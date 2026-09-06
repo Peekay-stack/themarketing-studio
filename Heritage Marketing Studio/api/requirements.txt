@@ -1,0 +1,19 @@
+# Core backend deps — MUST install for the app to start.
+# (Risky native/extra deps live in requirements-optional.txt, installed best-effort by the .bat.)
+fastapi>=0.115
+uvicorn[standard]>=0.30
+SQLAlchemy>=2.0
+pydantic>=2.7
+python-multipart>=0.0.9
+python-dotenv>=1.0        # loads api/.env automatically (needed for your API keys)
+
+anthropic>=0.40           # AI copy + "Draft brief with AI"  (ANTHROPIC_API_KEY)
+httpx>=0.27               # downloads rendered film clips for joining
+imageio-ffmpeg>=0.5       # bundles an ffmpeg binary; joins the 8s clips into one full-length film
+python-docx>=1.1          # builds the IMC brief .docx (and film-script / guided-brief docs)
+pillow>=10.0              # draws the NeedScope wheel + CB/CA figures embedded in the brief
+
+# research parsing for the IMC brief (uploaded PDF/DOCX/PPTX/XLSX/CSV)
+pdfplumber>=0.11
+python-pptx>=0.6
+openpyxl>=3.1

@@ -1,0 +1,60 @@
+{
+  "id": "ca187242fc",
+  "plan": "9e95f09719",
+  "house": "3cfdec4bb2",
+  "kind": "posm",
+  "brief": {
+    "kind": "posm",
+    "audience": {
+      "id": "0ce70adc",
+      "audience": "Data leads",
+      "rank": "1",
+      "believes_now": "pipelines always break",
+      "pillar": "functional"
+    },
+    "channel": {
+      "id": "a9e2a4cc",
+      "channel": "POSM",
+      "role": "proof",
+      "job": "prove the latency",
+      "measure": "claim recall",
+      "side": "brand",
+      "share": "20",
+      "owner": "PMM",
+      "lead": "yes"
+    },
+    "occasion": {
+      "id": "ae2940d9",
+      "phase": "Launch",
+      "window": "Q1",
+      "occasion": "Budget cycle",
+      "channels": "POSM",
+      "hands_over": "sustain"
+    },
+    "measure": {
+      "id": "a7d32409",
+      "role": "proof",
+      "leading": "claim recall",
+      "lagging": "trials",
+      "would_tell_us_it_failed": "flat at 8wk"
+    },
+    "pillar": "functional",
+    "brief": {
+      "id": "26c42b1dec",
+      "title": "Sync — launch",
+      "brand": "Northwind Cloud",
+      "mandatories": "SOC 2 badge",
+      "tone": "Direct",
+      "business_objective": "400 paid workspaces in 12 months"
+    },
+    "message": {
+      "id": "2e2d0728",
+      "text": "One line on the shelf of a search result",
+      "note": ""
+    }
+  },
+  "status": "briefed",
+  "artefacts": [],
+  "created": "2026-08-11 13:37",
+  "updated": "2026-08-11 13:37"
+}

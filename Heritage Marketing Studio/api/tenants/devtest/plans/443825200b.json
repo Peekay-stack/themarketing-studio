@@ -1,0 +1,58 @@
+{
+  "id": "443825200b",
+  "brand": "Heritage",
+  "house": "5c3965955f",
+  "created": "2026-08-11 17:21",
+  "updated": "2026-08-11 17:21",
+  "balance": {
+    "brand_share": 60,
+    "reason": "",
+    "basis": "year"
+  },
+  "nodes": {
+    "objectives": {
+      "layer": "objectives",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    },
+    "audiences": {
+      "layer": "audiences",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    },
+    "channels": {
+      "layer": "channels",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    },
+    "balance": {
+      "layer": "balance",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    },
+    "phases": {
+      "layer": "phases",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    },
+    "measures": {
+      "layer": "measures",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    },
+    "governance": {
+      "layer": "governance",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    }
+  },
+  "brief_id": "8e61e052e9",
+  "brief_title": "Typed at the messaging house"
+}

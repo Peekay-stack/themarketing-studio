@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<!--
+  WORKED EXAMPLE — STRUCTURE ONLY.
+
+  One real house (Heritage Foods, Indian dairy) rendered to the spec in diagram.md.
+
+  COPY: the pediment roof; two matched pillars side by side that never stack above 620px, each with
+  a capital, label, evidence badge, gloss and ONE message; the full-width outstanding-facts strip
+  below both; six code boxes with one chosen code each and `avoid` tinted apart; the hero demo; the
+  basement; contenteditable throughout with a save button.
+
+  DO NOT COPY: the brand, the messages, the codes, the demo, or these colours as brand colours.
+  They belong to someone else.
+-->
+
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Heritage — Messaging House</title>
+<style>
+  :root{
+    --ink:#15171a; --ink-2:#4a4f57; --ink-3:#8d929a;
+    --rule:#e4e6e9; --rule-2:#eff1f3; --paper:#f4f3f0; --card:#fff;
+    --emo:#7a4b78; --emo-soft:#faf5f9; --emo-deep:#2e2030;
+    --fun:#1f5f74; --fun-soft:#f2f8fa; --fun-deep:#123039;
+    --proof:#3f6b3f; --proof-soft:#f3f8f3;
+    --cult:#8a5a2b; --cult-soft:#fbf6ef;
+    --warn:#a8322b; --warn-soft:#fdf2f1;
+    --lift:0 1px 2px rgba(18,20,24,.04), 0 10px 26px -14px rgba(18,20,24,.22);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--paper);color:var(--ink);
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    font-size:13.5px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .sheet{max-width:1180px;margin:0 auto;padding:26px 28px 34px}
+  .sans{font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,sans-serif}
+  .lbl{font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:8.5px;
+    letter-spacing:.18em;text-transform:uppercase;font-weight:700;color:var(--ink-3)}
+
+  [contenteditable]{outline:none;border-radius:3px;transition:background .12s,box-shadow .12s}
+  [contenteditable]:hover{background:rgba(120,130,150,.06)}
+  [contenteditable]:focus{background:#fff;box-shadow:0 0 0 2px rgba(58,74,107,.3)}
+
+  header.top{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;
+    padding-bottom:12px;margin-bottom:24px;border-bottom:1px solid var(--ink);flex-wrap:wrap}
+  h1{font-size:20px;margin:0;font-weight:600;letter-spacing:.15px}
+  .meta{font-size:9.5px;color:var(--ink-3);text-align:right;line-height:1.8}
+  .bar{display:flex;gap:7px;align-items:center;margin-top:9px}
+  .btn{font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:10px;font-weight:600;
+    border:1px solid var(--rule);background:#fff;color:var(--ink-2);border-radius:6px;padding:6px 12px;
+    cursor:pointer;box-shadow:var(--lift)}
+  .btn:hover{border-color:#cdd0d5;color:var(--ink)}
+  .hint{font-size:9.5px;color:var(--ink-3)}
+  .tag{font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:7.5px;font-weight:700;
+    letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;border-radius:20px;display:inline-block}
+  .tag.b{background:#ebf1eb;color:var(--proof)} .tag.u{background:var(--warn-soft);color:var(--warn)}
+
+  /* ---------- ROOF ---------- */
+  .roof{position:relative;height:168px;margin-bottom:14px}
+  .roof svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+  .roof .in{position:absolute;left:0;right:0;bottom:20px;text-align:center;padding:0 17%}
+  .roof .core{font-size:25px;line-height:1.28;font-weight:500;margin:7px 0 0;letter-spacing:.1px}
+  .roof .plat{margin-top:11px;font-size:10px;color:var(--ink-3);letter-spacing:.03em}
+  .roof .plat b{color:var(--ink-2);font-weight:600}
+
+  /* ---------- TWO PILLARS, ALWAYS SIDE BY SIDE ---------- */
+  /* The pair IS the structure. It only stacks on a phone, and even then it is the last thing to go. */
+  .pillars{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+  .pil{background:var(--card);border:1px solid var(--rule);border-radius:7px;box-shadow:var(--lift);
+    display:flex;flex-direction:column;overflow:hidden;min-height:190px}
+  .cap{height:6px}
+  .pil.e .cap{background:var(--emo)} .pil.f .cap{background:var(--fun)}
+  .pil .top{padding:16px 22px 0;display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+  .pil.e .lbl{color:var(--emo)} .pil.f .lbl{color:var(--fun)}
+  .ev{font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:8px;font-weight:700;
+    letter-spacing:.05em;padding:3px 10px;border-radius:20px;white-space:nowrap}
+  .ev.good{background:#ebf1eb;color:var(--proof)} .ev.bad{background:var(--warn-soft);color:var(--warn)}
+  .pil .gloss{padding:7px 22px 0;font-size:10px;color:var(--ink-3);font-style:italic}
+  .pil .msg{margin:0;padding:9px 22px 22px;font-size:19px;line-height:1.36;font-weight:500;flex:1}
+  .pil.e .msg{color:var(--emo-deep)} .pil.f .msg{color:var(--fun-deep)}
+  .foot{height:7px;border-top:1px solid var(--rule-2)}
+  .pil.e .foot{background:var(--emo-soft)} .pil.f .foot{background:var(--fun-soft)}
+
+  .gate{margin-top:14px;border:1px solid #eddad8;background:var(--warn-soft);border-radius:7px;
+    padding:11px 18px;font-size:11.5px;color:#5c2e2b;line-height:1.5}
+  .gate b{color:var(--warn)}
+
+  /* ---------- BANDS ---------- */
+  .band{background:var(--card);border:1px solid var(--rule);border-radius:7px;margin-top:16px;
+    box-shadow:var(--lift);overflow:hidden}
+  .bh{padding:11px 22px;display:flex;justify-content:space-between;align-items:center;gap:12px;
+    flex-wrap:wrap;border-bottom:1px solid var(--rule-2)}
+  .bh .note{font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:9.5px;color:var(--ink-3)}
+  .band.c .bh{background:var(--cult-soft)} .band.c .lbl{color:var(--cult)}
+  .band.p .bh{background:var(--proof-soft)} .band.p .lbl{color:var(--proof)}
+
+  .codes{display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--rule-2)}
+  .code{background:#fff;padding:15px 16px 17px;display:flex;flex-direction:column;gap:7px}
+  .ck{font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:7.5px;font-weight:700;
+    letter-spacing:.15em;text-transform:uppercase;color:var(--cult)}
+  .cv{font-size:13.5px;line-height:1.38;color:var(--ink);font-weight:500}
+  .code.avoid{background:var(--warn-soft)} .code.avoid .ck{color:var(--warn)} .code.avoid .cv{color:#69352f}
+
+  .hero{display:flex;gap:22px;padding:20px 22px 22px;align-items:flex-start}
+  .heromark{flex:none;font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:8px;
+    font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--proof);
+    background:var(--proof-soft);border:1px solid #dce7dc;border-radius:20px;padding:5px 12px;margin-top:4px}
+  .herot{font-size:19px;font-weight:600;margin:0 0 6px;letter-spacing:.1px}
+  .herod{font-size:13.5px;color:var(--ink-2);line-height:1.55;margin:0;max-width:74ch}
+
+  .basement{margin-top:16px;background:var(--ink);color:#fff;border-radius:7px;padding:17px 22px;
+    display:grid;grid-template-columns:repeat(3,1fr);gap:26px;font-size:11.5px;line-height:1.55}
+  .basement .lbl{color:rgba(255,255,255,.42);display:block;margin-bottom:5px}
+  .basement b{font-weight:600}
+
+  footer{margin-top:16px;padding-top:10px;border-top:1px solid var(--rule);
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:9.5px;color:var(--ink-3);
+    display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
+
+  @media print{
+    body{background:#fff}
+    .sheet{max-width:none;padding:6px}
+    .bar{display:none}
+    .band,.pil,.basement,.gate,.roof{break-inside:avoid;box-shadow:none}
+    [contenteditable]:hover{background:none}
+    @page{size:A4 landscape;margin:9mm}
+  }
+  /* The pillars hold their pairing right down to a phone; type shrinks before the grid breaks. */
+  @media (max-width:980px){
+    .sheet{padding:18px}
+    .roof{height:150px} .roof .core{font-size:21px} .roof .in{padding:0 9%}
+    .pil .msg{font-size:16px;padding:8px 16px 18px} .pil .top{padding:13px 16px 0}
+    .codes{grid-template-columns:repeat(3,1fr)}
+  }
+  @media (max-width:620px){
+    .pillars{grid-template-columns:1fr}
+    .codes{grid-template-columns:1fr}
+    .basement{grid-template-columns:1fr;gap:14px}
+    .hero{flex-direction:column;gap:12px}
+  }
+</style>
+</head>
+<body>
+<div class="sheet">
+
+  <header class="top">
+    <div>
+      <h1 contenteditable="true">Heritage — Messaging House</h1>
+      <div class="bar">
+        <button class="btn" onclick="window.print()">Print / PDF</button>
+        <button class="btn" id="save">Download edited copy</button>
+        <span class="hint sans">Click any text to edit</span>
+      </div>
+    </div>
+    <div class="meta sans">
+      Heritage Foods Ltd. · from the Brand Brief, 30 June 2026<br>
+      <span class="tag b">brief</span> traces to supplied input &nbsp;
+      <span class="tag u">unverified</span> needs a fact you do not yet have
+    </div>
+  </header>
+
+  <!-- ROOF -->
+  <div class="roof">
+    <svg viewBox="0 0 1000 168" preserveAspectRatio="none" aria-hidden="true">
+      <polygon points="500,6 994,162 6,162" fill="#ffffff" stroke="#15171a" stroke-width="1.4"/>
+    </svg>
+    <div class="in">
+      <div class="lbl">Core message</div>
+      <p class="core" contenteditable="true">The purity you choose today is the strength they carry tomorrow.</p>
+      <div class="plat sans" contenteditable="true">Platform <b>Pure Doodh Ki Shakti</b> &nbsp;·&nbsp; Mass line <b>Har ghar ki rozaana shakti — Heritage</b></div>
+    </div>
+  </div>
+
+  <!-- TWO SUPPORTING PILLARS, MATCHED -->
+  <div class="pillars">
+    <div class="pil e">
+      <div class="cap"></div>
+      <div class="top"><span class="lbl">Supporting pillar · Emotional</span><span class="ev good">2 of 2 sourced</span></div>
+      <div class="gloss">What she feels is true about herself</div>
+      <p class="msg" contenteditable="true">The smallest thing I do every morning is the biggest thing I do.</p>
+      <div class="foot"></div>
+    </div>
+    <div class="pil f">
+      <div class="cap"></div>
+      <div class="top"><span class="lbl">Supporting pillar · Functional</span><span class="ev bad">0 of 2 sourced</span></div>
+      <div class="gloss">What the product demonstrably does</div>
+      <p class="msg" contenteditable="true">Heritage keeps milk's own strength — protein, calcium, fat — as milk made it.</p>
+      <div class="foot"></div>
+    </div>
+  </div>
+
+  <div class="gate" contenteditable="true">
+    <b>Five facts outstanding, all on the functional pillar.</b> Test protocol · rejection rate · fat &amp; SNF specs and
+    batch variance · whether batch data can reach a consumer QR · a native Telugu register. Until these land, that pillar
+    is an assertion.
+  </div>
+
+  <!-- CULTURE & CODES -->
+  <div class="band c">
+    <div class="bh">
+      <span class="lbl">Lifestyle &amp; codes — what carries both pillars</span>
+      <span class="note">The chosen code for each kind</span>
+    </div>
+    <div class="codes">
+      <div class="code"><span class="ck">Occasion</span><span class="cv" contenteditable="true">Exam season, February–April</span></div>
+      <div class="code"><span class="ck">Ritual</span><span class="cv" contenteditable="true">Yesterday's spoon into today's curd</span></div>
+      <div class="code"><span class="ck">Code</span><span class="cv" contenteditable="true">Steel, never glass</span></div>
+      <div class="code"><span class="ck">Idiom</span><span class="cv" contenteditable="true">“Doodh ubal gaya!” — never translated</span></div>
+      <div class="code"><span class="ck">Iconography</span><span class="cv" contenteditable="true">Two pairs of hands, same gesture</span></div>
+      <div class="code avoid"><span class="ck">Avoid</span><span class="cv" contenteditable="true">Lab coats, beakers, muscle imagery</span></div>
+    </div>
+  </div>
+
+  <!-- HERO DEMO -->
+  <div class="band p">
+    <div class="bh">
+      <span class="lbl">Foundation · hero demo proposition</span>
+      <span class="note">What can be shown, not said</span>
+    </div>
+    <div class="hero">
+      <span class="heromark">Hero · D3</span>
+      <div>
+        <p class="herot" contenteditable="true">The 4am mirror</p>
+        <p class="herod" contenteditable="true">A farmer's hands at 4am, a mother's at 6am — the same movements, the same quiet, nobody watching either of them. It proves the emotional pillar, and it is shootable now with no facts required.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="basement">
+    <div><span class="lbl">What it stands on</span><span contenteditable="true"><b>Pure Doodh Ki Shakti.</b> Everyday purity is what powers a family's strength.</span></div>
+    <div><span class="lbl">NeedScope discipline</span><span contenteditable="true">Security anchor, one thread into <b>Belonging</b>. Nothing moves the brand toward Discernment.</span></div>
+    <div><span class="lbl">Launch window</span><span contenteditable="true"><b>Exam season, Feb–Apr</b> — capacity anxiety peaks, the category is absent.</span></div>
+  </div>
+
+  <footer>
+    <span>Messaging house v1 · one-page summary · built on the Single Minded Proposition in the brand brief</span>
+    <span>Full house, RTBs, channel adoption and the complete avoid list: heritage-messaging-house.html</span>
+  </footer>
+
+</div>
+
+<script>
+  // Editing that vanishes on refresh is worse than none, so the page can write itself back out.
+  // The toolbar and this script are stripped from the saved copy.
+  document.getElementById('save').addEventListener('click', function () {
+    var clone = document.documentElement.cloneNode(true);
+    var bar = clone.querySelector('.bar'); if (bar) bar.remove();
+    var s = clone.querySelector('script'); if (s) s.remove();
+    var blob = new Blob(['<!DOCTYPE html>\n' + clone.outerHTML], {type: 'text/html'});
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'messaging-house-edited.html';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+</script>
+</body>
+</html>

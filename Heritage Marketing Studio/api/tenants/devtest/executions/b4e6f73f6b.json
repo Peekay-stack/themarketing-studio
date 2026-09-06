@@ -1,0 +1,52 @@
+{
+  "id": "b4e6f73f6b",
+  "plan": "c676782d0e",
+  "house": "620e4b0882",
+  "kind": "posm",
+  "brief": {
+    "kind": "posm",
+    "audience": {
+      "id": "8585de8b",
+      "audience": "Chennai mothers",
+      "rank": "1",
+      "believes_now": "loose is fresher",
+      "pillar": "functional"
+    },
+    "channel": {
+      "id": "dcbfe2e9",
+      "channel": "POSM",
+      "role": "proof",
+      "job": "prove freshness",
+      "measure": "claim recall",
+      "side": "brand",
+      "share": "20",
+      "owner": "Trade",
+      "lead": "yes"
+    },
+    "occasion": {
+      "id": "9d5f1ec3",
+      "phase": "Pongal",
+      "window": "Jan",
+      "occasion": "Pongal",
+      "channels": "POSM",
+      "hands_over": "sustain"
+    },
+    "measure": {
+      "id": "f11043df",
+      "role": "proof",
+      "leading": "claim recall",
+      "lagging": "repeat",
+      "would_tell_us_it_failed": "flat at 8wk"
+    },
+    "pillar": "functional",
+    "message": {
+      "id": "7f5908e1",
+      "text": "Two facings. Turns faster than loose.",
+      "note": ""
+    }
+  },
+  "status": "briefed",
+  "artefacts": [],
+  "created": "2026-08-10 23:00",
+  "updated": "2026-08-10 23:00"
+}

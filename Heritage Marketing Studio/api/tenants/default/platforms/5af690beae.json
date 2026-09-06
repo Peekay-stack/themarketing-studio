@@ -1,0 +1,100 @@
+{
+  "id": "5af690beae",
+  "brand": "Heritage",
+  "house": "1a41179c90",
+  "created": "2026-08-27 11:13",
+  "updated": "2026-08-27 11:19",
+  "round": 0,
+  "platforms": [
+    {
+      "name": "The Ordinary Proof",
+      "idea": "Every piece shows one real Heritage-raised child finishing the ordinary thing — the last lap, the last page, the last bite — with a plain caption naming what strength looked like today.",
+      "mechanic": "A repeatable 'proof-of-strength moment' template: pick an everyday task, show a real child completing it, name the strength on show — endlessly refillable with new kids, new tasks, new towns.",
+      "territory": "",
+      "proof": "",
+      "why": "",
+      "rtb": "strength shows in the small daily things — stamina, focus, appetite — not in exam results",
+      "source": "model",
+      "adopted": true,
+      "brief": "Heritage — IMC Brief",
+      "verdicts": {
+        "ours": {
+          "verdict": "untested",
+          "note": ""
+        },
+        "durable": {
+          "verdict": "untested",
+          "note": ""
+        }
+      },
+      "routes": {},
+      "expressions": {
+        "video": "Dawn, before a single household kitchen light is on: we follow one man — Ramesh, the boiling-pan tester at a collection centre — through his check, then pull back to reveal he is one of a counted line of people, each doing their own check, until the number 500 lands as a mother pours the first cup at 6am. What turns: the cup she thought she made alone was made by 500 hands first.",
+        "social": "A daily 'Check #___ of 500' series — one square, one real role, one routine filmed in under 20 seconds at actual dawn: the fat check, the smell test, the temperature reading. The format is fixed (role name, check name, the number), the person and check rotate forever, so the account posts a new one every morning without a new idea.",
+        "posm": "A shelf strip that reads '500 checked this before you' with the FSSAI mark and 'Pure Doodh Ki Shakti' — a single number a shopper reads at two metres and understands instantly against nine packs claiming nothing but 'pure'.",
+        "activation": "At a market or society gate, set up the boiling-pan test as a live demo: a Heritage checker performs the actual smell-and-boil check on the day's milk in front of shoppers, and each visitor gets a numbered card — 'you are person 501' — physically handing them a place in the count.",
+        "incentive": "Retailers get a counter card and a talk-track: 'ask me how many checked this milk' — a differentiator that lets a general-trade shopkeeper justify the branded pack over loose milk to a price-questioning customer, converting the provenance story into a reason to not lose the sale to unbranded.",
+        "pr": "",
+        "media": "A daily-rhythm schedule, not a burst: the platform lives on repetition, so it wants a steady always-on drip on social and in-store timed to the morning purchase window, with the film as an anchor rather than the whole spend. Weight the schedule to dawn and to the store, where the check and the pour actually happen."
+      },
+      "pillar": "emotional",
+      "rtb_id": "d7531eaf",
+      "caveat": "",
+      "ladder": "",
+      "campaigns": [
+        {
+          "id": "f6ceef9c",
+          "name": "IMC 2026",
+          "big_idea": "",
+          "big_idea_note": "",
+          "ladder": "21e6b88b",
+          "insight": "She sees her child finish the ordinary things every day, but never lets herself believe those small daily wins are proof of the strength she's building — she's waiting for a big moment that never announces itself.",
+          "resolution": "The everyday strength you already see IS the strength — named, today, in the milk he drinks and the lap he finishes. (Inferred tension: no current→desired shift was supplied, so this is derived from the emotional truth and needs confirming.)",
+          "shape": "frame",
+          "frame": "{X} ki taakat, heritage pure doodh se",
+          "slots": [
+            {
+              "text": "Aakhri lap ki taakat, heritage pure doodh se",
+              "lang": "hi"
+            },
+            {
+              "text": "Aakhri panne ki taakat, heritage pure doodh se",
+              "lang": "hi"
+            },
+            {
+              "text": "Chivari mettu ekkina taakat, roju paalu nunchi",
+              "lang": "te"
+            },
+            {
+              "text": "The last-bite kind of strength, from pure heritage milk",
+              "lang": "en"
+            }
+          ],
+          "divisions": [],
+          "roles": {
+            "digital": "the bridge, demonstrated, at high intent",
+            "social": "the bridge, demonstrated",
+            "tv": "emotional endpoint + the turn",
+            "ooh": "one rung, chosen",
+            "posm": "functional truth + emotional RECALL",
+            "on-ground": "the bridge, experienced",
+            "trade": "OFF the consumer ladder entirely",
+            "influencer": "emotional endpoint, third-party"
+          },
+          "from": "",
+          "to": "",
+          "source": "user",
+          "added": "2026-08-27 11:19"
+        }
+      ],
+      "judged": {},
+      "id": "58dcd6be",
+      "added": "2026-08-27 11:13",
+      "round": 0,
+      "built_from": "",
+      "ladder_confirmed": true
+    }
+  ],
+  "chosen": "58dcd6be",
+  "skipped": false
+}

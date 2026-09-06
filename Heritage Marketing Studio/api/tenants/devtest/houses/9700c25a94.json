@@ -1,0 +1,128 @@
+{
+  "id": "9700c25a94",
+  "brand": "Heritage Foods",
+  "brief": {},
+  "created": "2026-08-10 22:27",
+  "updated": "2026-08-10 22:27",
+  "nodes": {
+    "core": {
+      "layer": "core",
+      "options": [
+        {
+          "id": "9aa7c9b6",
+          "text": "The strength of pure milk",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-10 22:27"
+        },
+        {
+          "id": "b4d79a29",
+          "text": "Doodh that earns its place",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-10 22:27"
+        }
+      ],
+      "chosen": [
+        "9aa7c9b6"
+      ],
+      "sig": "",
+      "generated_under": ""
+    },
+    "emotional": {
+      "layer": "emotional",
+      "options": [
+        {
+          "id": "e4074161",
+          "text": "A mother who chose well",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-10 22:27"
+        }
+      ],
+      "chosen": [
+        "e4074161"
+      ],
+      "sig": "",
+      "generated_under": ""
+    },
+    "functional": {
+      "layer": "functional",
+      "options": [
+        {
+          "id": "ddc1ce15",
+          "text": "Tested twice before dispatch",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-10 22:27"
+        }
+      ],
+      "chosen": [
+        "ddc1ce15"
+      ],
+      "sig": "",
+      "generated_under": ""
+    },
+    "rtb_emotional": {
+      "layer": "rtb_emotional",
+      "options": [],
+      "chosen": [],
+      "sig": "",
+      "generated_under": ""
+    },
+    "rtb_functional": {
+      "layer": "rtb_functional",
+      "options": [
+        {
+          "id": "6fe2ea30",
+          "text": "Cold chain audited monthly",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-10 22:27"
+        }
+      ],
+      "chosen": [
+        "6fe2ea30"
+      ],
+      "sig": "",
+      "generated_under": ""
+    },
+    "proof": {
+      "layer": "proof",
+      "options": [],
+      "chosen": [],
+      "sig": "",
+      "generated_under": ""
+    },
+    "culture": {
+      "layer": "culture",
+      "options": [
+        {
+          "id": "6cea33b8",
+          "text": "Pongal morning",
+          "note": "",
+          "source": "user",
+          "tag": "occasion",
+          "added": "2026-08-10 22:27"
+        }
+      ],
+      "chosen": [
+        "6cea33b8"
+      ],
+      "sig": "",
+      "generated_under": ""
+    },
+    "medium": {
+      "layer": "medium",
+      "options": [],
+      "chosen": [],
+      "sig": "",
+      "generated_under": ""
+    }
+  }
+}

@@ -1,0 +1,75 @@
+--- app.dc.html (base sent as Design_Handover_20)
++++ app.dc.html (with P2 fixes)
+@@ -11394,7 +11394,7 @@
+       ideaTests, adoptIdea: this.adoptIdea,
+       // ---- start the platform: the house it argues from, the brief it answers ----
+       ideaHouseOpts: ((this.strat().houses) || []).map(h => ({ id:h.id,
+-        label: (h.brand || 'Untitled') + ' \u00b7 ' + ((h.chosen_layers || 0) + ' of ' + this.H_LAYERS.length + ' decided') })),
++        label: (h.brand || 'Untitled') + ' \u00b7 ' + ((h.chosen_layers || 0) + ' of ' + (h.total_layers != null ? h.total_layers : this.H_LAYERS.length) + ' decided') })),
+       hasIdeaHouseOpts: !!((this.strat().houses) || []).length,
+       noIdeaHouseOpts: !((this.strat().houses) || []).length,
+       ideaHouseId: ip.houseId || '', onIdeaHouse: this.onIdeaHouse,
+@@ -11866,12 +11866,19 @@
+     const dots = (n, total) => Array.from({length: total}, (_,i) => ({ bg: i < n ? '#17325E' : '#E1E4EA' }));
+     const houseCards = houses.map(h => {
+       const done = h.chosen_layers != null ? h.chosen_layers : (h.progress || 0);
++      // The TOTAL comes from the server too, not from this local list.
++      //
++      // It read `H_LAYERS.length`, so the card's denominator was whatever this file happened to know
++      // while the numerator came from the server. The moment a layer was retired on the backend, every
++      // card said "8 of 9 layers decided" over a house that was finished — the same class as the count
++      // once reading 0 over eight settled layers, and it makes a finished house look unfinished.
++      const total = h.total_layers != null ? h.total_layers : this.H_LAYERS.length;
+       const nextName = (this.H_LAYERS.find(([k]) => k === h.next_layer) || [])[1];
+       const nb = h.blocking || 0;
+       return { brand: h.label || h.brand || 'Untitled', open: this.openHouse(h.id),
+-        progress: done + ' of ' + this.H_LAYERS.length + ' layers decided', dots: dots(done, this.H_LAYERS.length),
++        progress: done + ' of ' + total + ' layers decided', dots: dots(done, total),
+         stale: !!h.stale, blocking: nb > 0, blockingLabel: nb + (nb === 1 ? ' blocking' : ' blocking'),
+-        next: done >= this.H_LAYERS.length ? 'All decided.' : (nextName ? 'Next: ' + nextName : 'Not started.') };
++        next: done >= total ? 'All decided.' : (nextName ? 'Next: ' + nextName : 'Not started.') };
+     });
+     const planCards = plans.map(p => {
+       const done = p.filled_layers != null ? p.filled_layers : (p.progress || 0);
+@@ -11887,11 +11894,21 @@
+ 
+     // ---- house detail ----
+     const house = s.house, status = s.houseStatus, cur = s.hLayer || 'core';
+-    const curDef = this.H_LAYERS.find(([k]) => k === cur) || this.H_LAYERS[0];
++    // Only render layers the server still asks for.
++    //
++    // The rail was built straight from the local H_LAYERS list, so a layer retired on the backend kept
++    // its row here — and clicking it hit a route that rejects any layer not in LAYER_BY_ID. A control
++    // that is visible and errors is worse than one that is gone: `Message by medium` is now folded into
++    // the jobs table, and `status.retired_layers` carries what was chosen under it so nothing is lost.
++    // Falls back to the full list before the status has loaded, so a cold open still draws a rail.
++    const liveIds = (status && Array.isArray(status.layers) && status.layers.length)
++      ? status.layers.map(l => l.layer || l.id || l.key) : null;
++    const H_LIVE = liveIds ? this.H_LAYERS.filter(([k]) => liveIds.indexOf(k) >= 0) : this.H_LAYERS;
++    const curDef = H_LIVE.find(([k]) => k === cur) || H_LIVE[0];
+     const L = this.layerStatus(status, cur) || {};
+     const chosenIds = L.chosen || [];
+     const rawOpts = L.options || ((house && house.layers && house.layers[cur] && house.layers[cur].options) || []);
+-    const hLayers = this.H_LAYERS.map(([k,name,parent], i) => {
++    const hLayers = H_LIVE.map(([k,name,parent], i) => {
+       const ls = this.layerStatus(status, k) || {};
+       const nOpt = (ls.options || []).length, nCh = (ls.chosen || []).length;
+       const blocked = !!ls.blocked_because || (parent && !((this.layerStatus(status, parent)||{}).chosen||[]).length);
+@@ -12020,7 +12037,7 @@
+       newHouseLabel: st.busy === 'house' ? 'Starting…' : 'Start a house',
+       npBrand: st.np.brand, npHouse: st.np.house, onNewPlan: this.onNewPlan, createPlan: this.createPlan,
+       newPlanLabel: st.busy === 'plan' ? 'Starting…' : 'Start a plan',
+-      houseOpts: houses.map(h => ({ id:h.id, label:(h.brand||'Untitled') + ' · ' + ((h.chosen_layers||0) + ' of ' + this.H_LAYERS.length) })),
++      houseOpts: houses.map(h => ({ id:h.id, label:(h.brand||'Untitled') + ' · ' + ((h.chosen_layers||0) + ' of ' + (h.total_layers != null ? h.total_layers : this.H_LAYERS.length)) })),
+       npWarn: npBound ? 'The proof gate will run: channels given proof work are checked against that house’s sourced reasons.'
+                       : 'Without a house the proof gate cannot run, and any channel could be handed proof work it cannot deliver.',
+       npWarnFg: npBound ? '#6B7280' : '#B07A12',
+@@ -12032,7 +12049,7 @@
+       hProjectAsk: 'Name this project', suggestProjectName: this.suggestProjectName,
+       hHasProjectSuggest: !(house && house.project) && !!s.hProjectSuggest,
+       hProjectSuggestion: s.hProjectSuggest || '', acceptProjectName: this.acceptProjectName,
+-      hLayers, hRailNote: decided + ' of ' + this.H_LAYERS.length + ' decided' + (hNextUp ? ' — next up is ' + hNextUp.name.toLowerCase() + '.' : ' — all decided.') + ' Each choice is what the layer below is written against, which is why they open one at a time.',
++      hLayers, hRailNote: decided + ' of ' + H_LIVE.length + ' decided' + (hNextUp ? ' — next up is ' + hNextUp.name.toLowerCase() + '.' : ' — all decided.') + ' Each choice is what the layer below is written against, which is why they open one at a time.',
+       hHasChosen: chosenIds.length > 0, hNotChosen: chosenIds.length === 0,
+       hUndecidedNote: hNextDef
+         ? 'Choose at least one line — the next layer is written against what you pick here.'

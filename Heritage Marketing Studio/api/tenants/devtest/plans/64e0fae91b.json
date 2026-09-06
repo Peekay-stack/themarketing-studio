@@ -1,0 +1,122 @@
+{
+  "id": "64e0fae91b",
+  "brand": "Heritage Foods",
+  "house": "66304f9878",
+  "created": "2026-08-10 22:07",
+  "updated": "2026-08-10 22:07",
+  "balance": {
+    "brand_share": 45,
+    "reason": "",
+    "basis": "year"
+  },
+  "nodes": {
+    "objectives": {
+      "layer": "objectives",
+      "rows": [
+        {
+          "level": "business",
+          "statement": "Grow value share in Chennai",
+          "measure": "+12% value",
+          "by_when": "FY27",
+          "id": "70ea759d",
+          "source": "user",
+          "added": "2026-08-10 22:07"
+        },
+        {
+          "level": "marketing",
+          "statement": "Shift mothers off loose milk",
+          "measure": "",
+          "by_when": "",
+          "id": "db1241f0",
+          "source": "user",
+          "added": "2026-08-10 22:07"
+        }
+      ],
+      "sig": "",
+      "house_under": ""
+    },
+    "audiences": {
+      "layer": "audiences",
+      "rows": [
+        {
+          "audience": "Chennai mothers, 28-40",
+          "rank": "1",
+          "believes_now": "loose milk is fresher",
+          "pillar": "functional",
+          "id": "73db5a33",
+          "source": "user",
+          "added": "2026-08-10 22:07"
+        }
+      ],
+      "sig": "",
+      "house_under": ""
+    },
+    "channels": {
+      "layer": "channels",
+      "rows": [
+        {
+          "channel": "POSM",
+          "role": "proof",
+          "job": "prove freshness",
+          "measure": "claim recall",
+          "side": "brand",
+          "share": "20",
+          "owner": "",
+          "lead": "yes",
+          "id": "774b9fec",
+          "source": "user",
+          "added": "2026-08-10 22:07"
+        },
+        {
+          "channel": "Q-commerce",
+          "role": "conversion",
+          "job": "close the basket",
+          "measure": "conversion rate",
+          "side": "activation",
+          "share": "30",
+          "owner": "Digital",
+          "lead": "",
+          "id": "d0b4fbd9",
+          "source": "user",
+          "added": "2026-08-10 22:07"
+        }
+      ],
+      "sig": "",
+      "house_under": ""
+    },
+    "balance": {
+      "layer": "balance",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    },
+    "phases": {
+      "layer": "phases",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    },
+    "measures": {
+      "layer": "measures",
+      "rows": [
+        {
+          "role": "proof",
+          "leading": "claim recall",
+          "lagging": "repeat rate",
+          "would_tell_us_it_failed": "",
+          "id": "e1303c94",
+          "source": "user",
+          "added": "2026-08-10 22:07"
+        }
+      ],
+      "sig": "",
+      "house_under": ""
+    },
+    "governance": {
+      "layer": "governance",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    }
+  }
+}

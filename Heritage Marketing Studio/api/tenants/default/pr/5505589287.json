@@ -1,0 +1,59 @@
+{
+  "id": "5505589287",
+  "brand": "Heritage Foods",
+  "mode": "campaign",
+  "kind": "",
+  "phase": "tease",
+  "plan": "d684b76657",
+  "house": "68c50487e3",
+  "execution": "",
+  "created": "2026-08-31 18:49",
+  "updated": "2026-08-31 18:51",
+  "objectives": [
+    {
+      "id": "779bbde6",
+      "statement": "Explain the premium: Build fame for 'Pure Doodh Ki Shakti' as the purest everyday milk, and make the unbroken cold chain believable enough to justify choosing packed over loose.",
+      "statement_id": "f0de3882",
+      "level": "communication",
+      "rung": "explain",
+      "proof": "",
+      "note": ""
+    }
+  ],
+  "messages": [
+    {
+      "id": "3eb54da5",
+      "text": "Milk that passes every purity test before it reaches your door.",
+      "proof": "Farm to home on an unbroken cold chain, chilled within hours of milking, so nothing spoils and nothing needs to be masked.",
+      "proof_id": "6b40fb07",
+      "sourced": true,
+      "proof_missing": false
+    }
+  ],
+  "release": {
+    "language": "en",
+    "headline": "Heritage Foods positions Pure Milk on unbroken cold chain from farm to home",
+    "dateline": "",
+    "lead_text": "",
+    "support": "Heritage says the milk is chilled within hours of milking and held on an unbroken cold chain from farm to home. The company frames this as milk that passes every purity test before it reaches the door. Heritage Pure Milk carries the FSSAI mark.",
+    "quote": "The one thing a household cannot check for itself is whether the milk stayed cold from the farm to the door, and that is exactly what we hold to.",
+    "quote_by": "",
+    "quote_role": "",
+    "background": "Heritage Foods operates in the dairy category covering milk, curd and value-added dairy, with its strongest presence across South India and an expanding national footprint. Its milk is distributed largely through general trade and home delivery, and the company's brand line is 'Pure Doodh Ki Shakti.'",
+    "boilerplate": "",
+    "contact": "",
+    "five_w": {
+      "who": "Heritage Foods, a dairy company producing milk, curd and value-added dairy products with its strongest presence across South India, including Telangana, Andhra Pradesh, Karnataka and Tamil Nadu.",
+      "what": "Heritage Foods is highlighting the cold-chain handling behind Heritage Pure Milk, its everyday milk product. The company says the milk is chilled within hours of milking and kept on an unbroken cold chain from farm to home, so that nothing spoils and nothing needs to be masked before it reaches a household's door.",
+      "when": "",
+      "where": "Core South markets in Telangana, Andhra Pradesh, Karnataka and Tamil Nadu, with distribution extending nationally.",
+      "why": "The company aims to grow Heritage Pure Milk volume and value in its core South markets while extending national distribution, and to make packed daily-fresh milk the default household choice for buyers who currently purchase loose or unbranded milk from a vendor or dairy."
+    },
+    "carries": [],
+    "mandatories": [],
+    "embargo": "",
+    "translations": {},
+    "created": "2026-08-31 18:50",
+    "updated": "2026-08-31 18:51"
+  }
+}

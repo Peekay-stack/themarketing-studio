@@ -1,0 +1,189 @@
+{
+  "id": "5ebbad01b0",
+  "brand": "heritage",
+  "house": "68c50487e3",
+  "created": "2026-08-31 18:54",
+  "updated": "2026-08-31 18:59",
+  "project": "Heritage — house, August 2026",
+  "balance": {
+    "brand_share": 60,
+    "reason": "Hold the 60/40 default. Against unbranded loose milk the constraint is mental availability — being thought of at the pre-dawn boil at all — so the brand-building reach and the cold-chain proof film do the structural work; the conversion channel (the named lead) then books a standing daily order. Note: current 60/40 is on channel count only; once TV/OOH spend is weighted the actual brand share will run above 60, and that drift must be watched so the lead conversion channel is not starved.",
+    "basis": "year",
+    "declared": true
+  },
+  "nodes": {
+    "objectives": {
+      "layer": "objectives",
+      "rows": [
+        {
+          "level": "business",
+          "statement": "Grow Heritage Pure Milk volume in core South India markets by winning switchers from loose/unbranded milk and holding share against Amul and Nandini.",
+          "measure": "CEO/CFO to set — target % volume or revenue growth",
+          "by_when": "FY27",
+          "id": "f976b293",
+          "source": "model",
+          "added": "2026-08-31 18:54"
+        },
+        {
+          "level": "marketing",
+          "statement": "Move families who currently buy loose or rival packaged milk to a daily Heritage home-delivery or general-trade habit, on the promise of purity they can trust.",
+          "measure": "marketing lead to set — daily-subscriber count and repeat-purchase rate",
+          "by_when": "end FY27",
+          "id": "b0863abd",
+          "source": "model",
+          "added": "2026-08-31 18:54"
+        },
+        {
+          "level": "communication",
+          "statement": "Make 'purity you can see, on an unbroken cold chain' the reason families in core markets choose Heritage over cheaper loose milk, and keep 'Pure Doodh Ki Shakti' the phrase they associate with everyday strength.",
+          "measure": "comms lead to set — prompted brand association with purity and daily-fresh, tracked in core markets",
+          "by_when": "end FY27",
+          "id": "4368b0bf",
+          "source": "model",
+          "added": "2026-08-31 18:54"
+        }
+      ],
+      "sig": "",
+      "house_under": "9e13c9180ee98575"
+    },
+    "audiences": {
+      "layer": "audiences",
+      "rows": [
+        {
+          "audience": "Loose / unbranded milk buyers in core South India — the daily switcher prize",
+          "rank": "1",
+          "believes_now": "Loose milk from the local vendor is fresher and cheaper because it's 'direct'. Quietly worries about adulteration and dilution but has no way to check, and packaged milk feels like paying more for the same thing. Purity they can actually see — the unbroken cold chain — is the argument that turns that unspoken worry into a switch.",
+          "pillar": "functional",
+          "id": "d2266345",
+          "source": "model",
+          "added": "2026-08-31 18:55"
+        },
+        {
+          "audience": "Rival packaged-milk families (Amul, Nandini, Dodla, Arokya)",
+          "rank": "2",
+          "believes_now": "Already accept packaged milk and assume their brand is safe, so a purity claim reads as 'what everyone says'. Won't switch on proof they think they already have. Moves on preference — that Heritage means the household starts the morning already ahead, richer strength in the pour.",
+          "pillar": "emotional",
+          "id": "830e5cf6",
+          "source": "model",
+          "added": "2026-08-31 18:55"
+        },
+        {
+          "audience": "Existing Heritage daily buyers — held against Amul/Nandini",
+          "rank": "3",
+          "believes_now": "Already trust the cold-chain and buy daily. Re-proving purity to them is redundant and risks sounding defensive. Keeping them proud of the choice and less shoppable on price is the emotional pillar's job — strength every morning, family ahead.",
+          "pillar": "emotional",
+          "id": "9c4f293b",
+          "source": "model",
+          "added": "2026-08-31 18:55"
+        }
+      ],
+      "sig": "",
+      "house_under": "7a56da190c09493c"
+    },
+    "channels": {
+      "layer": "channels",
+      "rows": [
+        {
+          "channel": "15s + 30s TV, Telugu/Kannada/Tamil, steel vessel on the flame",
+          "medium": "medium not supplied — client to confirm served media list",
+          "role": "reach",
+          "job": "Get to loose-milk and rival-packaged households who don't yet think of Heritage, on the pre-dawn-boil culture code",
+          "measure": "Coverage and cost per reach against target households",
+          "side": "brand",
+          "share": "",
+          "owner": "Brand team + media agency",
+          "lead": "",
+          "id": "74d8fc2c",
+          "source": "model",
+          "added": "2026-08-31 18:57"
+        },
+        {
+          "channel": "The cold-chain film — one continuous clock, milking to doorstep, timestamp in-frame",
+          "medium": "medium not supplied — client to confirm served media list",
+          "role": "proof",
+          "job": "Make the functional pillar believable to loose-milk buyers via the sourced cold-chain RTB — the only pillar cleared for proof work",
+          "measure": "Whether the cold-chain claim lands (claim-recall / believability), not clicks",
+          "side": "brand",
+          "share": "",
+          "owner": "Brand team + production",
+          "lead": "",
+          "id": "485137a7",
+          "source": "model",
+          "added": "2026-08-31 18:57"
+        },
+        {
+          "channel": "Home-delivery / GT sampling and first-crate conversion push",
+          "medium": "medium not supplied — client to confirm served media list",
+          "role": "conversion",
+          "job": "Turn switch intent into a standing daily order at the doorstep",
+          "measure": "New daily-order sign-up rate and cost per acquisition",
+          "side": "activation",
+          "share": "",
+          "owner": "Sales / distribution + home-delivery ops",
+          "lead": "yes",
+          "id": "f209be77",
+          "source": "model",
+          "added": "2026-08-31 18:57"
+        },
+        {
+          "channel": "OOH / vessel-and-cream hero, core South India high streets",
+          "medium": "medium not supplied — client to confirm served media list",
+          "role": "reach",
+          "job": "Repeat the steel-vessel image at scale to build mental availability in core markets",
+          "measure": "Coverage and cost per reach in priority towns",
+          "side": "brand",
+          "share": "",
+          "owner": "Brand team + OOH agency",
+          "lead": "",
+          "id": "bf68a37e",
+          "source": "model",
+          "added": "2026-08-31 18:57"
+        },
+        {
+          "channel": "Existing-buyer loyalty / referral on delivery routes",
+          "medium": "medium not supplied — client to confirm served media list",
+          "role": "advocacy",
+          "job": "Keep rank-3 daily buyers proud and less shoppable, get them to carry the emotional pillar",
+          "measure": "Referral participation and route-level sentiment",
+          "side": "activation",
+          "share": "",
+          "owner": "CRM / home-delivery ops",
+          "lead": "",
+          "id": "e28beb08",
+          "source": "model",
+          "added": "2026-08-31 18:57"
+        }
+      ],
+      "sig": "",
+      "house_under": "89dc2bf2cb3e23c8"
+    },
+    "balance": {
+      "layer": "balance",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    },
+    "phases": {
+      "layer": "phases",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    },
+    "measures": {
+      "layer": "measures",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    },
+    "governance": {
+      "layer": "governance",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    }
+  }
+},
+      "house_under": ""
+    }
+  }
+}

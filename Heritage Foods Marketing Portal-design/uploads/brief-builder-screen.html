@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Heritage Marketing Studio — Brief Builder (design source)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400..800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{--green:#14331F;--green2:#3F814C;--gold:#E8A93C;--cream:#FBF6EA;--paper:#fff;--ink:#14331F;--muted:#7A8A7E;--line:#ECE3CE;--bg:#FBF6EA}
+*{box-sizing:border-box}body{margin:0;font-family:"Plus Jakarta Sans",system-ui,sans-serif;background:var(--bg);color:var(--ink)}
+h1,h2,h3{font-family:"Bricolage Grotesque",sans-serif}
+.nav{display:flex;align-items:center;gap:26px;padding:0 30px;height:60px;background:var(--green);color:var(--cream)}
+.brand{font-family:"Bricolage Grotesque";font-weight:800;font-size:18px}.brand .dot{color:var(--gold)}
+.nav a,.nav button{color:var(--cream);text-decoration:none;font-weight:600;font-size:15px;opacity:.8;background:none;border:none;cursor:pointer}
+.nav .tabbtn.active{opacity:1;background:rgba(255,255,255,.12);border-radius:9px;padding:7px 13px}
+.nav .sp{flex:1}
+.role-chip{font-size:11px;padding:3px 9px;border-radius:20px;background:var(--gold);color:#3a2a00;font-weight:700}
+.userpill{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);border-radius:9px;padding:7px 12px;font-size:13px;font-weight:600}
+.wrap{max-width:1080px;margin:0 auto;padding:22px 24px 80px}
+.h1{font-size:26px;font-weight:700;margin:6px 0 2px}.sub{color:var(--muted);font-size:14px;margin-bottom:18px}
+.formats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.fmt{padding:10px 15px;border-radius:12px;border:1px solid var(--line);background:var(--paper);font-weight:700;font-size:14px;cursor:pointer}
+.fmt.active{border-color:var(--gold);background:#FFF7E8}
+.fmt .badge{font-size:10px;background:var(--gold);color:#3a2a00;border-radius:10px;padding:2px 7px;margin-left:8px;font-weight:800;vertical-align:middle}
+.fmt .badge.skill{background:#EAD9F5;color:#6b3fa0}
+.row2{display:grid;grid-template-columns:1fr 320px;gap:14px;margin-bottom:14px}
+label{display:block;font-size:11.5px;font-weight:700;color:var(--green);margin:0 0 5px;text-transform:uppercase;letter-spacing:.02em}
+input,textarea,select{width:100%;border:1px solid var(--line);border-radius:10px;padding:11px 12px;font-family:inherit;font-size:14px;background:var(--paper);color:var(--ink)}
+textarea{min-height:76px;resize:vertical;line-height:1.5}
+.cowriter{background:linear-gradient(135deg,#1c4a2c,#14331F);border-radius:14px;padding:16px 18px;color:var(--cream);margin:6px 0 18px}
+.cowriter .t{font-weight:700;font-size:15px}.cowriter .t .m{opacity:.75;font-weight:400;font-size:13px}
+.cwrow{display:flex;gap:10px;margin-top:10px}
+.cwrow input{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.25);color:#fff}
+.cwrow input::placeholder{color:rgba(255,255,255,.55)}
+.cwbtn{background:var(--gold);color:#3a2a00;border:none;border-radius:10px;padding:0 18px;font-weight:800;cursor:pointer;white-space:nowrap}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;border-bottom:1px solid var(--line);margin-bottom:18px}
+.tab{padding:10px 4px;font-weight:700;font-size:14px;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
+.tab.active{color:var(--green);border-bottom-color:var(--green2)}
+.field{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:12px}
+.field .n{display:flex;align-items:center;gap:10px;font-weight:700;font-size:15px;margin-bottom:8px}
+.field .num{width:24px;height:24px;border-radius:7px;background:#EAF2EC;color:var(--green2);display:grid;place-items:center;font-size:12px;font-weight:800}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+.btn{border:1px solid var(--line);background:var(--paper);padding:11px 18px;border-radius:11px;font-weight:700;font-size:14px;cursor:pointer}
+.btn.primary{background:var(--green);color:var(--cream);border-color:var(--green)}.btn.gold{background:var(--gold);color:#3a2a00;border-color:var(--gold)}
+.status{font-size:13px;color:var(--muted);margin-top:10px}
+.pill{display:inline-block;padding:4px 11px;border-radius:20px;font-size:12px;font-weight:700;background:#FDEEDA;color:#C8860F}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 20px}.chip{background:#EAF2EC;color:var(--green2);border-radius:20px;padding:6px 13px;font-size:13px;font-weight:600}
+.review .field{background:#FCFAF4}.review .val{white-space:pre-wrap;font-size:14.5px;line-height:1.55}.review .val.empty{color:var(--muted)}
+.skillnote{background:#FFF7E8;border:1px solid #F0D9A0;border-radius:12px;padding:14px 16px;font-size:13.5px;color:#7a5a10}
+</style>
+</head>
+<body>
+<div class="nav">
+  <span class="brand">Heritage <span class="dot">●</span> Marketing Studio</span>
+  <button class="tabbtn active">New brief</button>
+  <button class="tabbtn">Briefs</button>
+  <button class="tabbtn">Approval queue</button>
+  <a href="#">Full studio ↗</a>
+  <span class="sp"></span>
+  <span class="role-chip">Creator</span>
+  <span class="userpill">Puneet (Creator)</span>
+</div>
+
+<div class="wrap">
+  <div class="h1">New brief</div>
+  <div class="sub">Pick a format, build it tab by tab (or let the AI co-writer draft it), then review the ready-to-approve brief.</div>
+  <div class="formats" id="formats"></div>
+
+  <div id="builder">
+    <div class="row2">
+      <div><label>Brief title</label><input id="title" placeholder="Communications brief — Pure Milk"/></div>
+      <div><label>Campaign objective</label><select id="objective"></select></div>
+    </div>
+    <div class="cowriter">
+      <div class="t">✦ AI co-writer <span class="m">— describe the ask, I'll draft every field</span></div>
+      <div class="cwrow">
+        <input id="ask" placeholder="e.g. Diwali push for Pure Milk targeting young urban families"/>
+        <button class="cwbtn" onclick="draftSample()">Draft brief</button>
+      </div>
+    </div>
+    <div class="tabs" id="tabs"></div>
+    <div id="sec"></div>
+    <div class="actions">
+      <button class="btn" onclick="review()">Review brief →</button>
+      <button class="btn primary" onclick="setStatus('In the live app this saves to Briefs and enters the L1–L3 approval queue.')">Save to Briefs</button>
+    </div>
+    <div class="status" id="status"></div>
+  </div>
+
+  <div id="brandPane" style="display:none">
+    <div class="skillnote">Brand strategy briefs use the full builder — NeedScope wheel, CB/CA → DB/DA, market-share Excel and consumer research — and generate a paginated Word brief via the comprehensive brand-brief skill. (That builder is a separate rich screen.)</div>
+  </div>
+
+  <div id="reviewPane" class="review" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div><div class="h1" id="rTitle"></div><div class="chips" id="rChips"></div></div>
+      <span class="pill">Draft</span>
+    </div>
+    <div id="rBody"></div>
+    <div class="actions"><button class="btn" onclick="backToEdit()">← Back to builder</button>
+      <button class="btn primary" onclick="setStatus('In the live app this saves and submits for approval.', true)">Save &amp; submit for approval</button></div>
+    <div class="status" id="rStatus"></div>
+  </div>
+</div>
+
+<script>
+// ===== DESIGN SOURCE — schema is inlined so this renders with NO backend =====
+// The backend exposes the same data at GET /brief-schema. Keep field keys + format ids
+// intact when restyling so the app can re-wire to the backend unchanged.
+var SCHEMA = [{"id": "brand", "name": "Brand Strategy Brief", "uses_skill": true, "source": "skill", "sections": [{"title": "Executive summary", "fields": []}, {"title": "Competitor snapshot", "fields": []}, {"title": "Messaging comparison matrix", "fields": []}, {"title": "NeedScope brand positioning (Figure 1)", "fields": []}, {"title": "CB/CA -> DB/DA shift (Figure 2)", "fields": []}, {"title": "Single Minded Proposition + defence + unlocks", "fields": []}, {"title": "Pricing, distribution & content snapshot", "fields": []}, {"title": "Opportunities & threats", "fields": []}, {"title": "Recommended actions", "fields": []}, {"title": "Caveats", "fields": []}]}, {"id": "comms", "name": "Communications", "uses_skill": false, "source": "builder", "sections": [{"title": "Strategic foundation", "fields": [["background", "Background & context", "What business or market situation prompts this brief?"], ["businessObjective", "Business objective", "The commercial goal \u2014 sales, share, penetration, trials."], ["commObjective", "Communication objective", "What the communication must achieve \u2014 awareness, consideration, action."]]}, {"title": "Audience & insight", "fields": [["audience", "Target audience", "Demographics, geography, category role and occasions."], ["insight", "Consumer insight", "The human truth or tension the work taps into."], ["competition", "Competitive context", "Who/what we're up against and how we differ."]]}, {"title": "Positioning", "fields": [["proposition", "Single-minded proposition", "The one thought to land in the audience's mind."], ["rtbs", "Reasons to believe", "Proof points that make the proposition credible."]]}, {"title": "Brand expression", "fields": [["tone", "Tone & personality", "How it should feel and sound."], ["mandatories", "Mandatories & brand codes", "Logos, claims, legal, brand assets that must appear."]]}, {"title": "Execution & measurement", "fields": [["deliverables", "Deliverables & channels", "What exactly needs to be produced, and where."], ["budget", "Budget", "Indicative budget / cost guardrails."], ["timeline", "Timeline & milestones", "Key dates and approval gates."], ["kpis", "Success metrics / KPIs", "How we'll measure success."]]}]}, {"id": "imc", "name": "IMC", "uses_skill": false, "source": "builder", "sections": [{"title": "Strategic foundation", "fields": [["background", "Background & context", "What business or market situation prompts this brief?"], ["businessObjective", "Business objective", "The commercial goal across the integrated effort."], ["commObjective", "Communication objective", "What the integrated communication must achieve."]]}, {"title": "Audience & insight", "fields": [["audience", "Target audience", "Demographics, geography, category role and occasions."], ["insight", "Consumer insight", "The human truth or tension the work taps into."], ["competition", "Competitive context", "Who/what we're up against and how we differ."]]}, {"title": "The big idea", "fields": [["proposition", "Single-minded proposition", "The one thought to land across every channel."], ["bigIdea", "The one big idea", "The unifying creative idea that travels across touchpoints."], ["rtbs", "Reasons to believe", "Proof points that make the proposition credible."]]}, {"title": "Integration", "fields": [["channelRoles", "Role of each channel", "How ATL, digital, retail & PR each contribute to the idea."], ["tone", "Tone & personality", "How it should feel and sound, consistently."], ["mandatories", "Mandatories & brand codes", "Codes and assets that must stay consistent everywhere."]]}, {"title": "Execution & measurement", "fields": [["deliverables", "Deliverables & channels", "What needs producing across every channel."], ["budget", "Budget by channel", "How investment splits across channels and phases."], ["timeline", "Phasing & milestones", "How the campaign phases over time."], ["kpis", "Success metrics / KPIs", "The master KPI framework."]]}]}, {"id": "media", "name": "Media", "uses_skill": false, "source": "frontend", "sections": [{"title": "Strategic foundation", "fields": [["background", "Background & context", "Market, seasonality and media-landscape context."], ["businessObjective", "Business objective", "The commercial goal this media plan supports."], ["commObjective", "Media objective", "Reach, frequency and outcome the plan must deliver."]]}, {"title": "Audience", "fields": [["audience", "Target audience", "Who we are buying \u2014 demographics, geography, role."], ["mediaHabits", "Media consumption habits", "When/where they watch, scroll, listen and shop."]]}, {"title": "Media strategy", "fields": [["channelMix", "Channel mix & role", "Which channels, and the job each one does."], ["reachGoals", "Reach & frequency goals", "1+/3+ reach targets and effective frequency."], ["markets", "Markets & flighting", "Priority markets and how spend is flighted."]]}, {"title": "Investment & deliverables", "fields": [["budget", "Budget", "Total budget and split across media."], ["deliverables", "Deliverables", "Plan, calendar and reporting outputs."]]}, {"title": "Measurement", "fields": [["kpis", "Media KPIs", "Reach, GRPs, CPM/CPRP efficiency, ROAS."]]}]}, {"id": "digital", "name": "Digital", "uses_skill": false, "source": "frontend", "sections": [{"title": "Strategic foundation", "fields": [["background", "Background & context", "Digital landscape and where the brand stands."], ["businessObjective", "Business objective", "The commercial outcome \u2014 trials, subscriptions, repeat."], ["commObjective", "Digital objective", "Awareness, consideration or conversion goal."]]}, {"title": "Audience", "fields": [["audience", "Target audience & segments", "Core segments and who we retarget."], ["digitalBehaviour", "Digital behaviour & platforms", "Where they discover, research and transact."]]}, {"title": "Approach", "fields": [["funnel", "Funnel & customer journey", "How content moves people from reach to action."], ["proposition", "Key message", "The core message for the work."]]}, {"title": "Execution", "fields": [["formats", "Formats & assets", "The creative formats and cuts needed."], ["deliverables", "Deliverables", "Assets, landing pages and CRM outputs."], ["targeting", "Targeting & tracking", "Audiences, geo/interest targeting, UTMs and tracking."], ["budget", "Budget", "Spend by platform and funnel stage."]]}, {"title": "Measurement", "fields": [["kpis", "Digital KPIs", "CTR, CPA, install->subscribe, ROAS, engagement."]]}]}, {"id": "pack", "name": "Packaging", "uses_skill": false, "source": "frontend", "sections": [{"title": "Context", "fields": [["background", "Background & context", "Why the pack needs to evolve now."], ["commObjective", "Role of the pack", "The job the pack must do at the shelf."], ["rangeArch", "Range architecture", "How variants relate within one family look."]]}, {"title": "Consumer & shelf", "fields": [["audience", "Target consumer", "Who picks it up and what they value."], ["shelfContext", "Shelf & competitive context", "How it competes and blocks on shelf."]]}, {"title": "Design direction", "fields": [["packHierarchy", "Pack hierarchy & key info", "The order of information front-of-pack."], ["claims", "Claims & RTBs", "Claims to feature and their substantiation."]]}]}, {"id": "product", "name": "Product Development", "uses_skill": false, "source": "frontend", "sections": [{"title": "Opportunity", "fields": [["background", "Market context & gap", "The unmet need or whitespace in market."], ["businessObjective", "Business objective", "Incremental volume, mix or premiumisation goal."]]}, {"title": "Consumer", "fields": [["consumerNeed", "Consumer need", "The functional/emotional need being served."], ["audience", "Target consumer", "Who the product is for."], ["insight", "Consumer insight", "The human truth behind the need."]]}, {"title": "Concept", "fields": [["concept", "Product concept", "What the product is and how it works."], ["rtbs", "Benefits & RTBs", "Benefits and the reasons to believe."], ["pricing", "Pricing & positioning", "Price ladder and where it sits in the range."]]}, {"title": "Feasibility & launch", "fields": [["feasibility", "Quality, regulatory & feasibility", "Shelf-life, plant capability, clearances."], ["deliverables", "Deliverables", "Concept board, sensory, launch checklist."], ["launch", "Launch plan & timeline", "Pilot, review and roll-out phasing."]]}, {"title": "Measurement", "fields": [["kpis", "Success metrics", "Trial, repeat, distribution, margin."]]}]}, {"id": "pr", "name": "Public Relations", "uses_skill": false, "source": "frontend", "sections": [{"title": "Context", "fields": [["background", "Background & context", "The reputation situation and opportunity."], ["businessObjective", "Reputation / business objective", "What trust or reputation goal this serves."], ["commObjective", "Communication objective", "What earned media must achieve."]]}, {"title": "Audience", "fields": [["stakeholders", "Target media & stakeholders", "Press, influencers and stakeholders to reach."], ["insight", "Insight / angle", "The truth that makes the story land."]]}, {"title": "Narrative", "fields": [["narrative", "Core narrative & angles", "The story and the angles we can pitch."], ["messages", "Key messages", "The messages every piece must carry."], ["spokespeople", "Spokespeople & proof points", "Who speaks and the proof they bring."]]}, {"title": "Execution", "fields": [["deliverables", "Deliverables", "Release, media list, Q&A, calendar."], ["mandatories", "Approvals & embargo", "Sign-offs, quotes and embargo timing."]]}]}];
+var OBJECTIVES = ["Brand awareness", "Product launch", "Festive / seasonal", "Performance / DR", "Trust & purity", "Recipe / usage"];
+var SAMPLE = {
+  background:"Diwali festive window; regional brands push festive dairy packs and price offers.",
+  businessObjective:"Grow festive pack sell-through and household penetration in core South markets.",
+  commObjective:"Own 'purity = family strength' through the festive season.",
+  audience:"Urban mothers 28–40 buying fresh dairy daily for the family.",
+  insight:"At festivals, giving your family the purest nourishment is an act of love.",
+  competition:"Amul owns taste & wit; Mother Dairy owns trust; whitespace is purity-led strength.",
+  proposition:"Heritage turns everyday purity into your family's strength.",
+  rtbs:"Farm-fresh sourcing, multi-stage purity testing, decades of trust.",
+  tone:"Warm, trustworthy, rooted in everyday Indian family life.",
+  mandatories:"Carry the line 'Pure Doodh Ki Shakti' and the festive pack visual.",
+  deliverables:"Hero film + cutdowns, FB/IG/LinkedIn social, retail standees, PR purity story.",
+  budget:"Indicative ₹15,00,000 across film, media and retail.",
+  timeline:"Teaser wk1, launch film wk2, sustain wk3–4.",
+  kpis:"Festive sell-through, reach, engagement vs category benchmarks."
+};
+var cur=null, tab=0, values={};
+function boot(){
+  document.getElementById('objective').innerHTML=OBJECTIVES.map(function(o){return '<option>'+o+'</option>';}).join('');
+  document.getElementById('formats').innerHTML=SCHEMA.map(function(s){
+    var b=s.source==='skill'?'<span class="badge skill">skill</span>':(s.source==='builder'?'<span class="badge">builder format</span>':'');
+    return '<div class="fmt" data-id="'+s.id+'" onclick="pick(\''+s.id+'\')">'+s.name+b+'</div>';}).join('');
+  pick('comms');
+}
+function pick(id){
+  cur=SCHEMA.filter(function(s){return s.id===id;})[0]; tab=0; values={};
+  document.querySelectorAll('.fmt').forEach(function(el){el.classList.toggle('active',el.dataset.id===id);});
+  document.getElementById('reviewPane').style.display='none';
+  var brand=cur.uses_skill;
+  document.getElementById('builder').style.display=brand?'none':'block';
+  document.getElementById('brandPane').style.display=brand?'block':'none';
+  if(!brand){renderTabs();renderSec();}
+}
+function renderTabs(){document.getElementById('tabs').innerHTML=cur.sections.map(function(s,i){return '<div class="tab '+(i===tab?'active':'')+'" onclick="goTab('+i+')">'+s.title+'</div>';}).join('');}
+function goTab(i){collect();tab=i;renderTabs();renderSec();}
+function renderSec(){
+  var s=cur.sections[tab],h='';
+  s.fields.forEach(function(f,idx){h+='<div class="field"><div class="n"><span class="num">'+(idx+1)+'</span>'+f[1]+'</div><textarea id="fx_'+f[0]+'" placeholder="'+(f[2]||'').replace(/"/g,'&quot;')+'">'+(values[f[0]]||'')+'</textarea></div>';});
+  document.getElementById('sec').innerHTML=h;
+}
+function collect(){cur.sections[tab].fields.forEach(function(f){var el=document.getElementById('fx_'+f[0]);if(el)values[f[0]]=el.value;});}
+function draftSample(){cur.sections.forEach(function(s){s.fields.forEach(function(f){if(SAMPLE[f[0]])values[f[0]]=SAMPLE[f[0]];});});if(!document.getElementById('title').value)document.getElementById('title').value=cur.name+' brief — Pure Milk';renderSec();setStatus('Sample draft filled (design preview). The live app calls the AI co-writer.');}
+function review(){
+  collect();var h='';
+  cur.sections.forEach(function(s){h+='<div style="font-size:12px;font-weight:800;letter-spacing:.06em;color:var(--muted);text-transform:uppercase;margin:18px 0 8px">'+s.title+'</div>';
+    s.fields.forEach(function(f){var v=values[f[0]]||'';h+='<div class="field"><div class="n">'+f[1]+'</div><div class="val'+(v?'':' empty')+'">'+(v||'—')+'</div></div>';});});
+  document.getElementById('rTitle').textContent=document.getElementById('title').value||cur.name+' brief';
+  document.getElementById('rChips').innerHTML='<span class="chip">'+cur.name+'</span><span class="chip">'+document.getElementById('objective').value+'</span>';
+  document.getElementById('rBody').innerHTML=h;
+  document.getElementById('builder').style.display='none';document.getElementById('reviewPane').style.display='block';window.scrollTo(0,0);
+}
+function backToEdit(){document.getElementById('reviewPane').style.display='none';document.getElementById('builder').style.display='block';}
+function setStatus(m,review){document.getElementById(review?'rStatus':'status').textContent=m;}
+boot();
+</script>
+</body>
+</html>

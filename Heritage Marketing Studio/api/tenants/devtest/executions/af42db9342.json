@@ -1,0 +1,60 @@
+{
+  "id": "af42db9342",
+  "plan": "715631c952",
+  "house": "6198b87476",
+  "kind": "posm",
+  "brief": {
+    "kind": "posm",
+    "audience": {
+      "id": "b0ccd0c2",
+      "audience": "Health-led mothers",
+      "rank": "1",
+      "believes_now": "slim is watered down",
+      "pillar": "functional"
+    },
+    "channel": {
+      "id": "09e93dba",
+      "channel": "POSM",
+      "role": "proof",
+      "job": "prove the protein",
+      "measure": "claim recall",
+      "side": "brand",
+      "share": "20",
+      "owner": "Trade",
+      "lead": "yes"
+    },
+    "occasion": {
+      "id": "7866907f",
+      "phase": "Launch",
+      "window": "Jan",
+      "occasion": "New year",
+      "channels": "POSM",
+      "hands_over": "sustain"
+    },
+    "measure": {
+      "id": "df3c65a4",
+      "role": "proof",
+      "leading": "claim recall",
+      "lagging": "repeat",
+      "would_tell_us_it_failed": "flat at 8wk"
+    },
+    "pillar": "functional",
+    "brief": {
+      "id": "4dcf1dfa9b",
+      "title": "Slim — launch",
+      "brand": "Heritage Slim",
+      "mandatories": "FSSAI, #PureDoodhKiShakti",
+      "tone": "Plain",
+      "business_objective": "3% value share in 12 months"
+    },
+    "message": {
+      "id": "cfd1c6d0",
+      "text": "Two facings. Same milk, lighter.",
+      "note": ""
+    }
+  },
+  "status": "briefed",
+  "artefacts": [],
+  "created": "2026-08-11 12:51",
+  "updated": "2026-08-11 12:51"
+}

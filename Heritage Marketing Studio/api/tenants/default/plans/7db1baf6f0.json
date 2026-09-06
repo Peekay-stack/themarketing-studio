@@ -1,0 +1,56 @@
+{
+  "id": "7db1baf6f0",
+  "brand": "Parle G",
+  "house": "d7e8066873",
+  "created": "2026-08-12 13:19",
+  "updated": "2026-08-14 12:10",
+  "balance": {
+    "brand_share": 60,
+    "reason": "",
+    "basis": "year"
+  },
+  "nodes": {
+    "objectives": {
+      "layer": "objectives",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    },
+    "audiences": {
+      "layer": "audiences",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    },
+    "channels": {
+      "layer": "channels",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    },
+    "balance": {
+      "layer": "balance",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    },
+    "phases": {
+      "layer": "phases",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    },
+    "measures": {
+      "layer": "measures",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    },
+    "governance": {
+      "layer": "governance",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    }
+  }
+}

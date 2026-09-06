@@ -1,0 +1,8 @@
+# Real API keys and secrets — never commit. api/.env.example is the safe template.
+Heritage Marketing Studio/api/.env
+
+# Regenerable — reinstall with `pip install -r requirements.txt` / `npm install`.
+Heritage Marketing Studio/api/.venv/
+**/node_modules/
+**/__pycache__/
+*.pyc

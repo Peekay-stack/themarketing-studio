@@ -1,0 +1,139 @@
+{
+  "id": "a16fb52e6a",
+  "brand": "Heritage Foods",
+  "brief": {},
+  "created": "2026-08-10 21:25",
+  "updated": "2026-08-10 21:25",
+  "nodes": {
+    "core": {
+      "layer": "core",
+      "options": [
+        {
+          "id": "52cd0213",
+          "text": "Pure milk. Real strength.",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-10 21:25",
+          "edited": "2026-08-10 21:25"
+        }
+      ],
+      "chosen": [
+        "52cd0213"
+      ],
+      "sig": "",
+      "generated_under": ""
+    },
+    "emotional": {
+      "layer": "emotional",
+      "options": [
+        {
+          "id": "10d264cd",
+          "text": "A mother who chose well",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-10 21:25"
+        }
+      ],
+      "chosen": [
+        "10d264cd"
+      ],
+      "sig": "",
+      "generated_under": ""
+    },
+    "functional": {
+      "layer": "functional",
+      "options": [
+        {
+          "id": "c04cede6",
+          "text": "Tested twice before it leaves the plant",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-10 21:25"
+        }
+      ],
+      "chosen": [
+        "c04cede6"
+      ],
+      "sig": "",
+      "generated_under": ""
+    },
+    "rtb_emotional": {
+      "layer": "rtb_emotional",
+      "options": [],
+      "chosen": [],
+      "sig": "",
+      "generated_under": ""
+    },
+    "rtb_functional": {
+      "layer": "rtb_functional",
+      "options": [
+        {
+          "id": "f8484628",
+          "text": "Cold chain audited monthly",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-10 21:25"
+        },
+        {
+          "id": "554893e6",
+          "text": "FSSAI certified at every plant",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-10 21:25"
+        }
+      ],
+      "chosen": [
+        "f8484628",
+        "554893e6"
+      ],
+      "sig": "",
+      "generated_under": ""
+    },
+    "proof": {
+      "layer": "proof",
+      "options": [],
+      "chosen": [],
+      "sig": "",
+      "generated_under": ""
+    },
+    "culture": {
+      "layer": "culture",
+      "options": [],
+      "chosen": [],
+      "sig": "",
+      "generated_under": ""
+    },
+    "medium": {
+      "layer": "medium",
+      "options": [
+        {
+          "id": "d6042857",
+          "text": "Two facings. Turns faster than loose milk.",
+          "note": "",
+          "source": "user",
+          "tag": "posm",
+          "added": "2026-08-10 21:25"
+        },
+        {
+          "id": "57217fee",
+          "text": "Weekly ordering. Better margin per foot.",
+          "note": "",
+          "source": "user",
+          "tag": "trade",
+          "added": "2026-08-10 21:25"
+        }
+      ],
+      "chosen": [
+        "d6042857",
+        "57217fee"
+      ],
+      "sig": "",
+      "generated_under": ""
+    }
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "id": "ae3cde4622",
+  "brand": "Heritage Foods",
+  "mode": "campaign",
+  "kind": "",
+  "phase": "launch",
+  "plan": "d684b76657",
+  "house": "68c50487e3",
+  "execution": "",
+  "created": "2026-08-31 10:31",
+  "updated": "2026-08-31 10:33",
+  "objectives": [],
+  "messages": [
+    {
+      "id": "2ae02b00",
+      "text": "Milk that passes every purity test before it reaches your door.",
+      "proof": "Farm to home on an unbroken cold chain, chilled within hours of milking, so nothing spoils and nothing needs to be masked.",
+      "proof_id": "6b40fb07",
+      "sourced": true,
+      "proof_missing": false
+    },
+    {
+      "id": "94da70c3",
+      "text": "Milk that passes every purity test before it reaches your door.",
+      "proof": "Farm to home on an unbroken cold chain, chilled within hours of milking, so nothing spoils and nothing needs to be masked.",
+      "proof_id": "6b40fb07",
+      "sourced": true,
+      "proof_missing": false
+    },
+    {
+      "id": "115a9022",
+      "text": "Milk that passes every purity test before it reaches your door.",
+      "proof": "Farm to home on an unbroken cold chain, chilled within hours of milking, so nothing spoils and nothing needs to be masked.",
+      "proof_id": "6b40fb07",
+      "sourced": true,
+      "proof_missing": false
+    }
+  ],
+  "release": {
+    "language": "en",
+    "headline": "",
+    "dateline": "",
+    "lead_text": "",
+    "support": "",
+    "quote": "",
+    "quote_by": "",
+    "quote_role": "",
+    "background": "",
+    "boilerplate": "",
+    "contact": "",
+    "five_w": {
+      "who": "",
+      "what": "",
+      "when": "",
+      "where": "",
+      "why": ""
+    },
+    "carries": [],
+    "mandatories": [],
+    "embargo": "",
+    "translations": {},
+    "created": "2026-08-31 10:32",
+    "updated": "2026-08-31 10:33"
+  }
+}

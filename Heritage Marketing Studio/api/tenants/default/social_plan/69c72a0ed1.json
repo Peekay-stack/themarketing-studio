@@ -1,0 +1,68 @@
+{
+  "id": "69c72a0ed1",
+  "brand": "Heritage Foods",
+  "name": "heritage",
+  "plan": "",
+  "created": "2026-08-27 20:28:17",
+  "updated": "2026-08-27 20:31:13",
+  "objective": "reach",
+  "optimisation": "",
+  "budget": 10000000.0,
+  "currency": "INR",
+  "days": 0,
+  "budget_mode": "pooled",
+  "split_level": "state",
+  "benchmark": null,
+  "cells": [
+    {
+      "id": "60dc937b",
+      "level": "state",
+      "name": "Telangana",
+      "state": "tg",
+      "state_label": "Telangana",
+      "radius_km": null,
+      "budget": null,
+      "floor": null,
+      "pincodes": [],
+      "n_pincodes": 0,
+      "phase": "",
+      "priority": "",
+      "note": "",
+      "pop": null,
+      "pop_basis": "",
+      "seeded": false,
+      "languages": [
+        "te",
+        "ur",
+        "en"
+      ],
+      "principal_language": "te",
+      "added": "2026-08-27 20:30:54"
+    },
+    {
+      "id": "b06b5a76",
+      "level": "state",
+      "name": "Andhra Pradesh",
+      "state": "ap",
+      "state_label": "Andhra Pradesh",
+      "radius_km": null,
+      "budget": null,
+      "floor": null,
+      "pincodes": [],
+      "n_pincodes": 0,
+      "phase": "",
+      "priority": "",
+      "note": "",
+      "pop": null,
+      "pop_basis": "",
+      "seeded": false,
+      "languages": [
+        "te",
+        "ur",
+        "en"
+      ],
+      "principal_language": "te",
+      "added": "2026-08-27 20:31:13"
+    }
+  ]
+}

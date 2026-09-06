@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 800 640" xmlns="http://www.w3.org/2000/svg" width="1600" height="1280" font-family="DejaVu Sans, Arial, sans-serif">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M 0,0 L 10,5 L 0,10 z" fill="#444"/>
+    </marker>
+  </defs>
+  <rect width="800" height="640" fill="#FFFFFF"/>
+  <path d="M 400,320 L 290,129.5 A 220,220 0 0 1 510,129.5 Z" fill="#E8736A" opacity="0.20"/>
+  <path d="M 400,320 L 510,129.5 A 220,220 0 0 1 620,320 Z" fill="#E89A4E" opacity="0.18"/>
+  <path d="M 400,320 L 620,320 A 220,220 0 0 1 510,510.5 Z" fill="#E8C547" opacity="0.22"/>
+  <path d="M 400,320 L 510,510.5 A 220,220 0 0 1 290,510.5 Z" fill="#5BA86B" opacity="0.26"/>
+  <path d="M 400,320 L 290,510.5 A 220,220 0 0 1 180,320 Z" fill="#4F8AC9" opacity="0.20"/>
+  <path d="M 400,320 L 180,320 A 220,220 0 0 1 290,129.5 Z" fill="#9A6BB8" opacity="0.20"/>
+  <g stroke="#CCCCCC" stroke-width="1">
+    <line x1="400" y1="320" x2="290" y2="129.5"/>
+    <line x1="400" y1="320" x2="510" y2="129.5"/>
+    <line x1="400" y1="320" x2="620" y2="320"/>
+    <line x1="400" y1="320" x2="510" y2="510.5"/>
+    <line x1="400" y1="320" x2="290" y2="510.5"/>
+    <line x1="400" y1="320" x2="180" y2="320"/>
+  </g>
+  <circle cx="400" cy="320" r="220" fill="none" stroke="#999999" stroke-width="1.5"/>
+  <text x="400" y="78" text-anchor="middle" font-size="15" font-weight="700" fill="#C04A40">POWER</text>
+  <text x="400" y="96" text-anchor="middle" font-size="11" fill="#777777">Strength &#183; Performance</text>
+  <text x="650" y="170" text-anchor="middle" font-size="15" font-weight="700" fill="#C97829">FREEDOM</text>
+  <text x="650" y="188" text-anchor="middle" font-size="11" fill="#777777">Self-expression</text>
+  <text x="650" y="470" text-anchor="middle" font-size="15" font-weight="700" fill="#A78318">VITALITY</text>
+  <text x="650" y="488" text-anchor="middle" font-size="11" fill="#777777">Optimism &#183; Fun</text>
+  <text x="400" y="582" text-anchor="middle" font-size="15" font-weight="700" fill="#3F814C">BELONGING</text>
+  <text x="400" y="600" text-anchor="middle" font-size="11" fill="#777777">Family &#183; Warmth</text>
+  <text x="150" y="470" text-anchor="middle" font-size="15" font-weight="700" fill="#3469A8">SECURITY</text>
+  <text x="150" y="488" text-anchor="middle" font-size="11" fill="#777777">Trust &#183; Control</text>
+  <text x="150" y="170" text-anchor="middle" font-size="15" font-weight="700" fill="#7848A0">DISCERNMENT</text>
+  <text x="150" y="188" text-anchor="middle" font-size="11" fill="#777777">Sophistication</text>
+  <!-- BRAND_PINS_INSERTION_POINT -->
+  <!-- STRATEGIC_BRIDGE_INSERTION_POINT -->
+  <circle cx="400" cy="320" r="42" fill="#FFFFFF" stroke="#999999" stroke-width="1"/>
+  <text x="400" y="316" text-anchor="middle" font-size="11" font-weight="700" fill="#222222">NeedScope</text>
+  <text x="400" y="332" text-anchor="middle" font-size="10" fill="#777777">{{CATEGORY_LABEL}}</text>
+</svg>

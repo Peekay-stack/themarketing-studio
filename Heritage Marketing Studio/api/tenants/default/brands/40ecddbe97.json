@@ -1,0 +1,39 @@
+{
+  "id": "40ecddbe97",
+  "created": "2026-08-11 14:00",
+  "name": "Loomwell",
+  "category": "Apparel — everyday and casual wear, men's and women's",
+  "market": "India, metros and tier-1/2, online-first with a growing own-store footprint",
+  "master_idea": "Clothes that earn their place in the wardrobe",
+  "positioning": "Fewer, better everyday clothes for people who dress for their own day",
+  "tone": "Plain, confident, unfashiony — no hype, no trend-chasing",
+  "hero_product": "The everyday cotton shirt",
+  "notes": "Seasonal category with festive and wedding peaks. Online returns run 25-40% and are the single biggest economic issue — fit and colour accuracy matter more than reach. Discounting is structural in the channel, so full-price sell-through is the real measure.",
+  "hashtags": [
+    "#Loomwell",
+    "#EarnsItsPlace"
+  ],
+  "mandatories": [
+    "fabric composition on every asset",
+    "care instructions on pack",
+    "Legal Metrology declarations"
+  ],
+  "competitors": [
+    "Zara",
+    "H&M",
+    "Max",
+    "Uniqlo",
+    "D2C natives",
+    "unorganised local tailoring"
+  ],
+  "avoid": [
+    "never imply a garment is a season-only purchase",
+    "never use 'fast fashion' language"
+  ],
+  "colours": {
+    "primary": "Indigo",
+    "secondary": "Undyed cotton",
+    "accent": "Rust"
+  },
+  "updated": "2026-08-11 14:00"
+}

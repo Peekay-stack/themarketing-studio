@@ -1,0 +1,53 @@
+{
+  "id": "fd62261873",
+  "brand": "Heritage Foods",
+  "mode": "campaign",
+  "kind": "",
+  "phase": "launch",
+  "plan": "d684b76657",
+  "house": "68c50487e3",
+  "execution": "",
+  "created": "2026-08-28 19:09",
+  "updated": "2026-08-28 19:11",
+  "objectives": [
+    {
+      "id": "fc940009",
+      "statement": "Explain the premium: Build fame for 'Pure Doodh Ki Shakti' as the purest everyday milk, and make the unbroken cold chain believable enough to justify choosing packed over loose.",
+      "statement_id": "f0de3882",
+      "level": "communication",
+      "rung": "explain",
+      "proof": "",
+      "note": ""
+    }
+  ],
+  "messages": [],
+  "release": {
+    "language": "en",
+    "headline": "",
+    "dateline": "",
+    "lead_text": "",
+    "support": "",
+    "quote": "",
+    "quote_by": "",
+    "quote_role": "",
+    "background": "",
+    "boilerplate": "Heritage Foods, Dairy — milk, curd, and value-added dairy. It operates in India, strongest across South India (Telangana, Andhra Pradesh, Karnataka, Tamil Nadu), expanding nationally. Its principal product is Heritage Pure Milk.",
+    "contact": "",
+    "five_w": {
+      "who": "Heritage Foods",
+      "what": "",
+      "when": "",
+      "where": "Andhra Pradesh, Telangana",
+      "why": ""
+    },
+    "carries": [],
+    "mandatories": [
+      "FSSAI mark",
+      "the line 'Pure Doodh Ki Shakti'"
+    ],
+    "embargo": "",
+    "translations": {},
+    "created": "2026-08-28 19:10",
+    "updated": "2026-08-28 19:11"
+  }
+}

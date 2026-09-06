@@ -1,0 +1,81 @@
+{
+  "id": "b7951d92d6",
+  "brand": "Heritage",
+  "house": "f7801a3886",
+  "created": "2026-08-17 11:08",
+  "updated": "2026-08-26 14:25",
+  "round": 0,
+  "platforms": [
+    {
+      "name": "500 Before You",
+      "idea": "Before a mother makes the first cup, 500 people have already checked the milk that morning — we count them, name their jobs, and show the checks as human work done at dawn.",
+      "mechanic": "Each execution surfaces one of the 500 checks as a person and a routine — the boiling-pan test, the fat check, the smell test — a rotating cast of real roles, so the platform generates a new person and a new check indefinitely.",
+      "territory": "",
+      "proof": "",
+      "why": "",
+      "rtb": "500 dairy professionals check the milk every single day",
+      "source": "model",
+      "adopted": true,
+      "brief": "",
+      "verdicts": {
+        "ours": {
+          "verdict": "untested",
+          "note": ""
+        },
+        "durable": {
+          "verdict": "untested",
+          "note": ""
+        }
+      },
+      "routes": {},
+      "expressions": {
+        "video": "Dawn, before a single household kitchen light is on: we follow one man — Ramesh, the boiling-pan tester at a collection centre — through his check, then pull back to reveal he is one of a counted line of people, each doing their own check, until the number 500 lands as a mother pours the first cup at 6am. What turns: the cup she thought she made alone was made by 500 hands first.",
+        "social": "A daily 'Check #___ of 500' series — one square, one real role, one routine filmed in under 20 seconds at actual dawn: the fat check, the smell test, the temperature reading. The format is fixed (role name, check name, the number), the person and check rotate forever, so the account posts a new one every morning without a new idea.",
+        "posm": "A shelf strip that reads '500 checked this before you' with the FSSAI mark and 'Pure Doodh Ki Shakti' — a single number a shopper reads at two metres and understands instantly against nine packs claiming nothing but 'pure'.",
+        "activation": "At a market or society gate, set up the boiling-pan test as a live demo: a Heritage checker performs the actual smell-and-boil check on the day's milk in front of shoppers, and each visitor gets a numbered card — 'you are person 501' — physically handing them a place in the count.",
+        "incentive": "Retailers get a counter card and a talk-track: 'ask me how many checked this milk' — a differentiator that lets a general-trade shopkeeper justify the branded pack over loose milk to a price-questioning customer, converting the provenance story into a reason to not lose the sale to unbranded.",
+        "media": "A daily-rhythm schedule, not a burst: the platform lives on repetition, so it wants a steady always-on drip on social and in-store timed to the morning purchase window, with the film as an anchor rather than the whole spend. Weight the schedule to dawn and to the store, where the check and the pour actually happen."
+      },
+      "pillar": "functional",
+      "rtb_id": "9c5aaee5",
+      "caveat": "",
+      "judged": {},
+      "id": "2a93549c",
+      "added": "2026-08-17 11:08",
+      "edited": "2026-08-20 17:41",
+      "campaigns": [
+        {
+          "id": "0ab6df12",
+          "name": "Festive 2026",
+          "big_idea": "Put one of the 500 on her doorstep: the person who checked her milk this morning, named, at the moment she opens the door.",
+          "big_idea_note": "Festive expression of the platform. The platform is the 500; the idea is bringing one of them to the door.",
+          "ladder": "",
+          "insight": "She feels judged on what she gives her child in the morning.",
+          "resolution": "",
+          "shape": "frame",
+          "frame": "",
+          "slots": [],
+          "divisions": [],
+          "roles": {
+            "digital": "the bridge, demonstrated, at high intent",
+            "social": "the bridge, demonstrated",
+            "tv": "emotional endpoint + the turn",
+            "ooh": "one rung, chosen",
+            "posm": "functional truth + emotional RECALL",
+            "on-ground": "the bridge, experienced",
+            "trade": "OFF the consumer ladder entirely",
+            "influencer": "emotional endpoint, third-party"
+          },
+          "from": "",
+          "to": "",
+          "source": "user",
+          "added": "2026-08-26 12:18"
+        }
+      ]
+    }
+  ],
+  "chosen": "2a93549c",
+  "skipped": false,
+  "project": "Heritage — house, August 2026",
+  "project_source": "inherited"
+}

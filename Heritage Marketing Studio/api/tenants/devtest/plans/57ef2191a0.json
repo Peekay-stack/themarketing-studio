@@ -1,0 +1,121 @@
+{
+  "id": "57ef2191a0",
+  "brand": "H",
+  "house": "750a369a64",
+  "created": "2026-08-10 21:26",
+  "updated": "2026-08-10 21:26",
+  "balance": {
+    "brand_share": 60,
+    "reason": "",
+    "basis": "year"
+  },
+  "nodes": {
+    "objectives": {
+      "layer": "objectives",
+      "rows": [
+        {
+          "level": "business",
+          "statement": "s",
+          "measure": "+12%",
+          "by_when": "FY27",
+          "id": "634c3b4e",
+          "source": "user",
+          "added": "2026-08-10 21:26"
+        }
+      ],
+      "sig": "",
+      "house_under": ""
+    },
+    "audiences": {
+      "layer": "audiences",
+      "rows": [
+        {
+          "audience": "A",
+          "rank": "1",
+          "believes_now": "x",
+          "pillar": "functional",
+          "id": "1ba20d50",
+          "source": "user",
+          "added": "2026-08-10 21:26"
+        }
+      ],
+      "sig": "",
+      "house_under": ""
+    },
+    "channels": {
+      "layer": "channels",
+      "rows": [
+        {
+          "channel": "POSM",
+          "role": "conversion",
+          "job": "shift the shelf decision",
+          "measure": "claim recall",
+          "side": "brand",
+          "share": "20",
+          "owner": "T",
+          "lead": "yes",
+          "id": "125ba29f",
+          "source": "user",
+          "added": "2026-08-10 21:26",
+          "edited": "2026-08-10 21:26"
+        }
+      ],
+      "sig": "",
+      "house_under": ""
+    },
+    "balance": {
+      "layer": "balance",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    },
+    "phases": {
+      "layer": "phases",
+      "rows": [
+        {
+          "phase": "P",
+          "window": "Jan",
+          "occasion": "Pongal",
+          "channels": "POSM",
+          "hands_over": "s",
+          "id": "6f0bce96",
+          "source": "user",
+          "added": "2026-08-10 21:26"
+        }
+      ],
+      "sig": "",
+      "house_under": ""
+    },
+    "measures": {
+      "layer": "measures",
+      "rows": [
+        {
+          "role": "proof",
+          "leading": "cr",
+          "lagging": "rr",
+          "would_tell_us_it_failed": "flat",
+          "id": "08c84f4e",
+          "source": "user",
+          "added": "2026-08-10 21:26"
+        },
+        {
+          "role": "conversion",
+          "leading": "cvr",
+          "lagging": "sales",
+          "would_tell_us_it_failed": "cpa up",
+          "id": "a0688ed5",
+          "source": "user",
+          "added": "2026-08-10 21:26"
+        }
+      ],
+      "sig": "",
+      "house_under": ""
+    },
+    "governance": {
+      "layer": "governance",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    }
+  }
+}

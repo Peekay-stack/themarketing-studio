@@ -1,0 +1,326 @@
+{
+  "id": "77e3788fb8",
+  "brand": "Heritage",
+  "house": "3833585cbb",
+  "created": "2026-08-12 14:56",
+  "updated": "2026-08-31 19:45",
+  "balance": {
+    "brand_share": 60,
+    "reason": "Daily cold-chain category with long habit-formation cycles and entrenched loose-milk loyalists — the switch is a belief change before a transaction, so brand-building has to lead; holding 60/40 against a market that has drifted to ~69% performance is the competitive choice here, not the safe one.",
+    "basis": "year",
+    "declared": true
+  },
+  "nodes": {
+    "objectives": {
+      "layer": "objectives",
+      "rows": [
+        {
+          "level": "business",
+          "statement": "Grow Heritage Pure Milk revenue in the core South India markets by winning share from loose/unbranded milk and holding against Amul and Nandini.",
+          "measure": "",
+          "by_when": "",
+          "id": "395bee02",
+          "source": "user",
+          "added": "2026-08-12 14:56",
+          "edited": "2026-08-14 15:51"
+        },
+        {
+          "level": "marketing",
+          "statement": "Increase household penetration and repeat purchase of Heritage Pure Milk among quality-conscious families, shifting them from loose milk and competitor packs to a daily Heritage habit.",
+          "measure": "Penetration % and repeat-purchase rate in core markets",
+          "by_when": "",
+          "id": "e3aab24d",
+          "source": "model",
+          "added": "2026-08-12 14:56"
+        },
+        {
+          "level": "communication",
+          "statement": "Establish 'Pure Doodh Ki Shakti' as the reason Heritage is the purest everyday milk, owning the two daily milk moments (first tumbler before school, last glass before bed) in the minds of family purchase-deciders.",
+          "measure": "Prompted brand association with purity and daily quality-checking; salience at the two occasions",
+          "by_when": "",
+          "id": "16aa2810",
+          "source": "model",
+          "added": "2026-08-12 14:56"
+        }
+      ],
+      "sig": "",
+      "house_under": "8eb137ed55cd3fde"
+    },
+    "audiences": {
+      "layer": "audiences",
+      "rows": [
+        {
+          "audience": "The primary household milk-decider — the mother in a quality-conscious urban/peri-urban South Indian family, buying daily via general trade or home delivery, currently splitting between loose milk and a branded pack",
+          "rank": "1",
+          "believes_now": "Loose milk is fresher and cheaper; branded milk is convenient but I'm paying for a name. I worry about adulteration but don't have a reason to trust one pack over another.",
+          "pillar": "emotional",
+          "id": "3835f29c",
+          "source": "model",
+          "added": "2026-08-12 14:59"
+        },
+        {
+          "audience": "The loose-milk loyalist household — buys unbranded from the local vendor or dairy out of habit, price and 'freshness' belief, has never made the switch to packaged",
+          "rank": "2",
+          "believes_now": "Loose is what we've always done. It's cheaper and I know my vendor. Packaged milk is for people who don't have a good source.",
+          "pillar": "functional",
+          "id": "3d7e2690",
+          "source": "model",
+          "added": "2026-08-12 14:59"
+        },
+        {
+          "audience": "The switchable Amul/Nandini household — already buys packaged branded milk, sees the category as a commodity, chooses on availability and price rather than brand",
+          "rank": "3",
+          "believes_now": "All packaged milk is basically the same. I buy whatever my kirana stocks. Switching brands isn't worth the thought.",
+          "pillar": "functional",
+          "id": "800b1bd3",
+          "source": "model",
+          "added": "2026-08-12 14:59"
+        },
+        {
+          "audience": "The Heritage home-delivery / existing buyer household — already on a daily Heritage habit, a source of advocacy and defence against Amul/Nandini poaching",
+          "rank": "4",
+          "believes_now": "Heritage is my daily milk and it's fine. I don't think about it much and I'd switch if something were cheaper or ran out.",
+          "pillar": "emotional",
+          "id": "8e65c05c",
+          "source": "model",
+          "added": "2026-08-12 14:59"
+        }
+      ],
+      "sig": "",
+      "house_under": "140e8f7b33205831"
+    },
+    "channels": {
+      "layer": "channels",
+      "rows": [
+        {
+          "channel": "Regional TV + connected TV (Telugu, Kannada, Tamil)",
+          "role": "reach",
+          "job": "Reach the primary household decider and loose-milk loyalist with the emotional pillar — the everyday-strength story around the two milk moments",
+          "measure": "1+ reach % of target households; cost per reach point",
+          "side": "brand",
+          "share": "",
+          "owner": "",
+          "lead": "yes",
+          "id": "94f4762c",
+          "source": "model",
+          "added": "2026-08-12 15:00"
+        },
+        {
+          "channel": "Outdoor / transit near residential clusters and schools",
+          "role": "reach",
+          "job": "Own the two milk moments (before school, before bed) in the physical neighbourhood; keep #PureDoodhKiShakti present at the point of routine",
+          "measure": "coverage of target catchments; cost per reach",
+          "side": "brand",
+          "share": "",
+          "owner": "",
+          "lead": "no",
+          "id": "53e11ed2",
+          "source": "model",
+          "added": "2026-08-12 15:00"
+        },
+        {
+          "channel": "YouTube + regional-language social (Instagram, Facebook)",
+          "role": "reach",
+          "job": "Extend the emotional film to the urban/peri-urban decider; frequency against the launch story",
+          "measure": "reach and completed views in target geos; cost per reach",
+          "side": "brand",
+          "share": "",
+          "owner": "",
+          "lead": "no",
+          "id": "821998f8",
+          "source": "model",
+          "added": "2026-08-12 15:00"
+        },
+        {
+          "channel": "Home-delivery app + WhatsApp (existing subscriber base)",
+          "role": "advocacy",
+          "job": "Turn existing Heritage households into defenders against Amul/Nandini poaching; referral of the daily habit",
+          "measure": "referral participation rate; retention of daily subscribers; sentiment",
+          "side": "activation",
+          "share": "",
+          "owner": "",
+          "lead": "no",
+          "id": "0272d93b",
+          "source": "model",
+          "added": "2026-08-12 15:00"
+        },
+        {
+          "channel": "General trade — kirana visibility, shelf and vendor engagement",
+          "role": "conversion",
+          "job": "Convert intent to a first branded pack at the point the switchable and loose households actually buy — availability and prompt at shelf",
+          "measure": "conversion rate at outlet; new-pack trial; cost per acquisition",
+          "side": "activation",
+          "share": "",
+          "owner": "",
+          "lead": "no",
+          "id": "2be22958",
+          "source": "model",
+          "added": "2026-08-12 15:00"
+        },
+        {
+          "channel": "Home-delivery acquisition (app onboarding, trial packs, doorstep sampling)",
+          "role": "conversion",
+          "job": "Convert the daily loose-milk routine into a daily Heritage delivery subscription — the highest-retention switch",
+          "measure": "trial-to-subscription rate; cost per acquisition",
+          "side": "activation",
+          "share": "",
+          "owner": "",
+          "lead": "no",
+          "id": "5db979b3",
+          "source": "model",
+          "added": "2026-08-12 15:00"
+        }
+      ],
+      "sig": "",
+      "house_under": "26d4de86a36894c1"
+    },
+    "balance": {
+      "layer": "balance",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    },
+    "phases": {
+      "layer": "phases",
+      "rows": [
+        {
+          "phase": "1 — Land the strength story",
+          "window": "Launch weeks 1–6",
+          "occasion": "The first tumbler before school and the last glass before bed — the two milk moments that bookend a child's day",
+          "channels": "Regional TV + CTV (lead); Outdoor/transit near residential clusters and schools; YouTube + regional social",
+          "hands_over": "Built emotional-pillar awareness and neighbourhood presence around the two milk moments; hands warmed, primed households to the conversion phase",
+          "id": "81812311",
+          "source": "model",
+          "added": "2026-08-12 15:02"
+        },
+        {
+          "phase": "2 — Turn the routine into a first pack",
+          "window": "Weeks 5–12 (overlaps phase 1)",
+          "occasion": "The morning purchase moment — when the switchable and loose-milk household actually buys the day's milk",
+          "channels": "General trade — kirana visibility, shelf and vendor engagement; Home-delivery acquisition (onboarding, trial packs, doorstep sampling); reach channels continuing at reduced weight",
+          "hands_over": "First branded-pack trial at shelf and first doorstep trials; hands the trial households to the subscription/habit phase",
+          "id": "243af6eb",
+          "source": "model",
+          "added": "2026-08-12 15:02"
+        },
+        {
+          "phase": "3 — Convert the daily habit to a subscription",
+          "window": "Weeks 10–20",
+          "occasion": "The last glass before bed — the moment that decides whether tomorrow's milk is ordered or bought loose again",
+          "channels": "Home-delivery acquisition (trial-to-subscription push, app onboarding); General trade sustaining availability; home-delivery app + WhatsApp beginning to engage new subscribers",
+          "hands_over": "A base of daily Heritage subscribers and repeat pack buyers; hands the retained households to the advocacy/defence phase",
+          "id": "c392d4fa",
+          "source": "model",
+          "added": "2026-08-12 15:02"
+        },
+        {
+          "phase": "4 — Defend the daily habit",
+          "window": "Week 16 onward, continuous",
+          "occasion": "Every daily milk moment — the point at which Amul or Nandini can poach an existing Heritage household",
+          "channels": "Home-delivery app + WhatsApp (existing subscriber base, referral); reach channels maintaining base brand presence at low weight",
+          "hands_over": "Retained, referring households and sustained mental availability; feeds back into phase 1 reach for the next wave",
+          "id": "4c16777d",
+          "source": "model",
+          "added": "2026-08-12 15:02"
+        }
+      ],
+      "sig": "",
+      "house_under": "6321af2dd70cbff0"
+    },
+    "measures": {
+      "layer": "measures",
+      "rows": [
+        {
+          "role": "reach",
+          "leading": "Building 1+ reach against target households in core Telugu/Kannada/Tamil geos; completed-view rate on the emotional film in the same geos",
+          "lagging": "1+ reach % of target households achieved at planned cost per reach point; unaided awareness of Heritage against the two milk moments",
+          "would_tell_us_it_failed": "Reach curve flattens below target before the buying-occasion window opens, or cost per reach point runs materially above plan, i.e. we are paying reach money for frequency against people already reached",
+          "id": "200871b3",
+          "source": "model",
+          "added": "2026-08-12 15:02"
+        },
+        {
+          "role": "conversion",
+          "leading": "New-pack trial at outlet and app trial-pack pickups in the first weeks of each phase; onboarding completions on home delivery",
+          "lagging": "Conversion rate at outlet and trial-to-subscription rate at planned cost per acquisition",
+          "would_tell_us_it_failed": "Trial happens but does not repeat — first branded pack bought, no second — which points straight at the unverified functional claim: if 'quality-checked every day' is not landing at the shelf, we cannot fix it with more spend until the RTB is sourced. Also fails if cost per acquisition on home delivery exceeds the retention value of a daily subscriber",
+          "id": "523375d6",
+          "source": "model",
+          "added": "2026-08-12 15:02"
+        },
+        {
+          "role": "advocacy",
+          "leading": "Referral participation rate among existing subscribers; share of referrals that activate",
+          "lagging": "Retention of daily subscribers through the competitive window; net sentiment against Amul/Nandini poaching",
+          "would_tell_us_it_failed": "Subscriber churn to a named competitor rises during a phase despite the advocacy programme running, or referral participation stays near zero, meaning existing households will endorse the milk but not carry the message",
+          "id": "e04cf63a",
+          "source": "model",
+          "added": "2026-08-12 15:02"
+        }
+      ],
+      "sig": "",
+      "house_under": "6321af2dd70cbff0"
+    },
+    "governance": {
+      "layer": "governance",
+      "rows": [
+        {
+          "who": "Brand lead / CMO",
+          "speaks_on": "Core message and both pillars; any change to 'Pure Doodh Ki Shakti' or the master brand idea",
+          "boundary": "Cannot drop the mandatory line or FSSAI mark from any piece; cannot move the brand off everyday nutrition into festival or treat territory",
+          "decides_changes": "Approves any change to the core message, positioning or pillar assignment",
+          "id": "1f826b3d",
+          "source": "model",
+          "added": "2026-08-12 15:05"
+        },
+        {
+          "who": "Quality / supply-chain lead",
+          "speaks_on": "The functional pillar — the 'quality-checked every day, farmer to family' claim and what it factually rests on",
+          "boundary": "No public proof claim may run until the RTB behind it is sourced and signed off; [unverified] as of this plan",
+          "decides_changes": "Owns whether the functional claim is provable; sign-off gates all proof-role channel activity",
+          "id": "02743d82",
+          "source": "model",
+          "added": "2026-08-12 15:05"
+        },
+        {
+          "who": "Legal / regulatory reviewer",
+          "speaks_on": "FSSAI compliance, food-safety and nutrition claims wording",
+          "boundary": "Every piece carries the FSSAI mark; no nutrition or purity claim that outruns what quality can substantiate",
+          "decides_changes": "Holds veto on any claim; escalates to Brand lead where positioning is affected",
+          "id": "267af96c",
+          "source": "model",
+          "added": "2026-08-12 15:05"
+        },
+        {
+          "who": "Media / channel lead",
+          "speaks_on": "Channel roles, phasing and the brand/activation split across reach, conversion and advocacy",
+          "boundary": "May not assign proof work to any channel while the functional RTB is unsourced; declared split is defended, not quietly drifted toward activation",
+          "decides_changes": "Proposes reallocation between channels; split changes above the declared band go to Brand lead",
+          "id": "3c2e56c3",
+          "source": "model",
+          "added": "2026-08-12 15:05"
+        },
+        {
+          "who": "Regional trade / home-delivery lead (South cluster)",
+          "speaks_on": "General trade, home-delivery and the two milk-moment occasions (first tumbler, last glass) in-market",
+          "boundary": "Regional activation stays inside the everyday-nutrition territory and the approved palette; no local claim beyond the sourced RTB",
+          "decides_changes": "Owns in-market execution changes; message or claim changes escalate up",
+          "id": "d8a7208b",
+          "source": "model",
+          "added": "2026-08-12 15:05"
+        },
+        {
+          "who": "Social / community owner",
+          "speaks_on": "#PureDoodhKiShakti, #HeritageFoods, advocacy and community response day-to-day",
+          "boundary": "Speaks only to the emotional pillar (sourced) and reach messaging; routes any purity/quality proof query to the Quality lead before replying",
+          "decides_changes": "Cannot originate a claim change; flags issues to Media lead",
+          "id": "80c3520f",
+          "source": "model",
+          "added": "2026-08-12 15:05"
+        }
+      ],
+      "sig": "",
+      "house_under": "8eb137ed55cd3fde"
+    }
+  }
+}

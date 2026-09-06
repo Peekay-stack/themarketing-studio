@@ -1,0 +1,832 @@
+"""brandprofile.py — the brand as data, so it stops being code.
+
+Until now the brand lived in string literals: *"You are a film director at an ad agency for Heritage Foods
+(Indian dairy, Pure Milk, #PureDoodhKiShakti)"*, about fifteen times over. That is not decoration — it is
+the **grounding** that makes the output specific. Strip it and every generator writes generic global-FMCG
+copy: families enjoying dairy, rather than loose milk, cold chain, kirana and Pongal.
+
+So this is a substitution, not a removal. The same sentences get built from a profile a person can edit.
+
+**`category` and `market` are structured fields, not prose.** They are what the prompt grounds on today,
+and what will later choose which skills apply — a trade-activation skill about kirana stores and dark
+stores is right for Indian FMCG and wrong for US B2B software. Keeping them as named fields now means that
+selection is a lookup later rather than a parse.
+
+**What belongs here and what does not.** A profile holds what is true of the brand across every brief:
+category, market, master idea, brand codes, mandatories, palette, competitors. A brief holds what is true
+of one piece of work: this objective, this audience, this occasion. The test is whether re-typing it on
+the next brief would be tedious *and* a chance for the two copies to disagree — if so, it lives here.
+"""
+from __future__ import annotations
+
+import json
+import os
+import re
+import time
+import uuid
+
+import geo
+import tenancy
+
+FIELDS = ("name", "category", "market", "master_idea", "positioning", "tone",
+          "hero_product", "notes",
+          # --- the seven that make the studio category-aware rather than generically competent ---
+          "category_axis", "regulator", "purchase_cycle", "decider", "payer", "user",
+          "cheap_alternative", "price_tier")
+LIST_FIELDS = ("states", "languages", "entry_points",
+               "hashtags", "mandatories", "competitors", "avoid",
+               "banned_words", "channels")
+# Claims are rows, not a list of strings: a claim without what proves it is the thing the proof gate
+# exists to catch, so the two travel together or not at all.
+ROW_FIELDS = ("claims", "packs", "market_share")
+
+# What each field is, as data, so the form is rendered from the backend rather than hardcoded twice.
+#
+# `ask` is the question a person answers — deliberately in their words, not the field name. `why` is what
+# changes in the output if they answer it, because a form that cannot say why it wants something gets
+# filled in with whatever makes the asterisk go away.
+#
+# `derives_from` names where a value can be pre-filled from work already done. Eight of these are already
+# implied by the brief and the messaging house, and asking twice for something the product already knows
+# is how the two copies end up disagreeing. Pre-fill, mark it as derived, and let somebody correct it.
+SPEC: list[dict] = [
+    {"key": "name", "label": "Brand name", "kind": "text", "required": True,
+     "ask": "What is the brand called?",
+     "why": "Named in every prompt. Without it the work is written for 'the brand'.",
+     "derives_from": "brief"},
+    {"key": "category", "label": "Category", "kind": "text", "required": True,
+     "ask": "What category is it in, in the words the trade would use?",
+     "why": "Decides what a good idea even looks like. Dairy, cement and skincare do not share a playbook.",
+     "derives_from": "brief"},
+    {"key": "category_axis", "label": "What the category competes on", "kind": "text", "required": True,
+     "ask": "Finish this: in this category, brands win by being the most ______.",
+     "why": ("The single highest-value field here. 'Pure' for milk, 'consistently strong' for cement, "
+             "'gentle' for baby skincare. Every generated line is pulled toward this axis, which is the "
+             "difference between category-native work and competent global-FMCG wallpaper."),
+     "placeholder": "pure · consistently strong · gentle · long-lasting · genuinely fresh"},
+    {"key": "market", "label": "Market", "kind": "text",
+     "ask": "Where does it actually sell — and where is it strongest?",
+     "why": "Keeps occasions, language and retail real. A national claim written for a four-state brand is a lie.",
+     "derives_from": "brief"},
+    {"key": "claims", "label": "What you can prove, and what proves it", "kind": "rows", "required": True,
+     "cols": ["claim", "proof"],
+     "ask": "Each thing you want to say about the product, and the evidence behind it.",
+     "why": ("The proof gate reads this. A claim with no proof cannot be given to a channel as its job, "
+             "which is what stops a plan being a wish. Leave the proof empty and the claim is still "
+             "recorded — flagged, not hidden."),
+     "derives_from": "house"},
+    {"key": "regulator", "label": "Regulator", "kind": "text",
+     "ask": "Who can stop your advertising?",
+     "why": "FSSAI, BIS, ASCI, CDSCO. Named so the copy respects it instead of being corrected later.",
+     "placeholder": "FSSAI · BIS · ASCI · CDSCO · RBI"},
+    {"key": "banned_words", "label": "Words you may not use", "kind": "list",
+     "ask": "Words legal or the regulator has ruled out.",
+     "why": "Kept out of every generated line. Cheaper here than in a recall.",
+     "placeholder": "pure, 100%, cures, best, guaranteed"},
+    {"key": "purchase_cycle", "label": "Purchase cycle", "kind": "choice",
+     "options": ["daily", "weekly", "monthly", "seasonal", "once every few years", "one-off"],
+     "ask": "How often does somebody buy this?",
+     "why": ("Decides whether the work builds a habit or a decision. Daily milk and a once-a-decade "
+             "cement purchase need opposite communication, and getting this wrong makes everything "
+             "downstream subtly wrong.")},
+    {"key": "decider", "label": "Who decides", "kind": "text",
+     "ask": "Who chooses the brand?",
+     "why": "The person the message is aimed at.", "derives_from": "brief"},
+    {"key": "payer", "label": "Who pays", "kind": "text",
+     "ask": "Who actually hands over the money?",
+     "why": ("Often not the decider — and where they differ, price and value have to be argued to two "
+             "different people. A contractor specifies the cement; the homeowner pays for it.")},
+    {"key": "user", "label": "Who uses it", "kind": "text",
+     "ask": "Who ends up using or consuming it?",
+     "why": "Where the benefit actually lands, which is not always where the pitch is aimed."},
+    {"key": "channels", "label": "Your real channels", "kind": "list", "required": True,
+     "ask": "Where is it actually sold?",
+     "why": ("The trade sheet and the plan are built from these rather than from a generic list, so a "
+             "channel you do not have never gets a budget."),
+     "placeholder": "general trade, modern trade, quick commerce, own retail, D2C, home delivery",
+     "derives_from": "plan"},
+    {"key": "cheap_alternative", "label": "The cheap alternative you lose to", "kind": "text",
+     "ask": "When somebody does not buy you, what do they buy instead — including the unbranded option?",
+     "why": ("Usually the real competitor and usually not a brand: loose milk, the local mill, a cousin "
+             "with a van. Naming it stops the work arguing with the wrong opponent."),
+     "placeholder": "loose milk from the dairy · unbranded cement · the neighbourhood tailor"},
+    {"key": "price_tier", "label": "Price tier", "kind": "choice",
+     "options": ["value", "mass", "mass premium", "premium", "luxury"],
+     "ask": "Where do you sit on price in your category?",
+     "why": "Sets how much the work has to justify, and how it may talk about cost.",
+     "unlocks": "The trade calculators"},
+    {"key": "competitors", "label": "Named competitors", "kind": "list",
+     "ask": "Who else is on the shelf?",
+     "why": ("Held so the model can be told never to name them. A generated line that names a competitor "
+             "is unusable and somebody has to spot it."),
+     "unlocks": "The competitive picture",
+     "derives_from": "brief"},
+    {"key": "master_idea", "label": "The campaign idea in force", "kind": "text",
+     "ask": "The line or idea currently running, if there is one.",
+     "why": "Keeps new work consistent with what is already in market.", "derives_from": "house"},
+    {"key": "positioning", "label": "Positioning", "kind": "text",
+     "ask": "What the brand stands for, in one sentence.",
+     "why": "The thing every execution has to ladder to.", "derives_from": "house"},
+    {"key": "tone", "label": "Tone", "kind": "text",
+     "ask": "How it should sound — and how it should not.",
+     "why": "Governs craft in every generated line.", "derives_from": "house"},
+    {"key": "hero_product", "label": "Hero product", "kind": "text",
+     "ask": "The product that carries the brand.",
+     "why": "What the work is about when nothing more specific is said.", "derives_from": "brief"},
+    {"key": "avoid", "label": "Never do this", "kind": "list",
+     "ask": "Territory or execution the brand does not go near.",
+     "why": "Injected as a hard constraint, not advice.", "derives_from": "house"},
+    {"key": "mandatories", "label": "Mandatories", "kind": "list",
+     "ask": "What must appear on every piece.",
+     "why": "Logo lock-up, the FSSAI mark, a statutory line.", "derives_from": "brief"},
+    {"key": "hashtags", "label": "Brand hashtags", "kind": "list",
+     "ask": "Tags that are genuinely yours.",
+     "why": "Used verbatim; the model is told never to invent a brand tag.", "derives_from": "brief"},
+    {"key": "notes", "label": "Anything else", "kind": "textarea",
+     "ask": "What would you tell a new agency in their first hour?",
+     "why": "Free text, injected as-is. The place for the thing that does not fit a field."},
+
+    # Five fields that four other modules were each asking for separately. Collecting them once here is
+    # the difference between setup being admin and setup being the first strategic act — and it is why
+    # every entry below carries `unlocks`: a form grouped by what it enables is answerable, and a form
+    # grouped by section is a form somebody abandons at field nine.
+    #
+    # None of them is `required`, because `CORE` is derived from that flag and marking one required
+    # would retroactively make every existing brand incomplete.
+    {"key": "states", "label": "Where it actually sells", "kind": "list",
+     "ask": "Which states and union territories? Names, codes or old names all work.",
+     "why": ("`market` is prose and cannot be counted or filtered. This resolves through the real "
+             "vocabulary, so a media plan can target it, PR can find the language press for it, and "
+             "the language gaps below can be computed rather than guessed."),
+     "unlocks": "Geography and language",
+     "derives_from": "brief"},
+
+    {"key": "languages", "label": "Languages it can be written in", "kind": "list",
+     "ask": "Which of the studio's languages can this brand actually be written in?",
+     "why": ("Ten of thirty-six states have a principal language the studio holds no code for. Naming "
+             "what this brand can be written in is what lets a plan refuse a state it cannot speak to, "
+             "before the money is committed rather than after the posts underperform."),
+     "unlocks": "Geography and language",
+     "derives_from": "brief"},
+
+    {"key": "entry_points", "label": "Category entry points", "kind": "list",
+     "ask": "The situations that make somebody think of this category at all.",
+     "why": ("The highest-value field on this form and the one nothing currently collects. Not "
+             "demographics — occasions. 'The 6am school-lunch scramble' is an entry point; 'mothers "
+             "25-40' is a media buy. Nothing reads this mechanically yet: it is the input a brief's "
+             "insight and a plan's phasing should be written against, and it is recorded here so it "
+             "stops being re-invented per campaign."),
+     "unlocks": "Occasion-led strategy"},
+
+    {"key": "packs", "label": "Pack economics", "kind": "rows",
+     "cols": ["pack", "mrp", "trade_price", "gross_margin_pct"],
+     "ask": "Each pack, its MRP, what the trade pays for it, and the gross margin on it.",
+     "why": ("The two trade calculators refuse without these and there are deliberately no defaults — "
+             "a distributor ROI or a channel contribution computed from an assumed margin is a verdict "
+             "about somebody else's business. Entered once here, both read it."),
+     "unlocks": "The trade calculators"},
+
+    {"key": "market_share", "label": "Share of market, with its source", "kind": "rows",
+     "cols": ["value", "source", "as_of"],
+     "ask": "The brand's share, where the figure came from, and when it was measured.",
+     "why": ("ESOV is share of voice minus share of MARKET, and the second term is a sales fact from a "
+             "retail audit or the ledger — nothing the studio can derive. Held here with its source so "
+             "it stops being typed fresh into every campaign, which is how two campaigns end up "
+             "disagreeing about the same brand's share."),
+     "unlocks": "The competitive picture"},
+]
+SPEC_BY_KEY = {s["key"]: s for s in SPEC}
+
+# Answer these and the studio stops being generically competent. They are the ones `readiness` counts.
+CORE = tuple(s["key"] for s in SPEC if s.get("required"))
+
+
+def _now() -> str:
+    return time.strftime("%Y-%m-%d %H:%M", time.localtime())
+
+
+def _dir() -> str:
+    return tenancy.dir("brands")
+
+
+def _path(bid: str) -> str:
+    return os.path.join(_dir(), f"{bid}.json")
+
+
+def load(bid: str) -> dict | None:
+    try:
+        with open(_path(bid), encoding="utf-8") as fh:
+            return json.load(fh)
+    except (OSError, ValueError):
+        return None
+
+
+def save(b: dict) -> dict:
+    b["updated"] = _now()
+    tmp = _path(b["id"]) + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as fh:
+        json.dump(b, fh, indent=2, ensure_ascii=False)
+    os.replace(tmp, _path(b["id"]))
+    return b
+
+
+def _listify(v) -> list[str]:
+    if v is None:
+        return []
+    if isinstance(v, str):
+        return [x.strip() for x in re.split(r"[,\n;]", v) if x.strip()]
+    if isinstance(v, list):
+        return [str(x).strip() for x in v if str(x).strip()]
+    return []
+
+
+def profiles() -> list[dict]:
+    """Every profile, with `active` always present.
+
+    Guaranteed rather than implied: a screen that renders a switcher has to know which one is on, and a
+    key that exists only after somebody has switched once means a fresh install shows nothing marked.
+    """
+    out = []
+    for f in sorted(os.listdir(_dir())):
+        # `_studio.json` shares this directory and is not a brand. A leading underscore marks anything
+        # that lives here without being a profile, so one rule covers whatever comes next.
+        if f.endswith(".json") and not f.startswith("_"):
+            b = load(f[:-5])
+            if b:
+                b.setdefault("active", False)
+                out.append(b)
+    return sorted(out, key=lambda x: str(x.get("name", "")).lower())
+
+
+def brand_key(name: str) -> str:
+    """The canonical storage key for a per-brand document.
+
+    Per-brand stores — the PR media map, the competitive picture — key on a slug of a brand NAME, and
+    there is more than one name in circulation for the same brand: a plan carries `brand: "Heritage"`
+    while the profile is called "Heritage Foods". Slugged directly those are two different documents,
+    and a screen asking with one never sees what was written with the other. That is exactly what
+    happened: a real competitive picture rendered as "Nothing recorded".
+
+    So the name is resolved to its profile first, and the PROFILE's name is what keys the document. A
+    brand with no profile still works — it keys on its own slug, which is the old behaviour.
+
+    Deliberately uses `by_name` and NOT `resolve`. `resolve` exists for GROUNDING — "which brand's
+    guidelines apply to this generation" — and it therefore falls back to the active profile when it
+    cannot match, which is right there and catastrophic here: every unmatched brand name would key into
+    the active brand's document and merge two clients' data. Tried it, watched `brand_key("Parle G")`
+    return `heritage-foods`, reverted.
+
+    So: an EXACT profile match canonicalises the key (case and spacing variants of a real brand name
+    converge). Anything else keys on its own slug, which is the previous behaviour and cannot collide.
+    """
+    p = by_name(name)
+    return tenancy.slug((p or {}).get("name") or name)
+
+
+def brand_keys(name: str) -> list[str]:
+    """Every key a brand's document might be under, canonical first.
+
+    Fold-on-read, the same shape as `tenancy.asset_path` and `media.migrate`: new writes go to the
+    canonical key, and anything written under the raw slug before this existed still loads. Nothing is
+    migrated on disk, because a rename of a stored document is the one operation that cannot be undone
+    if the resolution turns out to be wrong.
+    """
+    out = [brand_key(name)]
+    raw = tenancy.slug(name)
+    if raw and raw not in out:
+        out.append(raw)
+    return out
+
+
+def by_name(name: str) -> dict | None:
+    """Match on the brand name, case-insensitively. Briefs carry a name rather than an id, so this is
+    how a brief written before its profile existed still finds one."""
+    want = str(name or "").strip().lower()
+    if not want:
+        return None
+    return next((b for b in profiles() if str(b.get("name", "")).strip().lower() == want), None)
+
+
+def put(data: dict, brand_id: str = "") -> dict:
+    existing = load(brand_id) if brand_id else by_name(str(data.get("name") or ""))
+    b = existing or {"id": uuid.uuid4().hex[:10], "created": _now()}
+    for f in FIELDS:
+        if f in data:
+            b[f] = str(data.get(f, "") or "").strip()
+    for f in LIST_FIELDS:
+        if f in data:
+            b[f] = _listify(data.get(f))
+    for f in ROW_FIELDS:
+        if f in data:
+            b[f] = _rows(data.get(f), SPEC_BY_KEY[f]["cols"])
+    # Geography and language resolve to the real vocabulary rather than staying prose. Anything that
+    # does NOT resolve is kept in a sibling field rather than dropped: somebody typed it, and a form
+    # that silently discards an entry teaches people not to trust it. `setup_view` reports them.
+    if "states" in data:
+        codes, unresolved = [], []
+        for raw in b.get("states") or []:
+            code = geo.resolve_state(raw)
+            (codes if code else unresolved).append(code or raw)
+        b["states"] = list(dict.fromkeys(codes))
+        b["states_unresolved"] = unresolved
+    if "languages" in data:
+        known = set(geo.language_codes())
+        codes, unresolved = [], []
+        for raw in b.get("languages") or []:
+            c = str(raw).strip().lower()
+            (codes if c in known else unresolved).append(c if c in known else raw)
+        b["languages"] = list(dict.fromkeys(codes))
+        b["languages_unresolved"] = unresolved
+
+    b.setdefault("colours", {})
+    if isinstance(data.get("colours"), dict):
+        b["colours"].update({k: str(v or "").strip() for k, v in data["colours"].items()})
+    b.setdefault("name", str(data.get("name") or "").strip() or "Unnamed brand")
+    for f in LIST_FIELDS:
+        b.setdefault(f, [])
+    for f in ROW_FIELDS:
+        b.setdefault(f, [])
+    for f in FIELDS:
+        b.setdefault(f, "")
+    return save(b)
+
+
+def _rows(v, cols: list[str]) -> list[dict]:
+    """Normalise a rows field. Tolerates a list of strings, so a claim can be typed before its proof.
+
+    A claim with an empty proof is **kept and flagged**, not dropped. Dropping it would mean somebody
+    typed a claim, saw it vanish, and learnt not to trust the form; flagging it is what the proof gate is
+    for.
+    """
+    out = []
+    for item in (v if isinstance(v, list) else []):
+        if isinstance(item, str):
+            if item.strip():
+                out.append({cols[0]: item.strip(), **{c: "" for c in cols[1:]}})
+        elif isinstance(item, dict):
+            row = {c: str(item.get(c, "") or "").strip() for c in cols}
+            if any(row.values()):
+                out.append(row)
+    return out
+
+
+def remove(bid: str) -> bool:
+    try:
+        os.remove(_path(bid))
+        return True
+    except OSError:
+        return False
+
+
+# --- readiness: what is set, what can be pre-filled, and what it costs to leave blank ------------
+
+def _has(b: dict, key: str) -> bool:
+    v = (b or {}).get(key)
+    if isinstance(v, list):
+        return bool([x for x in v if (x if isinstance(x, str) else " ".join(x.values())).strip()])
+    return bool(str(v or "").strip())
+
+
+def derivable(b: dict | None, house: dict | None = None, brief: dict | None = None) -> dict:
+    """What could be pre-filled from work already done. Suggestions only — never written.
+
+    Eight of these fields are already implied by the brief and the messaging house. Asking a second time
+    for something the product already knows is how two copies of one answer end up disagreeing, so the
+    form should offer the value and let somebody correct it rather than starting empty.
+
+    Deliberately returns *suggestions*, not a saved profile: a derived value nobody looked at is still a
+    guess, and it would be indistinguishable from an answer once stored.
+    """
+    out: dict = {}
+    if house:
+        try:
+            import strategy
+            core = strategy._chosen_text(house, "core")
+            if core:
+                out["master_idea"] = "; ".join(core)
+                out["positioning"] = core[0]
+            nodes = house.get("nodes") or {}
+            cult = nodes.get("culture") or {}
+            picked = set(cult.get("chosen") or [])
+            avoid = [o["text"] for o in cult.get("options", [])
+                     if o["id"] in picked and str(o.get("tag", "")).lower() == "avoid"]
+            if avoid:
+                out["avoid"] = avoid
+            rtbs = [t for lid in ("rtb_emotional", "rtb_functional")
+                    for t in strategy._chosen_text(house, lid)]
+            if rtbs:
+                out["claims"] = [{"claim": t, "proof": ""} for t in rtbs]
+        except Exception:
+            pass
+    if brief:
+        for src, key in (("brand", "name"), ("category", "category"), ("market", "market"),
+                         ("hero_product", "hero_product")):
+            v = str((brief or {}).get(src) or "").strip()
+            if v:
+                out.setdefault(key, v)
+        comp = (brief or {}).get("competitors")
+        if comp:
+            out.setdefault("competitors", comp if isinstance(comp, list) else [str(comp)])
+    return {k: v for k, v in out.items() if v}
+
+
+def readiness(b: dict | None = None, house: dict | None = None,
+              brief: dict | None = None) -> dict:
+    """Per-field state for the Studio Settings form, plus what each gap actually costs.
+
+    Not a percentage for its own sake. A form that says "60% complete" tells somebody nothing about what
+    to do next; this says which field is missing, what changes when it is filled, and whether the answer
+    can be pre-filled from work already done.
+
+    `blocking` is the honest headline: with none of the core fields answered, the studio still runs and
+    writes competent work that could be any brand in the category — which is the failure worth naming,
+    because it does not look like a failure.
+    """
+    b = b or {}
+    sug = derivable(b, house, brief)
+    fields = []
+    for s in SPEC:
+        k = s["key"]
+        set_ = _has(b, k)
+        row = {**s, "set": set_, "value": b.get(k, [] if s["kind"] in ("list", "rows") else "")}
+        if not set_ and k in sug:
+            row["suggestion"] = sug[k]
+            row["state"] = "derivable"
+        else:
+            row["state"] = "set" if set_ else "missing"
+        fields.append(row)
+
+    core_set = [k for k in CORE if _has(b, k)]
+    missing_core = [k for k in CORE if not _has(b, k)]
+    all_set = [s["key"] for s in SPEC if _has(b, s["key"])]
+
+    # Claims with no proof — the one gap the proof gate downstream actually enforces.
+    unproven = [r.get("claim", "") for r in (b.get("claims") or [])
+                if not str(r.get("proof", "") or "").strip()]
+
+    return {
+        "fields": fields,
+        "spec": SPEC,
+        # `core` is field KEYS, for logic. `core_fields` is the same five for a person to read.
+        # Sending only the keys meant the settings screen listed "category_axis" to the user, which is a
+        # variable name, not a question — the one place in the product where the plumbing showed.
+        "core": list(CORE),
+        # `set` and `done` are the same boolean under two names. The client reads `done`; this sent only
+        # `set`, so every one of the five rendered as unanswered on a profile that had two. Cheaper to
+        # send both than to make either side rename — and `done` is the better word for it.
+        "core_fields": [{"key": k, "label": SPEC_BY_KEY[k]["label"],
+                         "ask": SPEC_BY_KEY[k]["ask"],
+                         "set": _has(b, k), "done": _has(b, k)} for k in CORE],
+        "core_set": core_set, "core_missing": missing_core,
+        "core_total": len(CORE), "core_done": len(core_set),
+        "total": len(SPEC), "done": len(all_set),
+        "derivable": sug,
+        "ready": not missing_core,
+        "unproven_claims": unproven,
+        "blocking": ([] if not missing_core else
+                     [{"level": "blocking", "layer": "brand", "field": k,
+                       "detail": f"{SPEC_BY_KEY[k]['label']} is not set. {SPEC_BY_KEY[k]['why']}"}
+                      for k in missing_core]),
+        "summary": (
+            "Nothing is set, so every prompt is told it does not know the category. The work will read "
+            "competent and could be any brand." if not all_set else
+            f"{len(core_set)} of {len(CORE)} answered."
+            + (f" Missing: {', '.join(SPEC_BY_KEY[k]['label'] for k in missing_core)}."
+               if missing_core else " The studio is grounded in this brand.")
+            + (f" {len(unproven)} claim(s) have no proof behind them."
+               if unproven else "")),
+    }
+
+
+# --- what the prompts actually consume ---------------------------------------------------------
+
+# The order a brand is actually set up in, and what each group buys. Grouped by CONSEQUENCE rather
+# than by form section: a person answering "this is what the competitive picture needs" finishes; a
+# person answering "section 3 of 6" stops at field nine.
+#
+# `gates` is the honest part. It says what stays unavailable while the group is empty, in the same voice
+# the rest of the portal uses for a refusal — not "please complete this".
+SETUP_GROUPS: list[dict] = [
+    {"name": "Opens a brief", "keys": None,
+     "gates": "Nothing downstream runs on a brand this thin. The studio still writes competent work "
+              "that could be any brand in the category, which is the failure worth naming because it "
+              "does not look like one."},
+    {"name": "Geography and language",
+     "gates": "A media plan cannot target states it has not been given, PR cannot find the language "
+              "press, and the language gaps stay invisible until the creative underperforms."},
+    {"name": "The competitive picture",
+     "gates": "Share of voice has no competitor set to be a share of, and ESOV has no share of market "
+              "to subtract — so both report unavailable rather than wrong."},
+    {"name": "The trade calculators",
+     "gates": "Distributor ROI and channel contribution both refuse without pack economics, and they "
+              "refuse rather than assume because a margin nobody entered produces a verdict about "
+              "somebody else's business."},
+    {"name": "Occasion-led strategy",
+     "gates": "Nothing refuses for want of this. It is the input a brief's insight and a plan's "
+              "phasing should be written against, and without it both get re-invented per campaign."},
+    {"name": "Sharpens the work",
+     "gates": "Everything here still works. The output is more generic than it needs to be."},
+]
+
+
+def setup_view(b: dict | None = None, house: dict | None = None,
+               brief: dict | None = None) -> dict:
+    """Brand setup, tiered by what each group of answers unlocks.
+
+    Built on `readiness` rather than beside it, so "is this field set" has one definition. What this
+    adds is the grouping, the consequence of each gap, and the geography that can only be computed
+    once the states are real codes — most usefully the language gaps, which are the answer to "can we
+    actually run this state" and are knowable before any money moves.
+    """
+    b = b or {}
+    r = readiness(b, house, brief)
+    by_key = {f["key"]: f for f in r["fields"]}
+
+    groups = []
+    for g in SETUP_GROUPS:
+        if g["name"] == "Opens a brief":
+            keys = [k for k in CORE]
+        elif g["name"] == "Sharpens the work":
+            keys = [f["key"] for f in r["fields"]
+                    if f["key"] not in CORE and not f.get("unlocks")]
+        else:
+            keys = [f["key"] for f in r["fields"] if f.get("unlocks") == g["name"]]
+        rows = [by_key[k] for k in keys if k in by_key]
+        done = [f["key"] for f in rows if f["state"] == "set"]
+        groups.append({
+            "name": g["name"], "gates": g["gates"],
+            "fields": rows, "total": len(rows), "answered": len(done),
+            "complete": bool(rows) and len(done) == len(rows),
+            "empty": not done,
+        })
+
+    states = [c for c in (b.get("states") or []) if geo.resolve_state(c)]
+    gaps = geo.language_gaps(states) if states else []
+    held = set(b.get("languages") or [])
+    return {
+        "groups": groups,
+        "core": {"answered": r.get("core_set", r.get("answered")), "total": len(CORE),
+                 "blocking": r.get("blocking")},
+        "geography": {
+            "states": [{"key": k, "label": geo.state_label(k)} for k in states],
+            "count": len(states),
+            "unresolved": list(b.get("states_unresolved") or []),
+            "languages": sorted(held),
+            "languages_unresolved": list(b.get("languages_unresolved") or []),
+            # The useful half. A state whose principal language the STUDIO cannot write is one thing;
+            # a state whose principal language this BRAND has not been given is another, and both are
+            # reported because they have different fixes — commission the language, or add it here.
+            "studio_gaps": gaps,
+            "brand_gaps": [{"state": k, "label": geo.state_label(k),
+                            "needs": geo.principal_language_of(k)}
+                           for k in states
+                           if geo.principal_language_of(k)
+                           and geo.principal_language_of(k) not in held] if held else [],
+        },
+        "why_grouped": ("Grouped by what each answer unlocks rather than by form section. Five fields "
+                        "open a brief; everything after that is named by the desk it feeds, so a "
+                        "half-finished profile says exactly which capability is still dark."),
+    }
+
+
+def market_share_of(name_or_doc) -> dict:
+    """The brand's share of market and its source, or an honest unavailable.
+
+    Held on the brand rather than typed into each campaign, because two campaigns typing it fresh is
+    how two campaigns end up disagreeing about the same brand's share. The SOURCE travels with it: a
+    share with no provenance cannot be used for ESOV, which is the only thing that reads it.
+    """
+    b = resolve(name_or_doc) if not isinstance(name_or_doc, dict) or "id" not in name_or_doc         else name_or_doc
+    rows = (b or {}).get("market_share") or []
+    row = next((r for r in rows if str(r.get("value") or "").strip()), None)
+    if not row:
+        return {"available": False, "value": None, "source": "", "as_of": "",
+                "why": "No share of market on the brand profile. ESOV needs it and cannot derive it — "
+                       "it is a sales fact from a retail audit or the ledger. Entered once on the "
+                       "brand, every campaign reads the same figure."}
+    src = str(row.get("source") or "").strip()
+    if not src:
+        return {"available": False, "value": str(row.get("value")), "source": "", "as_of": "",
+                "why": "A share is recorded but with no source, so it cannot be used. ESOV built on an "
+                       "unsourced figure is uncheckable, which is the one thing a share must not be."}
+    return {"available": True, "value": str(row.get("value")).strip(), "source": src,
+            "as_of": str(row.get("as_of") or "").strip(),
+            "brand": (b or {}).get("name", ""), "why": ""}
+
+
+def voice_block(b: dict | None, *, brief_brand: str = "") -> str:
+    """The grounding paragraph, built from a profile instead of hardcoded.
+
+    Returns an explicit *absence* rather than nothing when there is no profile. A generator told
+    "no brand profile — do not invent a category" writes cautious copy somebody can fix; one told nothing
+    at all invents a plausible brand and the invention is invisible in the output.
+    """
+    if not b:
+        who = brief_brand or "the brand"
+        return (f"BRAND: {who}. No brand profile has been filled in, so you do not know its category, "
+                f"market, master idea or brand codes.\n"
+                f"Do NOT invent any of them. Write from the brief alone, keep claims general, and say "
+                f"what the work needs in order to be specific.")
+
+    lines = [f"BRAND: {b.get('name') or 'Unnamed brand'}"]
+    if b.get("category"):
+        lines.append(f"CATEGORY: {b['category']}")
+    if b.get("market"):
+        lines.append(f"MARKET: {b['market']} — write for this market's habits, retail and idiom, "
+                     f"not a generic global one.")
+    if b.get("hero_product"):
+        lines.append(f"HERO PRODUCT: {b['hero_product']}")
+    if b.get("master_idea"):
+        lines.append(f"MASTER BRAND IDEA: {b['master_idea']} — everything ladders to this.")
+    if b.get("positioning"):
+        lines.append(f"POSITIONING: {b['positioning']}")
+    if b.get("tone"):
+        lines.append(f"TONE: {b['tone']}")
+    if b.get("hashtags"):
+        lines.append("BRAND CODES / HASHTAGS: " + ", ".join(b["hashtags"]))
+    if b.get("mandatories"):
+        lines.append("MANDATORY ON EVERY PIECE: " + "; ".join(b["mandatories"]))
+    if b.get("competitors"):
+        lines.append("COMPETITORS: " + ", ".join(b["competitors"]))
+    if b.get("avoid"):
+        lines.append("NEVER DO: " + "; ".join(b["avoid"]))
+
+    # --- the category-aware half. A form that changes nothing in the output is a form nobody fills in
+    # twice, so every one of these is stated as a constraint rather than as background.
+
+    # The highest-value line in this whole block. It is what makes the work category-native instead of
+    # competent-anywhere, so it is stated first of the new fields and phrased as a pull, not a fact.
+    if b.get("category_axis"):
+        lines.append(
+            f"WHAT THIS CATEGORY COMPETES ON: being the most {b['category_axis']}. Every line you write "
+            f"should be pulled toward that, in the concrete terms of this category — not as the word "
+            f"itself repeated.")
+    claims = [r for r in (b.get("claims") or []) if str(r.get("claim") or "").strip()]
+    if claims:
+        proven = [r for r in claims if str(r.get("proof") or "").strip()]
+        unproven = [r for r in claims if not str(r.get("proof") or "").strip()]
+        if proven:
+            lines.append("CLAIMS YOU MAY MAKE, each with what proves it — do not make a claim that is "
+                         "not on this list:\n"
+                         + "\n".join(f"  - {r['claim']}  (proof: {r['proof']})" for r in proven))
+        if unproven:
+            lines.append("CLAIMED BUT UNPROVEN — you may allude to these but must NOT state them as "
+                         "fact: " + "; ".join(r["claim"] for r in unproven))
+    if b.get("regulator"):
+        lines.append(f"REGULATOR: {b['regulator']}. Copy has to survive them.")
+    if b.get("banned_words"):
+        lines.append("WORDS YOU MAY NOT USE, in any form: " + ", ".join(b["banned_words"])
+                     + ". These are legal or regulatory rulings, not preferences.")
+    if b.get("purchase_cycle"):
+        lines.append(f"PURCHASE CYCLE: {b['purchase_cycle']} — so this is "
+                     + ("habit-building work; a single dramatic decision is the wrong shape"
+                        if b["purchase_cycle"] in ("daily", "weekly")
+                        else "a considered decision; habit language is the wrong shape"))
+    who = [(k, b.get(k)) for k in ("decider", "payer", "user") if str(b.get(k) or "").strip()]
+    if who:
+        lines.append("WHO IS INVOLVED: " + " · ".join(f"{k}: {v}" for k, v in who)
+                     + (". The decider and the payer are different people here, so price and value have "
+                        "to be argued to both."
+                        if len({str(b.get('decider')), str(b.get('payer'))}) > 1
+                        and b.get("decider") and b.get("payer") else ""))
+    if b.get("channels"):
+        lines.append("CHANNELS IT IS ACTUALLY SOLD IN: " + ", ".join(b["channels"])
+                     + ". Do not write for a channel that is not on this list.")
+    if b.get("cheap_alternative"):
+        lines.append(f"WHAT IT LOSES TO: {b['cheap_alternative']}. This is the real alternative, usually "
+                     f"unbranded. Argue against this rather than against the other brands.")
+    if b.get("price_tier"):
+        lines.append(f"PRICE TIER: {b['price_tier']} — how much the work has to justify.")
+
+    cols = {k: v for k, v in (b.get("colours") or {}).items() if v}
+    if cols:
+        lines.append("BRAND PALETTE: " + ", ".join(f"{k} {v}" for k, v in cols.items()))
+    if b.get("notes"):
+        lines.append(f"ALSO TRUE: {b['notes']}")
+    lines.append("Only these are the brand's. Anything else you need, ask for rather than assume.")
+    # The screens still carry their own hardcoded brand text in the *user* message — a leftover from when
+    # there was one brand. Until those strings are replaced, a request can name one brand while this
+    # block names another, and the model has to be told which wins. Stated as authority rather than
+    # solved by matching phrases: string-matching prompt text breaks the moment somebody rewords it.
+    lines.append(f"AUTHORITY: if the request below names a different brand, product, category or "
+                 f"market, it is out of date — ignore it and use {b.get('name') or 'the brand above'}. "
+                 f"Do not blend the two.")
+    return "\n".join(lines)
+
+
+def resolve(*docs) -> dict | None:
+    """Find the brand profile behind whatever you are holding — a brief, a house, a plan, or a name.
+
+    Checked in the order given, so a caller passes the most specific document first. Falls back to the
+    only profile on file when there is exactly one: a single-brand deployment should not have to state
+    which brand every time.
+    """
+    for d in docs:
+        if not d:
+            continue
+        if isinstance(d, str):
+            hit = load(d) or by_name(d)
+            if hit:
+                return hit
+            continue
+        if isinstance(d, dict):
+            bid = str(d.get("brand_id") or "")
+            if bid:
+                hit = load(bid)
+                if hit:
+                    return hit
+            name = str(d.get("brand") or (d.get("canon") or {}).get("brand") or "")
+            if name:
+                hit = by_name(name)
+                if hit:
+                    return hit
+    all_of_them = profiles()
+    if len(all_of_them) == 1:
+        return all_of_them[0]
+    # With more than one brand on file and nothing to go on, fall back to whichever is marked active.
+    # Without this, adding a second brand silently *removes* the grounding from every screen that has no
+    # brief attached — the tool would get worse the moment somebody used the multi-brand feature.
+    return next((b for b in all_of_them if b.get("active")), None)
+
+
+def set_active(brand_id: str) -> dict | None:
+    """Mark the brand the studio is working on. Exactly one, so there is never a question which."""
+    hit = load(brand_id)
+    if not hit:
+        return None
+    for b in profiles():
+        was = bool(b.get("active"))
+        b["active"] = (b["id"] == brand_id)
+        if was != b["active"]:
+            save(b)
+    return load(brand_id)
+
+
+# --- the one-off seed --------------------------------------------------------------------------
+
+# Exactly what was hardcoded in the prompts, moved here so nothing regresses on the day this lands. It
+# is a seed, not a default: `seed()` only runs when there are no profiles at all, so it can never
+# reappear over somebody's own brand.
+SEED = {
+    "name": "Heritage Foods",
+    "category": "Dairy — milk, curd, and value-added dairy",
+    "market": "India, strongest across South India (Telangana, Andhra Pradesh, Karnataka, "
+              "Tamil Nadu), expanding nationally",
+    "hero_product": "Heritage Pure Milk",
+    "master_idea": "Pure Doodh Ki Shakti — the strength of pure milk",
+    "positioning": "The purest everyday milk for families who will not compromise",
+    "tone": "Warm, wholesome and reassuring, with a premium modern finish",
+    "hashtags": ["#PureDoodhKiShakti", "#HeritageFoods"],
+    "mandatories": ["FSSAI mark", "the line 'Pure Doodh Ki Shakti'"],
+    "competitors": ["Amul", "Nandini", "Dodla", "Arokya", "loose/unbranded milk"],
+    "colours": {"primary": "Deep Forest", "secondary": "Cream", "accent": "Ghee gold"},
+    "notes": "A daily cold-chain category: general trade and home delivery dominate, and quick "
+             "commerce is less disruptive here than in snacks or beverages.",
+}
+
+
+# --- studio settings ---------------------------------------------------------------------------
+#
+# Theme, accent and the client's name. Not part of a brand profile: they are how the studio *looks* to
+# whoever is using it, not what it *says*. Kept per tenant so they outlive a browser tab — the screen
+# held them in client state, which made every one of them a preference for one window rather than a
+# decision about the studio.
+
+_SETTINGS_KEYS = ("client_name", "accent", "theme", "manager_name")
+
+
+def _settings_path() -> str:
+    return os.path.join(tenancy.dir("brands"), "_studio.json")
+
+
+def studio_settings() -> dict:
+    try:
+        with open(_settings_path(), encoding="utf-8") as fh:
+            data = json.load(fh)
+    except (OSError, ValueError):
+        data = {}
+    return {k: str(data.get(k, "") or "") for k in _SETTINGS_KEYS}
+
+
+def set_studio_settings(patch: dict) -> dict:
+    data = studio_settings()
+    for k in _SETTINGS_KEYS:
+        if k in (patch or {}):
+            data[k] = str(patch.get(k, "") or "").strip()
+    tmp = _settings_path() + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as fh:
+        json.dump(data, fh, indent=2, ensure_ascii=False)
+    os.replace(tmp, _settings_path())
+    return data
+
+
+def seed() -> dict | None:
+    """Create the seed profile only when there are none, so the day this ships nothing gets worse.
+
+    It is marked active: a fresh install with a profile nobody has selected would leave `resolve()`
+    depending on there being exactly one, and every screen showing an unmarked switcher.
+    """
+    if profiles():
+        return None
+    b = put(SEED)
+    return set_active(b["id"]) or b

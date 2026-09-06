@@ -1,0 +1,56 @@
+{
+  "id": "a321b3f75a",
+  "brand": "H",
+  "house": "c9bcc3b82c",
+  "created": "2026-08-11 10:48",
+  "updated": "2026-08-11 10:48",
+  "balance": {
+    "brand_share": 60,
+    "reason": "",
+    "basis": "year"
+  },
+  "nodes": {
+    "objectives": {
+      "layer": "objectives",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    },
+    "audiences": {
+      "layer": "audiences",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    },
+    "channels": {
+      "layer": "channels",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    },
+    "balance": {
+      "layer": "balance",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    },
+    "phases": {
+      "layer": "phases",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    },
+    "measures": {
+      "layer": "measures",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    },
+    "governance": {
+      "layer": "governance",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "studio",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", ".venv\\Scripts\\python.exe", "-m", "uvicorn", "main:app", "--port", "8000"],
+      "cwd": "C:/Users/punie/Heritage-Marketing-Studio-OPUS/Heritage Marketing Studio/api",
+      "port": 8000
+    }
+  ]
+}

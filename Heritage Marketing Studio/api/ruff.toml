@@ -1,0 +1,25 @@
+extend-exclude = [".venv", "__pycache__"]
+line-length = 110
+
+[lint]
+# Signal over noise: bug/security-relevant rule families only. Left out on purpose — I (import
+# sorting), UP (pyupgrade syntax modernization), ISC004 (implicit string concat) — real, but pure
+# style, and drowning the 20 findings worth reading in 340 that aren't is how a lint tool stops
+# getting read at all.
+select = [
+    "E", "F",       # pyflakes / pycodestyle errors — real correctness issues
+    "B",            # flake8-bugbear — real bug patterns (loop-variable capture, mutable defaults, ...)
+    "S",            # flake8-bandit — security (this is what caught nothing new here only because
+                     # the round-83 audit + this round's fixes already found the same things by hand;
+                     # keep it on so the NEXT one like it doesn't need a human to notice first)
+    "SIM",          # flake8-simplify — logic simplifications that are often bugs in disguise
+    "C4",           # flake8-comprehensions
+    "RUF",          # ruff's own additional checks
+    "ASYNC",        # blocking calls inside async functions
+    "DTZ",          # naive datetime.now() — real bug class (timezone-dependent behavior)
+]
+ignore = [
+    "E501",         # line length — this codebase's prose comments run long on purpose
+]
+# No per-file-ignores for the `.bak*` snapshots (main.py.bak-pre-derive etc.) — their names don't end
+# in `.py`, so ruff's own file discovery already skips them; a rule excluding them would match nothing.

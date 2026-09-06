@@ -1,0 +1,680 @@
+{
+  "id": "aaf096f16d",
+  "brand": "Heritage",
+  "house": "68c50487e3",
+  "created": "2026-08-27 20:13",
+  "updated": "2026-09-04 11:24",
+  "round": 0,
+  "platforms": [
+    {
+      "name": "The Head Start",
+      "idea": "Every morning, Heritage shows one small thing a family did before anyone else was awake — the poured glass that started it — and names the head start it bought them by breakfast.",
+      "mechanic": "",
+      "territory": "",
+      "proof": "",
+      "why": "",
+      "rtb": "purer milk carries more of what a growing family runs on, so the strength is really in the pour",
+      "source": "model",
+      "adopted": true,
+      "brief": "",
+      "verdicts": {
+        "ours": {
+          "verdict": "untested",
+          "note": ""
+        },
+        "durable": {
+          "verdict": "untested",
+          "note": ""
+        }
+      },
+      "routes": {},
+      "expressions": {
+        "video": "A boy sits the state exam calm while the row around him fidgets — cut back through his morning to find the one thing he did before anyone woke: revised the two chapters he'd flagged, glass drained beside the book. What turns: the calm everyone reads as talent was bought at 5:40am, and the pour is where the head start started.",
+        "social": "A daily 'Ahead by breakfast' unit: one square, one real person, one small thing they finished before the house stirred (the 6k run, the packed tiffins, the fixed cycle chain), captioned with the exact time it was done and the 'ahead' it bought them. Format fixed — task, time, the ahead — person and task rotate forever, one post every morning off the same idea.",
+        "posm": "A shelf strip reading 'Ahead by breakfast' with a small clock at 5:45, the FSSAI mark and 'Pure Doodh Ki Shakti' — one time-stamp a shopper reads at two metres that turns milk from a purchase into the thing that starts the day early, against nine packs saying only 'pure'.",
+        "activation": "At a society gate in the morning purchase window, a chalk-board 'What did you finish before 7?' — each early riser writes their one thing and takes a numbered dawn-glass, physically claiming their head start and reading twenty others already on the board.",
+        "incentive": "Retailers get a morning-window talk-track and a small counter clock: 'the families who buy this are the ones already ahead' — a line that lets a general-trade shopkeeper sell the branded pack to the school-going, exam-season household as the parent's small edge, not a price line but a why-this-one line at the exact hour they buy.",
+        "influencer": "",
+        "ooh": "A junction hoarding near a school gate at drop-off: one giant time-stamp — '5:45am' — and under it 'the pour that got her ahead by breakfast', so a parent stopped at the light reads their own morning back to the glass in three seconds. #PureDoodhKiShakti, FSSAI mark, no scene to decode — just the hour and the ahead it bought.",
+        "pr": "The checkable fact is the RTB itself, sourced from the brand's own composition data: per-glass, purer milk delivered to the door carries measurably more of a named nutrient a growing child runs on than the category baseline — a number a journalist can verify against the pack, not a sentiment. [unverified — brand must supply the tested figure]",
+        "media": "A dawn-weighted always-on drip, not a burst: the platform lives at 5:30–7:30am, so social posts land at actual dawn and in-store weight sits in the morning purchase window, with the film as the anchor and the daily unit carrying the spend across the year."
+      },
+      "pillar": "emotional",
+      "rtb_id": "e6eee05e",
+      "caveat": "",
+      "ladder": "",
+      "campaigns": [
+        {
+          "id": "f6fcfb44",
+          "name": "IMC 2026",
+          "big_idea": "",
+          "big_idea_note": "",
+          "ladder": "418c9391",
+          "insight": "She sees her child finish the ordinary things every day, but never lets herself believe those small daily wins are proof of the strength she's building — she's waiting for a big moment that never announces itself.",
+          "resolution": "The everyday strength you already see IS the strength — named, today, in the milk he drinks and the lap he finishes. (Inferred tension: no current→desired shift was supplied, so this is derived from the emotional truth and needs confirming.)",
+          "shape": "frame",
+          "frame": "{X} ki taakat, heritage pure doodh se",
+          "slots": [
+            {
+              "text": "Aakhri lap ki taakat, heritage pure doodh se",
+              "lang": "hi"
+            },
+            {
+              "text": "Aakhri panne ki taakat, heritage pure doodh se",
+              "lang": "hi"
+            },
+            {
+              "text": "Chivari mettu ekkina taakat, roju paalu nunchi",
+              "lang": "te"
+            },
+            {
+              "text": "The last-bite kind of strength, from pure heritage milk",
+              "lang": "en"
+            }
+          ],
+          "divisions": [],
+          "roles": {
+            "digital": "the bridge, demonstrated, at high intent",
+            "social": "the bridge, demonstrated",
+            "tv": "emotional endpoint + the turn",
+            "ooh": "one rung, chosen",
+            "posm": "functional truth + emotional RECALL",
+            "on-ground": "the bridge, experienced",
+            "trade": "OFF the consumer ladder entirely",
+            "influencer": "emotional endpoint, third-party"
+          },
+          "from": "",
+          "to": "",
+          "source": "user",
+          "added": "2026-08-27 20:19"
+        },
+        {
+          "id": "905b6e48",
+          "name": "IMC 2026",
+          "big_idea": "",
+          "big_idea_note": "",
+          "ladder": "418c9391",
+          "insight": "She pours the same milk every morning trusting it feeds him, but 'fresh' is a word on every carton — she has no way to know whether what's in his glass still carries what he actually runs on.",
+          "resolution": "Fresh isn't a claim on the pack — it's the head start already in his morning.",
+          "shape": "frame",
+          "frame": "Roz subah, {X} — taaza doodh se",
+          "slots": [
+            {
+              "text": "taaza subah",
+              "lang": "hi"
+            },
+            {
+              "text": "taaqat bhari",
+              "lang": "hi"
+            },
+            {
+              "text": "poori khuraak",
+              "lang": "hi"
+            }
+          ],
+          "divisions": [],
+          "roles": {
+            "digital": "the bridge, demonstrated, at high intent",
+            "social": "the bridge, demonstrated",
+            "tv": "emotional endpoint + the turn",
+            "ooh": "one rung, chosen",
+            "posm": "functional truth + emotional RECALL",
+            "on-ground": "the bridge, experienced",
+            "trade": "OFF the consumer ladder entirely",
+            "influencer": "emotional endpoint, third-party"
+          },
+          "from": "",
+          "to": "",
+          "source": "user",
+          "added": "2026-08-27 20:20"
+        },
+        {
+          "id": "96ee8b37",
+          "name": "IMC 2026",
+          "big_idea": "",
+          "big_idea_note": "",
+          "ladder": "5cbe2de0",
+          "insight": "She reads 'fresh' and 'pure' on every carton on the shelf, so the words have stopped meaning anything — she can no longer tell whose purity actually reaches her son's glass. (This is my inference from the emotional truth, since no current→desired shift was supplied; it needs confirming.)",
+          "resolution": "Pure isn't a claim on the pack — it's how much strength survives the pour.",
+          "shape": "frame",
+          "frame": "Roz {X}, Roz Taaza",
+          "slots": [
+            {
+              "text": "Roz Poori Taakat, Roz Taaza",
+              "lang": "hi"
+            },
+            {
+              "text": "Roz Bharpoor, Roz Taaza",
+              "lang": "hi"
+            },
+            {
+              "text": "Roj Sampoorna Bidda, Roj Taaza",
+              "lang": "te"
+            }
+          ],
+          "divisions": [],
+          "roles": {
+            "tv": "emotional endpoint + the turn",
+            "digital": "the bridge, demonstrated, at high intent",
+            "social": "the bridge, demonstrated",
+            "influencer": "emotional endpoint, third-party",
+            "on-ground": "the bridge, experienced",
+            "ooh": "one rung, chosen",
+            "trade": "OFF the consumer ladder entirely",
+            "posm": "functional truth + emotional RECALL"
+          },
+          "from": "",
+          "to": "",
+          "source": "user",
+          "added": "2026-09-02 11:24"
+        },
+        {
+          "id": "d2a36f5e",
+          "name": "IMC 2026",
+          "big_idea": "",
+          "big_idea_note": "",
+          "ladder": "5cbe2de0",
+          "insight": "She's told every carton is 'pure,' so the word has gone flat — she can't tell whose purity actually shows up in her child's plate and whose is just a claim on the pack. (Inferred tension from the emotional truth, since no current→desired shift was supplied — please confirm.)",
+          "resolution": "Purity you can't see becomes strength you can — it's what's left in the glass, not what's written on it.",
+          "shape": "frame",
+          "frame": "Roz taaza, {X} poora",
+          "slots": [
+            {
+              "text": "Roz taaza, protein poora",
+              "lang": "hi"
+            },
+            {
+              "text": "Roz taaza, taakat poori",
+              "lang": "hi"
+            },
+            {
+              "text": "రోజూ తాజా, బలం నిండుగా",
+              "lang": "te"
+            }
+          ],
+          "divisions": [],
+          "roles": {
+            "tv": "emotional endpoint + the turn",
+            "digital": "the bridge, demonstrated, at high intent",
+            "social": "the bridge, demonstrated",
+            "influencer": "emotional endpoint, third-party",
+            "on-ground": "the bridge, experienced",
+            "ooh": "one rung, chosen",
+            "trade": "OFF the consumer ladder entirely",
+            "posm": "functional truth + emotional RECALL"
+          },
+          "from": "",
+          "to": "",
+          "source": "user",
+          "added": "2026-09-02 12:52"
+        },
+        {
+          "id": "886b8082",
+          "name": "IMC 2026",
+          "big_idea": "",
+          "big_idea_note": "",
+          "ladder": "5cbe2de0",
+          "insight": "She's told every carton is 'pure,' so the word has gone flat — she can't tell whose purity actually shows up in her child's plate and whose is just a claim on the pack. (Inferred tension from the emotional truth, since no current→desired shift was supplied — please confirm.)",
+          "resolution": "Purity you can't see becomes strength you can — it's what's left in the glass, not what's written on it.",
+          "shape": "frame",
+          "frame": "Roz taaza, {X} poora",
+          "slots": [
+            {
+              "text": "Roz taaza, protein poora",
+              "lang": "hi"
+            },
+            {
+              "text": "Roz taaza, taakat poori",
+              "lang": "hi"
+            },
+            {
+              "text": "రోజూ తాజా, బలం నిండుగా",
+              "lang": "te"
+            }
+          ],
+          "divisions": [],
+          "roles": {
+            "tv": "emotional endpoint + the turn",
+            "digital": "the bridge, demonstrated, at high intent",
+            "social": "the bridge, demonstrated",
+            "influencer": "emotional endpoint, third-party",
+            "on-ground": "the bridge, experienced",
+            "ooh": "one rung, chosen",
+            "trade": "OFF the consumer ladder entirely",
+            "posm": "functional truth + emotional RECALL"
+          },
+          "from": "",
+          "to": "",
+          "source": "user",
+          "added": "2026-09-02 13:39"
+        },
+        {
+          "id": "6d3b90ac",
+          "name": "IMC 2026",
+          "big_idea": "",
+          "big_idea_note": "",
+          "ladder": "5cbe2de0",
+          "insight": "She reads 'fresh' and 'pure' on every carton on the shelf, so the word has stopped meaning anything — she can't tell whose milk actually still has the strength her child needs by morning. (Inferred tension, since no current→desired shift was supplied — please confirm before build.)",
+          "resolution": "Real freshness isn't a promise on the pack — it's the strength still left in the glass.",
+          "shape": "frame",
+          "frame": "Roz taaza, isliye {X} bhi poora",
+          "slots": [
+            {
+              "text": "protein",
+              "lang": "hi"
+            },
+            {
+              "text": "calcium",
+              "lang": "hi"
+            },
+            {
+              "text": "nāsti",
+              "lang": "te"
+            }
+          ],
+          "divisions": [],
+          "roles": {
+            "tv": "emotional endpoint + the turn",
+            "digital": "the bridge, demonstrated, at high intent",
+            "social": "the bridge, demonstrated",
+            "influencer": "emotional endpoint, third-party",
+            "on-ground": "the bridge, experienced",
+            "ooh": "one rung, chosen",
+            "trade": "OFF the consumer ladder entirely",
+            "posm": "functional truth + emotional RECALL"
+          },
+          "from": "",
+          "to": "",
+          "source": "user",
+          "added": "2026-09-02 15:51"
+        },
+        {
+          "id": "baf6070a",
+          "name": "IMC 2026",
+          "big_idea": "Roz subah, poori taaqat — taaza doodh se",
+          "big_idea_note": "",
+          "ladder": "5cbe2de0",
+          "insight": "She reads 'pure' on every carton and has stopped believing any of it means anything — the word has been worn smooth by everyone who prints it. (Inferred tension, since no current→desired shift was supplied — needs confirming: the block is credibility of the purity claim, not ignorance of its value.)",
+          "resolution": "Pure isn't what's kept out — it's what's left in, and you can taste it by breakfast.",
+          "shape": "frame",
+          "frame": "Roz subah, {X} — taaza doodh se.",
+          "slots": [
+            {
+              "text": "Roz subah, poori taaqat — taaza doodh se",
+              "lang": "hi"
+            },
+            {
+              "text": "Roz subah, badhti haddiyaan — taaza doodh se",
+              "lang": "hi"
+            },
+            {
+              "text": "రోజూ ఉదయం, నిండైన బలం — తాజా పాలతో",
+              "lang": "te"
+            }
+          ],
+          "divisions": [],
+          "roles": {
+            "tv": "emotional endpoint + the turn",
+            "digital": "the bridge, demonstrated, at high intent",
+            "social": "the bridge, demonstrated",
+            "influencer": "emotional endpoint, third-party",
+            "on-ground": "the bridge, experienced",
+            "ooh": "one rung, chosen",
+            "trade": "OFF the consumer ladder entirely",
+            "posm": "functional truth + emotional RECALL"
+          },
+          "from": "",
+          "to": "",
+          "source": "user",
+          "added": "2026-09-03 09:51"
+        },
+        {
+          "id": "0db36abe",
+          "name": "IMC 2026",
+          "big_idea": "",
+          "big_idea_note": "",
+          "ladder": "5cbe2de0",
+          "insight": "She reads 'pure' on every carton and has stopped believing any of it means anything — the word has been worn smooth by everyone who prints it. (Inferred tension, since no current→desired shift was supplied — needs confirming: the block is credibility of the purity claim, not ignorance of its value.)",
+          "resolution": "Pure isn't what's kept out — it's what's left in, and you can taste it by breakfast.",
+          "shape": "frame",
+          "frame": "Roz subah, {X} — taaza doodh se.",
+          "slots": [
+            {
+              "text": "Roz subah, poori taaqat — taaza doodh se",
+              "lang": "hi"
+            },
+            {
+              "text": "Roz subah, badhti haddiyaan — taaza doodh se",
+              "lang": "hi"
+            },
+            {
+              "text": "రోజూ ఉదయం, నిండైన బలం — తాజా పాలతో",
+              "lang": "te"
+            }
+          ],
+          "divisions": [],
+          "roles": {
+            "tv": "emotional endpoint + the turn",
+            "digital": "the bridge, demonstrated, at high intent",
+            "social": "the bridge, demonstrated",
+            "influencer": "emotional endpoint, third-party",
+            "on-ground": "the bridge, experienced",
+            "ooh": "one rung, chosen",
+            "trade": "OFF the consumer ladder entirely",
+            "posm": "functional truth + emotional RECALL"
+          },
+          "from": "",
+          "to": "",
+          "source": "user",
+          "added": "2026-09-03 12:40"
+        },
+        {
+          "id": "7afd37f5",
+          "name": "IMC 2026",
+          "big_idea": "",
+          "big_idea_note": "",
+          "ladder": "5cbe2de0",
+          "insight": "She says 'roz taaza doodh' out loud every morning but half-believes fresh is just a delivery time, not a promise that anything more is actually reaching her child's glass — my inference, needs confirming.",
+          "resolution": "Taaza isn't when it arrives — it's how much of him it's still carrying when he drinks it.",
+          "shape": "frame",
+          "frame": "Roz {X}, taaza doodh se",
+          "slots": [
+            {
+              "text": "Roz badhti taakat, taaza doodh se",
+              "lang": "hi"
+            },
+            {
+              "text": "Roz poori khuraak, taaza doodh se",
+              "lang": "hi"
+            },
+            {
+              "text": "Roj perige balam, taaja paalatho",
+              "lang": "te"
+            }
+          ],
+          "divisions": [],
+          "roles": {
+            "tv": "emotional endpoint + the turn",
+            "digital": "the bridge, demonstrated, at high intent",
+            "social": "the bridge, demonstrated",
+            "influencer": "emotional endpoint, third-party",
+            "on-ground": "the bridge, experienced",
+            "ooh": "one rung, chosen",
+            "trade": "OFF the consumer ladder entirely",
+            "posm": "functional truth + emotional RECALL"
+          },
+          "from": "",
+          "to": "",
+          "source": "user",
+          "added": "2026-09-03 12:40"
+        },
+        {
+          "id": "95184bb2",
+          "name": "IMC 2026",
+          "big_idea": "poori taakat, pure doodh se",
+          "big_idea_note": "",
+          "ladder": "5cbe2de0",
+          "insight": "She reads 'pure' on every carton and has stopped believing any of them — the word has been used so loosely that she assumes what reaches her glass is already thinned by the time it arrives. (Inferred from the emotional truth; needs confirming.)",
+          "resolution": "Pure isn't a claim on the pack — it's how much of him is actually in the glass.",
+          "shape": "frame",
+          "frame": "Roz subah, {X} — poori taakat, poore doodh se.",
+          "slots": [
+            {
+              "text": "Roz subah, taaza doodh — poori taakat, poore doodh se.",
+              "lang": "hi"
+            },
+            {
+              "text": "Roz subah, badhta bachpan — poori taakat, poore doodh se.",
+              "lang": "hi"
+            },
+            {
+              "text": "రోజూ ఉదయం, నిండైన బలం — పూర్తి పాలలో పూర్తి శక్తి.",
+              "lang": "te"
+            }
+          ],
+          "divisions": [],
+          "roles": {
+            "tv": "emotional endpoint + the turn",
+            "digital": "the bridge, demonstrated, at high intent",
+            "social": "the bridge, demonstrated",
+            "influencer": "emotional endpoint, third-party",
+            "on-ground": "the bridge, experienced",
+            "ooh": "one rung, chosen",
+            "trade": "OFF the consumer ladder entirely",
+            "posm": "functional truth + emotional RECALL"
+          },
+          "from": "",
+          "to": "",
+          "source": "user",
+          "added": "2026-09-03 13:38"
+        },
+        {
+          "id": "f98fd0c9",
+          "name": "IMC 2026",
+          "big_idea": "",
+          "big_idea_note": "",
+          "ladder": "5cbe2de0",
+          "insight": "She reads 'fresh' and 'pure' on every carton she's ever bought, so the word has stopped meaning anything — she no longer believes purity is the thing carrying her child through the morning. (Inferred tension — no current→desired shift was supplied; please confirm.)",
+          "resolution": "Pure isn't a promise on the pack — it's the protein, calcium and strength still left in the glass.",
+          "shape": "frame",
+          "frame": "Roz subah, {X} ki taaza shakti.",
+          "slots": [
+            {
+              "text": "protein",
+              "lang": "en"
+            },
+            {
+              "text": "haddiyon",
+              "lang": "hi"
+            },
+            {
+              "text": "badhne",
+              "lang": "hi"
+            },
+            {
+              "text": "ఎదుగుదల",
+              "lang": "te"
+            }
+          ],
+          "divisions": [],
+          "roles": {
+            "tv": "emotional endpoint + the turn",
+            "digital": "the bridge, demonstrated, at high intent",
+            "social": "the bridge, demonstrated",
+            "influencer": "emotional endpoint, third-party",
+            "on-ground": "the bridge, experienced",
+            "ooh": "one rung, chosen",
+            "trade": "OFF the consumer ladder entirely",
+            "posm": "functional truth + emotional RECALL"
+          },
+          "from": "",
+          "to": "",
+          "source": "user",
+          "added": "2026-09-03 17:13"
+        },
+        {
+          "id": "027d7632",
+          "name": "IMC 2026",
+          "big_idea": "Roz Pure, Poori Shakti",
+          "big_idea_note": "",
+          "ladder": "5cbe2de0",
+          "insight": "She pours the milk every morning trusting it's fresh, but 'fresh' only tells her it hasn't spoiled — it never tells her whether everything her child actually grows on is still in the glass (INFERENCE: no current→desired shift was supplied; I've derived this from the emotional truth, and it needs confirming).",
+          "resolution": "Roz taaza isn't just today's milk — it's today's full strength, nothing thinned out before it reaches him.",
+          "shape": "frame",
+          "frame": "Roz {X}, poori taaqat",
+          "slots": [
+            {
+              "text": "Roz taaza, poori taaqat",
+              "lang": "hi"
+            },
+            {
+              "text": "Roz pura, poori taaqat",
+              "lang": "hi"
+            },
+            {
+              "text": "Roj tajaa, sampoorna shakti",
+              "lang": "mr"
+            },
+            {
+              "text": "Prati roju taajaa, nindu balam",
+              "lang": "te"
+            }
+          ],
+          "divisions": [],
+          "roles": {
+            "tv": "emotional endpoint + the turn",
+            "digital": "the bridge, demonstrated, at high intent",
+            "social": "the bridge, demonstrated",
+            "influencer": "emotional endpoint, third-party",
+            "on-ground": "the bridge, experienced",
+            "ooh": "one rung, chosen",
+            "trade": "OFF the consumer ladder entirely",
+            "posm": "functional truth + emotional RECALL"
+          },
+          "from": "",
+          "to": "",
+          "source": "user",
+          "added": "2026-09-03 20:30"
+        },
+        {
+          "id": "96f53673",
+          "name": "IMC 2026",
+          "big_idea": "Roz Pure, Poori Shakti",
+          "big_idea_note": "",
+          "ladder": "5cbe2de0",
+          "insight": "She pours the milk every morning trusting it's fresh, but 'fresh' only tells her it hasn't spoiled — it never tells her whether everything her child actually grows on is still in the glass (INFERENCE: no current→desired shift was supplied; I've derived this from the emotional truth, and it needs confirming).",
+          "resolution": "Roz taaza isn't just today's milk — it's today's full strength, nothing thinned out before it reaches him.",
+          "shape": "frame",
+          "frame": "Roz {X}, poori taaqat",
+          "slots": [
+            {
+              "text": "Roz taaza, poori taaqat",
+              "lang": "hi"
+            },
+            {
+              "text": "Roz pura, poori taaqat",
+              "lang": "hi"
+            },
+            {
+              "text": "Roj tajaa, sampoorna shakti",
+              "lang": "mr"
+            },
+            {
+              "text": "Prati roju taajaa, nindu balam",
+              "lang": "te"
+            }
+          ],
+          "divisions": [],
+          "roles": {
+            "tv": "emotional endpoint + the turn",
+            "digital": "the bridge, demonstrated, at high intent",
+            "social": "the bridge, demonstrated",
+            "influencer": "emotional endpoint, third-party",
+            "on-ground": "the bridge, experienced",
+            "ooh": "one rung, chosen",
+            "trade": "OFF the consumer ladder entirely",
+            "posm": "functional truth + emotional RECALL"
+          },
+          "from": "",
+          "to": "",
+          "source": "user",
+          "added": "2026-09-03 21:57"
+        },
+        {
+          "id": "7f62e257",
+          "name": "IMC 2026",
+          "big_idea": "Roz Pure, poori shakti",
+          "big_idea_note": "",
+          "ladder": "5cbe2de0",
+          "insight": "She pours the milk every morning trusting it's fresh, but 'fresh' only tells her it hasn't spoiled — it never tells her whether everything her child actually grows on is still in the glass (INFERENCE: no current→desired shift was supplied; I've derived this from the emotional truth, and it needs confirming).",
+          "resolution": "Roz taaza isn't just today's milk — it's today's full strength, nothing thinned out before it reaches him.",
+          "shape": "frame",
+          "frame": "Roz {X}, poori taaqat",
+          "slots": [
+            {
+              "text": "Roz taaza, poori taaqat",
+              "lang": "hi"
+            },
+            {
+              "text": "Roz pura, poori taaqat",
+              "lang": "hi"
+            },
+            {
+              "text": "Roj tajaa, sampoorna shakti",
+              "lang": "mr"
+            },
+            {
+              "text": "Prati roju taajaa, nindu balam",
+              "lang": "te"
+            }
+          ],
+          "divisions": [],
+          "roles": {
+            "tv": "emotional endpoint + the turn",
+            "digital": "the bridge, demonstrated, at high intent",
+            "social": "the bridge, demonstrated",
+            "influencer": "emotional endpoint, third-party",
+            "on-ground": "the bridge, experienced",
+            "ooh": "one rung, chosen",
+            "trade": "OFF the consumer ladder entirely",
+            "posm": "functional truth + emotional RECALL"
+          },
+          "from": "",
+          "to": "",
+          "source": "user",
+          "added": "2026-09-04 09:19"
+        },
+        {
+          "id": "ca669ea6",
+          "name": "IMC 2026",
+          "big_idea": "Pure strength everyday",
+          "big_idea_note": "",
+          "ladder": "5cbe2de0",
+          "insight": "She pours the milk every morning trusting it's fresh, but 'fresh' only tells her it hasn't spoiled — it never tells her whether everything her child actually grows on is still in the glass (INFERENCE: no current→desired shift was supplied; I've derived this from the emotional truth, and it needs confirming).",
+          "resolution": "Roz taaza isn't just today's milk — it's today's full strength, nothing thinned out before it reaches him.",
+          "shape": "frame",
+          "frame": "Roz {X}, poori taaqat",
+          "slots": [
+            {
+              "text": "Roz taaza, poori taaqat",
+              "lang": "hi"
+            },
+            {
+              "text": "Roz pura, poori taaqat",
+              "lang": "hi"
+            },
+            {
+              "text": "Roj tajaa, sampoorna shakti",
+              "lang": "mr"
+            },
+            {
+              "text": "Prati roju taajaa, nindu balam",
+              "lang": "te"
+            }
+          ],
+          "divisions": [],
+          "roles": {
+            "tv": "emotional endpoint + the turn",
+            "digital": "the bridge, demonstrated, at high intent",
+            "social": "the bridge, demonstrated",
+            "influencer": "emotional endpoint, third-party",
+            "on-ground": "the bridge, experienced",
+            "ooh": "one rung, chosen",
+            "trade": "OFF the consumer ladder entirely",
+            "posm": "functional truth + emotional RECALL"
+          },
+          "from": "",
+          "to": "",
+          "source": "user",
+          "added": "2026-09-04 11:24"
+        }
+      ],
+      "judged": {},
+      "id": "213bcd62",
+      "added": "2026-08-27 20:13",
+      "edited": "2026-09-03 09:50"
+    }
+  ],
+  "chosen": "213bcd62",
+  "skipped": false
+}

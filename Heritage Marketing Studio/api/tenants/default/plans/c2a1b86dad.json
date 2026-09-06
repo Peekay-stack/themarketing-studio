@@ -1,0 +1,242 @@
+{
+  "id": "c2a1b86dad",
+  "brand": "Heritage",
+  "house": "68c50487e3",
+  "created": "2026-09-02 13:39",
+  "updated": "2026-09-02 13:48",
+  "project": "Heritage — house, August 2026",
+  "balance": {
+    "brand_share": 60,
+    "reason": "",
+    "basis": "year",
+    "declared": true,
+    "source": "user"
+  },
+  "nodes": {
+    "objectives": {
+      "layer": "objectives",
+      "rows": [
+        {
+          "level": "business",
+          "statement": "Grow Heritage Pure Milk volume in the core South India markets by winning switchers from loose/unbranded milk and holding share against Amul and Nandini.",
+          "measure": "Pure Milk volume growth target — finance to confirm %",
+          "by_when": "FY27",
+          "id": "5b0c3358",
+          "source": "model",
+          "added": "2026-09-02 13:47"
+        },
+        {
+          "level": "marketing",
+          "statement": "Move purity from a claim to a reason families choose Heritage over cheaper loose milk — grow the share of buyers who name Heritage as the milk they trust for daily use.",
+          "measure": "Brand consideration / trust score in core markets — baseline to be set by insights team",
+          "by_when": "end FY26, tracked quarterly",
+          "id": "22e69d99",
+          "source": "model",
+          "added": "2026-09-02 13:47"
+        },
+        {
+          "level": "communication",
+          "statement": "Land 'Pure Doodh Ki Shakti' so that the unbroken cold chain and richer nourishment become the two things people can repeat back, against the marketing consideration goal above.",
+          "measure": "Prompted message recall of purity/cold-chain proof and emotional 'starts the day ahead' — brand tracker to set target",
+          "by_when": "end FY26, first read at 6 months",
+          "id": "1cb1ce45",
+          "source": "model",
+          "added": "2026-09-02 13:47"
+        }
+      ],
+      "sig": "",
+      "house_under": "9e13c9180ee98575"
+    },
+    "audiences": {
+      "layer": "audiences",
+      "rows": [
+        {
+          "audience": "Loose / unbranded milk switchers — households in core South India still buying from the local vendor or milkman, price-led but uneasy about what they're actually getting",
+          "rank": "1",
+          "believes_now": "Loose milk is cheaper and 'fresh from the source', and packaged milk is processed, sat around, possibly old or adulterated. They don't distrust Heritage specifically — they distrust that anything in a packet can be as fresh as what the vendor pours. The cold-chain proof directly answers the one doubt keeping them out of the category.",
+          "pillar": "functional",
+          "id": "9a51ea4f",
+          "source": "model",
+          "added": "2026-09-02 13:47"
+        },
+        {
+          "audience": "Existing branded-milk buyers at risk — current Heritage and competitor-brand households who already accept packaged milk but could switch to Amul or Nandini on price, promo or availability",
+          "rank": "2",
+          "believes_now": "Purity is a given — every brand claims it, so it no longer decides anything for them. They choose on habit, doorstep availability and small price gaps. Holding them needs the emotional ground the competitors don't own: the milk that quietly sets the family up to start the day ahead, tied to the morning rituals they already live.",
+          "pillar": "emotional",
+          "id": "c337473f",
+          "source": "model",
+          "added": "2026-09-02 13:47"
+        },
+        {
+          "audience": "Aspirational young families — newer households, often with a young or growing child, forming their daily-dairy habit now and willing to pay a little more for the child",
+          "rank": "3",
+          "believes_now": "Milk is 'for the child' above all, and they're anxious about getting the choice right — is it nourishing enough, is it safe enough. They respond to strength and nourishment as a parenting decision, not a purity spec. Smaller and slower to compound than the switcher pool, which is why they sit below the defence audience.",
+          "pillar": "emotional",
+          "id": "4451bac2",
+          "source": "model",
+          "added": "2026-09-02 13:47"
+        }
+      ],
+      "sig": "",
+      "house_under": "16dedac80a4127e3"
+    },
+    "channels": {
+      "layer": "channels",
+      "rows": [
+        {
+          "channel": "TV + CTV, 30s film — steel vessel climbing the flame, Telugu/Tamil/Kannada cuts, master idea Pure Doodh Ki Shakti",
+          "medium": "tv [unverified]",
+          "role": "reach",
+          "job": "Put the morning-ritual world and the master idea in front of people who don't think of packaged milk as fresh",
+          "measure": "Reach % and cost per reach point across core South markets",
+          "side": "brand",
+          "share": "30",
+          "owner": "Brand + media agency",
+          "lead": "yes",
+          "id": "719d7c68",
+          "source": "model",
+          "added": "2026-09-02 13:48"
+        },
+        {
+          "channel": "Cold-chain proof film — one continuous clock, dawn milking to doorstep, timestamp never crossing spoilage line; long form + cutdowns",
+          "medium": "online_video [unverified]",
+          "role": "proof",
+          "job": "Make the functional claim believable to loose-milk switchers — the cold never breaks",
+          "measure": "Claim recall / belief shift on 'as fresh as the vendor' in tracker, not clicks",
+          "side": "brand",
+          "share": "14",
+          "owner": "Brand + content studio",
+          "lead": "",
+          "id": "7b9f4a53",
+          "source": "model",
+          "added": "2026-09-02 13:48"
+        },
+        {
+          "channel": "YouTube + regional OTT pre-roll, vertical social video — emotional 'starts the day ahead' cuts for the defence audience",
+          "medium": "social_video [unverified]",
+          "role": "reach",
+          "job": "Hold at-risk branded buyers on emotional ground competitors don't own",
+          "measure": "Reach and video completion among branded-buyer audiences",
+          "side": "brand",
+          "share": "12",
+          "owner": "Brand + media agency",
+          "lead": "",
+          "id": "78a3e75a",
+          "source": "model",
+          "added": "2026-09-02 13:48"
+        },
+        {
+          "channel": "OOH near residential clusters and general-trade markets — steel-vessel hero image, Ghee-gold cream band",
+          "medium": "ooh [unverified]",
+          "role": "reach",
+          "job": "Sustain presence at point of daily habit and near the vendor's own turf",
+          "measure": "Coverage of target catchments and cost per reach",
+          "side": "brand",
+          "share": "9",
+          "owner": "Media agency",
+          "lead": "",
+          "id": "cf4cd397",
+          "source": "model",
+          "added": "2026-09-02 13:48"
+        },
+        {
+          "channel": "General trade — retailer visibility, chiller branding, crate/POS at the milk point",
+          "medium": "retail [unverified]",
+          "role": "conversion",
+          "job": "Turn intent into the pack picked up where most milk is actually bought",
+          "measure": "Conversion / offtake per outlet and cost per acquisition",
+          "side": "activation",
+          "share": "14",
+          "owner": "Sales / trade marketing",
+          "lead": "",
+          "id": "08300526",
+          "source": "model",
+          "added": "2026-09-02 13:48"
+        },
+        {
+          "channel": "Home-delivery / subscription app — onboarding offer, route expansion into switcher neighbourhoods",
+          "medium": "app [unverified]",
+          "role": "conversion",
+          "job": "Convert switchers to a standing daily order — the habit that locks the category win",
+          "measure": "New subscriptions started and cost per acquisition",
+          "side": "activation",
+          "share": "12",
+          "owner": "D2C / delivery ops",
+          "lead": "",
+          "id": "4cb089eb",
+          "source": "model",
+          "added": "2026-09-02 13:48"
+        },
+        {
+          "channel": "Local search + geo-targeted performance — 'milk delivery near me', subscription sign-up",
+          "medium": "search [unverified]",
+          "role": "conversion",
+          "job": "Catch active intent and route it to subscription or nearest stockist",
+          "measure": "Sign-up rate and cost per acquisition",
+          "side": "activation",
+          "share": "5",
+          "owner": "Performance / D2C",
+          "lead": "",
+          "id": "1af28d05",
+          "source": "model",
+          "added": "2026-09-02 13:48"
+        },
+        {
+          "channel": "WhatsApp + community referral for existing subscribers — 'roz taaza' morning content, refer-a-neighbour",
+          "medium": "messaging [unverified]",
+          "role": "advocacy",
+          "job": "Get current households to carry the message to loose-milk neighbours",
+          "measure": "Referral participation rate and sentiment",
+          "side": "activation",
+          "share": "4",
+          "owner": "CRM / D2C — owner unknown, D2C lead to name",
+          "lead": "",
+          "id": "4ce527f0",
+          "source": "model",
+          "added": "2026-09-02 13:48"
+        },
+        {
+          "channel": "Regional radio + FM morning drive — pre-dawn boil / first filter coffee occasion",
+          "medium": "radio [unverified]",
+          "role": "reach",
+          "job": "Own the morning-ritual moment audibly at the hour milk is used",
+          "measure": "Reach among morning listeners and cost per reach",
+          "side": "brand",
+          "share": "",
+          "owner": "Media agency",
+          "lead": "",
+          "id": "3cee1cda",
+          "source": "model",
+          "added": "2026-09-02 13:48"
+        }
+      ],
+      "sig": "",
+      "house_under": "2c2a0e354fe25d56"
+    },
+    "balance": {
+      "layer": "balance",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    },
+    "phases": {
+      "layer": "phases",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    },
+    "measures": {
+      "layer": "measures",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    },
+    "governance": {
+      "layer": "governance",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    }
+  }
+}

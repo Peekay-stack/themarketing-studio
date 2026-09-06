@@ -1,0 +1,102 @@
+{
+  "id": "b614a21f38",
+  "brand": "Heritage",
+  "brief": {
+    "background": "Heritage: the purity that gives your child strength."
+  },
+  "created": "2026-08-11 17:21",
+  "updated": "2026-08-11 17:22",
+  "nodes": {
+    "core": {
+      "layer": "core",
+      "options": [
+        {
+          "id": "75035362",
+          "text": "Purity you can see. Strength you can watch grow.",
+          "note": "Bets on visible proof both ways — purity as demonstrable, strength as observable in the child over time; leans into the demo layer competitors can't match.",
+          "tag": "proof-led strength",
+          "source": "brief",
+          "added": "2026-08-11 17:22"
+        },
+        {
+          "id": "6ee88d31",
+          "text": "The purest milk builds the strongest kids.",
+          "note": "Bets flatly on the SMP causal chain — purity leads to strength — aimed at the outcome-focused parent; simplest, most repeatable, most contestable by Amul/Mother Dairy.",
+          "tag": "straight causal claim",
+          "source": "brief",
+          "added": "2026-08-11 17:22"
+        },
+        {
+          "id": "e824e430",
+          "text": "No compromise in the glass. No limit on the child.",
+          "note": "Bets on the 'will not compromise' parent identity from positioning — purity is the parent's non-negotiable, strength is the child's open future; owns the emotional stance not the product fact.",
+          "tag": "parent-identity",
+          "source": "brief",
+          "added": "2026-08-11 17:22"
+        },
+        {
+          "id": "51c14b8a",
+          "text": "Har boond mein shakti — kyunki har boond shudh hai.",
+          "note": "Bets on the vernacular South/Hindi idiom and the master idea directly — every drop carries strength because every drop is pure; strongest for on-ground and mass, weakest for premium modern-trade shelf.",
+          "tag": "idiom-led",
+          "source": "brief",
+          "added": "2026-08-11 17:22"
+        }
+      ],
+      "chosen": [],
+      "sig": "",
+      "generated_under": "e3b0c44298fc1c14"
+    },
+    "emotional": {
+      "layer": "emotional",
+      "options": [],
+      "chosen": [],
+      "sig": "",
+      "generated_under": ""
+    },
+    "functional": {
+      "layer": "functional",
+      "options": [],
+      "chosen": [],
+      "sig": "",
+      "generated_under": ""
+    },
+    "rtb_emotional": {
+      "layer": "rtb_emotional",
+      "options": [],
+      "chosen": [],
+      "sig": "",
+      "generated_under": ""
+    },
+    "rtb_functional": {
+      "layer": "rtb_functional",
+      "options": [],
+      "chosen": [],
+      "sig": "",
+      "generated_under": ""
+    },
+    "proof": {
+      "layer": "proof",
+      "options": [],
+      "chosen": [],
+      "sig": "",
+      "generated_under": ""
+    },
+    "culture": {
+      "layer": "culture",
+      "options": [],
+      "chosen": [],
+      "sig": "",
+      "generated_under": ""
+    },
+    "medium": {
+      "layer": "medium",
+      "options": [],
+      "chosen": [],
+      "sig": "",
+      "generated_under": ""
+    }
+  },
+  "brief_id": "c752adee62",
+  "brief_title": "Typed at the messaging house"
+}

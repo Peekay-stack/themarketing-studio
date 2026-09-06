@@ -1,0 +1,163 @@
+{
+  "id": "c5e5ed91ae",
+  "created": "2026-08-27 19:47",
+  "brand": "Heritage",
+  "title": "Heritage — Brand",
+  "format": "Brand",
+  "source": "brand-brief",
+  "fields": {
+    "brand": "Heritage",
+    "category": "Dairy",
+    "prepared_for": "Heritage Foods marketing and brand team",
+    "competitors": [
+      {
+        "name": "Amul",
+        "hero_brands": "Amul Taaza, Amul Gold, Amul butter and cheese portfolio",
+        "positioning": "The Taste of India — cooperative scale, ubiquity and value; national mass affiliation anchored in Belonging with strong Vitality via the Amul Girl",
+        "recent_moves": "Aggressive category-defining topical advertising, expanding value-added dairy (curd, buttermilk, protein) and deepening quick-commerce presence"
+      },
+      {
+        "name": "Nandini (KMF)",
+        "hero_brands": "Nandini Milk, Nandini Good Life, curd and ghee",
+        "positioning": "Karnataka cooperative pride — trust, freshness and regional belonging at accessible price; strong farmer-provenance story",
+        "recent_moves": "State-backed expansion beyond Karnataka, price-led competition and provenance-forward regional campaigns"
+      },
+      {
+        "name": "Hatsun (Arokya/Arun)",
+        "hero_brands": "Arokya Milk, Hatsun curd, Arun ice cream",
+        "positioning": "Private dairy scale in the South — Arokya positioned on health and dependable daily nourishment (Security)",
+        "recent_moves": "Distribution densification, cold-chain investment and value-added dairy launches; steady share defence in Tamil Nadu and AP"
+      },
+      {
+        "name": "Milky Mist",
+        "hero_brands": "Milky Mist Paneer, curd, cheese, yoghurt",
+        "positioning": "Premium value-added dairy specialist — freshness, indulgence and modern kitchen sophistication (Discernment pull)",
+        "recent_moves": "Heavy premium-format advertising, paneer and cheese leadership, aspirational urban positioning"
+      },
+      {
+        "name": "Dodla Dairy",
+        "hero_brands": "Dodla Milk, curd, ghee",
+        "positioning": "South-Indian private dairy on reliable freshness and value; functional daily-use trust (Security)",
+        "recent_moves": "Geographic expansion, farm-to-home freshness messaging and value-added dairy push"
+      },
+      {
+        "name": "",
+        "hero_brands": "",
+        "positioning": "",
+        "recent_moves": ""
+      }
+    ],
+    "needscope": {
+      "pins": [
+        {
+          "brand": "Heritage",
+          "x": 508,
+          "y": 259,
+          "anchor": true
+        },
+        {
+          "brand": "Amul",
+          "x": 424,
+          "y": 458,
+          "anchor": false
+        },
+        {
+          "brand": "Nandini",
+          "x": 358,
+          "y": 452,
+          "anchor": false
+        },
+        {
+          "brand": "Arokya (Hatsun)",
+          "x": 279,
+          "y": 388,
+          "anchor": false
+        },
+        {
+          "brand": "Dodla",
+          "x": 275,
+          "y": 331,
+          "anchor": false
+        },
+        {
+          "brand": "Milky Mist",
+          "x": 291,
+          "y": 253,
+          "anchor": false
+        }
+      ],
+      "bridge_territory": "Freedom",
+      "bridge_label": "Pure Doodh Ki Shakti",
+      "reading": "The affiliative south of the wheel is crowded: Amul and Nandini own Belonging through cooperative scale and provenance, while Arokya and Dodla sit in Security on dependable daily nourishment, and Milky Mist pulls toward Discernment with premium indulgence. Heritage sits in warm Vitality-Belonging today but the affiliative Freedom whitespace — purity as a source of personal strength and everyday self-expression — is unclaimed. That bridge lets Heritage own 'purity that makes you stronger' without abandoning its trusted, family-warm equity."
+    },
+    "cb_ca_db_da": {
+      "cb": [
+        "Bought as the dependable household milk for tea, coffee and daily cooking — habit more than active choice.",
+        "Consumed across the family but rarely credited as the reason anyone feels stronger or performs better.",
+        "Under-indexed in value-added and functional dairy baskets (protein, curd, health formats) versus daily fresh milk."
+      ],
+      "db": [
+        "Actively chosen as the milk that fuels the family's day — study, sport, work and growing children.",
+        "Traded up within the franchise into fortified, protein and value-added variants under one master brand.",
+        "Recognised as a strength brand across occasions, winning share in quick-commerce and modern-kitchen baskets."
+      ],
+      "ca_quote": "Heritage is fresh, pure milk we've trusted for years — good, safe, everyday milk for the family.",
+      "ca_declarative": [
+        "Trust is quiet and taken for granted.",
+        "Purity is assumed, not felt as power."
+      ],
+      "da_quote": "Heritage is pure milk that actually makes my family stronger — the fuel we choose, not just the milk we buy.",
+      "da_declarative": [
+        "Purity is now felt as strength.",
+        "A chosen source of everyday energy."
+      ],
+      "shift_from": "assumed everyday purity",
+      "shift_to": "purity felt as family strength",
+      "caption": "The desired attitude layers strength on top of Heritage's existing trust and freshness — purity is not replaced, it is activated as the source of that strength.",
+      "shift_line": "From assumed everyday purity to purity felt as family strength."
+    },
+    "smp": "Heritage: the pure milk that makes every family stronger.",
+    "smp_defence": [
+      {
+        "competitor": "Amul",
+        "why_collapses": "Owns taste and national belonging but its scale-and-value story cannot credibly claim purity as a personal source of strength without narrowing its mass, all-things-to-all-people equity."
+      },
+      {
+        "competitor": "Nandini",
+        "why_collapses": "Claims freshness and cooperative provenance but its regional-pride positioning is about where the milk comes from, not the strength it gives the person who drinks it."
+      },
+      {
+        "competitor": "Arokya (Hatsun)",
+        "why_collapses": "Speaks to health and dependability (Security), but plays defensive daily-nourishment; it cannot own the active, affiliative energy of purity-as-strength."
+      },
+      {
+        "competitor": "Milky Mist",
+        "why_collapses": "Owns premium indulgence and sophistication but its aspirational-kitchen story is about refinement, not the everyday-strength promise Heritage can hold for the whole family."
+      },
+      {
+        "competitor": "Dodla",
+        "why_collapses": "Competes on freshness and value with a functional, understated voice; it lacks the emotional permission to claim purity as a source of strength."
+      }
+    ],
+    "smp_unlocks": {
+      "brand_line": "Pure strength, poured every day. (illustrative — not final copy)",
+      "mass_line": "Heritage — shuddh doodh, poori taakat. (illustrative — not final copy)",
+      "activation": "A 'Strength of Purity' schools and grounds programme: free morning Heritage milk plus a purity-to-performance drive around exams and sports days, dramatising pure milk as fuel. (illustrative — not final copy)",
+      "product": "A master-brand 'Strength' range — fortified/high-protein Heritage milk and curd under one purity-gives-strength platform, spanning kids, sport and family formats. (illustrative — not final copy)"
+    },
+    "brief_id": "c5e5ed91ae",
+    "date": "2026-08-27",
+    "sources_note": "",
+    "market_data": null,
+    "household_data": null,
+    "research_files": []
+  },
+  "canon": {
+    "currentBelief": "Bought as the dependable household milk for tea, coffee and daily cooking — habit more than active choice.; Consumed across the family but rarely credited as the reason anyone feels stronger or performs better.; Under-indexed in value-added and functional dairy baskets (protein, curd, health formats) versus daily fresh milk.",
+    "desiredBelief": "Actively chosen as the milk that fuels the family's day — study, sport, work and growing children.; Traded up within the franchise into fortified, protein and value-added variants under one master brand.; Recognised as a strength brand across occasions, winning share in quick-commerce and modern-kitchen baskets.",
+    "smp": "Heritage: the pure milk that makes every family stronger.",
+    "competition": "name: Amul · hero brands: Amul Taaza, Amul Gold, Amul butter and cheese portfolio · positioning: The Taste of India — cooperative scale, ubiquity and value; national mass affiliation anchored in Belonging with strong Vitality via the Amul Girl · recent moves: Aggressive category-defining topical advertising, expanding value-added dairy (curd, buttermilk, protein) and deepening quick-commerce presence; name: Nandini (KMF) · hero brands: Nandini Milk, Nandini Good Life, curd and ghee · positioning: Karnataka cooperative pride — trust, freshness and regional belonging at accessible price; strong farmer-provenance story · recent moves: State-backed expansion beyond Karnataka, price-led competition and provenance-forward regional campaigns; name: Hatsun (Arokya/Arun) · hero brands: Arokya Milk, Hatsun curd, Arun ice cream · positioning: Private dairy scale in the South — Arokya positioned on health and dependable daily nourishment (Security) · recent moves: Distribution densification, cold-chain investment and value-added dairy launches; steady share defence in Tamil Nadu and AP; name: Milky Mist · hero brands: Milky Mist Paneer, curd, cheese, yoghurt · positioning: Premium value-added dairy specialist — freshness, indulgence and modern kitchen sophistication (Discernment pull) · recent moves: Heavy premium-format advertising, paneer and cheese leadership, aspirational urban positioning; name: Dodla Dairy · hero brands: Dodla Milk, curd, ghee · positioning: South-Indian private dairy on reliable freshness and value; functional daily-use trust (Security) · recent moves: Geographic expansion, farm-to-home freshness messaging and value-added dairy push",
+    "brand": "Heritage"
+  },
+  "updated": "2026-08-27 19:51"
+}

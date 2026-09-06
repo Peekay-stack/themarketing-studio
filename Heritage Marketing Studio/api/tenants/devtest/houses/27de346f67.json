@@ -1,0 +1,118 @@
+{
+  "id": "27de346f67",
+  "brand": "H",
+  "brief": {},
+  "created": "2026-08-10 22:09",
+  "updated": "2026-08-10 22:09",
+  "nodes": {
+    "core": {
+      "layer": "core",
+      "options": [
+        {
+          "id": "413d0e19",
+          "text": "c",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-10 22:09"
+        }
+      ],
+      "chosen": [
+        "413d0e19"
+      ],
+      "sig": "",
+      "generated_under": ""
+    },
+    "emotional": {
+      "layer": "emotional",
+      "options": [
+        {
+          "id": "eab8ba58",
+          "text": "e",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-10 22:09"
+        }
+      ],
+      "chosen": [
+        "eab8ba58"
+      ],
+      "sig": "",
+      "generated_under": ""
+    },
+    "functional": {
+      "layer": "functional",
+      "options": [
+        {
+          "id": "fe6665ef",
+          "text": "f",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-10 22:09"
+        }
+      ],
+      "chosen": [
+        "fe6665ef"
+      ],
+      "sig": "",
+      "generated_under": ""
+    },
+    "rtb_emotional": {
+      "layer": "rtb_emotional",
+      "options": [],
+      "chosen": [],
+      "sig": "",
+      "generated_under": ""
+    },
+    "rtb_functional": {
+      "layer": "rtb_functional",
+      "options": [
+        {
+          "id": "dfcc7743",
+          "text": "r1",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-10 22:09"
+        },
+        {
+          "id": "7590d2ca",
+          "text": "r2",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-10 22:09"
+        }
+      ],
+      "chosen": [
+        "dfcc7743",
+        "7590d2ca"
+      ],
+      "sig": "",
+      "generated_under": ""
+    },
+    "proof": {
+      "layer": "proof",
+      "options": [],
+      "chosen": [],
+      "sig": "",
+      "generated_under": ""
+    },
+    "culture": {
+      "layer": "culture",
+      "options": [],
+      "chosen": [],
+      "sig": "",
+      "generated_under": ""
+    },
+    "medium": {
+      "layer": "medium",
+      "options": [],
+      "chosen": [],
+      "sig": "",
+      "generated_under": ""
+    }
+  }
+}

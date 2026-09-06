@@ -1,0 +1,41 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "studio",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": [
+        "/c",
+        "set",
+        "STUDIO_INSECURE_COOKIES=1",
+        "&&",
+        ".venv\\Scripts\\python.exe",
+        "-m",
+        "uvicorn",
+        "main:app",
+        "--port",
+        "8000"
+      ],
+      "cwd": "Heritage Marketing Studio/api",
+      "port": 8000
+    },
+    {
+      "name": "studio-verify",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": [
+        "/c",
+        "set",
+        "STUDIO_INSECURE_COOKIES=1",
+        "&&",
+        ".venv\\Scripts\\python.exe",
+        "-m",
+        "uvicorn",
+        "main:app",
+        "--port",
+        "8010"
+      ],
+      "cwd": "Heritage Marketing Studio/api",
+      "port": 8010
+    }
+  ]
+}

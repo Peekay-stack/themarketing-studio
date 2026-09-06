@@ -1,0 +1,129 @@
+{
+  "id": "750a369a64",
+  "brand": "H",
+  "brief": {},
+  "created": "2026-08-10 21:26",
+  "updated": "2026-08-10 21:26",
+  "nodes": {
+    "core": {
+      "layer": "core",
+      "options": [
+        {
+          "id": "df1e46b7",
+          "text": "c",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-10 21:26"
+        }
+      ],
+      "chosen": [
+        "df1e46b7"
+      ],
+      "sig": "",
+      "generated_under": ""
+    },
+    "emotional": {
+      "layer": "emotional",
+      "options": [
+        {
+          "id": "73eaaa85",
+          "text": "e",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-10 21:26"
+        }
+      ],
+      "chosen": [
+        "73eaaa85"
+      ],
+      "sig": "",
+      "generated_under": ""
+    },
+    "functional": {
+      "layer": "functional",
+      "options": [
+        {
+          "id": "2f357b17",
+          "text": "f",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-10 21:26"
+        }
+      ],
+      "chosen": [
+        "2f357b17"
+      ],
+      "sig": "",
+      "generated_under": ""
+    },
+    "rtb_emotional": {
+      "layer": "rtb_emotional",
+      "options": [],
+      "chosen": [],
+      "sig": "",
+      "generated_under": ""
+    },
+    "rtb_functional": {
+      "layer": "rtb_functional",
+      "options": [
+        {
+          "id": "4e7b3eb6",
+          "text": "r1",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-10 21:26"
+        },
+        {
+          "id": "c12f5b10",
+          "text": "r2",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-10 21:26"
+        }
+      ],
+      "chosen": [
+        "4e7b3eb6",
+        "c12f5b10"
+      ],
+      "sig": "",
+      "generated_under": ""
+    },
+    "proof": {
+      "layer": "proof",
+      "options": [],
+      "chosen": [],
+      "sig": "",
+      "generated_under": ""
+    },
+    "culture": {
+      "layer": "culture",
+      "options": [],
+      "chosen": [],
+      "sig": "",
+      "generated_under": ""
+    },
+    "medium": {
+      "layer": "medium",
+      "options": [
+        {
+          "id": "4338b8c3",
+          "text": "posm line",
+          "note": "",
+          "source": "user",
+          "tag": "posm",
+          "added": "2026-08-10 21:26"
+        }
+      ],
+      "chosen": [
+        "4338b8c3"
+      ],
+      "sig": "",
+      "generated_under": ""
+    }
+  }
+}

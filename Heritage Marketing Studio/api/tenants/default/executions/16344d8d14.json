@@ -1,0 +1,93 @@
+{
+  "id": "16344d8d14",
+  "plan": "abfaac5fe0",
+  "house": "f7801a3886",
+  "kind": "posm",
+  "brief": {
+    "kind": "posm",
+    "audience": {
+      "id": "274cbaa6",
+      "audience": "Trust-driven mothers currently on loose/unbranded milk, core South India",
+      "rank": "1",
+      "believes_now": "Fresh-from-the-cow loose milk is purest and most affordable; branded milk is processed and distant. She is the first up at 6am and decides what her child drinks. She trusts what she can see over what she's told, and does not yet believe a packaged brand is checked more carefully than her local milkman.",
+      "pillar": "functional"
+    },
+    "channel": {
+      "id": "3274e2c9",
+      "channel": "Social (15s vertical reel — '500 before 7am' counter)",
+      "medium": "",
+      "role": "proof",
+      "job": "Prove the sourced functional RTB — 500 people checked this milk before 7am — in a scroll-stopping, no-voiceover format to a younger mother who trusts what she can see.",
+      "measure": "Whether the claim lands: completion rate on the counter, saves/shares, prompted belief lift — not clicks",
+      "side": "brand",
+      "share": "",
+      "owner": "Social/content team; budget to confirm",
+      "lead": "True"
+    },
+    "occasion": {
+      "id": "0e07e7d7",
+      "phase": "2 · Prove it where she watches",
+      "window": "Weeks 4–10 (overlaps phase 1)",
+      "occasion": "First tumbler of the morning — steel dabara, pour from a height, warm milk pressed into a child's hands before school",
+      "channels": "Social '500 before 7am' counter (proof, lead channel) carries; TV/OOH taper to maintain reach; Digital 'Track your milk' (conversion) goes live to catch intent",
+      "hands_over": "A younger mother who trusts what she can see and has the claim proven — hands a warm, believing audience with a place to act to the doorstep recruitment"
+    },
+    "measure": {
+      "id": "881b2c3a",
+      "role": "proof",
+      "leading": "Counter completion rate on the '500 before 7am' reel and save/share rate — is the number being watched to the end and passed on",
+      "lagging": "Prompted belief lift: proportion who agree 'this milk is checked every day before it reaches me' among exposed vs unexposed",
+      "would_tell_us_it_failed": "By week 4, completion rate below the platform norm for a 15s vertical AND no belief-lift gap between exposed and unexposed — the claim is being scrolled past, not absorbed. Norms: social team to set."
+    },
+    "pillar": "functional",
+    "platform": {
+      "id": "2a93549c",
+      "name": "500 Before You",
+      "idea": "Before a mother makes the first cup, 500 people have already checked the milk that morning — we count them, name their jobs, and show the checks as human work done at dawn.",
+      "mechanic": "Each execution surfaces one of the 500 checks as a person and a routine — the boiling-pan test, the fat check, the smell test — a rotating cast of real roles, so the platform generates a new person and a new check indefinitely.",
+      "expression": "A shelf strip that reads '500 checked this before you' with the FSSAI mark and 'Pure Doodh Ki Shakti' — a single number a shopper reads at two metres and understands instantly against nine packs claiming nothing but 'pure'."
+    },
+    "campaign": {
+      "id": "0ab6df12",
+      "name": "Festive 2026",
+      "shape": "frame",
+      "ladder": "",
+      "axis": [],
+      "axis_source": "",
+      "big_idea": {
+        "text": "Put one of the 500 on her doorstep: the person who checked her milk this morning, named, at the moment she opens the door.",
+        "note": "Festive expression of the platform. The platform is the 500; the idea is bringing one of them to the door.",
+        "available": true,
+        "campaign": "Festive 2026",
+        "platform": {
+          "name": "500 Before You",
+          "idea": "Before a mother makes the first cup, 500 people have already checked the milk that morning — we count them, name their jobs, and show the checks as human work done at dawn."
+        },
+        "why_separate": "A platform is a territory that lasts years; a big idea is what one campaign does with it this season. They are stored apart so next year's campaign can get a new idea without the platform being abandoned to make room for it.",
+        "why_missing": ""
+      }
+    },
+    "house": {
+      "id": "f7801a3886",
+      "core": [
+        "Pure milk is where strength begins."
+      ],
+      "claim": {
+        "available": true,
+        "text": "500 dairy professionals check the milk every single day — purity here is people doing a job, not a slogan.",
+        "pillar": "functional",
+        "sourced": true,
+        "id": "9c5aaee5"
+      }
+    },
+    "message": {
+      "id": "platform",
+      "text": "A shelf strip that reads '500 checked this before you' with the FSSAI mark and 'Pure Doodh Ki Shakti' — a single number a shopper reads at two metres and understands instantly against nine packs claiming nothing but 'pure'.",
+      "note": "the platform's expression for pos material"
+    }
+  },
+  "status": "briefed",
+  "artefacts": [],
+  "created": "2026-08-27 11:26",
+  "updated": "2026-08-27 11:26"
+}

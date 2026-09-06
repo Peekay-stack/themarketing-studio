@@ -1,0 +1,369 @@
+{
+  "id": "d73284f964",
+  "brand": "Heritage",
+  "house": "3833585cbb",
+  "created": "2026-08-14 10:21",
+  "updated": "2026-09-01 10:11",
+  "balance": {
+    "brand_share": 60,
+    "reason": "Milk is a daily habit category where switching is won slowly at the doorstep and chiller, but the '4am/named-farmer' recognition asset is the only durable competitive moat against Amul and Nandini — hold brand at 60 for the year so each activation burst starts from a rising baseline, not a flat one; the 57/43 the channels actually add up to is close enough that a small budget tilt toward the TV lead channel closes it.",
+    "basis": "year",
+    "declared": true
+  },
+  "nodes": {
+    "objectives": {
+      "layer": "objectives",
+      "rows": [
+        {
+          "level": "business",
+          "statement": "Grow Heritage Pure Milk volume by 1.2X  converting daily loose/unbranded milk buyers to branded packs in the South India core, then extend the same conversion motion nationally.",
+          "measure": "",
+          "by_when": "",
+          "id": "9c9feb48",
+          "source": "user",
+          "added": "2026-08-14 10:22",
+          "edited": "2026-08-14 10:23"
+        },
+        {
+          "level": "marketing",
+          "statement": "Move 20% of the 25–44 household milk buyer from loose or a rival pack to a repeat Heritage daily purchase, and hold that repeat via general trade and home delivery.",
+          "measure": "repeat purchase rate among converted households; packs sold per household per week",
+          "by_when": "",
+          "id": "8c9e9dec",
+          "source": "user",
+          "added": "2026-08-14 10:22",
+          "edited": "2026-08-14 10:23"
+        },
+        {
+          "level": "communication",
+          "statement": "Make 'milked at dawn, on your table by morning — quality-checked every single day' the reason a daily buyer trusts a Heritage pack over loose milk at the point of purchase.",
+          "measure": "prompted association of Heritage with 'same-day / quality-checked purity' vs Amul/Nandini/loose; message recall among 25–44 mothers",
+          "by_when": "",
+          "id": "6a25ffd6",
+          "source": "model",
+          "added": "2026-08-14 10:22"
+        }
+      ],
+      "sig": "",
+      "house_under": "8eb137ed55cd3fde"
+    },
+    "audiences": {
+      "layer": "audiences",
+      "rows": [
+        {
+          "audience": "The 25–44 household milk buyer (mother) currently buying a rival pack daily, in the South India core",
+          "rank": "1",
+          "believes_now": "Loose milk from the local vendor is fresh and cheaper; branded packs are 'processed' and I'm paying for a name. I don't distrust Heritage — I've just never had a reason to switch the daily habit.",
+          "pillar": "functional",
+          "id": "8960e38f",
+          "source": "user",
+          "added": "2026-08-14 10:25",
+          "edited": "2026-08-14 10:28"
+        },
+        {
+          "audience": "The daily buyer at the point of purchase — deciding between packs at the GT chiller, the person the POSM strip and promoter actually meet",
+          "rank": "2",
+          "believes_now": "At the chiller they're all similar; I'll pick on price or whichever is stocked front. 'Same-day' and 'quality-checked' would move me if I believed it at the moment I reach for a pack.",
+          "pillar": "functional",
+          "id": "de4ce294",
+          "source": "user",
+          "added": "2026-08-14 10:25",
+          "edited": "2026-08-14 10:25"
+        },
+        {
+          "audience": "GT retailers and distributors in the South India core who decide chiller facing and repeat stocking",
+          "rank": "3",
+          "believes_now": "Loose milk still moves; Amul and Nandini are the safe branded bets. Heritage moves daily but I'll give front-of-chiller to whoever sells through and doesn't sit.",
+          "pillar": "functional — 'Heritage moves every day and now carries a same-day, quality-checked story your shoppers trust over loose.' Sell-through and repeat, not consumer emotion, is what moves this audience.",
+          "id": "09451265",
+          "source": "model",
+          "added": "2026-08-14 10:25"
+        }
+      ],
+      "sig": "",
+      "house_under": "13136c1d233948ab"
+    },
+    "channels": {
+      "layer": "channels",
+      "rows": [
+        {
+          "channel": "TV (40s, 4am film)",
+          "role": "reach",
+          "job": "Carry the sourced 4am/named-farmer story to the South India core to build recognition — reach, not proof of the functional claim, which has no sourced RTB",
+          "measure": "Coverage and cost per reach against 25–44 milk buyers in core states",
+          "side": "brand",
+          "share": "",
+          "owner": "",
+          "lead": "yes",
+          "id": "fc77a00a",
+          "source": "model",
+          "added": "2026-08-14 10:30"
+        },
+        {
+          "channel": "OOH (highway + neighbourhood hoarding)",
+          "role": "reach",
+          "job": "'Milked at dawn. On your table by morning.' — the farmer's face near residential clusters, building recognition for the daily buyer",
+          "measure": "Coverage and cost per reach in target residential catchments",
+          "side": "brand",
+          "share": "",
+          "owner": "",
+          "lead": "",
+          "id": "7215a538",
+          "source": "model",
+          "added": "2026-08-14 10:30"
+        },
+        {
+          "channel": "Digital pre-roll (20s, skippable)",
+          "role": "reach",
+          "job": "Reach the 25–44 mother researching what she buys with the timestamp-to-tumbler cut; do NOT judge on the functional claim landing — it can't be proven here",
+          "measure": "6s view-through and cost per reach against the mother segment",
+          "side": "brand",
+          "share": "",
+          "owner": "",
+          "lead": "",
+          "id": "68786563",
+          "source": "model",
+          "added": "2026-08-14 10:30"
+        },
+        {
+          "channel": "Social (Reel/Short, mother POV)",
+          "role": "advocacy",
+          "job": "Get existing buyers to carry the two-milk-moments story — first tumbler, last glass — with the dawn footage spliced in",
+          "measure": "Participation (shares, saves, UGC) and sentiment",
+          "side": "brand",
+          "share": "",
+          "owner": "",
+          "lead": "",
+          "id": "0d53e212",
+          "source": "model",
+          "added": "2026-08-14 10:30"
+        },
+        {
+          "channel": "On-ground (RWA/society morning stall)",
+          "role": "conversion",
+          "job": "Promoter shows the dated pack and farmer card and offers a taste — physical demonstration at the doorstep turns the rank-1 mother's habit; this is field proof, not media proof",
+          "measure": "Trial-to-switch rate and cost per acquired daily household",
+          "side": "activation",
+          "share": "",
+          "owner": "",
+          "lead": "",
+          "id": "ab41fb68",
+          "source": "model",
+          "added": "2026-08-14 10:30"
+        },
+        {
+          "channel": "POSM (chiller strip + door cling)",
+          "role": "conversion",
+          "job": "'Quality-checked every single day' at the chiller for the rank-2 buyer choosing between packs — asserts the claim at the moment of reach; carries the assertion, does not verify it",
+          "measure": "Sell-through rate at stocked stores vs control; front-chiller pack pickup",
+          "side": "activation",
+          "share": "",
+          "owner": "",
+          "lead": "",
+          "id": "52357128",
+          "source": "model",
+          "added": "2026-08-14 10:30"
+        },
+        {
+          "channel": "Trade (distributor + GT retailer pitch)",
+          "role": "conversion",
+          "job": "Move the rank-3 retailer on sell-through and repeat: 'Heritage moves every day, front the chiller' — a stocking/facing decision, not consumer emotion",
+          "measure": "Front-of-chiller facings won, repeat order rate, distribution depth",
+          "side": "activation",
+          "share": "",
+          "owner": "",
+          "lead": "",
+          "id": "418e4c1e",
+          "source": "model",
+          "added": "2026-08-14 10:30"
+        }
+      ],
+      "sig": "",
+      "house_under": "24a0241c57355517"
+    },
+    "balance": {
+      "layer": "balance",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    },
+    "phases": {
+      "layer": "phases",
+      "rows": [
+        {
+          "phase": "1 · Make the dawn story known",
+          "window": "Weeks 1–8",
+          "occasion": "The first tumbler before school — the morning milk decision the 25–44 mother makes for her child",
+          "channels": "TV (40s, 4am film) [lead] · OOH (highway + neighbourhood hoarding) · Digital pre-roll (20s)",
+          "hands_over": "Recognition of the named farmer and the 'milked at dawn, on your table by morning' story in the South India core — so that when the promoter knocks and the chiller strip appears, the buyer already knows the face. Reach channels only; no proof of the functional claim, which has no sourced RTB.",
+          "id": "e3bf8a33",
+          "source": "model",
+          "added": "2026-08-14 10:31"
+        },
+        {
+          "phase": "2 · Turn recognition into the daily habit",
+          "window": "Weeks 6–16 (overlaps phase 1 by two weeks)",
+          "occasion": "The switch from loose/unbranded milk to a standing daily Heritage pack — the household's repeat purchase decision",
+          "channels": "On-ground (RWA/society morning stall) [lead] · POSM (chiller strip + door cling) · Trade (distributor + GT retailer pitch)",
+          "hands_over": "Trialled households who switched, and front-of-chiller facings won at GT — a base of daily buyers and the shelf position needed to keep serving them. Field demonstration does the proving here; media only carries the assertion.",
+          "id": "d9daf40f",
+          "source": "model",
+          "added": "2026-08-14 10:31"
+        },
+        {
+          "phase": "3 · Hold the habit and let buyers carry it",
+          "window": "Weeks 14 onward (rolling)",
+          "occasion": "The last glass before bed — the everyday nutrition moment repeated by households already buying, now spread by them",
+          "channels": "Social (Reel/Short, mother POV) [lead] · sustaining OOH · sustaining chiller POSM",
+          "hands_over": "Advocacy and sentiment from existing daily buyers feeding back into reach — the two-milk-moments story carried by mothers, not media. Rolls into the next annual cycle's phase 1 with an established buyer base to defend.",
+          "id": "687cded2",
+          "source": "model",
+          "added": "2026-08-14 10:31"
+        },
+        {
+          "phase": "1 — Recognition",
+          "window": "",
+          "occasion": "The first tumbler before school and the last glass before bed — the two everyday milk moments, before any switch is asked for",
+          "channels": "TV (40s, 4am film) [lead]; OOH (highway + neighbourhood hoarding); Digital pre-roll (20s)",
+          "hands_over": "A South India core that recognises the 4am/named-farmer story and the daily-milk claim, so the doorstep promoter isn't a cold knock — the face on the hoarding is already familiar when the stall arrives",
+          "id": "f50d69f6",
+          "source": "model",
+          "added": "2026-08-14 10:35"
+        },
+        {
+          "phase": "2 — Doorstep switch",
+          "window": "",
+          "occasion": "The morning milk decision at the society gate — the daily buyer choosing today's pack over loose/unbranded",
+          "channels": "On-ground (RWA/society morning stall) [lead]; POSM (chiller strip + door cling); Social (Reel/Short) sustaining recognition alongside",
+          "hands_over": "Households that have tasted, seen the dated pack and the farmer card, and made one switch — plus the retail chiller primed with POSM so the second purchase has somewhere to land",
+          "id": "97f7b3d3",
+          "source": "model",
+          "added": "2026-08-14 10:35"
+        },
+        {
+          "phase": "3 — Hold the habit",
+          "window": "",
+          "occasion": "The repeat morning — turning one switch into the standing daily buy, tumbler after tumbler",
+          "channels": "Trade (distributor + GT retailer pitch) [lead]; POSM (chiller strip + door cling); Social (Reel/Short, mother POV) for advocacy",
+          "hands_over": "Front-of-chiller facings held, repeat order rate established, and existing buyers carrying the two-moments story outward — feeding recognition back into the next recognition wave",
+          "id": "d4223763",
+          "source": "model",
+          "added": "2026-08-14 10:35"
+        }
+      ],
+      "sig": "",
+      "house_under": "3472128366cbd56c"
+    },
+    "measures": {
+      "layer": "measures",
+      "rows": [
+        {
+          "role": "reach",
+          "leading": "Cost per reach and cumulative 1+ coverage against 25–44 milk buyers in the South India core, tracked weekly across TV, OOH and digital pre-roll; 6s view-through on the pre-roll cut",
+          "lagging": "Aided and unaided brand recognition of the 'milked at dawn / same-day' story in core states, measured pre- vs post-burst; movement in spontaneous brand awareness vs Amul, Nandini, Dodla, Arokya",
+          "would_tell_us_it_failed": "By the end of the first burst: cost per reach runs materially above the media plan's benchmark, OR post-wave recognition of the dawn/farmer story has not moved above the pre-wave baseline. If the story is being seen but not remembered, the reach spend is buying impressions, not memory — pause and re-cut before the next flight.",
+          "id": "42346d0e",
+          "source": "model",
+          "added": "2026-08-14 10:46"
+        },
+        {
+          "role": "advocacy",
+          "leading": "Participation on the Reel/Short — shares, saves, and volume of UGC replicating the two-milk-moments format — plus sentiment split, tracked weekly",
+          "lagging": "Sustained share of positive brand conversation and organic mentions of #PureDoodhKiShakti carried by existing buyers rather than paid amplification",
+          "would_tell_us_it_failed": "Within the first 4–6 weeks: shares and saves stay flat and no organic UGC appears, OR sentiment tips negative on the purity/authenticity claim. Existing buyers are watching but not carrying it — advocacy isn't happening, and the format needs a real reason to share, not more paid push.",
+          "id": "c773b9c8",
+          "source": "model",
+          "added": "2026-08-14 10:46"
+        },
+        {
+          "role": "conversion",
+          "leading": "On-ground: trial-to-switch rate and cost per acquired daily household at RWA stalls. POSM: front-chiller pack pickup and sell-through at stocked stores vs control. Trade: front-of-chiller facings won and distribution depth",
+          "lagging": "Repeat order rate on acquired households, sustained sell-through uplift at stocked vs control stores, and retained facings after the activation window closes",
+          "would_tell_us_it_failed": "On-ground: cost per acquired household exceeds the value of a retained daily buyer, or tasters don't convert to a repeat pack. POSM: no sell-through lift at stocked stores vs control within the first cycle. Trade: facings are won during the pitch but lost back to loose milk or Amul within one or two order cycles. Any of these means the activation is buying a spike that doesn't stick — and with the functional 'quality-checked' claim unproven, the chiller assertion may be the weak point. Decide by the end of the first full re-order cycle.",
+          "id": "b8915457",
+          "source": "model",
+          "added": "2026-08-14 10:46"
+        }
+      ],
+      "sig": "",
+      "house_under": "3472128366cbd56c"
+    },
+    "governance": {
+      "layer": "governance",
+      "rows": [
+        {
+          "who": "Brand lead / Marketing head",
+          "speaks_on": "Core message, master brand idea 'Pure Doodh Ki Shakti', the emotional pillar and its sourced RTB (4am collection, named farmer)",
+          "boundary": "May not stray from the house; may not add new pillars or claims not in the house",
+          "decides_changes": "Owns changes to positioning, messaging and the brand/activation split",
+          "id": "eee8445e",
+          "source": "model",
+          "added": "2026-08-14 10:46"
+        },
+        {
+          "who": "Quality / Supply chain lead",
+          "speaks_on": "The functional pillar's purity/testing claim — but only once the batch-testing RTB is sourced and documented",
+          "boundary": "May NOT claim 'quality-checked every single day' or 'tested for adulteration' publicly until the RTB is sourced — pillar has 0 of 1 RTBs sourced",
+          "decides_changes": "Owns whether the functional claim can be released; must sign the fact before any proof channel uses it",
+          "id": "bffc0c51",
+          "source": "model",
+          "added": "2026-08-14 10:46"
+        },
+        {
+          "who": "Digital / Social manager",
+          "speaks_on": "Reels, pre-roll, end cards — reusing the house's decided digital and social messaging only",
+          "boundary": "No new messaging per medium; must carry #PureDoodhKiShakti, #HeritageFoods and FSSAI mark; no festival/treat framing — everyday nutrition occasions only",
+          "decides_changes": "Escalates any copy change to brand lead",
+          "id": "3cccc4b1",
+          "source": "model",
+          "added": "2026-08-14 10:46"
+        },
+        {
+          "who": "Trade / Distribution lead",
+          "speaks_on": "Distributor and GT retailer pitch, chiller-front placement, the 'trades up from loose milk' story",
+          "boundary": "May not promise the same-day quality-checked claim to trade until the functional RTB is sourced; leave-behind must match on-air message",
+          "decides_changes": "Owns trade terms; escalates message changes to brand lead",
+          "id": "5753f3b3",
+          "source": "model",
+          "added": "2026-08-14 10:46"
+        },
+        {
+          "who": "On-ground / Activation lead",
+          "speaks_on": "RWA/apartment-society promoter script, farmer card, taste sampling",
+          "boundary": "Promoter uses the decided opening line; may show the dated pack and farmer card, may NOT verbally claim lab-testing until sourced",
+          "decides_changes": "Owns promoter staffing and stall schedule; escalates script changes to brand lead",
+          "id": "2c1dd2da",
+          "source": "model",
+          "added": "2026-08-14 10:46"
+        },
+        {
+          "who": "Legal / Compliance",
+          "speaks_on": "FSSAI mark presence, mandatory line 'Pure Doodh Ki Shakti', substantiation of any purity/adulteration claim",
+          "boundary": "Blocks any claim without a sourced, documented fact behind it — enforces the functional-pillar hold",
+          "decides_changes": "Holds veto on claims; cannot be overridden by brand lead on substantiation",
+          "id": "ca9e9fe1",
+          "source": "model",
+          "added": "2026-08-14 10:46"
+        },
+        {
+          "who": "Media / Reach owner",
+          "speaks_on": "TV, OOH, pre-roll placement and coverage — the reach and awareness channels",
+          "boundary": "May run the emotional 4am film and farmer-face OOH (sourced RTB); may not be assigned proof work on the functional pillar",
+          "decides_changes": "",
+          "id": "b40c8218",
+          "source": "model",
+          "added": "2026-08-14 10:46"
+        }
+      ],
+      "sig": "",
+      "house_under": "8eb137ed55cd3fde"
+    }
+  },
+  "overrides": {
+    "75e15ba35553": {
+      "reason": "I have added the numbers in business and marketing",
+      "who": "Ananya",
+      "at": "2026-08-14 10:24"
+    }
+  }
+}

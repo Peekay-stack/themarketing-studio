@@ -1,0 +1,58 @@
+{
+  "id": "edacbeee11",
+  "brand": "Heritage",
+  "house": "19cea8e26b",
+  "created": "2026-08-14 10:42",
+  "updated": "2026-08-14 12:17",
+  "round": 0,
+  "platforms": [
+    {
+      "name": "Checked Today",
+      "idea": "Every pack and doorstep drop carries the date and result of the check it passed this morning, so the freshness is a fact you can read, not a claim you're asked to trust.",
+      "mechanic": "",
+      "territory": "",
+      "proof": "",
+      "why": "",
+      "rtb": "",
+      "source": "model",
+      "adopted": true,
+      "brief": "Heritage — IMC Brief",
+      "verdicts": {
+        "true": {
+          "verdict": "untested",
+          "note": ""
+        },
+        "ours": {
+          "verdict": "untested",
+          "note": ""
+        },
+        "tension": {
+          "verdict": "untested",
+          "note": ""
+        },
+        "elastic": {
+          "verdict": "untested",
+          "note": ""
+        },
+        "durable": {
+          "verdict": "untested",
+          "note": ""
+        }
+      },
+      "routes": {},
+      "expressions": {
+        "video": "",
+        "social": "",
+        "posm": "",
+        "activation": "",
+        "incentive": ""
+      },
+      "id": "fb5ed622",
+      "added": "2026-08-14 10:42",
+      "round": 0,
+      "built_from": ""
+    }
+  ],
+  "chosen": "fb5ed622",
+  "skipped": false
+}

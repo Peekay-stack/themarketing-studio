@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Heritage — IMC Brief</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400..800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{--green:#14331F;--green2:#3F814C;--gold:#E8A93C;--cream:#FBF6EA;--paper:#fff;--ink:#14331F;--muted:#7A8A7E;--line:#ECE3CE;--bg:#F6F2E9}
+*{box-sizing:border-box}body{margin:0;font-family:"Plus Jakarta Sans",system-ui,sans-serif;background:var(--bg);color:var(--ink)}
+h1,h2,h3{font-family:"Bricolage Grotesque",sans-serif}
+.header{background:var(--green);color:var(--cream);padding:16px 24px;display:flex;align-items:center;gap:14px}
+.header .logo{font-family:"Bricolage Grotesque";font-weight:800;font-size:18px}.header .dot{color:var(--gold)}
+.header .sub{opacity:.7;font-size:13px;margin-left:auto}
+.wrap{max-width:1100px;margin:0 auto;padding:24px 22px 80px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px;position:sticky;top:0;background:var(--bg);padding:10px 0;z-index:5}
+.tab{padding:9px 15px;border-radius:30px;border:1px solid var(--line);background:var(--paper);font-weight:700;font-size:13.5px;cursor:pointer}
+.tab.active{background:var(--green);color:var(--cream);border-color:var(--green)}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:22px;box-shadow:0 1px 3px rgba(20,51,31,.06);margin-bottom:18px}
+.card h2{margin:0 0 4px;font-size:19px}.card .hint{color:var(--muted);font-size:13.5px;margin-bottom:14px}
+label{display:block;font-size:12.5px;font-weight:700;color:var(--green);margin:12px 0 5px}
+input,textarea,select{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:inherit;font-size:14px;background:var(--paper);color:var(--ink)}
+textarea{min-height:60px;resize:vertical}.row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.btn{border:1px solid var(--line);background:var(--paper);padding:9px 15px;border-radius:10px;font-weight:600;font-size:14px;cursor:pointer}
+.btn:hover{border-color:var(--gold)}.btn.primary{background:var(--green);color:var(--cream);border-color:var(--green)}.btn.gold{background:var(--gold);color:#3a2a00;border-color:var(--gold)}
+.btn.sm{padding:6px 11px;font-size:13px}.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{border:1px solid var(--line);padding:7px 9px;text-align:left}th{background:var(--cream);font-weight:700}
+.del{color:#C0392B;cursor:pointer;font-weight:700}
+.grid4{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.quad{border:1px solid var(--line);border-radius:12px;padding:14px}.quad.current{background:#FAFAF7}.quad.desired{background:#F2F8F3;border-color:#CFE6D5}
+.quad h3{margin:0 0 8px;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--green2)}
+.wheelwrap{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:start}
+.pinrow{display:flex;align-items:center;gap:8px;margin-bottom:7px;font-size:13px}
+.swatch{width:14px;height:14px;border-radius:50%;flex-shrink:0}
+.terr{font-size:11px;color:var(--muted)}
+.drop{border:2px dashed var(--line);border-radius:12px;padding:18px;text-align:center;color:var(--muted);font-size:13px;cursor:pointer}
+.drop:hover{border-color:var(--gold);color:var(--ink)}
+.filelist{margin-top:8px;font-size:13px}.filelist div{padding:4px 0;border-bottom:1px solid var(--line)}
+.smpcallout{border:2px solid var(--green2);border-radius:12px;padding:14px;text-align:center;font-family:"Bricolage Grotesque";font-weight:700;color:var(--green2);font-size:18px;background:#F2F8F3}
+.note{font-size:12.5px;color:var(--muted);margin-top:6px}
+.hidden{display:none}
+.pill{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;background:var(--gold);color:#3a2a00}
+.tip{background:#FFF7E8;border:1px solid #F0D9A0;border-radius:10px;padding:10px 13px;font-size:13px;color:#7a5a10;margin-bottom:14px}
+</style>
+</head>
+<body>
+<div class="header"><span class="logo">Heritage <span class="dot">●</span> IMC Brief</span><span class="sub">One brief — prompt, market &amp; household data, NeedScope and CB/CA → a downloadable Word brief</span></div>
+<div class="wrap">
+  <div class="tabs" id="tabs"></div>
+
+  <!-- 1. Brand & competitors -->
+  <section data-tab="brand">
+    <div class="card" style="border-color:#CFE6D5;background:#F5FBF6">
+      <h2>Brief prompt</h2>
+      <div class="hint">Describe the brief in a sentence or two — the objective, the audience and the shift you want. Add your files on the <b>Data &amp; research</b> tab, then let the skill draft the whole brief. You can review and edit everything before generating the Word document.</div>
+      <textarea id="prompt" style="min-height:80px" placeholder="e.g. Diwali IMC push for Pure Milk targeting young urban families — move the brand from 'trusted daily milk' to 'the pure strength I choose for my family', across TV, digital, retail and PR.">Diwali IMC push for Pure Milk targeting young urban families — move the brand from a trusted daily staple to the pure strength families actively choose, integrated across TV, digital, retail and PR.</textarea>
+      <div class="btnrow">
+        <button class="btn gold" id="draftBtn" onclick="draftWithAI()">✦ Draft brief with AI</button>
+        <span id="draftStatus" class="note" style="align-self:center"></span>
+      </div>
+      <div class="note">Runs the brand-brief skill on your prompt + files to fill every tab below. Needs an Anthropic API key on the server.</div>
+    </div>
+    <div class="card">
+      <h2>Brand & competitive set</h2>
+      <div class="hint">The focal brand plus the direct competitors that will appear on the NeedScope wheel and in the messaging matrix.</div>
+      <div class="row3">
+        <div><label>Focal brand</label><input id="brand" value="Heritage"/></div>
+        <div><label>Prepared for</label><input id="prepared_for" value="Heritage Foods Ltd. — Dairy brand team"/></div>
+        <div><label>Date</label><input id="date" value="30 June 2026"/></div>
+      </div>
+      <label>Category</label><input id="category" value="Indian dairy"/>
+      <label style="margin-top:18px">Competitors</label>
+      <table id="compTable"><thead><tr><th>Name</th><th>Hero brands</th><th>Positioning</th><th>Recent moves</th><th></th></tr></thead><tbody></tbody></table>
+      <div class="btnrow"><button class="btn sm" onclick="addComp()">+ Add competitor</button></div>
+    </div>
+  </section>
+
+  <!-- 2. Data & research -->
+  <section data-tab="data" class="hidden">
+    <div class="card">
+      <h2>Market share &amp; sales</h2>
+      <div class="hint">Upload an .xlsx or .csv of market-share / sales figures. These are used verbatim in the competitor snapshot, pricing and distribution sections — never overridden by estimates.</div>
+      <div class="drop" id="xlDrop">Click to upload market share / sales spreadsheet (.xlsx, .csv)</div>
+      <input id="xlInput" type="file" accept=".xlsx,.xls,.csv" class="hidden"/>
+      <div id="xlPreview"></div>
+    </div>
+    <div class="card">
+      <h2>Household data</h2>
+      <div class="hint">Upload an .xlsx or .csv of household panel / penetration / consumption data. Used verbatim to size the audience and frame the behaviour shift.</div>
+      <div class="drop" id="hhDrop">Click to upload household data spreadsheet (.xlsx, .csv)</div>
+      <input id="hhInput" type="file" accept=".xlsx,.xls,.csv" class="hidden"/>
+      <div id="hhPreview"></div>
+    </div>
+    <div class="card">
+      <h2>Reference figures (optional)</h2>
+      <div class="hint">Already have a NeedScope wheel or a CB/CA → DB/DA chart? Attach them here (image or PDF) to travel with the brief. You can still draw them on the next two tabs — those drawn figures are what get embedded in the Word document.</div>
+      <div class="row2">
+        <div>
+          <label>NeedScope wheel</label>
+          <div class="drop" id="nsDrop">Attach NeedScope wheel (PNG, JPG, PDF)</div>
+          <input id="nsInput" type="file" accept="image/*,.pdf" class="hidden"/>
+        </div>
+        <div>
+          <label>CB/CA → DB/DA (CACB-DADB)</label>
+          <div class="drop" id="ccDrop">Attach CB/CA → DB/DA chart (PNG, JPG, PDF)</div>
+          <input id="ccInput" type="file" accept="image/*,.pdf" class="hidden"/>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Consumer research reports</h2>
+      <div class="hint">Upload qualitative/quant research (PDF, PPTX, DOCX). The skill mines these for verbatim consumer language (CB/CA quotes) and NeedScope cues. Uploaded files travel with the brief request to the backend.</div>
+      <div class="drop" id="resDrop">Click to attach research reports (PDF, PPTX, DOCX)</div>
+      <input id="resInput" type="file" accept=".pdf,.pptx,.docx,.doc" multiple class="hidden"/>
+      <div class="filelist" id="resList"></div>
+    </div>
+  </section>
+
+  <!-- 3. NeedScope -->
+  <section data-tab="needscope" class="hidden">
+    <div class="card">
+      <h2>NeedScope positioning</h2>
+      <div class="hint">Select a brand, then click inside the wheel to place its emotional position. Mark the focal brand as the anchor and set its strategic bridge into an adjacent territory.</div>
+      <div class="tip">Six territories, clockwise from 12 o'clock: <b>Power · Freedom · Vitality · Belonging · Security · Discernment</b>. Click closer to the rim for a stronger commitment.</div>
+      <div class="wheelwrap">
+        <div>
+          <svg id="wheel" width="500" height="400" viewBox="0 0 800 640" style="border:1px solid var(--line);border-radius:14px;background:#fff;cursor:crosshair"></svg>
+        </div>
+        <div>
+          <label>Placing pin for</label>
+          <select id="pinBrand"></select>
+          <label>Strategic bridge → territory</label>
+          <select id="bridgeTerr"><option value="">(none)</option><option>Power</option><option>Freedom</option><option>Vitality</option><option>Belonging</option><option>Security</option><option>Discernment</option></select>
+          <label>Bridge platform label</label>
+          <input id="bridgeLabel" value="Pure Doodh Ki Shakti"/>
+          <div id="pinList" style="margin-top:14px"></div>
+          <div class="btnrow"><button class="btn sm" onclick="clearPins()">Clear pins</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. CB/CA -> DB/DA -->
+  <section data-tab="shift" class="hidden">
+    <div class="card">
+      <h2>CB / CA → DB / DA</h2>
+      <div class="hint">What the communication must shift. Current on the left, Desired on the right. Attitudes carry a verbatim consumer quote.</div>
+      <div class="grid4">
+        <div class="quad current"><h3>CB · Current behaviour</h3><textarea id="cb" placeholder="Observable purchase & usage patterns today (one per line)">Trusted daily fresh-milk staple in core South India markets.
+Chosen for freshness & availability — habit more than active choice.
+Under-indexed in curd/ghee trade-up & quick-commerce baskets.</textarea></div>
+        <div class="quad desired"><h3>DB · Desired behaviour</h3><textarea id="db" placeholder="New behaviours over 12–24 months (one per line)">Actively chosen across occasions: nutrition, festive gifting, trade-up.
+Curd → ghee → beverages within the Heritage franchise.
+Beyond the South via quick-commerce with purity-led advocacy.</textarea></div>
+        <div class="quad current"><h3>CA · Current attitude</h3><textarea id="caQuote" placeholder="Verbatim consumer quote">"The fresh, dependable local milk we've always trusted — pure, but just milk."</textarea><input id="caDecl" placeholder="Two declarative lines, comma-separated" value="Trust is functional, Relied on not celebrated"/></div>
+        <div class="quad desired"><h3>DA · Desired attitude</h3><textarea id="daQuote" placeholder="Aspirational consumer quote">"Heritage is how I give my family pure strength every day — a daily act of care."</textarea><input id="daDecl" placeholder="Two declarative lines, comma-separated" value="Active pride not habit, Purity I choose strength I see"/></div>
+      </div>
+      <div class="row2" style="margin-top:14px">
+        <div><label>Shift line — from</label><input id="shiftFrom" value="dependable purity"/></div>
+        <div><label>Shift line — to</label><input id="shiftTo" value="chosen family strength"/></div>
+      </div>
+      <label>Caption (one sentence — layered, not replaced)</label>
+      <input id="shiftCaption" value="Layer family strength on top of trusted purity — never replace it."/>
+    </div>
+  </section>
+
+  <!-- 5. SMP -->
+  <section data-tab="smp" class="hidden">
+    <div class="card">
+      <h2>Single Minded Proposition</h2>
+      <div class="hint">One sentence, max 14 words, ending in a full stop. Tension-resolving, brand-true, competitor-defeating, future-facing.</div>
+      <input id="smp" value="Heritage turns everyday purity into your family's strength."/>
+      <div class="smpcallout" id="smpPreview" style="margin-top:12px"></div>
+      <label style="margin-top:18px">Why only this brand can say it</label>
+      <table id="defTable"><thead><tr><th>Competitor</th><th>Why their version collapses</th><th></th></tr></thead><tbody></tbody></table>
+      <div class="btnrow"><button class="btn sm" onclick="addDef()">+ Add defence row</button></div>
+      <div class="row2" style="margin-top:16px">
+        <div><label>Brand line (illustrative)</label><input id="uBrand" value="Pure Doodh Ki Shakti."/></div>
+        <div><label>Mass line (illustrative)</label><input id="uMass" value="Har ghar ki rozaana shakti — Heritage."/></div>
+        <div><label>Activation idea</label><input id="uAct" value="A 'Strength of Purity' festive platform with farm-to-family transparency."/></div>
+        <div><label>Product / pricing idea</label><input id="uProd" value="Heritage Strength range — fortified milk + purity-marked curd/ghee tier."/></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. Generate -->
+  <section data-tab="generate" class="hidden">
+    <div class="card">
+      <h2>Generate the IMC brief</h2>
+      <div class="hint">Assembles the prompt, data and figures above into the JSON the brand-brief skill consumes, then produces a paginated Word brief (with the NeedScope wheel and CB/CA → DB/DA figures) that downloads to your computer.</div>
+      <div class="btnrow">
+        <button class="btn gold" onclick="genDocx()">Generate IMC brief (.docx)</button>
+        <button class="btn" onclick="downloadJson()">Download brief.json</button>
+        <button class="btn" onclick="showJson()">Preview JSON</button>
+      </div>
+      <div id="genStatus" class="note"></div>
+      <pre id="jsonPreview" style="display:none;background:#0e2616;color:#cfe6d5;padding:14px;border-radius:12px;overflow:auto;max-height:380px;font-size:12px;margin-top:14px"></pre>
+    </div>
+  </section>
+</div>
+
+<script>
+// ---------- tabs ----------
+var TABS=[["brand","Brand & competitors"],["data","Data & research"],["needscope","NeedScope wheel"],["shift","CB/CA → DB/DA"],["smp","SMP"],["generate","Generate"]];
+var tabsEl=document.getElementById('tabs');
+TABS.forEach(function(t,i){var b=document.createElement('div');b.className='tab'+(i===0?' active':'');b.textContent=t[1];b.onclick=function(){selTab(t[0],b);};tabsEl.appendChild(b);});
+function selTab(id,btn){document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('active');});btn.classList.add('active');
+  document.querySelectorAll('section[data-tab]').forEach(function(s){s.classList.toggle('hidden',s.getAttribute('data-tab')!==id);});
+  if(id==='needscope')drawWheel(); if(id==='smp')renderSmp();}
+
+// ---------- competitors ----------
+var comps=[["Amul (GCMMF)","Amul Milk, Taaza, Gold","The Taste of India — ubiquity & wit","Topical media; value-added expansion"],
+  ["Mother Dairy","Mother Dairy milk, Dhara","Trusted daily nourishment","Fortified variants; q-commerce"],
+  ["Nandini (KMF)","Nandini milk, curd, ghee","Karnataka's own — regional pride","State loyalty; expansion attempts"],
+  ["Hatsun (Arokya)","Arokya milk, Hatsun curd","South private-dairy scale + freshness","Distribution build-out; premiumising"]];
+function renderComp(){var tb=document.querySelector('#compTable tbody');tb.innerHTML='';
+  comps.forEach(function(c,i){var tr=document.createElement('tr');
+    tr.innerHTML='<td><input value="'+esc(c[0])+'" oninput="comps['+i+'][0]=this.value"></td><td><input value="'+esc(c[1])+'" oninput="comps['+i+'][1]=this.value"></td><td><input value="'+esc(c[2])+'" oninput="comps['+i+'][2]=this.value"></td><td><input value="'+esc(c[3])+'" oninput="comps['+i+'][3]=this.value"></td><td><span class="del" onclick="comps.splice('+i+',1);renderComp();syncPinBrands()">✕</span></td>';
+    tb.appendChild(tr);});}
+function addComp(){comps.push(["New competitor","","",""]);renderComp();syncPinBrands();}
+
+// ---------- defence ----------
+var defs=[["Amul","Claims taste & ubiquity but its register is wit, not freshness-led purity."],
+  ["Mother Dairy","Shares trust but has never made strength its story."],
+  ["Nandini","Owns regional belonging, not a purity proposition a mother chooses."],
+  ["Hatsun Arokya","Competes on scale & price, cannot earn 'strength' without abandoning value."]];
+function renderDef(){var tb=document.querySelector('#defTable tbody');tb.innerHTML='';
+  defs.forEach(function(d,i){var tr=document.createElement('tr');
+    tr.innerHTML='<td><input value="'+esc(d[0])+'" oninput="defs['+i+'][0]=this.value"></td><td><input value="'+esc(d[1])+'" oninput="defs['+i+'][1]=this.value"></td><td><span class="del" onclick="defs.splice('+i+',1);renderDef()">✕</span></td>';
+    tb.appendChild(tr);});}
+function addDef(){defs.push(["Competitor",""]);renderDef();}
+
+// ---------- Excel ----------
+var marketData=null;
+var xlDrop=document.getElementById('xlDrop'),xlInput=document.getElementById('xlInput');
+xlDrop.onclick=function(){xlInput.click();};
+xlInput.onchange=function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();
+  r.onload=function(ev){try{
+    var wb=XLSX.read(new Uint8Array(ev.target.result),{type:'array'});
+    var ws=wb.Sheets[wb.SheetNames[0]];var rows=XLSX.utils.sheet_to_json(ws,{header:1});
+    marketData={sheet:wb.SheetNames[0],rows:rows};
+    var html='<div class="note">Parsed <b>'+esc(f.name)+'</b> · sheet "'+esc(wb.SheetNames[0])+'" · '+rows.length+' rows</div><table style="margin-top:8px"><tbody>';
+    rows.slice(0,12).forEach(function(row,ri){html+='<tr>'+row.map(function(c){return ri===0?'<th>'+esc(String(c))+'</th>':'<td>'+esc(String(c))+'</td>';}).join('')+'</tr>';});
+    html+='</tbody></table>';document.getElementById('xlPreview').innerHTML=html;
+  }catch(err){document.getElementById('xlPreview').innerHTML='<div class="note" style="color:#C0392B">Could not parse: '+esc(String(err))+'</div>';}};
+  r.readAsArrayBuffer(f);};
+
+// ---------- household data (Excel) ----------
+var householdData=null;
+var hhDrop=document.getElementById('hhDrop'),hhInput=document.getElementById('hhInput');
+hhDrop.onclick=function(){hhInput.click();};
+hhInput.onchange=function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();
+  r.onload=function(ev){try{
+    var wb=XLSX.read(new Uint8Array(ev.target.result),{type:'array'});
+    var ws=wb.Sheets[wb.SheetNames[0]];var rows=XLSX.utils.sheet_to_json(ws,{header:1});
+    householdData={sheet:wb.SheetNames[0],rows:rows};
+    var html='<div class="note">Parsed <b>'+esc(f.name)+'</b> · sheet "'+esc(wb.SheetNames[0])+'" · '+rows.length+' rows</div><table style="margin-top:8px"><tbody>';
+    rows.slice(0,12).forEach(function(row,ri){html+='<tr>'+row.map(function(c){return ri===0?'<th>'+esc(String(c))+'</th>':'<td>'+esc(String(c))+'</td>';}).join('')+'</tr>';});
+    html+='</tbody></table>';document.getElementById('hhPreview').innerHTML=html;
+  }catch(err){document.getElementById('hhPreview').innerHTML='<div class="note" style="color:#C0392B">Could not parse: '+esc(String(err))+'</div>';}};
+  r.readAsArrayBuffer(f);};
+
+// ---------- research files (incl. optional NeedScope / CB-CA reference figures) ----------
+var researchFiles=[];
+var resDrop=document.getElementById('resDrop'),resInput=document.getElementById('resInput');
+resDrop.onclick=function(){resInput.click();};
+resInput.onchange=function(e){for(var i=0;i<e.target.files.length;i++)researchFiles.push(e.target.files[i]);renderRes();};
+// reference-figure drops just ride along as research attachments
+[['nsDrop','nsInput'],['ccDrop','ccInput']].forEach(function(ids){
+  var drop=document.getElementById(ids[0]),input=document.getElementById(ids[1]);
+  drop.onclick=function(){input.click();};
+  input.onchange=function(e){for(var i=0;i<e.target.files.length;i++)researchFiles.push(e.target.files[i]);renderRes();};
+});
+function renderRes(){document.getElementById('resList').innerHTML=researchFiles.map(function(f,i){return '<div>📄 '+esc(f.name)+' <span class="del" onclick="researchFiles.splice('+i+',1);renderRes()">✕</span></div>';}).join('');}
+
+// ---------- NeedScope wheel ----------
+var TERR={Power:270,Freedom:330,Vitality:30,Belonging:90,Security:150,Discernment:210};
+var TCOL={Power:'#C04A40',Freedom:'#C97829',Vitality:'#A78318',Belonging:'#3F814C',Security:'#3469A8',Discernment:'#7848A0'};
+var SECTORS=[['POWER','#E8736A',0.20,400,96],['FREEDOM','#E89A4E',0.18,650,170],['VITALITY','#E8C547',0.22,650,470],['BELONGING','#5BA86B',0.26,400,582],['SECURITY','#4F8AC9',0.20,150,470],['DISCERNMENT','#9A6BB8',0.20,150,170]];
+var pins=[]; // {brand, x, y, anchor}
+function brandNames(){return [document.getElementById('brand').value].concat(comps.map(function(c){return c[0];}));}
+function syncPinBrands(){var sel=document.getElementById('pinBrand');var cur=sel.value;sel.innerHTML=brandNames().map(function(n){return '<option>'+esc(n)+'</option>';}).join('');if(cur)sel.value=cur;}
+function wheelPaths(){
+  // approximate sector wedges using the template geometry
+  return '<rect width="800" height="640" fill="#fff"/>'+
+  '<path d="M 400,320 L 290,129.5 A 220,220 0 0 1 510,129.5 Z" fill="#E8736A" opacity="0.20"/>'+
+  '<path d="M 400,320 L 510,129.5 A 220,220 0 0 1 620,320 Z" fill="#E89A4E" opacity="0.18"/>'+
+  '<path d="M 400,320 L 620,320 A 220,220 0 0 1 510,510.5 Z" fill="#E8C547" opacity="0.22"/>'+
+  '<path d="M 400,320 L 510,510.5 A 220,220 0 0 1 290,510.5 Z" fill="#5BA86B" opacity="0.26"/>'+
+  '<path d="M 400,320 L 290,510.5 A 220,220 0 0 1 180,320 Z" fill="#4F8AC9" opacity="0.20"/>'+
+  '<path d="M 400,320 L 180,320 A 220,220 0 0 1 290,129.5 Z" fill="#9A6BB8" opacity="0.20"/>'+
+  '<circle cx="400" cy="320" r="220" fill="none" stroke="#999" stroke-width="1.5"/>'+
+  '<text x="400" y="84" text-anchor="middle" font-size="15" font-weight="700" fill="#C04A40">POWER</text>'+
+  '<text x="650" y="176" text-anchor="middle" font-size="15" font-weight="700" fill="#C97829">FREEDOM</text>'+
+  '<text x="650" y="476" text-anchor="middle" font-size="15" font-weight="700" fill="#A78318">VITALITY</text>'+
+  '<text x="400" y="588" text-anchor="middle" font-size="15" font-weight="700" fill="#3F814C">BELONGING</text>'+
+  '<text x="150" y="476" text-anchor="middle" font-size="15" font-weight="700" fill="#3469A8">SECURITY</text>'+
+  '<text x="150" y="176" text-anchor="middle" font-size="15" font-weight="700" fill="#7848A0">DISCERNMENT</text>';
+}
+function polar(a,r){var t=a*Math.PI/180;return [400+r*Math.cos(t),320+r*Math.sin(t)];}
+function drawWheel(){
+  syncPinBrands();
+  var svg=document.getElementById('wheel');var anchorName=document.getElementById('brand').value;
+  var s=wheelPaths();
+  // bridge
+  var bt=document.getElementById('bridgeTerr').value, anchorPin=pins.filter(function(p){return p.anchor;})[0];
+  if(bt && anchorPin){var tp=polar(TERR[bt],120);
+    s+='<path d="M '+anchorPin.x.toFixed(0)+','+anchorPin.y.toFixed(0)+' L '+tp[0].toFixed(0)+','+tp[1].toFixed(0)+'" fill="none" stroke="#3F814C" stroke-width="2.5" stroke-dasharray="7 5"/>'+
+    '<text x="'+((anchorPin.x+tp[0])/2).toFixed(0)+'" y="'+((anchorPin.y+tp[1])/2-8).toFixed(0)+'" text-anchor="middle" font-size="12" font-weight="700" fill="#3F814C">"'+esc(document.getElementById('bridgeLabel').value)+'"</text>';}
+  // pins
+  pins.forEach(function(p){var col=p.anchor?'#14331F':'#777';
+    s+='<circle cx="'+p.x.toFixed(0)+'" cy="'+p.y.toFixed(0)+'" r="'+(p.anchor?11:7)+'" fill="'+col+'" stroke="#fff" stroke-width="2"/>'+
+    '<text x="'+p.x.toFixed(0)+'" y="'+(p.y+(p.y<320?-15:22)).toFixed(0)+'" text-anchor="middle" font-size="12" font-weight="'+(p.anchor?700:600)+'" fill="#222">'+esc(p.brand)+(p.anchor?' (anchor)':'')+'</text>';});
+  '<circle cx="400" cy="320" r="40" fill="#fff" stroke="#999"/>';
+  s+='<circle cx="400" cy="320" r="40" fill="#fff" stroke="#999"/><text x="400" y="318" text-anchor="middle" font-size="11" font-weight="700">NeedScope</text><text x="400" y="333" text-anchor="middle" font-size="9" fill="#777">'+esc(document.getElementById('category').value)+'</text>';
+  svg.innerHTML=s;
+  renderPinList();
+}
+document.getElementById('wheel').addEventListener('click',function(e){
+  var svg=document.getElementById('wheel'),rect=svg.getBoundingClientRect();
+  var x=(e.clientX-rect.left)/rect.width*800, y=(e.clientY-rect.top)/rect.height*640;
+  var brand=document.getElementById('pinBrand').value;
+  var existing=pins.filter(function(p){return p.brand===brand;})[0];
+  var isAnchor=(brand===document.getElementById('brand').value);
+  if(existing){existing.x=x;existing.y=y;}else{pins.push({brand:brand,x:x,y:y,anchor:isAnchor});}
+  drawWheel();
+});
+['bridgeTerr','bridgeLabel','category'].forEach(function(id){document.getElementById(id).addEventListener('input',drawWheel);});
+function renderPinList(){document.getElementById('pinList').innerHTML='<label>Placed</label>'+(pins.length?pins.map(function(p,i){
+  return '<div class="pinrow"><span class="swatch" style="background:'+(p.anchor?'#14331F':'#777')+'"></span>'+esc(p.brand)+(p.anchor?' <span class="pill">anchor</span>':'')+' <span class="del" onclick="pins.splice('+i+',1);drawWheel()">✕</span></div>';
+}).join(''):'<div class="note">Click the wheel to place the selected brand.</div>');}
+function clearPins(){pins=[];drawWheel();}
+
+// ---------- SMP ----------
+function renderSmp(){document.getElementById('smpPreview').textContent=document.getElementById('smp').value;}
+document.getElementById('smp').addEventListener('input',renderSmp);
+
+// ---------- assemble + generate ----------
+var aiReading=""; // filled by Draft-with-AI; falls back to a computed reading otherwise
+function lines(id){return document.getElementById(id).value.split('\n').map(function(s){return s.trim();}).filter(Boolean);}
+function buildBrief(){
+  var anchor=pins.filter(function(p){return p.anchor;})[0];
+  var ns_reading=aiReading||("Positions captured on the interactive wheel: "+pins.map(function(p){return p.brand;}).join(', ')+".");
+  return {
+    brand:document.getElementById('brand').value,
+    prepared_for:document.getElementById('prepared_for').value,
+    date:document.getElementById('date').value,
+    category:document.getElementById('category').value,
+    prompt:document.getElementById('prompt').value,
+    sources_note:"Built from the inputs supplied in the IMC Brief builder"+(marketData?", including uploaded market data":"")+(householdData?", household data":"")+(researchFiles.length?" and "+researchFiles.length+" research/reference file(s)":"")+". Validate share/pricing before publication.",
+    smp:document.getElementById('smp').value,
+    competitors:comps.map(function(c){return {name:c[0],hero_brands:c[1],positioning:c[2],recent_moves:c[3]};}),
+    market_data:marketData,
+    household_data:householdData,
+    research_files:researchFiles.map(function(f){return f.name;}),
+    needscope:{
+      pins:pins.map(function(p){return {brand:p.brand,x:Math.round(p.x),y:Math.round(p.y),anchor:!!p.anchor};}),
+      bridge_territory:document.getElementById('bridgeTerr').value,
+      bridge_label:document.getElementById('bridgeLabel').value,
+      reading:ns_reading
+    },
+    cb_ca_db_da:{
+      cb:lines('cb'), db:lines('db'),
+      ca_quote:document.getElementById('caQuote').value, ca_declarative:document.getElementById('caDecl').value.split(',').map(function(s){return s.trim();}),
+      da_quote:document.getElementById('daQuote').value, da_declarative:document.getElementById('daDecl').value.split(',').map(function(s){return s.trim();}),
+      shift_line:"From "+document.getElementById('shiftFrom').value+" to "+document.getElementById('shiftTo').value+".",
+      shift_from:document.getElementById('shiftFrom').value, shift_to:document.getElementById('shiftTo').value,
+      caption:document.getElementById('shiftCaption').value
+    },
+    smp_defence:defs.map(function(d){return {competitor:d[0],why_collapses:d[1]};}),
+    smp_unlocks:{brand_line:document.getElementById('uBrand').value,mass_line:document.getElementById('uMass').value,activation:document.getElementById('uAct').value,product:document.getElementById('uProd').value}
+  };
+}
+// ---------- Draft with AI (runs the brand-brief skill on the server) ----------
+function setVal(id,v){var el=document.getElementById(id);if(el&&v!=null)el.value=v;}
+function populateFromDraft(d){
+  if(!d)return;
+  setVal('brand',d.brand); setVal('category',d.category); setVal('prepared_for',d.prepared_for);
+  if(Array.isArray(d.competitors)&&d.competitors.length){
+    comps=d.competitors.map(function(c){return [c.name||'',c.hero_brands||'',c.positioning||'',c.recent_moves||''];});
+    renderComp();
+  }
+  var ns=d.needscope||{};
+  if(Array.isArray(ns.pins)){pins=ns.pins.map(function(p){return {brand:p.brand,x:Math.round(+p.x),y:Math.round(+p.y),anchor:!!p.anchor};});}
+  setVal('bridgeTerr',ns.bridge_territory); setVal('bridgeLabel',ns.bridge_label);
+  aiReading=ns.reading||"";
+  var c=d.cb_ca_db_da||{};
+  if(Array.isArray(c.cb))setVal('cb',c.cb.join('\n'));
+  if(Array.isArray(c.db))setVal('db',c.db.join('\n'));
+  setVal('caQuote',c.ca_quote); setVal('daQuote',c.da_quote);
+  if(Array.isArray(c.ca_declarative))setVal('caDecl',c.ca_declarative.join(', '));
+  if(Array.isArray(c.da_declarative))setVal('daDecl',c.da_declarative.join(', '));
+  setVal('shiftFrom',c.shift_from); setVal('shiftTo',c.shift_to); setVal('shiftCaption',c.caption);
+  setVal('smp',d.smp);
+  if(Array.isArray(d.smp_defence)){defs=d.smp_defence.map(function(x){return [x.competitor||'',x.why_collapses||''];});renderDef();}
+  var u=d.smp_unlocks||{};
+  setVal('uBrand',u.brand_line); setVal('uMass',u.mass_line); setVal('uAct',u.activation); setVal('uProd',u.product);
+  syncPinBrands(); renderSmp(); drawWheel();
+}
+async function draftWithAI(){
+  var btn=document.getElementById('draftBtn'),st=document.getElementById('draftStatus');
+  var base={brand:document.getElementById('brand').value,category:document.getElementById('category').value,
+    prepared_for:document.getElementById('prepared_for').value,prompt:document.getElementById('prompt').value,
+    market_data:marketData,household_data:householdData};
+  btn.disabled=true;st.style.color='';st.textContent='Running the brand-brief skill…';
+  try{
+    var fd=new FormData();fd.append('payload',JSON.stringify(base));
+    researchFiles.forEach(function(f){fd.append('research',f);});
+    var res=await fetch('/brand-brief-draft',{method:'POST',body:fd});
+    if(!res.ok){var msg=await res.text();try{msg=JSON.parse(msg).detail||msg;}catch(e){}throw new Error(msg);}
+    var draft=await res.json();
+    populateFromDraft(draft);
+    st.style.color='#1E7E34';st.textContent='Draft ready — review each tab, then Generate.';
+  }catch(e){st.style.color='#C0392B';st.textContent='Could not draft: '+esc(String(e.message||e));}
+  btn.disabled=false;
+}
+function showJson(){var p=document.getElementById('jsonPreview');p.style.display='block';p.textContent=JSON.stringify(buildBrief(),null,2);}
+function downloadJson(){var blob=new Blob([JSON.stringify(buildBrief(),null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='brief.json';a.click();
+  document.getElementById('genStatus').textContent='Downloaded brief.json — feed it to the backend skill: node assets/build_brief_docx.js brief.json out.docx';}
+async function genDocx(){
+  var st=document.getElementById('genStatus');st.textContent='Sending to backend /brand-brief …';
+  try{
+    var fd=new FormData();fd.append('payload',JSON.stringify(buildBrief()));
+    researchFiles.forEach(function(f){fd.append('research',f);});
+    var res=await fetch('/brand-brief',{method:'POST',body:fd});
+    if(!res.ok)throw new Error('backend returned '+res.status);
+    var blob=await res.blob();var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=(document.getElementById('brand').value||'brand')+'_IMC_Brief.docx';a.click();
+    st.textContent='IMC brief generated and downloaded.';
+  }catch(e){st.innerHTML='Could not reach the backend ('+esc(String(e.message))+').<br>This button works when the file is served by the app (uvicorn). Use “Download brief.json” to run the skill manually.';}
+}
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// init
+renderComp();renderDef();renderRes();renderSmp();syncPinBrands();
+// preseed Heritage anchor + the four competitor positions to match the sample brief
+pins=[{brand:'Heritage',x:352,y:411,anchor:true},{brand:'Mother Dairy',x:259,y:371,anchor:false},{brand:'Amul (GCMMF)',x:495,y:425,anchor:false},{brand:'Nandini (KMF)',x:384,y:469,anchor:false},{brand:'Hatsun (Arokya)',x:256,y:266,anchor:false}];
+document.getElementById('bridgeTerr').value='Belonging';
+</script>
+</body>
+</html>

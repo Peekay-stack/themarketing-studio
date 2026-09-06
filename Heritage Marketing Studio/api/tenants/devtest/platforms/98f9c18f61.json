@@ -1,0 +1,63 @@
+{
+  "id": "98f9c18f61",
+  "brand": "H",
+  "house": "55c7233f1f",
+  "created": "2026-08-11 11:36",
+  "updated": "2026-08-11 11:36",
+  "round": 0,
+  "platforms": [
+    {
+      "name": "The Named Dairy",
+      "idea": "Every pack names its dairy.",
+      "mechanic": "",
+      "territory": "",
+      "proof": "",
+      "why": "",
+      "rtb": "",
+      "source": "user",
+      "adopted": true,
+      "verdicts": {
+        "true": {
+          "verdict": "holds",
+          "note": "n"
+        },
+        "ours": {
+          "verdict": "holds",
+          "note": "n"
+        },
+        "tension": {
+          "verdict": "holds",
+          "note": "n"
+        },
+        "elastic": {
+          "verdict": "holds",
+          "note": "n"
+        },
+        "durable": {
+          "verdict": "holds",
+          "note": "n"
+        }
+      },
+      "routes": {
+        "social": "a",
+        "posm": "b",
+        "onground": "c",
+        "media": "d",
+        "trade": "e"
+      },
+      "expressions": {
+        "video": "",
+        "social": "a",
+        "posm": "b",
+        "activation": "c",
+        "incentive": "e"
+      },
+      "id": "981b2f6d",
+      "added": "2026-08-11 11:36",
+      "round": 0,
+      "built_from": ""
+    }
+  ],
+  "chosen": "981b2f6d",
+  "skipped": false
+}

@@ -1,0 +1,209 @@
+{
+  "id": "07361af936",
+  "brand": "Heritage",
+  "house": "68c50487e3",
+  "created": "2026-09-02 11:24",
+  "updated": "2026-09-02 11:33",
+  "project": "Heritage — house, August 2026",
+  "balance": {
+    "brand_share": 60,
+    "reason": "",
+    "basis": "year",
+    "declared": true,
+    "source": "user"
+  },
+  "nodes": {
+    "objectives": {
+      "layer": "objectives",
+      "rows": [
+        {
+          "level": "business",
+          "statement": "Grow Heritage Pure Milk volume in the core South India markets by defending against Amul/Nandini and converting loose/unbranded milk buyers.",
+          "measure": "leadership to set — target volume growth % or share point gain",
+          "by_when": "leadership to set — FY horizon",
+          "id": "469c2aaa",
+          "source": "model",
+          "added": "2026-09-02 11:27"
+        },
+        {
+          "level": "marketing",
+          "statement": "Move households from loose milk and rival packs to daily Heritage delivery/repeat purchase, on the strength of pure milk that passes every purity test before the door.",
+          "measure": "penetration in priority segments + repeat-purchase / subscription rate — baseline to set by marketing",
+          "by_when": "12 months from launch, subject to business date",
+          "id": "e18abf4a",
+          "source": "model",
+          "added": "2026-09-02 11:27"
+        },
+        {
+          "level": "communication",
+          "statement": "Make 'Pure Doodh Ki Shakti' the reason families choose Heritage: land the unbroken cold-chain purity claim as believable, and own the pre-dawn morning occasion.",
+          "measure": "prompted brand association with purity + claim believability (tracker) — baseline to set",
+          "by_when": "12 months, reviewed at 6",
+          "id": "efdcc739",
+          "source": "model",
+          "added": "2026-09-02 11:27"
+        }
+      ],
+      "sig": "",
+      "house_under": "9e13c9180ee98575"
+    },
+    "audiences": {
+      "layer": "audiences",
+      "rows": [
+        {
+          "audience": "Loose / unbranded milk households in core South India — the vendor or dairy-can buyer, often boiling twice 'to be safe'",
+          "rank": "1",
+          "believes_now": "Loose milk is fresher and cheaper because it's local, but I'm never quite sure what's in it — I boil hard and hope. Packaged milk is 'processed', maybe watered or old by the time it reaches me. Convince me the sealed pack is genuinely purer and hasn't sat warm in a truck, and price stops being the whole argument.",
+          "pillar": "functional",
+          "id": "4f741819",
+          "source": "model",
+          "added": "2026-09-02 11:28"
+        },
+        {
+          "audience": "Rival-pack switchers (current Amul/Nandini/Dodla daily buyers) open to a better daily milk",
+          "rank": "2",
+          "believes_now": "I already buy packaged, so safety is a solved problem — one blue pack is much like another and I choose on price, habit and what the kirana stocks. I have no reason to switch unless Heritage proves it's cleaner-handled or richer, not just another brand shouting 'pure'.",
+          "pillar": "functional",
+          "id": "fee8de5a",
+          "source": "model",
+          "added": "2026-09-02 11:28"
+        },
+        {
+          "audience": "Young urban families / new parents in South metros, quality-first, delivery-inclined",
+          "rank": "3",
+          "believes_now": "Milk is for the kids and it has to be right — I'll pay a bit more for something I trust and that turns up daily without me thinking about it. I respond to the idea that the morning runs on this glass, that my family is nourished and ahead, more than to a purity spec I take as table stakes.",
+          "pillar": "emotional",
+          "id": "18604f18",
+          "source": "model",
+          "added": "2026-09-02 11:28"
+        },
+        {
+          "audience": "Existing Heritage households at churn risk — bought before, lapsed or buying intermittently",
+          "rank": "4",
+          "believes_now": "I've had Heritage; it was fine but I drifted — a delivery gap, a price nudge, a vendor closer by. Nothing's wrong with it, I just don't have a reason it has to be the one on the flame every morning. Remind me why the morning starts with this pour and I come back.",
+          "pillar": "emotional",
+          "id": "d220ec00",
+          "source": "model",
+          "added": "2026-09-02 11:28"
+        }
+      ],
+      "sig": "",
+      "house_under": "419824944be768e5"
+    },
+    "channels": {
+      "layer": "channels",
+      "rows": [
+        {
+          "channel": "Cold-chain 'unbroken clock' film — 30s TV + 15s cut-downs, Telugu/Kannada/Tamil, the timestamp ticking from pre-dawn milking to doorstep",
+          "medium": "NEEDS ID: television",
+          "role": "proof",
+          "job": "Make the functional purity claim believable by showing the cold chain never breaks — proof for audiences 1 and 2",
+          "measure": "Claim recall: % who can state 'chilled within hours, cold never breaks' unprompted, tracked pre/post",
+          "side": "brand",
+          "share": "30",
+          "owner": "Brand + creative agency",
+          "lead": "yes",
+          "id": "678df0ce",
+          "source": "model",
+          "added": "2026-09-02 11:31"
+        },
+        {
+          "channel": "Vernacular OOH along GT/dairy corridors — steel vessel with the ghee-gold cream band, #PureDoodhKiShakti",
+          "medium": "NEEDS ID: ooh",
+          "role": "reach",
+          "job": "Get to loose-milk households who don't yet consider a sealed pack — coverage where they already shop",
+          "measure": "Coverage of target pin-codes; cost per reach",
+          "side": "brand",
+          "share": "18",
+          "owner": "Media agency",
+          "lead": "",
+          "id": "cd27b1f7",
+          "source": "model",
+          "added": "2026-09-02 11:31"
+        },
+        {
+          "channel": "Vertical reels + regional-language YouTube — the pre-dawn boil, first filter coffee, family-starts-ahead cuts",
+          "medium": "NEEDS ID: online-video",
+          "role": "reach",
+          "job": "Reach young urban / new-parent families (audience 3) with the emotional pillar",
+          "measure": "Reach and completed views in South metros; cost per reach",
+          "side": "brand",
+          "share": "14",
+          "owner": "Media agency + creative",
+          "lead": "",
+          "id": "3443a449",
+          "source": "model",
+          "added": "2026-09-02 11:31"
+        },
+        {
+          "channel": "General trade — kirana shelf strips, crate branding, distributor push in core South GT",
+          "medium": "NEEDS ID: retail-instore",
+          "role": "conversion",
+          "job": "Turn intent into the daily pack pickup where most milk is actually bought — switch rival-pack buyers (audience 2)",
+          "measure": "Conversion rate at outlet; cost per new pack household",
+          "side": "activation",
+          "share": "16",
+          "owner": "Sales / distribution",
+          "lead": "",
+          "id": "bb336f67",
+          "source": "model",
+          "added": "2026-09-02 11:31"
+        },
+        {
+          "channel": "Home-delivery app + subscription offers — first-week trial, win-back nudge for lapsed households",
+          "medium": "NEEDS ID: owned-app",
+          "role": "conversion",
+          "job": "Convert delivery-inclined families (audience 3) and win back churn-risk households (audience 4) into standing daily orders",
+          "measure": "Subscription sign-up rate; reactivation rate of lapsed accounts; CPA",
+          "side": "activation",
+          "share": "14",
+          "owner": "D2C / CRM team",
+          "lead": "",
+          "id": "7295bdd2",
+          "source": "model",
+          "added": "2026-09-02 11:31"
+        },
+        {
+          "channel": "WhatsApp / SMS lifecycle to existing & lapsed subscribers — 'roz subah, taaza doodh' reminders, delivery-gap recovery",
+          "medium": "NEEDS ID: crm-messaging",
+          "role": "advocacy",
+          "job": "Keep existing Heritage households pouring daily and get them referring — retention and word of mouth (audience 4)",
+          "measure": "Referral participation rate; retention / repeat sentiment",
+          "side": "activation",
+          "share": "8",
+          "owner": "CRM team",
+          "lead": "",
+          "id": "4092a385",
+          "source": "model",
+          "added": "2026-09-02 11:31"
+        }
+      ],
+      "sig": "",
+      "house_under": "16ee9938a3c35861"
+    },
+    "balance": {
+      "layer": "balance",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    },
+    "phases": {
+      "layer": "phases",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    },
+    "measures": {
+      "layer": "measures",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    },
+    "governance": {
+      "layer": "governance",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    }
+  }
+}

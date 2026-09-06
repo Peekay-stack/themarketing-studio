@@ -1,0 +1,138 @@
+{
+  "id": "c9bcc3b82c",
+  "brand": "H",
+  "brief": {},
+  "created": "2026-08-11 10:48",
+  "updated": "2026-08-11 10:48",
+  "nodes": {
+    "core": {
+      "layer": "core",
+      "options": [
+        {
+          "id": "088170be",
+          "text": "c",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-11 10:48"
+        }
+      ],
+      "chosen": [
+        "088170be"
+      ],
+      "sig": "",
+      "generated_under": ""
+    },
+    "emotional": {
+      "layer": "emotional",
+      "options": [
+        {
+          "id": "bb7c0252",
+          "text": "e",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-11 10:48"
+        }
+      ],
+      "chosen": [
+        "bb7c0252"
+      ],
+      "sig": "",
+      "generated_under": ""
+    },
+    "functional": {
+      "layer": "functional",
+      "options": [
+        {
+          "id": "4237bf5d",
+          "text": "f",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-11 10:48"
+        }
+      ],
+      "chosen": [
+        "4237bf5d"
+      ],
+      "sig": "",
+      "generated_under": ""
+    },
+    "rtb_emotional": {
+      "layer": "rtb_emotional",
+      "options": [],
+      "chosen": [],
+      "sig": "",
+      "generated_under": ""
+    },
+    "rtb_functional": {
+      "layer": "rtb_functional",
+      "options": [
+        {
+          "id": "f7cd7fc1",
+          "text": "r1",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-11 10:48"
+        },
+        {
+          "id": "075d3b4e",
+          "text": "r2",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-11 10:48"
+        }
+      ],
+      "chosen": [
+        "f7cd7fc1",
+        "075d3b4e"
+      ],
+      "sig": "",
+      "generated_under": ""
+    },
+    "proof": {
+      "layer": "proof",
+      "options": [],
+      "chosen": [],
+      "sig": "",
+      "generated_under": ""
+    },
+    "culture": {
+      "layer": "culture",
+      "options": [],
+      "chosen": [],
+      "sig": "",
+      "generated_under": ""
+    },
+    "medium": {
+      "layer": "medium",
+      "options": [
+        {
+          "id": "602f0e4d",
+          "text": "Two facings. Turns faster.",
+          "note": "",
+          "source": "user",
+          "tag": "posm",
+          "added": "2026-08-11 10:48"
+        },
+        {
+          "id": "5d6c2606",
+          "text": "Stall line",
+          "note": "",
+          "source": "user",
+          "tag": "on-ground",
+          "added": "2026-08-11 10:48"
+        }
+      ],
+      "chosen": [
+        "602f0e4d",
+        "5d6c2606"
+      ],
+      "sig": "",
+      "generated_under": ""
+    }
+  }
+}

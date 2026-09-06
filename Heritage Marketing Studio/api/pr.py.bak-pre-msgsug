@@ -1,0 +1,2375 @@
+"""pr.py — earned media: the sheet, the objectives funnel, the message set, and the media map.
+
+PR is the one medium whose entire job is carrying a proof somebody else vouches for. `media.py` has
+said so since the taxonomy was written:
+
+    "Third-party verification of something the brand cannot say about itself without sounding like it
+     is selling. It carries a proof and it cannot construct a feeling — the same limit as an
+     influencer, without the payment."
+
+Everything in this module follows from that sentence. A PR objective that cannot name its proof is not
+a PR objective, and a message with nothing under it is a press release nobody runs.
+
+**Two modes, one sheet.** Campaign PR drives a campaign's message through earned channels and is
+phased; standalone PR answers to nothing above it — corporate reputation, a milestone, or a recall. The
+only structural difference is whether an execution is attached, which is why both live in one store
+rather than two. That shape is copied from `sales.py`, which already models a document keyed to a brand
+with an *optional* plan and house, and has done so long enough to be trusted.
+
+**The funnel descends the plan's own ladder rather than guessing.** The plan's objectives layer already
+carries `level` — business, marketing, communication, "each answerable to the one above". So the
+question "can PR carry this objective" is answered from stored data, not from keyword-matching a
+sentence:
+
+    business       -> refused. PR cannot carry a revenue number, and pretending otherwise is how a
+                      communications programme gets judged on something it never controlled.
+    marketing      -> contributes, never owns. Earned coverage moves consideration; it does not
+                      convert.
+    communication  -> owns. This is the row a PR objective is written against.
+
+What is *suggested* rather than derived is which of the five PR jobs a given objective is — and that is
+offered as a suggestion a person confirms, in the same spirit as `main.shot_viability`: advice, not a
+filter. The refusal, which is the load-bearing half, needs no guessing at all.
+
+**The media map is brand-level and asymmetric on purpose.** Outlets may be suggested and confirmed by a
+person; journalists may only be entered or imported. That asymmetry is the point — a masthead is a
+public fact, a reporter's name and beat is personal data about a real individual, and the second is
+where a confident invention does harm no reader could detect.
+
+Nothing here talks to a model. Drafting lives in `pr_skill`; this module owns the vocabulary, the
+descent, the gates and the refusals, so all of it is testable without spending anything.
+"""
+from __future__ import annotations
+
+import json
+import os
+import time
+import uuid
+
+import brandprofile
+import geo
+import media
+import strategy as strategy_mod
+import tenancy
+
+PR_DIR = tenancy.dir("pr")
+
+# --- what a sheet can be ------------------------------------------------------------------------
+
+MODES: dict[str, dict] = {
+    "campaign": {
+        "label": "Campaign PR",
+        "what": "Drives the campaign's message through earned channels, phased across the campaign.",
+        "needs_plan": True,
+    },
+    "standalone": {
+        "label": "Standalone PR",
+        "what": "Answers to nothing above it — the company as an institution, a milestone, or a "
+                "recall. Most PR a company does is this.",
+        "needs_plan": False,
+    },
+}
+
+# Standalone sub-kinds. `crisis` is declared so a sheet can be FILED as one from the start; its
+# response machinery is not built here. The fields a crisis sheet will need — risk class, the
+# notification clock, the jurisdiction, named sign-off — arrive with the logic that validates them,
+# because a stored field nothing checks is worse than an absent one: it looks answered.
+#
+# What that costs today is honest and small: a crisis sheet holds objectives and messages like any
+# other, and `findings()` says plainly that the response machinery is not here yet rather than
+# implying the sheet is complete.
+STANDALONE_KINDS: dict[str, dict] = {
+    "corporate": {"label": "Corporate reputation",
+                  "what": "The company as an institution — procurement scale, livelihoods, employment."},
+    "milestone": {"label": "Milestone or news",
+                  "what": "A plant, an award, a capacity, an appointment. Something verifiably new."},
+    "crisis":    {"label": "Crisis or recall response",
+                  "what": "A response against the applicable regulator's obligations. Prepared in "
+                          "calm, assembled under pressure — never composed from scratch."},
+}
+
+# Campaign phasing. One to six weeks on the tease is the researched range; past four to six, attention
+# decays unless something escalates weekly. Stored as a named phase rather than a date range because
+# the media map and the message set differ per phase, which is the reason the field exists at all.
+PHASES: dict[str, dict] = {
+    "tease":   {"label": "Tease", "what": "Curiosity without the news. Nothing to verify yet."},
+    "launch":  {"label": "Launch", "what": "The news itself, in the week it is actually news."},
+    "sustain": {"label": "Sustain",
+                "what": "A second story, not the first one repeated. News value expires."},
+}
+
+# --- the descent: what PR may answer to ---------------------------------------------------------
+#
+# Read off the plan's `level`, never inferred. `owns` is the only level a PR objective is written
+# against; the other two are recorded so a screen can say why rather than just hiding rows.
+DESCENT: dict[str, dict] = {
+    "business": {
+        "stance": "refused",
+        "why": "PR cannot carry a revenue or volume number. Judged on one it will look like a failure "
+               "whatever it achieves, because nothing it does converts on its own.",
+    },
+    "marketing": {
+        "stance": "contributes",
+        "why": "Earned coverage moves consideration and trust, which the marketing objective needs — "
+               "but it does not own the outcome, and a PR objective written at this level quietly "
+               "takes credit for the whole funnel.",
+    },
+    "communication": {
+        "stance": "owns",
+        "why": "This is the row a PR objective is written against: what people should know, believe or "
+               "repeat.",
+    },
+}
+
+# --- the five PR jobs ---------------------------------------------------------------------------
+#
+# `cannot` is the field that earns this table. Every rung names the thing PR will be asked to do here
+# and cannot, so the refusal arrives before the work rather than after the review.
+#
+# `cues` are for SUGGESTION only. Loose phrase matching, in the manner of `main.shot_viability` — a
+# prompt for a person's judgement, never a filter, and never the basis of a refusal.
+PR_RUNGS: dict[str, dict] = {
+    "verify": {
+        "label": "Get the claim verified",
+        "what": "Put the proof into the trusted press so a third party has said it before the paid "
+                "work asks anyone to act on it.",
+        "proof": "The testing, the audit, the process — whatever makes the claim checkable.",
+        "cannot": "Create the reason to feel something. Trial is earned by the film and the sample.",
+        "measure": "Message pull-through on the proof, in the languages that matter.",
+        "cues": ("trial", "penetration", "purity", "quality", "trust", "believe", "proof", "verify",
+                 "safe", "tested"),
+    },
+    "explain": {
+        "label": "Explain the premium",
+        "what": "Give a reader a nameable cause for a price difference.",
+        "proof": "Cost structure a reader can follow — cold chain, sourcing, payment terms.",
+        "cannot": "Create desire. Coverage explains a premium; it does not make anyone want it.",
+        "measure": "Whether the cause appears in coverage, not just the price.",
+        "cues": ("premium", "price", "value", "justify", "worth", "cost", "premiumis"),
+    },
+    "prepare": {
+        "label": "Be trusted before the scare",
+        "what": "Publish the numbers before anybody asks, so the answer exists when a category "
+                "problem arrives.",
+        "proof": "Existing data and its independence.",
+        "cannot": "Work retrospectively. Started at the scare, this rung is not available — that is "
+                  "crisis response, which is a different sheet.",
+        "measure": "Whether the record exists and is findable, before it is needed.",
+        "cues": ("trust", "reassur", "scare", "safety", "confidence", "reputation", "transparen"),
+    },
+    "news": {
+        "label": "Convert genuine news",
+        "what": "Turn a first, an only, or a new availability into coverage in the week it is news.",
+        "proof": "What is verifiably new, stated without adjectives.",
+        "cannot": "Give you a second week. News value expires; sustain needs a different story.",
+        "measure": "Coverage in the launch window, weighted by tier.",
+        "cues": ("launch", "new", "introduc", "variant", "first", "announce", "availab", "expand"),
+    },
+    "institution": {
+        "label": "Stand the company up",
+        "what": "The company as an institution — livelihoods, procurement, employment, scale.",
+        "proof": "Numbers the company can stand behind and source.",
+        "cannot": "Carry a product claim. Mixing corporate and product PR is how a good corporate "
+                  "story reads as an ad.",
+        "measure": "Standing among the audiences that are not buyers.",
+        "cues": ("farmer", "livelihood", "employ", "community", "corporate", "institution", "csr",
+                 "sustainab", "procure"),
+    },
+}
+
+# Phrases that mean the objective is a commercial target rather than a communications one. Used only to
+# add a note when a `communication`-level row still reads like a sales target — the refusal proper
+# comes from `level`, which is stored data.
+COMMERCIAL_CUES = ("revenue", "volume", "market share", "sales", "conversion", "roi", "turnover",
+                   "crore", "units", "subscriber", "penetration %", "roas")
+
+# The message set. Three, because pull-through is measured per message and a set nobody can hold in
+# their head is not a set. The cap is a refusal, not a guideline.
+MESSAGE_MAX = 3
+
+
+# --- the media map: languages, tiers, and the categories the studio actually works in -----------
+#
+# Thirteen language markets plus English. The reason the map is small enough to curate by hand is
+# concentration: in every Indian language market the top two titles take more than half the readership
+# (Eenadu and Sakshi reach ~71% of Telugu readers; four Hindi titles ~76%). So "reach by language" is a
+# few dozen named mastheads per language, not a database of thousands — which is what makes a
+# person-confirmed list viable and scraping unnecessary.
+LANGUAGES: dict[str, dict] = {
+    "en": {"label": "English", "native": "English",
+           "where": "National, urban, and the whole of the trade and business press"},
+    "hi": {"label": "Hindi", "native": "हिन्दी",
+           "where": "UP, MP, Bihar, Rajasthan, Haryana, Jharkhand, Chhattisgarh, Uttarakhand, Delhi"},
+    "te": {"label": "Telugu", "native": "తెలుగు", "where": "Andhra Pradesh, Telangana"},
+    "ta": {"label": "Tamil", "native": "தமிழ்", "where": "Tamil Nadu, Puducherry"},
+    "bn": {"label": "Bengali", "native": "বাংলা", "where": "West Bengal, Tripura"},
+    "mr": {"label": "Marathi", "native": "मराठी", "where": "Maharashtra"},
+    "ml": {"label": "Malayalam", "native": "മലയാളം", "where": "Kerala"},
+    "kn": {"label": "Kannada", "native": "ಕನ್ನಡ", "where": "Karnataka"},
+    "gu": {"label": "Gujarati", "native": "ગુજરાતી", "where": "Gujarat"},
+    "or": {"label": "Odia", "native": "ଓଡ଼ିଆ", "where": "Odisha"},
+    "pa": {"label": "Punjabi", "native": "ਪੰਜਾਬੀ", "where": "Punjab"},
+    "as": {"label": "Assamese", "native": "অসমীয়া", "where": "Assam"},
+    "ur": {"label": "Urdu", "native": "اردو",
+           "where": "Telangana, UP, Bihar, Jammu & Kashmir — spread rather than concentrated"},
+}
+
+# What kind of outlet it is. `wire` is first because it behaves unlike the rest: one pickup syndicates
+# into dozens of titles, so a wire hit is not one item of coverage and counting it as one understates it
+# badly.
+TIERS: dict[str, dict] = {
+    "wire":     {"label": "Wire agency",
+                 "what": "PTI, ANI and the like. One pickup syndicates — never count it as one item."},
+    "national": {"label": "National English",
+                 "what": "Reach and authority. Wants the sharpest angle, and rarely the local one."},
+    "language": {"label": "State-language mass",
+                 "what": "Where attitudes are actually formed for most readers. The tier most brands "
+                         "under-serve because nobody in the room reads it."},
+    "trade":    {"label": "Trade and business",
+                 "what": "Read by the channel, the investor and the competitor. Category-specific."},
+    "digital":  {"label": "Digital news",
+                 "what": "Fast, linkable, and the only tier with a measurable audience figure."},
+}
+
+# The categories the studio has brand cases for. Trade press is category-specific, so this is the
+# dimension a trade outlet is filed under — and it is also the key the crisis framework table will be
+# keyed by, because the product regulator differs per category while the claims regulator does not.
+TRADE_CATEGORIES: dict[str, dict] = {
+    "dairy":    {"label": "Dairy and food",
+                 "regulator": "FSSAI — Food Safety and Standards Act; Food Recall Procedure "
+                              "Regulations 2017 (24-hour notification, Schedule I, Class I/II/III, "
+                              "public notice for Class I)"},
+    "beauty":   {"label": "Beauty and personal care",
+                 "regulator": "CDSCO — Drugs and Cosmetics Act 1940 and Cosmetics Rules 2020. Note "
+                              "the asymmetry: enforcement runs through registration suspension and "
+                              "prohibited-substance action, NOT a codified recall procedure with a "
+                              "public-notice template like food's"},
+    "apparel":  {"label": "Apparel and textiles",
+                 "regulator": "BIS — IS 15798 labelling and marking of consumer textiles, with "
+                              "traceability regulations tightening. No food-style recall regime"},
+    "cement":   {"label": "Cement and building materials",
+                 "regulator": "BIS — mandatory ISI mark under IS 269 and the Cement (Quality Control) "
+                              "Order 2003. A spec failure is a certification matter before it is a "
+                              "communications one"},
+}
+
+# The regulator that applies to EVERY category, and the one a marketing studio is most likely to fall
+# foul of. Kept separate from TRADE_CATEGORIES because it is not a per-category fact.
+#
+# This is why deliverable 7's "anything paid moves to `influencer` and must be disclosed" is a legal
+# requirement rather than good manners — and the definition of a material connection is wider than
+# money: free product, a family relationship and an equity stake all count.
+CLAIMS_AUTHORITY: dict[str, str] = {
+    "who": "CCPA — Central Consumer Protection Authority",
+    "what": "Guidelines for Prevention of Misleading Advertisements and Endorsements, 2022. Applies "
+            "across every category. ASCI's self-regulatory code is the substance; the CCPA guidelines "
+            "are what give it teeth.",
+    "disclosure": "Any material connection between endorser and advertiser must be disclosed — "
+                  "monetary payment, free product, family relationship, or equity stake.",
+    "penalty": "Up to ₹10 lakh, rising to ₹50 lakh for repeat violations, plus an endorsement ban on "
+               "the endorser of one to three years.",
+}
+
+# How stale a record is allowed to get before it stops being a fact. Journalism is a high-turnover
+# trade: beats move, desks close, people leave, and a media list is wrong within months of being
+# right. These bands are a judgement, not a measurement, and they are named so a screen can show the
+# age rather than presenting every row as equally current.
+FRESH_DAYS, AGEING_DAYS = 90, 270
+
+
+def _now() -> str:
+    return time.strftime("%Y-%m-%d %H:%M", time.localtime())
+
+
+def _path(sid: str) -> str:
+    return os.path.join(PR_DIR, f"{sid}.json")
+
+
+def load(sid: str) -> dict | None:
+    try:
+        with open(_path(sid), encoding="utf-8") as fh:
+            return json.load(fh)
+    except (OSError, ValueError):
+        return None
+
+
+def save(s: dict) -> dict:
+    os.makedirs(PR_DIR, exist_ok=True)
+    s["updated"] = _now()
+    tmp = _path(s["id"]) + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as fh:
+        json.dump(s, fh, indent=2, ensure_ascii=False)
+    os.replace(tmp, _path(s["id"]))      # never leave a half-written sheet behind
+    return s
+
+
+def drop(sid: str) -> bool:
+    try:
+        os.remove(_path(sid))
+        return True
+    except OSError:
+        return False
+
+
+def new_sheet(brand: str, mode: str = "campaign", *, plan_id: str = "", house_id: str = "",
+              kind: str = "", execution_id: str = "", phase: str = "") -> tuple[dict | None, str]:
+    """Start a PR sheet. Returns (sheet, error).
+
+    `mode` decides what the sheet is answerable to, and it is the ONLY structural difference between
+    the two — everything below is shared. A campaign sheet without a plan is refused, because campaign
+    PR with nothing above it is standalone PR that has not admitted it yet.
+    """
+    if mode not in MODES:
+        return None, f"Unknown mode {mode!r}. One of: {', '.join(MODES)}."
+    if MODES[mode]["needs_plan"] and not plan_id:
+        return None, ("Campaign PR answers to a plan — pick one, or start this as standalone PR. "
+                      "Campaign PR with nothing above it is standalone PR that has not said so.")
+    if mode == "standalone":
+        kind = kind or "corporate"
+        if kind not in STANDALONE_KINDS:
+            return None, (f"Unknown standalone kind {kind!r}. One of: "
+                          f"{', '.join(STANDALONE_KINDS)}.")
+    else:
+        kind = ""
+        if phase and phase not in PHASES:
+            return None, f"Unknown phase {phase!r}. One of: {', '.join(PHASES)}."
+    # `house_id` is resolved by the CALLER, not here — this module never loads a plan, which is what
+    # lets its gates be exercised without a plan store behind them. The `/pr-sheet` route inherits the
+    # plan's house when the client does not send one, so the sheet records what its messages were
+    # written against. Without that the document is unattributable the moment a plan switches house.
+    s = {
+        "id": uuid.uuid4().hex[:10], "brand": brand or "Brand",
+        "mode": mode, "kind": kind, "phase": phase if mode == "campaign" else "",
+        "plan": plan_id, "house": house_id, "execution": execution_id,
+        "created": _now(), "updated": _now(),
+        # The two things this phase builds. Both start empty and are honest about it.
+        "objectives": [],       # [{id, level, statement_id, statement, rung, proof, note}]
+        "messages": [],         # [{id, text, proof, proof_id, sourced}]
+    }
+    return save(s), ""
+
+
+def sheets(plan_id: str = "", mode: str = "") -> list[dict]:
+    os.makedirs(PR_DIR, exist_ok=True)
+    out = []
+    for f in sorted(os.listdir(PR_DIR)):
+        if not f.endswith(".json"):
+            continue
+        s = load(f[:-5])
+        if not s:
+            continue
+        if plan_id and s.get("plan") != plan_id:
+            continue
+        if mode and s.get("mode") != mode:
+            continue
+        out.append({"id": s["id"], "brand": s.get("brand", ""), "mode": s.get("mode", ""),
+                    "kind": s.get("kind", ""), "phase": s.get("phase", ""),
+                    "plan": s.get("plan", ""), "house": s.get("house", ""),
+                    "created": s.get("created", ""), "updated": s.get("updated", ""),
+                    "objectives": len(s.get("objectives") or []),
+                    "messages": len(s.get("messages") or []),
+                    "outstanding": [f["what"] for f in findings(s) if f.get("blocking")]})
+    return out
+
+
+# --- the objectives funnel ----------------------------------------------------------------------
+
+def suggest_rung(statement: str) -> tuple[str, str]:
+    """The PR job this objective looks like, and why. ('', '') when nothing matches.
+
+    A suggestion, never a decision — see the module note. Returning nothing is a real answer: an
+    objective that matches no rung may still be a good PR objective, and a person saying which one it
+    is beats this function inventing one.
+    """
+    text = str(statement or "").lower()
+    best, hits = "", 0
+    for key, spec in PR_RUNGS.items():
+        n = sum(1 for cue in spec["cues"] if cue in text)
+        if n > hits:
+            best, hits = key, n
+    if not best:
+        return "", ""
+    matched = [c for c in PR_RUNGS[best]["cues"] if c in text]
+    return best, f"reads like {PR_RUNGS[best]['label'].lower()} — matched {', '.join(matched)}"
+
+
+def suggest_statement(level_stance: str, rung: str, plan_statement: str) -> dict:
+    """A starting text for a PR objective, composed from the plan's own words and the rung's own words.
+
+    The screen currently offers an empty box against each plan objective, so a person who has nothing
+    to type writes nothing, `objectives: []` is sent, and the sheet stays empty — which blocks the
+    message set, the release, the plan and coverage behind it. This is the unblock, and the shape of it
+    matters more than the fact of it.
+
+    **Nothing here is generated prose.** The text is the rung's label and the plan's statement, both
+    verbatim, with the join words being the only thing this function contributes. `parts` carries the
+    two halves separately so a screen can show where each came from rather than presenting one opaque
+    sentence as the studio's idea.
+
+    Offered only where PR may write at all: a `refused` row gets nothing, because the funnel already
+    says no objective can be written against it and a suggestion would argue with that. A row with no
+    matching rung also gets nothing — `suggest_rung` returning empty is a real answer, and inventing a
+    job to have something to prefill is how a suggestion becomes a decision nobody made.
+    """
+    plan_statement = str(plan_statement or "").strip()
+    if level_stance not in ("owns", "contributes") or not rung or not plan_statement:
+        return {"text": "", "from": "", "parts": {}}
+    spec = PR_RUNGS[rung]
+    # Trailing full stop dropped so the composed sentence does not carry two.
+    subject = plan_statement.rstrip(".")
+    return {
+        "text": f"{spec['label']}: {subject}.",
+        "from": (f"the plan's own objective, narrowed to the {spec['label'].lower()} rung. "
+                 f"Both halves are quoted, not written — edit it into your words."),
+        "parts": {
+            "rung_label": spec["label"],
+            "plan_statement": plan_statement,
+            "measure": spec["measure"],
+            "cannot": spec["cannot"],
+        },
+    }
+
+
+def descend(row: dict) -> dict:
+    """What PR may do with one plan objective row. Read from `level`, not guessed."""
+    level = str((row or {}).get("level") or "").strip().lower()
+    spec = DESCENT.get(level)
+    statement = str((row or {}).get("statement") or "").strip()
+    out = {
+        "id": (row or {}).get("id", ""), "level": level, "statement": statement,
+        "measure": str((row or {}).get("measure") or "").strip(),
+        "stance": (spec or {}).get("stance", "unknown"),
+        "why": (spec or {}).get("why",
+                                "This row carries no level, so there is no way to tell what PR may "
+                                "answer to. Fix the objectives ladder first."),
+    }
+    rung, rung_why = suggest_rung(statement)
+    out["suggested_rung"] = rung
+    out["suggested_label"] = PR_RUNGS[rung]["label"] if rung else ""
+    out["suggested_why"] = rung_why
+    sug = suggest_statement(out["stance"], rung, statement)
+    out["suggested_statement"] = sug["text"]
+    out["suggested_statement_from"] = sug["from"]
+    out["suggested_statement_parts"] = sug["parts"]
+    # A communication-level row that still reads like a sales target is worth saying out loud: the
+    # level says PR owns it, and the sentence says otherwise.
+    low = statement.lower()
+    commercial = [c for c in COMMERCIAL_CUES if c in low]
+    out["note"] = ("" if not (commercial and level == "communication") else
+                   f"This is written at communication level but reads like a commercial target "
+                   f"({', '.join(commercial)}). PR can carry what people know or repeat; it cannot "
+                   f"carry the number.")
+    return out
+
+
+def funnel(objective_rows: list[dict]) -> dict:
+    """The whole ladder, with what PR may answer to at each level.
+
+    Refuses as well as maps — that is the point of it. A funnel that found a PR objective for every
+    marketing objective would be a funnel that had stopped reading.
+    """
+    rows = [descend(r) for r in (objective_rows or []) if isinstance(r, dict)]
+    owns = [r for r in rows if r["stance"] == "owns"]
+    notes = []
+    if not rows:
+        notes.append("This plan has no objectives ladder yet. PR descends from it, so there is "
+                     "nothing to write against.")
+    elif not owns:
+        notes.append("No communication-level objective in this plan. PR objectives are written "
+                     "against that row — add it to the objectives ladder rather than pointing PR at "
+                     "the business number.")
+    return {
+        "rows": rows,
+        "owns": [r["id"] for r in owns],
+        "refused": [r["id"] for r in rows if r["stance"] == "refused"],
+        "contributes": [r["id"] for r in rows if r["stance"] == "contributes"],
+        "levels": {k: {"stance": v["stance"], "why": v["why"]} for k, v in DESCENT.items()},
+        "rungs": {k: {kk: vv for kk, vv in v.items() if kk != "cues"} for k, v in PR_RUNGS.items()},
+        "notes": notes,
+    }
+
+
+def set_objectives(s: dict, items: list[dict], objective_rows: list[dict] | None = None
+                   ) -> tuple[dict | None, str]:
+    """Write the sheet's PR objectives. Each must name its rung and its proof.
+
+    `objective_rows` is the plan's objectives layer when available, so a PR objective can be refused
+    for descending from a row PR cannot carry. Without it the descent is not checked — an honest gap
+    rather than a silent pass, and `findings()` reports it.
+    """
+    by_id = {str(r.get("id")): r for r in (objective_rows or []) if isinstance(r, dict)}
+    out = []
+    for i, raw in enumerate(items or []):
+        if not isinstance(raw, dict):
+            continue
+        statement = str(raw.get("statement") or "").strip()
+        if not statement:
+            return None, f"Objective {i + 1} has no statement."
+        rung = str(raw.get("rung") or "").strip()
+        if rung and rung not in PR_RUNGS:
+            return None, f"Unknown PR job {rung!r}. One of: {', '.join(PR_RUNGS)}."
+        sid = str(raw.get("statement_id") or "").strip()
+        if sid and sid in by_id:
+            d = descend(by_id[sid])
+            if d["stance"] == "refused":
+                return None, (f"Objective {i + 1} descends from the {d['level']} row. {d['why']}")
+        out.append({
+            "id": str(raw.get("id") or uuid.uuid4().hex[:8]),
+            "statement": statement,
+            "statement_id": sid,
+            "level": (by_id.get(sid) or {}).get("level", "") if sid else "",
+            "rung": rung,
+            "proof": str(raw.get("proof") or "").strip(),
+            "note": str(raw.get("note") or "").strip(),
+        })
+    s["objectives"] = out
+    return save(s), ""
+
+
+# --- the message set ----------------------------------------------------------------------------
+
+def set_messages(s: dict, items: list[dict], house: dict | None = None) -> tuple[dict | None, str]:
+    """Write the declared message set. At most `MESSAGE_MAX`, each pointing at a proof.
+
+    **This is the object message pull-through is measured against**, which is why it is stored rather
+    than derived: a message set that changed after the outreach would make the metric meaningless.
+
+    An unsourced message is FLAGGED, not refused — the same treatment the house gives an unsourced
+    option. A person may knowingly run a message whose proof is not in the library yet; what they may
+    not do is not notice.
+    """
+    items = [x for x in (items or []) if isinstance(x, dict)]
+    if len(items) > MESSAGE_MAX:
+        return None, (f"{len(items)} messages — the set is capped at {MESSAGE_MAX}. Pull-through is "
+                      f"measured per message, and a set nobody can hold in their head is not a set. "
+                      f"Cut to the {MESSAGE_MAX} that carry the proof.")
+    known = {r["id"]: r for r in (_rtbs(house) or [])}
+    out = []
+    for i, raw in enumerate(items):
+        text = str(raw.get("text") or "").strip()
+        if not text:
+            return None, f"Message {i + 1} is empty."
+        pid = str(raw.get("proof_id") or "").strip()
+        proof = str(raw.get("proof") or "").strip()
+        # Three states, not two. A message that was never sourced and a message whose evidence has
+        # since been DELETED both used to report as "unsourced", and they need different actions: the
+        # first is a decision not yet made, the second is the ground moving under a message already
+        # declared and possibly already pitched. `claim_fact` draws exactly this distinction for the
+        # platform's claim; there is no reason PR should draw it less carefully.
+        sourced = bool(pid) and pid in known
+        missing = bool(pid) and pid not in known
+        if sourced:
+            proof = proof or known[pid]["text"]
+        out.append({"id": str(raw.get("id") or uuid.uuid4().hex[:8]), "text": text,
+                    "proof": proof, "proof_id": pid, "sourced": sourced,
+                    "proof_missing": missing})
+    s["messages"] = out
+    return save(s), ""
+
+
+def _rtbs(house: dict | None) -> list[dict]:
+    """The house's reasons to believe, as proof candidates. Imported lazily.
+
+    `ideas` imports `media` and `strategy`; importing it at module scope here would put `pr` into that
+    graph for the sake of one lookup. Nothing else in this module needs it.
+    """
+    if not house:
+        return []
+    try:
+        import ideas
+        return ideas.house_basis(house).get("rtbs") or []
+    except Exception:
+        return []
+
+
+def proof_options(house: dict | None) -> list[dict]:
+    """What a message may point at. The house's RTBs — the same list the platform's claim comes from,
+    so PR and the idea platform are provably standing on the same evidence rather than two copies."""
+    return [{"id": r["id"], "text": r.get("text", ""), "pillar": r.get("pillar", "")}
+            for r in _rtbs(house)]
+
+
+# --- what is missing ----------------------------------------------------------------------------
+
+def findings(s: dict | None) -> list[dict]:
+    """Gaps worth showing, blocking ones first. Same shape the plan and campaign findings use."""
+    s = s or {}
+    out: list[dict] = []
+    objectives = s.get("objectives") or []
+    messages = s.get("messages") or []
+
+    crisis = s.get("mode") == "standalone" and s.get("kind") == "crisis"
+
+    if crisis:
+        # A recall sheet is not a marketing document, and asking it for a "PR objective" would be the
+        # wrong question at the worst moment. Its real state comes from `crisis_status`, which knows
+        # about the framework, the class, the clock and the signatures.
+        cs = crisis_status(s)
+        for f in cs.get("findings", []):
+            out.append({"layer": "pr", "level": f["level"], "blocking": f["blocking"],
+                        "what": f["what"], "why": f["why"]})
+    if not objectives and not crisis:
+        out.append({"layer": "pr", "level": "gap", "blocking": True,
+                    "what": "No PR objective yet",
+                    "why": "Everything downstream — the media map, the release, the measurement — is "
+                           "written against these. Without one there is nothing to judge the work by."})
+    for o in objectives:
+        if not o.get("rung"):
+            out.append({"layer": "pr", "level": "gap", "blocking": False,
+                        "what": f"“{o['statement'][:52]}” has no PR job assigned",
+                        "why": "Which of the five jobs this is decides what it can and cannot deliver, "
+                               "and what it should be measured on."})
+        if not o.get("proof"):
+            out.append({"layer": "pr", "level": "risk", "blocking": True,
+                        "what": f"“{o['statement'][:52]}” names no proof",
+                        "why": "PR carries a proof somebody else vouches for. An objective with "
+                               "nothing checkable behind it is an assertion looking for a journalist."})
+        if not o.get("statement_id"):
+            out.append({"layer": "pr", "level": "note", "blocking": False,
+                        "what": f"“{o['statement'][:52]}” is not tied to a plan objective",
+                        "why": "Its descent cannot be checked, so nothing stops it answering to a "
+                               "business number PR could never carry."})
+
+    if not messages:
+        out.append({"layer": "pr", "level": "gap", "blocking": not crisis,
+                    "what": "No declared message set",
+                    "why": ("The three things this response must say — what the product is, what the "
+                            "risk is, what a consumer should do — are the message set here."
+                            if crisis else
+                            "Message pull-through — the metric that separates coverage from effect — "
+                            "is measured against this set. Without it, only volume can be reported.")})
+    for m in messages:
+        if m.get("proof_missing"):
+            # Blocking, unlike a plain unsourced message. Something was chosen and has since gone.
+            out.append({"layer": "pr", "level": "risk", "blocking": True,
+                        "what": f"“{m['text'][:52]}” points at evidence that is gone",
+                        "why": "Its reason to believe was deleted from the house, or the house was "
+                               "replaced. This message was declared against a proof that no longer "
+                               "exists — repoint it or withdraw it before anything else goes out."})
+        elif not m.get("sourced"):
+            out.append({"layer": "pr", "level": "risk", "blocking": False,
+                        "what": f"“{m['text'][:52]}” is unsourced",
+                        "why": "It points at no reason to believe in the house. Runnable, but a "
+                               "journalist will ask, and the answer should exist before they do."})
+    if s.get("mode") == "campaign" and not s.get("phase"):
+        out.append({"layer": "pr", "level": "note", "blocking": False,
+                    "what": "No phase set",
+                    "why": "Tease, launch and sustain want different outlets and different messages. "
+                           "Unset, this sheet is being written for all three at once."})
+    order = {"gap": 0, "risk": 1, "note": 2}
+    return sorted(out, key=lambda f: (not f["blocking"], order.get(f["level"], 3)))
+
+
+def status(s: dict | None) -> dict:
+    """The sheet's own honest state — what is decided, what is not, and what PR is for here."""
+    s = s or {}
+    objectives = s.get("objectives") or []
+    messages = s.get("messages") or []
+    fs = findings(s)
+    mode = s.get("mode", "")
+    return {
+        "id": s.get("id", ""), "brand": s.get("brand", ""),
+        "mode": mode, "mode_label": (MODES.get(mode) or {}).get("label", ""),
+        "kind": s.get("kind", ""),
+        "kind_label": (STANDALONE_KINDS.get(s.get("kind", "")) or {}).get("label", ""),
+        "phase": s.get("phase", ""),
+        "phase_label": (PHASES.get(s.get("phase", "")) or {}).get("label", ""),
+        "linked": {"plan": s.get("plan", ""), "house": s.get("house", ""),
+                   "execution": s.get("execution", "")},
+        "objectives": len(objectives),
+        "objectives_with_proof": sum(1 for o in objectives if o.get("proof")),
+        "messages": len(messages),
+        "messages_sourced": sum(1 for m in messages if m.get("sourced")),
+        "message_cap": MESSAGE_MAX,
+        "findings": fs,
+        "blocking": [f["what"] for f in fs if f.get("blocking")],
+        "ready": not any(f.get("blocking") for f in fs),
+        # Said on every sheet rather than in a help page. It is the sentence that stops PR being
+        # briefed as though it were advertising.
+        "role": media.role_for("pr")[0],
+        "role_why": media.role_for("pr")[1],
+    }
+
+
+# --- the media map ------------------------------------------------------------------------------
+#
+# Brand-level, not sheet-level: a campaign sheet and a recall sheet reach for the same list, and a map
+# per sheet is how two copies start disagreeing about who covers dairy in Telugu.
+#
+# **Outlets may be suggested. People never are.** A masthead, its language and its edition are public
+# facts a model knows well, and a person keeps or cuts the suggestion the way plan rows already work. A
+# journalist's name, beat and contact is where a model invents confidently, and it is personal data
+# about a real person — so `add_journalist` refuses anything not marked as entered or imported.
+
+MAP_DIR = tenancy.dir("pr_map")
+
+# Seed titles, offered as SUGGESTIONS and nothing more. Every one enters a map `confirmed: False`.
+#
+# Deliberately incomplete. It carries only the titles the concentration research actually established,
+# with the source recorded, because a longer list assembled from memory would be exactly the invented
+# reference data this module refuses elsewhere. Languages absent from here get an honest "no seed for
+# this market" rather than a plausible guess.
+SEED_SOURCE = ("Media Ownership Monitor India (readership shares by language market) and published "
+               "circulation figures — confirm each title and its edition before use")
+SEED_OUTLETS: dict[str, tuple[str, ...]] = {
+    "hi": ("Dainik Jagran", "Dainik Bhaskar", "Hindustan", "Amar Ujala"),
+    "te": ("Eenadu", "Sakshi"),
+    "ml": ("Malayala Manorama",),
+    "ta": ("Daily Thanthi",),
+    "mr": ("Lokmat",),
+}
+
+
+def _map_path(brand_slug: str) -> str:
+    return os.path.join(MAP_DIR, f"{brand_slug}.json")
+
+
+def map_load(brand: str) -> dict:
+    """The brand's media map, or a fresh empty one. Never None — a brand always has a map, even if it
+    is empty, because "no map yet" and "a map with nothing in it" are the same thing to a reader.
+
+    Keyed through `brandprofile.brand_key` for the same reason `mediaplan.ci_load` is: a plan says
+    "Heritage" and the profile says "Heritage Foods", and slugged directly those are two maps.
+    """
+    slug = brandprofile.brand_key(brand)
+    for key in brandprofile.brand_keys(brand):
+        if os.path.isfile(_map_path(key)):
+            slug = key
+            break
+    try:
+        with open(_map_path(slug), encoding="utf-8") as fh:
+            m = json.load(fh)
+        if isinstance(m, dict):
+            return m
+    except (OSError, ValueError):
+        pass
+    return {"brand": brand, "slug": slug, "created": _now(), "updated": _now(),
+            "outlets": [], "journalists": []}
+
+
+def map_save(m: dict) -> dict:
+    os.makedirs(MAP_DIR, exist_ok=True)
+    m["updated"] = _now()
+    path = _map_path(m["slug"])
+    tmp = path + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as fh:
+        json.dump(m, fh, indent=2, ensure_ascii=False)
+    os.replace(tmp, path)
+    return m
+
+
+def _age_days(stamp: str) -> int | None:
+    """Days since a 'YYYY-MM-DD ...' stamp, or None when there is no stamp to measure from."""
+    s = str(stamp or "")[:10]
+    if len(s) != 10:
+        return None
+    try:
+        then = time.mktime(time.strptime(s, "%Y-%m-%d"))
+    except ValueError:
+        return None
+    return max(0, int((time.time() - then) // 86400))
+
+
+def freshness(record: dict) -> dict:
+    """How old this record's last check is, and what to make of it.
+
+    `unverified` is its own state, distinct from `stale`. A row nobody has ever checked is not an old
+    fact, it is not a fact — and collapsing the two would let an unchecked import pass as merely
+    ageing.
+    """
+    days = _age_days((record or {}).get("verified", ""))
+    if days is None:
+        return {"band": "unverified", "days": None,
+                "what": "Never verified. Treat as a lead, not a contact."}
+    if days <= FRESH_DAYS:
+        return {"band": "fresh", "days": days, "what": f"Checked {days} days ago."}
+    if days <= AGEING_DAYS:
+        return {"band": "ageing", "days": days,
+                "what": f"{days} days since anyone checked. Beats move; verify before pitching."}
+    return {"band": "stale", "days": days,
+            "what": f"{days} days old. Assume the desk, the beat or the person has changed."}
+
+
+def add_outlet(m: dict, item: dict) -> tuple[dict | None, str]:
+    """Add or update one outlet. Returns (map, error).
+
+    `circulation` and `digital` are kept as SEPARATE numbers, each with its own source and date, and
+    there is deliberately no combined field. Print circulation counts audited copies; a digital figure
+    counts visits to a website. They measure different populations by different methods, and the one
+    thing that must never exist here is a single blended "reach" that looks authoritative and means
+    nothing. See `reach_by_language`.
+    """
+    lang = str(item.get("language") or "").strip().lower()
+    if lang not in LANGUAGES:
+        return None, f"Unknown language {lang!r}. One of: {', '.join(LANGUAGES)}."
+    tier = str(item.get("tier") or "").strip().lower()
+    if tier not in TIERS:
+        return None, f"Unknown tier {tier!r}. One of: {', '.join(TIERS)}."
+    name = str(item.get("name") or "").strip()
+    if not name:
+        return None, "An outlet needs a name."
+    category = str(item.get("category") or "").strip().lower()
+    if tier == "trade" and category not in TRADE_CATEGORIES:
+        return None, (f"A trade outlet is category-specific — name one of: "
+                      f"{', '.join(TRADE_CATEGORIES)}.")
+    if category and category not in TRADE_CATEGORIES:
+        return None, f"Unknown category {category!r}. One of: {', '.join(TRADE_CATEGORIES)}."
+
+    row = {
+        "id": str(item.get("id") or uuid.uuid4().hex[:8]),
+        "name": name, "language": lang, "tier": tier, "category": category,
+        "edition": str(item.get("edition") or "").strip(),
+        "region": str(item.get("region") or "").strip(),
+        "note": str(item.get("note") or "").strip(),
+        # Two audiences, never one. Absent is a real answer and is reported as such.
+        "circulation": item.get("circulation") if item.get("circulation") not in ("", None) else None,
+        "circulation_source": str(item.get("circulation_source") or "").strip(),
+        "circulation_as_of": str(item.get("circulation_as_of") or "").strip(),
+        "digital": item.get("digital") if item.get("digital") not in ("", None) else None,
+        "digital_source": str(item.get("digital_source") or "").strip(),
+        "digital_as_of": str(item.get("digital_as_of") or "").strip(),
+        "confirmed": bool(item.get("confirmed")),
+        "origin": str(item.get("origin") or "entered").strip(),   # entered | imported | suggested
+        "verified": str(item.get("verified") or "").strip(),
+    }
+    outlets = [o for o in (m.get("outlets") or []) if o.get("id") != row["id"]]
+    outlets.append(row)
+    m["outlets"] = outlets
+    return map_save(m), ""
+
+
+def add_journalist(m: dict, item: dict) -> tuple[dict | None, str]:
+    """Add or update one journalist. Refuses a generated record.
+
+    The refusal is the feature. Everything else here treats a model's suggestion as a draft a person
+    confirms; a person's NAME, beat and contact details are the one place where a confident invention
+    is both useless and a problem about a real individual. So `origin` must say a human put it there
+    or a licensed tool did.
+    """
+    origin = str(item.get("origin") or "").strip().lower()
+    if origin not in ("entered", "imported"):
+        return None, ("A journalist record has to be entered by a person or imported from a licensed "
+                      "source. Names, beats and contacts are not suggested here — a generated one is "
+                      "an invention about a real individual, and no reader could tell.")
+    name = str(item.get("name") or "").strip()
+    if not name:
+        return None, "A journalist needs a name."
+    outlet_id = str(item.get("outlet") or item.get("outlet_id") or "").strip()
+    known = {o["id"]: o for o in (m.get("outlets") or [])}
+    if outlet_id and outlet_id not in known:
+        return None, "That outlet is not in this map. Add the outlet before the people on it."
+    row = {
+        "id": str(item.get("id") or uuid.uuid4().hex[:8]),
+        "name": name, "outlet": outlet_id,
+        "outlet_name": known.get(outlet_id, {}).get("name", ""),
+        "beat": str(item.get("beat") or "").strip(),
+        "language": str(item.get("language") or known.get(outlet_id, {}).get("language", "")).strip(),
+        "contact": str(item.get("contact") or "").strip(),
+        "recent": str(item.get("recent") or "").strip(),   # what they last wrote that is relevant
+        "note": str(item.get("note") or "").strip(),
+        "origin": origin,
+        "verified": str(item.get("verified") or "").strip(),
+    }
+    people = [j for j in (m.get("journalists") or []) if j.get("id") != row["id"]]
+    people.append(row)
+    m["journalists"] = people
+    return map_save(m), ""
+
+
+def drop_outlet(m: dict, outlet_id: str) -> tuple[dict, int]:
+    """Remove an outlet and every journalist filed under it. Returns (map, people removed).
+
+    The people go with it deliberately: a contact whose outlet has been removed is a name with no
+    masthead, which is worse than absent because it still looks pitchable.
+    """
+    m["outlets"] = [o for o in (m.get("outlets") or []) if o.get("id") != outlet_id]
+    people = m.get("journalists") or []
+    keep = [j for j in people if j.get("outlet") != outlet_id]
+    m["journalists"] = keep
+    return map_save(m), len(people) - len(keep)
+
+
+def drop_journalist(m: dict, jid: str) -> dict:
+    m["journalists"] = [j for j in (m.get("journalists") or []) if j.get("id") != jid]
+    return map_save(m)
+
+
+def derive_map_languages(brand: str = "") -> dict:
+    """Which languages a media map for this brand should cover, and where each one came from.
+
+    The map used to require a person to name the languages before it would suggest a single title,
+    which is a question the brand profile has already answered twice over: `languages` is declared in
+    brand setup, and `states` implies more through `geo`. Asking again is the re-asking this project
+    keeps removing.
+
+    Two sources, and the difference between them is kept rather than merged. A language somebody
+    DECLARED for the brand is a decision; a language IMPLIED by a state the brand sells in is
+    reference data about that state, and the brand may have no intention of writing in it. Both are
+    offered, each labelled, and the implied ones are not silently promoted to declared.
+
+    `seeded` is reported per language because `SEED_OUTLETS` covers five of the twelve. An unseeded
+    language is a gap in this module's list, not an absence of press in that language, and it says so
+    in those words rather than coming back as an empty suggestion set.
+    """
+    b = brandprofile.by_name(brand) if brand else None
+    declared = [str(x).strip().lower() for x in ((b or {}).get("languages") or []) if str(x).strip()]
+    states = [str(x).strip().lower() for x in ((b or {}).get("states") or []) if str(x).strip()]
+
+    rows: list[dict] = []
+    seen: set[str] = set()
+    for code in declared:
+        if code in seen:
+            continue
+        seen.add(code)
+        rows.append({"code": code, "label": (LANGUAGES.get(code) or {}).get("label", code),
+                     "source": "declared",
+                     "why": f"Declared on the brand profile as a language {b.get('name', 'this brand')} "
+                            f"can be written in.",
+                     "seeded": code in SEED_OUTLETS})
+    for st in states:
+        for code in geo.languages_of(st):
+            code = str(code).strip().lower()
+            if code in seen:
+                continue
+            seen.add(code)
+            rows.append({"code": code, "label": (LANGUAGES.get(code) or {}).get("label", code),
+                         "source": "implied",
+                         "why": f"Spoken in {geo.state_label(st)}, which this brand sells in. "
+                                f"Nobody has said the brand can write in it — confirm "
+                                f"before pitching in it.",
+                         "seeded": code in SEED_OUTLETS})
+
+    note = ""
+    if not b:
+        note = ("No brand was named, so there is nothing to derive from. A media map is per brand."
+                if not str(brand or "").strip() else
+                f"No brand profile matches {brand!r}, so there is nothing to derive from. A media map "
+                f"is per brand, and matching is exact so one brand's map cannot be filed under another.")
+    elif not rows:
+        note = ("This brand declares no languages and no states, so the map has nothing to derive "
+                "from. Both are set in brand setup, and setting them there fixes this everywhere.")
+    return {
+        "brand": (b or {}).get("name", brand),
+        "languages": rows,
+        "declared": [r["code"] for r in rows if r["source"] == "declared"],
+        "implied": [r["code"] for r in rows if r["source"] == "implied"],
+        "seeded": [r["code"] for r in rows if r["seeded"]],
+        "not_seeded": [r["code"] for r in rows if not r["seeded"]],
+        "from_states": states,
+        "note": note,
+    }
+
+
+def suggest_outlets(languages: tuple | list = (), tier: str = "language") -> dict:
+    """Titles worth considering for these languages. Suggestions only, every one unconfirmed.
+
+    Says plainly where it has nothing. A market with no seed gets a note rather than a guess, because
+    the alternative — assembling plausible mastheads from memory — is the invented reference data this
+    module refuses everywhere else.
+    """
+    langs = [str(x).strip().lower() for x in (languages or []) if str(x).strip()]
+    bad = [x for x in langs if x not in LANGUAGES]
+    if bad:
+        return {"suggested": [], "no_seed": [], "unknown": bad, "source": SEED_SOURCE,
+                "note": f"Unknown language(s): {', '.join(bad)}."}
+    langs = langs or list(LANGUAGES)
+    suggested, no_seed = [], []
+    for lang in langs:
+        titles = SEED_OUTLETS.get(lang) or ()
+        if not titles:
+            no_seed.append(lang)
+            continue
+        for name in titles:
+            suggested.append({"name": name, "language": lang, "tier": tier, "category": "",
+                              "confirmed": False, "origin": "suggested", "verified": ""})
+    note = ""
+    if no_seed:
+        note = (f"No seed titles for {', '.join(LANGUAGES[x]['label'] for x in no_seed)}. That is a "
+                f"gap in this list, not an absence of press — add the mastheads for those markets "
+                f"directly rather than waiting for a suggestion.")
+    return {"suggested": suggested, "no_seed": no_seed, "unknown": [],
+            "source": SEED_SOURCE, "note": note}
+
+
+def reach_by_language(m: dict) -> dict:
+    """Circulation and digital audience per language — as TWO figures, never one.
+
+    `why_missing` is the honest part. The Indian Readership Survey has been suspended since 2019, so
+    there is no readership currency to fall back on: an outlet with no audited circulation entered
+    against it has no defensible audience number, and this reports that rather than estimating one.
+    """
+    out: dict[str, dict] = {}
+    for o in (m.get("outlets") or []):
+        lang = o.get("language") or ""
+        bucket = out.setdefault(lang, {
+            "language": lang, "label": LANGUAGES.get(lang, {}).get("label", lang),
+            "outlets": 0, "confirmed": 0, "wire": 0,
+            "circulation": 0, "circulation_titles": 0,
+            "digital": 0, "digital_titles": 0,
+            "missing_circulation": [], "missing_digital": [],
+        })
+        bucket["outlets"] += 1
+        bucket["confirmed"] += 1 if o.get("confirmed") else 0
+        # A wire agency has no circulation of its own — it syndicates into other people's. Counting it
+        # as a title with a missing figure would put a permanent, unfixable row on the gap list, and a
+        # gap list that can never be cleared is one people stop reading.
+        syndicates = o.get("tier") == "wire"
+        if syndicates:
+            bucket["wire"] += 1
+            continue
+        try:
+            c = float(o.get("circulation")) if o.get("circulation") is not None else None
+        except (TypeError, ValueError):
+            c = None
+        if c is None:
+            bucket["missing_circulation"].append(o.get("name", ""))
+        else:
+            bucket["circulation"] += c
+            bucket["circulation_titles"] += 1
+        try:
+            d = float(o.get("digital")) if o.get("digital") is not None else None
+        except (TypeError, ValueError):
+            d = None
+        if d is None:
+            bucket["missing_digital"].append(o.get("name", ""))
+        else:
+            bucket["digital"] += d
+            bucket["digital_titles"] += 1
+    # A total of nothing is None, not 0. Zero is a circulation; "no title here has a figure" is an
+    # absence, and a screen showing `0` for the second would be stating something false.
+    for b in out.values():
+        if not b["circulation_titles"]:
+            b["circulation"] = None
+        if not b["digital_titles"]:
+            b["digital"] = None
+    return {
+        "languages": [out[k] for k in sorted(out)],
+        "blended": None,
+        "why_wire": ("A wire agency carries no circulation of its own — one pickup syndicates into other "
+                     "titles. Counted separately so it is neither a missing figure nor a zero."),
+        "why_no_blend": ("Print circulation counts audited copies; a digital figure counts visits to a "
+                         "site. They measure different populations by different methods, so there is "
+                         "no total. Two numbers, labelled, or none."),
+        "why_missing": ("The Indian Readership Survey has been suspended since 2019, so there is no "
+                        "readership currency to fill a gap with. A title with no audited circulation "
+                        "entered against it has no defensible audience figure — reported here rather "
+                        "than estimated."),
+    }
+
+
+def map_status(m: dict) -> dict:
+    """The map's own honest state: coverage, confirmation, freshness, and what has no audience figure."""
+    outlets = m.get("outlets") or []
+    people = m.get("journalists") or []
+    by_band: dict[str, int] = {}
+    for r in outlets + people:
+        band = freshness(r)["band"]
+        by_band[band] = by_band.get(band, 0) + 1
+    langs_present = sorted({o.get("language") for o in outlets if o.get("language")})
+    tiers_present = sorted({o.get("tier") for o in outlets if o.get("tier")})
+    findings = []
+    if not outlets:
+        findings.append({"level": "gap", "blocking": True, "what": "No outlets in the map yet",
+                         "why": "The release, the languages and every coverage metric are written "
+                                "against this list."})
+    unconfirmed = [o["name"] for o in outlets if not o.get("confirmed")]
+    if unconfirmed:
+        findings.append({"level": "risk", "blocking": False,
+                         "what": f"{len(unconfirmed)} outlet(s) not confirmed by a person",
+                         "why": "Suggested titles are a draft. Until someone confirms the masthead and "
+                                "its edition, this is a reading list rather than a media map."})
+    no_people = [o["name"] for o in outlets
+                 if o.get("tier") != "wire" and not any(j.get("outlet") == o["id"] for j in people)]
+    if no_people:
+        findings.append({"level": "note", "blocking": False,
+                         "what": f"{len(no_people)} outlet(s) with nobody named against them",
+                         "why": "A pitch goes to a person, not a masthead. One-to-one email is what "
+                                "journalists actually prefer, and a title with no name attached "
+                                "cannot receive one."})
+    old = [r.get("name", "") for r in outlets + people if freshness(r)["band"] == "stale"]
+    if old:
+        findings.append({"level": "risk", "blocking": False,
+                         "what": f"{len(old)} record(s) over {AGEING_DAYS} days unchecked",
+                         "why": "Beats and desks move. An unverified contact wastes the one pitch that "
+                                "outlet was going to read."})
+    return {
+        "brand": m.get("brand", ""), "slug": m.get("slug", ""),
+        "outlets": len(outlets), "journalists": len(people),
+        "confirmed": sum(1 for o in outlets if o.get("confirmed")),
+        "languages": langs_present,
+        "languages_missing": [k for k in LANGUAGES if k not in langs_present],
+        "tiers": tiers_present,
+        "freshness": by_band, "fresh_days": FRESH_DAYS, "ageing_days": AGEING_DAYS,
+        "reach": reach_by_language(m),
+        "findings": findings,
+        "blocking": [f["what"] for f in findings if f["blocking"]],
+        "claims_authority": CLAIMS_AUTHORITY,
+    }
+
+
+# --- the press release ---------------------------------------------------------------------------
+#
+# Inverted pyramid, and the reason is mechanical rather than stylistic: an editor cuts from the BOTTOM.
+# A release whose argument builds to a conclusion loses the conclusion first. So the most newsworthy
+# fact goes in the lead, support follows, and the background sits last where it can be lost without
+# damage.
+#
+# **The lead's five questions are stored as fields, not parsed out of prose.** Gating a paragraph by
+# looking for who/what/when/where/why in it would be a guess dressed as a check. Asking the drafter to
+# fill five named fields makes the gate real, and gives `pr_skill` an exact contract instead of an
+# instruction to "remember the 5Ws".
+FIVE_W = {
+    "who":   "Whose news this is — the company, and the person if one is central.",
+    "what":  "What has actually happened or been established. No adjectives.",
+    "when":  "The date it happened or takes effect.",
+    "where": "The place, at the specificity the story needs — a plant, a district, a state.",
+    "why":   "Why a reader outside the company should care. The hardest of the five and the one most "
+             "often answered with why the COMPANY cares.",
+}
+
+# The parts of a release, and whether it can ship without each. `blocking` is not a style opinion: a
+# release with no attributed quote is a company talking about itself, and a release with no contact is
+# a story a journalist cannot check.
+RELEASE_PARTS: dict[str, dict] = {
+    "headline":    {"label": "Headline", "required": True,
+                    "what": "The news in one line, in the words a reader would use."},
+    "dateline":    {"label": "Dateline", "required": True,
+                    "what": "Place and date. The convention that tells a desk where this belongs."},
+    "lead":        {"label": "Lead paragraph", "required": True,
+                    "what": "The five questions, answered. Everything below is support."},
+    "support":     {"label": "Supporting paragraph", "required": False,
+                    "what": "The detail and the numbers that back the lead."},
+    "quote":       {"label": "Attributed quote", "required": True,
+                    "what": "A named person saying something they would actually say out loud."},
+    "background":  {"label": "Background", "required": False,
+                    "what": "Context. Sits last because it is the first thing an editor cuts."},
+    "boilerplate": {"label": "Boilerplate", "required": True,
+                    "what": "What the company is, in three sentences that never change."},
+    "contact":     {"label": "Contact", "required": True,
+                    "what": "A person, a phone number and an email that will be answered today."},
+}
+
+# Word count. The researched band for a release that gets read is 300-400 words; this is reported as a
+# band with advice rather than refused, because a 280-word release is not broken and a gate that
+# refuses one teaches people to pad.
+WORDS_MIN, WORDS_MAX = 300, 400
+
+
+def _words(text: str) -> int:
+    return len([w for w in str(text or "").split() if w.strip()])
+
+
+def release_body(r: dict) -> str:
+    """Every prose part in reading order — what the word count is actually counted over."""
+    parts = [str((r or {}).get(k) or "") for k in
+             ("headline", "dateline", "lead_text", "support", "quote", "background", "boilerplate")]
+    return " ".join(p for p in parts if p.strip())
+
+
+def new_release(s: dict, language: str = "en") -> tuple[dict | None, str]:
+    """Start a release on a PR sheet. One release per sheet, in one source language.
+
+    Translations hang off it rather than being separate releases, because a translated release is the
+    same news and must carry the same declared messages — two independent releases would let the
+    Telugu one drift from the English one with nothing to catch it.
+    """
+    lang = str(language or "en").strip().lower()
+    if lang not in LANGUAGES:
+        return None, f"Unknown language {lang!r}. One of: {', '.join(LANGUAGES)}."
+    s["release"] = {
+        "language": lang,
+        "headline": "", "dateline": "", "lead_text": "", "support": "",
+        "quote": "", "quote_by": "", "quote_role": "",
+        "background": "", "boilerplate": "", "contact": "",
+        "five_w": {k: "" for k in FIVE_W},
+        "carries": [],          # message ids this release is declared to carry
+        "mandatories": [],      # locked-copy ids that must appear verbatim
+        "embargo": "",
+        "translations": {},
+        "created": _now(), "updated": _now(),
+    }
+    return save(s), ""
+
+
+def release_suggestions(s: dict, plan: dict | None = None, house: dict | None = None) -> dict:
+    """What a release can be filled in with from what is already declared, and what it cannot.
+
+    The release form asks for eleven fields before it will do anything, and several of them are facts
+    the studio already holds: the boilerplate is the brand profile, the mandatories are the brand's
+    mandatories, `carries` is the sheet's own declared message set. Asking a person to retype those is
+    the re-asking this project keeps removing.
+
+    **The split down the middle of this function is the point.** `fill` is fields assembled from
+    declared data, each with the source named. `write` is the prose — the headline, the lead, the
+    support, the quote, the background — and this returns **no text for any of them**. A studio that
+    generated a headline from a brief and presented it as a suggestion would be writing the news, and
+    the one thing a press release cannot be is plausible. What it returns instead is `source_material`:
+    everything a writer (or a model call the screen makes deliberately) needs, in one place, quoted
+    from its origin.
+
+    Nothing here writes to the sheet. It is a proposal a person applies field by field.
+    """
+    rel = (s or {}).get("release") or {}
+    brand_name = str((s or {}).get("brand") or "").strip()
+    b = brandprofile.by_name(brand_name) if brand_name else None
+
+    fill: list[dict] = []
+
+    def offer(field: str, value, source: str):
+        if isinstance(value, str):
+            value = value.strip()
+        if not value:
+            return
+        fill.append({"field": field, "value": value, "source": source,
+                     "already_set": bool(rel.get(field))})
+
+    if b:
+        # A boilerplate is the standing description of the company. Every clause is a declared field,
+        # joined in a fixed order — no adjectives added.
+        # Sentences, not clauses joined by full stops: the first version produced
+        # "Dairy. operating in India." Each piece here is a whole sentence or it is not added.
+        parts = []
+        head = " ".join(x for x in (str(b.get("name", "")).rstrip(",") + ",", b.get("category", "")) if str(x).strip())
+        if str(b.get("name") or "").strip():
+            parts.append(head.rstrip("."))
+        if b.get("market"):
+            parts.append(f"It operates in {b['market']}".rstrip("."))
+        if b.get("hero_product"):
+            parts.append(f"Its principal product is {b['hero_product']}".rstrip("."))
+        if parts:
+            offer("boilerplate", ". ".join(parts) + ".",
+                  "the brand profile — name, category, market and hero product, as sentences")
+        offer("mandatories", [str(x) for x in (b.get("mandatories") or []) if str(x).strip()],
+              "the brand profile's mandatories, which apply to every piece")
+
+    msgs = [m for m in ((s or {}).get("messages") or []) if str(m.get("text") or "").strip()]
+    offer("carries", [m.get("id") for m in msgs if m.get("id")],
+          "this sheet's own declared message set")
+
+    five: list[dict] = []
+
+    def five_w(key: str, value, source: str):
+        value = str(value or "").strip()
+        if value:
+            five.append({"key": key, "value": value, "source": source,
+                         "what": FIVE_W[key], "already_set": bool((rel.get("five_w") or {}).get(key))})
+
+    if b:
+        five_w("who", b.get("name", ""), "the brand profile")
+        states = [geo.state_label(x) for x in (b.get("states") or []) if str(x).strip()]
+        five_w("where", ", ".join(x for x in states if x), "the states declared on the brand profile")
+
+    # `strategy._chosen_text(house, layer)` is the accessor `docs.py` and `brandprofile.py` already use.
+    # My first version read `house["chosen"]["core"]` and `house["core"]`, neither of which exists: the
+    # real shape is `nodes.core.chosen` holding option IDS that resolve against `nodes.core.options`.
+    # It returned '' silently on a house that had a core message, which is the shape-guess failure this
+    # project keeps paying for - and I made it reading someone else's store rather than describing mine.
+    core = ""
+    if house:
+        try:
+            core = "; ".join(t for t in strategy_mod._chosen_text(house, "core") if str(t).strip())
+        except Exception:
+            core = ""
+
+    # `by_name` is an exact match by design: `brand_key`'s docstring records why resolving loosely here
+    # would key one client's document into another's. So an unmatched name is not worked around, it is
+    # named — otherwise this returns three fields instead of six and looks like it simply had less
+    # to offer. Sheet 2f3ca6b396 carries brand "Heritage" against a profile called "Heritage Foods",
+    # and that is precisely the divergence this reports rather than papers over.
+    profile_note = ""
+    if brand_name and not b:
+        known = [str(x.get("name") or "") for x in brandprofile.profiles() if x.get("name")]
+        profile_note = (
+            f"This sheet's brand is stored as {brand_name!r}, which matches no brand profile, so the "
+            f"boilerplate, the mandatories and the who/where cannot be derived. Profiles available: "
+            f"{', '.join(known) or 'none'}. Matching is exact on purpose — a loose match here would "
+            f"file one brand's release under another's.")
+
+    return {
+        "fill": fill,
+        "five_w": five,
+        "profile_note": profile_note,
+        "has_profile": bool(b),
+        # Named, not written. The screen decides whether to hand these to a model; this does not.
+        "write": [
+            {"field": "headline", "why_not_derived":
+                "A headline is the news, judged. Assembling one from a brief would produce a sentence "
+                "that reads like a decision nobody made."},
+            {"field": "lead_text", "why_not_derived":
+                "The lead is the five W's written as one paragraph. The facts are below; the writing "
+                "is a person's."},
+            {"field": "support", "why_not_derived": "Support is evidence chosen and ordered."},
+            {"field": "quote", "why_not_derived":
+                "A quote is attributed speech. Composing one and attributing it to a named person is "
+                "the one thing this desk must never do."},
+            {"field": "background", "why_not_derived": "Background is what a reader needs, decided."},
+        ],
+        "source_material": {
+            "house_core_message": core,
+            "declared_messages": [{"id": m.get("id"), "text": m.get("text"),
+                                   "proof": m.get("proof", "")} for m in msgs],
+            "plan_objectives": [str(r.get("statement") or "") for r
+                                in ((plan or {}).get("nodes", {}).get("objectives", {}) or {}
+                                    ).get("rows", []) or [] if str(r.get("statement") or "").strip()],
+            "brand_tone": str((b or {}).get("tone") or ""),
+            "note": ("Everything a headline and lead would be written from, quoted from where it was "
+                     "decided. Handed over rather than turned into prose."),
+        },
+        "writes_nothing": True,
+    }
+
+
+def set_release(s: dict, patch: dict) -> tuple[dict | None, str]:
+    """Write release fields. Only known fields are accepted, so a typo cannot create a silent field."""
+    r = (s.get("release") or {}).copy()
+    if not r:
+        return None, "This sheet has no release yet."
+    flat = ("headline", "dateline", "lead_text", "support", "quote", "quote_by", "quote_role",
+            "background", "boilerplate", "contact", "embargo")
+    unknown = [k for k in patch if k not in flat + ("five_w", "carries", "mandatories", "language")]
+    if unknown:
+        return None, f"Unknown release field(s): {', '.join(sorted(unknown))}."
+    for k in flat:
+        if k in patch:
+            r[k] = str(patch[k] or "").strip()
+    if "language" in patch:
+        lang = str(patch["language"] or "").strip().lower()
+        if lang not in LANGUAGES:
+            return None, f"Unknown language {lang!r}. One of: {', '.join(LANGUAGES)}."
+        r["language"] = lang
+    if "five_w" in patch and isinstance(patch["five_w"], dict):
+        bad = [k for k in patch["five_w"] if k not in FIVE_W]
+        if bad:
+            return None, f"Unknown lead field(s): {', '.join(sorted(bad))}. One of: {', '.join(FIVE_W)}."
+        r["five_w"] = {k: str((patch["five_w"].get(k) if k in patch["five_w"]
+                               else r.get("five_w", {}).get(k)) or "").strip() for k in FIVE_W}
+    if "carries" in patch:
+        known = {m["id"] for m in (s.get("messages") or [])}
+        want = [str(x) for x in (patch["carries"] or [])]
+        missing = [x for x in want if x not in known]
+        if missing:
+            return None, ("A release can only carry a message from this sheet's declared set — "
+                          f"{', '.join(missing)} is not in it. Pull-through is measured against the "
+                          "set, so a release carrying something outside it cannot be scored.")
+        r["carries"] = want
+    if "mandatories" in patch:
+        r["mandatories"] = [str(x) for x in (patch["mandatories"] or [])]
+    r["updated"] = _now()
+    s["release"] = r
+    return save(s), ""
+
+
+def add_translation(s: dict, language: str, fields: dict) -> tuple[dict | None, str]:
+    """Add or update a translation. It arrives unchecked and stays unchecked until a person signs it.
+
+    `checked_by` is never set here and cannot be set by this function — see `check_translation`. A
+    machine translation of a legal claim that ships because a flag defaulted to true is the specific
+    accident this split exists to prevent.
+    """
+    r = s.get("release") or {}
+    if not r:
+        return None, "This sheet has no release yet."
+    lang = str(language or "").strip().lower()
+    if lang not in LANGUAGES:
+        return None, f"Unknown language {lang!r}. One of: {', '.join(LANGUAGES)}."
+    if lang == r.get("language"):
+        return None, (f"{LANGUAGES[lang]['label']} is this release's own language — it is the source, "
+                      f"not a translation of itself.")
+    t = dict(r.get("translations") or {}).get(lang) or {}
+    for k in ("headline", "dateline", "lead_text", "support", "quote", "background", "boilerplate",
+              "contact"):
+        if k in (fields or {}):
+            t[k] = str(fields[k] or "").strip()
+    t["by"] = str((fields or {}).get("by") or t.get("by") or "").strip()
+    # Reset on every edit. An edited translation is an unchecked translation again.
+    t["checked_by"], t["checked_at"] = "", ""
+    t["updated"] = _now()
+    trans = dict(r.get("translations") or {})
+    trans[lang] = t
+    r["translations"] = trans
+    s["release"] = r
+    return save(s), ""
+
+
+def check_translation(s: dict, language: str, who: str) -> tuple[dict | None, str]:
+    """A named person signs off a translation. Deliberately a separate act from writing it."""
+    r = s.get("release") or {}
+    lang = str(language or "").strip().lower()
+    t = (r.get("translations") or {}).get(lang)
+    if not t:
+        return None, f"No {lang!r} translation on this release."
+    who = str(who or "").strip()
+    if not who:
+        return None, ("Name the person who checked it. An unattributed sign-off is the same as none — "
+                      "there is nobody to ask when the claim is questioned.")
+    t["checked_by"], t["checked_at"] = who, _now()
+    s["release"] = r
+    return save(s), ""
+
+
+def release_gate(s: dict, locked: list[dict] | None = None) -> dict:
+    """Is this release fit to send? Structure, mandatories, and the messages it claims to carry.
+
+    Deliberately NOT a semantic judgement. It does not read the prose and decide whether the story is
+    good — it checks the things that are actually checkable, and says so, which is the difference
+    between a gate people trust and one they route around.
+    """
+    r = s.get("release") or {}
+    if not r:
+        return {"exists": False, "ready": False, "findings": [
+            {"level": "gap", "blocking": True, "what": "No release on this sheet yet", "why": ""}]}
+
+    out: list[dict] = []
+    for key, spec in RELEASE_PARTS.items():
+        field = "lead_text" if key == "lead" else key
+        if str(r.get(field) or "").strip():
+            continue
+        out.append({"level": "gap", "blocking": bool(spec["required"]),
+                    "what": f"No {spec['label'].lower()}",
+                    "why": spec["what"]})
+
+    # The quote needs a name against it. An unattributed quote is the company quoting itself, which is
+    # the thing a quote exists to avoid.
+    if str(r.get("quote") or "").strip() and not str(r.get("quote_by") or "").strip():
+        out.append({"level": "risk", "blocking": True, "what": "The quote has nobody attributed to it",
+                    "why": "A quote with no name is the company talking about itself in inverted "
+                           "commas. Name the person and their role."})
+
+    # The lead's five questions.
+    missing_w = [k for k in FIVE_W if not str((r.get("five_w") or {}).get(k) or "").strip()]
+    if missing_w:
+        out.append({"level": "gap", "blocking": True,
+                    "what": f"The lead does not answer: {', '.join(missing_w)}",
+                    "why": "An editor cuts from the bottom, so anything the lead does not answer may "
+                           "not survive to be answered at all."})
+
+    # Word count, as a band with advice rather than a refusal.
+    n = _words(release_body(r))
+    if n and n < WORDS_MIN:
+        out.append({"level": "note", "blocking": False, "what": f"{n} words — under {WORDS_MIN}",
+                    "why": "Short is not wrong, but check nothing a journalist needs is missing rather "
+                           "than padding to a number."})
+    elif n > WORDS_MAX:
+        out.append({"level": "note", "blocking": False, "what": f"{n} words — over {WORDS_MAX}",
+                    "why": "Past about 400 words a release gets skimmed. What is below the quote is "
+                           "usually what can go."})
+
+    # Locked copy, verbatim. This is an existing studio rule, not a PR one: a claim, a mandatory or an
+    # FSSAI line is legal text, and a paraphrase is a compliance failure rather than a style choice.
+    by_id = {c["id"]: c for c in (locked or [])}
+    body = release_body(r)
+    for mid in (r.get("mandatories") or []):
+        item = by_id.get(mid)
+        if not item:
+            out.append({"level": "risk", "blocking": True,
+                        "what": f"Mandatory {mid} is no longer in the library",
+                        "why": "It was signed off and has since been removed or replaced. Re-point it "
+                               "or drop it, but do not ship against a mandatory that no longer exists."})
+        elif item["text"] not in body:
+            out.append({"level": "risk", "blocking": True,
+                        "what": f"Mandatory not placed verbatim: “{item['text'][:44]}”",
+                        "why": "Locked copy is placed exactly as written. A paraphrase of a legal line "
+                               "is a compliance failure, not an edit."})
+
+    # What it claims to carry, and whether that claim is worth anything.
+    msgs = {m["id"]: m for m in (s.get("messages") or [])}
+    carries = [msgs[m] for m in (r.get("carries") or []) if m in msgs]
+    if not carries:
+        out.append({"level": "gap", "blocking": True, "what": "This release carries no declared message",
+                    "why": "Message pull-through is measured per declared message. A release outside "
+                           "the set produces coverage nobody can score."})
+    for m in carries:
+        if m.get("proof_missing"):
+            out.append({"level": "risk", "blocking": True,
+                        "what": f"“{m['text'][:44]}” points at evidence that is gone",
+                        "why": "Do not send a release built on a proof that was deleted from the house."})
+        elif not m.get("sourced"):
+            out.append({"level": "risk", "blocking": False,
+                        "what": f"“{m['text'][:44]}” is unsourced",
+                        "why": "A journalist will ask what it rests on. Have the answer before they do."})
+
+    # Translations. Unchecked is blocking — for the release in that language, not for the source.
+    for lang, t in (r.get("translations") or {}).items():
+        if not str(t.get("checked_by") or "").strip():
+            out.append({"level": "risk", "blocking": True,
+                        "what": f"The {LANGUAGES.get(lang, {}).get('label', lang)} translation is "
+                                f"unchecked",
+                        "why": "Nobody has signed it. A machine rendering of a claim is not a claim in "
+                               "that language — and in a script the desk cannot read back, nobody "
+                               "downstream will catch it."})
+
+    order = {"gap": 0, "risk": 1, "note": 2}
+    out.sort(key=lambda f: (not f["blocking"], order.get(f["level"], 3)))
+    return {
+        "exists": True, "words": n, "band": [WORDS_MIN, WORDS_MAX],
+        "language": r.get("language", ""),
+        "languages_out": sorted((r.get("translations") or {})),
+        "checked_languages": sorted(k for k, t in (r.get("translations") or {}).items()
+                                    if str(t.get("checked_by") or "").strip()),
+        "carries": [m["id"] for m in carries],
+        "findings": out,
+        "blocking": [f["what"] for f in out if f["blocking"]],
+        "ready": not any(f["blocking"] for f in out),
+        "parts": {k: {"label": v["label"], "required": v["required"], "what": v["what"]}
+                  for k, v in RELEASE_PARTS.items()},
+        "five_w": FIVE_W,
+    }
+
+
+# --- the media kit ------------------------------------------------------------------------------
+#
+# A newsroom needs CUTTABLE ELEMENTS, not a finished film. A video release that looks like a commercial
+# does not get used, because a desk cannot put an advertisement inside a news bulletin — it needs clean
+# footage it can cut under its own voice, and a soundbite it can quote.
+#
+# So the kit is separate pieces with a rule attached to each, and one of those rules is mechanically
+# checkable: a SCORED master is the finished film with music and voice on it, and it can never be
+# b-roll. That check is real; the rest are declarations a person makes.
+KIT_ELEMENTS: dict[str, dict] = {
+    "soundbite": {"label": "Spokesperson soundbite", "required": True,
+                  "what": "One named person, 20 to 30 seconds, saying the thing in their own words.",
+                  "fails": "Without it a broadcast desk has nobody to quote and will use a competitor "
+                           "who provided one."},
+    "broll":     {"label": "B-roll", "required": True,
+                  "what": "Clean footage of the process, no music, no voice, no supers.",
+                  "fails": "A desk cannot cut under an advertisement. Scored footage is unusable."},
+    "stills":    {"label": "Stills", "required": True,
+                  "what": "Pack and process photography at print resolution, from the library.",
+                  "fails": "Print picks up a story it has a picture for."},
+    "profile":   {"label": "Company profile", "required": True,
+                  "what": "One page: what the company is, how big, since when, who runs it.",
+                  "fails": "A reporter writing at speed guesses the numbers instead."},
+    "release":   {"label": "The release", "required": True,
+                  "what": "The text release itself, in each language it goes out in.",
+                  "fails": "Nothing else in the kit says what the news is."},
+}
+
+# `-scored` is the one certain signal. `main._next_scored_name` produces exactly this suffix when the
+# soundtrack is laid over a master, so a path carrying it has music and voice on it — no exceptions.
+_SCORED_MARK = "-scored"
+
+# `/edits/` is NOT a reliable signal, and treating it as one was wrong. That directory holds a mixture:
+# silent `fit_to_beat` trims of live-action takes, keyed composites, cutdowns — and scored mixes, since
+# a scored name is derived from wherever its master lived. So a `/edits/` path is *ambiguous* rather
+# than disqualifying, and it earns a note asking for confirmation instead of a refusal. Refusing on a
+# signal that is only sometimes right teaches people to work around the gate.
+_AMBIGUOUS_MARK = "/edits/"
+
+
+def looks_scored(url: str) -> bool:
+    """Certainly a scored cut — music and voice on it. Refusable."""
+    return _SCORED_MARK in str(url or "").lower()
+
+
+def maybe_scored(url: str) -> bool:
+    """Possibly a scored or graded cut. Worth confirming, not worth refusing."""
+    u = str(url or "").lower()
+    return _AMBIGUOUS_MARK in u and not looks_scored(u)
+
+
+def set_kit(s: dict, patch: dict) -> tuple[dict | None, str]:
+    """Attach kit elements. `{soundbite: {url, who?, seconds?}, broll: {url, clean?}, ...}`.
+
+    Refuses a scored master as b-roll. That refusal is the one part of the "clean elements" rule that
+    can be enforced rather than asked for, so it is enforced.
+    """
+    kit = dict(s.get("kit") or {})
+    unknown = [k for k in (patch or {}) if k not in KIT_ELEMENTS]
+    if unknown:
+        return None, (f"Unknown kit element(s): {', '.join(sorted(unknown))}. One of: "
+                      f"{', '.join(KIT_ELEMENTS)}.")
+    for key, raw in (patch or {}).items():
+        if not isinstance(raw, dict):
+            return None, f"{key} should be an object with at least a url."
+        url = str(raw.get("url") or "").strip()
+        if key == "broll" and url and looks_scored(url):
+            return None, ("That is a scored master — it has music and voice on it, so a newsroom "
+                          "cannot cut under it. B-roll is the clean footage: the silent stitched cut "
+                          "or the raw clips, not the finished film.")
+        entry = {"url": url,
+                 "who": str(raw.get("who") or "").strip(),
+                 "role": str(raw.get("role") or "").strip(),
+                 "seconds": raw.get("seconds"),
+                 "note": str(raw.get("note") or "").strip(),
+                 "added": _now()}
+        kit[key] = entry
+    s["kit"] = kit
+    return save(s), ""
+
+
+def kit_status(s: dict) -> dict:
+    """What the kit has, what it lacks, and what each absence costs."""
+    kit = s.get("kit") or {}
+    rows, findings = [], []
+    for key, spec in KIT_ELEMENTS.items():
+        got = kit.get(key) or {}
+        url = str(got.get("url") or "").strip()
+        rows.append({"key": key, "label": spec["label"], "required": spec["required"],
+                     "what": spec["what"], "have": bool(url), "url": url,
+                     "who": got.get("who", ""), "note": got.get("note", "")})
+        if not url and spec["required"]:
+            findings.append({"level": "gap", "blocking": True,
+                             "what": f"No {spec['label'].lower()}", "why": spec["fails"]})
+    broll = kit.get("broll") or {}
+    if maybe_scored(broll.get("url")):
+        findings.append({"level": "note", "blocking": False,
+                         "what": "Confirm the b-roll is silent",
+                         "why": "It comes from the edits folder, which holds both silent trims and "
+                                "graded or scored cuts. If it has music or a voice on it a newsroom "
+                                "cannot use it — and nobody will ring to say so."})
+    sb = kit.get("soundbite") or {}
+    if str(sb.get("url") or "").strip() and not str(sb.get("who") or "").strip():
+        findings.append({"level": "risk", "blocking": True,
+                         "what": "The soundbite has nobody named against it",
+                         "why": "A desk needs the name and the title on screen. Unnamed footage of "
+                                "somebody talking is not a soundbite."})
+    return {"elements": rows, "findings": findings,
+            "blocking": [f["what"] for f in findings if f["blocking"]],
+            "ready": not any(f["blocking"] for f in findings),
+            "why_elements": ("Separate clean pieces, never a finished film. A newsroom cuts b-roll "
+                             "under its own voice and quotes the soundbite; it cannot place an "
+                             "advertisement inside a bulletin.")}
+
+
+# --- the coverage log ----------------------------------------------------------------------------
+#
+# ONE table. Every metric below is computed from it, so two panels cannot disagree about how much
+# coverage there was — the failure this codebase keeps catching in other places (`grid()` and
+# `jobs()`, the house count in four templates, `hasCut` in two bags).
+#
+# A row is one published item. Not one pitch, not one outlet: the same masthead running the story
+# twice is two rows, and that is correct.
+
+PROMINENCE: dict[str, dict] = {
+    "headline": {"label": "In the headline", "rank": 0,
+                 "what": "The story is about us. The strongest form there is."},
+    "lead":     {"label": "In the lead", "rank": 1,
+                 "what": "First paragraph. Survives an editor cutting from the bottom."},
+    "body":     {"label": "In the body", "rank": 2,
+                 "what": "Somewhere in the piece. Real, but a reader may not reach it."},
+    "mention":  {"label": "Passing mention", "rank": 3,
+                 "what": "A name-check in a list or a round-up. Counted, not celebrated."},
+}
+
+# Sentiment is here because it is the specific thing AVE cannot see: a demolition and a rave price
+# identically under it. Three values, because finer grading than this is a judgement two people will
+# score differently and nobody can audit.
+SENTIMENT: dict[str, str] = {
+    "positive": "Reads in the brand's favour.",
+    "neutral":  "Reports the facts without a stance. The commonest and most useful outcome.",
+    "negative": "Reads against the brand. Logged, not hidden — an unlogged negative is still read.",
+}
+
+# Said once, here, so every report can carry it and no screen has to remember why the field is absent.
+AVE_REFUSAL = ("No advertising value is calculated. AVE prices coverage as though it had been bought, "
+               "which scores a demolition and a rave identically, means nothing for a digital mention "
+               "occupying no column inches, and is rejected by AMEC, the IPR, PRSA, PRCA, the Global "
+               "Alliance and ICCO. Pull-through, prominence and circulation by language are reported "
+               "instead.")
+
+
+def log_coverage(s: dict, item: dict, media_map: dict | None = None) -> tuple[dict | None, str]:
+    """Log one published item. Returns (sheet, error).
+
+    The outlet is taken from the brand's media map where it exists, so language, tier and the audience
+    figure come from ONE place rather than being retyped per item. An item from a title that is not in
+    the map is allowed and marked `off_map` — an unpitched pickup is real coverage and often the most
+    interesting kind, so refusing it would only teach people to log it wrongly.
+    """
+    outlets = {o["id"]: o for o in ((media_map or {}).get("outlets") or [])}
+    oid = str(item.get("outlet") or "").strip()
+    name = str(item.get("outlet_name") or "").strip()
+    if oid and oid not in outlets:
+        return None, ("That outlet is not in this brand's media map. Send `outlet_name`, `language` "
+                      "and `tier` instead to log a title you did not target.")
+    src = outlets.get(oid) or {}
+    lang = str(item.get("language") or src.get("language") or "").strip().lower()
+    tier = str(item.get("tier") or src.get("tier") or "").strip().lower()
+    if not (oid or name):
+        return None, "Name the outlet this ran in."
+    if lang not in LANGUAGES:
+        return None, f"Unknown language {lang!r}. One of: {', '.join(LANGUAGES)}."
+    if tier not in TIERS:
+        return None, f"Unknown tier {tier!r}. One of: {', '.join(TIERS)}."
+
+    prom = str(item.get("prominence") or "").strip().lower()
+    if prom not in PROMINENCE:
+        return None, (f"Say where it appeared: {', '.join(PROMINENCE)}. A mention in paragraph "
+                      f"fourteen and a headline are not the same result.")
+    sent = str(item.get("sentiment") or "neutral").strip().lower()
+    if sent not in SENTIMENT:
+        return None, f"Unknown sentiment {sent!r}. One of: {', '.join(SENTIMENT)}."
+
+    known = {m["id"] for m in (s.get("messages") or [])}
+    carried = [str(x) for x in (item.get("messages") or [])]
+    unknown = [x for x in carried if x not in known]
+    if unknown:
+        return None, ("An item can only carry a message from this sheet's declared set — "
+                      f"{', '.join(unknown)} is not in it. Pull-through is the share of coverage that "
+                      "carried a DECLARED message; scoring against anything else measures nothing.")
+
+    # A syndicated pickup is real coverage and is NOT an independent editorial decision. Both facts
+    # matter, so the link is recorded rather than either being thrown away.
+    parent = str(item.get("from_wire") or "").strip()
+    existing = {c["id"] for c in (s.get("coverage") or [])}
+    if parent and parent not in existing:
+        return None, "That wire item is not in this log. Log the wire story before its pickups."
+
+    row = {
+        "id": str(item.get("id") or uuid.uuid4().hex[:8]),
+        "outlet": oid, "outlet_name": name or src.get("name", ""),
+        "off_map": not bool(oid),
+        "language": lang, "tier": tier,
+        "date": str(item.get("date") or "").strip()[:10],
+        "url": str(item.get("url") or "").strip(),
+        "headline": str(item.get("headline") or "").strip(),
+        "prominence": prom, "sentiment": sent,
+        "messages": carried,
+        "spokesperson_quoted": bool(item.get("spokesperson_quoted")),
+        "from_wire": parent,
+        "note": str(item.get("note") or "").strip(),
+        "logged": _now(),
+    }
+    rows = [c for c in (s.get("coverage") or []) if c.get("id") != row["id"]]
+    rows.append(row)
+    s["coverage"] = rows
+    return save(s), ""
+
+
+def drop_coverage(s: dict, cid: str) -> tuple[dict, int]:
+    """Remove an item and any pickups recorded against it. Returns (sheet, pickups removed)."""
+    rows = s.get("coverage") or []
+    keep = [c for c in rows if c.get("id") != cid and c.get("from_wire") != cid]
+    removed = len(rows) - len(keep) - (1 if any(c.get("id") == cid for c in rows) else 0)
+    s["coverage"] = keep
+    return save(s), max(0, removed)
+
+
+def coverage_report(s: dict, media_map: dict | None = None) -> dict:
+    """Every measure, from the one table.
+
+    The audience weighting deserves a note, because the plan promised "tier-weighted" and this is
+    deliberately not that. Weighting by an invented per-tier multiplier would be the same mistake as a
+    blended reach figure: a number with no method behind it. Instead each item is weighted by its
+    outlet's OWN audited circulation where one exists, and the share of items with no figure is
+    reported — so the weighting is real where it applies and visibly absent where it does not. It still
+    achieves what the tier weighting was for: forty small pickups cannot outscore a dominant masthead.
+    """
+    rows = s.get("coverage") or []
+    msgs = s.get("messages") or []
+    outlets = {o["id"]: o for o in ((media_map or {}).get("outlets") or [])}
+
+    by_outlet: dict[str, dict] = {}
+    by_language: dict[str, dict] = {}
+    prominence = {k: 0 for k in PROMINENCE}
+    sentiment = {k: 0 for k in SENTIMENT}
+    per_message = {m["id"]: {"id": m["id"], "text": m["text"], "items": 0, "front": 0,
+                             "sourced": bool(m.get("sourced"))} for m in msgs}
+
+    weighted, unpriced = 0.0, 0
+    # Circulation per DISTINCT outlet, kept apart from the per-item sum. Two articles in one paper are
+    # two opportunities to see and roughly one readership, so the two numbers answer different
+    # questions and only one of them is anything like reach.
+    seen_circ: dict[str, float] = {}
+    carried_any, carried_front, quoted = 0, 0, 0
+    syndicated = 0
+
+    for c in rows:
+        key = c.get("outlet") or f"name:{c.get('outlet_name','')}"
+        o = by_outlet.setdefault(key, {"outlet": c.get("outlet", ""),
+                                       "name": c.get("outlet_name", ""),
+                                       "off_map": c.get("off_map", False),
+                                       "language": c.get("language", ""),
+                                       "tier": c.get("tier", ""), "items": 0})
+        o["items"] += 1
+
+        lang = c.get("language", "")
+        b = by_language.setdefault(lang, {"language": lang,
+                                          "label": LANGUAGES.get(lang, {}).get("label", lang),
+                                          "items": 0, "outlets": set(), "carried": 0,
+                                          "circulation": 0.0, "unpriced": 0})
+        b["items"] += 1
+        b["outlets"].add(key)
+
+        prominence[c.get("prominence", "mention")] = \
+            prominence.get(c.get("prominence", "mention"), 0) + 1
+        sentiment[c.get("sentiment", "neutral")] = sentiment.get(c.get("sentiment", "neutral"), 0) + 1
+
+        front = c.get("prominence") in ("headline", "lead")
+        if c.get("messages"):
+            carried_any += 1
+            b["carried"] += 1
+            if front:
+                carried_front += 1
+        for mid in c.get("messages") or []:
+            if mid in per_message:
+                per_message[mid]["items"] += 1
+                if front:
+                    per_message[mid]["front"] += 1
+        if c.get("spokesperson_quoted"):
+            quoted += 1
+        if c.get("from_wire"):
+            syndicated += 1
+
+        # Weight by the outlet's own figure. A wire carries no circulation of its own, so it is neither
+        # weighted nor counted as unpriced — see `reach_by_language`.
+        src = outlets.get(c.get("outlet") or "")
+        circ = None
+        if src and c.get("tier") != "wire":
+            try:
+                circ = float(src.get("circulation")) if src.get("circulation") is not None else None
+            except (TypeError, ValueError):
+                circ = None
+        if circ is not None:
+            weighted += circ
+            b["circulation"] += circ
+            seen_circ[c.get("outlet") or key] = circ
+        elif c.get("tier") != "wire":
+            unpriced += 1
+            b["unpriced"] += 1
+
+    n = len(rows)
+    langs = []
+    for k in sorted(by_language):
+        v = by_language[k]
+        langs.append({**v, "outlets": len(v["outlets"]),
+                      "circulation": v["circulation"] or None})
+
+    findings = []
+    if not n:
+        findings.append({"level": "gap", "blocking": False, "what": "Nothing logged yet",
+                         "why": "Every measure here is computed from the log, so an empty log is an "
+                                "empty report rather than a zero result."})
+    if n and not msgs:
+        findings.append({"level": "risk", "blocking": False,
+                         "what": "Coverage logged against no declared message set",
+                         "why": "Volume can be reported and pull-through cannot. Declare the message "
+                                "set and the same log becomes evidence rather than a tally."})
+    if n and msgs and not carried_any:
+        findings.append({"level": "risk", "blocking": False,
+                         "what": "No item carried a declared message",
+                         "why": "The story ran and our point did not travel with it. That is a "
+                                "briefing problem, not a placement problem."})
+    dead = [m["text"][:44] for m in per_message.values() if not m["items"]]
+    if n and dead:
+        findings.append({"level": "note", "blocking": False,
+                         "what": f"{len(dead)} declared message(s) appeared nowhere",
+                         "why": "A message nothing picked up is either not news or not said plainly "
+                                "enough. Both are fixable, and neither is visible without this."})
+    if unpriced:
+        findings.append({"level": "note", "blocking": False,
+                         "what": f"{unpriced} item(s) have no audience figure",
+                         "why": "Their outlets carry no audited circulation, so they count toward "
+                                "volume and not toward weighted audience. Reported rather than "
+                                "estimated."})
+    off = [c["outlet_name"] for c in rows if c.get("off_map")]
+    if off:
+        findings.append({"level": "note", "blocking": False,
+                         "what": f"{len(off)} item(s) from titles not in the media map",
+                         "why": "Unpitched pickups. Worth adding to the map if they keep covering the "
+                                "category — they are already interested."})
+
+    return {
+        "items": n,
+        "by_outlet": sorted(by_outlet.values(), key=lambda r: (-r["items"], r["name"])),
+        "by_language": langs,
+        "prominence": prominence,
+        "sentiment": sentiment,
+        # The headline number. Share of items that carried at least one declared message, and the
+        # stronger version: carried it where it survives an edit.
+        "pull_through": {
+            "items_carrying": carried_any,
+            "share": round(carried_any / n, 3) if n else None,
+            "front_of_piece": carried_front,
+            "front_share": round(carried_front / n, 3) if n else None,
+            "per_message": sorted(per_message.values(), key=lambda m: -m["items"]),
+            "what": "Of the items that ran, the share carrying at least one DECLARED message. The "
+                    "number that separates coverage from effect.",
+        },
+        "spokesperson_quoted": quoted,
+        "independent": {
+            "items": n - syndicated, "syndicated": syndicated,
+            "what": "A wire pickup is real coverage and is not an independent editorial decision. "
+                    "Forty pickups of one PTI story are forty readerships and one decision, and a "
+                    "report that hides either is misleading.",
+        },
+        # Two numbers because they answer different questions, and calling either one "reach" would
+        # be wrong. Summing per item counts a title that ran twice twice — that is opportunities to
+        # see. Summing per distinct outlet is the closer thing to a readership, and still an
+        # over-count, since readerships overlap.
+        "opportunities": {
+            "circulation": weighted or None,
+            "what": "Circulation summed per ITEM. A title that ran twice counts twice — these are "
+                    "opportunities to see, not people.",
+        },
+        "distinct_outlet_circulation": {
+            "circulation": (sum(seen_circ.values()) or None) if seen_circ else None,
+            "outlets": len(seen_circ),
+            "what": "Circulation summed once per outlet. Closer to a readership than the per-item "
+                    "figure, and still an over-count because readerships overlap. There is no exact "
+                    "reach number available — IRS has been suspended since 2019.",
+        },
+        "unpriced_items": unpriced,
+        "weighting": ("Each item is weighted by its own outlet's audited circulation. No per-tier "
+                      "multiplier is invented — that would be a number with no method behind it — and "
+                      "items whose outlet has no figure count toward volume but not toward audience."),
+        "ave": None,
+        "why_no_ave": AVE_REFUSAL,
+        "findings": findings,
+    }
+
+
+# --- crisis and recall ---------------------------------------------------------------------------
+#
+# The highest-stakes thing in this module, and the one where what the code REFUSES to do matters more
+# than what it does. Three rules, and every function below exists to hold one of them:
+#
+#   1. **The framework is entered, never remembered.** What a regulation requires is confirmed by the
+#      client's legal team, with a source and a review date. A model reciting FSSAI or CDSCO rules
+#      unaided is the most dangerous thing available here, and `set_framework` refuses an obligation
+#      that carries no source and no named confirmer.
+#
+#      `TRADE_CATEGORIES[...]["regulator"]` names WHICH regulator applies. It does not state what that
+#      regulator requires, and nothing downstream may treat it as if it did.
+#
+#   2. **The class is a determination, not an inference.** Whether a recall is the class that triggers
+#      a public notice is a QA and legal judgement with legal consequences. The module asks and stops.
+#      It also does not know the class NAMES — those come from the entered framework, because a
+#      taxonomy hard-coded as I/II/III would be FSSAI's taxonomy imposed on cosmetics and cement.
+#
+#   3. **Nothing publishes itself.** QA sets the class, Legal clears the statement, and the CEO signs
+#      when the class says so. Editing the statement clears every signature — the same discipline the
+#      translations use, and for the same reason.
+#
+# Under pressure the right behaviour is retrieving approved language, not composing new claims. That is
+# what `standby` is for: written in calm, on a crisis sheet that exists before there is an incident.
+
+FRAMEWORK_DIR = tenancy.dir("pr_framework")
+
+# The three things a consumer notice has to say. Named here because they are the one content
+# requirement the studio can gate on, and because they are the same three in every regime that has a
+# public-notice duty at all: what the product is, what the risk is, what a person should now do.
+NOTICE_ELEMENTS: dict[str, str] = {
+    "product": "Which product, at the specificity a person can check in their own kitchen — pack, "
+               "size, batch or date codes, where it was sold.",
+    "risk":    "What is actually wrong and what harm it could do. Plainly, without minimising.",
+    "action":  "What to do now: stop using it, return it, where, and what they get back.",
+}
+
+# Who signs, and what each signature means. Deliberately three separate acts by three different
+# functions — a single "approved" flag would let one person's click stand for a quality determination,
+# a legal clearance and a chief executive's decision.
+SIGNOFF_ROLES: dict[str, dict] = {
+    "qa":    {"label": "Quality / food safety",
+              "what": "Determines the risk class. Nothing else can proceed until this exists, because "
+                      "the class decides what is legally required."},
+    "legal": {"label": "Legal",
+              "what": "Clears the statement against the obligations entered for this jurisdiction."},
+    "ceo":   {"label": "Chief executive",
+              "what": "Required when the class is one the framework marks as escalating. A public "
+                      "notice is a company-level act, not a communications one."},
+}
+
+
+def _fw_path(jurisdiction: str, category: str) -> str:
+    return os.path.join(FRAMEWORK_DIR, f"{tenancy.slug(jurisdiction)}--{tenancy.slug(category)}.json")
+
+
+def framework(jurisdiction: str, category: str) -> dict:
+    """The obligations entered for this jurisdiction and category.
+
+    Returns an honest empty shell rather than None, carrying `entered: False` — because "no framework
+    has been confirmed for cosmetics in India" is a real and important answer, and the one thing that
+    must never happen is silently falling back on the framework that HAS been entered for something
+    else.
+    """
+    try:
+        with open(_fw_path(jurisdiction, category), encoding="utf-8") as fh:
+            d = json.load(fh)
+        if isinstance(d, dict):
+            d["entered"] = bool(d.get("obligations") or d.get("classes"))
+            return d
+    except (OSError, ValueError):
+        pass
+    return {"jurisdiction": jurisdiction, "category": category, "entered": False,
+            "classes": [], "obligations": [], "confirmed_by": "", "confirmed_at": "",
+            "why_empty": (f"Nothing has been confirmed for {category or '?'} in "
+                          f"{jurisdiction or '?'}. The obligations are entered by the client's legal "
+                          f"team with a source against each one — they are not inferred here, and the "
+                          f"framework for another category does not apply.")}
+
+
+def set_framework(jurisdiction: str, category: str, data: dict) -> tuple[dict | None, str]:
+    """Enter or replace a framework. Every obligation needs a source; the whole thing needs a confirmer.
+
+    The refusals here are the point of the function. An obligation with no source is somebody's
+    recollection, and a framework with no named confirmer is nobody's responsibility.
+    """
+    if category and category not in TRADE_CATEGORIES:
+        return None, f"Unknown category {category!r}. One of: {', '.join(TRADE_CATEGORIES)}."
+    if not str(jurisdiction or "").strip():
+        return None, "Name the jurisdiction this applies in."
+    who = str(data.get("confirmed_by") or "").strip()
+    if not who:
+        return None, ("Name the person who confirmed this framework. Obligations entered by nobody in "
+                      "particular are a recollection, and this is the document a recall is run "
+                      "against.")
+
+    classes = []
+    for i, c in enumerate(data.get("classes") or []):
+        key = str((c or {}).get("key") or "").strip()
+        if not key:
+            return None, f"Class {i + 1} has no key."
+        classes.append({
+            "key": key, "label": str(c.get("label") or key).strip(),
+            "what": str(c.get("what") or "").strip(),
+            # The two facts that change what must happen. Both come from the framework, never from a
+            # guess about how serious this sounds.
+            "public_notice": bool(c.get("public_notice")),
+            "escalate_ceo": bool(c.get("escalate_ceo")),
+        })
+
+    obligations = []
+    for i, o in enumerate(data.get("obligations") or []):
+        what = str((o or {}).get("what") or "").strip()
+        if not what:
+            return None, f"Obligation {i + 1} says nothing."
+        src = str((o or {}).get("source") or "").strip()
+        if not src:
+            return None, (f"Obligation {i + 1} has no source. Cite the rule or the clause — an "
+                          f"obligation nobody can look up is not one this studio may assert.")
+        obligations.append({
+            "id": str(o.get("id") or uuid.uuid4().hex[:8]),
+            "what": what, "source": src,
+            "within_hours": o.get("within_hours"),
+            "form": str(o.get("form") or "").strip(),
+            "who": str(o.get("who") or "").strip(),
+            "classes": [str(x) for x in (o.get("classes") or [])],   # empty = applies to every class
+        })
+
+    doc = {"jurisdiction": str(jurisdiction).strip(), "category": category,
+           "classes": classes, "obligations": obligations,
+           "confirmed_by": who, "confirmed_at": _now(),
+           "review_by": str(data.get("review_by") or "").strip(),
+           "note": str(data.get("note") or "").strip(),
+           "updated": _now()}
+    os.makedirs(FRAMEWORK_DIR, exist_ok=True)
+    path = _fw_path(jurisdiction, category)
+    tmp = path + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as fh:
+        json.dump(doc, fh, indent=2, ensure_ascii=False)
+    os.replace(tmp, path)
+    doc["entered"] = True
+    return doc, ""
+
+
+def frameworks() -> list[dict]:
+    """Every framework entered, so a screen can show what is covered and what is not."""
+    os.makedirs(FRAMEWORK_DIR, exist_ok=True)
+    out = []
+    for f in sorted(os.listdir(FRAMEWORK_DIR)):
+        if not f.endswith(".json"):
+            continue
+        try:
+            with open(os.path.join(FRAMEWORK_DIR, f), encoding="utf-8") as fh:
+                d = json.load(fh)
+        except (OSError, ValueError):
+            continue
+        out.append({"jurisdiction": d.get("jurisdiction", ""), "category": d.get("category", ""),
+                    "classes": len(d.get("classes") or []),
+                    "obligations": len(d.get("obligations") or []),
+                    "confirmed_by": d.get("confirmed_by", ""), "confirmed_at": d.get("confirmed_at", ""),
+                    "review_by": d.get("review_by", "")})
+    return out
+
+
+def set_standby(s: dict, items: list[dict]) -> tuple[dict | None, str]:
+    """Holding statements written in calm. The thing that actually protects a brand.
+
+    Retrieved under pressure rather than composed. The Maggi lesson is not that the contamination
+    finding was unanswerable — it is that the first response was made up on the spot.
+    """
+    if s.get("kind") != "crisis":
+        return None, "Standby statements belong on a crisis sheet."
+    out = []
+    for i, raw in enumerate(items or []):
+        text = str((raw or {}).get("text") or "").strip()
+        if not text:
+            return None, f"Standby statement {i + 1} is empty."
+        out.append({"id": str(raw.get("id") or uuid.uuid4().hex[:8]),
+                    "situation": str(raw.get("situation") or "").strip(),
+                    "text": text,
+                    "approved_by": str(raw.get("approved_by") or "").strip(),
+                    "approved_at": str(raw.get("approved_at") or "").strip()})
+    s["standby"] = out
+    return save(s), ""
+
+
+def open_incident(s: dict, data: dict) -> tuple[dict | None, str]:
+    """Start an incident on a prepared crisis sheet. The clock starts from `discovered_at`."""
+    if s.get("kind") != "crisis":
+        return None, "Incidents belong on a crisis sheet."
+    jur = str(data.get("jurisdiction") or "").strip()
+    cat = str(data.get("category") or "").strip().lower()
+    if not jur:
+        return None, "Name the jurisdiction. The obligations differ, and so does who must be told."
+    if cat not in TRADE_CATEGORIES:
+        return None, f"Name the category: {', '.join(TRADE_CATEGORIES)}."
+    s["incident"] = {
+        "jurisdiction": jur, "category": cat,
+        "discovered_at": str(data.get("discovered_at") or _now()).strip(),
+        "summary": str(data.get("summary") or "").strip(),
+        # Set by QA through `set_class`, never here and never inferred.
+        "risk_class": "", "class_by": "", "class_at": "",
+        "notice": {k: "" for k in NOTICE_ELEMENTS},
+        "statement": "",
+        "signoff": {},
+        "opened": _now(),
+    }
+    return save(s), ""
+
+
+def set_class(s: dict, risk_class: str, who: str) -> tuple[dict | None, str]:
+    """QA records the risk class. The module never decides it and never guesses the vocabulary.
+
+    The valid classes come from the entered framework, so cosmetics is not silently graded on food's
+    scale. With no framework entered there is nothing to validate against, and that is refused rather
+    than waved through.
+    """
+    inc = (s.get("incident") or {})
+    if not inc:
+        return None, "No incident open on this sheet."
+    who = str(who or "").strip()
+    if not who:
+        return None, ("Name the person in quality or food safety who determined this. The class has "
+                      "legal consequences and cannot be attributed to nobody.")
+    fw = framework(inc.get("jurisdiction", ""), inc.get("category", ""))
+    keys = [c["key"] for c in (fw.get("classes") or [])]
+    if not keys:
+        return None, (f"No framework has been confirmed for {inc.get('category')} in "
+                      f"{inc.get('jurisdiction')}, so there is no class scale to record against. Enter "
+                      f"the framework first — this studio does not supply one from memory.")
+    rc = str(risk_class or "").strip()
+    if rc not in keys:
+        return None, f"Unknown class {rc!r} for this framework. One of: {', '.join(keys)}."
+    inc["risk_class"], inc["class_by"], inc["class_at"] = rc, who, _now()
+    # A new class changes what is legally required, so every clearance given under the old one goes.
+    inc["signoff"] = {}
+    s["incident"] = inc
+    return save(s), ""
+
+
+def set_notice(s: dict, patch: dict) -> tuple[dict | None, str]:
+    """Write the public notice's three elements and the statement. Any edit clears the sign-offs."""
+    inc = (s.get("incident") or {})
+    if not inc:
+        return None, "No incident open on this sheet."
+    bad = [k for k in (patch or {}) if k not in tuple(NOTICE_ELEMENTS) + ("statement",)]
+    if bad:
+        return None, (f"Unknown field(s): {', '.join(sorted(bad))}. One of: "
+                      f"{', '.join(tuple(NOTICE_ELEMENTS) + ('statement',))}.")
+    notice = dict(inc.get("notice") or {})
+    changed = False
+    for k in NOTICE_ELEMENTS:
+        if k in patch:
+            new = str(patch[k] or "").strip()
+            changed = changed or new != notice.get(k, "")
+            notice[k] = new
+    if "statement" in patch:
+        new = str(patch["statement"] or "").strip()
+        changed = changed or new != inc.get("statement", "")
+        inc["statement"] = new
+    inc["notice"] = notice
+    if changed:
+        # The same rule as the translations: what was signed is no longer what is on the page.
+        inc["signoff"] = {}
+    s["incident"] = inc
+    return save(s), ""
+
+
+def sign(s: dict, role: str, who: str) -> tuple[dict | None, str]:
+    """One named person signs one role. Three acts, never one flag."""
+    inc = (s.get("incident") or {})
+    if not inc:
+        return None, "No incident open on this sheet."
+    role = str(role or "").strip().lower()
+    if role not in SIGNOFF_ROLES:
+        return None, f"Unknown role {role!r}. One of: {', '.join(SIGNOFF_ROLES)}."
+    who = str(who or "").strip()
+    if not who:
+        return None, "Name the person signing. An unattributed sign-off is the same as none."
+    if role in ("legal", "ceo") and not inc.get("risk_class"):
+        return None, ("Quality has not set the risk class yet, and it decides what is legally "
+                      "required. Nothing can be cleared against obligations nobody has identified.")
+    sofar = dict(inc.get("signoff") or {})
+    sofar[role] = {"who": who, "at": _now()}
+    inc["signoff"] = sofar
+    s["incident"] = inc
+    return save(s), ""
+
+
+def _hours_since(stamp: str) -> float | None:
+    s = str(stamp or "").strip()
+    for fmt in ("%Y-%m-%d %H:%M", "%Y-%m-%d"):
+        try:
+            return (time.time() - time.mktime(time.strptime(s[:len(time.strftime(fmt))], fmt))) / 3600.0
+        except ValueError:
+            continue
+    return None
+
+
+def crisis_status(s: dict) -> dict:
+    """Where this incident stands: the clock, the obligations, the notice, and who still has to sign.
+
+    Timestamps are local and naive, like everything else in this codebase. For a 24-hour statutory
+    clock that is a real limitation and it is said out loud rather than papered over — the deadline
+    here is an aid to a person watching a real clock, not the record of when the duty falls.
+    """
+    if s.get("kind") != "crisis":
+        return {"is_crisis": False}
+    inc = s.get("incident") or {}
+    standby = s.get("standby") or []
+    if not inc:
+        return {"is_crisis": True, "incident": False, "standby": len(standby),
+                "ready": False,
+                "findings": [{"level": "note", "blocking": False,
+                              "what": "Prepared, no incident open",
+                              "why": ("This is the state a crisis sheet should sit in most of the "
+                                      "time. Standby statements written now are the ones retrieved "
+                                      "later.")}] if standby else
+                            [{"level": "gap", "blocking": True,
+                              "what": "No standby statements written",
+                              "why": ("The value of crisis comms is preparation. Under pressure the "
+                                      "right move is retrieving approved language, not composing "
+                                      "new claims.")}]}
+
+    fw = framework(inc.get("jurisdiction", ""), inc.get("category", ""))
+    rc = inc.get("risk_class", "")
+    cls = next((c for c in (fw.get("classes") or []) if c["key"] == rc), None)
+    needs_notice = bool(cls and cls.get("public_notice"))
+    needs_ceo = bool(cls and cls.get("escalate_ceo"))
+
+    # Which obligations apply to this class, and how long is left on each.
+    hours = _hours_since(inc.get("discovered_at", ""))
+    duties = []
+    for o in (fw.get("obligations") or []):
+        if o.get("classes") and rc and rc not in o["classes"]:
+            continue
+        within = o.get("within_hours")
+        left = None
+        try:
+            left = round(float(within) - hours, 1) if (within is not None and hours is not None) else None
+        except (TypeError, ValueError):
+            left = None
+        duties.append({**o, "hours_left": left,
+                       "overdue": bool(left is not None and left < 0)})
+
+    findings = []
+    if not fw.get("entered"):
+        findings.append({"level": "gap", "blocking": True,
+                         "what": f"No confirmed framework for {inc.get('category')} in "
+                                 f"{inc.get('jurisdiction')}",
+                         "why": fw.get("why_empty", "")})
+    if not rc:
+        findings.append({"level": "gap", "blocking": True, "what": "No risk class set",
+                         "why": "Quality determines it. It decides whether a public notice is legally "
+                                "required, so nothing downstream is knowable without it."})
+    for d in duties:
+        if d["overdue"]:
+            # LOUD, and deliberately NOT blocking. Blocking the statement because a different duty is
+            # late would mean this module actively delays a recall notice — making the situation worse
+            # to register disapproval of it. Being late on the authority filing and getting the public
+            # notice out are separate obligations, and the second must never wait on the first.
+            findings.append({"level": "risk", "blocking": False,
+                             "what": f"OVERDUE by {abs(d['hours_left']):.1f}h: {d['what'][:48]}",
+                             "why": f"{d['source']}. Being late is a separate failure from whatever "
+                                    f"caused the recall — deal with it in parallel, do not hold the "
+                                    f"notice for it."})
+    if needs_notice:
+        empty = [k for k in NOTICE_ELEMENTS if not str((inc.get("notice") or {}).get(k) or "").strip()]
+        if empty:
+            findings.append({"level": "gap", "blocking": True,
+                             "what": f"The public notice does not say: {', '.join(empty)}",
+                             "why": "A notice that does not name the product, the risk and what to do "
+                                    "is not a notice — it is an announcement."})
+    if not str(inc.get("statement") or "").strip():
+        findings.append({"level": "gap", "blocking": True, "what": "No statement drafted",
+                         "why": "Retrieve a standby statement and adapt it rather than starting from "
+                                "nothing."})
+    signed = inc.get("signoff") or {}
+    required = ["qa", "legal"] + (["ceo"] if needs_ceo else [])
+    for role in required:
+        if role not in signed:
+            findings.append({"level": "gap", "blocking": True,
+                             "what": f"Not signed by {SIGNOFF_ROLES[role]['label']}",
+                             "why": SIGNOFF_ROLES[role]["what"]})
+
+    order = {"gap": 0, "risk": 1, "note": 2}
+    findings.sort(key=lambda f: (not f["blocking"], order.get(f["level"], 3)))
+    return {
+        "is_crisis": True, "incident": True,
+        "jurisdiction": inc.get("jurisdiction", ""), "category": inc.get("category", ""),
+        "regulator": TRADE_CATEGORIES.get(inc.get("category", ""), {}).get("regulator", ""),
+        "framework_entered": fw.get("entered", False),
+        "framework_confirmed_by": fw.get("confirmed_by", ""),
+        "risk_class": rc, "class_label": (cls or {}).get("label", ""),
+        "class_by": inc.get("class_by", ""), "class_at": inc.get("class_at", ""),
+        "public_notice_required": needs_notice, "ceo_required": needs_ceo,
+        "hours_since_discovery": round(hours, 1) if hours is not None else None,
+        "duties": duties,
+        "notice": inc.get("notice") or {},
+        "notice_elements": NOTICE_ELEMENTS,
+        "statement": inc.get("statement", ""),
+        "standby": standby,
+        "signoff": signed,
+        "required_signoff": required,
+        "roles": SIGNOFF_ROLES,
+        "findings": findings,
+        "blocking": [f["what"] for f in findings if f["blocking"]],
+        # `ready` means "the statement is fit to issue", NOT "this recall is on schedule". The two are
+        # different questions and a screen must be able to show both — a company that is late on the
+        # authority filing still needs to get the notice out.
+        "ready": not any(f["blocking"] for f in findings),
+        "overdue": [{"what": d["what"], "source": d["source"], "hours_late": abs(d["hours_left"])}
+                    for d in duties if d["overdue"]],
+        "ready_means": ("The statement is fit to issue. It does not mean every statutory duty is on "
+                        "time — see `overdue`, which is reported separately and never holds the "
+                        "notice."),
+        "clock_note": ("Times here are the server's local clock and are an aid, not the record. The "
+                       "statutory clock is the one a person is watching."),
+        "limits": ("This studio drafts and checks. It does not determine the risk class, does not "
+                   "state what a regulation requires, and does not send. Those are the client's "
+                   "quality, legal and executive functions."),
+    }
+
+
+# --- the skill ----------------------------------------------------------------------------------
+
+_SKILL = os.path.join(os.path.dirname(__file__), "pr_skill")
+_REFS = ("release.md", "media-map.md", "failures.md")
+
+
+def _read(path: str) -> str:
+    try:
+        with open(path, encoding="utf-8") as fh:
+            return fh.read()
+    except OSError:
+        return ""
+
+
+def skill_present() -> bool:
+    return os.path.exists(os.path.join(_SKILL, "SKILL.md"))
+
+
+def skill_instructions() -> str:
+    """SKILL.md plus its references — the same loader shape `posm._skill_instructions` uses.
+
+    Loaded by the product rather than only reachable by a person typing `/pr`, which is the mistake
+    `posm` made for months: the skill existed and nothing the product generated could see it.
+    """
+    parts = [_read(os.path.join(_SKILL, "SKILL.md"))]
+    for r in _REFS:
+        txt = _read(os.path.join(_SKILL, "references", r))
+        if txt:
+            parts.append(f"\n\n===== reference: {r} =====\n{txt}")
+    return "\n".join(p for p in parts if p)

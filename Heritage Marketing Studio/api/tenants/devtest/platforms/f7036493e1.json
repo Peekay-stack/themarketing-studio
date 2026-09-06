@@ -1,0 +1,54 @@
+{
+  "id": "f7036493e1",
+  "brand": "H",
+  "house": "8c5b0a7705",
+  "created": "2026-08-10 23:01",
+  "updated": "2026-08-10 23:01",
+  "round": 0,
+  "platforms": [
+    {
+      "name": "The Named Dairy",
+      "idea": "Name the dairy on the pack.",
+      "mechanic": "Name the dairy on the pack, then let each medium point at it.",
+      "territory": "",
+      "proof": "",
+      "why": "",
+      "rtb": "ed3aae75",
+      "id": "62e04975",
+      "source": "user",
+      "added": "2026-08-10 23:01",
+      "round": 0,
+      "built_from": "",
+      "expressions": {
+        "video": "one dairy, one morning",
+        "social": "",
+        "posm": "Shelf strip naming the nearest dairy, with the date.",
+        "activation": "",
+        "incentive": ""
+      },
+      "edited": "2026-08-10 23:01"
+    },
+    {
+      "name": "Two Facings",
+      "idea": "Ask for a second facing.",
+      "mechanic": "Every piece asks for one more facing than we have.",
+      "territory": "",
+      "proof": "",
+      "why": "",
+      "rtb": "ed3aae75",
+      "id": "d7a8f20b",
+      "source": "user",
+      "added": "2026-08-10 23:01",
+      "round": 0,
+      "built_from": "",
+      "expressions": {
+        "video": "v",
+        "social": "s",
+        "posm": "a strip sized for two facings",
+        "activation": "",
+        "incentive": ""
+      }
+    }
+  ],
+  "chosen": "d7a8f20b"
+}

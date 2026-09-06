@@ -1,0 +1,733 @@
+"""campaign.py — the time-bound expression of a platform, and the roles it hands each medium.
+
+**Why a layer at all.** The platform is durable and does not argue; it holds a mechanic that should
+survive its twentieth execution. What actually gets briefed is narrower: one route up the house's
+ladder, one tension, one resolution, running between two dates. Heritage's *"Pure Doodh Ki Shakti"* is
+that — and *"drive purity as a core proposition"* is the brief above it while the platform sits between.
+Without this layer, every campaign has to be smuggled in as either a platform (and then it is expected
+to last three years) or an execution (and then nothing ties the film to the shelf strip).
+
+**Stored as a child of the platform.** A campaign expresses exactly one platform, so nesting makes the
+inheritance structural rather than a convention, and a campaign cannot orphan itself from the idea it
+expresses. It carries its own dates because that is the one thing it has and the platform does not.
+
+**Four shapes, not one.** The obvious campaign idea is a sentence with a slot in it — *"{X} ki Shakti,
+Pure Doodh Se"* — and filling the slot yields executions that are unmistakably the same campaign. But
+that is one shape of four, and a tool that only knows it will force every brand into a fill-in-the-blank
+and produce mad-libs. Amul's topical girl is a **device**; *"Daag Acche Hain"* is a **rule** that
+licenses infinite stories; *"Meet Your Farmer"* is an **act**. All four are recorded here as first-class.
+
+**What is deliberately NOT stored.** The proof axis is read off the bridge on the ladder path, and the
+grid is computed from the axis and the roles. Storing either would be a second copy of something the
+house already decides, and this project's recurring bug is exactly that: two copies of one decision,
+drifting apart.
+"""
+from __future__ import annotations
+
+import datetime
+import os
+import uuid
+
+import ideas
+import jsonout
+import media
+import strategy
+import re
+
+# The shapes a campaign idea can take. Anything that generates the next execution counts; the test is
+# whether it GENERATES, not whether it is a sentence.
+SHAPES = {
+    "frame":  ("A sentence with a slot. Fill the slot and get the next execution — "
+               "“{X} ki Shakti, Pure Doodh Se”. Strongest where the language conjugates "
+               "cleanly, and it survives translation as a STRUCTURE rather than a string."),
+    "device": ("A recurring character, object or format that carries the idea. Amul's topical girl. "
+               "The next execution is the same device pointed at something new."),
+    "rule":   ("A reframe that licenses stories without prescribing them. “Daag Acche Hain” "
+               "makes every stain a story. The next execution obeys the rule and is otherwise free."),
+    "act":    ("Something the brand DOES, repeatedly. “Meet Your Farmer”. The next execution "
+               "is the act performed again, somewhere else."),
+}
+
+# `influencer` is here and not in strategy.MEDIA on purpose. The house's medium node is about the
+# message; this is about the ROLE in a campaign, and third-party credibility is a role no owned medium
+# can play. Adding it to the house would churn a screen Design has already shipped.
+# Defined in media.py, the only file that says what a medium is. Identical value — a re-point.
+MEDIA = media.LEGACY_CAMPAIGN_MEDIA
+
+# What each medium is FOR, derived from the rung of the ladder it can carry rather than from convention.
+# This is the retired `elastic` test done properly: not "does this channel have something to do" but
+# "what can this channel actually do that the others cannot".
+ROLE_BY_RUNG = media.LEGACY_ROLE_BY_RUNG
+
+
+def _now() -> str:
+    return datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+
+
+def _item(p: dict | None) -> dict | None:
+    """The adopted platform inside a set, which is the only thing campaigns hang off."""
+    if not p:
+        return None
+    return next((x for x in p.get("platforms", []) if x.get("adopted")), None)
+
+
+def defaults(keys: tuple = ()) -> dict:
+    """The role table, prefilled. Offered as a starting point, never enforced.
+
+    A person who accepts these has still made a decision; a person the tool never showed them to would
+    have written 'awareness' in all seven boxes.
+
+    The parameter was called `media` until this module started importing the `media` module, at which
+    point the name shadowed it inside this function — the same hazard that made the execution routes
+    import `plan as plan_mod`. Nothing here needed the module yet, so it was a latent bug rather than a
+    live one; renamed before it became live.
+    """
+    return {m: ROLE_BY_RUNG.get(m, ("", ""))[0] for m in (keys or MEDIA)}
+
+
+def save(p: dict, data: dict) -> tuple[dict | None, str]:
+    """Create or update one campaign under the adopted platform. Returns (campaign, error).
+
+    `insight` is required, and that is the retired `tension` test landing where it belongs: a campaign
+    without a tension is a description with dates on it.
+    """
+    it = _item(p)
+    if not it:
+        return None, ("No platform adopted in this set — a campaign is an expression of a platform, "
+                      "so there has to be one first.")
+
+    name = str(data.get("name") or "").strip()
+    insight = str(data.get("insight") or "").strip()
+    if not name:
+        return None, "A campaign needs a name — the two or three words a room will repeat."
+    if not insight:
+        return None, ("A campaign needs an insight: the tension it resolves. Not a demographic. "
+                      "“Mothers 25–40” is an audience; “she feels the pressure of "
+                      "his growth more than anyone” is an insight.")
+
+    shape = str(data.get("shape") or "frame").strip().lower()
+    if shape not in SHAPES:
+        shape = "frame"
+
+    slots = []
+    for s in (data.get("slots") or []):
+        if isinstance(s, dict):
+            text = str(s.get("text") or "").strip()
+            if text:
+                slots.append({"text": text, "lang": str(s.get("lang") or "").strip()})
+        elif str(s or "").strip():
+            slots.append({"text": str(s).strip(), "lang": ""})
+
+    roles = {}
+    incoming = data.get("roles") if isinstance(data.get("roles"), dict) else {}
+    for m in MEDIA:
+        if m in incoming:
+            roles[m] = str(incoming.get(m) or "").strip()
+        else:
+            roles[m] = ROLE_BY_RUNG.get(m, ("", ""))[0]
+
+    # The proof axis, written directly on the campaign rather than only inferred from the bridge's
+    # colon-divided text. Heritage's own recorded ladders show why the inference alone is not enough:
+    # five of six report "the bridge does not divide" — not because the campaign has no real axis, but
+    # because the axis was being asked for at the wrong altitude. A shift from "smell" to "fat" to
+    # "temperature" is a genuine three-part proof a CAMPAIGN can see and a bridge sentence often cannot
+    # be written to declare. `axis()` below tries this list first and only falls back to the bridge
+    # when it is empty, so an older campaign with no divisions of its own is unaffected.
+    divisions = [str(d).strip() for d in (data.get("divisions") or []) if str(d or "").strip()]
+
+    # THE BIG IDEA. Named on the campaign rather than on the platform, deliberately.
+    #
+    # A platform is a durable territory that outlives campaigns ("500 Before You"). A big idea is one
+    # campaign's expression of it, and it changes every season. Storing the big idea ON the platform
+    # collapses two different lifespans into one field, and the cost lands next year: the platform
+    # either has to carry a stale idea or be abandoned, and abandoning platforms annually is the most
+    # expensive habit in brand marketing.
+    #
+    # So the gate below is the point of the field, not a formality. If the big idea merely restates the
+    # platform's own line, nothing has been added at campaign level and the collapse has happened
+    # anyway — just one layer down where it is harder to see.
+    big_idea = str(data.get("big_idea") or "").strip()
+    if big_idea:
+        def _norm(t):
+            return re.sub(r"[^a-z0-9 ]+", "", str(t or "").lower()).split()
+        plat_idea, plat_name = _norm(it.get("idea")), _norm(it.get("name"))
+        bi = _norm(big_idea)
+        if bi and (bi == plat_idea or bi == plat_name):
+            return None, (f"The big idea is word-for-word the platform's own line. A platform is a "
+                          f"territory that lasts years; a big idea is what this campaign does with it "
+                          f"this season. Restating the platform means the campaign has added nothing, "
+                          f"and next year the platform has to be abandoned to get a new idea.")
+        if bi and plat_idea and len(set(bi) & set(plat_idea)) >= max(3, int(len(set(bi)) * 0.85)):
+            return None, (f"The big idea is a near-restatement of the platform's line — almost every "
+                          f"word is shared. Say what THIS campaign does that the platform alone does "
+                          f"not, or leave it blank rather than filling it with the line above.")
+
+    rows = it.setdefault("campaigns", [])
+    cid = str(data.get("id") or "").strip()
+    prior = next((c for c in rows if c.get("id") == cid), None) if cid else None
+
+    c = {
+        "id": prior["id"] if prior else uuid.uuid4().hex[:8],
+        "name": name,
+        # Optional, so existing campaigns keep loading. Its absence is reported by `status`, not
+        # refused — a campaign mid-draft has not got there yet, and blocking on it would stop the
+        # layer being usable while it is being written.
+        "big_idea": big_idea or (prior or {}).get("big_idea", ""),
+        "big_idea_note": str(data.get("big_idea_note")
+                             or (prior or {}).get("big_idea_note", "")).strip(),
+        # Inherits the platform's ladder path and may narrow it, but may not invent one — a campaign
+        # standing on a rung the platform does not is the disconnect this layer exists to prevent.
+        "ladder": str(data.get("ladder") or (prior or {}).get("ladder") or it.get("ladder") or "").strip(),
+        "insight": insight,
+        "resolution": str(data.get("resolution") or (prior or {}).get("resolution") or "").strip(),
+        "shape": shape,
+        "frame": str(data.get("frame") or (prior or {}).get("frame") or "").strip(),
+        "slots": slots if "slots" in data else ((prior or {}).get("slots") or []),
+        "divisions": divisions if "divisions" in data else ((prior or {}).get("divisions") or []),
+        "roles": roles,
+        "from": str(data.get("from") or (prior or {}).get("from") or "").strip(),
+        "to": str(data.get("to") or (prior or {}).get("to") or "").strip(),
+        "source": "model" if str(data.get("source") or "").lower() == "model" else "user",
+        "added": prior.get("added") if prior else _now(),
+    }
+    if prior:
+        c["edited"] = _now()
+        it["campaigns"] = [c if x["id"] == c["id"] else x for x in rows]
+    else:
+        it["campaigns"] = rows + [c]
+    ideas.save(p)
+    return c, ""
+
+
+def drop(p: dict, campaign_id: str) -> bool:
+    it = _item(p)
+    if not it:
+        return False
+    before = len(it.get("campaigns") or [])
+    it["campaigns"] = [c for c in (it.get("campaigns") or []) if c.get("id") != campaign_id]
+    ideas.save(p)
+    return len(it["campaigns"]) != before
+
+
+def get(p: dict, campaign_id: str = "") -> dict | None:
+    it = _item(p)
+    rows = (it or {}).get("campaigns") or []
+    if campaign_id:
+        return next((c for c in rows if c.get("id") == campaign_id), None)
+    return rows[-1] if rows else None
+
+
+def big_idea(p: dict, campaign_id: str = "") -> dict:
+    """The campaign's big idea, and its parent platform. Read-only.
+
+    Returned as a pair on purpose: the idea means nothing without the territory it expresses, and a
+    screen showing one without the other invites exactly the collapse `save` refuses.
+    """
+    it = _item(p) or {}
+    c = get(p, campaign_id) or {}
+    text = str(c.get("big_idea") or "").strip()
+    return {
+        "text": text,
+        "note": str(c.get("big_idea_note") or "").strip(),
+        "available": bool(text),
+        "campaign": str(c.get("name") or ""),
+        "platform": {"name": str(it.get("name") or ""), "idea": str(it.get("idea") or "")},
+        "why_separate": ("A platform is a territory that lasts years; a big idea is what one campaign "
+                         "does with it this season. They are stored apart so next year's campaign can "
+                         "get a new idea without the platform being abandoned to make room for it."),
+        "why_missing": "" if text else (
+            "No big idea named yet. The campaign is still usable without one — every execution can be "
+            "briefed from the platform's expression per medium — but nothing then says what THIS "
+            "campaign does that the platform alone does not."),
+    }
+
+
+def axis(house: dict | None, c: dict | None) -> list[str]:
+    """The campaign's proof axis. The campaign's own `divisions` first; the bridge's colon-parsed
+    divisions on its ladder path as a fallback for a campaign that has not written any.
+
+    A stored division is authoritative once written — it is not re-derived from the bridge even if the
+    bridge itself later starts dividing, because the campaign may have deliberately drawn its axis
+    differently from the ladder's own wording. The fallback exists only so an older campaign, saved
+    before this field existed, still computes the axis exactly as it always has.
+    """
+    c = c or {}
+    own = [str(d).strip() for d in (c.get("divisions") or []) if str(d or "").strip()]
+    if own:
+        return own
+    if not (house and c.get("ladder")):
+        return []
+    p = strategy.path(house, c["ladder"])
+    return (p or {}).get("axis") or []
+
+
+def axis_source(house: dict | None, c: dict | None) -> str:
+    """Where the returned axis came from, so a screen can say so rather than presenting either as the
+    neutral truth — the same discipline `producers.stands_on` applies to a resolved line."""
+    if [str(d).strip() for d in ((c or {}).get("divisions") or []) if str(d or "").strip()]:
+        return "written on this campaign"
+    if house and (c or {}).get("ladder") and (strategy.path(house, c["ladder"]) or {}).get("axis"):
+        return "the bridge on this campaign's ladder path"
+    return ""
+
+
+def grid(house: dict | None, c: dict | None) -> dict:
+    """The campaign on a page: proof axis across, media down.
+
+    Computed skeleton only — no cell contents are stored. The value is in showing which combinations
+    exist and which are empty, because an empty column is a dimension nobody is proving and an empty row
+    is a medium with nothing to do.
+    """
+    if not c:
+        return {"axis": [], "slots": [], "rows": [], "cells": 0, "filled": 0}
+    ax = axis(house, c)
+    slots = [s.get("text", "") for s in (c.get("slots") or [])]
+    rows = []
+    for m in MEDIA:
+        role = str((c.get("roles") or {}).get(m) or "").strip()
+        if not role:
+            continue
+        rows.append({"medium": m, "role": role,
+                     "why": ROLE_BY_RUNG.get(m, ("", ""))[1],
+                     # Columns are the axis where there is one, otherwise a single undivided column.
+                     "columns": ax or [""]})
+    return {"axis": ax, "slots": slots, "rows": rows,
+            "columns": len(ax or [""]), "media": len(rows),
+            "cells": len(rows) * len(ax or [""])}
+
+
+# Which legacy expression slots feed which target leaf. Built from the alias map rather than written
+# out, so adding an alias cannot leave this table behind. `media` resolves to `media`, which is not a
+# leaf, so it drops out here without a special case — which is the correct handling of a parked key.
+def _expression_slots_by_leaf() -> dict[str, list[str]]:
+    out: dict[str, list[str]] = {}
+    for slot in media.EXPRESSIONS:
+        target = media.normalise(slot)
+        if target in media.LEAVES:
+            out.setdefault(target, []).append(slot)
+    return out
+
+
+def _house_lines_by_leaf(house: dict | None) -> dict[str, dict]:
+    """The house's chosen medium lines, filed against the leaf each one now belongs to.
+
+    This is the fold-on-read for the house's medium layer, running here **before** the phase that
+    retires that layer. Nothing is written and nothing is removed: the point is to prove the seven
+    deliberated paragraphs land somewhere visible while the layer they came from is still on screen to
+    check against. If a line goes missing here, it is a bug in the map rather than lost work.
+    """
+    node = ((house or {}).get("nodes") or {}).get("medium") or {}
+    picked = set(node.get("chosen") or [])
+    out: dict[str, dict] = {}
+    for o in node.get("options", []):
+        if o.get("id") not in picked:
+            continue
+        text = str(o.get("text") or "").strip()
+        tag = str(o.get("tag") or "").strip().lower()
+        if not (text and tag):
+            continue
+        leaf, review = media.migrate(tag)
+        if leaf in media.LEAVES and leaf not in out:
+            # `note` is the channel rationale — "arterial roads near residential clusters, morning
+            # drive-time". It travels with the line rather than being dropped, and it is deliberately
+            # NOT routed onward to the plan: scheduling is parked, and quietly filing this under a
+            # parked decision would be making that decision.
+            out[leaf] = {"text": text, "tag": tag, "needs_review": review,
+                         "rationale": str(o.get("note") or "").strip()}
+    return out
+
+
+def jobs(house: dict | None, p: dict | None = None, c: dict | None = None) -> dict:
+    """The jobs table: one row per medium, the role computed and the expression resolved beside it.
+
+    This is the successor to `grid()` and the replacement for three separate screens — the house's
+    message-by-medium, the platform's expression-by-medium, and the campaign's roles-by-medium. Those
+    three asked the same question at three altitudes in three vocabularies that shared two names out of
+    eight, which is how a house came to say POS material was one thing while the platform said it was
+    another, with only one of them ever read.
+
+    **The role explains the expression, in the same row.** That is the whole gain. It also means a medium
+    carrying a job with nothing written for it shows up as an empty cell rather than as a screen nobody
+    built — and an empty cell is a decision somebody has not made yet, which is worth seeing.
+
+    Resolution per row follows the same order of authority as `producers.stands_on`: the platform's
+    expression for this medium first because it is the most specific thing anyone decided, then the
+    house's line for it, then nothing. `source` says which, so a borrowed line is never presented as
+    though it were written here.
+    """
+    # `p` is the SET, and the adopted platform inside it is resolved here — the same convention as
+    # `get()` and `save()`. Taking a platform dict instead would have made this the one function in the
+    # module with a different idea of what it is passed.
+    slots = _expression_slots_by_leaf()
+    house_lines = _house_lines_by_leaf(house)
+    expressions = (_item(p) or {}).get("expressions") or {}
+    typed_roles = (c or {}).get("roles") or {}
+
+    rows = []
+    for leaf in media.LEAVES:
+        role, why = media.role_for(leaf)
+        # Check the leaf's own key first, then any legacy key a rename left behind. A campaign saved
+        # before `on-ground` became `activation` stores its role under the old key; without this, a
+        # role a person actually typed was silently dropped in favour of the computed default the
+        # moment the medium was renamed — found by saving a real campaign with a custom `on-ground`
+        # role and watching `/jobs` report `activation` as untouched.
+        typed = str(typed_roles.get(leaf) or "").strip()
+        if not typed:
+            for legacy in media.legacy_keys_for(leaf):
+                typed = str(typed_roles.get(legacy) or "").strip()
+                if typed:
+                    break
+        text, source, review, rationale = "", "", False, ""
+
+        for slot in slots.get(leaf, []):
+            got = str(expressions.get(slot) or "").strip()
+            if got:
+                text = got
+                source = ("the platform" if slot == leaf else
+                          f"the platform, expressed as {slot}")
+                break
+        if not text and leaf in house_lines:
+            text = house_lines[leaf]["text"]
+            review = house_lines[leaf]["needs_review"]
+            rationale = house_lines[leaf]["rationale"]
+            source = f"the house's {house_lines[leaf]['tag']} message"
+
+        rows.append({
+            "medium": leaf,
+            "label": media.label(leaf),
+            "parent": media.parent_of(leaf),
+            "role": typed or role,
+            "role_source": "typed" if typed else "computed",
+            "why": why,
+            "expression": text,
+            "source": source,
+            "rationale": rationale,
+            "needs_review": review,
+            "empty": not text,
+        })
+
+    empty = [r["medium"] for r in rows if r["empty"]]
+    review = [r["medium"] for r in rows if r["needs_review"]]
+    return {
+        "rows": rows,
+        "count": len(rows),
+        "filled": len(rows) - len(empty),
+        "empty": empty,
+        "needs_review": review,
+        "parents": {k: list(v["children"]) for k, v in media.MEDIA.items() if v["children"]},
+        "findings": jobs_findings(rows),
+    }
+
+
+def jobs_findings(rows: list[dict]) -> list[dict]:
+    """What the table shows that a list of six expressions could not."""
+    out = []
+    empty = [r for r in rows if r["empty"]]
+    if empty:
+        out.append({
+            "id": "no-expression", "level": "ask",
+            "what": f"{len(empty)} medium(s) carry a job with nothing written for them: "
+                    f"{', '.join(r['label'] for r in empty)}.",
+            "why": "A computed role is what the medium *could* carry. Until somebody writes the "
+                   "expression, that is a job assigned to nobody.",
+        })
+    review = [r for r in rows if r["needs_review"]]
+    if review:
+        out.append({
+            "id": "needs-review", "level": "ask",
+            "what": f"{', '.join(r['label'] for r in review)} inherited a line written when digital was "
+                    f"one medium.",
+            "why": "It could have been a site, a search line or a social post, and only a reader can "
+                   "tell which. Confirm it belongs here or move it.",
+        })
+    parked = [k for k in media.EXPRESSIONS if media.normalise(k) not in media.LEAVES]
+    if parked:
+        out.append({
+            "id": "parked", "level": "note",
+            "what": f"{', '.join(parked)} has an expression slot and no row here.",
+            "why": media.RETIRED.get(parked[0], "Retired from the medium list."),
+        })
+    return out
+
+
+def suggest_shape(house: dict | None) -> tuple[str, str]:
+    """Which of the four shapes this brand's own codes point at, and why.
+
+    Read off the culture layer rather than guessed, because the house has already decided the signs the
+    brand repeats — and a campaign shape that ignores them produces a device nobody recognises as this
+    brand. A hint for the drafter, never a constraint: the four shapes stay open.
+    """
+    node = ((house or {}).get("nodes") or {}).get("culture") or {}
+    picked = set(node.get("chosen") or [])
+    tags = {str(o.get("tag") or "").lower() for o in node.get("options", []) if o["id"] in picked}
+    if "idiom" in tags:
+        return "frame", ("The house owns an idiom, and an idiom with a word swapped out is the cheapest "
+                         "generative sentence there is.")
+    if "iconography" in tags:
+        return "device", "The house owns iconography — a recurring thing carries the idea better than a line."
+    if "ritual" in tags:
+        return "act", "The house owns a ritual, and a ritual the brand performs repeatedly is an act."
+    return "frame", "No culture code points anywhere in particular, so the most portable shape is the default."
+
+
+def draft(p: dict | None, house: dict | None, ladder_id: str = "",
+          shift: dict | None = None) -> tuple[dict | None, str]:
+    """A first campaign off the platform and one ladder path. Returns (draft, note). Saves nothing.
+
+    **Every input already exists.** The platform says what must be expressed; the ladder path says which
+    fact licenses which feeling and, through its bridge, how the proof divides; the culture layer says
+    which shape the brand's own codes point at; the brief's Current→Desired shift IS the tension, if
+    anybody passes it. Asking somebody to retype all of that into a blank form is how two copies of one
+    decision start disagreeing — which has happened three times on this project already.
+
+    `shift` is `{shift_from, shift_to, shift_line, ca, da}` from the brief builder's `cb_ca_db_da`. The house
+    does not carry it (its `brief` holds only `background`), so it is optional and its absence is said
+    out loud rather than papered over — an insight invented with no current-state to move from is a mood.
+    """
+    it = _item(p)
+    if not it:
+        return None, ("No platform adopted in this set — a campaign is an expression of a platform, so "
+                      "there has to be one first.")
+    if not os.environ.get("ANTHROPIC_API_KEY"):
+        return None, "No ANTHROPIC_API_KEY — the campaign can still be written by hand."
+
+    lid = ladder_id or it.get("ladder") or ""
+    path = strategy.path(house, lid) if (house and lid) else None
+    if not path:
+        return None, ("This needs a ladder path: which functional truth, through which bridge, to which "
+                      "feeling. Record one in the messaging house, or draft candidates with "
+                      "/ladder-draft.")
+
+    axis = path.get("axis") or []
+    shape, shape_why = suggest_shape(house)
+    shift = shift or {}
+    s_from = str(shift.get("shift_from") or "").strip()
+    s_to = str(shift.get("shift_to") or "").strip()
+    s_line = str(shift.get("shift_line") or "").strip()
+    # The ATTITUDES, not just the behaviours. `cb_ca_db_da` splits current/desired into behaviour (cb/db)
+    # and attitude (ca/da), and the tension a campaign resolves is the ATTITUDE gap — she already buys the
+    # milk, so the behaviour is not what needs moving. Optional, and worth far more than the one-liner.
+    s_ca = str(shift.get("ca") or "").strip()
+    s_da = str(shift.get("da") or "").strip()
+
+    culture = ((house or {}).get("nodes") or {}).get("culture") or {}
+    picked = set(culture.get("chosen") or [])
+    codes = [(str(o.get("tag") or "").lower(), o.get("text", ""))
+             for o in culture.get("options", []) if o["id"] in picked]
+    idiom = next((t for tag, t in codes if tag == "idiom"), "")
+    avoid = [t for tag, t in codes if tag == "avoid"]
+
+    parts = [
+        f"You are writing the campaign layer for {(house or {}).get('brand') or 'this brand'}.",
+        "",
+        "A CAMPAIGN is the time-bound expression of a durable platform: one route up the ladder, one "
+        "tension, one resolution. It is not the platform restated with dates on it.",
+        "",
+        f"THE PLATFORM (binding — the campaign expresses this, never contradicts it)",
+        f"  line: {it.get('idea') or it.get('name') or ''}",
+    ]
+    if it.get("mechanic"):
+        parts.append(f"  mechanic: {it['mechanic']}")
+    parts += [
+        "",
+        "THE LADDER PATH THIS CAMPAIGN ARGUES",
+        f"  functional truth: {path['f']['text']}",
+    ]
+    for b in path.get("bridges", []):
+        parts.append(f"  bridge: {b['text']}")
+    parts.append(f"  emotional truth: {path['e']['text']}")
+    if axis:
+        parts.append(f"  the bridge DIVIDES into: {', '.join(axis)} — these are the proof axis, and each "
+                     f"one is a separate execution with its own evidence rather than a repeat.")
+    if s_from or s_to or s_line or s_ca or s_da:
+        parts += ["", "THE SHIFT THE WORK HAS TO DELIVER (from the brief)",
+                  f"  from: {s_from}" if s_from else "",
+                  f"  to: {s_to}" if s_to else "",
+                  f"  in one line: {s_line}" if s_line else "",
+                  f"  her attitude TODAY: {s_ca}" if s_ca else "",
+                  f"  her attitude WANTED: {s_da}" if s_da else "",
+                  ("  The tension is the gap between those two attitudes. Write the insight from it — "
+                   "not from the behaviour, which is already happening." if (s_ca and s_da) else "")]
+    else:
+        parts += ["", "NO CURRENT→DESIRED SHIFT WAS SUPPLIED. Derive the tension from the emotional "
+                  "truth instead — what stops her believing it today — and say plainly that it is "
+                  "your inference and needs confirming."]
+    if idiom:
+        parts += ["", f"THE BRAND'S OWN IDIOM (use it — do not invent a new one): {idiom}"]
+    if avoid:
+        parts += ["", "MUST AVOID: " + " | ".join(avoid)]
+
+    parts += [
+        "", f"THE SHAPE TO USE: {shape}. {shape_why}",
+        "The four shapes: " + " · ".join(f"{k} — {v}" for k, v in SHAPES.items()),
+        "",
+        "Write:",
+        "  insight — the TENSION, in one sentence. What is true and uncomfortable for this buyer that "
+        "the work resolves. NOT a demographic and NOT a benefit restated. 'Mothers 25-40' is an "
+        "audience; 'she feels the pressure of his growth more than anyone' is an insight.",
+        "  resolution — what the work TELLS her, in one short sentence. It should be sayable and a "
+        "little surprising: 'learning matters more than winning'.",
+        f"  frame — the {shape} itself. For a frame, a sentence with ONE slot marked {{X}}, built off "
+        "the brand's idiom where there is one.",
+        "  slots — the conjugations that fill it. " + (
+            f"Write ONE PER DIVISION of the proof axis ({', '.join(axis)}), in that order, so the "
+            f"campaign covers every dimension it claims." if axis else
+            "Write two or three, enough to show the frame generates."),
+        "    Each slot carries a `lang` where the word is not English — this is India, and a campaign "
+        "line is a STRUCTURE instantiated per language, not one string translated.",
+        "",
+        'Return ONLY JSON: {"insight":"…","resolution":"…","shape":"' + shape + '","frame":"…",'
+        '"slots":[{"text":"…","lang":"hi|te|en|…"}],"why":"one sentence on why this is the campaign '
+        'this platform should run now"}',
+    ]
+    prompt = "\n".join(x for x in parts if x != "")
+
+    data, err = jsonout.ask_json(prompt, max_tokens=1600)
+    if data is None:
+        return None, f"Generation failed: {err}"
+
+    slots = []
+    for s in (data.get("slots") or []):
+        if isinstance(s, dict) and str(s.get("text") or "").strip():
+            slots.append({"text": str(s["text"]).strip(), "lang": str(s.get("lang") or "").strip()})
+    out = {
+        "insight": str(data.get("insight") or "").strip(),
+        "resolution": str(data.get("resolution") or "").strip(),
+        "shape": (str(data.get("shape") or shape).strip().lower()
+                  if str(data.get("shape") or "").strip().lower() in SHAPES else shape),
+        "frame": str(data.get("frame") or "").strip(),
+        "slots": slots,
+        "ladder": lid,
+        "roles": defaults(),
+        "why": str(data.get("why") or "").strip(),
+        "shape_why": shape_why,
+        "source": "model",
+    }
+    if not out["insight"]:
+        return None, "Nothing usable came back — no insight, which is the one field a campaign cannot skip."
+
+    bits = [f"Drafted off “{path['f']['text'][:40]}…” → “{path['e']['text'][:40]}…”."]
+    if axis:
+        bits.append(f"Proof axis: {', '.join(axis)} ({len(slots)} slot(s) written).")
+    else:
+        bits.append("The bridge on this path does not divide, so there is no proof axis and every "
+                    "execution will argue the same thing — worth fixing in the house before building.")
+    if not (s_from or s_to or s_line or s_ca or s_da):
+        bits.append("No Current→Desired shift was supplied, so the insight is inferred [unverified] — "
+                    "confirm it against the brief.")
+    elif not (s_ca and s_da):
+        bits.append("The shift arrived as behaviour only. The tension is really the ATTITUDE gap "
+                    "(ca/da on the brief), so the insight is weaker than it needs to be.")
+    bits.append("Nothing is saved yet.")
+    return out, " ".join(bits)
+
+
+def validate(p: dict | None, house: dict | None = None) -> list[dict]:
+    """What is wrong with the campaigns on this platform. Findings, not blockers on saving.
+
+    Every check here is computed. The layer adds no new question for a person to answer, which is the
+    whole reason three of the platform's five hand-answered tests could be retired into it.
+    """
+    out: list[dict] = []
+
+    def add(level, msg, cid=""):
+        out.append({"level": level, "layer": "campaign", "campaign": cid, "detail": msg})
+
+    it = _item(p)
+    if not it:
+        return out
+    rows = it.get("campaigns") or []
+    if not rows:
+        return out
+
+    for c in rows:
+        cid, nm = c.get("id", ""), c.get("name") or "this campaign"
+
+        # The disconnect that produced the live Heritage case: the work stands on a truth the house does
+        # not contain, and nothing noticed.
+        if not c.get("ladder"):
+            add("blocking", f"{nm} names no ladder path — so nobody can say which fact licenses it, "
+                            f"and the insight is a leap with nothing recorded under it", cid)
+        elif house and not strategy.path(house, c["ladder"]):
+            add("blocking", f"{nm} stands on a ladder path that no longer resolves in the house — an "
+                            f"option under it was deleted or the house was replaced", cid)
+
+        if not c.get("resolution"):
+            add("open", f"{nm} states a tension and not what the work tells them — an insight with no "
+                        f"resolution briefs a mood", cid)
+
+        shape = c.get("shape") or "frame"
+        if not c.get("frame"):
+            add("open", f"{nm} has no {shape} written. {SHAPES.get(shape, ('', ''))[0]}", cid)
+
+        # A frame with nothing slotted has not been shown to generate anything, which is the only test
+        # that separates a campaign idea from a tagline.
+        if shape == "frame" and len(c.get("slots") or []) < 2:
+            add("open", f"{nm} is a frame with fewer than two slots filled — a frame that has not been "
+                        f"conjugated twice is a tagline, and nobody can see yet that it generates", cid)
+
+        ax = axis(house, c)
+        divs = [str(d).strip() for d in (c.get("divisions") or []) if str(d or "").strip()]
+        if divs and not (2 <= len(divs) <= 4):
+            add("open", f"{nm} writes {len(divs)} division(s) — two to four is the range this framework "
+                        f"argues for. One division is not a division; more than four and the ladder has "
+                        f"stopped being an argument.", cid)
+        # This is the finding `strategy.ladder_findings()` cannot make: that function reports a bridge
+        # that will not divide, which is true of the SPINE and independent of any one campaign. This one
+        # is true of THIS campaign specifically, after `divisions` has had its chance to supply an axis
+        # the bridge could not. A campaign can now clear it without anyone touching the house.
+        elif not ax and (c.get("insight") or c.get("resolution")):
+            add("open", f"{nm} has no proof axis — write two to four divisions directly (for example "
+                        f"“cognitive, physical, social”), or divide the bridge on its ladder path. "
+                        f"Without one, every execution argues the same evidence.", cid)
+
+        n_slots = len(c.get("slots") or [])
+        if ax and n_slots and n_slots < len(ax):
+            add("open", f"{nm} has {n_slots} slot(s) against a {len(ax)}-part proof axis "
+                        f"({', '.join(ax)}) — {len(ax) - n_slots} dimension(s) have nothing to say them",
+                cid)
+
+        empty = [m for m in MEDIA if not str((c.get("roles") or {}).get(m) or "").strip()]
+        if empty:
+            add("open", f"{nm} gives no role to: {', '.join(empty)}", cid)
+
+        # Two media doing the same job means one of them is decoration.
+        seen: dict[str, str] = {}
+        for m, role in (c.get("roles") or {}).items():
+            key = str(role or "").strip().lower()
+            if not key:
+                continue
+            if key in seen and m != "digital" and seen[key] != "social":
+                add("open", f"{nm}: {seen[key]} and {m} are given the same role — one of them is "
+                            f"repeating the other rather than doing its own job", cid)
+            seen.setdefault(key, m)
+
+        if c.get("from") and c.get("to") and c["from"] > c["to"]:
+            add("blocking", f"{nm} ends before it starts.", cid)
+
+    # A campaign is time-bound; two running at once off one platform is usually a mistake and always
+    # worth naming, because the shopper meets both at the same shelf.
+    live = [c for c in rows if c.get("from") and not c.get("to")]
+    if len(live) > 1:
+        add("open", f"{len(live)} campaigns are open-ended at the same time on one platform — the buyer "
+                    f"meets them together, so say which is running.")
+    return out
+
+
+def status(p: dict | None, house: dict | None = None) -> dict:
+    """The campaign layer's own account of itself, for the screen and the document."""
+    it = _item(p)
+    rows = (it or {}).get("campaigns") or []
+    findings = validate(p, house)
+    return {
+        "platform": (it or {}).get("name", ""),
+        "platform_id": (it or {}).get("id", ""),
+        "count": len(rows),
+        "campaigns": rows,
+        "shapes": {k: v for k, v in SHAPES.items()},
+        "media": list(MEDIA),
+        "role_defaults": {m: {"role": v[0], "why": v[1]} for m, v in ROLE_BY_RUNG.items()},
+        "grid": grid(house, rows[-1] if rows else None),
+        "findings": findings,
+        "blocking": [f for f in findings if f["level"] == "blocking"],
+    }

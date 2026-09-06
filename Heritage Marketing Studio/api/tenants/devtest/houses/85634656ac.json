@@ -1,0 +1,138 @@
+{
+  "id": "85634656ac",
+  "brand": "Heritage Foods",
+  "brief": {},
+  "created": "2026-08-10 22:59",
+  "updated": "2026-08-10 22:59",
+  "nodes": {
+    "core": {
+      "layer": "core",
+      "options": [
+        {
+          "id": "deb3d373",
+          "text": "The strength of pure milk",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-10 22:59"
+        }
+      ],
+      "chosen": [
+        "deb3d373"
+      ],
+      "sig": "",
+      "generated_under": ""
+    },
+    "emotional": {
+      "layer": "emotional",
+      "options": [
+        {
+          "id": "df8cd21f",
+          "text": "A mother who chose well",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-10 22:59"
+        }
+      ],
+      "chosen": [
+        "df8cd21f"
+      ],
+      "sig": "",
+      "generated_under": ""
+    },
+    "functional": {
+      "layer": "functional",
+      "options": [
+        {
+          "id": "212b701b",
+          "text": "Tested twice before dispatch",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-10 22:59"
+        }
+      ],
+      "chosen": [
+        "212b701b"
+      ],
+      "sig": "",
+      "generated_under": ""
+    },
+    "rtb_emotional": {
+      "layer": "rtb_emotional",
+      "options": [],
+      "chosen": [],
+      "sig": "",
+      "generated_under": ""
+    },
+    "rtb_functional": {
+      "layer": "rtb_functional",
+      "options": [
+        {
+          "id": "0ba00aac",
+          "text": "Cold chain audited monthly by NDDB",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-10 22:59"
+        },
+        {
+          "id": "unsrc1",
+          "text": "Farmers are paid more",
+          "note": "",
+          "tag": "",
+          "source": "model",
+          "added": "now"
+        }
+      ],
+      "chosen": [
+        "0ba00aac",
+        "unsrc1"
+      ],
+      "sig": "",
+      "generated_under": ""
+    },
+    "proof": {
+      "layer": "proof",
+      "options": [],
+      "chosen": [],
+      "sig": "",
+      "generated_under": ""
+    },
+    "culture": {
+      "layer": "culture",
+      "options": [
+        {
+          "id": "d9f3998d",
+          "text": "Pongal morning",
+          "note": "",
+          "source": "user",
+          "tag": "occasion",
+          "added": "2026-08-10 22:59"
+        },
+        {
+          "id": "06ff94b7",
+          "text": "Never show milk being wasted",
+          "note": "",
+          "source": "user",
+          "tag": "avoid",
+          "added": "2026-08-10 22:59"
+        }
+      ],
+      "chosen": [
+        "d9f3998d",
+        "06ff94b7"
+      ],
+      "sig": "",
+      "generated_under": ""
+    },
+    "medium": {
+      "layer": "medium",
+      "options": [],
+      "chosen": [],
+      "sig": "",
+      "generated_under": ""
+    }
+  }
+}

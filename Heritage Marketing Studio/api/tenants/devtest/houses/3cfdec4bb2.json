@@ -1,0 +1,139 @@
+{
+  "id": "3cfdec4bb2",
+  "brand": "Northwind Cloud",
+  "brief": {
+    "businessObjective": "400 paid workspaces in 12 months",
+    "commObjective": "Land Sync as the default",
+    "targetAudience": "Data leads at 200-2000 seat companies",
+    "smp": "Your data, already there.",
+    "toneOfVoice": "Direct",
+    "mandatories": "SOC 2 badge",
+    "brand": "Northwind Cloud"
+  },
+  "created": "2026-08-11 13:37",
+  "updated": "2026-08-11 13:37",
+  "nodes": {
+    "core": {
+      "layer": "core",
+      "options": [
+        {
+          "id": "7c0809ea",
+          "text": "Already there",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-11 13:37"
+        }
+      ],
+      "chosen": [
+        "7c0809ea"
+      ],
+      "sig": "",
+      "generated_under": ""
+    },
+    "emotional": {
+      "layer": "emotional",
+      "options": [
+        {
+          "id": "f2eebac1",
+          "text": "You look prepared",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-11 13:37"
+        }
+      ],
+      "chosen": [
+        "f2eebac1"
+      ],
+      "sig": "",
+      "generated_under": ""
+    },
+    "functional": {
+      "layer": "functional",
+      "options": [
+        {
+          "id": "870085f3",
+          "text": "Sub-minute sync, any source",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-11 13:37"
+        }
+      ],
+      "chosen": [
+        "870085f3"
+      ],
+      "sig": "",
+      "generated_under": ""
+    },
+    "rtb_emotional": {
+      "layer": "rtb_emotional",
+      "options": [],
+      "chosen": [],
+      "sig": "",
+      "generated_under": ""
+    },
+    "rtb_functional": {
+      "layer": "rtb_functional",
+      "options": [
+        {
+          "id": "7abee63c",
+          "text": "p95 latency published monthly",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-11 13:37"
+        },
+        {
+          "id": "f0c9b5db",
+          "text": "SOC 2 Type II",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-11 13:37"
+        }
+      ],
+      "chosen": [
+        "7abee63c",
+        "f0c9b5db"
+      ],
+      "sig": "",
+      "generated_under": ""
+    },
+    "proof": {
+      "layer": "proof",
+      "options": [],
+      "chosen": [],
+      "sig": "",
+      "generated_under": ""
+    },
+    "culture": {
+      "layer": "culture",
+      "options": [],
+      "chosen": [],
+      "sig": "",
+      "generated_under": ""
+    },
+    "medium": {
+      "layer": "medium",
+      "options": [
+        {
+          "id": "2e2d0728",
+          "text": "One line on the shelf of a search result",
+          "note": "",
+          "source": "user",
+          "tag": "posm",
+          "added": "2026-08-11 13:37"
+        }
+      ],
+      "chosen": [
+        "2e2d0728"
+      ],
+      "sig": "",
+      "generated_under": ""
+    }
+  },
+  "brief_id": "26c42b1dec",
+  "brief_title": "Sync — launch"
+}

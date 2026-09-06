@@ -1,0 +1,121 @@
+{
+  "id": "732c05432f",
+  "plan": "d684b76657",
+  "house": "68c50487e3",
+  "kind": "social",
+  "brief": {
+    "kind": "social",
+    "audience": {
+      "id": "7b459c4a",
+      "audience": "Loose/unbranded milk households in core South markets — buy daily from a vendor or dairy, boil and skim at home",
+      "rank": "1",
+      "believes_now": "Loose milk is fresher because they see it that morning; packed milk is processed, older, or thinned. Their trust is in the vendor's face, not a brand. The one thing they cannot check for themselves is whether the milk stayed cold from farm to door — that gap is the opening.",
+      "pillar": "functional"
+    },
+    "channel": {
+      "id": "bf0a9dd3",
+      "channel": "Vernacular social video — pre-dawn boil, first-coffee ritual, ghee-gold cream band, 9:16 reels",
+      "medium": "social",
+      "role": "reach",
+      "job": "Carry the family-morning meaning to young urban parents and packed-milk loyalists",
+      "measure": "16558660",
+      "side": "brand",
+      "share": "11",
+      "owner": "Social team + agency",
+      "lead": ""
+    },
+    "occasion": {
+      "id": "f50a9ba2",
+      "phase": "Phase 1 — Make the cold-chain believable",
+      "window": "Weeks 1–8",
+      "occasion": "The pre-dawn boil — milk hitting the vessel and rising to foam before the household wakes. This is where 'the cold never breaks' either lands or doesn't; the household boils the milk precisely because it doesn't trust it.",
+      "channels": "Cold-chain proof film (lead, TV + cutdowns); Regional TV & CTV reach buy; Route-level OOH on dairy-dense streets; Vernacular social video",
+      "hands_over": "A household that now believes the purity claim — intent the conversion phase can act on. Also hands the proof film's best-performing cuts to Phase 2 for retargeting."
+    },
+    "measure": {
+      "id": "16558660",
+      "role": "reach",
+      "leading": "1+ reach build and cost per reach point vs plan, weekly",
+      "lagging": "Aided awareness lift among loose-milk + packed-milk households at flight end",
+      "would_tell_us_it_failed": "3+ reach below target at half-spend, or cost per reach point 20%+ over plan"
+    },
+    "pillar": "functional",
+    "platform": {
+      "id": "213bcd62",
+      "name": "The Head Start",
+      "idea": "Every morning, Heritage shows one small thing a family did before anyone else was awake — the poured glass that started it — and names the head start it bought them by breakfast.",
+      "mechanic": "",
+      "expression": "A daily 'Ahead by breakfast' unit: one square, one real person, one small thing they finished before the house stirred (the 6k run, the packed tiffins, the fixed cycle chain), captioned with the exact time it was done and the 'ahead' it bought them. Format fixed — task, time, the ahead — person and task rotate forever, one post every morning off the same idea."
+    },
+    "campaign": {
+      "id": "ca669ea6",
+      "name": "IMC 2026",
+      "shape": "frame",
+      "ladder": "5cbe2de0",
+      "axis": [],
+      "axis_source": "",
+      "big_idea": {
+        "text": "Pure strength everyday",
+        "note": "",
+        "available": true,
+        "campaign": "IMC 2026",
+        "platform": {
+          "name": "The Head Start",
+          "idea": "Every morning, Heritage shows one small thing a family did before anyone else was awake — the poured glass that started it — and names the head start it bought them by breakfast."
+        },
+        "why_separate": "A platform is a territory that lasts years; a big idea is what one campaign does with it this season. They are stored apart so next year's campaign can get a new idea without the platform being abandoned to make room for it.",
+        "why_missing": ""
+      }
+    },
+    "house": {
+      "id": "68c50487e3",
+      "core": [
+        "Strength you can pour every morning."
+      ],
+      "claim": {
+        "available": true,
+        "text": "Milk this pure carries more of what a growing family runs on — better nourishment in every glass, so strength isn't a slogan, it's what's actually in the pour.",
+        "pillar": "emotional",
+        "sourced": true,
+        "id": "e6eee05e"
+      }
+    },
+    "geography": {
+      "rows": [
+        {
+          "id": "6ce17e04",
+          "state": "mh",
+          "stratum": "urban",
+          "town_class": "metro",
+          "cities": [
+            "Mumbai",
+            "Pune"
+          ]
+        }
+      ],
+      "total_population": 15566831,
+      "by_state": [
+        {
+          "state": "mh",
+          "label": "Maharashtra",
+          "population": 15566831,
+          "share": 100.0
+        }
+      ],
+      "language_gaps": [],
+      "basis": "census_2011",
+      "caveat": "Every figure here is Census of India 2011 — the last completed count. India was 1.21 billion then and is estimated above 1.4 billion now, and urban areas grew faster than the national rate, so these numbers are stale by roughly fifteen years, unevenly, and low rather than high. Census 2027 enumerates on 1 March 2027 and is the next real count.",
+      "states_missing_data": [],
+      "states_with_data_quality_flag": []
+    },
+    "message": {
+      "id": "platform",
+      "text": "A daily 'Ahead by breakfast' unit: one square, one real person, one small thing they finished before the house stirred (the 6k run, the packed tiffins, the fixed cycle chain), captioned with the exact time it was done and the 'ahead' it bought them. Format fixed — task, time, the ahead — person and task rotate forever, one post every morning off the same idea.",
+      "note": "the platform's expression for social"
+    }
+  },
+  "status": "briefed",
+  "artefacts": [],
+  "created": "2026-09-05 13:17",
+  "updated": "2026-09-05 13:17"
+}

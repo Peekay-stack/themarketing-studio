@@ -1,0 +1,116 @@
+{
+  "id": "7316244566",
+  "brand": "Heritage",
+  "name": "Pure Milk home-delivery acquisition",
+  "plan": "abfaac5fe0",
+  "created": "2026-08-26 12:12:31",
+  "updated": "2026-08-26 12:12:32",
+  "objective": "conversion",
+  "budget": 4000000.0,
+  "currency": "INR",
+  "days": 60,
+  "budget_mode": "per_cell",
+  "split_level": "city",
+  "benchmark": {
+    "kind": "own_history",
+    "source": "Diwali 2025 home-delivery signup campaign, Meta, AP+TG",
+    "as_of": "2026-01-15",
+    "trust": "high",
+    "at": "2026-08-26 12:12:31",
+    "cpa": 250.0
+  },
+  "cells": [
+    {
+      "id": "9b456510",
+      "level": "city",
+      "name": "Hyderabad",
+      "state": "tg",
+      "state_label": "Telangana",
+      "radius_km": null,
+      "budget": null,
+      "floor": null,
+      "phase": "",
+      "priority": "",
+      "note": "",
+      "pop": 6993262,
+      "pop_basis": "census_2011_city",
+      "seeded": true,
+      "languages": [
+        "te",
+        "ur",
+        "en"
+      ],
+      "principal_language": "te",
+      "added": "2026-08-26 12:12:31"
+    },
+    {
+      "id": "6e624495",
+      "level": "city",
+      "name": "Visakhapatnam",
+      "state": "ap",
+      "state_label": "Andhra Pradesh",
+      "radius_km": null,
+      "budget": null,
+      "floor": null,
+      "phase": "",
+      "priority": "",
+      "note": "",
+      "pop": 1728128,
+      "pop_basis": "census_2011_city",
+      "seeded": true,
+      "languages": [
+        "te",
+        "ur",
+        "en"
+      ],
+      "principal_language": "te",
+      "added": "2026-08-26 12:12:31"
+    },
+    {
+      "id": "479dc106",
+      "level": "city",
+      "name": "Guntur",
+      "state": "ap",
+      "state_label": "Andhra Pradesh",
+      "radius_km": null,
+      "budget": null,
+      "floor": null,
+      "phase": "",
+      "priority": "",
+      "note": "",
+      "pop": 647508,
+      "pop_basis": "census_2011_city",
+      "seeded": true,
+      "languages": [
+        "te",
+        "ur",
+        "en"
+      ],
+      "principal_language": "te",
+      "added": "2026-08-26 12:12:32"
+    },
+    {
+      "id": "75faef59",
+      "level": "city",
+      "name": "Warangal",
+      "state": "tg",
+      "state_label": "Telangana",
+      "radius_km": null,
+      "budget": null,
+      "floor": null,
+      "phase": "",
+      "priority": "",
+      "note": "",
+      "pop": 615998,
+      "pop_basis": "census_2011_city",
+      "seeded": true,
+      "languages": [
+        "te",
+        "ur",
+        "en"
+      ],
+      "principal_language": "te",
+      "added": "2026-08-26 12:12:32"
+    }
+  ]
+}

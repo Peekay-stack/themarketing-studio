@@ -1,0 +1,59 @@
+{
+  "id": "2b3d80a460",
+  "plan": "d73284f964",
+  "house": "3833585cbb",
+  "kind": "social",
+  "brief": {
+    "kind": "social",
+    "audience": {
+      "id": "8960e38f",
+      "audience": "The 25–44 household milk buyer (mother) currently buying a rival pack daily, in the South India core",
+      "rank": "1",
+      "believes_now": "Loose milk from the local vendor is fresh and cheaper; branded packs are 'processed' and I'm paying for a name. I don't distrust Heritage — I've just never had a reason to switch the daily habit.",
+      "pillar": "functional"
+    },
+    "channel": {
+      "id": "0d53e212",
+      "channel": "Social (Reel/Short, mother POV)",
+      "role": "advocacy",
+      "job": "Get existing buyers to carry the two-milk-moments story — first tumbler, last glass — with the dawn footage spliced in",
+      "measure": "Participation (shares, saves, UGC) and sentiment",
+      "side": "brand",
+      "share": "",
+      "owner": "",
+      "lead": ""
+    },
+    "occasion": {
+      "id": "e3bf8a33",
+      "phase": "1 · Make the dawn story known",
+      "window": "Weeks 1–8",
+      "occasion": "The first tumbler before school — the morning milk decision the 25–44 mother makes for her child",
+      "channels": "TV (40s, 4am film) [lead] · OOH (highway + neighbourhood hoarding) · Digital pre-roll (20s)",
+      "hands_over": "Recognition of the named farmer and the 'milked at dawn, on your table by morning' story in the South India core — so that when the promoter knocks and the chiller strip appears, the buyer already knows the face. Reach channels only; no proof of the functional claim, which has no sourced RTB."
+    },
+    "measure": {
+      "id": "c773b9c8",
+      "role": "advocacy",
+      "leading": "Participation on the Reel/Short — shares, saves, and volume of UGC replicating the two-milk-moments format — plus sentiment split, tracked weekly",
+      "lagging": "Sustained share of positive brand conversation and organic mentions of #PureDoodhKiShakti carried by existing buyers rather than paid amplification",
+      "would_tell_us_it_failed": "Within the first 4–6 weeks: shares and saves stay flat and no organic UGC appears, OR sentiment tips negative on the purity/authenticity claim. Existing buyers are watching but not carrying it — advocacy isn't happening, and the format needs a real reason to share, not more paid push."
+    },
+    "pillar": "functional",
+    "platform": {
+      "id": "8ce245ab",
+      "name": "The 4AM Promise",
+      "idea": "Heritage puts the same morning's collection on the pack — every carton is stamped with the date and dairy it came from that day, so purity is something a family can read, not just trust.",
+      "mechanic": "",
+      "expression": ""
+    },
+    "message": {
+      "id": "7df7911b",
+      "text": "Social — Reel/Short, mother's POV: the two milk moments cut back to back — first tumbler before school, last glass before bed — with the farmer's dawn footage spliced between. Caption: 'The small, everyday choices are what quietly make them strong. #PureDoodhKiShakti #HeritageFoods'",
+      "note": "Owns the bookend occasion in the feed's native language — the emotional message as a mother would actually say it, shareable because it's her routine, not an ad."
+    }
+  },
+  "status": "briefed",
+  "artefacts": [],
+  "created": "2026-08-14 10:47",
+  "updated": "2026-08-14 10:47"
+}

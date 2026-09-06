@@ -1,0 +1,39 @@
+{
+  "id": "faa01a22dd",
+  "created": "2026-08-11 14:00",
+  "name": "Sthir Cement",
+  "category": "Cement — building materials (OPC and PPC, bagged trade cement)",
+  "market": "India, state-level markets weighted to semi-urban and rural; freight cost makes every market regional rather than national",
+  "master_idea": "The bag your mason asks for by name",
+  "positioning": "Consistent strength, bag after bag, on the sites that cannot afford a bad batch",
+  "tone": "Straight, technical, respectful of the trade. Never patronise the site",
+  "hero_product": "Sthir PPC 50kg",
+  "notes": "The defining category truth: THE DECIDER IS NOT THE BUYER. A mason, contractor or engineer recommends and the individual home builder pays — so influencer programmes (mason meets, loyalty, technical training) do the work that advertising does elsewhere. For the home builder it is a once-in-a-lifetime purchase; for the contractor it is continuous. Dealer and sub-dealer credit, not shelf space, is the channel constraint. Institutional and project sales are a separate business from trade cement.",
+  "hashtags": [
+    "#SthirCement"
+  ],
+  "mandatories": [
+    "BIS grade mark and IS number",
+    "batch and packing date",
+    "MRP on bag"
+  ],
+  "competitors": [
+    "UltraTech",
+    "Ambuja",
+    "ACC",
+    "Shree",
+    "Dalmia",
+    "regional single-plant brands"
+  ],
+  "avoid": [
+    "never claim a strength grade the batch is not certified to",
+    "never show unsafe site practice",
+    "never disparage a mason's judgement"
+  ],
+  "colours": {
+    "primary": "Slate grey",
+    "secondary": "Cement buff",
+    "accent": "Safety orange"
+  },
+  "updated": "2026-08-11 14:00"
+}

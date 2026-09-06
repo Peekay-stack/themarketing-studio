@@ -1,0 +1,42 @@
+{
+  "id": "0fde8d4900",
+  "created": "2026-08-11 14:00",
+  "name": "Kumkum Beauty",
+  "category": "Beauty — skincare and colour cosmetics",
+  "market": "India, metros and tier-1, e-commerce first, then modern trade and beauty specialty",
+  "master_idea": "Actives that behave themselves",
+  "positioning": "Efficacy without irritation, for Indian skin and Indian weather",
+  "tone": "Precise and unhyped. Explain the science, never oversell it",
+  "hero_product": "The barrier-repair moisturiser",
+  "notes": "Regulated by the Drugs & Cosmetics Act and CDSCO, not FSSAI — cosmetic claims only, and claim substantiation is the whole competitive game. Replenishment cycle of roughly three to four months, but the category is trial-driven, so first purchase is the hard part.",
+  "hashtags": [
+    "#KumkumBeauty",
+    "#ActivesThatBehave"
+  ],
+  "mandatories": [
+    "full INCI list",
+    "percentage of each active",
+    "patch-test advice",
+    "manufacturing licence number"
+  ],
+  "competitors": [
+    "HUL brands",
+    "L'Oreal",
+    "Mamaearth",
+    "Minimalist",
+    "The Ordinary",
+    "Sugar"
+  ],
+  "avoid": [
+    "never make a drug or treatment claim",
+    "never say 'cures' or 'permanent'",
+    "never use before/after imagery that implies a medical outcome",
+    "never imply fairness or skin lightening"
+  ],
+  "colours": {
+    "primary": "Clay",
+    "secondary": "Bone",
+    "accent": "Deep green"
+  },
+  "updated": "2026-08-11 14:00"
+}

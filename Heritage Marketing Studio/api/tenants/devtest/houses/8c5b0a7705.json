@@ -1,0 +1,129 @@
+{
+  "id": "8c5b0a7705",
+  "brand": "H",
+  "brief": {},
+  "created": "2026-08-10 23:01",
+  "updated": "2026-08-10 23:01",
+  "nodes": {
+    "core": {
+      "layer": "core",
+      "options": [
+        {
+          "id": "1e2d6c73",
+          "text": "c",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-10 23:01"
+        }
+      ],
+      "chosen": [
+        "1e2d6c73"
+      ],
+      "sig": "",
+      "generated_under": ""
+    },
+    "emotional": {
+      "layer": "emotional",
+      "options": [
+        {
+          "id": "6f5587b3",
+          "text": "e",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-10 23:01"
+        }
+      ],
+      "chosen": [
+        "6f5587b3"
+      ],
+      "sig": "",
+      "generated_under": ""
+    },
+    "functional": {
+      "layer": "functional",
+      "options": [
+        {
+          "id": "7938362c",
+          "text": "f",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-10 23:01"
+        }
+      ],
+      "chosen": [
+        "7938362c"
+      ],
+      "sig": "",
+      "generated_under": ""
+    },
+    "rtb_emotional": {
+      "layer": "rtb_emotional",
+      "options": [],
+      "chosen": [],
+      "sig": "",
+      "generated_under": ""
+    },
+    "rtb_functional": {
+      "layer": "rtb_functional",
+      "options": [
+        {
+          "id": "ed3aae75",
+          "text": "Cold chain audited",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-10 23:01"
+        },
+        {
+          "id": "f3a4ee2a",
+          "text": "FSSAI",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-10 23:01"
+        }
+      ],
+      "chosen": [
+        "ed3aae75",
+        "f3a4ee2a"
+      ],
+      "sig": "",
+      "generated_under": ""
+    },
+    "proof": {
+      "layer": "proof",
+      "options": [],
+      "chosen": [],
+      "sig": "",
+      "generated_under": ""
+    },
+    "culture": {
+      "layer": "culture",
+      "options": [],
+      "chosen": [],
+      "sig": "",
+      "generated_under": ""
+    },
+    "medium": {
+      "layer": "medium",
+      "options": [
+        {
+          "id": "021a93e7",
+          "text": "posm line",
+          "note": "",
+          "source": "user",
+          "tag": "posm",
+          "added": "2026-08-10 23:01"
+        }
+      ],
+      "chosen": [
+        "021a93e7"
+      ],
+      "sig": "",
+      "generated_under": ""
+    }
+  }
+}

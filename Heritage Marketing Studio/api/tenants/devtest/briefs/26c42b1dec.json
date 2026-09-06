@@ -1,0 +1,26 @@
+{
+  "id": "26c42b1dec",
+  "created": "2026-08-11 13:37",
+  "brand": "Northwind Cloud",
+  "title": "Sync — launch",
+  "format": "Communications",
+  "source": "saved",
+  "fields": {
+    "proposition": "Your data, already there.",
+    "audience": "Data leads at 200-2000 seat companies",
+    "tone": "Direct",
+    "commObjective": "Land Sync as the default",
+    "mandatories": "SOC 2 badge",
+    "businessObjective": "400 paid workspaces in 12 months"
+  },
+  "canon": {
+    "businessObjective": "400 paid workspaces in 12 months",
+    "commObjective": "Land Sync as the default",
+    "targetAudience": "Data leads at 200-2000 seat companies",
+    "smp": "Your data, already there.",
+    "toneOfVoice": "Direct",
+    "mandatories": "SOC 2 badge",
+    "brand": "Northwind Cloud"
+  },
+  "updated": "2026-08-11 13:37"
+}

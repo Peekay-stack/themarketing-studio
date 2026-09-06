@@ -1,0 +1,279 @@
+{
+  "id": "7e9963dd3b",
+  "brand": "heritage",
+  "house": "a6e0ee9096",
+  "created": "2026-09-02 15:52",
+  "updated": "2026-09-02 15:54",
+  "project": "",
+  "balance": {
+    "brand_share": 60,
+    "reason": "",
+    "basis": "year",
+    "declared": true,
+    "source": "user"
+  },
+  "nodes": {
+    "objectives": {
+      "layer": "objectives",
+      "rows": [
+        {
+          "level": "business",
+          "statement": "Grow Heritage Pure Milk volume in the core South India markets (Telangana, AP, Karnataka, TN) while defending share against Amul, Nandini and loose milk.",
+          "measure": "",
+          "by_when": "",
+          "id": "9ee95b2d",
+          "source": "model",
+          "added": "2026-09-02 15:52"
+        },
+        {
+          "level": "marketing",
+          "statement": "Shift regular buyers from loose/unbranded and rival packaged milk to Heritage Pure Milk as the default household daily-milk choice, and lift repeat purchase through home delivery and general trade.",
+          "measure": "household penetration + repeat rate in core states — baseline to be set by insights",
+          "by_when": "",
+          "id": "a48c8101",
+          "source": "model",
+          "added": "2026-09-02 15:52"
+        },
+        {
+          "level": "communication",
+          "statement": "Build unmistakable association between Heritage and 'purest everyday milk' (Pure Doodh Ki Shakti) among primary grocery buyers in core states, so the brand is the one named first when 'pure milk' is the thought.",
+          "measure": "prompted + spontaneous brand association with 'pure milk'; brand consideration — tracker to be commissioned",
+          "by_when": "",
+          "id": "246cd447",
+          "source": "model",
+          "added": "2026-09-02 15:52"
+        }
+      ],
+      "sig": "",
+      "house_under": "3647eb180f06477c"
+    },
+    "audiences": {
+      "layer": "audiences",
+      "rows": [
+        {
+          "audience": "Primary grocery buyer — the mother/homemaker who decides the daily milk in urban & peri-urban core-state households (Hyderabad, Vijayawada, Bengaluru, Chennai)",
+          "rank": "1",
+          "believes_now": "Buys packaged or loose milk on habit and price; 'pure' means unadulterated and safe for her children. Currently splits between Heritage, a rival pack, and the local loose milk vendor. Purity is an anxiety, not yet a brand — she does not name Heritage first when she thinks 'pure milk'. This is the household that the marketing objective must convert to a default choice.",
+          "pillar": "emotional",
+          "id": "856034cd",
+          "source": "model",
+          "added": "2026-09-02 15:53"
+        },
+        {
+          "audience": "The loose/unbranded milk switcher — households still buying from the local doodhwala or a nearby dairy, mostly on price, trust in the vendor, and daily convenience",
+          "rank": "2",
+          "believes_now": "Trusts the vendor she can see; believes fresh-from-the-can is purer than packaged, and packaged milk is 'processed'. Price-sensitive and sceptical that a brand is worth the premium. Moving her needs a functional, tangible reason packaged is purer and safer than loose — but that reason must be sourced before it can be claimed.",
+          "pillar": "functional",
+          "id": "08669b54",
+          "source": "model",
+          "added": "2026-09-02 15:53"
+        },
+        {
+          "audience": "The rival-pack loyalist — current Amul / Nandini / Dodla / Arokya household in core states, already sold on packaged milk, choosing on availability, price and habit",
+          "rank": "3",
+          "believes_now": "Already convinced packaged is the right choice; sees little difference between brands and buys whatever the local kirana stocks or the delivery route offers. Switching is a distribution and reassurance game, not a category-education one. 'Purest' is the only lever that reframes an otherwise commoditised choice.",
+          "pillar": "emotional",
+          "id": "4eed829e",
+          "source": "model",
+          "added": "2026-09-02 15:53"
+        },
+        {
+          "audience": "The home-delivery subscriber & re-subscriber — households on or considering a Heritage daily-delivery route, where repeat rate is won or lost",
+          "rank": "4",
+          "believes_now": "Values reliability, freshness on the doorstep, and not having to think about it. Repeat is decided by consistency of supply and cold-chain trust more than by advertising. This is where the marketing objective's 'lift repeat purchase' actually lives; a functional, dependability-led message fits the behaviour.",
+          "pillar": "functional",
+          "id": "b9eaaefe",
+          "source": "model",
+          "added": "2026-09-02 15:53"
+        }
+      ],
+      "sig": "",
+      "house_under": "13f4b8da8d9ffa45"
+    },
+    "channels": {
+      "layer": "channels",
+      "rows": [
+        {
+          "channel": "15s & 30s brand films, Telugu/Kannada/Tamil, purity-of-family story",
+          "medium": "tv",
+          "role": "reach",
+          "job": "Build first-name recall for 'pure milk' among rank-1 mothers in core-state metros",
+          "measure": "Reach & cost per reach in Hyderabad/Vijayawada/Bengaluru/Chennai; unaided 'pure milk' recall",
+          "side": "brand",
+          "share": "28",
+          "owner": "Brand team + media agency",
+          "lead": "yes",
+          "id": "1bed4941",
+          "source": "model",
+          "added": "2026-09-02 15:54"
+        },
+        {
+          "channel": "Vertical reels & YouTube pre-roll, regional languages",
+          "medium": "online_video",
+          "role": "reach",
+          "job": "Extend brand-film reach to younger urban homemakers off linear TV",
+          "measure": "Incremental reach & frequency vs TV; view-through",
+          "side": "brand",
+          "share": "12",
+          "owner": "Brand team + media agency",
+          "lead": "",
+          "id": "329c6ebc",
+          "source": "model",
+          "added": "2026-09-02 15:54"
+        },
+        {
+          "channel": "Regional radio & FM, drive-time and morning belts",
+          "medium": "radio",
+          "role": "reach",
+          "job": "Repeat the core line in daily-routine moments across peri-urban core states",
+          "measure": "Reach & spot recall",
+          "side": "brand",
+          "share": "5",
+          "owner": "Media agency",
+          "lead": "",
+          "id": "ae62f45a",
+          "source": "model",
+          "added": "2026-09-02 15:54"
+        },
+        {
+          "channel": "Kirana & general-trade retail — shelf branding, freezer decals, POS",
+          "medium": "retail",
+          "role": "conversion",
+          "job": "Win the pack-pick-up at the store where rank-1 and rank-3 households actually buy daily milk",
+          "measure": "Sales per outlet; numeric distribution; share of chiller facing",
+          "side": "activation",
+          "share": "18",
+          "owner": "Trade marketing + GT sales",
+          "lead": "",
+          "id": "f29cabc2",
+          "source": "model",
+          "added": "2026-09-02 15:54"
+        },
+        {
+          "channel": "Home-delivery route — onboarding, retention offers, delivery-app touchpoints",
+          "medium": "crm",
+          "role": "conversion",
+          "job": "Lift repeat rate on daily-delivery subscriptions (rank-4)",
+          "measure": "Repeat/renewal rate; churn; cost per retained subscriber",
+          "side": "activation",
+          "share": "12",
+          "owner": "Direct-to-home / subscription ops",
+          "lead": "",
+          "id": "ce249745",
+          "source": "model",
+          "added": "2026-09-02 15:54"
+        },
+        {
+          "channel": "Meta & regional-language digital, geo-targeted to core-state pincodes",
+          "medium": "social",
+          "role": "conversion",
+          "job": "Drive delivery sign-ups and trial packs among rank-2 switchers near existing routes",
+          "measure": "Sign-up rate; cost per acquisition",
+          "side": "activation",
+          "share": "8",
+          "owner": "Performance / digital team",
+          "lead": "",
+          "id": "ec5b046e",
+          "source": "model",
+          "added": "2026-09-02 15:54"
+        },
+        {
+          "channel": "WhatsApp community & referral for existing subscribers",
+          "medium": "messaging",
+          "role": "advocacy",
+          "job": "Get satisfied delivery households to refer neighbours (rank-4 → rank-2)",
+          "measure": "Referral participation; referred sign-ups; sentiment",
+          "side": "activation",
+          "share": "2",
+          "owner": "CRM / subscription ops",
+          "lead": "",
+          "id": "10aedac4",
+          "source": "model",
+          "added": "2026-09-02 15:54"
+        },
+        {
+          "channel": "Local sampling & wet-demos at kirana clusters and residential gates",
+          "medium": "experiential",
+          "role": "reach",
+          "job": "Put packaged Heritage in the hands of loose-milk buyers (rank-2) where the vendor habit lives",
+          "measure": "Samples served & cost per trial; on-spot conversion to trial pack",
+          "side": "activation",
+          "share": "5",
+          "owner": "BTL agency + GT sales",
+          "lead": "",
+          "id": "7b2f4a58",
+          "source": "model",
+          "added": "2026-09-02 15:54"
+        },
+        {
+          "channel": "",
+          "medium": "",
+          "role": "proof",
+          "job": "WITHHELD — would prove purity for rank-2 & rank-4, but both pillars have 0 sourced RTBs; cannot assign until the house sources lab/cold-chain facts",
+          "measure": "n/a until RTBs exist",
+          "side": "",
+          "share": "",
+          "owner": "House owner to source RTBs",
+          "lead": "",
+          "id": "527e46b9",
+          "source": "model",
+          "added": "2026-09-02 15:54"
+        },
+        {
+          "channel": "Print & regional dailies, festival/seasonal bursts",
+          "medium": "print",
+          "role": "reach",
+          "job": "Top up reach among older core-state homemakers during buying-occasion windows",
+          "measure": "Reach in target dailies; coupon redemption if run",
+          "side": "brand",
+          "share": "5",
+          "owner": "Media agency",
+          "lead": "",
+          "id": "eeb6869f",
+          "source": "model",
+          "added": "2026-09-02 15:54"
+        },
+        {
+          "channel": "OOH near high-traffic kirana & residential belts in metros",
+          "medium": "ooh",
+          "role": "reach",
+          "job": "Sustain brand presence at point-of-daily-life in the four core metros",
+          "measure": "Coverage & cost per reach; recall lift in tagged areas",
+          "side": "brand",
+          "share": "5",
+          "owner": "Media agency",
+          "lead": "",
+          "id": "1f131309",
+          "source": "model",
+          "added": "2026-09-02 15:54"
+        }
+      ],
+      "sig": "",
+      "house_under": "b285506544afe2e7"
+    },
+    "balance": {
+      "layer": "balance",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    },
+    "phases": {
+      "layer": "phases",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    },
+    "measures": {
+      "layer": "measures",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    },
+    "governance": {
+      "layer": "governance",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    }
+  }
+}

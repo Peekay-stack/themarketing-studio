@@ -1,0 +1,7 @@
+# Optional extras — installed best-effort by the launcher. If any fail, the app STILL runs;
+# you only lose that one capability (the UI degrades gracefully).
+
+cairosvg>=2.7        # embeds the NeedScope & CB/CA figures in the IMC brief .docx.
+                     #   If it fails on Windows ("no library called 'cairo' was found"),
+                     #   the brief still generates, just without those two images.
+fal-client>=0.5      # real storyboard images / film renders (FAL_KEY). Else: placeholders.

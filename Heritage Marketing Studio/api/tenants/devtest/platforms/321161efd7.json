@@ -1,0 +1,63 @@
+{
+  "id": "321161efd7",
+  "brand": "Heritage Foods",
+  "house": "b305ea5dbd",
+  "created": "2026-08-11 11:35",
+  "updated": "2026-08-11 11:35",
+  "round": 0,
+  "platforms": [
+    {
+      "name": "The Named Dairy",
+      "idea": "Every pack carries the name of the dairy that filled it.",
+      "mechanic": "",
+      "territory": "",
+      "proof": "",
+      "why": "",
+      "rtb": "",
+      "source": "user",
+      "adopted": true,
+      "verdicts": {
+        "true": {
+          "verdict": "holds",
+          "note": "stands on the cold-chain audit"
+        },
+        "ours": {
+          "verdict": "holds",
+          "note": "only we name the dairy"
+        },
+        "tension": {
+          "verdict": "fails",
+          "note": "we accept it: the doubt is price, not purity"
+        },
+        "elastic": {
+          "verdict": "holds",
+          "note": "4 of 5 routes written"
+        },
+        "durable": {
+          "verdict": "untested",
+          "note": ""
+        }
+      },
+      "routes": {
+        "social": "Shoppers film their own test.",
+        "posm": "The test on the shelf strip.",
+        "onground": "The two-minute test at the stall.",
+        "media": "Weight where the test can be run.",
+        "trade": "The retailer runs the test on a wholesaler's doubt."
+      },
+      "expressions": {
+        "video": "",
+        "social": "Shoppers film their own test.",
+        "posm": "The test on the shelf strip.",
+        "activation": "The two-minute test at the stall.",
+        "incentive": "The retailer runs the test on a wholesaler's doubt."
+      },
+      "id": "729665dc",
+      "added": "2026-08-11 11:35",
+      "round": 0,
+      "built_from": ""
+    }
+  ],
+  "chosen": "729665dc",
+  "skipped": false
+}

@@ -1,0 +1,126 @@
+{
+  "brand": "Heritage Foods",
+  "slug": "heritage-foods",
+  "created": "2026-08-26 12:11:09",
+  "updated": "2026-08-26 12:11:48",
+  "currency": "",
+  "competitors": [
+    {
+      "id": "aa1527e2",
+      "name": "Heritage Foods",
+      "us": true,
+      "note": "AP + Telangana, packaged milk and value-added dairy",
+      "added": "2026-08-26 12:11:09"
+    },
+    {
+      "id": "f627e866",
+      "name": "Dodla Dairy",
+      "us": false,
+      "note": "AP/TG regional, close overlap on home delivery",
+      "added": "2026-08-26 12:11:09"
+    },
+    {
+      "id": "9dd1509a",
+      "name": "Tirumala",
+      "us": false,
+      "note": "Lactalis-owned, strong AP presence",
+      "added": "2026-08-26 12:11:09"
+    },
+    {
+      "id": "ab1e6837",
+      "name": "Jersey",
+      "us": false,
+      "note": "Creamline / Godrej, Hyderabad-heavy",
+      "added": "2026-08-26 12:11:09"
+    },
+    {
+      "id": "91e6a246",
+      "name": "Amul",
+      "us": false,
+      "note": "GCMMF - national, strongest in value-added",
+      "added": "2026-08-26 12:11:48"
+    }
+  ],
+  "observations": [
+    {
+      "id": "8666223d",
+      "competitor": "aa1527e2",
+      "medium": "social",
+      "period": "2026-08",
+      "spend": null,
+      "currency": "",
+      "running": true,
+      "creative": "active video and image ads",
+      "source": "Meta Ad Library, searched 26 Aug 2026",
+      "source_kind": "free_public",
+      "grain": "presence",
+      "as_of": "2026-08-26",
+      "entered": "2026-08-26 12:11:10"
+    },
+    {
+      "id": "39845337",
+      "competitor": "f627e866",
+      "medium": "social",
+      "period": "2026-08",
+      "spend": null,
+      "currency": "",
+      "running": true,
+      "creative": "active video and image ads",
+      "source": "Meta Ad Library, searched 26 Aug 2026",
+      "source_kind": "free_public",
+      "grain": "presence",
+      "as_of": "2026-08-26",
+      "entered": "2026-08-26 12:11:10"
+    },
+    {
+      "id": "1eeaabcd",
+      "competitor": "9dd1509a",
+      "medium": "social",
+      "period": "2026-08",
+      "spend": null,
+      "currency": "",
+      "running": true,
+      "creative": "active video and image ads",
+      "source": "Meta Ad Library, searched 26 Aug 2026",
+      "source_kind": "free_public",
+      "grain": "presence",
+      "as_of": "2026-08-26",
+      "entered": "2026-08-26 12:11:10"
+    },
+    {
+      "id": "deec494b",
+      "competitor": "ab1e6837",
+      "medium": "social",
+      "period": "2026-08",
+      "spend": null,
+      "currency": "",
+      "running": true,
+      "creative": "active video and image ads",
+      "source": "Meta Ad Library, searched 26 Aug 2026",
+      "source_kind": "free_public",
+      "grain": "presence",
+      "as_of": "2026-08-26",
+      "entered": "2026-08-26 12:11:10"
+    },
+    {
+      "id": "be956d71",
+      "competitor": "91e6a246",
+      "medium": "social",
+      "period": "2026-08",
+      "spend": null,
+      "currency": "",
+      "running": true,
+      "creative": "active video ads",
+      "source": "Meta Ad Library, searched 26 Aug 2026",
+      "source_kind": "free_public",
+      "grain": "presence",
+      "as_of": "2026-08-26",
+      "entered": "2026-08-26 12:11:48"
+    }
+  ],
+  "set_complete": {
+    "declared": false,
+    "note": ""
+  },
+  "som": null
+}

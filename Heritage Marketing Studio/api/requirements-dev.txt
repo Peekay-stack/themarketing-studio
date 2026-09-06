@@ -1,0 +1,5 @@
+# Dev/CI-only tooling — not needed to run the app, only to check it.
+# pip install -r requirements-dev.txt
+ruff>=0.16          # lints api/*.py — run: python -m ruff check .
+pytest>=9.0          # tests/ — run: python -m pytest
+pip-audit>=2.7       # dependency CVE scan — run: python -m pip_audit -r requirements.txt

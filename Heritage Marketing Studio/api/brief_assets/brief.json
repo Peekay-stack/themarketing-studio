@@ -1,0 +1,129 @@
+{
+  "brand": "Heritage",
+  "prepared_for": "Heritage Foods Ltd. — Dairy brand team",
+  "date": "30 June 2026",
+  "category": "Indian dairy",
+  "sources_note": "Built from the inputs supplied in the Brand Brief Builder. Validate share/pricing before publication.",
+  "smp": "Heritage turns everyday purity into your family's strength.",
+  "competitors": [
+    {
+      "name": "Amul (GCMMF)",
+      "hero_brands": "Amul Milk, Taaza, Gold",
+      "positioning": "The Taste of India — ubiquity & wit",
+      "recent_moves": "Topical media; value-added expansion"
+    },
+    {
+      "name": "Mother Dairy",
+      "hero_brands": "Mother Dairy milk, Dhara",
+      "positioning": "Trusted daily nourishment",
+      "recent_moves": "Fortified variants; q-commerce"
+    },
+    {
+      "name": "Nandini (KMF)",
+      "hero_brands": "Nandini milk, curd, ghee",
+      "positioning": "Karnataka's own — regional pride",
+      "recent_moves": "State loyalty; expansion attempts"
+    },
+    {
+      "name": "Hatsun (Arokya)",
+      "hero_brands": "Arokya milk, Hatsun curd",
+      "positioning": "South private-dairy scale + freshness",
+      "recent_moves": "Distribution build-out; premiumising"
+    },
+    {
+      "name": "Dodla",
+      "hero_brands": "Dodla Milk, Curd",
+      "positioning": "",
+      "recent_moves": ""
+    }
+  ],
+  "market_data": null,
+  "research_files": [],
+  "needscope": {
+    "pins": [
+      {
+        "brand": "Heritage",
+        "x": 352,
+        "y": 411,
+        "anchor": true
+      },
+      {
+        "brand": "Mother Dairy",
+        "x": 259,
+        "y": 371,
+        "anchor": false
+      },
+      {
+        "brand": "Amul (GCMMF)",
+        "x": 495,
+        "y": 425,
+        "anchor": false
+      },
+      {
+        "brand": "Nandini (KMF)",
+        "x": 384,
+        "y": 469,
+        "anchor": false
+      },
+      {
+        "brand": "Hatsun (Arokya)",
+        "x": 256,
+        "y": 266,
+        "anchor": false
+      }
+    ],
+    "bridge_territory": "Belonging",
+    "bridge_label": "Pure Doodh Ki Shakti",
+    "reading": "Positions captured on the interactive wheel: Heritage, Mother Dairy, Amul (GCMMF), Nandini (KMF), Hatsun (Arokya)."
+  },
+  "cb_ca_db_da": {
+    "cb": [
+      "Trusted daily fresh-milk staple in core South India markets.",
+      "Chosen for freshness & availability — habit more than active choice.",
+      "Under-indexed in curd/ghee trade-up & quick-commerce baskets."
+    ],
+    "db": [
+      "Actively chosen across occasions: nutrition, festive gifting, trade-up.",
+      "Curd → ghee → beverages within the Heritage franchise.",
+      "Beyond the South via quick-commerce with purity-led advocacy."
+    ],
+    "ca_quote": "\"The fresh, dependable local milk we've always trusted — pure, but just milk.\"",
+    "ca_declarative": [
+      "Trust is functional",
+      "Relied on not celebrated"
+    ],
+    "da_quote": "\"Heritage is how I give my family pure strength every day — a daily act of care.\"",
+    "da_declarative": [
+      "Active pride not habit",
+      "Purity I choose strength I see"
+    ],
+    "shift_line": "From dependable purity to chosen family strength.",
+    "shift_from": "dependable purity",
+    "shift_to": "chosen family strength",
+    "caption": "Layer family strength on top of trusted purity — never replace it."
+  },
+  "smp_defence": [
+    {
+      "competitor": "Amul",
+      "why_collapses": "Claims taste & ubiquity but its register is wit, not freshness-led purity."
+    },
+    {
+      "competitor": "Mother Dairy",
+      "why_collapses": "Shares trust but has never made strength its story."
+    },
+    {
+      "competitor": "Nandini",
+      "why_collapses": "Owns regional belonging, not a purity proposition a mother chooses."
+    },
+    {
+      "competitor": "Hatsun Arokya",
+      "why_collapses": "Competes on scale & price, cannot earn 'strength' without abandoning value."
+    }
+  ],
+  "smp_unlocks": {
+    "brand_line": "Pure Doodh Ki Shakti.",
+    "mass_line": "Har ghar ki rozaana shakti — Heritage.",
+    "activation": "A 'Strength of Purity' festive platform with farm-to-family transparency.",
+    "product": "Heritage Strength range — fortified milk + purity-marked curd/ghee tier."
+  }
+}

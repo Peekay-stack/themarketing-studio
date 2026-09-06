@@ -1,0 +1,75 @@
+{
+  "id": "a5a587cdc1",
+  "brand": "Heritage Slim",
+  "brief": {
+    "businessObjective": "3% value share in 12 months",
+    "commObjective": "Land Slim as the same milk, lighter",
+    "targetAudience": "Health-led families, metro south",
+    "smp": "Same strength, half the fat.",
+    "toneOfVoice": "Plain, unfussy",
+    "mandatories": "FSSAI, #PureDoodhKiShakti",
+    "brand": "Heritage Slim"
+  },
+  "created": "2026-08-11 12:49",
+  "updated": "2026-08-11 12:49",
+  "nodes": {
+    "core": {
+      "layer": "core",
+      "options": [],
+      "chosen": [],
+      "sig": "",
+      "generated_under": ""
+    },
+    "emotional": {
+      "layer": "emotional",
+      "options": [],
+      "chosen": [],
+      "sig": "",
+      "generated_under": ""
+    },
+    "functional": {
+      "layer": "functional",
+      "options": [],
+      "chosen": [],
+      "sig": "",
+      "generated_under": ""
+    },
+    "rtb_emotional": {
+      "layer": "rtb_emotional",
+      "options": [],
+      "chosen": [],
+      "sig": "",
+      "generated_under": ""
+    },
+    "rtb_functional": {
+      "layer": "rtb_functional",
+      "options": [],
+      "chosen": [],
+      "sig": "",
+      "generated_under": ""
+    },
+    "proof": {
+      "layer": "proof",
+      "options": [],
+      "chosen": [],
+      "sig": "",
+      "generated_under": ""
+    },
+    "culture": {
+      "layer": "culture",
+      "options": [],
+      "chosen": [],
+      "sig": "",
+      "generated_under": ""
+    },
+    "medium": {
+      "layer": "medium",
+      "options": [],
+      "chosen": [],
+      "sig": "",
+      "generated_under": ""
+    }
+  },
+  "brief_id": "fd444df7b6",
+  "brief_title": "Slim — launch comms"
+}

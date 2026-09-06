@@ -1,0 +1,53 @@
+{
+  "id": "82a9a272f5",
+  "plan": "77e3788fb8",
+  "house": "3833585cbb",
+  "kind": "media",
+  "brief": {
+    "kind": "media",
+    "audience": {
+      "id": "3835f29c",
+      "audience": "The primary household milk-decider — the mother in a quality-conscious urban/peri-urban South Indian family, buying daily via general trade or home delivery, currently splitting between loose milk and a branded pack",
+      "rank": "1",
+      "believes_now": "Loose milk is fresher and cheaper; branded milk is convenient but I'm paying for a name. I worry about adulteration but don't have a reason to trust one pack over another.",
+      "pillar": "emotional"
+    },
+    "channel": {
+      "id": "53e11ed2",
+      "channel": "Outdoor / transit near residential clusters and schools",
+      "role": "reach",
+      "job": "Own the two milk moments (before school, before bed) in the physical neighbourhood; keep #PureDoodhKiShakti present at the point of routine",
+      "measure": "coverage of target catchments; cost per reach",
+      "side": "brand",
+      "share": "",
+      "owner": "",
+      "lead": "no"
+    },
+    "occasion": {
+      "id": "81812311",
+      "phase": "1 — Land the strength story",
+      "window": "Launch weeks 1–6",
+      "occasion": "The first tumbler before school and the last glass before bed — the two milk moments that bookend a child's day",
+      "channels": "Regional TV + CTV (lead); Outdoor/transit near residential clusters and schools; YouTube + regional social",
+      "hands_over": "Built emotional-pillar awareness and neighbourhood presence around the two milk moments; hands warmed, primed households to the conversion phase"
+    },
+    "measure": {
+      "id": "200871b3",
+      "role": "reach",
+      "leading": "Building 1+ reach against target households in core Telugu/Kannada/Tamil geos; completed-view rate on the emotional film in the same geos",
+      "lagging": "1+ reach % of target households achieved at planned cost per reach point; unaided awareness of Heritage against the two milk moments",
+      "would_tell_us_it_failed": "Reach curve flattens below target before the buying-occasion window opens, or cost per reach point runs materially above plan, i.e. we are paying reach money for frequency against people already reached"
+    },
+    "platform": {
+      "id": "8ce245ab",
+      "name": "The 4AM Promise",
+      "idea": "Heritage puts the same morning's collection on the pack — every carton is stamped with the date and dairy it came from that day, so purity is something a family can read, not just trust.",
+      "mechanic": "",
+      "expression": ""
+    }
+  },
+  "status": "briefed",
+  "artefacts": [],
+  "created": "2026-08-12 16:28",
+  "updated": "2026-08-12 16:28"
+}

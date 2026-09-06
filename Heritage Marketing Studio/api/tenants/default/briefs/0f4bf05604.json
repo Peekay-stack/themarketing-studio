@@ -1,0 +1,135 @@
+{
+  "id": "0f4bf05604",
+  "created": "2026-08-12 14:22",
+  "brand": "Heritage",
+  "title": "Heritage — Brand",
+  "format": "Brand",
+  "source": "brand-brief-draft",
+  "fields": {
+    "brand": "Heritage",
+    "category": "Indian dairy",
+    "prepared_for": "Heritage Foods marketing team",
+    "competitors": [
+      {
+        "name": "Amul",
+        "hero_brands": "Amul Taaza, Amul Gold, Amul butter and cheese",
+        "positioning": "The taste of India — cooperative trust, ubiquity and value at national scale",
+        "recent_moves": "Aggressive quick-commerce push, expanded value-added dairy (lassi, protein shakes), heavy topical moutache advertising"
+      },
+      {
+        "name": "Nandini (KMF)",
+        "hero_brands": "Nandini milk, curd, ghee",
+        "positioning": "Karnataka's own cooperative — regional pride, freshness and farmer solidarity",
+        "recent_moves": "Expansion beyond Karnataka, price-led defence against national players, farmer-first messaging"
+      },
+      {
+        "name": "Nestlé a+ / Nestlé dairy",
+        "hero_brands": "Nestlé a+ milk, Slim, Nesvita",
+        "positioning": "Science-backed nutrition and functional wellness for the health-conscious",
+        "recent_moves": "Fortified and slim variants, protein and immunity claims targeting urban women"
+      },
+      {
+        "name": "Mother Dairy",
+        "hero_brands": "Mother Dairy milk, Dahi, Nutrifit",
+        "positioning": "Trusted urban staple with a quality-and-safety promise",
+        "recent_moves": "Token-milk-to-poly upgrade, farm-to-home traceability messaging, curd and value-added growth"
+      }
+    ],
+    "needscope": {
+      "pins": [
+        {
+          "brand": "Heritage",
+          "x": 423,
+          "y": 195,
+          "anchor": true
+        },
+        {
+          "brand": "Nandini",
+          "x": 419,
+          "y": 459,
+          "anchor": false
+        },
+        {
+          "brand": "Amul",
+          "x": 330,
+          "y": 435,
+          "anchor": false
+        },
+        {
+          "brand": "Nestlé a+",
+          "x": 275,
+          "y": 250,
+          "anchor": false
+        },
+        {
+          "brand": "Mother Dairy",
+          "x": 278,
+          "y": 390,
+          "anchor": false
+        }
+      ],
+      "bridge_territory": "Belonging",
+      "bridge_label": "Pure Doodh, Poori Taakat",
+      "reading": "Heritage sits in Security — daily purity, quality checks and reliable freshness — the classic trust territory dairy defaults into, but which Mother Dairy and Nestlé a+ also crowd. Amul and Nandini own Belonging through cooperative warmth and regional pride, while Nestlé a+ pulls toward Discernment with functional-nutrition sophistication. The open whitespace for Heritage is the bridge from cold Security into warm Belonging — turning proven purity into a mother's active act of family nourishment, a space no farmer-distant national brand can fully claim."
+    },
+    "cb_ca_db_da": {
+      "cb": [
+        "Bought as the default fresh-milk brand where locally available — routine, not a considered choice.",
+        "Used almost entirely for tea, coffee and everyday cooking rather than as a nutrition decision.",
+        "Under-indexed in fortified, functional and value-added purchases versus Nestlé a+ and Amul."
+      ],
+      "db": [
+        "Actively chosen by mothers as the daily nutrition source for the whole family.",
+        "Trade-up within franchise into fortified milk, curd, ghee and protein variants.",
+        "Recruited into new occasions — kids' growth, women's own wellness, post-workout and festival gifting."
+      ],
+      "ca_quote": "Heritage is fresh and safe milk from nearby, so I trust it — but honestly one packet is much like another.",
+      "ca_declarative": [
+        "Trust is present but passive.",
+        "A safe habit, not a proud choice."
+      ],
+      "da_quote": "Heritage comes straight from our own farmers, checked every day — it's how I make sure my family grows strong.",
+      "da_declarative": [
+        "Purity becomes an act of care.",
+        "The mother's confident, proud choice."
+      ],
+      "shift_from": "dependable purity",
+      "shift_to": "a mother's act of family strength",
+      "caption": "The desired attitude layers a mother's pride and nourishment on top of Heritage's proven daily purity — the trust stays, the warmth and meaning are added, never replaced.",
+      "shift_line": "From dependable purity to a mother's act of family strength."
+    },
+    "smp": "Heritage turns pure milk into a mother's daily act of nourishment.",
+    "smp_defence": [
+      {
+        "competitor": "Amul",
+        "why_collapses": "Claims trust and ubiquity but its scale distances it from named local farmers, so it cannot own 'pure sources checked fresh every day' at Heritage's proximity."
+      },
+      {
+        "competitor": "Nandini",
+        "why_collapses": "Claims farmer freshness but frames it as regional cooperative pride, not a mother's personal nourishment decision for her family."
+      },
+      {
+        "competitor": "Nestlé a+",
+        "why_collapses": "Claims nutrition but through lab-and-science framing, missing the warm 'pure milk from our own farmers' emotional truth."
+      },
+      {
+        "competitor": "Mother Dairy",
+        "why_collapses": "Claims safety and quality but stays in cold utility Security and cannot credibly ladder purity up to a mother's proud everyday care."
+      }
+    ],
+    "smp_unlocks": {
+      "brand_line": "Pure milk. Pure nutrition. Every single day. (illustrative — not final copy)",
+      "mass_line": "Rozana shuddh doodh, rozana poori taakat. (illustrative — not final copy)",
+      "activation": "'Fresh Farmer Fridays' — daily digital proof of the exact farms and quality checks behind each region's milk, hosted by real mothers. (illustrative — not final copy)",
+      "product": "Heritage Grow+ fortified milk and curd range positioned as the mother's daily nutrition choice for growing kids and her own wellness. (illustrative — not final copy)"
+    }
+  },
+  "canon": {
+    "currentBelief": "Bought as the default fresh-milk brand where locally available — routine, not a considered choice.; Used almost entirely for tea, coffee and everyday cooking rather than as a nutrition decision.; Under-indexed in fortified, functional and value-added purchases versus Nestlé a+ and Amul.",
+    "desiredBelief": "Actively chosen by mothers as the daily nutrition source for the whole family.; Trade-up within franchise into fortified milk, curd, ghee and protein variants.; Recruited into new occasions — kids' growth, women's own wellness, post-workout and festival gifting.",
+    "smp": "Heritage turns pure milk into a mother's daily act of nourishment.",
+    "competition": "name: Amul · hero brands: Amul Taaza, Amul Gold, Amul butter and cheese · positioning: The taste of India — cooperative trust, ubiquity and value at national scale · recent moves: Aggressive quick-commerce push, expanded value-added dairy (lassi, protein shakes), heavy topical moutache advertising; name: Nandini (KMF) · hero brands: Nandini milk, curd, ghee · positioning: Karnataka's own cooperative — regional pride, freshness and farmer solidarity · recent moves: Expansion beyond Karnataka, price-led defence against national players, farmer-first messaging; name: Nestlé a+ / Nestlé dairy · hero brands: Nestlé a+ milk, Slim, Nesvita · positioning: Science-backed nutrition and functional wellness for the health-conscious · recent moves: Fortified and slim variants, protein and immunity claims targeting urban women; name: Mother Dairy · hero brands: Mother Dairy milk, Dahi, Nutrifit · positioning: Trusted urban staple with a quality-and-safety promise · recent moves: Token-milk-to-poly upgrade, farm-to-home traceability messaging, curd and value-added growth",
+    "brand": "Heritage"
+  },
+  "updated": "2026-08-12 14:22"
+}

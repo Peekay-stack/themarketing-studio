@@ -1,0 +1,111 @@
+{
+  "id": "b9b39517ca",
+  "brand": "H",
+  "house": "27de346f67",
+  "created": "2026-08-10 22:09",
+  "updated": "2026-08-10 22:09",
+  "balance": {
+    "brand_share": 60,
+    "reason": "",
+    "basis": "year"
+  },
+  "nodes": {
+    "objectives": {
+      "layer": "objectives",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    },
+    "audiences": {
+      "layer": "audiences",
+      "rows": [
+        {
+          "audience": "Chennai mothers",
+          "rank": "1",
+          "believes_now": "loose is fresher",
+          "pillar": "functional",
+          "id": "8803e8bb",
+          "source": "user",
+          "added": "2026-08-10 22:09"
+        }
+      ],
+      "sig": "",
+      "house_under": ""
+    },
+    "channels": {
+      "layer": "channels",
+      "rows": [
+        {
+          "channel": "POSM",
+          "role": "proof",
+          "job": "prove freshness",
+          "measure": "claim recall",
+          "side": "brand",
+          "share": "20",
+          "owner": "",
+          "lead": "yes",
+          "id": "7ca48ba1",
+          "source": "user",
+          "added": "2026-08-10 22:09"
+        }
+      ],
+      "sig": "",
+      "house_under": ""
+    },
+    "balance": {
+      "layer": "balance",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    },
+    "phases": {
+      "layer": "phases",
+      "rows": [
+        {
+          "phase": "Pongal",
+          "window": "Jan",
+          "occasion": "",
+          "channels": "POSM",
+          "hands_over": "sustain",
+          "id": "e0a7254c",
+          "source": "user",
+          "added": "2026-08-10 22:09"
+        }
+      ],
+      "sig": "",
+      "house_under": ""
+    },
+    "measures": {
+      "layer": "measures",
+      "rows": [
+        {
+          "role": "proof",
+          "leading": "claim recall",
+          "lagging": "repeat",
+          "would_tell_us_it_failed": "",
+          "id": "9344507a",
+          "source": "user",
+          "added": "2026-08-10 22:09"
+        }
+      ],
+      "sig": "",
+      "house_under": ""
+    },
+    "governance": {
+      "layer": "governance",
+      "rows": [
+        {
+          "who": "Brand lead",
+          "speaks_on": "message",
+          "boundary": "never show waste",
+          "decides_changes": "CMO",
+          "id": "0dcf8926",
+          "source": "user",
+          "added": "2026-08-10 22:09"
+        }
+      ],
+      "sig": "",
+      "house_under": ""
+    }
+  }
+}

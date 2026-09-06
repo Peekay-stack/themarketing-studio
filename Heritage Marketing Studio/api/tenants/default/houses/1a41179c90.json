@@ -1,0 +1,523 @@
+{
+  "id": "1a41179c90",
+  "brand": "Heritage",
+  "brief": {
+    "background": "Objective: Please draft a brief for heritage milk as a master brand creative focussing on how purity gives strength to the consumers. needscope territory orange on the affiliative side and key competition - amul, nandini, hatsun, milky mist, arokya, dodla\nProposition: Heritage: the pure milk that makes families stronger every day.\nAudience: Please draft a brief for heritage milk as a master brand creative focussing on how purity gives strength to the consumers. needscope territory orange on the affiliative side and key competition - amul, nandini, hatsun, milky mist, arokya, dodla\nTone: Warm, wholesome, premium — proud but never preachy. Lead with purity & family."
+  },
+  "created": "2026-08-27 10:43",
+  "updated": "2026-08-27 11:04",
+  "project": "",
+  "nodes": {
+    "core": {
+      "layer": "core",
+      "options": [
+        {
+          "id": "d3942437",
+          "text": "Pure milk. Stronger families. Every single day.",
+          "note": "Bets on the master idea head-on — purity as the cause, family strength as the effect. Safe, category-central, hard to own against Amul who can claim the same.",
+          "tag": "purity=strength",
+          "source": "brief",
+          "added": "2026-08-27 10:43"
+        },
+        {
+          "id": "1c6089bf",
+          "text": "The purity you can taste is the strength they carry.",
+          "note": "Bets on sensory proof over claim — links a mother's daily judgement of quality to her child's growth. Differentiates from co-op scale-and-trust plays by owning the felt, tasted moment.",
+          "tag": "felt purity",
+          "source": "model",
+          "added": "2026-08-27 10:43"
+        },
+        {
+          "id": "77230994",
+          "text": "For families who won't compromise on the first thing of the day.",
+          "note": "Bets on the audience's self-image, not the product — the no-compromise mother, milk as the day's first decision. Orange/affiliative, but risks sounding like any premium brand.",
+          "tag": "no-compromise family",
+          "source": "brief",
+          "added": "2026-08-27 10:43"
+        },
+        {
+          "id": "42d9c320",
+          "text": "Real strength starts with real milk.",
+          "note": "Bets on the purity-vs-adulteration fight against loose/unbranded milk — 'real' as the wedge. Sharpest enemy, but the enemy is generic, not the branded competitors named.",
+          "tag": "real vs adulterated",
+          "source": "model",
+          "added": "2026-08-27 10:43"
+        },
+        {
+          "id": "2332502c",
+          "text": "Pure milk. Stronger families.",
+          "note": "The straight bet: purity is the input, family strength is the payoff — closest to the master idea, ownable if 'purity' is provable but sayable enough for a promoter.",
+          "tag": "purity-to-strength",
+          "source": "brief",
+          "added": "2026-08-27 10:44"
+        },
+        {
+          "id": "7d324a8f",
+          "text": "The purity you can't compromise on.",
+          "note": "Bets on the refuser — the parent who won't settle for loose or lesser milk; makes 'no compromise' the emotional battleground against Amul and unbranded.",
+          "tag": "no-compromise",
+          "source": "brief",
+          "added": "2026-08-27 10:44"
+        },
+        {
+          "id": "530d5b53",
+          "text": "Strength starts with what's pure.",
+          "note": "Bets on strength as the hero and purity as the reason-why — flips the order so the outcome leads; broader claim, but risks sounding like any nutrition brand unless proof is tight.",
+          "tag": "strength-first",
+          "source": "model",
+          "added": "2026-08-27 10:44"
+        },
+        {
+          "id": "f599fced",
+          "text": "Every day, the milk that gives more.",
+          "note": "Bets on daily-ritual and generosity — 'gives more' covers purity, strength and value in one; warm and affiliative (orange), but softer and more claimable by competitors.",
+          "tag": "everyday-generosity",
+          "source": "model",
+          "added": "2026-08-27 10:44"
+        },
+        {
+          "id": "f656c1d2",
+          "text": "Pure enough for the ones you'd protect with your life.",
+          "note": "Bets hardest on the protective-parent instinct — most emotional, most affiliative; powerful for South Indian family-first idiom but can tip preachy against the 'never preachy' tone.",
+          "tag": "protective-instinct",
+          "source": "model",
+          "added": "2026-08-27 10:44"
+        }
+      ],
+      "chosen": [
+        "1c6089bf"
+      ],
+      "sig": "",
+      "generated_under": "e3b0c44298fc1c14"
+    },
+    "emotional": {
+      "layer": "emotional",
+      "options": [
+        {
+          "id": "545939ac",
+          "text": "I gave them the pure start, so the strength is theirs to keep.",
+          "note": "Bets on the mother's pride of provision — purity as the gift she chose, strength as the child's inheritance; NeedScope Orange affiliative warmth.",
+          "tag": "provider-pride",
+          "source": "brief",
+          "added": "2026-08-27 10:46"
+        },
+        {
+          "id": "a324b38a",
+          "text": "In this house, we don't compromise on what goes into them.",
+          "note": "Bets on family identity — 'we are the household that refuses to cut corners on our children'; ownable against loose/unbranded milk.",
+          "tag": "no-compromise-household",
+          "source": "brief",
+          "added": "2026-08-27 10:46"
+        },
+        {
+          "id": "1ffd1a80",
+          "text": "Every glass is one more day I did right by my family.",
+          "note": "Bets on the daily ritual of reassurance — strength built not in one heroic act but in a small pure act repeated; fits the daily cold-chain habit.",
+          "tag": "daily-reassurance",
+          "source": "brief",
+          "added": "2026-08-27 10:46"
+        },
+        {
+          "id": "52139969",
+          "text": "When they grow up strong, everyone can see what we're made of.",
+          "note": "Bets on the affiliative outward pride — the child's visible strength reflects on the whole family; more social and less private than the others.",
+          "tag": "visible-family-pride",
+          "source": "model",
+          "added": "2026-08-27 10:46"
+        }
+      ],
+      "chosen": [
+        "52139969"
+      ],
+      "sig": "",
+      "generated_under": "a0218a7545913f60"
+    },
+    "functional": {
+      "layer": "functional",
+      "options": [
+        {
+          "id": "d31b8ab6",
+          "text": "Tested for purity at every step from farm to pack, so every glass is milk and nothing else.",
+          "note": "Bets on the purity-control claim itself — the process is the product. Speaks to the family that won't compromise and needs a checkable reason why.",
+          "tag": "purity-process",
+          "source": "brief",
+          "added": "2026-08-27 10:47"
+        },
+        {
+          "id": "5bd62c12",
+          "text": "Full-cream nutrition your child's body can actually use — protein and calcium in the milk they drink every day.",
+          "note": "Bets on nutrition delivery, tying 'strength' to a functional growth claim for kids. Narrows the audience to mothers of growing children.",
+          "tag": "nutrition-strength",
+          "source": "model",
+          "added": "2026-08-27 10:47"
+        },
+        {
+          "id": "7ca94bef",
+          "text": "Fresh through an unbroken cold chain, from milking to your doorstep every morning.",
+          "note": "Bets on freshness and cold-chain reliability — the daily-delivery habit is the proof. Differentiates against loose milk and slow supply, not on purity per se.",
+          "tag": "cold-chain-freshness",
+          "source": "brief",
+          "added": "2026-08-27 10:47"
+        },
+        {
+          "id": "add50ab6",
+          "text": "The same pure, unadulterated milk in every pack, every single day — no dilution, no surprises.",
+          "note": "Bets on consistency and no-adulteration as the demonstrable claim. Directly attacks loose/unbranded milk and the fear of tampering.",
+          "tag": "consistency-no-adulteration",
+          "source": "model",
+          "added": "2026-08-27 10:47"
+        },
+        {
+          "id": "2cce4f9a",
+          "text": "Heritage Pure Milk is tested for purity at every step — from the farm, through the cold chain, to your doorstep — so what reaches your family is milk and nothing else.",
+          "note": "Bets on the end-to-end testing and cold-chain as the proof of 'pure' — claims process rigour to families who fear adulteration.",
+          "tag": "",
+          "source": "brief",
+          "added": "2026-08-27 10:48"
+        },
+        {
+          "id": "8f53a6a3",
+          "text": "Heritage Pure Milk delivers full, honest nutrition every day — the protein and calcium a growing family needs, with nothing watered down or taken out.",
+          "note": "Bets on nutritional completeness as the route from purity to strength — claims 'you get all of it' to parents feeding children.",
+          "tag": "",
+          "source": "model",
+          "added": "2026-08-27 10:48"
+        },
+        {
+          "id": "cfaa75d4",
+          "text": "Heritage Pure Milk comes to you fresh through a daily cold chain, from local farms to your door — the same trusted milk, morning after morning.",
+          "note": "Bets on freshness and daily reliability of the cold chain — claims consistency to home-delivery and general-trade regulars.",
+          "tag": "",
+          "source": "brief",
+          "added": "2026-08-27 10:48"
+        },
+        {
+          "id": "a42d89c4",
+          "text": "Heritage Pure Milk is unadulterated milk you can check yourself — it froths, it sets thick curd, it tastes like real doodh, because that is all it is.",
+          "note": "Bets on the visible, kitchen-testable signs of purity — claims 'see it for yourself' to sceptics of branded and loose milk alike.",
+          "tag": "",
+          "source": "model",
+          "added": "2026-08-27 10:48"
+        }
+      ],
+      "chosen": [
+        "d31b8ab6"
+      ],
+      "sig": "",
+      "generated_under": "a0218a7545913f60"
+    },
+    "rtb_emotional": {
+      "layer": "rtb_emotional",
+      "options": [
+        {
+          "id": "d7531eaf",
+          "text": "A child raised on Heritage milk shows it in the small things — the stamina to finish the game, the focus to sit through the lesson, the appetite that never flags. Strength you notice in the ordinary day, not the exam result.",
+          "note": "Bets on daily visible vitality in the child — energy, focus, appetite — the mother's proof that her routine choice is working. Closest to the product's functional truth.",
+          "tag": "",
+          "source": "model",
+          "added": "2026-08-27 10:51"
+        },
+        {
+          "id": "47127581",
+          "text": "The strength that shows up isn't the child's alone — it's the mother who never once skipped the good milk, quietly, every single morning. When they grow up strong, it is her discipline everyone is really seeing.",
+          "note": "Bets on the mother's consistency as the earned thing — affiliative Orange, she is seen and valued through the child. Rewards the daily decision-maker.",
+          "tag": "",
+          "source": "model",
+          "added": "2026-08-27 10:51"
+        },
+        {
+          "id": "8a023267",
+          "text": "Character is built at the breakfast table before it's built anywhere else — the habit of not cutting corners, of choosing the pure thing daily, is the same habit that becomes their character. What you feed becomes how they turn out.",
+          "note": "Bets on strength of character — purity as a moral upbringing, milk as the first lesson in not compromising. Highest-order, most premium claim.",
+          "tag": "",
+          "source": "model",
+          "added": "2026-08-27 10:51"
+        },
+        {
+          "id": "088812d6",
+          "text": "Grandmother trusted milk this pure, and so did her mother. Three generations raised strong on the same simple belief — that what you give a family every day is what they become. Heritage carries the name for a reason.",
+          "note": "Bets on the brand's own heritage and generational continuity as proof — leans on the name 'Heritage' itself. Trust earned over time, not in one glass.",
+          "tag": "",
+          "source": "model",
+          "added": "2026-08-27 10:51"
+        },
+        {
+          "id": "54f913a1",
+          "text": "When your child stands taller at the front of the class, when the neighbours' children come home tired and yours is still running — that's not luck. Everyone can see the difference, and everyone knows which family made the stronger choice.",
+          "note": "Bets on strength shown outward in the world — school, the street, in front of others. Affiliative pride and gentle social comparison; the strongest Orange 'seen by others' play.",
+          "tag": "",
+          "source": "model",
+          "added": "2026-08-27 10:51"
+        }
+      ],
+      "chosen": [
+        "d7531eaf"
+      ],
+      "sig": "",
+      "generated_under": "ed18b4543f2b3976"
+    },
+    "rtb_functional": {
+      "layer": "rtb_functional",
+      "options": [
+        {
+          "id": "77e4ac41",
+          "text": "500 quality champions run more than 25 tests on the milk every single day — and you can scan the pack to see the result for the milk in your hand.",
+          "note": "Bets on scale plus transparency — the number proves rigour, the scan makes it personal and checkable, which beats every competitor who tests but keeps it invisible.",
+          "tag": "[brief]",
+          "source": "brief",
+          "added": "2026-08-27 10:55"
+        },
+        {
+          "id": "583ad4da",
+          "text": "Every batch clears more than 25 separate purity tests before it is allowed into a pack — adulteration, antibiotics, fat, water, the lot.",
+          "note": "Bets on the depth of the check itself — 25 tests names the specific fears (water, adulterants) mothers actually worry about in loose and branded milk alike.",
+          "tag": "[unverified]",
+          "source": "model",
+          "added": "2026-08-27 10:55"
+        },
+        {
+          "id": "0dd42713",
+          "text": "A pack you can scan to see the day's quality results — purity you don't have to take on trust.",
+          "note": "Bets purely on the scannable QR proof as the differentiator; strongest against unbranded milk where trust is the whole battle and no one else can offer this.",
+          "tag": "[unverified]",
+          "source": "model",
+          "added": "2026-08-27 10:55"
+        },
+        {
+          "id": "7abfbdb0",
+          "text": "500 trained quality champions guard the milk at every step from farm to pack — testing daily, not just at the plant.",
+          "note": "Bets on the people — humanises 'tested at every step' into a standing team, which fits the affiliative Orange territory better than a cold process claim.",
+          "tag": "[brief]",
+          "source": "brief",
+          "added": "2026-08-27 10:55"
+        },
+        {
+          "id": "069581ba",
+          "text": "Testing runs the length of the cold chain — collection, chilling, transport, pack — so nothing gets in between the cow and your glass.",
+          "note": "Bets on the cold-chain journey itself, turning the 'farm to pack' phrase into concrete stages; leans on the 'daily cold-chain category' truth given in the brand facts.",
+          "tag": "[brief]",
+          "source": "brief",
+          "added": "2026-08-27 10:55"
+        }
+      ],
+      "chosen": [
+        "7abfbdb0"
+      ],
+      "sig": "",
+      "generated_under": "7f14dedc2e8150fa"
+    },
+    "bridge": {
+      "layer": "bridge",
+      "options": [
+        {
+          "id": "b3050f40",
+          "text": "People behind the milk become the pride you display raising them",
+          "note": "",
+          "source": "model",
+          "tag": "",
+          "added": "2026-08-27 10:57"
+        },
+        {
+          "id": "5acf4018",
+          "text": "When every glass is tested milk and nothing else, a mother stops worrying and starts trusting: peace of mind, one less compromise, a choice she never has to defend",
+          "note": "Bets on the caregiver's relief — purity removes the daily anxiety of what's in the glass; affiliative-orange, the mother earns quiet pride by choosing safe",
+          "tag": "",
+          "source": "model",
+          "added": "2026-08-27 10:58"
+        },
+        {
+          "id": "ce5ff9e2",
+          "text": "Milk that is only milk becomes milk that builds: strength you can see grow — height and energy today, the foundation of a strong adult tomorrow",
+          "note": "Bets on visible growth as the payoff of purity — links 'nothing else' directly to 'grow up strong'; strongest thread to the chosen emotional line",
+          "tag": "",
+          "source": "model",
+          "added": "2026-08-27 10:58"
+        },
+        {
+          "id": "c36032b8",
+          "text": "500 people watching your family's milk every day means your family is part of something bigger: belonging, a household that chose the careful brand, a standard the whole street trusts",
+          "note": "Bets on affiliation and shared standard — the buyer joins a community of families who won't compromise; leans hardest into NeedScope orange",
+          "tag": "",
+          "source": "model",
+          "added": "2026-08-27 10:58"
+        },
+        {
+          "id": "e05ac575",
+          "text": "When nothing is added and nothing is hidden, feeding the family becomes an act of love kept honest: care you can prove, a promise you keep at every meal, no shortcuts on the people you love",
+          "note": "Bets on purity as proof of the caregiver's own love — the product's honesty stands in for the parent's devotion",
+          "tag": "",
+          "source": "model",
+          "added": "2026-08-27 10:58"
+        }
+      ],
+      "chosen": [
+        "ce5ff9e2"
+      ],
+      "sig": "",
+      "generated_under": "a500da9f3b5a8d90"
+    },
+    "proof": {
+      "layer": "proof",
+      "options": [
+        {
+          "id": "a40fba59",
+          "text": "The 4am route film: follow one of the 500 quality champions from a village collection point at dawn, testing a farmer's milk on the spot — the lactometer dipped, the strip that changes colour, the can accepted or turned away at the gate. Cut to the same milk sealed on shelf by breakfast. Shows the guard, not the claim.",
+          "note": "Bet on the functional RTB — dramatise the 500 champions as a visible daily act, proof of purity as vigilance.",
+          "tag": "",
+          "source": "brief",
+          "added": "2026-08-27 10:59"
+        },
+        {
+          "id": "98c2c6e5",
+          "text": "The turned-away can: a single champion refuses a farmer's milk that fails the test — poured out, not packed. The uncomfortable, ownable proof that Heritage rejects what others might accept.",
+          "note": "Bet that the strongest proof of purity is what you refuse — a rejection nobody else will show on camera.",
+          "tag": "",
+          "source": "model",
+          "added": "2026-08-27 10:59"
+        },
+        {
+          "id": "6a698073",
+          "text": "The kitchen-table test: a mother does the boil test at home — Heritage milk vs loose milk side by side, the clean rise vs the thin split. The purity check families already do, made the hero.",
+          "note": "Bet on the home ritual as proof — puts the demo in the buyer's own kitchen against loose/unbranded milk.",
+          "tag": "",
+          "source": "model",
+          "added": "2026-08-27 10:59"
+        },
+        {
+          "id": "bb2ac8f3",
+          "text": "The ordinary-day montage, measured: a child through a real day — the last kid still running at the final whistle, still upright at the last bench, still hungry at dinner. No lab, no numbers — strength shown in stamina, focus and appetite that don't flag.",
+          "note": "Bet on the emotional RTB made filmable — strength you notice in the ordinary day, not a claim about it.",
+          "tag": "",
+          "source": "brief",
+          "added": "2026-08-27 10:59"
+        },
+        {
+          "id": "6e139665",
+          "text": "The daily-test seal: a close-up demo of one pack carrying the date and batch tied to that morning's test — 'tested today, not just at the plant' — a scannable code that shows the day's quality log.",
+          "note": "Bet on a measurable, verifiable proof point at the point of sale — turns 'tested daily' into something a shopper can check.",
+          "tag": "",
+          "source": "model",
+          "added": "2026-08-27 10:59"
+        },
+        {
+          "id": "efdceecb",
+          "text": "THE PARALLEL DAY (user's merge). Split-screen throughout. LEFT: the quality champion's 4am — headlamp on the churn, milk drawn at the collection point, the daily test strip read against the light, the seal pressed shut on the pack. RIGHT: the same hours in a family's day — a boy sprinting the last stretch of a gully-cricket over, a girl holding focus in the front row, a young woman closing a point in a work huddle. The two sides move in the same rhythm: every guarding act on the left cuts to a moment of strength on the right. Closing frame collapses both into one: the champion's hand on the seal, then the same milk poured at the family table. Demonstrable acts: the test strip, the seal, the timestamp on the churn.",
+          "note": "Builds exactly what the user asked — makes '500 quality champions' and 'strength in the ordinary day' one visual argument; the two chosen RTBs become one film.",
+          "tag": "",
+          "source": "brief",
+          "added": "2026-08-27 11:02"
+        },
+        {
+          "id": "82661dd8",
+          "text": "THE DAILY TEST, SHOWN. A single unbroken sequence at one collection point at 4am: a quality champion runs the day's test in real time — the strip goes into the sample, the colour reads clean, the batch is passed and sealed, the rejected can is set aside on camera. On-screen counter ticks the tests done before sunrise. No family, no metaphor — the claim '500 champions testing daily, not just at the plant' proven as an act you watch happen.",
+          "note": "Bets the functional RTB alone is strong enough — proof over emotion, the answer to loose milk and to 'is it really tested every day'.",
+          "tag": "",
+          "source": "brief",
+          "added": "2026-08-27 11:02"
+        },
+        {
+          "id": "2f285a41",
+          "text": "THE SEAL AS THE LINE. Macro film of the pack being sealed — the Heritage seal pressing shut, the FSSAI mark and 'Pure Doodh Ki Shakti' resolving in frame. Cut to the seal being broken at the family table the next morning, milk poured, a child drinks and runs. The proposition: nothing touches it between the champion's hand and yours. The seal is the demo.",
+          "note": "Ownable, repeatable icon across every medium — the unbroken seal answers the home-delivery and cold-chain trust question directly.",
+          "tag": "",
+          "source": "model",
+          "added": "2026-08-27 11:02"
+        },
+        {
+          "id": "a1450348",
+          "text": "THE SIDE-BY-SIDE POUR. Two glasses filled on camera, same light: Heritage against loose/unbranded milk. The visible difference — colour, body, cleanliness — then the tester's strip run on both, one passes, one does not. Ends on the child drinking the one that passed. The strength claim grounded in a thing the eye can judge before the mind is told.",
+          "note": "Bets on the loose-milk battle specifically — a shelf-level demonstration a promoter can also perform live at point of sale.",
+          "tag": "",
+          "source": "model",
+          "added": "2026-08-27 11:02"
+        },
+        {
+          "id": "5f6d5353",
+          "text": "STRENGTH YOU NOTICE, TRACKED OVER A WEEK. A single ordinary week in one household, shown as small measurable beats: the tiffin comes back empty (appetite that never flags), the boy finishes the match, the girl sits the full lesson. Each beat tagged to the same morning glass. No lab, no 4am — the proof is the child's ordinary day, filmed like evidence rather than an ad.",
+          "note": "Bets the emotional RTB is the demo — strength read in stamina, focus and appetite, not claimed in a voiceover.",
+          "tag": "",
+          "source": "brief",
+          "added": "2026-08-27 11:02"
+        }
+      ],
+      "chosen": [
+        "efdceecb"
+      ],
+      "sig": "",
+      "generated_under": "e10511ebae04bc04"
+    },
+    "culture": {
+      "layer": "culture",
+      "options": [
+        {
+          "id": "ee306e8e",
+          "text": "The morning glass before school — the mother pouring, the child drinking it down before the bag goes on the shoulder. Heritage owns the pre-school milk moment, not the bedtime one.",
+          "note": "Bets on the growth-and-strength moment where a mother sees the milk do its job; ladders straight to 'when they grow up strong'.",
+          "tag": "occasion",
+          "source": "model",
+          "added": "2026-08-27 11:03"
+        },
+        {
+          "id": "950198dc",
+          "text": "The boil-and-cool ritual: milk boiled at dawn, the malai skin lifted, the pot cooled and covered. Heritage claims the home act that separates real milk from a packet you just tear open.",
+          "note": "The most ownable South Indian ritual and the hardest for loose or long-life milk to match — proof of freshness you perform daily.",
+          "tag": "ritual",
+          "source": "model",
+          "added": "2026-08-27 11:03"
+        },
+        {
+          "id": "c3576cf6",
+          "text": "Ghee-gold light on cream — the frame lit like early kitchen sun on Deep Forest and Cream, malai catching the accent gold. A warm materiality that says richness without saying rich.",
+          "note": "Turns the palette into a repeatable visual signature of purity-as-richness across every medium.",
+          "tag": "code",
+          "source": "brief",
+          "added": "2026-08-27 11:03"
+        },
+        {
+          "id": "69038784",
+          "text": "'Roz ka doodh, roz ki taakat' — the everyday-strength line families say back. Keep the doodh/taakat pairing in the mother tongue; it carries the master idea without translating it flat.",
+          "note": "Locks the daily-habit claim into ownable idiom that a promoter and a mother both repeat; extends #PureDoodhKiShakti into speech.",
+          "tag": "idiom",
+          "source": "brief",
+          "added": "2026-08-27 11:03"
+        },
+        {
+          "id": "3396171d",
+          "text": "The full glass held up — brimming, opaque white, thick enough to coat the glass — as the recurring hero image across pack, poster and promoter's hand.",
+          "note": "One image the brand can own everywhere: 'purity you can taste' made visible as body and fullness, not thinness.",
+          "tag": "iconography",
+          "source": "model",
+          "added": "2026-08-27 11:03"
+        },
+        {
+          "id": "bda0e58b",
+          "text": "Avoid the fear register — no 'adulteration exposé', no dirty-milk scare, no lab-coat purity theatre. Purity here is warmth and strength, not suspicion of the rival.",
+          "note": "Protects the affiliative Orange, proud-not-preachy tone; the scare route is Amul-adjacent and cheapens the master idea.",
+          "tag": "avoid",
+          "source": "brief",
+          "added": "2026-08-27 11:03"
+        }
+      ],
+      "chosen": [
+        "ee306e8e",
+        "c3576cf6",
+        "69038784",
+        "3396171d",
+        "bda0e58b",
+        "950198dc"
+      ],
+      "sig": "",
+      "generated_under": "ed18b4543f2b3976"
+    }
+  },
+  "ladders": [
+    {
+      "id": "21e6b88b",
+      "f": "7abfbdb0",
+      "b1": "b3050f40",
+      "b2": "",
+      "e": "52139969",
+      "added": "2026-08-27 10:57"
+    }
+  ]
+}

@@ -1,0 +1,101 @@
+{
+  "id": "c676782d0e",
+  "brand": "Heritage Foods",
+  "house": "620e4b0882",
+  "created": "2026-08-10 23:00",
+  "updated": "2026-08-10 23:00",
+  "balance": {
+    "brand_share": 60,
+    "reason": "",
+    "basis": "year"
+  },
+  "nodes": {
+    "objectives": {
+      "layer": "objectives",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    },
+    "audiences": {
+      "layer": "audiences",
+      "rows": [
+        {
+          "audience": "Chennai mothers",
+          "rank": "1",
+          "believes_now": "loose is fresher",
+          "pillar": "functional",
+          "id": "8585de8b",
+          "source": "user",
+          "added": "2026-08-10 23:00"
+        }
+      ],
+      "sig": "",
+      "house_under": ""
+    },
+    "channels": {
+      "layer": "channels",
+      "rows": [
+        {
+          "channel": "POSM",
+          "role": "proof",
+          "job": "prove freshness",
+          "measure": "claim recall",
+          "side": "brand",
+          "share": "20",
+          "owner": "Trade",
+          "lead": "yes",
+          "id": "dcbfe2e9",
+          "source": "user",
+          "added": "2026-08-10 23:00"
+        }
+      ],
+      "sig": "",
+      "house_under": ""
+    },
+    "balance": {
+      "layer": "balance",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    },
+    "phases": {
+      "layer": "phases",
+      "rows": [
+        {
+          "phase": "Pongal",
+          "window": "Jan",
+          "occasion": "Pongal",
+          "channels": "POSM",
+          "hands_over": "sustain",
+          "id": "9d5f1ec3",
+          "source": "user",
+          "added": "2026-08-10 23:00"
+        }
+      ],
+      "sig": "",
+      "house_under": ""
+    },
+    "measures": {
+      "layer": "measures",
+      "rows": [
+        {
+          "role": "proof",
+          "leading": "claim recall",
+          "lagging": "repeat",
+          "would_tell_us_it_failed": "flat at 8wk",
+          "id": "f11043df",
+          "source": "user",
+          "added": "2026-08-10 23:00"
+        }
+      ],
+      "sig": "",
+      "house_under": ""
+    },
+    "governance": {
+      "layer": "governance",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    }
+  }
+}

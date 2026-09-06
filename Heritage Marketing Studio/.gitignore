@@ -1,0 +1,16 @@
+**/__pycache__/
+**/*.pyc
+api/.venv/
+api/.env
+*.db
+web/node_modules/
+web/dist/
+**/research_*/
+
+# generated film cuts
+api/renders/
+
+# Derived from api/frontend/app.dc.html by tools/partials.py — a review aid, not a source.
+api/frontend/parts/
+api/frontend/app.dc.html.bak-*
+api/frontend/app.dc.html.pre-*

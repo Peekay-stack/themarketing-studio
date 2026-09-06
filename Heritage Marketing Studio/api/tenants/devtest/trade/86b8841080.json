@@ -1,0 +1,414 @@
+{
+  "id": "86b8841080",
+  "brand": "H",
+  "plan": "57ef2191a0",
+  "house": "750a369a64",
+  "created": "2026-08-10 21:26",
+  "updated": "2026-08-10 21:26",
+  "channels": {
+    "trad": {
+      "key": "trad",
+      "role": "",
+      "owner": "",
+      "share_now": "",
+      "behaviour": "",
+      "baseline": "",
+      "target": "",
+      "lever": "",
+      "cost_per_unit": "",
+      "payback": "",
+      "leakage": "",
+      "control": "",
+      "residual_risk": "",
+      "sell_through": "",
+      "receives_money": "",
+      "effective_price": "",
+      "runs_through": [],
+      "source": "",
+      "elements": {
+        "pitch": {
+          "key": "pitch",
+          "brief": "",
+          "status": "not started",
+          "updated": ""
+        },
+        "counter": {
+          "key": "counter",
+          "brief": "",
+          "status": "not started",
+          "updated": ""
+        },
+        "slab": {
+          "key": "slab",
+          "brief": "",
+          "status": "not started",
+          "updated": ""
+        },
+        "beat": {
+          "key": "beat",
+          "brief": "",
+          "status": "not started",
+          "updated": ""
+        },
+        "card": {
+          "key": "card",
+          "brief": "Three lines.",
+          "status": "agreed",
+          "updated": "2026-08-10 21:26"
+        }
+      }
+    },
+    "wholesale": {
+      "key": "wholesale",
+      "role": "",
+      "owner": "",
+      "share_now": "",
+      "behaviour": "",
+      "baseline": "",
+      "target": "",
+      "lever": "",
+      "cost_per_unit": "",
+      "payback": "",
+      "leakage": "",
+      "control": "",
+      "residual_risk": "",
+      "sell_through": "",
+      "receives_money": "",
+      "effective_price": "",
+      "runs_through": [],
+      "source": "",
+      "elements": {
+        "scheme": {
+          "key": "scheme",
+          "brief": "",
+          "status": "not started",
+          "updated": ""
+        },
+        "pack": {
+          "key": "pack",
+          "brief": "",
+          "status": "not started",
+          "updated": ""
+        },
+        "terms": {
+          "key": "terms",
+          "brief": "",
+          "status": "not started",
+          "updated": ""
+        },
+        "meet": {
+          "key": "meet",
+          "brief": "",
+          "status": "not started",
+          "updated": ""
+        }
+      }
+    },
+    "modern": {
+      "key": "modern",
+      "role": "",
+      "owner": "",
+      "share_now": "",
+      "behaviour": "",
+      "baseline": "",
+      "target": "",
+      "lever": "",
+      "cost_per_unit": "",
+      "payback": "",
+      "leakage": "",
+      "control": "",
+      "residual_risk": "",
+      "sell_through": "",
+      "receives_money": "",
+      "effective_price": "",
+      "runs_through": [],
+      "source": "",
+      "elements": {
+        "plano": {
+          "key": "plano",
+          "brief": "",
+          "status": "not started",
+          "updated": ""
+        },
+        "visibility": {
+          "key": "visibility",
+          "brief": "",
+          "status": "not started",
+          "updated": ""
+        },
+        "promoter": {
+          "key": "promoter",
+          "brief": "",
+          "status": "not started",
+          "updated": ""
+        },
+        "offer": {
+          "key": "offer",
+          "brief": "",
+          "status": "not started",
+          "updated": ""
+        },
+        "jbp": {
+          "key": "jbp",
+          "brief": "",
+          "status": "not started",
+          "updated": ""
+        }
+      }
+    },
+    "ecomm": {
+      "key": "ecomm",
+      "role": "",
+      "owner": "",
+      "share_now": "",
+      "behaviour": "",
+      "baseline": "",
+      "target": "",
+      "lever": "",
+      "cost_per_unit": "",
+      "payback": "",
+      "leakage": "",
+      "control": "",
+      "residual_risk": "",
+      "sell_through": "",
+      "receives_money": "",
+      "effective_price": "",
+      "runs_through": [],
+      "source": "",
+      "elements": {
+        "listing": {
+          "key": "listing",
+          "brief": "",
+          "status": "not started",
+          "updated": ""
+        },
+        "search": {
+          "key": "search",
+          "brief": "",
+          "status": "not started",
+          "updated": ""
+        },
+        "reviews": {
+          "key": "reviews",
+          "brief": "",
+          "status": "not started",
+          "updated": ""
+        },
+        "basket": {
+          "key": "basket",
+          "brief": "",
+          "status": "not started",
+          "updated": ""
+        },
+        "banner": {
+          "key": "banner",
+          "brief": "",
+          "status": "not started",
+          "updated": ""
+        }
+      }
+    },
+    "qcomm": {
+      "key": "qcomm",
+      "role": "",
+      "owner": "",
+      "share_now": "",
+      "behaviour": "",
+      "baseline": "",
+      "target": "",
+      "lever": "",
+      "cost_per_unit": "",
+      "payback": "",
+      "leakage": "",
+      "control": "",
+      "residual_risk": "",
+      "sell_through": "",
+      "receives_money": "",
+      "effective_price": "",
+      "runs_through": [],
+      "source": "",
+      "elements": {
+        "assort": {
+          "key": "assort",
+          "brief": "",
+          "status": "not started",
+          "updated": ""
+        },
+        "avail": {
+          "key": "avail",
+          "brief": "",
+          "status": "not started",
+          "updated": ""
+        },
+        "price": {
+          "key": "price",
+          "brief": "",
+          "status": "not started",
+          "updated": ""
+        },
+        "ads": {
+          "key": "ads",
+          "brief": "",
+          "status": "not started",
+          "updated": ""
+        },
+        "window": {
+          "key": "window",
+          "brief": "",
+          "status": "not started",
+          "updated": ""
+        }
+      }
+    },
+    "loyalty": {
+      "key": "loyalty",
+      "role": "",
+      "owner": "",
+      "share_now": "",
+      "behaviour": "",
+      "baseline": "",
+      "target": "",
+      "lever": "",
+      "cost_per_unit": "",
+      "payback": "",
+      "leakage": "",
+      "control": "",
+      "residual_risk": "",
+      "sell_through": "",
+      "receives_money": "",
+      "effective_price": "",
+      "runs_through": [],
+      "source": "",
+      "elements": {
+        "who": {
+          "key": "who",
+          "brief": "",
+          "status": "not started",
+          "updated": ""
+        },
+        "earn": {
+          "key": "earn",
+          "brief": "",
+          "status": "not started",
+          "updated": ""
+        },
+        "burn": {
+          "key": "burn",
+          "brief": "",
+          "status": "not started",
+          "updated": ""
+        },
+        "enrol": {
+          "key": "enrol",
+          "brief": "",
+          "status": "not started",
+          "updated": ""
+        },
+        "data": {
+          "key": "data",
+          "brief": "",
+          "status": "not started",
+          "updated": ""
+        }
+      }
+    },
+    "own_retail": {
+      "key": "own_retail",
+      "role": "",
+      "owner": "",
+      "share_now": "",
+      "behaviour": "",
+      "baseline": "",
+      "target": "",
+      "lever": "",
+      "cost_per_unit": "",
+      "payback": "",
+      "leakage": "",
+      "control": "",
+      "residual_risk": "",
+      "sell_through": "",
+      "receives_money": "",
+      "effective_price": "",
+      "runs_through": [],
+      "source": "",
+      "elements": {
+        "range": {
+          "key": "range",
+          "brief": "",
+          "status": "not started",
+          "updated": ""
+        },
+        "experience": {
+          "key": "experience",
+          "brief": "",
+          "status": "not started",
+          "updated": ""
+        },
+        "launch_window": {
+          "key": "launch_window",
+          "brief": "",
+          "status": "not started",
+          "updated": ""
+        },
+        "staff_script": {
+          "key": "staff_script",
+          "brief": "",
+          "status": "not started",
+          "updated": ""
+        }
+      }
+    },
+    "home_delivery": {
+      "key": "home_delivery",
+      "role": "",
+      "owner": "",
+      "share_now": "",
+      "behaviour": "",
+      "baseline": "",
+      "target": "",
+      "lever": "",
+      "cost_per_unit": "",
+      "payback": "",
+      "leakage": "",
+      "control": "",
+      "residual_risk": "",
+      "sell_through": "",
+      "receives_money": "",
+      "effective_price": "",
+      "runs_through": [],
+      "source": "",
+      "elements": {
+        "trial": {
+          "key": "trial",
+          "brief": "",
+          "status": "not started",
+          "updated": ""
+        },
+        "referral": {
+          "key": "referral",
+          "brief": "",
+          "status": "not started",
+          "updated": ""
+        },
+        "reliability": {
+          "key": "reliability",
+          "brief": "",
+          "status": "not started",
+          "updated": ""
+        },
+        "pause_resume": {
+          "key": "pause_resume",
+          "brief": "",
+          "status": "not started",
+          "updated": ""
+        },
+        "churn": {
+          "key": "churn",
+          "brief": "",
+          "status": "not started",
+          "updated": ""
+        }
+      }
+    }
+  }
+}

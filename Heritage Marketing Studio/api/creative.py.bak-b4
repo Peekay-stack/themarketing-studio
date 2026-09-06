@@ -1,0 +1,155 @@
+"""creative.py — multi-provider creative gateway.
+
+Image + cinematic video route through ONE integration (fal.ai). Avatar/presenter video
+routes through HeyGen (heygen.py). If a provider's key is absent, a MockProvider returns
+placeholder assets so the whole app runs with zero keys. Add models in CATALOG — one place.
+"""
+from __future__ import annotations
+import os
+import sys
+import hashlib
+from dataclasses import dataclass
+from typing import Optional
+import urllib.parse
+
+import heygen
+
+
+@dataclass
+class CreativeModel:
+    id: str          # what the UI sends
+    label: str       # what the creative sees
+    kind: str        # "image" | "video" | "avatar"
+    provider: str    # "fal" | "heygen"
+    ref: str         # provider-specific id (fal endpoint, or HeyGen avatar id)
+    note: str
+
+
+# The catalogue the front-end picker renders.
+CATALOG: list[CreativeModel] = [
+    # --- images (fal.ai) ---
+    CreativeModel("ideogram-v3", "Ideogram v3 — best for text-in-image", "image",
+                  "fal", "fal-ai/ideogram/v3", "Social cards with captions / brand line / CTA."),
+    CreativeModel("imagen-4-ultra", "Imagen 4 Ultra — most photorealistic", "image",
+                  "fal", "fal-ai/imagen4/ultra", "Premium product & hero shots."),
+    CreativeModel("nano-banana-2", "Nano Banana 2 — most consistent all-rounder", "image",
+                  "fal", "fal-ai/nano-banana-2", "Versatile, good typography."),
+    CreativeModel("flux-2", "FLUX.2 — open-weight photoreal", "image",
+                  "fal", "fal-ai/flux-2", "Strong photoreal, cost-effective."),
+    # --- cinematic video (fal.ai) ---
+    CreativeModel("veo-3.1", "Veo 3.1 — premium video + native audio", "video",
+                  "fal", "fal-ai/veo/3.1", "Best cinematic default; great for YouTube."),
+    CreativeModel("runway-gen-4.5", "Runway Gen-4.5 — best control + brand consistency", "video",
+                  "fal", "fal-ai/runway/gen-4.5", "Marketer favourite; reference-driven."),
+    CreativeModel("kling-3.0", "Kling 3.0 — cheapest premium, high-volume social", "video",
+                  "fal", "fal-ai/kling-video/v3", "Short-form Reels at low cost."),
+    # --- avatar / presenter video (HeyGen) ---
+    CreativeModel("heygen-avatar", "HeyGen — avatar presenter (multilingual)", "avatar",
+                  "heygen", "", "Talking-head explainers & recipes; Hindi/Telugu/Tamil/English."),
+]
+_BY_ID = {m.id: m for m in CATALOG}
+
+
+def list_models(kind: Optional[str] = None) -> list[dict]:
+    return [m.__dict__ for m in CATALOG if kind is None or m.kind == kind]
+
+
+def model_provider(model_id: str) -> Optional[str]:
+    m = _BY_ID.get(model_id)
+    return m.provider if m else None
+
+
+def _dig_url(result):
+    """Pull a media URL out of any of the shapes fal endpoints return."""
+    if not isinstance(result, dict):
+        return None
+    # image shapes
+    if result.get("images"):
+        first = result["images"][0]
+        if isinstance(first, dict):
+            return first.get("url")
+        if isinstance(first, str):
+            return first
+    if isinstance(result.get("image"), dict) and result["image"].get("url"):
+        return result["image"]["url"]
+    # video shapes
+    if isinstance(result.get("video"), dict) and result["video"].get("url"):
+        return result["video"]["url"]
+    if result.get("videos"):
+        first = result["videos"][0]
+        if isinstance(first, dict) and first.get("url"):
+            return first["url"]
+    if isinstance(result.get("output"), dict) and result["output"].get("url"):
+        return result["output"]["url"]
+    if isinstance(result.get("url"), str):
+        return result["url"]
+    return None
+
+
+class MockProvider:
+    """Deterministic placeholder assets so the app runs without any provider key."""
+    def generate(self, model: CreativeModel, prompt: str, **kw) -> dict:
+        seed = hashlib.md5(f"{model.id}:{prompt}".encode()).hexdigest()[:8]
+        if model.kind == "image":
+            text = urllib.parse.quote((prompt[:48] + "…") if len(prompt) > 48 else prompt)
+            url = f"https://placehold.co/1080x1080/14331F/FBF6EA.png?text={text}"
+        else:
+            url = f"https://placehold.co/1280x720/14331F/E8A93C.png?text=VIDEO+{seed}"
+        return {"url": url, "provider": "mock", "model": model.id, "kind": model.kind}
+
+
+class FalProvider:
+    """Real generation through fal.ai. Used automatically when FAL_KEY is set.
+
+    Accepts an optional `seed` (used to keep characters/style consistent across a set of
+    images) and `image_size`. Robustly parses the many result shapes fal endpoints use, and
+    logs the raw result keys to stderr (-> heritage-log.txt) when no URL is found, so a
+    misconfigured or gated endpoint is diagnosable instead of silently failing."""
+    def __init__(self, key: str):
+        self.key = key
+
+    def generate(self, model: CreativeModel, prompt: str, *, seed=None, image_size=None) -> dict:
+        import fal_client  # type: ignore
+        os.environ.setdefault("FAL_KEY", self.key)
+        args = {"prompt": prompt}
+        if seed is not None:
+            args["seed"] = int(seed)
+        if image_size:
+            args["image_size"] = image_size
+        try:
+            result = fal_client.run(model.ref, arguments=args)
+        except Exception as e:
+            print(f"[creative] fal error on {model.ref}: {e}", file=sys.stderr, flush=True)
+            raise
+        url = _dig_url(result)
+        if not url:
+            keys = list(result.keys()) if isinstance(result, dict) else type(result).__name__
+            print(f"[creative] fal returned no URL from {model.ref}; result keys={keys}",
+                  file=sys.stderr, flush=True)
+        return {"url": url, "provider": "fal", "model": model.id, "kind": model.kind}
+
+
+def _fal_provider():
+    key = os.environ.get("FAL_KEY")
+    return FalProvider(key) if key else MockProvider()
+
+
+def generate_creative(model_id: str, prompt: str, *, avatar: Optional[str] = None,
+                      voice: Optional[str] = None, ratio: Optional[str] = None,
+                      seed=None, image_size=None) -> dict:
+    """Route by provider. For HeyGen avatar video, `prompt` is the script; `avatar`/`voice`
+    select the presenter and voice. `seed` keeps a set of fal images visually consistent."""
+    model = _BY_ID.get(model_id)
+    if not model:
+        raise ValueError(f"Unknown creative model '{model_id}'.")
+    if model.provider == "heygen":
+        avatars = heygen.list_avatars(); voices = heygen.list_voices()
+        avatar_id = avatar or (avatars[0]["avatar_id"] if avatars else "")
+        voice_id = voice or (voices[0]["voice_id"] if voices else "")
+        res = heygen.generate_avatar_video(prompt, avatar_id, voice_id, ratio or "9:16")
+        res["model"] = model.id
+        return res
+    prov = _fal_provider()
+    if isinstance(prov, FalProvider):
+        return prov.generate(model, prompt, seed=seed, image_size=image_size)
+    return prov.generate(model, prompt)

@@ -1,0 +1,45 @@
+{
+  "id": "04299dba5d",
+  "execution": "",
+  "created": "2026-08-11 11:37",
+  "updated": "2026-08-11 11:37",
+  "shots": [
+    {
+      "id": "b4a78fcf",
+      "no": 1,
+      "slug": "The lift",
+      "action": "A mother lifts the bottle from the crate",
+      "talent": "Lakshmi (mother)",
+      "location": "Erode plant, crate bay",
+      "length": "6s",
+      "state": "selected",
+      "take": 1,
+      "ref": "",
+      "takes": [
+        1
+      ],
+      "added": "2026-08-11 11:37",
+      "edited": "2026-08-11 11:37"
+    },
+    {
+      "id": "97fade1b",
+      "no": 2,
+      "slug": "Close on the dairy",
+      "action": "Close on the dairy name printed on the cap",
+      "talent": "",
+      "location": "",
+      "length": "6-14s",
+      "state": "planned",
+      "take": 0,
+      "ref": "",
+      "takes": [],
+      "added": "2026-08-11 11:37"
+    }
+  ],
+  "handoff": {
+    "at": "2026-08-11 11:37",
+    "shots": [
+      "b4a78fcf"
+    ]
+  }
+}

@@ -1,0 +1,139 @@
+{
+  "id": "6198b87476",
+  "brand": "Heritage Slim",
+  "brief": {
+    "businessObjective": "3% value share in 12 months",
+    "commObjective": "Land Slim",
+    "targetAudience": "Health-led families",
+    "smp": "Same strength, half the fat.",
+    "toneOfVoice": "Plain",
+    "mandatories": "FSSAI, #PureDoodhKiShakti",
+    "brand": "Heritage Slim"
+  },
+  "created": "2026-08-11 12:51",
+  "updated": "2026-08-11 12:51",
+  "nodes": {
+    "core": {
+      "layer": "core",
+      "options": [
+        {
+          "id": "b1a214ab",
+          "text": "Half the fat, all the strength",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-11 12:51"
+        }
+      ],
+      "chosen": [
+        "b1a214ab"
+      ],
+      "sig": "",
+      "generated_under": ""
+    },
+    "emotional": {
+      "layer": "emotional",
+      "options": [
+        {
+          "id": "000ded41",
+          "text": "She did not compromise",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-11 12:51"
+        }
+      ],
+      "chosen": [
+        "000ded41"
+      ],
+      "sig": "",
+      "generated_under": ""
+    },
+    "functional": {
+      "layer": "functional",
+      "options": [
+        {
+          "id": "9db103b4",
+          "text": "Same protein, half the fat",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-11 12:51"
+        }
+      ],
+      "chosen": [
+        "9db103b4"
+      ],
+      "sig": "",
+      "generated_under": ""
+    },
+    "rtb_emotional": {
+      "layer": "rtb_emotional",
+      "options": [],
+      "chosen": [],
+      "sig": "",
+      "generated_under": ""
+    },
+    "rtb_functional": {
+      "layer": "rtb_functional",
+      "options": [
+        {
+          "id": "9054d4e4",
+          "text": "Lab-verified per batch",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-11 12:51"
+        },
+        {
+          "id": "b7fbf21e",
+          "text": "FSSAI certified",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-11 12:51"
+        }
+      ],
+      "chosen": [
+        "9054d4e4",
+        "b7fbf21e"
+      ],
+      "sig": "",
+      "generated_under": ""
+    },
+    "proof": {
+      "layer": "proof",
+      "options": [],
+      "chosen": [],
+      "sig": "",
+      "generated_under": ""
+    },
+    "culture": {
+      "layer": "culture",
+      "options": [],
+      "chosen": [],
+      "sig": "",
+      "generated_under": ""
+    },
+    "medium": {
+      "layer": "medium",
+      "options": [
+        {
+          "id": "cfd1c6d0",
+          "text": "Two facings. Same milk, lighter.",
+          "note": "",
+          "source": "user",
+          "tag": "posm",
+          "added": "2026-08-11 12:51"
+        }
+      ],
+      "chosen": [
+        "cfd1c6d0"
+      ],
+      "sig": "",
+      "generated_under": ""
+    }
+  },
+  "brief_id": "4dcf1dfa9b",
+  "brief_title": "Slim — launch"
+}

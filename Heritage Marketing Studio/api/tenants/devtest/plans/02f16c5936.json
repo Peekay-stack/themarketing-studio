@@ -1,0 +1,101 @@
+{
+  "id": "02f16c5936",
+  "brand": "H",
+  "house": "8c5b0a7705",
+  "created": "2026-08-10 23:01",
+  "updated": "2026-08-10 23:01",
+  "balance": {
+    "brand_share": 60,
+    "reason": "",
+    "basis": "year"
+  },
+  "nodes": {
+    "objectives": {
+      "layer": "objectives",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    },
+    "audiences": {
+      "layer": "audiences",
+      "rows": [
+        {
+          "audience": "A",
+          "rank": "1",
+          "believes_now": "x",
+          "pillar": "functional",
+          "id": "10c9067d",
+          "source": "user",
+          "added": "2026-08-10 23:01"
+        }
+      ],
+      "sig": "",
+      "house_under": ""
+    },
+    "channels": {
+      "layer": "channels",
+      "rows": [
+        {
+          "channel": "POSM",
+          "role": "proof",
+          "job": "j",
+          "measure": "claim recall",
+          "side": "brand",
+          "share": "20",
+          "owner": "T",
+          "lead": "yes",
+          "id": "4ca872c3",
+          "source": "user",
+          "added": "2026-08-10 23:01"
+        }
+      ],
+      "sig": "",
+      "house_under": ""
+    },
+    "balance": {
+      "layer": "balance",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    },
+    "phases": {
+      "layer": "phases",
+      "rows": [
+        {
+          "phase": "P",
+          "window": "Jan",
+          "occasion": "Pongal",
+          "channels": "POSM",
+          "hands_over": "s",
+          "id": "af19c40a",
+          "source": "user",
+          "added": "2026-08-10 23:01"
+        }
+      ],
+      "sig": "",
+      "house_under": ""
+    },
+    "measures": {
+      "layer": "measures",
+      "rows": [
+        {
+          "role": "proof",
+          "leading": "cr",
+          "lagging": "rr",
+          "would_tell_us_it_failed": "flat",
+          "id": "13ab1165",
+          "source": "user",
+          "added": "2026-08-10 23:01"
+        }
+      ],
+      "sig": "",
+      "house_under": ""
+    },
+    "governance": {
+      "layer": "governance",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    }
+  }
+}

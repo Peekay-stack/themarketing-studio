@@ -1,0 +1,103 @@
+{
+  "id": "9e95f09719",
+  "brand": "Northwind Cloud",
+  "house": "3cfdec4bb2",
+  "created": "2026-08-11 13:37",
+  "updated": "2026-08-11 13:37",
+  "balance": {
+    "brand_share": 60,
+    "reason": "",
+    "basis": "year"
+  },
+  "nodes": {
+    "objectives": {
+      "layer": "objectives",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    },
+    "audiences": {
+      "layer": "audiences",
+      "rows": [
+        {
+          "audience": "Data leads",
+          "rank": "1",
+          "believes_now": "pipelines always break",
+          "pillar": "functional",
+          "id": "0ce70adc",
+          "source": "user",
+          "added": "2026-08-11 13:37"
+        }
+      ],
+      "sig": "",
+      "house_under": ""
+    },
+    "channels": {
+      "layer": "channels",
+      "rows": [
+        {
+          "channel": "POSM",
+          "role": "proof",
+          "job": "prove the latency",
+          "measure": "claim recall",
+          "side": "brand",
+          "share": "20",
+          "owner": "PMM",
+          "lead": "yes",
+          "id": "a9e2a4cc",
+          "source": "user",
+          "added": "2026-08-11 13:37"
+        }
+      ],
+      "sig": "",
+      "house_under": ""
+    },
+    "balance": {
+      "layer": "balance",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    },
+    "phases": {
+      "layer": "phases",
+      "rows": [
+        {
+          "phase": "Launch",
+          "window": "Q1",
+          "occasion": "Budget cycle",
+          "channels": "POSM",
+          "hands_over": "sustain",
+          "id": "ae2940d9",
+          "source": "user",
+          "added": "2026-08-11 13:37"
+        }
+      ],
+      "sig": "",
+      "house_under": ""
+    },
+    "measures": {
+      "layer": "measures",
+      "rows": [
+        {
+          "role": "proof",
+          "leading": "claim recall",
+          "lagging": "trials",
+          "would_tell_us_it_failed": "flat at 8wk",
+          "id": "a7d32409",
+          "source": "user",
+          "added": "2026-08-11 13:37"
+        }
+      ],
+      "sig": "",
+      "house_under": ""
+    },
+    "governance": {
+      "layer": "governance",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    }
+  },
+  "brief_id": "26c42b1dec",
+  "brief_title": "Sync — launch"
+}

@@ -1,0 +1,138 @@
+{
+  "id": "b305ea5dbd",
+  "brand": "Heritage Foods",
+  "brief": {},
+  "created": "2026-08-11 11:35",
+  "updated": "2026-08-11 11:35",
+  "nodes": {
+    "core": {
+      "layer": "core",
+      "options": [
+        {
+          "id": "ae816099",
+          "text": "The strength of pure milk",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-11 11:35"
+        }
+      ],
+      "chosen": [
+        "ae816099"
+      ],
+      "sig": "",
+      "generated_under": ""
+    },
+    "emotional": {
+      "layer": "emotional",
+      "options": [
+        {
+          "id": "ab06e6e7",
+          "text": "A mother who chose well",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-11 11:35"
+        }
+      ],
+      "chosen": [
+        "ab06e6e7"
+      ],
+      "sig": "",
+      "generated_under": ""
+    },
+    "functional": {
+      "layer": "functional",
+      "options": [
+        {
+          "id": "5ed5ad2d",
+          "text": "Tested twice",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-11 11:35"
+        }
+      ],
+      "chosen": [
+        "5ed5ad2d"
+      ],
+      "sig": "",
+      "generated_under": ""
+    },
+    "rtb_emotional": {
+      "layer": "rtb_emotional",
+      "options": [],
+      "chosen": [],
+      "sig": "",
+      "generated_under": ""
+    },
+    "rtb_functional": {
+      "layer": "rtb_functional",
+      "options": [
+        {
+          "id": "0f9af21c",
+          "text": "Cold chain audited",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-11 11:35"
+        },
+        {
+          "id": "62efada7",
+          "text": "FSSAI",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-11 11:35"
+        }
+      ],
+      "chosen": [
+        "0f9af21c",
+        "62efada7"
+      ],
+      "sig": "",
+      "generated_under": ""
+    },
+    "proof": {
+      "layer": "proof",
+      "options": [],
+      "chosen": [],
+      "sig": "",
+      "generated_under": ""
+    },
+    "culture": {
+      "layer": "culture",
+      "options": [],
+      "chosen": [],
+      "sig": "",
+      "generated_under": ""
+    },
+    "medium": {
+      "layer": "medium",
+      "options": [
+        {
+          "id": "00b54509",
+          "text": "Two facings. Turns faster.",
+          "note": "",
+          "source": "user",
+          "tag": "posm",
+          "added": "2026-08-11 11:35"
+        },
+        {
+          "id": "c0b0e92c",
+          "text": "Stall line",
+          "note": "",
+          "source": "user",
+          "tag": "on-ground",
+          "added": "2026-08-11 11:35"
+        }
+      ],
+      "chosen": [
+        "00b54509",
+        "c0b0e92c"
+      ],
+      "sig": "",
+      "generated_under": ""
+    }
+  }
+}

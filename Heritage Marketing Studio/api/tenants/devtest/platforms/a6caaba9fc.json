@@ -1,0 +1,32 @@
+{
+  "id": "a6caaba9fc",
+  "brand": "Heritage Foods",
+  "house": "620e4b0882",
+  "created": "2026-08-10 23:00",
+  "updated": "2026-08-10 23:00",
+  "round": 0,
+  "platforms": [
+    {
+      "name": "The Named Dairy",
+      "idea": "Every pack carries the name of the dairy that filled it.",
+      "mechanic": "Name the dairy on the pack, then let each medium point at it.",
+      "territory": "The village behind the bottle",
+      "proof": "Traceability",
+      "why": "",
+      "rtb": "c8f051f6",
+      "id": "8d3c88d1",
+      "source": "user",
+      "added": "2026-08-10 23:00",
+      "round": 0,
+      "built_from": "",
+      "expressions": {
+        "video": "One dairy, one morning, one bottle leaving.",
+        "social": "",
+        "posm": "Shelf strip naming the dairy nearest this shop.",
+        "activation": "",
+        "incentive": "The retailer can say whose milk this is."
+      }
+    }
+  ],
+  "chosen": "8d3c88d1"
+}

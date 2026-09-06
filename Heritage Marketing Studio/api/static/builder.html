@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Heritage Marketing Studio — Brief Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400..800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{--green:#14331F;--green2:#3F814C;--gold:#E8A93C;--cream:#FBF6EA;--paper:#fff;--ink:#14331F;--muted:#7A8A7E;--line:#ECE3CE;--bg:#FBF6EA}
+*{box-sizing:border-box}body{margin:0;font-family:"Plus Jakarta Sans",system-ui,sans-serif;background:var(--bg);color:var(--ink)}
+h1,h2,h3{font-family:"Bricolage Grotesque",sans-serif}
+/* app chrome (matches the studio) */
+.nav{display:flex;align-items:center;gap:26px;padding:14px 30px;background:var(--cream);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;font-family:"Bricolage Grotesque";font-weight:800;color:var(--green);letter-spacing:.04em;font-size:13px;line-height:1.1}
+.brand .mark{width:40px;height:26px;background:var(--green2);border-radius:50%/60%;display:grid;place-items:center;color:#fff;font-size:11px;font-style:italic;font-weight:700;box-shadow:inset 0 0 0 2px #fff, 0 0 0 2px #C0392B}
+.nav a{color:var(--ink);text-decoration:none;font-weight:600;font-size:15px;opacity:.75}.nav a:hover{opacity:1}
+.nav a.active{opacity:1;border-bottom:2px solid var(--green2);padding-bottom:4px}
+.nav .sp{flex:1}
+.wrap{max-width:1080px;margin:0 auto;padding:22px 24px 80px}
+.crumb{color:var(--muted);font-size:13px;margin-bottom:6px}
+.h1{font-size:26px;font-weight:700;margin:0 0 4px}
+.formats{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 6px}
+.fmt{padding:8px 14px;border-radius:30px;border:1px solid var(--line);background:var(--paper);font-weight:700;font-size:13.5px;cursor:pointer}
+.fmt.active{background:var(--green);color:var(--cream);border-color:var(--green)}
+.fmt .skill{font-size:10px;background:var(--gold);color:#3a2a00;border-radius:10px;padding:1px 6px;margin-left:6px;font-weight:800}
+.top{display:grid;grid-template-columns:1fr 320px;gap:14px;margin:14px 0}
+label{display:block;font-size:11.5px;font-weight:700;color:var(--green);margin:0 0 5px;text-transform:uppercase;letter-spacing:.02em}
+input,textarea,select{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:inherit;font-size:14px;background:var(--paper);color:var(--ink)}
+textarea{min-height:96px;resize:vertical;line-height:1.5}
+.cowriter{background:linear-gradient(135deg,#1c4a2c,#14331F);border-radius:16px;padding:16px 18px;color:var(--cream);margin:6px 0 18px}
+.cowriter h3{margin:0;font-size:15px;display:flex;align-items:center;gap:10px}
+.cowriter .ic{width:26px;height:26px;border-radius:7px;background:var(--gold)}
+.cowriter p{margin:2px 0 12px 36px;opacity:.8;font-size:13px}
+.cwrow{display:flex;gap:10px}.cwrow input{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.25);color:#fff}
+.cwrow input::placeholder{color:rgba(255,255,255,.55)}
+.cwbtn{background:var(--gold);color:#3a2a00;border:none;border-radius:10px;padding:0 18px;font-weight:800;cursor:pointer}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--line);margin-bottom:18px}
+.tab{padding:9px 14px;font-weight:700;font-size:13.5px;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
+.tab.active{color:var(--green);border-bottom-color:var(--green2)}
+.sec{margin-bottom:4px}
+.field{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:14px}
+.field .n{display:flex;align-items:center;gap:10px;font-weight:700;font-size:15px;margin-bottom:8px}
+.field .num{width:24px;height:24px;border-radius:7px;background:#EAF2EC;color:var(--green2);display:grid;place-items:center;font-size:12px;font-weight:800}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+.btn{border:1px solid var(--line);background:var(--paper);padding:11px 18px;border-radius:11px;font-weight:700;font-size:14px;cursor:pointer}
+.btn:hover{border-color:var(--gold)}.btn.primary{background:var(--green);color:var(--cream);border-color:var(--green)}.btn.gold{background:var(--gold);color:#3a2a00;border-color:var(--gold)}
+.status{font-size:13px;color:var(--muted);margin-top:10px}
+.pillbadge{display:inline-block;padding:4px 11px;border-radius:20px;font-size:12px;font-weight:700;background:#FDEEDA;color:#C8860F}
+/* review (ready-to-approve) */
+.review .field{background:#FCFAF4}
+.review .val{font-size:14.5px;line-height:1.55;white-space:pre-wrap}
+.review .val.empty{color:var(--muted)}
+.reviewhead{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 20px}
+.chip{background:#EAF2EC;color:var(--green2);border-radius:20px;padding:6px 13px;font-size:13px;font-weight:600}
+iframe{width:100%;height:1400px;border:1px solid var(--line);border-radius:14px;background:#fff}
+.hint{color:var(--muted);font-size:13px}
+.note{background:#FFF7E8;border:1px solid #F0D9A0;border-radius:10px;padding:10px 13px;font-size:13px;color:#7a5a10;margin:12px 0}
+</style>
+</head>
+<body>
+<div class="nav">
+  <div class="brand"><span class="mark">H</span><span>MARKETING<br>STUDIO</span></div>
+  <a href="/">Home</a>
+  <a href="/builder" class="active">Briefs</a>
+  <a href="/">Social</a><a href="/">Video</a><a href="/">Campaigns</a><a href="/">History</a>
+  <span class="sp"></span>
+  <a href="/" class="hint" style="font-size:13px">Open studio →</a>
+</div>
+
+<div class="wrap">
+  <div class="crumb">Briefs / <b id="fmtName">Communications</b> · Builder</div>
+  <div class="h1">New brief</div>
+  <div class="hint">Pick a format, build it tab by tab (or let the AI co-writer draft it), then review the ready-to-approve brief.</div>
+
+  <div class="formats" id="formats"></div>
+
+  <!-- SECTION BUILDER (non-brand) -->
+  <div id="builder">
+    <div class="top">
+      <div><label>Brief title</label><input id="title" placeholder="e.g. Communications brief — Pure Milk"/></div>
+      <div><label>Campaign objective</label><select id="objective"></select></div>
+    </div>
+
+    <div class="cowriter">
+      <h3><span class="ic"></span> AI co-writer</h3>
+      <p>Describe the ask — I'll draft every field in this brief.</p>
+      <div class="cwrow">
+        <input id="cwPrompt" placeholder="e.g. Diwali push for Pure Milk targeting young urban families"/>
+        <button class="cwbtn" onclick="draftAll()">Draft brief</button>
+      </div>
+    </div>
+
+    <div class="tabs" id="tabs"></div>
+    <div id="secWrap"></div>
+
+    <div class="actions">
+      <button class="btn" onclick="review()">Review brief →</button>
+      <button class="btn primary" onclick="saveBrief(false)">Save to Briefs</button>
+    </div>
+    <div class="status" id="status"></div>
+  </div>
+
+  <!-- REVIEW (ready-to-approve) -->
+  <div id="reviewPane" class="review" style="display:none">
+    <div class="reviewhead">
+      <div><div class="h1" id="rTitle"></div><div class="chips" id="rChips"></div></div>
+      <span class="pillbadge" id="rStatus">Draft</span>
+    </div>
+    <div id="rBody"></div>
+    <div class="actions">
+      <button class="btn" onclick="backToEdit()">← Back to builder</button>
+      <button class="btn primary" onclick="saveBrief(true)">Save & submit for approval</button>
+    </div>
+    <div class="status" id="rStatusMsg"></div>
+  </div>
+
+  <!-- BRAND (rich builder) -->
+  <div id="brandPane" style="display:none">
+    <div class="note">Brand strategy briefs use the full builder — NeedScope wheel, CB/CA → DB/DA, market-share Excel and consumer research — and generate a paginated Word brief via the comprehensive brand-brief skill.</div>
+    <iframe id="brandFrame" src="about:blank"></iframe>
+  </div>
+</div>
+
+<script>
+var SCHEMA=[], OBJECTIVES=[], cur=null, curTab=0, values={}, savedId=null;
+// map builder field keys -> Brief columns (BriefIn)
+var MAP={background:'background_context',businessObjective:'business_objective',commObjective:'communication_objective',
+ audience:'target_consumer',insight:'consumer_insight',competition:'competitive_context',proposition:'single_minded_proposition',
+ rtbs:'reasons_to_believe',tone:'tone_personality',mandatories:'mandatories_brand_codes',deliverables:'deliverables_channels',budget:'budget'};
+
+async function boot(){
+  SCHEMA=await (await fetch('/brief-schema')).json();
+  OBJECTIVES=(await (await fetch('/catalog')).json()).campaign_objectives||[];
+  document.getElementById('objective').innerHTML=OBJECTIVES.map(function(o){return '<option>'+o+'</option>';}).join('');
+  var f=document.getElementById('formats');
+  f.innerHTML=SCHEMA.map(function(s){return '<div class="fmt" data-id="'+s.id+'" onclick="pickFormat(\''+s.id+'\')">'+s.name+(s.uses_skill?'<span class="skill">skill</span>':'')+'</div>';}).join('');
+  pickFormat('comms');
+}
+function pickFormat(id){
+  cur=SCHEMA.filter(function(s){return s.id===id;})[0]; curTab=0; values={}; savedId=null;
+  document.querySelectorAll('.fmt').forEach(function(el){el.classList.toggle('active',el.dataset.id===id);});
+  document.getElementById('fmtName').textContent=cur.name;
+  document.getElementById('reviewPane').style.display='none';
+  if(cur.uses_skill){
+    document.getElementById('builder').style.display='none';
+    document.getElementById('brandPane').style.display='block';
+    var fr=document.getElementById('brandFrame'); if(fr.src.indexOf('brand-brief-builder')<0) fr.src='/brand-brief-builder';
+    return;
+  }
+  document.getElementById('brandPane').style.display='none';
+  document.getElementById('builder').style.display='block';
+  document.getElementById('title').value='';
+  renderTabs(); renderSec();
+}
+function renderTabs(){
+  document.getElementById('tabs').innerHTML=cur.sections.map(function(s,i){
+    return '<div class="tab '+(i===curTab?'active':'')+'" onclick="goTab('+i+')">'+s.title+'</div>';}).join('');
+}
+function goTab(i){ collect(); curTab=i; renderTabs(); renderSec(); }
+function renderSec(){
+  var sec=cur.sections[curTab];
+  var html='<div class="sec">';
+  sec.fields.forEach(function(fl,idx){
+    var key=fl[0],label=fl[1],hint=fl[2]||'';
+    html+='<div class="field"><div class="n"><span class="num">'+(idx+1)+'</span>'+label+'</div>'+
+      '<textarea id="fx_'+key+'" placeholder="'+escapeAttr(hint)+'">'+escapeHtml(values[key]||'')+'</textarea></div>';
+  });
+  html+='</div>';
+  document.getElementById('secWrap').innerHTML=html;
+}
+function collect(){
+  cur.sections[curTab].fields.forEach(function(fl){
+    var el=document.getElementById('fx_'+fl[0]); if(el) values[fl[0]]=el.value;
+  });
+}
+function allFields(){var a=[];cur.sections.forEach(function(s){s.fields.forEach(function(f){a.push(f);});});return a;}
+
+async function draftAll(){
+  var ask=document.getElementById('cwPrompt').value.trim(); if(!ask){return;}
+  var st=document.getElementById('status'); st.textContent='Drafting…';
+  var fields=allFields();
+  var keys=fields.map(function(f){return '"'+f[0]+'" ('+f[1]+')';}).join(', ');
+  var prompt="You are drafting a "+cur.name+" brief for Heritage (Indian dairy, brand line 'Pure Doodh Ki Shakti'). "+
+    "The ask: "+ask+". Return ONLY a JSON object with exactly these keys: "+keys+". Each value 1-2 sentences, concrete and on-brand.";
+  try{
+    var r=await fetch('/complete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:[{role:'user',content:prompt}]})});
+    var j=await r.json();
+    if(!j.completion){st.innerHTML='AI drafting needs <b>ANTHROPIC_API_KEY</b> set on the server. You can still fill fields manually.';return;}
+    var txt=j.completion; txt=txt.slice(txt.indexOf('{'),txt.lastIndexOf('}')+1);
+    var obj=JSON.parse(txt);
+    fields.forEach(function(f){ if(obj[f[0]]!=null) values[f[0]]=String(obj[f[0]]); });
+    if(!document.getElementById('title').value) document.getElementById('title').value=cur.name+' brief — Pure Milk';
+    renderSec(); st.textContent='Draft ready — review each tab, tweak, then Review.';
+  }catch(e){ st.textContent='Could not draft ('+e.message+'). Fill fields manually.'; }
+}
+
+function mapToBrief(){
+  collect();
+  var b={title:document.getElementById('title').value||cur.name+' brief',
+         brief_type:cur.name, campaign_objective:document.getElementById('objective').value};
+  var overflow=[];
+  allFields().forEach(function(f){
+    var key=f[0], val=values[key]||'';
+    if(MAP[key]) b[MAP[key]]=val;
+    else if(val) overflow.push(f[1]+': '+val);
+  });
+  if(overflow.length) b.background_context=((b.background_context||'')+'\n\n'+overflow.join('\n')).trim();
+  return b;
+}
+function review(){
+  collect();
+  var b=mapToBrief();
+  document.getElementById('rTitle').textContent=b.title;
+  document.getElementById('rChips').innerHTML='<span class="chip">'+cur.name+'</span><span class="chip">'+b.campaign_objective+'</span>';
+  var html='';
+  cur.sections.forEach(function(s){
+    html+='<div style="font-size:12px;font-weight:800;letter-spacing:.06em;color:var(--muted);text-transform:uppercase;margin:18px 0 8px">'+s.title+'</div>';
+    s.fields.forEach(function(f){
+      var v=values[f[0]]||'';
+      html+='<div class="field"><div class="n">'+f[1]+'</div><div class="val'+(v?'':' empty')+'">'+(escapeHtml(v)||'—')+'</div></div>';
+    });
+  });
+  document.getElementById('rBody').innerHTML=html;
+  document.getElementById('builder').style.display='none';
+  document.getElementById('reviewPane').style.display='block';
+  window.scrollTo(0,0);
+}
+function backToEdit(){document.getElementById('reviewPane').style.display='none';document.getElementById('builder').style.display='block';}
+
+async function saveBrief(thenSubmit){
+  var body=mapToBrief();
+  var msgEl=document.getElementById(thenSubmit?'rStatusMsg':'status'); msgEl.textContent='Saving…';
+  try{
+    var r=await fetch('/briefs',{method:'POST',headers:{'Content-Type':'application/json','X-User-Id':'puneet'},body:JSON.stringify(body)});
+    if(!r.ok) throw new Error('save failed ('+r.status+')');
+    var brief=await r.json(); savedId=brief.id;
+    if(thenSubmit){
+      var s=await fetch('/briefs/'+savedId+'/submit',{method:'POST',headers:{'X-User-Id':'puneet'}});
+      if(s.ok){document.getElementById('rStatus').textContent='Pending'; document.getElementById('rStatus').style.background='#E6F0FB'; document.getElementById('rStatus').style.color='#0A66C2';
+        msgEl.innerHTML='✓ Saved and submitted. It\'s now in the approval queue (needs L1–L3). Open the studio to approve.';}
+      else msgEl.textContent='Saved, but submit failed ('+s.status+').';
+    } else {
+      msgEl.innerHTML='✓ Saved to Briefs (id '+savedId+'). It now appears via the API and in the studio\'s brief list.';
+    }
+  }catch(e){ msgEl.textContent='Could not save ('+e.message+'). Is the backend running?'; }
+}
+
+function escapeHtml(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function escapeAttr(s){return escapeHtml(s).replace(/"/g,'&quot;');}
+boot();
+</script>
+</body>
+</html>

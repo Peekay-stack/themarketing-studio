@@ -1,0 +1,4 @@
+# app.dc.html (the live file and its historical snapshots) must stay LF-only — Design normalizes it
+# deliberately, and CRLF conversion breaks diffing against Design's handovers (see CLAUDE.md). Your
+# global git config has core.autocrlf=true, which would otherwise convert these to CRLF on checkout.
+*.html text eol=lf

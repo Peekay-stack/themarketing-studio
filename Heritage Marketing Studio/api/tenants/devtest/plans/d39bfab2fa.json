@@ -1,0 +1,143 @@
+{
+  "id": "d39bfab2fa",
+  "brand": "Heritage Foods",
+  "house": "53634a857c",
+  "created": "2026-08-10 22:06",
+  "updated": "2026-08-10 22:06",
+  "balance": {
+    "brand_share": 45,
+    "reason": "",
+    "basis": "year"
+  },
+  "nodes": {
+    "objectives": {
+      "layer": "objectives",
+      "rows": [
+        {
+          "level": "business",
+          "statement": "Grow value share in Chennai",
+          "measure": "+12% value",
+          "by_when": "FY27",
+          "id": "6db1c4a8",
+          "source": "user",
+          "added": "2026-08-10 22:06"
+        },
+        {
+          "level": "marketing",
+          "statement": "Shift mothers off loose milk",
+          "measure": "",
+          "by_when": "",
+          "id": "805702ae",
+          "source": "user",
+          "added": "2026-08-10 22:06"
+        }
+      ],
+      "sig": "",
+      "house_under": ""
+    },
+    "audiences": {
+      "layer": "audiences",
+      "rows": [
+        {
+          "audience": "Chennai mothers, 28-40",
+          "rank": "1",
+          "believes_now": "loose milk is fresher",
+          "pillar": "functional",
+          "id": "253d39b9",
+          "source": "user",
+          "added": "2026-08-10 22:06"
+        }
+      ],
+      "sig": "",
+      "house_under": ""
+    },
+    "channels": {
+      "layer": "channels",
+      "rows": [
+        {
+          "channel": "POSM",
+          "role": "proof",
+          "job": "prove freshness at the shelf",
+          "measure": "claim recall",
+          "side": "brand",
+          "share": "20",
+          "owner": "",
+          "lead": "yes",
+          "id": "bab77e2c",
+          "source": "user",
+          "added": "2026-08-10 22:06"
+        },
+        {
+          "channel": "Q-commerce",
+          "role": "conversion",
+          "job": "close the basket",
+          "measure": "conversion rate",
+          "side": "activation",
+          "share": "30",
+          "owner": "Digital",
+          "lead": "",
+          "id": "673f47a2",
+          "source": "user",
+          "added": "2026-08-10 22:06"
+        }
+      ],
+      "sig": "",
+      "house_under": ""
+    },
+    "balance": {
+      "layer": "balance",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    },
+    "phases": {
+      "layer": "phases",
+      "rows": [
+        {
+          "phase": "Pongal",
+          "window": "Jan",
+          "occasion": "Pongal",
+          "channels": "POSM, Q-comm",
+          "hands_over": "sustain",
+          "id": "95211064",
+          "source": "user",
+          "added": "2026-08-10 22:06"
+        }
+      ],
+      "sig": "",
+      "house_under": ""
+    },
+    "measures": {
+      "layer": "measures",
+      "rows": [
+        {
+          "role": "proof",
+          "leading": "claim recall",
+          "lagging": "repeat rate",
+          "would_tell_us_it_failed": "",
+          "id": "5a10b3e4",
+          "source": "user",
+          "added": "2026-08-10 22:06"
+        }
+      ],
+      "sig": "",
+      "house_under": ""
+    },
+    "governance": {
+      "layer": "governance",
+      "rows": [
+        {
+          "who": "Brand lead",
+          "speaks_on": "message",
+          "boundary": "never show waste",
+          "decides_changes": "CMO",
+          "id": "77ab622c",
+          "source": "user",
+          "added": "2026-08-10 22:06"
+        }
+      ],
+      "sig": "",
+      "house_under": ""
+    }
+  }
+}

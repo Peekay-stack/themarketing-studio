@@ -1,0 +1,59 @@
+{
+  "id": "fb54fc789d",
+  "plan": "abfaac5fe0",
+  "house": "f7801a3886",
+  "kind": "social",
+  "brief": {
+    "kind": "social",
+    "audience": {
+      "id": "274cbaa6",
+      "audience": "Trust-driven mothers currently on loose/unbranded milk, core South India",
+      "rank": "1",
+      "believes_now": "Fresh-from-the-cow loose milk is purest and most affordable; branded milk is processed and distant. She is the first up at 6am and decides what her child drinks. She trusts what she can see over what she's told, and does not yet believe a packaged brand is checked more carefully than her local milkman.",
+      "pillar": "functional"
+    },
+    "channel": {
+      "id": "3274e2c9",
+      "channel": "Social (15s vertical reel — '500 before 7am' counter)",
+      "role": "proof",
+      "job": "Prove the sourced functional RTB — 500 people checked this milk before 7am — in a scroll-stopping, no-voiceover format to a younger mother who trusts what she can see.",
+      "measure": "Whether the claim lands: completion rate on the counter, saves/shares, prompted belief lift — not clicks",
+      "side": "brand",
+      "share": "",
+      "owner": "Social/content team; budget to confirm",
+      "lead": "True"
+    },
+    "occasion": {
+      "id": "b47562b1",
+      "phase": "1 · Plant the number",
+      "window": "Weeks 1–6",
+      "occasion": "The 6am doorstep can — milk arriving before the house wakes; the mother first up to take it in",
+      "channels": "TV (reach) leads; OOH (reach) supports; Social '500 before 7am' (proof) runs alongside",
+      "hands_over": "A mother who has seen the 500-person morning and now believes a packaged brand is checked — hands warmed, believing demand to the conversion channels"
+    },
+    "measure": {
+      "id": "881b2c3a",
+      "role": "proof",
+      "leading": "Counter completion rate on the '500 before 7am' reel and save/share rate — is the number being watched to the end and passed on",
+      "lagging": "Prompted belief lift: proportion who agree 'this milk is checked every day before it reaches me' among exposed vs unexposed",
+      "would_tell_us_it_failed": "By week 4, completion rate below the platform norm for a 15s vertical AND no belief-lift gap between exposed and unexposed — the claim is being scrolled past, not absorbed. Norms: social team to set."
+    },
+    "pillar": "functional",
+    "platform": {
+      "id": "2a93549c",
+      "name": "Purity leads to strength",
+      "idea": "Purity begins with 500 Heritage quality warriors leading the tests and a mother giving milk to the kid who performs well in sports",
+      "mechanic": "",
+      "expression": ""
+    },
+    "message": {
+      "id": "105ad161",
+      "text": "Social — 15s vertical reel, the '500 before 7am' counter as a standalone hook: fast cuts of each real checkpoint, no voiceover, just the number climbing over 'Roz taaza, roz shakti.' The strategic bet: prove the claim in a scroll-stopping format to a younger mother who trusts what she can see, not what she's told.",
+      "note": "Feed and Reels, idle-scroll discovery — earns the follow by showing, not asserting."
+    }
+  },
+  "status": "briefed",
+  "artefacts": [],
+  "created": "2026-08-17 12:35",
+  "updated": "2026-08-17 12:35"
+}

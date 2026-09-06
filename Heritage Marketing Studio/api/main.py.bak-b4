@@ -1,0 +1,615 @@
+"""main.py — the Heritage Marketing Studio API.
+
+Run:  uvicorn main:app --reload --port 8000
+Docs: http://localhost:8000/docs
+"""
+from __future__ import annotations
+import uuid, os, json
+# Load environment keys robustly: read the .env that sits NEXT TO this file (api/.env) by
+# absolute path (independent of the working directory), and use utf-8-sig so a BOM written
+# by Notepad does not corrupt the first key name. Fall back to the studio-root .env and the
+# default search too.
+try:
+    from dotenv import load_dotenv
+    _API_DIR = os.path.dirname(os.path.abspath(__file__))
+    for _p in (os.path.join(_API_DIR, ".env"), os.path.join(_API_DIR, os.pardir, ".env")):
+        if os.path.exists(_p):
+            load_dotenv(_p, encoding="utf-8-sig", override=True)
+    load_dotenv(encoding="utf-8-sig")  # default search as a last resort
+except Exception:
+    pass
+from fastapi import FastAPI, Depends, Header, HTTPException, Form, UploadFile, File
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
+from sqlalchemy.orm import Session
+from sqlalchemy import select
+
+from database import init_db, get_db
+from models import User, Brief, Deliverable, ChatMessage
+import schemas, domain, generation, creative, catalog, complete as completion, brandbrief, heygen
+import docs
+
+app = FastAPI(title="Heritage Marketing Studio API")
+app.add_middleware(
+    CORSMiddleware, allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_methods=["*"], allow_headers=["*"],
+)
+
+
+@app.on_event("startup")
+def _startup():
+    init_db()
+
+
+@app.get("/health")
+def health():
+    """Quick wiring check — open http://127.0.0.1:8000/health in the browser.
+    `anthropic: true` means the app can see your Anthropic key."""
+    return {"ok": True,
+            "anthropic": bool((os.environ.get("ANTHROPIC_API_KEY") or "").strip()),
+            "fal": bool((os.environ.get("FAL_KEY") or "").strip()),
+            "model": os.environ.get("GEN_MODEL", "claude-opus-4-8")}
+
+
+def _id(prefix: str) -> str:
+    return f"{prefix}_{uuid.uuid4().hex[:10]}"
+
+
+# --- lightweight dev auth: identify the user via X-User-Id header --------------
+def current_user(x_user_id: str = Header(default="puneet"), db: Session = Depends(get_db)) -> User:
+    user = db.get(User, x_user_id)
+    if not user:
+        raise HTTPException(401, "Unknown user. Set X-User-Id to a seeded user.")
+    return user
+
+
+def _brief_attrs(b: Brief) -> dict:
+    return {"campaign_objective": b.campaign_objective, "budget_value": b.budget_value}
+
+
+# ----------------------------------------------------------------------------- #
+# Users & catalog
+# ----------------------------------------------------------------------------- #
+@app.get("/me", response_model=schemas.UserOut)
+def me(user: User = Depends(current_user)):
+    return user
+
+
+@app.get("/users", response_model=list[schemas.UserOut])
+def users(db: Session = Depends(get_db)):
+    return list(db.scalars(select(User)))
+
+
+@app.get("/creative-models")
+def creative_models(kind: str | None = None):
+    return creative.list_models(kind)
+
+
+@app.get("/avatar-options")
+def avatar_options():
+    """Presenters, voices and aspect ratios for HeyGen avatar video. When HEYGEN_API_KEY is
+    set these come from the account; otherwise a curated default set is returned."""
+    return {"avatars": heygen.list_avatars(), "voices": heygen.list_voices(),
+            "ratios": heygen.RATIOS, "live": heygen.has_key()}
+
+
+@app.get("/platforms")
+def platforms():
+    return catalog.PLATFORMS
+
+
+@app.get("/catalog")
+def get_catalog():
+    return {
+        "brief_types": catalog.BRIEF_TYPES,
+        "content_types": catalog.CONTENT_TYPES,
+        "campaign_objectives": catalog.CAMPAIGN_OBJECTIVES,
+        "platforms": catalog.PLATFORMS,
+    }
+
+
+# --- powers the front end's window.claude.complete() ---------------------------
+@app.post("/complete")
+def complete_endpoint(payload: dict):
+    return {"completion": completion.complete(payload.get("messages", [])), "live": completion.has_key()}
+
+
+# --- video production: render the film from the approved script + shoot board ----
+@app.post("/produce-video")
+def produce_video(payload: dict):
+    # New frontend sends {scenes, aspect, duration, music, voice, note} and reads {video_url};
+    # the legacy caller sent {script, board, ...} and read {url}. Support both.
+    aspect = payload.get("aspect") or "16:9"
+    if not os.environ.get("FAL_KEY"):
+        # no provider -> 501 so the new UI runs its own simulated render
+        return JSONResponse(status_code=501, content={"detail": "No video provider configured (set FAL_KEY)."})
+    script = payload.get("script") or {}
+    board = payload.get("board") or {}
+    model_id = payload.get("model") or "veo-3.1"
+    revise = str(payload.get("revise") or payload.get("note") or "").strip()
+    scenes = payload.get("scenes") or script.get("scenes") or []
+    scene_txt = " ".join(
+        (f"{s.get('t','') or s.get('tc','')} {s.get('title','') or s.get('visual','')}: "
+         f"{s.get('desc','') or s.get('dialogue','')}").strip()
+        for s in scenes if isinstance(s, dict))
+    prompt = (
+        f"Cinematic {aspect} brand film for Heritage Pure Milk (Indian dairy, #PureDoodhKiShakti). "
+        f"Logline: {script.get('logline','')}. Scenes: {scene_txt}. Voiceover: {script.get('vo','')}. "
+        f"Music/mood: {payload.get('music','') or board.get('music','') or script.get('music','')}. "
+        f"Voice: {payload.get('voice','')}. "
+        "Authentic Indian family setting, warm natural light, premium and wholesome; no on-screen text or logos.")
+    if revise:
+        prompt += f" Revision note: {revise}."
+    try:
+        res = creative.generate_creative(model_id, prompt, ratio=aspect)
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"detail": str(e)})
+    url = res.get("url") or ""
+    if not url:
+        return JSONResponse(status_code=501, content={
+            "detail": f"Video render via '{model_id}' returned no URL — see server log (heritage-log.txt) "
+                      "for the fal response. The video model/endpoint may be gated on your fal account."})
+    return {"video_url": url, "url": url, "live": res.get("provider") == "fal", "model": res.get("model")}
+
+
+# --- image generation (storyboard frames AND social-post visuals) ----------------
+# {prompt, ratio, style, characters, seed} -> {image_url}. Needs FAL_KEY (real images).
+# Without it we return 501 so the UI keeps its clean branded placeholder.
+#
+#   style      : "real" (photo w/ people) | "product" | "infographic" | "vector"
+#   characters : a shared character sheet to keep the SAME people across a film's frames
+#   seed       : fixed integer per film/set -> visual consistency across images
+_IMG_STYLES = {
+    "real": ("High-resolution, photorealistic advertising photograph. Professional commercial food & "
+             "lifestyle photography: full-frame DSLR, 50mm lens, shallow depth of field, crisp sharp "
+             "focus, soft warm natural light, true-to-life colours, realistic textures and condensation "
+             "on fresh milk. Authentic contemporary Indian home, kitchen, or dawn dairy-farm setting with "
+             "real people and natural expressions. Ultra-detailed and realistic — NOT illustrated, NOT "
+             "cartoon, NOT 3D/CGI; no plastic skin, no distorted hands, no extra fingers."),
+    "product": ("High-end product photograph: the Heritage Pure Milk pack and a fresh glass of milk as the "
+                "hero on a clean minimal surface. Studio lighting, soft reflections, condensation, crisp "
+                "focus, appetising and premium. NO people, NO hands. Photorealistic, not illustrated."),
+    "infographic": ("Clean modern infographic / data-visualisation graphic. Flat design, generous "
+                    "whitespace, simple line icons, clear visual hierarchy, brand palette (Heritage green "
+                    "#259821, ghee gold #E8A93C, cream #FBF6EA, deep forest #14331F). Editorial and "
+                    "professional. No photographic imagery."),
+    "vector": ("Flat vector illustration: bold clean shapes, smooth gradients, friendly modern style in the "
+               "brand palette (Heritage green, ghee gold, cream). Warm and premium. Not photoreal, not 3D."),
+}
+
+
+@app.post("/scene-still")
+def scene_still(payload: dict):
+    if not os.environ.get("FAL_KEY"):
+        return JSONResponse(status_code=501, content={"detail": "No image provider configured (set FAL_KEY)."})
+    ratio = payload.get("ratio") or "1:1"
+    style = str(payload.get("style") or "real").lower()
+    craft = _IMG_STYLES.get(style, _IMG_STYLES["real"])
+    subject = str(payload.get("prompt", "")).strip() or "Heritage Pure Milk key visual"
+    characters = str(payload.get("characters", "")).strip()
+    parts = ["Marketing image for Heritage Pure Milk — a premium Indian dairy brand (#PureDoodhKiShakti)."]
+    if characters:
+        parts.append(f"Keep these characters identical and consistent across every frame: {characters}.")
+    parts.append(f"Subject: {subject}.")
+    parts.append(craft)
+    parts.append(f"Framed for a {ratio} composition with tasteful negative space. "
+                 "No on-screen text, captions, typography, logos, watermarks or borders.")
+    prompt = " ".join(parts)
+    try:
+        res = creative.generate_creative("imagen-4-ultra", prompt, ratio=ratio, seed=payload.get("seed"))
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"detail": str(e)})
+    if not res.get("url"):
+        return JSONResponse(status_code=501, content={"detail": "Image generation returned no URL — see server log (heritage-log.txt)."})
+    return {"image_url": res["url"]}
+
+
+# --- guided brief (Media/Digital/Pack/Product/PR) -> .docx -----------------------
+@app.post("/brief-docx")
+def brief_docx(payload: dict):
+    try:
+        out = docs.build_brief_docx(payload.get("title", "Heritage Brief"),
+                                    payload.get("objective", ""), payload.get("fields", {}) or {})
+    except Exception as e:
+        raise HTTPException(500, f"Brief document build failed: {e}")
+    base = (payload.get("title") or "Heritage_Brief").replace(" ", "_")
+    return FileResponse(out, filename=f"{base}.docx",
+                        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+
+
+# --- film shooting script -> .docx -----------------------------------------------
+@app.post("/video-script-docx")
+def video_script_docx(payload: dict):
+    try:
+        out = docs.build_script_docx(payload.get("title", "Heritage Film Script"),
+                                     payload.get("logline", ""), payload.get("scenes", []) or [])
+    except Exception as e:
+        raise HTTPException(500, f"Script document build failed: {e}")
+    return FileResponse(out, filename="Heritage_Film_Script.docx",
+                        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+
+
+# --- shoot board: generate a storyboard still for a key shot ---------------------
+@app.post("/shot-still")
+def shot_still(payload: dict):
+    shot = str(payload.get("shot", "")).strip()
+    look = str(payload.get("look", "")).strip()
+    model_id = payload.get("model") or "imagen-4-ultra"
+    prompt = (
+        "Cinematic storyboard still, photorealistic, for a Heritage Pure Milk (Indian dairy) brand film. "
+        f"Shot: {shot}. Look: {look}. Authentic Indian family setting, warm natural light, premium and wholesome, no text or logos."
+    )
+    try:
+        res = creative.generate_creative(model_id, prompt)
+        return {"url": res.get("url") or "", "live": res.get("provider") == "fal"}
+    except Exception as e:
+        return {"url": "", "live": False, "error": str(e)}
+
+
+# --- serve the front end (Claude Design build) ---------------------------------
+_STATIC = os.path.join(os.path.dirname(__file__), "static")
+_FE = os.path.join(os.path.dirname(__file__), "frontend")
+from fastapi.staticfiles import StaticFiles
+if os.path.isdir(os.path.join(_FE, "assets")):
+    app.mount("/assets", StaticFiles(directory=os.path.join(_FE, "assets")), name="assets")
+
+# The .dc.html source assumes its host provides React + ReactDOM (the Claude artifact sandbox
+# does) and a window.claude.complete() bridge. Served standalone, we inject both BEFORE
+# support.js (the dc-runtime) runs. React/ReactDOM 18.3.1 UMD match the standalone build.
+_BRIDGE_MARK = "HF_HEAD_INJECT"
+_HEAD_INJECT = """
+<!-- HF_HEAD_INJECT -->
+<script crossorigin src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+<script>
+window.claude = window.claude || {};
+window.claude.complete = async function(arg){
+  var messages = (arg && arg.messages) ? arg.messages
+    : [{role:'user', content:(typeof arg==='string'?arg:JSON.stringify(arg||''))}];
+  var r = await fetch('/complete',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({messages:messages})});
+  if(!r.ok) throw new Error('complete '+r.status);
+  var j = await r.json();
+  return j.completion || '';
+};
+</script>
+"""
+
+
+@app.get("/", response_class=HTMLResponse)
+def index():
+    # Primary front end = the Claude Design build (Design Component + dc-runtime).
+    html = open(os.path.join(_FE, "app.dc.html"), encoding="utf-8").read()
+    if _BRIDGE_MARK not in html:
+        html = html.replace("<head>", "<head>" + _HEAD_INJECT, 1) if "<head>" in html else _HEAD_INJECT + html
+    return HTMLResponse(html)
+
+
+@app.get("/support.js")
+def dc_support():
+    return FileResponse(os.path.join(_FE, "support.js"), media_type="application/javascript")
+
+
+@app.get("/image-slot.js")
+def dc_imageslot():
+    return FileResponse(os.path.join(_FE, "image-slot.js"), media_type="application/javascript")
+
+
+@app.get("/studio")
+def studio():
+    # legacy original bundle, kept for reference
+    return FileResponse(os.path.join(_STATIC, "index.html"))
+
+
+@app.get("/bridge.js")
+def bridge():
+    return FileResponse(os.path.join(_STATIC, "bridge.js"), media_type="application/javascript")
+
+
+@app.get("/brand-brief-builder")
+def brand_brief_builder():
+    return FileResponse(os.path.join(_STATIC, "brand-brief-builder.html"))
+
+
+@app.get("/builder")
+def builder():
+    return FileResponse(os.path.join(_STATIC, "builder.html"))
+
+
+@app.get("/brief-schema")
+def brief_schema_endpoint():
+    """Section/sub-section schema per format. Comms/IMC follow the builder format;
+    Media/Digital/Packaging/Product/PR follow the front end; brand routes to the skill."""
+    import brief_schema as bs
+    out = [{"id": "brand", "name": bs.BRAND_BRIEF["name"], "uses_skill": True, "source": "skill",
+            "sections": [{"title": s, "fields": []} for s in bs.BRAND_BRIEF["sections"]]}]
+    for fid in bs.ORDER:
+        f = bs.FRONTEND_FORMATS[fid]
+        out.append({"id": fid, "name": f["name"], "uses_skill": False, "source": f["source"],
+                    "sections": [{"title": t, "fields": flds} for t, flds in f["sections"]]})
+    return out
+
+
+@app.post("/brand-brief")
+def brand_brief(payload: str = Form(...), research: list[UploadFile] = File(default=[])):
+    """Builder payload (+ optional research files) -> the skill's .docx brand brief.
+
+    Uploaded research is parsed (PDF/DOCX/PPTX/XLSX/CSV/TXT) and, when ANTHROPIC_API_KEY is
+    set, mined into the brief's narrative sections; otherwise deterministic synthesis is used.
+    """
+    import tempfile, research_parse, brief_render
+    data = json.loads(payload)
+    data.setdefault("research_files", [f.filename for f in research])
+    blobs = []
+    if research:
+        tmp = tempfile.mkdtemp(prefix="research_")
+        paths = []
+        for f in research:
+            dest = os.path.join(tmp, os.path.basename(f.filename or "file"))
+            with open(dest, "wb") as out:
+                out.write(f.file.read())
+            paths.append(dest)
+        blobs = research_parse.parse_paths(paths)
+    try:
+        # Pure-Python renderer (Pillow figures + python-docx) — no Node / cairosvg needed.
+        out = brief_render.generate(data, research_blobs=blobs)
+    except Exception as e:
+        raise HTTPException(500, f"Brief generation failed: {e}")
+    return FileResponse(
+        out, filename=os.path.basename(out),
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    )
+
+
+_IMAGE_TYPES = {"png": "image/png", "jpg": "image/jpeg", "jpeg": "image/jpeg",
+                "gif": "image/gif", "webp": "image/webp"}
+
+
+@app.post("/brand-brief-draft")
+def brand_brief_draft(payload: str = Form(...), research: list[UploadFile] = File(default=[])):
+    """Run the brand-brief SKILL to DRAFT the whole brief from a prompt + files.
+
+    Returns the builder payload (competitors, NeedScope pins, CB/CA, SMP, defence, unlocks)
+    for the front end to populate its editors so the user can review/edit before generating
+    the Word document via /brand-brief. Requires ANTHROPIC_API_KEY.
+    """
+    import base64, tempfile, research_parse, brief_ai
+    if not brief_ai.has_key():
+        raise HTTPException(
+            400, "AI drafting needs an Anthropic API key. Add ANTHROPIC_API_KEY to api/.env "
+                 "and restart the server, or fill the brief in manually.")
+    base = json.loads(payload)
+    blobs, images, doc_paths = [], [], []
+    tmp = tempfile.mkdtemp(prefix="draft_")
+    for f in research:
+        ext = os.path.splitext(f.filename or "")[1].lower().lstrip(".")
+        raw = f.file.read()
+        if ext in _IMAGE_TYPES:
+            images.append({"filename": f.filename, "media_type": _IMAGE_TYPES[ext],
+                           "data_b64": base64.b64encode(raw).decode("ascii")})
+        else:
+            dest = os.path.join(tmp, os.path.basename(f.filename or "file"))
+            with open(dest, "wb") as out:
+                out.write(raw)
+            doc_paths.append(dest)
+    if doc_paths:
+        blobs = research_parse.parse_paths(doc_paths)
+    try:
+        draft = brief_ai.draft_brief(base, blobs=blobs, images=images)
+    except brief_ai.NoApiKey:
+        raise HTTPException(400, "ANTHROPIC_API_KEY is not set.")
+    except Exception as e:
+        raise HTTPException(500, f"AI draft failed: {e}")
+    return draft
+
+
+# ----------------------------------------------------------------------------- #
+# Briefs
+# ----------------------------------------------------------------------------- #
+@app.get("/briefs", response_model=list[schemas.BriefOut])
+def list_briefs(db: Session = Depends(get_db)):
+    return list(db.scalars(select(Brief).order_by(Brief.created_at.desc())))
+
+
+@app.post("/briefs", response_model=schemas.BriefOut)
+def create_brief(payload: schemas.BriefIn, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    data = payload.model_dump()
+    override = data.pop("required_levels", None)
+    attrs = {"campaign_objective": data["campaign_objective"], "budget_value": data["budget_value"]}
+    if override:
+        attrs["required_levels"] = override
+    b = Brief(id=_id("brief"), creator_id=user.id, status="Draft",
+              required_levels=domain.required_levels("Brief", attrs),
+              approvals=[], history=[], **data)
+    db.add(b); db.commit(); db.refresh(b)
+    return b
+
+
+@app.get("/briefs/{brief_id}", response_model=schemas.BriefOut)
+def get_brief(brief_id: str, db: Session = Depends(get_db)):
+    b = db.get(Brief, brief_id)
+    if not b: raise HTTPException(404, "Brief not found")
+    return b
+
+
+@app.put("/briefs/{brief_id}", response_model=schemas.BriefOut)
+def update_brief(brief_id: str, payload: schemas.BriefIn, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    b = db.get(Brief, brief_id)
+    if not b: raise HTTPException(404, "Brief not found")
+    if b.status != "Draft":
+        raise HTTPException(409, "Only a Draft brief can be edited.")
+    data = payload.model_dump()
+    override = data.pop("required_levels", None)
+    for k, v in data.items():
+        setattr(b, k, v)
+    attrs = _brief_attrs(b)
+    if override: attrs["required_levels"] = override
+    b.required_levels = domain.required_levels("Brief", attrs)
+    db.commit(); db.refresh(b)
+    return b
+
+
+def _transition(item, op, *args):
+    try:
+        op(item, *args)
+    except ValueError as e:
+        raise HTTPException(409, str(e))
+
+
+@app.post("/briefs/{brief_id}/submit", response_model=schemas.BriefOut)
+def submit_brief(brief_id: str, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    b = db.get(Brief, brief_id) or _404()
+    _transition(b, domain.submit, user.id); db.commit(); db.refresh(b); return b
+
+
+@app.post("/briefs/{brief_id}/approve", response_model=schemas.BriefOut)
+def approve_brief(brief_id: str, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    b = db.get(Brief, brief_id) or _404()
+    _transition(b, domain.approve, user.id, user.role); db.commit(); db.refresh(b); return b
+
+
+@app.post("/briefs/{brief_id}/request-changes", response_model=schemas.BriefOut)
+def request_changes_brief(brief_id: str, payload: schemas.ApproveIn, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    b = db.get(Brief, brief_id) or _404()
+    _transition(b, domain.request_changes, user.id, payload.note); db.commit(); db.refresh(b); return b
+
+
+def _404():
+    raise HTTPException(404, "Not found")
+
+
+# ----------------------------------------------------------------------------- #
+# Generation — gated on the brief being Approved
+# ----------------------------------------------------------------------------- #
+@app.post("/briefs/{brief_id}/generate", response_model=list[schemas.DeliverableOut])
+def generate(brief_id: str, payload: schemas.GenerateIn, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    b = db.get(Brief, brief_id) or _404()
+    if not domain.can_generate(b):
+        raise HTTPException(409, f"Brief is '{b.status}'. Generation is blocked until the brief is Approved.")
+    brief_dict = {c.name: getattr(b, c.name) for c in Brief.__table__.columns}
+    out: list[Deliverable] = []
+    for t in payload.targets:
+        meta = catalog.platform_meta(t.platform)
+        copy = generation.generate_copy(brief_dict, meta["name"], t.format)
+        flags = generation.brand_check(copy["caption"], b.mandatories_brand_codes)
+        d = Deliverable(
+            id=_id("post"), brief_id=b.id, platform=meta["id"], format=t.format,
+            content_type=t.content_type,
+            caption=copy["caption"], hashtags=copy["hashtags"], rationale=copy["rationale"],
+            brand_flags=flags, creator_id=user.id, status="Draft",
+            required_levels=domain.required_levels("Deliverable", {"brief_required_levels": b.required_levels}),
+            approvals=[], history=[],
+        )
+        if payload.creative_model:
+            if creative.model_provider(payload.creative_model) == "heygen":
+                # avatar video: the script is the post copy itself
+                res = creative.generate_creative(
+                    payload.creative_model, copy["caption"],
+                    avatar=payload.avatar, voice=payload.voice, ratio=payload.ratio)
+            else:
+                prompt = f"{b.single_minded_proposition}. {t.platform} {t.format}. {b.tone_personality}"
+                res = creative.generate_creative(payload.creative_model, prompt)
+            d.creative_kind = res["kind"]; d.creative_model = res["model"]; d.creative_url = res["url"]
+        db.add(d); out.append(d)
+    db.commit()
+    for d in out: db.refresh(d)
+    return out
+
+
+# ----------------------------------------------------------------------------- #
+# Deliverables
+# ----------------------------------------------------------------------------- #
+@app.get("/deliverables", response_model=list[schemas.DeliverableOut])
+def list_deliverables(brief_id: str | None = None, status: str | None = None, db: Session = Depends(get_db)):
+    q = select(Deliverable)
+    if brief_id: q = q.where(Deliverable.brief_id == brief_id)
+    if status: q = q.where(Deliverable.status == status)
+    return list(db.scalars(q.order_by(Deliverable.created_at.desc())))
+
+
+@app.get("/deliverables/{did}", response_model=schemas.DeliverableOut)
+def get_deliverable(did: str, db: Session = Depends(get_db)):
+    return db.get(Deliverable, did) or _404()
+
+
+@app.put("/deliverables/{did}", response_model=schemas.DeliverableOut)
+def edit_deliverable(did: str, payload: schemas.EditDeliverableIn, db: Session = Depends(get_db)):
+    d = db.get(Deliverable, did) or _404()
+    if d.status not in ("Draft", "Changes"):
+        raise HTTPException(409, "Only a Draft/Changes post can be edited.")
+    if payload.caption is not None: d.caption = payload.caption
+    if payload.hashtags is not None: d.hashtags = payload.hashtags
+    b = db.get(Brief, d.brief_id)
+    d.brand_flags = generation.brand_check(d.caption, b.mandatories_brand_codes if b else "")
+    db.commit(); db.refresh(d); return d
+
+
+@app.post("/deliverables/{did}/submit", response_model=schemas.DeliverableOut)
+def submit_deliverable(did: str, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    d = db.get(Deliverable, did) or _404()
+    _transition(d, domain.submit, user.id); db.commit(); db.refresh(d); return d
+
+
+@app.post("/deliverables/{did}/approve", response_model=schemas.DeliverableOut)
+def approve_deliverable(did: str, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    d = db.get(Deliverable, did) or _404()
+    _transition(d, domain.approve, user.id, user.role); db.commit(); db.refresh(d); return d
+
+
+@app.post("/deliverables/{did}/request-changes", response_model=schemas.DeliverableOut)
+def request_changes_deliverable(did: str, payload: schemas.ApproveIn, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    d = db.get(Deliverable, did) or _404()
+    _transition(d, domain.request_changes, user.id, payload.note); db.commit(); db.refresh(d); return d
+
+
+@app.post("/deliverables/{did}/publish", response_model=schemas.DeliverableOut)
+def publish_deliverable(did: str, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    d = db.get(Deliverable, did) or _404()
+    _transition(d, domain.publish, user.id); db.commit(); db.refresh(d); return d
+
+
+@app.post("/deliverables/{did}/creative", response_model=schemas.DeliverableOut)
+def set_creative(did: str, payload: schemas.CreativeIn, db: Session = Depends(get_db)):
+    d = db.get(Deliverable, did) or _404()
+    if d.status not in ("Draft", "Changes"):
+        raise HTTPException(409, "Creatives can only change while the post is editable (Draft/Changes).")
+    b = db.get(Brief, d.brief_id)
+    is_avatar = creative.model_provider(payload.model_id) == "heygen"
+    if is_avatar:
+        # script = explicit prompt, else the post's own caption
+        prompt = payload.prompt or d.caption or (b.single_minded_proposition if b else "")
+        res = creative.generate_creative(payload.model_id, prompt,
+                                         avatar=payload.avatar, voice=payload.voice, ratio=payload.ratio)
+    else:
+        prompt = payload.prompt or f"{b.single_minded_proposition}. {d.platform} {d.format}. {b.tone_personality}"
+        res = creative.generate_creative(payload.model_id, prompt)
+    d.creative_kind = res["kind"]; d.creative_model = res["model"]; d.creative_url = res["url"]
+    db.commit(); db.refresh(d); return d
+
+
+# ----------------------------------------------------------------------------- #
+# Per-post chat studio — iterate copy (and optionally creative) by chatting
+# ----------------------------------------------------------------------------- #
+@app.get("/deliverables/{did}/chat", response_model=list[schemas.ChatMessageOut])
+def get_chat(did: str, db: Session = Depends(get_db)):
+    d = db.get(Deliverable, did) or _404()
+    return d.messages
+
+
+@app.post("/deliverables/{did}/chat", response_model=schemas.DeliverableOut)
+def post_chat(did: str, payload: schemas.ChatIn, db: Session = Depends(get_db)):
+    d = db.get(Deliverable, did) or _404()
+    if d.status not in ("Draft", "Changes"):
+        raise HTTPException(409, "You can only refine an editable post (Draft/Changes) in the studio.")
+    b = db.get(Brief, d.brief_id)
+    brief_dict = {c.name: getattr(b, c.name) for c in Brief.__table__.columns}
+    db.add(ChatMessage(id=_id("msg"), deliverable_id=d.id, role="user", content=payload.message))
+    prior = {"caption": d.caption, "hashtags": d.hashtags, "rationale": d.rationale}
+    revised = generation.generate_copy(brief_dict, d.platform, d.format,
+                                        instruction=payload.message, prior=prior)
+    d.caption = revised["caption"]; d.hashtags = revised["hashtags"]; d.rationale = revised["rationale"]
+    d.brand_flags = generation.brand_check(d.caption, b.mandatories_brand_codes if b else "")
+    assistant = (f"Updated the {d.platform} {d.format} copy. "
+                 + ("Heads up — " + "; ".join(d.brand_flags) if d.brand_flags else "All brand mandatories present."))
+    db.add(ChatMessage(id=_id("msg"), deliverable_id=d.id, role="assistant", content=assistant))
+    db.commit(); db.refresh(d); return d

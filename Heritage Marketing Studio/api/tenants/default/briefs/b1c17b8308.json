@@ -1,0 +1,162 @@
+{
+  "id": "b1c17b8308",
+  "created": "2026-08-12 13:14",
+  "brand": "Heritage",
+  "title": "Heritage — IMC brief",
+  "format": "IMC",
+  "source": "saved",
+  "fields": {
+    "format": "IMC",
+    "status": "Draft",
+    "proposition": "Heritage: pure nutrition, because it comes from a pure source.",
+    "objective": "Heritage: pure nutrition, because it comes from a pure source.",
+    "audience": "draft a brief for heritage masterbrand with the proposition of pure nutrition comes from pure milk sources from the farmers fresh and quality checked every day targeting women in the age group of 25-44 and key competition being dodla, hatsun, arokya, nandini, amul, jersey",
+    "tone": "",
+    "category": "Indian dairy",
+    "draft": {
+      "brand": "Heritage",
+      "category": "Indian dairy",
+      "prepared_for": "Heritage Foods marketing leadership",
+      "competitors": [
+        {
+          "name": "Amul",
+          "hero_brands": "Amul Taaza, Amul Gold, Amul butter",
+          "positioning": "The national cooperative — 'The Taste of India', mass ubiquity, farmer-owned equity and unbeatable trust at scale",
+          "recent_moves": "Aggressive value-milk and value-added dairy expansion, heavy topical social advertising, deep quick-commerce distribution"
+        },
+        {
+          "name": "Nandini",
+          "hero_brands": "Nandini Goodlife, Nandini curd, Nandini ghee",
+          "positioning": "Karnataka cooperative (KMF) — pride-of-state provenance, freshness and affordability with strong regional loyalty",
+          "recent_moves": "Expansion beyond Karnataka, price-led positioning, cooperative-farmer storytelling"
+        },
+        {
+          "name": "Hatsun / Arokya",
+          "hero_brands": "Arokya milk, Hatsun curd, Ibaco",
+          "positioning": "Arokya sub-brand leads on 'healthy milk' and freshness in Tamil Nadu; Hatsun as the private-dairy freshness leader",
+          "recent_moves": "Widening south-India cold-chain, health-forward messaging, value-added premiumisation via Ibaco and Arun"
+        },
+        {
+          "name": "Dodla",
+          "hero_brands": "Dodla milk, Dodla curd, Dodla ghee",
+          "positioning": "Andhra/Telangana private dairy — freshness and consistent quality at accessible prices, farmer-sourcing narrative",
+          "recent_moves": "Geographic expansion, retail and modern-trade push, procurement-network storytelling"
+        },
+        {
+          "name": "Jersey",
+          "hero_brands": "Jersey milk, Jersey curd, Jersey paneer",
+          "positioning": "South-India private dairy leaning on 'pure and fresh' with a premium-quality signal",
+          "recent_moves": "Portfolio premiumisation and curd/paneer value-added growth"
+        }
+      ],
+      "needscope": {
+        "pins": [
+          {
+            "brand": "Heritage",
+            "x": 315,
+            "y": 425,
+            "anchor": true
+          },
+          {
+            "brand": "Amul",
+            "x": 400,
+            "y": 460,
+            "anchor": false
+          },
+          {
+            "brand": "Nandini",
+            "x": 460,
+            "y": 449,
+            "anchor": false
+          },
+          {
+            "brand": "Hatsun / Arokya",
+            "x": 279,
+            "y": 445,
+            "anchor": false
+          },
+          {
+            "brand": "Dodla",
+            "x": 505,
+            "y": 428,
+            "anchor": false
+          },
+          {
+            "brand": "Jersey",
+            "x": 270,
+            "y": 400,
+            "anchor": false
+          }
+        ],
+        "bridge_territory": "Security",
+        "bridge_label": "Pure Source, Pure Nutrition",
+        "reading": "The category clusters tightly in Belonging — Amul (national cooperative warmth), Nandini (state pride) and Dodla (regional freshness) all trade on inclusive family trust, leaving that territory over-claimed. Heritage sits in Belonging with a natural pull toward Security, where its verifiable farmer-fresh, quality-checked-daily sourcing gives it permission the cooperatives cannot match on a person-to-person basis. The whitespace is Security-as-proof: not vague 'purity' but a daily, source-traceable guarantee of nutrition — a territory Jersey and Arokya gesture at on quality but no one has systematised into a brand promise."
+      },
+      "cb_ca_db_da": {
+        "cb": [
+          "Bought largely on availability and price parity — milk is a substitutable daily commodity, not a chosen brand.",
+          "Consumed almost entirely as an ingredient — chai, coffee, cooking — rarely a considered nutrition decision.",
+          "Under-represented in value-added and health-forward baskets (fortified, high-protein, curd, functional dairy)."
+        ],
+        "db": [
+          "Actively chosen by the household nutrition gatekeeper because the source is trusted and verifiable, not just because it is on the shelf.",
+          "Traded up within the franchise: standard milk to fortified, high-protein and value-added variants for the family.",
+          "Consumed with intent across new occasions — children's growth, women's own nutrition, morning wellness routines."
+        ],
+        "ca_quote": "Milk is milk — I buy whatever is fresh and available that morning; Heritage is fine, it's clean and reliable.",
+        "ca_declarative": [
+          "Trust is present but passive.",
+          "A dependable commodity, not a deliberate choice."
+        ],
+        "da_quote": "I choose Heritage because I know where the milk comes from — fresh from the farmer, checked every day, so I know my family is getting real nutrition.",
+        "da_declarative": [
+          "Active, informed confidence.",
+          "Pure source is the proof of pure nutrition."
+        ],
+        "shift_from": "dependable everyday milk",
+        "shift_to": "consciously chosen source of family nutrition",
+        "caption": "The desired attitude layers a rational, verifiable nutrition-through-source proof on top of Heritage's existing freshness trust — it deepens the everyday relationship rather than replacing it.",
+        "shift_line": "From dependable everyday milk to consciously chosen source of family nutrition."
+      },
+      "smp": "Heritage: pure nutrition, because it comes from a pure source.",
+      "smp_defence": [
+        {
+          "competitor": "Amul",
+          "why_collapses": "Owns national trust but at cooperative scale — cannot make an intimate, farmer-to-family source promise the way a directly procuring regional dairy can."
+        },
+        {
+          "competitor": "Nandini",
+          "why_collapses": "Claims provenance through state pride, but its promise is geographic identity, not a daily, verifiable nutrition-from-source guarantee."
+        },
+        {
+          "competitor": "Hatsun / Arokya",
+          "why_collapses": "Arokya says 'healthy milk' but leads on the milk's health, not on traceable purity of the source that earns that nutrition."
+        },
+        {
+          "competitor": "Dodla",
+          "why_collapses": "Talks freshness and farmer sourcing but has not built a systematised, quality-checked-daily proof into the brand promise."
+        },
+        {
+          "competitor": "Jersey",
+          "why_collapses": "Signals premium 'pure and fresh' but on product quality alone — it lacks the farmer-source-to-nutrition chain of causation."
+        }
+      ],
+      "smp_unlocks": {
+        "brand_line": "Pure source. Pure nutrition. (illustrative — not final copy)",
+        "mass_line": "Achche doodh se hi achchi sehat — asli source se, roz jaanch ke saath. (illustrative — not final copy)",
+        "activation": "'Meet the source' — QR-on-pack and neighbourhood farmer-fresh days that let women trace their pack back to the procuring farmer and the day's quality check. (illustrative — not final copy)",
+        "product": "A fortified / high-protein 'Heritage Pure Nutrition' range for family and women's daily wellness, carrying the daily-quality-check seal. (illustrative — not final copy)"
+      },
+      "brief_id": "b1c17b8308"
+    }
+  },
+  "canon": {
+    "commObjective": "Heritage: pure nutrition, because it comes from a pure source.",
+    "targetAudience": "draft a brief for heritage masterbrand with the proposition of pure nutrition comes from pure milk sources from the farmers fresh and quality checked every day targeting women in the age group of 25-44 and key competition being dodla, hatsun, arokya, nandini, amul, jersey",
+    "smp": "Heritage: pure nutrition, because it comes from a pure source.",
+    "competition": "name: Amul · hero brands: Amul Taaza, Amul Gold, Amul butter · positioning: The national cooperative — 'The Taste of India', mass ubiquity, farmer-owned equity and unbeatable trust at scale · recent moves: Aggressive value-milk and value-added dairy expansion, heavy topical social advertising, deep quick-commerce distribution; name: Nandini · hero brands: Nandini Goodlife, Nandini curd, Nandini ghee · positioning: Karnataka cooperative (KMF) — pride-of-state provenance, freshness and affordability with strong regional loyalty · recent moves: Expansion beyond Karnataka, price-led positioning, cooperative-farmer storytelling; name: Hatsun / Arokya · hero brands: Arokya milk, Hatsun curd, Ibaco · positioning: Arokya sub-brand leads on 'healthy milk' and freshness in Tamil Nadu; Hatsun as the private-dairy freshness leader · recent moves: Widening south-India cold-chain, health-forward messaging, value-added premiumisation via Ibaco and Arun; name: Dodla · hero brands: Dodla milk, Dodla curd, Dodla ghee · positioning: Andhra/Telangana private dairy — freshness and consistent quality at accessible prices, farmer-sourcing narrative · recent moves: Geographic expansion, retail and modern-trade push, procurement-network storytelling; name: Jersey · hero brands: Jersey milk, Jersey curd, Jersey paneer · positioning: South-India private dairy leaning on 'pure and fresh' with a premium-quality signal · recent moves: Portfolio premiumisation and curd/paneer value-added growth",
+    "brand": "Heritage",
+    "format": "IMC"
+  },
+  "updated": "2026-08-12 13:14"
+}

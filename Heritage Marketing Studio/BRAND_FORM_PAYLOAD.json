@@ -1,0 +1,337 @@
+{
+  "_what_this_is": "The exact GET /brand-fields payload with all 23 fields populated, so the form can be checked against real content rather than its empty state. Generated once and then reverted on the server - these values are illustrative, not the client's answers.",
+  "core_done": 5,
+  "core_total": 5,
+  "ready": true,
+  "summary": "5 of 5 answered. The studio is grounded in this brand. 1 claim(s) have no proof behind them.",
+  "unproven_claims": [
+    "The strongest milk in the market"
+  ],
+  "blocking": [],
+  "derivable": {
+    "master_idea": "The strength of a family starts with the purity of its milk.",
+    "positioning": "The strength of a family starts with the purity of its milk.",
+    "claims": [
+      {
+        "claim": "Heritage collects from real dairy farmers every single morning, so the milk that reaches your family is fresh from the same day — not stored, not old. The feeling of 'I gave them the best start' is earned because someone did the work at 4am for you.",
+        "proof": ""
+      },
+      {
+        "claim": "Every batch is tested for purity and adulteration before it leaves the plant — the same day it's collected.",
+        "proof": ""
+      }
+    ]
+  },
+  "fields": [
+    {
+      "key": "name",
+      "label": "Brand name",
+      "kind": "text",
+      "required": true,
+      "ask": "What is the brand called?",
+      "why": "Named in every prompt. Without it the work is written for 'the brand'.",
+      "derives_from": "brief",
+      "set": true,
+      "value": "Heritage Foods",
+      "state": "set"
+    },
+    {
+      "key": "category",
+      "label": "Category",
+      "kind": "text",
+      "required": true,
+      "ask": "What category is it in, in the words the trade would use?",
+      "why": "Decides what a good idea even looks like. Dairy, cement and skincare do not share a playbook.",
+      "derives_from": "brief",
+      "set": true,
+      "value": "Dairy — milk, curd, and value-added dairy",
+      "state": "set"
+    },
+    {
+      "key": "category_axis",
+      "label": "What the category competes on",
+      "kind": "text",
+      "required": true,
+      "ask": "Finish this: in this category, brands win by being the most ______.",
+      "why": "The single highest-value field here. 'Pure' for milk, 'consistently strong' for cement, 'gentle' for baby skincare. Every generated line is pulled toward this axis, which is the difference between category-native work and competent global-FMCG wallpaper.",
+      "placeholder": "pure · consistently strong · gentle · long-lasting · genuinely fresh",
+      "set": true,
+      "value": "pure",
+      "state": "set"
+    },
+    {
+      "key": "market",
+      "label": "Market",
+      "kind": "text",
+      "ask": "Where does it actually sell — and where is it strongest?",
+      "why": "Keeps occasions, language and retail real. A national claim written for a four-state brand is a lie.",
+      "derives_from": "brief",
+      "set": true,
+      "value": "India, strongest across South India (Telangana, Andhra Pradesh, Karnataka, Tamil Nadu), expanding nationally",
+      "state": "set"
+    },
+    {
+      "key": "claims",
+      "label": "What you can prove, and what proves it",
+      "kind": "rows",
+      "required": true,
+      "cols": [
+        "claim",
+        "proof"
+      ],
+      "ask": "Each thing you want to say about the product, and the evidence behind it.",
+      "why": "The proof gate reads this. A claim with no proof cannot be given to a channel as its job, which is what stops a plan being a wish. Leave the proof empty and the claim is still recorded — flagged, not hidden.",
+      "derives_from": "house",
+      "set": true,
+      "value": [
+        {
+          "claim": "Quality-checked every single day, from farmer to family",
+          "proof": "Daily lab testing at every collection centre; per-batch records retained"
+        },
+        {
+          "claim": "On your table the morning it was collected",
+          "proof": "Date-and-dairy stamp printed on every carton"
+        },
+        {
+          "claim": "The strongest milk in the market",
+          "proof": ""
+        }
+      ],
+      "state": "set"
+    },
+    {
+      "key": "regulator",
+      "label": "Regulator",
+      "kind": "text",
+      "ask": "Who can stop your advertising?",
+      "why": "FSSAI, BIS, ASCI, CDSCO. Named so the copy respects it instead of being corrected later.",
+      "placeholder": "FSSAI · BIS · ASCI · CDSCO · RBI",
+      "set": true,
+      "value": "FSSAI",
+      "state": "set"
+    },
+    {
+      "key": "banned_words",
+      "label": "Words you may not use",
+      "kind": "list",
+      "ask": "Words legal or the regulator has ruled out.",
+      "why": "Kept out of every generated line. Cheaper here than in a recall.",
+      "placeholder": "pure, 100%, cures, best, guaranteed",
+      "set": true,
+      "value": [
+        "100% pure",
+        "cures",
+        "best in India",
+        "medicinal"
+      ],
+      "state": "set"
+    },
+    {
+      "key": "purchase_cycle",
+      "label": "Purchase cycle",
+      "kind": "choice",
+      "options": [
+        "daily",
+        "weekly",
+        "monthly",
+        "seasonal",
+        "once every few years",
+        "one-off"
+      ],
+      "ask": "How often does somebody buy this?",
+      "why": "Decides whether the work builds a habit or a decision. Daily milk and a once-a-decade cement purchase need opposite communication, and getting this wrong makes everything downstream subtly wrong.",
+      "set": true,
+      "value": "daily",
+      "state": "set"
+    },
+    {
+      "key": "decider",
+      "label": "Who decides",
+      "kind": "text",
+      "ask": "Who chooses the brand?",
+      "why": "The person the message is aimed at.",
+      "derives_from": "brief",
+      "set": true,
+      "value": "the mother in the household, 25-44",
+      "state": "set"
+    },
+    {
+      "key": "payer",
+      "label": "Who pays",
+      "kind": "text",
+      "ask": "Who actually hands over the money?",
+      "why": "Often not the decider — and where they differ, price and value have to be argued to two different people. A contractor specifies the cement; the homeowner pays for it.",
+      "set": true,
+      "value": "the mother in the household",
+      "state": "set"
+    },
+    {
+      "key": "user",
+      "label": "Who uses it",
+      "kind": "text",
+      "ask": "Who ends up using or consuming it?",
+      "why": "Where the benefit actually lands, which is not always where the pitch is aimed.",
+      "set": true,
+      "value": "the whole family, children first",
+      "state": "set"
+    },
+    {
+      "key": "channels",
+      "label": "Your real channels",
+      "kind": "list",
+      "required": true,
+      "ask": "Where is it actually sold?",
+      "why": "The trade sheet and the plan are built from these rather than from a generic list, so a channel you do not have never gets a budget.",
+      "placeholder": "general trade, modern trade, quick commerce, own retail, D2C, home delivery",
+      "derives_from": "plan",
+      "set": true,
+      "value": [
+        "general trade",
+        "modern trade",
+        "quick commerce",
+        "home delivery",
+        "own retail"
+      ],
+      "state": "set"
+    },
+    {
+      "key": "cheap_alternative",
+      "label": "The cheap alternative you lose to",
+      "kind": "text",
+      "ask": "When somebody does not buy you, what do they buy instead — including the unbranded option?",
+      "why": "Usually the real competitor and usually not a brand: loose milk, the local mill, a cousin with a van. Naming it stops the work arguing with the wrong opponent.",
+      "placeholder": "loose milk from the dairy · unbranded cement · the neighbourhood tailor",
+      "set": true,
+      "value": "loose milk from the local dairy, ladled from a can by the litre",
+      "state": "set"
+    },
+    {
+      "key": "price_tier",
+      "label": "Price tier",
+      "kind": "choice",
+      "options": [
+        "value",
+        "mass",
+        "mass premium",
+        "premium",
+        "luxury"
+      ],
+      "ask": "Where do you sit on price in your category?",
+      "why": "Sets how much the work has to justify, and how it may talk about cost.",
+      "set": true,
+      "value": "mass premium",
+      "state": "set"
+    },
+    {
+      "key": "competitors",
+      "label": "Named competitors",
+      "kind": "list",
+      "ask": "Who else is on the shelf?",
+      "why": "Held so the model can be told never to name them. A generated line that names a competitor is unusable and somebody has to spot it.",
+      "derives_from": "brief",
+      "set": true,
+      "value": [
+        "Amul",
+        "Nandini",
+        "Dodla",
+        "Arokya",
+        "loose/unbranded milk"
+      ],
+      "state": "set"
+    },
+    {
+      "key": "master_idea",
+      "label": "The campaign idea in force",
+      "kind": "text",
+      "ask": "The line or idea currently running, if there is one.",
+      "why": "Keeps new work consistent with what is already in market.",
+      "derives_from": "house",
+      "set": true,
+      "value": "Pure Doodh Ki Shakti — the strength of pure milk",
+      "state": "set"
+    },
+    {
+      "key": "positioning",
+      "label": "Positioning",
+      "kind": "text",
+      "ask": "What the brand stands for, in one sentence.",
+      "why": "The thing every execution has to ladder to.",
+      "derives_from": "house",
+      "set": true,
+      "value": "The purest everyday milk for families who will not compromise",
+      "state": "set"
+    },
+    {
+      "key": "tone",
+      "label": "Tone",
+      "kind": "text",
+      "ask": "How it should sound — and how it should not.",
+      "why": "Governs craft in every generated line.",
+      "derives_from": "house",
+      "set": true,
+      "value": "Warm, wholesome and reassuring, with a premium modern finish",
+      "state": "set"
+    },
+    {
+      "key": "hero_product",
+      "label": "Hero product",
+      "kind": "text",
+      "ask": "The product that carries the brand.",
+      "why": "What the work is about when nothing more specific is said.",
+      "derives_from": "brief",
+      "set": true,
+      "value": "Heritage Pure Milk",
+      "state": "set"
+    },
+    {
+      "key": "avoid",
+      "label": "Never do this",
+      "kind": "list",
+      "ask": "Territory or execution the brand does not go near.",
+      "why": "Injected as a hard constraint, not advice.",
+      "derives_from": "house",
+      "set": false,
+      "value": [],
+      "state": "missing"
+    },
+    {
+      "key": "mandatories",
+      "label": "Mandatories",
+      "kind": "list",
+      "ask": "What must appear on every piece.",
+      "why": "Logo lock-up, the FSSAI mark, a statutory line.",
+      "derives_from": "brief",
+      "set": true,
+      "value": [
+        "FSSAI mark",
+        "the line 'Pure Doodh Ki Shakti'"
+      ],
+      "state": "set"
+    },
+    {
+      "key": "hashtags",
+      "label": "Brand hashtags",
+      "kind": "list",
+      "ask": "Tags that are genuinely yours.",
+      "why": "Used verbatim; the model is told never to invent a brand tag.",
+      "derives_from": "brief",
+      "set": true,
+      "value": [
+        "#PureDoodhKiShakti",
+        "#HeritageFoods"
+      ],
+      "state": "set"
+    },
+    {
+      "key": "notes",
+      "label": "Anything else",
+      "kind": "textarea",
+      "ask": "What would you tell a new agency in their first hour?",
+      "why": "Free text, injected as-is. The place for the thing that does not fit a field.",
+      "set": true,
+      "value": "A daily cold-chain category: general trade and home delivery dominate, and quick commerce is less disruptive here than in snacks or beverages.",
+      "state": "set"
+    }
+  ],
+  "voice": "BRAND: Heritage Foods\nCATEGORY: Dairy — milk, curd, and value-added dairy\nMARKET: India, strongest across South India (Telangana, Andhra Pradesh, Karnataka, Tamil Nadu), expanding nationally — write for this market's habits, retail and idiom, not a generic global one.\nHERO PRODUCT: Heritage Pure Milk\nMASTER BRAND IDEA: Pure Doodh Ki Shakti — the strength of pure milk — everything ladders to this.\nPOSITIONING: The purest everyday milk for families who will not compromise\nTONE: Warm, wholesome and reassuring, with a premium modern finish\nBRAND CODES / HASHTAGS: #PureDoodhKiShakti, #HeritageFoods\nMANDATORY ON EVERY PIECE: FSSAI mark; the line 'Pure Doodh Ki Shakti'\nCOMPETITORS: Amul, Nandini, Dodla, Arokya, loose/unbranded milk\nWHAT THIS CATEGORY COMPETES ON: being the most pure. Every line you write should be pulled toward that, in the concrete terms of this category — not as the word itself repeated.\nCLAIMS YOU MAY MAKE, each with what proves it — do not make a claim that is not on this list:\n  - Quality-checked every single day, from farmer to family  (proof: Daily lab testing at every collection centre; per-batch records retained)\n  - On your table the morning it was collected  (proof: Date-and-dairy stamp printed on every carton)\nCLAIMED BUT UNPROVEN — you may allude to these but must NOT state them as fact: The strongest milk in the market\nREGULATOR: FSSAI. Copy has to survive them.\nWORDS YOU MAY NOT USE, in any form: 100% pure, cures, best in India, medicinal. These are legal or regulatory rulings, not preferences.\nPURCHASE CYCLE: daily — so this is habit-building work; a single dramatic decision is the wrong shape\nWHO IS INVOLVED: decider: the mother in the household, 25-44 · payer: the mother in the household · user: the whole family, children first. The decider and the payer are different people here, so price and value have to be argued to both.\nCHANNELS IT IS ACTUALLY SOLD IN: general trade, modern trade, quick commerce, home delivery, own retail. Do not write for a channel that is not on this list.\nWHAT IT LOSES TO: loose milk from the local dairy, ladled from a can by the litre. This is the real alternative, usually unbranded. Argue against this rather than against the other brands.\nPRICE TIER: mass premium — how much the work has to justify.\nBRAND PALETTE: primary Deep Forest, secondary Cream, accent Ghee gold\nALSO TRUE: A daily cold-chain category: general trade and home delivery dominate, and quick commerce is less disruptive here than in snacks or beverages.\nOnly these are the brand's. Anything else you need, ask for rather than assume.\nAUTHORITY: if the request below names a different brand, product, category or market, it is out of date — ignore it and use Heritage Foods. Do not blend the two."
+}

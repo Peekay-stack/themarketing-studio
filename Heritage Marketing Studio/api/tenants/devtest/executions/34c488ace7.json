@@ -1,0 +1,66 @@
+{
+  "id": "34c488ace7",
+  "plan": "57ef2191a0",
+  "house": "750a369a64",
+  "kind": "posm",
+  "brief": {
+    "kind": "posm",
+    "audience": {
+      "id": "1ba20d50",
+      "audience": "A",
+      "rank": "1",
+      "believes_now": "x",
+      "pillar": "functional"
+    },
+    "channel": {
+      "id": "125ba29f",
+      "channel": "POSM",
+      "role": "conversion",
+      "job": "shift the shelf decision",
+      "measure": "claim recall",
+      "side": "brand",
+      "share": "20",
+      "owner": "T",
+      "lead": "yes"
+    },
+    "occasion": {
+      "id": "6f0bce96",
+      "phase": "P",
+      "window": "Jan",
+      "occasion": "Pongal",
+      "channels": "POSM",
+      "hands_over": "s"
+    },
+    "measure": {
+      "id": "a0688ed5",
+      "role": "conversion",
+      "leading": "cvr",
+      "lagging": "sales",
+      "would_tell_us_it_failed": "cpa up"
+    },
+    "pillar": "functional",
+    "message": {
+      "id": "4338b8c3",
+      "text": "posm line",
+      "note": ""
+    }
+  },
+  "status": "briefed",
+  "artefacts": [],
+  "created": "2026-08-10 21:26",
+  "updated": "2026-08-10 21:26",
+  "rebriefed": [
+    {
+      "at": "2026-08-10 21:26",
+      "changed": [
+        {
+          "field": "channel",
+          "col": "job",
+          "was": "j",
+          "now": "shift the shelf decision",
+          "detail": "channel job was 'j', now 'shift the shelf decision'"
+        }
+      ]
+    }
+  ]
+}

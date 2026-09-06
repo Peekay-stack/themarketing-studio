@@ -1,0 +1,166 @@
+{
+  "id": "9210693b99",
+  "brand": "Heritage Foods",
+  "brief": {},
+  "created": "2026-08-10 22:07",
+  "updated": "2026-08-10 22:07",
+  "nodes": {
+    "core": {
+      "layer": "core",
+      "options": [
+        {
+          "id": "801e0def",
+          "text": "The strength of pure milk",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-10 22:07"
+        },
+        {
+          "id": "fa091cb7",
+          "text": "Doodh that earns its place",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-10 22:07"
+        }
+      ],
+      "chosen": [
+        "801e0def"
+      ],
+      "sig": "",
+      "generated_under": ""
+    },
+    "emotional": {
+      "layer": "emotional",
+      "options": [
+        {
+          "id": "e19ecc47",
+          "text": "A mother who chose well",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-10 22:07"
+        }
+      ],
+      "chosen": [
+        "e19ecc47"
+      ],
+      "sig": "",
+      "generated_under": ""
+    },
+    "functional": {
+      "layer": "functional",
+      "options": [
+        {
+          "id": "99499d9d",
+          "text": "Tested twice before it leaves the plant",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-10 22:07"
+        }
+      ],
+      "chosen": [
+        "99499d9d"
+      ],
+      "sig": "",
+      "generated_under": ""
+    },
+    "rtb_emotional": {
+      "layer": "rtb_emotional",
+      "options": [],
+      "chosen": [],
+      "sig": "",
+      "generated_under": ""
+    },
+    "rtb_functional": {
+      "layer": "rtb_functional",
+      "options": [
+        {
+          "id": "74f8cd32",
+          "text": "Cold chain audited monthly by NDDB",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-10 22:07"
+        },
+        {
+          "id": "f301be2b",
+          "text": "FSSAI certified at every plant",
+          "note": "",
+          "source": "model",
+          "tag": "",
+          "added": "2026-08-10 22:07"
+        }
+      ],
+      "chosen": [
+        "74f8cd32",
+        "f301be2b"
+      ],
+      "sig": "",
+      "generated_under": ""
+    },
+    "proof": {
+      "layer": "proof",
+      "options": [],
+      "chosen": [],
+      "sig": "",
+      "generated_under": ""
+    },
+    "culture": {
+      "layer": "culture",
+      "options": [
+        {
+          "id": "f6de572e",
+          "text": "Pongal morning",
+          "note": "",
+          "source": "user",
+          "tag": "occasion",
+          "added": "2026-08-10 22:07"
+        },
+        {
+          "id": "de2da03f",
+          "text": "Never show milk being wasted",
+          "note": "",
+          "source": "user",
+          "tag": "avoid",
+          "added": "2026-08-10 22:07"
+        }
+      ],
+      "chosen": [
+        "f6de572e",
+        "de2da03f"
+      ],
+      "sig": "",
+      "generated_under": ""
+    },
+    "medium": {
+      "layer": "medium",
+      "options": [
+        {
+          "id": "37aa3a51",
+          "text": "Two facings. Turns faster than loose milk.",
+          "note": "",
+          "source": "user",
+          "tag": "posm",
+          "added": "2026-08-10 22:07"
+        },
+        {
+          "id": "5b997072",
+          "text": "Weekly ordering. Better margin per foot.",
+          "note": "",
+          "source": "user",
+          "tag": "trade",
+          "added": "2026-08-10 22:07"
+        }
+      ],
+      "chosen": [
+        "37aa3a51",
+        "5b997072"
+      ],
+      "sig": "",
+      "generated_under": ""
+    }
+  }
+}

@@ -1,0 +1,141 @@
+{
+  "id": "cade742f91",
+  "created": "2026-08-11 17:16",
+  "brand": "Heritage",
+  "title": "Heritage — Brand",
+  "format": "Brand",
+  "source": "brand-brief",
+  "fields": {
+    "brand": "Heritage",
+    "category": "Indian dairy",
+    "prepared_for": "Heritage Foods marketing and brand strategy team",
+    "competitors": [
+      {
+        "name": "Amul",
+        "hero_brands": "Amul Taaza, Amul Gold, Amul Masti Curd",
+        "positioning": "National cooperative ubiquity; 'The Taste of India' — trusted, wholesome, every-home dairy at value",
+        "recent_moves": "Aggressive quick-commerce expansion, sustained mass-media utsav-of-India storytelling, protein-fortified range extensions"
+      },
+      {
+        "name": "Nandini",
+        "hero_brands": "Nandini Milk, Good Life, Nandini Curd",
+        "positioning": "Karnataka cooperative pride; farmer-first freshness and regional trust at competitive price",
+        "recent_moves": "South-market fortress defence, freshness-of-farm messaging, value packs for family households"
+      },
+      {
+        "name": "Mother Dairy",
+        "hero_brands": "Mother Dairy Milk, Classic Curd, Nutrifit",
+        "positioning": "Trust and purity from the token-milk heritage; 'maternal care' cues without owning the strength benefit",
+        "recent_moves": "Health-forward Nutrifit push, tamper-proof packaging emphasis, urban modern-trade focus"
+      },
+      {
+        "name": "Milky Mist",
+        "hero_brands": "Milky Mist Curd, Paneer, Cheese",
+        "positioning": "Premium fresh-dairy craft; thick, rich, indulgent value-added dairy for discerning urban homes",
+        "recent_moves": "Aspirational premium advertising, value-added dairy portfolio, aggressive south and metro distribution"
+      }
+    ],
+    "needscope": {
+      "pins": [
+        {
+          "brand": "Heritage",
+          "x": 346,
+          "y": 229,
+          "anchor": true
+        },
+        {
+          "brand": "Mother Dairy",
+          "x": 279,
+          "y": 390,
+          "anchor": false
+        },
+        {
+          "brand": "Nandini",
+          "x": 323,
+          "y": 409,
+          "anchor": false
+        },
+        {
+          "brand": "Amul",
+          "x": 460,
+          "y": 447,
+          "anchor": false
+        },
+        {
+          "brand": "Milky Mist",
+          "x": 275,
+          "y": 248,
+          "anchor": false
+        }
+      ],
+      "bridge_territory": "Power",
+      "bridge_label": "Pure Doodh Ki Shakti",
+      "reading": "The Security territory is crowded — Heritage, Mother Dairy and Nandini all trade on trust, purity and reliability, making it a defended but undifferentiated pole. Amul owns warm Belonging ubiquity and Milky Mist reaches toward Discernment with premium craft, while the Power territory of visible strength and vitality-through-nourishment sits largely unclaimed. Heritage's whitespace is the disciplined bridge from purity (Security) into strength (Power) — proving that its purity is what makes children and families strong."
+    },
+    "cb_ca_db_da": {
+      "cb": [
+        "Bought as the dependable 'safe' milk for the household — a hygiene decision, not an emotional one",
+        "Consumed mainly at breakfast and in tea/coffee; rarely credited for the child's growth or the family's vigour",
+        "Chosen on availability and freshness at the local outlet; easily switched to whichever pure brand is stocked"
+      ],
+      "db": [
+        "Actively chosen by mothers as the milk that builds their child's strength — bought with intent, not habit",
+        "Traded up within the franchise: standard toned milk to fortified/high-protein and value-added dairy variants",
+        "Recommended mother-to-mother as the purity that visibly powers growing kids and active families"
+      ],
+      "ca_quote": "It's a clean, pure milk I can trust — safe for my kids, but honestly every good brand is pure these days.",
+      "ca_declarative": [
+        "Trust is assumed, not earned.",
+        "Purity is a floor, not a reason to choose."
+      ],
+      "da_quote": "Heritage is the pure milk that actually makes my child stronger — I can see it in their day.",
+      "da_declarative": [
+        "Purity becomes a promise of strength.",
+        "A mother's active, proud choice."
+      ],
+      "shift_from": "assumed purity",
+      "shift_to": "purity that gives strength",
+      "caption": "The strength story is layered on top of Heritage's proven purity, never in place of it — purity remains the reason to believe, strength becomes the reason to choose.",
+      "shift_line": "From assumed purity to purity that gives strength."
+    },
+    "smp": "Heritage: the purity that gives your child strength.",
+    "smp_defence": [
+      {
+        "competitor": "Amul",
+        "why_collapses": "Owns warm national belonging and taste, but its mass ubiquity cannot credibly claim purity as a mother's proof of strength — strength is not its equity."
+      },
+      {
+        "competitor": "Nandini",
+        "why_collapses": "Claims farm-fresh purity but stays a regional value-and-freshness play; it has not built the emotional strength-of-growth benefit for the child."
+      },
+      {
+        "competitor": "Mother Dairy",
+        "why_collapses": "Leans on maternal trust and purity but stops at safety and care; it earns 'pure' yet never converts purity into visible strength."
+      },
+      {
+        "competitor": "Milky Mist",
+        "why_collapses": "Wins on premium richness and indulgent craft, but its discernment positioning speaks to taste and quality, not to purity that powers a growing child."
+      }
+    ],
+    "smp_unlocks": {
+      "brand_line": "Purity that gives strength. (illustrative — not final copy)",
+      "mass_line": "Heritage doodh — shudhta se aati hai shakti. (illustrative — not final copy)",
+      "activation": "'Strength of Purity' mother-and-child growth programme: partner with paediatricians and schools for a season-long tracker where mothers log their child's daily energy and growth against Heritage's fortified milk, culminating in community 'strength stories' shared on social. (illustrative — not final copy)",
+      "product": "Launch a fortified 'Heritage Shakti' high-protein/A2 toned milk variant, purity-sealed and mother-targeted, as the productised proof of 'purity gives strength'. (illustrative — not final copy)"
+    },
+    "brief_id": "cade742f91",
+    "date": "2026-08-11",
+    "sources_note": "",
+    "market_data": null,
+    "household_data": null,
+    "research_files": []
+  },
+  "canon": {
+    "currentBelief": "Bought as the dependable 'safe' milk for the household — a hygiene decision, not an emotional one; Consumed mainly at breakfast and in tea/coffee; rarely credited for the child's growth or the family's vigour; Chosen on availability and freshness at the local outlet; easily switched to whichever pure brand is stocked",
+    "desiredBelief": "Actively chosen by mothers as the milk that builds their child's strength — bought with intent, not habit; Traded up within the franchise: standard toned milk to fortified/high-protein and value-added dairy variants; Recommended mother-to-mother as the purity that visibly powers growing kids and active families",
+    "smp": "Heritage: the purity that gives your child strength.",
+    "competition": "name: Amul · hero brands: Amul Taaza, Amul Gold, Amul Masti Curd · positioning: National cooperative ubiquity; 'The Taste of India' — trusted, wholesome, every-home dairy at value · recent moves: Aggressive quick-commerce expansion, sustained mass-media utsav-of-India storytelling, protein-fortified range extensions; name: Nandini · hero brands: Nandini Milk, Good Life, Nandini Curd · positioning: Karnataka cooperative pride; farmer-first freshness and regional trust at competitive price · recent moves: South-market fortress defence, freshness-of-farm messaging, value packs for family households; name: Mother Dairy · hero brands: Mother Dairy Milk, Classic Curd, Nutrifit · positioning: Trust and purity from the token-milk heritage; 'maternal care' cues without owning the strength benefit · recent moves: Health-forward Nutrifit push, tamper-proof packaging emphasis, urban modern-trade focus; name: Milky Mist · hero brands: Milky Mist Curd, Paneer, Cheese · positioning: Premium fresh-dairy craft; thick, rich, indulgent value-added dairy for discerning urban homes · recent moves: Aspirational premium advertising, value-added dairy portfolio, aggressive south and metro distribution",
+    "brand": "Heritage"
+  },
+  "updated": "2026-08-11 17:16"
+}

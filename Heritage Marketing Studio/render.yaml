@@ -1,0 +1,18 @@
+# One-click-ish deploy to Render (https://render.com). Push this repo to GitHub,
+# then in Render: New + → Blueprint → pick the repo. It reads this file.
+services:
+  - type: web
+    name: heritage-marketing-studio
+    runtime: docker
+    plan: starter          # free/low tier; upgrade for more RAM if brand-brief renders are slow
+    dockerfilePath: ./Dockerfile
+    autoDeploy: true
+    envVars:
+      - key: ANTHROPIC_API_KEY   # real copy + brand-brief enrichment (optional)
+        sync: false
+      - key: FAL_KEY             # real image/cinematic video (optional)
+        sync: false
+      - key: HEYGEN_API_KEY      # real avatar video (optional)
+        sync: false
+      - key: GEN_MODEL
+        value: claude-sonnet-4-6

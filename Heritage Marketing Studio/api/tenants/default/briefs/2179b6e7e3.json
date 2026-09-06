@@ -1,0 +1,162 @@
+{
+  "id": "2179b6e7e3",
+  "created": "2026-08-27 10:42",
+  "brand": "Heritage",
+  "title": "Heritage — IMC brief",
+  "format": "IMC",
+  "source": "saved",
+  "fields": {
+    "format": "IMC",
+    "status": "Draft",
+    "proposition": "Heritage: the pure milk that makes families stronger every day.",
+    "objective": "Heritage: the pure milk that makes families stronger every day.",
+    "audience": "Please draft a brief for heritage milk as a master brand creative focussing on how purity gives strength to the consumers. needscope territory orange on the affiliative side and key competition - amul, nandini, hatsun, milky mist, arokya, dodla",
+    "tone": "",
+    "category": "Indian dairy",
+    "draft": {
+      "brand": "Heritage",
+      "category": "Indian dairy",
+      "prepared_for": "Heritage Foods marketing team",
+      "competitors": [
+        {
+          "name": "Amul",
+          "hero_brands": "Amul Gold, Amul Taaza, Amul Butter",
+          "positioning": "The Taste of India — cooperative scale, ubiquity, wholesome national belonging with iconic topical wit.",
+          "positioning_note": "Anchored firmly in Belonging (Green) with heritage utility and everyday trust."
+        },
+        {
+          "name": "Nandini",
+          "hero_brands": "Nandini Milk, Nandini Curd, Nandini Ghee",
+          "positioning": "Karnataka's own cooperative — regional pride, farmer-first trust, value staple.",
+          "recent_moves": "Aggressive expansion beyond Karnataka; positioned as affordable regional trust."
+        },
+        {
+          "name": "Hatsun (Arokya)",
+          "hero_brands": "Arokya Milk, Hatsun Curd, Ibaco",
+          "positioning": "Arokya as the health-and-purity milk of the South — reliability and freshness at scale.",
+          "recent_moves": "Deepening farm-to-home cold chain and premium curd play."
+        },
+        {
+          "name": "Milky Mist",
+          "hero_brands": "Milky Mist Paneer, Curd, Cheese",
+          "positioning": "Premium, indulgent, modern dairy — texture, craft and value-added products.",
+          "recent_moves": "Heavy brand-build spend, aspirational packaging, urban premium tilt."
+        },
+        {
+          "name": "Dodla",
+          "hero_brands": "Dodla Milk, Curd, Ghee",
+          "positioning": "Value-led South Indian dairy — quality reliability without frills.",
+          "recent_moves": "Geographic expansion and modest premiumisation of value-added range."
+        }
+      ],
+      "needscope": {
+        "pins": [
+          {
+            "brand": "Heritage",
+            "x": 449,
+            "y": 205,
+            "anchor": true
+          },
+          {
+            "brand": "Amul",
+            "x": 400,
+            "y": 460,
+            "anchor": false
+          },
+          {
+            "brand": "Nandini",
+            "x": 306,
+            "y": 415,
+            "anchor": false
+          },
+          {
+            "brand": "Hatsun (Arokya)",
+            "x": 279,
+            "y": 393,
+            "anchor": false
+          },
+          {
+            "brand": "Milky Mist",
+            "x": 279,
+            "y": 247,
+            "anchor": false
+          },
+          {
+            "brand": "Dodla",
+            "x": 326,
+            "y": 405,
+            "anchor": false
+          }
+        ],
+        "bridge_territory": "Power",
+        "bridge_label": "Purity Gives Strength",
+        "reading": "Amul, Nandini, Dodla and Arokya crowd Belonging and Security — cooperative trust, regional pride and dependable purity, so those poles are over-owned. Milky Mist stretches toward Discernment with premium indulgence. Heritage sits on the warm, affiliative edge of Freedom (Orange), free to own an open, energising, self-affirming purity — with clear whitespace to bridge into Power by making purity the source of real strength."
+      },
+      "cb_ca_db_da": {
+        "cb": [
+          "Bought as a dependable daily staple — habit and availability, not active preference.",
+          "Consumed at chai-time and breakfast; rarely the hero of any health or strength occasion.",
+          "Under-represented in premium value-added baskets (protein curd, fortified milk) and younger households."
+        ],
+        "db": [
+          "Actively chosen as the milk that fuels the family — study, sport, growth, active mornings.",
+          "Trade-up within franchise: standard milk to fortified and high-protein value-added variants.",
+          "Earned share of voice among young parents and fitness-minded consumers as the purity-to-strength brand."
+        ],
+        "ca_quote": "It's clean, fresh milk that I trust for my family — reliable and pure, but honestly one good dairy is much like another.",
+        "ca_declarative": [
+          "Trust is quiet and passive.",
+          "Purity is assumed, not celebrated."
+        ],
+        "da_quote": "Heritage is pure milk that actually makes my family stronger — the goodness I can feel, not just believe.",
+        "da_declarative": [
+          "Purity is active proof of strength.",
+          "The everyday milk that builds better days."
+        ],
+        "shift_from": "assumed dependable purity",
+        "shift_to": "purity that visibly gives strength",
+        "caption": "Keep Heritage's warm, trusted purity intact and layer a single new thread on top — that this purity is what gives the family real strength, never replacing trust with a claim.",
+        "shift_line": "From assumed dependable purity to purity that visibly gives strength."
+      },
+      "smp": "Heritage: the pure milk that makes families stronger every day.",
+      "smp_defence": [
+        {
+          "competitor": "Amul",
+          "why_collapses": "Owns belonging and taste-of-India ubiquity but frames milk as wholesome habit, not as the purity that actively builds strength."
+        },
+        {
+          "competitor": "Nandini",
+          "why_collapses": "Claims regional trust and value but has no equity in strength-through-purity — it defends affordability, not transformation."
+        },
+        {
+          "competitor": "Hatsun (Arokya)",
+          "why_collapses": "Owns health-and-freshness reliability but stops at reassurance; it promises safe milk, not milk that makes you stronger."
+        },
+        {
+          "competitor": "Milky Mist",
+          "why_collapses": "Stands for premium indulgence and texture, not everyday accessible strength — its story is craft, not family vigour."
+        },
+        {
+          "competitor": "Dodla",
+          "why_collapses": "A value-quality staple with no ownable purity-to-strength narrative; it competes on price-reliability, not on building families."
+        }
+      ],
+      "smp_unlocks": {
+        "brand_line": "Pure strength, poured every day. (illustrative — not final copy)",
+        "mass_line": "Shuddhata mein hai asli shakti. (illustrative — not final copy)",
+        "activation": "'Strength of Purity' school and grassroots-sport programme fuelling young athletes and students with fortified Heritage milk, dramatising visible strength from pure milk.",
+        "product": "Heritage Strength range — high-protein and fortified milk and curd variants that productise the purity-to-strength promise across the franchise."
+      },
+      "brief_id": "2179b6e7e3"
+    }
+  },
+  "canon": {
+    "commObjective": "Heritage: the pure milk that makes families stronger every day.",
+    "targetAudience": "Please draft a brief for heritage milk as a master brand creative focussing on how purity gives strength to the consumers. needscope territory orange on the affiliative side and key competition - amul, nandini, hatsun, milky mist, arokya, dodla",
+    "smp": "Heritage: the pure milk that makes families stronger every day.",
+    "competition": "name: Amul · hero brands: Amul Gold, Amul Taaza, Amul Butter · positioning: The Taste of India — cooperative scale, ubiquity, wholesome national belonging with iconic topical wit. · positioning note: Anchored firmly in Belonging (Green) with heritage utility and everyday trust.; name: Nandini · hero brands: Nandini Milk, Nandini Curd, Nandini Ghee · positioning: Karnataka's own cooperative — regional pride, farmer-first trust, value staple. · recent moves: Aggressive expansion beyond Karnataka; positioned as affordable regional trust.; name: Hatsun (Arokya) · hero brands: Arokya Milk, Hatsun Curd, Ibaco · positioning: Arokya as the health-and-purity milk of the South — reliability and freshness at scale. · recent moves: Deepening farm-to-home cold chain and premium curd play.; name: Milky Mist · hero brands: Milky Mist Paneer, Curd, Cheese · positioning: Premium, indulgent, modern dairy — texture, craft and value-added products. · recent moves: Heavy brand-build spend, aspirational packaging, urban premium tilt.; name: Dodla · hero brands: Dodla Milk, Curd, Ghee · positioning: Value-led South Indian dairy — quality reliability without frills. · recent moves: Geographic expansion and modest premiumisation of value-added range.",
+    "brand": "Heritage",
+    "format": "IMC"
+  },
+  "updated": "2026-08-27 10:42"
+}

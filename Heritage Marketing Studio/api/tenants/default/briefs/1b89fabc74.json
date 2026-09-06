@@ -1,0 +1,151 @@
+{
+  "id": "1b89fabc74",
+  "created": "2026-08-13 19:49",
+  "brand": "Heritage",
+  "title": "Heritage — Brand",
+  "format": "Brand",
+  "source": "brand-brief-draft",
+  "fields": {
+    "brand": "Heritage",
+    "category": "Indian dairy",
+    "prepared_for": "Heritage Foods brand & marketing team",
+    "competitors": [
+      {
+        "name": "Nandini",
+        "hero_brands": "Nandini Milk, Good Life, Nandini Curd",
+        "positioning": "Karnataka's co-operative trust brand; state-backed farmer network, everyday reliability at controlled prices",
+        "recent_moves": "Aggressive expansion beyond Karnataka; heavy value messaging and government-anchored credibility"
+      },
+      {
+        "name": "Amul",
+        "hero_brands": "Amul Taaza, Amul Gold, Amul Butter",
+        "positioning": "National co-operative icon; 'The Taste of India'; ubiquity, topicality and mass belonging",
+        "recent_moves": "Topical Amul Girl campaigns, category expansion into protein and value-added dairy, deep quick-commerce presence"
+      },
+      {
+        "name": "Hatsun (Arokya)",
+        "hero_brands": "Arokya Milk, Hatsun Curd, Ibaco",
+        "positioning": "South India private-dairy scale leader; Arokya positioned on hygiene and consistent quality",
+        "recent_moves": "Wide distribution build-out, cold-chain investment, value-added dairy and ice-cream push"
+      },
+      {
+        "name": "Dodla",
+        "hero_brands": "Dodla Milk, Dodla Dairy Curd",
+        "positioning": "Telangana/AP regional challenger; farmer-sourced freshness at competitive price",
+        "recent_moves": "Geographic expansion, procurement network growth, premiumising curd and paneer"
+      },
+      {
+        "name": "Jersey (Creamline)",
+        "hero_brands": "Jersey Milk, Jersey Curd",
+        "positioning": "AP/Telangana quality-milk player; freshness and richness cues",
+        "recent_moves": "Distribution deepening under Lactalis ownership, value-added portfolio expansion"
+      }
+    ],
+    "needscope": {
+      "pins": [
+        {
+          "brand": "Heritage",
+          "x": 400,
+          "y": 195,
+          "anchor": true
+        },
+        {
+          "brand": "Amul",
+          "x": 400,
+          "y": 460,
+          "anchor": false
+        },
+        {
+          "brand": "Nandini",
+          "x": 279,
+          "y": 390,
+          "anchor": false
+        },
+        {
+          "brand": "Hatsun (Arokya)",
+          "x": 279,
+          "y": 250,
+          "anchor": false
+        },
+        {
+          "brand": "Dodla",
+          "x": 331,
+          "y": 441,
+          "anchor": false
+        },
+        {
+          "brand": "Jersey (Creamline)",
+          "x": 262,
+          "y": 245,
+          "anchor": false
+        }
+      ],
+      "bridge_territory": "Power",
+      "bridge_label": "Pure Milk, Pure Strength",
+      "reading": "Belonging is crowded — Amul and Nandini own inclusive, everyday co-operative warmth, while Dodla sits nearby on regional familiarity. Security is where quality-and-hygiene players compete, with Hatsun's Arokya and Jersey anchored on reliability and richness. Heritage sits between Belonging and Security today, but the open whitespace is Power — active, farmer-fresh nutritional strength that no competitor has claimed as their own emotional pole."
+    },
+    "cb_ca_db_da": {
+      "cb": [
+        "Bought as the dependable daily home-delivery or store milk — a routine, not a decision.",
+        "Chosen for the family's tea, curd and children's milk; rarely credited with active nutritional benefit.",
+        "Under-indexed with younger 25-44 women who default to Amul/Nandini or trade to specialist protein and A2 options."
+      ],
+      "db": [
+        "Actively chosen for its farmer-fresh, daily-checked purity across milk, curd, paneer and value-added range.",
+        "Trade-up within franchise: standard milk to fortified, high-protein and premium fresh variants.",
+        "Named by 25-44 women as their considered choice for the family's daily nutrition, not just a habit."
+      ],
+      "ca_quote": "Heritage is the fresh local milk we've always had at home — reliable, decent quality, nothing to think about.",
+      "ca_declarative": [
+        "Trust is quiet and taken for granted.",
+        "A habit, not an active choice."
+      ],
+      "da_quote": "Heritage is pure milk straight from our farmers, checked every day — real strength for my family.",
+      "da_declarative": [
+        "Active pride in pure sourcing, not passive reliance.",
+        "The purity I choose because I understand it."
+      ],
+      "shift_from": "dependable local freshness",
+      "shift_to": "chosen farmer-pure nutrition",
+      "caption": "The desired attitude layers active, farmer-pure nutritional strength on top of Heritage's existing trust — the everyday-freshness equity stays intact, a new thread of purpose is added.",
+      "shift_line": "From dependable local freshness to chosen farmer-pure nutrition."
+    },
+    "smp": "Heritage is pure nutrition, straight from the farmer, checked every day.",
+    "smp_defence": [
+      {
+        "competitor": "Amul",
+        "why_collapses": "Claims trust and taste, but its co-operative scale distances it from a visible farmer-to-you freshness promise checked daily."
+      },
+      {
+        "competitor": "Nandini",
+        "why_collapses": "Owns state-backed reliability, but leans on institutional trust rather than active daily quality-checked purity as a nutrition claim."
+      },
+      {
+        "competitor": "Hatsun (Arokya)",
+        "why_collapses": "Claims hygiene and consistency, but frames it as process safety, not farmer-source purity translated into nutrition."
+      },
+      {
+        "competitor": "Dodla",
+        "why_collapses": "Claims farmer freshness regionally, but lacks the masterbrand nutrition equity to own 'pure nutrition' credibly."
+      },
+      {
+        "competitor": "Jersey (Creamline)",
+        "why_collapses": "Claims richness and freshness, but competes on indulgent quality, not everyday farmer-pure nutritional strength."
+      }
+    ],
+    "smp_unlocks": {
+      "brand_line": "Pure milk. Pure nutrition. Checked every day. (illustrative — not final copy)",
+      "mass_line": "Seedhe kisaan se, roz jaanchi hui shuddhta. (illustrative — not final copy)",
+      "activation": "'Farm to Family' daily-purity trail — QR on pack showing the sourcing farm and that morning's quality check, plus community farmer-recognition drives. (illustrative — not final copy)",
+      "product": "Heritage Pure+ fortified and high-protein fresh range, each carrying the daily-checked farmer-source seal. (illustrative — not final copy)"
+    }
+  },
+  "canon": {
+    "currentBelief": "Bought as the dependable daily home-delivery or store milk — a routine, not a decision.; Chosen for the family's tea, curd and children's milk; rarely credited with active nutritional benefit.; Under-indexed with younger 25-44 women who default to Amul/Nandini or trade to specialist protein and A2 options.",
+    "desiredBelief": "Actively chosen for its farmer-fresh, daily-checked purity across milk, curd, paneer and value-added range.; Trade-up within franchise: standard milk to fortified, high-protein and premium fresh variants.; Named by 25-44 women as their considered choice for the family's daily nutrition, not just a habit.",
+    "smp": "Heritage is pure nutrition, straight from the farmer, checked every day.",
+    "competition": "name: Nandini · hero brands: Nandini Milk, Good Life, Nandini Curd · positioning: Karnataka's co-operative trust brand; state-backed farmer network, everyday reliability at controlled prices · recent moves: Aggressive expansion beyond Karnataka; heavy value messaging and government-anchored credibility; name: Amul · hero brands: Amul Taaza, Amul Gold, Amul Butter · positioning: National co-operative icon; 'The Taste of India'; ubiquity, topicality and mass belonging · recent moves: Topical Amul Girl campaigns, category expansion into protein and value-added dairy, deep quick-commerce presence; name: Hatsun (Arokya) · hero brands: Arokya Milk, Hatsun Curd, Ibaco · positioning: South India private-dairy scale leader; Arokya positioned on hygiene and consistent quality · recent moves: Wide distribution build-out, cold-chain investment, value-added dairy and ice-cream push; name: Dodla · hero brands: Dodla Milk, Dodla Dairy Curd · positioning: Telangana/AP regional challenger; farmer-sourced freshness at competitive price · recent moves: Geographic expansion, procurement network growth, premiumising curd and paneer; name: Jersey (Creamline) · hero brands: Jersey Milk, Jersey Curd · positioning: AP/Telangana quality-milk player; freshness and richness cues · recent moves: Distribution deepening under Lactalis ownership, value-added portfolio expansion",
+    "brand": "Heritage"
+  },
+  "updated": "2026-08-13 19:49"
+}

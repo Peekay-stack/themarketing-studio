@@ -1,0 +1,382 @@
+"""activation.py — the arithmetic behind an on-ground idea, in the posm.py pattern.
+
+`producers.py` already has the right instincts about on-ground: eleven venues, each with who it reaches,
+who has to say yes, and the trap it sets — real, well-observed prose, used today to brief a model
+generating ideas. What it does not have is a single number. There is no footfall, no sense of how many
+of the people who pass actually stop, no cost, and no answer to "is this worth doing" that does not
+require reading a paragraph and guessing.
+
+That is the same gap POSM had before `posm.py`: good judgement about the medium, and nothing underneath
+it that computes. This module is the numbers layer for the SAME eleven venues — it does not invent a
+second vocabulary. Everything here reads `producers.VENUES` and `producers.OG_ELEMENTS` by the keys they
+already use, and adds what a person actually needs to decide whether a venue is worth booking: footfall,
+intercept, dwell, cost, and what a kit still contains once the scale forces something to drop.
+
+**Nothing here is precise, and everything says so.** A footfall figure for a kirana counter is a sensible
+Indian retail default, not a measurement — the same discipline `posm.FORMATS` uses for a shelf strip's
+millimetres, and for the same reason: a number marked `[assumed]` that a person can override with a real
+site count is worth more than either a confident guess or no number at all.
+"""
+from __future__ import annotations
+
+import producers
+
+# --- footfall, dwell and intercept ---------------------------------------------------------------
+#
+# Three numbers per venue, all ranges, all `[assumed]` until someone measures the actual site.
+#
+#   footfall    people passing within earshot/eyeshot per DAY the activation runs (not per hour —
+#               the day is the unit an activation is actually booked and paid for in)
+#   intercept   the fraction of that footfall who stop long enough to be counted as reached — NOT
+#               footfall itself. A transit hub's footfall is huge and its intercept is tiny for the
+#               same reason a mall atrium's is: everybody there is already going somewhere.
+#   dwell_min   minutes a person who does stop typically stays, which is what decides whether an idea
+#               needing three minutes of demo can work here at all
+#
+# The shape that matters more than any single number: reach and intercept trade against each other.
+# Doorstep and RWA reach few and keep most of them; transit and mall atrium reach many and keep almost
+# none. Neither is the "better" venue — they answer different questions.
+FOOTFALL: dict[str, dict] = {
+    "kirana":         {"footfall": (150, 400),   "intercept": (0.12, 0.22), "dwell_min": (2, 5)},
+    "modern_trade":   {"footfall": (800, 2500),  "intercept": (0.03, 0.08), "dwell_min": (1, 3)},
+    "mall_atrium":    {"footfall": (3000, 8000), "intercept": (0.01, 0.04), "dwell_min": (2, 6)},
+    "office_complex": {"footfall": (500, 1500),  "intercept": (0.05, 0.12), "dwell_min": (1, 3)},
+    "rwa":            {"footfall": (80, 250),    "intercept": (0.20, 0.40), "dwell_min": (3, 8)},
+    "sabzi_mandi":    {"footfall": (600, 1800),  "intercept": (0.04, 0.10), "dwell_min": (1, 2)},
+    "haat":           {"footfall": (1000, 3000), "intercept": (0.06, 0.15), "dwell_min": (2, 5)},
+    "temple_festival": {"footfall": (2000, 15000), "intercept": (0.02, 0.06), "dwell_min": (1, 3)},
+    "transit":        {"footfall": (5000, 20000), "intercept": (0.005, 0.02), "dwell_min": (0.5, 1.5)},
+    "college":        {"footfall": (1000, 4000), "intercept": (0.10, 0.25), "dwell_min": (2, 6)},
+    "doorstep":       {"footfall": (40, 120),    "intercept": (0.30, 0.55), "dwell_min": (3, 10)},
+}
+
+# Every venue in producers.VENUES must have a row here. Checked once at import time rather than
+# discovered later as a missing key, because a silent gap here would make one venue quietly
+# uncomputable while looking identical to the other ten on screen.
+_missing = [v for v in producers.VENUES if v not in FOOTFALL]
+if _missing:
+    raise RuntimeError(f"activation.FOOTFALL is missing venue(s) {_missing} — every producers.VENUES "
+                       f"key needs a row or the kit sheet silently drops it")
+
+
+def footfall_range(venue: str) -> dict:
+    """The three ranges for a venue, or a clearly-marked absence for an unknown key."""
+    row = FOOTFALL.get(venue)
+    if not row:
+        return {"available": False, "footfall": None, "intercept": None, "dwell_min": None}
+    return {"available": True, "footfall": row["footfall"], "intercept": row["intercept"],
+            "dwell_min": row["dwell_min"]}
+
+
+def reach_estimate(venue: str, days: float = 1.0) -> dict:
+    """People reached and people actually intercepted, low and high, over `days` days of running.
+
+    Reach is footfall × days. Intercepted is reach × the intercept rate — the number that should
+    anchor a budget conversation, because it is the one nobody sees who did not stop.
+    """
+    row = FOOTFALL.get(venue)
+    if not row:
+        return {"available": False}
+    f_lo, f_hi = row["footfall"]
+    i_lo, i_hi = row["intercept"]
+    reach_lo, reach_hi = f_lo * days, f_hi * days
+    return {
+        "available": True,
+        "days": days,
+        "reach": (round(reach_lo), round(reach_hi)),
+        "intercepted": (round(reach_lo * i_lo), round(reach_hi * i_hi)),
+        "dwell_min": row["dwell_min"],
+        "source": "[assumed] — sensible Indian retail defaults; a real site count always wins",
+    }
+
+
+def cost_per_contact(venue: str, total_cost: float, days: float = 1.0) -> dict:
+    """What one intercepted person costs, given what the day actually costs to run.
+
+    `total_cost` is everything: stall or van hire, staff, props, the leave-behind, and any permission
+    fee — the whole day, not just the media buy, because on-ground has no media buy and the trap is
+    always in the parts people forget to add up. Refuses rather than divides by a made-up number: if
+    the venue is not on file or the cost is not a real figure, this says so instead of returning a
+    number nobody supplied.
+    """
+    if total_cost is None or total_cost <= 0:
+        return {"available": False,
+                "why": "No real cost given. Add up the stall or van, staff, props, the leave-behind and "
+                       "any permission fee for the whole day — cost-per-contact from a guessed cost is "
+                       "a guess wearing a decimal point."}
+    r = reach_estimate(venue, days)
+    if not r["available"]:
+        return {"available": False, "why": f"'{venue}' is not a venue this module knows."}
+    lo, hi = r["intercepted"]
+    if lo <= 0:
+        return {"available": False, "why": "The intercepted-range floor is zero at this footfall and "
+                                           "duration — too little reach to divide a cost across."}
+    # Cost per contact falls as intercepted rises, so the HIGH intercept estimate gives the LOW cost.
+    return {"available": True, "total_cost": total_cost, "days": days,
+            "intercepted_range": (lo, hi),
+            "cost_per_contact": (round(total_cost / hi, 2), round(total_cost / lo, 2)),
+            "source": r["source"]}
+
+
+# --- permissions: structure added to the existing prose, not a second copy of it -----------------
+#
+# `producers.VENUES[v]["access"]` already says WHO has to agree, in a sentence written for a person
+# reading it once. This adds the two numbers that sentence does not carry: how far ahead to start
+# asking, and roughly what tier of cost the permission itself sits in (separate from the activation's
+# own build cost). Keyed to the same venues, nothing duplicated.
+PERMISSION_LEAD: dict[str, dict] = {
+    "kirana":          {"lead_days": (0, 2),   "cost_tier": "free–low", "formal": False},
+    "modern_trade":     {"lead_days": (21, 45), "cost_tier": "paid",     "formal": True},
+    "mall_atrium":      {"lead_days": (14, 30), "cost_tier": "paid",     "formal": True},
+    "office_complex":   {"lead_days": (5, 14),  "cost_tier": "free–low", "formal": True},
+    "rwa":              {"lead_days": (7, 21),  "cost_tier": "free–low", "formal": True},
+    "sabzi_mandi":      {"lead_days": (0, 3),   "cost_tier": "free–low", "formal": False},
+    "haat":             {"lead_days": (3, 7),   "cost_tier": "free–low", "formal": False},
+    "temple_festival":  {"lead_days": (30, 60), "cost_tier": "free–paid","formal": True},
+    "transit":          {"lead_days": (30, 60), "cost_tier": "paid",     "formal": True},
+    "college":          {"lead_days": (10, 21), "cost_tier": "free–low", "formal": True},
+    "doorstep":         {"lead_days": (5, 14),  "cost_tier": "free",     "formal": True},
+}
+
+_missing2 = [v for v in producers.VENUES if v not in PERMISSION_LEAD]
+if _missing2:
+    raise RuntimeError(f"activation.PERMISSION_LEAD is missing venue(s) {_missing2}")
+
+
+def permission_timeline(venue: str, start_by: str = "") -> dict:
+    """Lead time and cost tier for one venue's access, plus the existing prose describing WHO."""
+    v = producers.VENUES.get(venue)
+    lead = PERMISSION_LEAD.get(venue)
+    if not (v and lead):
+        return {"available": False}
+    lo, hi = lead["lead_days"]
+    return {"available": True, "who": v.get("access", ""), "lead_days": (lo, hi),
+            "cost_tier": lead["cost_tier"], "formal": lead["formal"],
+            "ask_by": ("start asking now" if not start_by else
+                      f"start asking {hi} days before {start_by} at the latest, {lo} if it can move"),
+            "source": "[assumed] — a real contact at the venue may quote a different timeline; "
+                      "theirs wins."}
+
+
+# --- the drop-out ladder for OG_ELEMENTS, at three scales -----------------------------------------
+#
+# `producers.OG_ELEMENTS` names nine things an activation can be made of. Not every idea needs all
+# nine, and this is not about that — `elements_for()` in producers.py already answers which of the
+# nine a given idea needs. This is about what happens when the SCALE forces a cut: a single-day RWA
+# stall and a five-city mall tour cannot both afford the same build, and deciding what goes should be a
+# rule, not eleven separate arguments — the same reasoning behind POSM's drop-out ladder, applied to a
+# different medium.
+SCALES = ("single-site", "multi-site", "tour")
+
+# Fixed order. Read top to bottom as what survives; bottom to top as what goes first when the scale
+# tightens. `capture` never drops — an activation with no way to turn a person into a number was not
+# measurable at any scale, and cutting it first is how a tour ships without ever knowing if it worked.
+DROP_ORDER: tuple[str, ...] = (
+    "truck", "van", "leave_behind", "prop", "stall", "uniform", "education", "permissions", "capture",
+)
+
+SCALE_TIERS: dict[str, dict] = {
+    "single-site": {
+        "label": "Single site, one day",
+        "dropped": (),
+        "what": "Everything the idea calls for. One stall or van, one crew, one site.",
+    },
+    "multi-site": {
+        "label": "Multiple sites, one city, one week",
+        "dropped": ("truck",),
+        "what": "Drop the truck — a van or stall repeats across sites instead of one rig staying put. "
+                "Everything else travels.",
+    },
+    "tour": {
+        "label": "Multiple cities, weeks",
+        "dropped": ("truck", "van", "leave_behind"),
+        "what": "Drop the truck and the van — a tour is staffed and re-stocked locally per city rather "
+                "than driven between them — and drop the leave-behind, which is the first cost that "
+                "stops making sense multiplied by every stop. Capture and education survive at every "
+                "scale: a tour that cannot say what happened, or whose promoters go off-script city to "
+                "city, is not one activation, it is several unrelated ones wearing the same T-shirt.",
+    },
+}
+
+NEVER_DROPPED = ("capture", "education")
+
+
+def elements_at_scale(idea_elements: list[str], scale: str) -> dict:
+    """Which of an idea's own elements survive at this scale, and which the ladder drops.
+
+    `idea_elements` is the output of `producers.elements_for()` — the keys ONE idea actually needs, not
+    every key in `OG_ELEMENTS`. Dropping is scoped to what the idea has: a doorstep idea with no truck
+    to begin with does not get a finding about dropping one.
+    """
+    tier = SCALE_TIERS.get(scale, SCALE_TIERS["single-site"])
+    would_drop = set(tier["dropped"]) - set(NEVER_DROPPED)
+    have = [e for e in idea_elements if e in producers.OG_ELEMENTS]
+    dropped = [e for e in have if e in would_drop]
+    kept = [e for e in have if e not in would_drop]
+    return {
+        "scale": scale, "label": tier["label"], "what": tier["what"],
+        "kept": kept, "kept_labels": [producers.OG_ELEMENTS.get(e, e) for e in kept],
+        "dropped": dropped, "dropped_labels": [producers.OG_ELEMENTS.get(e, e) for e in dropped],
+        "never_dropped": [e for e in have if e in NEVER_DROPPED],
+    }
+
+
+# --- the kit sheet: one idea, one venue, one scale, one real cost ---------------------------------
+
+# Whether the key visual leads an element, or is only something it must not contradict.
+#
+# The question came from use: "should the stall link to the KV or be an independent generation?" The
+# answer given was "it could be either, based on the selected idea (RWA or college campus or modern
+# trade outlet)" — which is right, and it means this cannot be one rule for all nine elements.
+#
+# So it is derived, not tabulated. A 9-elements-by-11-venues matrix would be 99 judgements invented at
+# a desk, and this module's whole discipline is that every number comes from a table or an arithmetic
+# step. Two inputs, both already here:
+#
+#   1. What the element IS. A van is a moving surface whichever venue it visits; a prop is the thing
+#      being demonstrated, not a canvas; permissions are paperwork. That does not vary by venue.
+#   2. For the elements that DO vary — the stall above all — the venue's own intercept and dwell.
+#      A place where one person in fifty stops for ninety seconds has to be read at distance, so the
+#      key visual is the piece. A place where one in three stops for six minutes is a conversation,
+#      and there the demonstration leads while the visual only has to agree with it.
+KV_BY_NATURE: dict[str, str] = {
+    "van":          "source",     # a moving surface, legible at speed, whatever the venue
+    "truck":        "source",
+    "leave_behind": "source",     # printed, carries the line and the pack
+    "prop":         "none",       # the thing being demonstrated is not a canvas for the visual
+    "uniform":      "reference",  # brand codes, not the visual's composition
+    "education":    "none",       # what a promoter says and does
+    "permissions":  "none",       # paperwork
+    "capture":      "none",       # a data mechanism
+}
+
+# Elements whose answer depends on the venue rather than on what they are.
+KV_BY_VENUE = ("stall",)
+
+# How each element is referred to in a sentence. Without this the reasons read "A education is not a
+# surface" and "A leave_behind is a surface" - the key name pushed into a slot that wanted a noun.
+KV_SUBJECT: dict[str, str] = {
+    "van": "A van", "truck": "A truck", "leave_behind": "A leave-behind", "prop": "A prop",
+    "uniform": "A uniform", "education": "Promoter training", "permissions": "Permissions",
+    "capture": "A capture mechanism", "stall": "A stall",
+}
+
+
+def _subject(element: str) -> str:
+    return KV_SUBJECT.get(element, f"{element!r}")
+
+
+def _mins(n: float) -> str:
+    """'1 minute' / '5.5 minutes'. The first version printed 'for around 1 minutes'."""
+    return f"{n:g} minute" + ("" if abs(n - 1.0) < 1e-9 else "s")
+
+# Below either of these the piece has to stop a stranger at a distance, so the visual leads.
+KV_INTERCEPT_BELOW = 0.10
+KV_DWELL_BELOW_MIN = 3.0
+
+
+def _mid(pair) -> float:
+    try:
+        lo, hi = pair
+        return (float(lo) + float(hi)) / 2.0
+    except Exception:
+        return 0.0
+
+
+def kv_role(element: str, venue: str) -> dict:
+    """Whether the key visual is the SOURCE of this element, a REFERENCE for it, or NOT USED.
+
+    Returns `{role, why}`. `role` is 'source' | 'reference' | 'none' | '' (unknown element or venue),
+    and `why` always cites what decided it — the element's nature, or the venue's own two numbers.
+    """
+    element = str(element or "").strip().lower()
+    venue = str(venue or "").strip().lower()
+    if element in KV_BY_NATURE:
+        role = KV_BY_NATURE[element]
+        subj = _subject(element)
+        why = {
+            "source": f"{subj} is a surface the visual travels on, at any venue.",
+            "reference": f"{subj} carries the brand's codes rather than the visual's composition, so it "
+                         f"has to agree with the key visual without reproducing it.",
+            # An em dash rather than a verb, because `subj` is sometimes plural — the first
+            # version read "Permissions is not a surface".
+            "none": f"{subj} — not a surface for a visual. Briefing it from the key visual "
+                    f"would dress up something that is not artwork.",
+        }[role]
+        return {"role": role, "why": why}
+
+    if element not in KV_BY_VENUE:
+        return {"role": "", "why": f"{element!r} is not an element this module knows, so it has no "
+                                   f"stated relationship to the key visual."}
+
+    f = FOOTFALL.get(venue)
+    v = producers.VENUES.get(venue) or {}
+    if not f:
+        return {"role": "", "why": f"'{venue or '(none)'}' is not one of this idea's venues, so the "
+                                   f"venue cannot decide whether the visual leads. Choose it first."}
+
+    icept, dwell = _mid(f["intercept"]), _mid(f["dwell_min"])
+    label = v.get("label", venue)
+    at_distance = icept < KV_INTERCEPT_BELOW or dwell < KV_DWELL_BELOW_MIN
+    if at_distance:
+        return {"role": "source",
+                "why": (f"At {label} about {round(icept * 100)}% of passers stop, for around "
+                        f"{_mins(dwell)}. That is a piece read at a distance before anyone decides "
+                        f"to approach, so the key visual is what the {element} is made of.")}
+    return {"role": "reference",
+            "why": (f"At {label} about {round(icept * 100)}% of passers stop, for around {_mins(dwell)}. "
+                    f"That is long enough to be a conversation, so the demonstration leads "
+                    f"and the key visual only has to agree with it — briefing the {element} as a "
+                    f"render of the visual would build a poster where a table is needed.")}
+
+
+def kit_sheet(idea: dict, *, scale: str = "single-site", total_cost: float | None = None,
+              days: float = 1.0, start_by: str = "") -> dict:
+    """Everything a person needs to decide whether to book this idea at this venue. Computed, not
+    generated — the same discipline as `posm.adaptation()`: every number here comes from a table or an
+    arithmetic step, never from a model.
+
+    Refuses cleanly rather than guessing at the two things nobody can compute for you: a venue this
+    module has never heard of, and a cost nobody has actually added up.
+    """
+    venue = str((idea or {}).get("venue") or "").strip()
+    v = producers.VENUES.get(venue)
+    if not v:
+        return {"available": False,
+                "why": f"'{venue or '(none)'}' is not one of this idea's venues. Choose the idea's "
+                       f"venue first — an activation is not portable across venues, and a kit sheet "
+                       f"for the wrong one is answering a question nobody asked."}
+
+    scale = scale if scale in SCALE_TIERS else "single-site"
+    els = producers.elements_for(idea) if idea else []
+    el_keys = [e.get("key") for e in els if isinstance(e, dict) and e.get("key")]
+
+    return {
+        "available": True,
+        "venue": venue, "venue_label": v.get("label", venue),
+        "who": v.get("who", ""), "trap": v.get("trap", ""),
+        "reach": reach_estimate(venue, days),
+        "cost": cost_per_contact(venue, total_cost, days) if total_cost else
+                {"available": False, "why": "No cost given yet — add up the day's real spend to see "
+                                            "cost-per-contact."},
+        "permission": permission_timeline(venue, start_by),
+        "elements": elements_at_scale(el_keys, scale),
+        # Per element, whether the key visual is what it is made of, something it must agree with,
+        # or not involved. Derived from the element and this venue's own numbers — see `kv_role`.
+        "kv": {k: kv_role(k, venue) for k in el_keys},
+        "scales": {k: v2["label"] for k, v2 in SCALE_TIERS.items()},
+    }
+
+
+def status() -> dict:
+    """Everything a screen needs to render its choices from data — the venues, their numbers and the
+    scale ladder — rather than a hard-coded list."""
+    return {
+        "venues": producers.VENUES,
+        "footfall": FOOTFALL,
+        "permission_lead": PERMISSION_LEAD,
+        "elements": producers.OG_ELEMENTS,
+        "scales": SCALE_TIERS,
+        "drop_order": list(DROP_ORDER),
+        "never_dropped": list(NEVER_DROPPED),
+    }

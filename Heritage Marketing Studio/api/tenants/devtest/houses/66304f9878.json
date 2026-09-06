@@ -1,0 +1,118 @@
+{
+  "id": "66304f9878",
+  "brand": "Heritage Foods",
+  "brief": {},
+  "created": "2026-08-10 22:07",
+  "updated": "2026-08-10 22:07",
+  "nodes": {
+    "core": {
+      "layer": "core",
+      "options": [
+        {
+          "id": "e140084d",
+          "text": "The strength of pure milk",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-10 22:07"
+        }
+      ],
+      "chosen": [
+        "e140084d"
+      ],
+      "sig": "",
+      "generated_under": ""
+    },
+    "emotional": {
+      "layer": "emotional",
+      "options": [
+        {
+          "id": "ff81e95a",
+          "text": "A mother who chose well",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-10 22:07"
+        }
+      ],
+      "chosen": [
+        "ff81e95a"
+      ],
+      "sig": "",
+      "generated_under": ""
+    },
+    "functional": {
+      "layer": "functional",
+      "options": [
+        {
+          "id": "24dff2a4",
+          "text": "Tested twice",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-10 22:07"
+        }
+      ],
+      "chosen": [
+        "24dff2a4"
+      ],
+      "sig": "",
+      "generated_under": ""
+    },
+    "rtb_emotional": {
+      "layer": "rtb_emotional",
+      "options": [],
+      "chosen": [],
+      "sig": "",
+      "generated_under": ""
+    },
+    "rtb_functional": {
+      "layer": "rtb_functional",
+      "options": [
+        {
+          "id": "b327fd8d",
+          "text": "Cold chain audited",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-10 22:07"
+        },
+        {
+          "id": "fdd564d7",
+          "text": "FSSAI certified",
+          "note": "",
+          "source": "user",
+          "tag": "",
+          "added": "2026-08-10 22:07"
+        }
+      ],
+      "chosen": [
+        "b327fd8d",
+        "fdd564d7"
+      ],
+      "sig": "",
+      "generated_under": ""
+    },
+    "proof": {
+      "layer": "proof",
+      "options": [],
+      "chosen": [],
+      "sig": "",
+      "generated_under": ""
+    },
+    "culture": {
+      "layer": "culture",
+      "options": [],
+      "chosen": [],
+      "sig": "",
+      "generated_under": ""
+    },
+    "medium": {
+      "layer": "medium",
+      "options": [],
+      "chosen": [],
+      "sig": "",
+      "generated_under": ""
+    }
+  }
+}

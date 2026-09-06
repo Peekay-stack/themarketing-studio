@@ -1,0 +1,78 @@
+{
+  "id": "fbf6b87808",
+  "created": "2026-08-11 13:29",
+  "name": "Heritage Foods",
+  "category": "Dairy — milk, curd, and value-added dairy",
+  "market": "India, strongest across South India (Telangana, Andhra Pradesh, Karnataka, Tamil Nadu), expanding nationally",
+  "master_idea": "Pure Doodh Ki Shakti — the strength of pure milk",
+  "positioning": "The purest everyday milk for families who will not compromise",
+  "tone": "Warm, wholesome and reassuring, with a premium modern finish",
+  "hero_product": "Heritage Pure Milk",
+  "notes": "A daily cold-chain category: general trade and home delivery dominate, and quick commerce is less disruptive here than in snacks or beverages.",
+  "hashtags": [
+    "#PureDoodhKiShakti",
+    "#HeritageFoods"
+  ],
+  "mandatories": [
+    "FSSAI mark",
+    "the line 'Pure Doodh Ki Shakti'"
+  ],
+  "competitors": [
+    "Amul",
+    "Nandini",
+    "Dodla",
+    "Arokya",
+    "loose/unbranded milk"
+  ],
+  "colours": {
+    "primary": "Deep Forest",
+    "secondary": "Cream",
+    "accent": "Ghee gold"
+  },
+  "avoid": [],
+  "updated": "2026-09-05 13:29",
+  "active": true,
+  "category_axis": "",
+  "regulator": "",
+  "purchase_cycle": "",
+  "decider": "",
+  "payer": "",
+  "user": "",
+  "cheap_alternative": "",
+  "price_tier": "",
+  "banned_words": [],
+  "channels": [],
+  "claims": [],
+  "logo": "/brand-logo/fbf6b87808",
+  "logo_file": "fbf6b87808-logo.png",
+  "states": [
+    "ap",
+    "tg"
+  ],
+  "languages": [
+    "te",
+    "en"
+  ],
+  "states_unresolved": [],
+  "languages_unresolved": [],
+  "entry_points": [],
+  "packs": [],
+  "market_share": [],
+  "fonts": "",
+  "dos": [],
+  "palette": [],
+  "approval_hierarchy": [
+    {
+      "level": 1,
+      "title": "Brand Manager",
+      "primary_user_id": "ravi",
+      "backup_user_id": "meera"
+    },
+    {
+      "level": 2,
+      "title": "CMO",
+      "primary_user_id": "ananya",
+      "backup_user_id": ""
+    }
+  ]
+}

@@ -1,0 +1,116 @@
+{
+  "id": "e9466dedfa",
+  "brand": "Heritage Foods",
+  "house": "85634656ac",
+  "created": "2026-08-10 22:59",
+  "updated": "2026-08-10 22:59",
+  "round": 0,
+  "platforms": [
+    {
+      "name": "The Named Dairy",
+      "idea": "Every pack carries the name of the dairy that filled it.",
+      "mechanic": "Name the dairy on the pack, then let each medium point at it.",
+      "territory": "The village behind the bottle",
+      "proof": "Traceability to a named dairy",
+      "why": "",
+      "rtb": "0ba00aac",
+      "id": "8602654e",
+      "source": "user",
+      "added": "2026-08-10 22:59",
+      "round": 0,
+      "built_from": "",
+      "expressions": {
+        "video": "One dairy, one morning, one bottle leaving.",
+        "social": "",
+        "posm": "Shelf strip naming the dairy nearest this shop.",
+        "activation": "",
+        "incentive": "Retailer can say whose milk this is — provenance sells at the counter."
+      }
+    },
+    {
+      "name": "Warmth",
+      "idea": "Celebrate mothers.",
+      "mechanic": "Celebrate the everyday warmth of Indian mothers.",
+      "territory": "",
+      "proof": "",
+      "why": "",
+      "rtb": "0ba00aac",
+      "id": "a5d89b9d",
+      "source": "user",
+      "added": "2026-08-10 22:59",
+      "round": 0,
+      "built_from": "",
+      "expressions": {
+        "video": "x",
+        "social": "z",
+        "posm": "y",
+        "activation": "",
+        "incentive": ""
+      }
+    },
+    {
+      "name": "Fair Pay",
+      "idea": "Show the farmer's better price.",
+      "mechanic": "Print the farmgate price on every pack each month.",
+      "territory": "",
+      "proof": "",
+      "why": "",
+      "rtb": "unsrc1",
+      "id": "a99ba55f",
+      "source": "user",
+      "added": "2026-08-10 22:59",
+      "round": 0,
+      "built_from": "",
+      "expressions": {
+        "video": "a",
+        "social": "c",
+        "posm": "b",
+        "activation": "",
+        "incentive": ""
+      }
+    },
+    {
+      "name": "One Long Take",
+      "idea": "A single unbroken shot.",
+      "mechanic": "One take, one morning, repeated each year with a new dairy.",
+      "territory": "",
+      "proof": "",
+      "why": "",
+      "rtb": "0ba00aac",
+      "id": "dc6c88eb",
+      "source": "user",
+      "added": "2026-08-10 22:59",
+      "round": 0,
+      "built_from": "",
+      "expressions": {
+        "video": "the whole thing is the film",
+        "social": "",
+        "posm": "",
+        "activation": "",
+        "incentive": ""
+      }
+    },
+    {
+      "name": "Spill",
+      "idea": "Milk being wasted shows why care matters.",
+      "mechanic": "Show wasted milk, then show the care that prevents it.",
+      "territory": "",
+      "proof": "",
+      "why": "",
+      "rtb": "0ba00aac",
+      "id": "12bd00c0",
+      "source": "user",
+      "added": "2026-08-10 22:59",
+      "round": 0,
+      "built_from": "",
+      "expressions": {
+        "video": "a",
+        "social": "c",
+        "posm": "b",
+        "activation": "",
+        "incentive": ""
+      }
+    }
+  ],
+  "chosen": ""
+}

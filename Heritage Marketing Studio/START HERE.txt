@@ -1,0 +1,38 @@
+HERITAGE MARKETING STUDIO - full version - how to run
+======================================================
+
+STEP 1 - install Python (one time)
+  - Get it from https://www.python.org/downloads/
+  - In the installer, TICK "Add python.exe to PATH", then Install.
+  - (Optional) Node.js from https://nodejs.org only if you want the NeedScope / CB-CA
+    charts embedded inside the IMC brief Word file. Not required to run.
+
+STEP 2 - EXTRACT this zip first
+  - Right-click the .zip -> "Extract All..." -> Extract.
+  - Open the extracted folder. You should see an "api" folder sitting next to
+    "Start Heritage Studio.bat".  (Do NOT run the .bat from inside the zip preview.)
+
+STEP 3 - double-click "Start Heritage Studio.bat"
+  First run it will:
+    - build a private Python environment and install dependencies (a few minutes)
+    - open a .env file in Notepad. Put your key right after ANTHROPIC_API_KEY= so the
+      line reads:   ANTHROPIC_API_KEY=sk-ant-...    then SAVE (Ctrl+S) and CLOSE Notepad.
+    - it will NOT start until it detects the key, so you can't miss this step.
+    - start the server and open http://127.0.0.1:8000
+
+  To stop: press Ctrl+C in the black window, or close it.
+  To start again later: double-click the .bat (fast after the first time).
+
+VERIFY / TROUBLESHOOT
+  - While running, open http://127.0.0.1:8000/health  ->  it should show
+      {"ok":true,"anthropic":true,...}    ("anthropic":true means your key is seen.)
+  - "Check keys.bat" reports True/False for your keys without showing them.
+  - If anything fails, a "heritage-log.txt" is created next to the .bat and opened for you;
+    send its contents for help.
+  - To reinstall dependencies from scratch: delete  api\.deps-installed  and the  api\.venv
+    folder, then run the .bat again.
+
+NOTES
+  - Works with NO keys too (placeholder copy + manual editing). The Anthropic key turns on
+    all AI text and the "Draft brief with AI" button.
+  - First load needs internet (React, SheetJS and fonts come from a CDN).

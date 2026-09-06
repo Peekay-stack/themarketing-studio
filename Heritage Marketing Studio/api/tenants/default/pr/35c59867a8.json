@@ -1,0 +1,24 @@
+{
+  "id": "35c59867a8",
+  "brand": "Heritage Foods",
+  "mode": "campaign",
+  "kind": "",
+  "phase": "launch",
+  "plan": "d684b76657",
+  "house": "68c50487e3",
+  "execution": "",
+  "created": "2026-08-27 20:31",
+  "updated": "2026-08-27 20:32",
+  "objectives": [
+    {
+      "id": "49111b4b",
+      "statement": "Explain the premium: Build fame for 'Pure Doodh Ki Shakti' as the purest everyday milk, and make the unbroken cold chain believable enough to justify choosing packed over loose.",
+      "statement_id": "f0de3882",
+      "level": "communication",
+      "rung": "explain",
+      "proof": "",
+      "note": ""
+    }
+  ],
+  "messages": []
+}

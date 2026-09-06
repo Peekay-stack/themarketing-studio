@@ -1,0 +1,450 @@
+{
+  "id": "d684b76657",
+  "brand": "Heritage Foods",
+  "house": "68c50487e3",
+  "created": "2026-08-27 20:23",
+  "updated": "2026-09-05 18:54",
+  "project": "Heritage — house, August 2026",
+  "balance": {
+    "brand_share": 65,
+    "reason": "restored after approval test",
+    "basis": "year",
+    "declared": true,
+    "source": "user"
+  },
+  "nodes": {
+    "objectives": {
+      "layer": "objectives",
+      "rows": [
+        {
+          "level": "business",
+          "statement": "Grow Heritage Pure Milk volume and value in core South markets while extending national distribution.",
+          "measure": "leadership + finance to set: volume/value growth %",
+          "by_when": "board to set FY window",
+          "id": "7e1dd968",
+          "source": "model",
+          "added": "2026-08-27 20:23"
+        },
+        {
+          "level": "marketing",
+          "statement": "Convert loose/unbranded milk buyers and win share from Nandini, Amul and Dodla by making packed daily-fresh milk the default household choice.",
+          "measure": "penetration + repeat-purchase rate in core markets; marketing to set target %",
+          "by_when": "marketing to set, aligned to business window",
+          "id": "e9e57aa2",
+          "source": "model",
+          "added": "2026-08-27 20:23"
+        },
+        {
+          "level": "communication",
+          "statement": "Build fame for 'Pure Doodh Ki Shakti' as the purest everyday milk, and make the unbroken cold chain believable enough to justify choosing packed over loose.",
+          "measure": "prompted brand awareness + purity/purity-of-cold-chain attribute association, tracked pre/post",
+          "by_when": "measurement baseline before first burst, then quarterly",
+          "id": "f0de3882",
+          "source": "model",
+          "added": "2026-08-27 20:23"
+        }
+      ],
+      "sig": "",
+      "house_under": "9e13c9180ee98575"
+    },
+    "audiences": {
+      "layer": "audiences",
+      "rows": [
+        {
+          "audience": "Loose/unbranded milk households in core South markets — buy daily from a vendor or dairy, boil and skim at home",
+          "rank": "1",
+          "believes_now": "Loose milk is fresher because they see it that morning; packed milk is processed, older, or thinned. Their trust is in the vendor's face, not a brand. The one thing they cannot check for themselves is whether the milk stayed cold from farm to door — that gap is the opening.",
+          "pillar": "functional",
+          "id": "7b459c4a",
+          "source": "model",
+          "added": "2026-08-27 20:24"
+        },
+        {
+          "audience": "Packed-milk buyers loyal to Nandini, Amul or Dodla in core South markets",
+          "rank": "2",
+          "believes_now": "They already accept packed daily-fresh milk; the co-op or incumbent is a decade-old habit, cheap and everywhere. They see little reason to switch because on purity all packed milk feels the same to them. The lever is meaning, not proof — whose milk makes the morning feel like the family is running ahead.",
+          "pillar": "emotional",
+          "id": "e7848a1c",
+          "source": "model",
+          "added": "2026-08-27 20:24"
+        },
+        {
+          "audience": "Young urban parents, nutrition-anxious, in core-market metros and tier-1 towns",
+          "rank": "3",
+          "believes_now": "They read labels and worry about what is added to or missing from a child's milk. They will listen to a purity argument, but what actually moves them is what the milk does for the child — better nourishment, visible strength in the growing years — not the logistics behind it.",
+          "pillar": "emotional",
+          "id": "a84862d9",
+          "source": "model",
+          "added": "2026-08-27 20:24"
+        },
+        {
+          "audience": "Households in national-expansion markets outside the South (new distribution footprint)",
+          "rank": "4",
+          "believes_now": "No prior relationship with Heritage; default to whatever local brand or loose milk they know. Neither pillar lands until basic fame exists — target rank and budget for this segment: marketing to confirm against national rollout pace. If forced to lead, purity travels better than a family-morning cue in an unfamiliar market.",
+          "pillar": "functional",
+          "id": "a72c1cd8",
+          "source": "model",
+          "added": "2026-08-27 20:24"
+        }
+      ],
+      "sig": "",
+      "house_under": "b9e687ebb9f31d0b"
+    },
+    "channels": {
+      "layer": "channels",
+      "rows": [
+        {
+          "channel": "Cold-chain proof film — one continuous clock, farm-to-doorstep, Telugu/Kannada/Tamil cuts, 40s hero + 15s cutdowns",
+          "medium": "tv",
+          "role": "proof",
+          "job": "Make 'the cold never breaks' believable to loose-milk households — the one thing they can't check for themselves",
+          "measure": "7567b1e1",
+          "side": "brand",
+          "share": "22",
+          "owner": "Brand + agency creative",
+          "lead": "yes",
+          "id": "0127c783",
+          "source": "user",
+          "added": "2026-08-27 20:25",
+          "edited": "2026-08-27 20:29"
+        },
+        {
+          "channel": "Regional TV & connected-TV reach buy, South GEC/news day-parts around morning routine",
+          "medium": "ott",
+          "role": "reach",
+          "job": "Build fame among packed-milk loyalists and loose-milk households who don't yet think of Heritage",
+          "measure": "16558660",
+          "side": "brand",
+          "share": "18",
+          "owner": "Media agency",
+          "lead": "",
+          "id": "85ddace7",
+          "source": "user",
+          "added": "2026-08-27 20:25",
+          "edited": "2026-08-27 20:29"
+        },
+        {
+          "channel": "Route-level OOH on milk-vendor and dairy-dense streets — steel-vessel-on-flame hero image, #PureDoodhKiShakti",
+          "medium": "ooh",
+          "role": "reach",
+          "job": "Own the daily-fresh street context where loose milk is bought",
+          "measure": "16558660",
+          "side": "brand",
+          "share": "9",
+          "owner": "Media agency + regional field",
+          "lead": "",
+          "id": "0fa36f23",
+          "source": "user",
+          "added": "2026-08-27 20:25",
+          "edited": "2026-08-27 20:30"
+        },
+        {
+          "channel": "Vernacular social video — pre-dawn boil, first-coffee ritual, ghee-gold cream band, 9:16 reels",
+          "medium": "social",
+          "role": "reach",
+          "job": "Carry the family-morning meaning to young urban parents and packed-milk loyalists",
+          "measure": "16558660",
+          "side": "brand",
+          "share": "11",
+          "owner": "Social team + agency",
+          "lead": "",
+          "id": "bf0a9dd3",
+          "source": "user",
+          "added": "2026-08-27 20:25",
+          "edited": "2026-08-27 20:30"
+        },
+        {
+          "channel": "Regional-language creator partnerships — food/mom creators showing the morning ritual, not lab claims",
+          "medium": "influencer",
+          "role": "advocacy",
+          "job": "Get trusted local voices to carry 'runs ahead' to nutrition-anxious parents",
+          "measure": "a7c69e34",
+          "side": "brand",
+          "share": "7",
+          "owner": "Influencer lead — to be named by marketing",
+          "lead": "",
+          "id": "470e168d",
+          "source": "user",
+          "added": "2026-08-27 20:25",
+          "edited": "2026-08-27 20:30"
+        },
+        {
+          "channel": "General-trade retail activation — crate branding, fridge stickers, first-time-buyer trial offer at kirana & dairy outlets",
+          "medium": "in-store",
+          "role": "conversion",
+          "job": "Turn intent into first pack at the point loose milk is normally bought",
+          "measure": "5bc23774",
+          "side": "activation",
+          "share": "14",
+          "owner": "Sales / trade marketing",
+          "lead": "",
+          "id": "4ed5d51c",
+          "source": "user",
+          "added": "2026-08-27 20:25",
+          "edited": "2026-08-27 20:30"
+        },
+        {
+          "channel": "Home-delivery / subscription push — onboarding offer, morning-slot sign-up, in-app + doorstep leaflet",
+          "medium": "home-delivery",
+          "role": "conversion",
+          "job": "Convert daily-vendor households to a standing Heritage delivery — the direct substitute for the loose-milk habit",
+          "measure": "5bc23774",
+          "side": "activation",
+          "share": "10",
+          "owner": "D2C / home-delivery ops",
+          "lead": "",
+          "id": "2b4ffa16",
+          "source": "user",
+          "added": "2026-08-27 20:25",
+          "edited": "2026-08-27 20:30"
+        },
+        {
+          "channel": "CRM & existing-subscriber advocacy — referral, review prompts, ghee-gold cream photo challenge",
+          "medium": "crm",
+          "role": "advocacy",
+          "job": "Get current buyers to carry the message and pull in neighbours",
+          "measure": "a7c69e34",
+          "side": "brand",
+          "share": "5",
+          "owner": "CRM lead — to be named by marketing",
+          "lead": "",
+          "id": "eef1f311",
+          "source": "user",
+          "added": "2026-08-27 20:25",
+          "edited": "2026-08-27 20:30"
+        },
+        {
+          "channel": "National-expansion holding line — purity-led reach in new footprint, phased to rollout pace",
+          "medium": "digital-video",
+          "role": "reach",
+          "job": "Build basic fame in non-South markets where neither pillar lands yet; lead on purity, not family-morning",
+          "measure": "16558660",
+          "side": "brand",
+          "share": "4",
+          "owner": "Marketing to confirm scope vs rollout pace",
+          "lead": "",
+          "id": "2f263505",
+          "source": "user",
+          "added": "2026-08-27 20:25",
+          "edited": "2026-08-27 20:30"
+        }
+      ],
+      "sig": "",
+      "house_under": "7504d294cbc53b10"
+    },
+    "balance": {
+      "layer": "balance",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    },
+    "phases": {
+      "layer": "phases",
+      "rows": [
+        {
+          "phase": "Phase 1 — Make the cold-chain believable",
+          "window": "Weeks 1–8",
+          "occasion": "The pre-dawn boil — milk hitting the vessel and rising to foam before the household wakes. This is where 'the cold never breaks' either lands or doesn't; the household boils the milk precisely because it doesn't trust it.",
+          "channels": "Cold-chain proof film (lead, TV + cutdowns); Regional TV & CTV reach buy; Route-level OOH on dairy-dense streets; Vernacular social video",
+          "hands_over": "A household that now believes the purity claim — intent the conversion phase can act on. Also hands the proof film's best-performing cuts to Phase 2 for retargeting.",
+          "id": "f50a9ba2",
+          "source": "model",
+          "added": "2026-08-27 20:26"
+        },
+        {
+          "phase": "Phase 2 — Turn belief into the first pack",
+          "window": "Weeks 6–16 (overlaps Phase 1 by two weeks)",
+          "occasion": "The morning milk purchase itself — the moment loose milk is normally bought from vendor or kirana, and the first-coffee ritual that follows. Conversion is placed exactly where the loose-milk habit already happens.",
+          "channels": "General-trade retail activation (lead — trial offer at kirana & dairy); Home-delivery / subscription push (morning-slot sign-up); OOH continues as reminder; proof film cutdowns retargeted",
+          "hands_over": "First-time buyers and new subscription starts — a base of week-1 triers the advocacy phase can turn into carriers. Hands trial-conversion data to sales to fix the offer.",
+          "id": "e740774e",
+          "source": "model",
+          "added": "2026-08-27 20:26"
+        },
+        {
+          "phase": "Phase 3 — Make buyers carry it",
+          "window": "Weeks 12–24 (overlaps Phase 2)",
+          "occasion": "The ghee-gold cream band at the top of the vessel — the visible proof a buyer can show a neighbour. Advocacy is built on the one thing a household can photograph and boast about after they've switched.",
+          "channels": "CRM & existing-subscriber advocacy (lead — referral + cream-photo challenge); Regional-language creator partnerships; social video sustains reach",
+          "hands_over": "Referral-driven new buyers and week-4 retention signal — proof the switch holds. Hands sentiment + participation data back to the brand tracker to confirm the pillars are working.",
+          "id": "7ed63bb0",
+          "source": "model",
+          "added": "2026-08-27 20:26"
+        },
+        {
+          "phase": "Phase 4 — Extend the footprint",
+          "window": "Weeks 16 onward — phased to rollout pace",
+          "occasion": "No owned occasion yet — this is non-South territory where neither the family-morning meaning nor the cold-chain proof has been established. Lead on purity alone; do not import the ritual codes until fame exists.",
+          "channels": "National-expansion holding line (lead — purity-led reach); proof film if cold-chain claim travels",
+          "hands_over": "Basic aided awareness in new pin-codes — the precondition for a full Phase 1–3 sequence to run there later.",
+          "id": "4689c6f2",
+          "source": "model",
+          "added": "2026-08-27 20:26"
+        }
+      ],
+      "sig": "",
+      "house_under": "48f61dee66aeeee9"
+    },
+    "measures": {
+      "layer": "measures",
+      "rows": [
+        {
+          "role": "proof",
+          "leading": "Claim recall of 'cold never breaks' in weekly tracker dips",
+          "lagging": "Purity-belief shift vs control at end of flight; loose-milk switching intent",
+          "would_tell_us_it_failed": "Purity belief flat vs control by week 8 — the film isn't landing the one thing households can't check",
+          "id": "7567b1e1",
+          "source": "model",
+          "added": "2026-08-27 20:26"
+        },
+        {
+          "role": "reach",
+          "leading": "1+ reach build and cost per reach point vs plan, weekly",
+          "lagging": "Aided awareness lift among loose-milk + packed-milk households at flight end",
+          "would_tell_us_it_failed": "3+ reach below target at half-spend, or cost per reach point 20%+ over plan",
+          "id": "16558660",
+          "source": "model",
+          "added": "2026-08-27 20:26"
+        },
+        {
+          "role": "conversion",
+          "leading": "Trial-pack redemption rate + new-subscription starts, weekly",
+          "lagging": "Cost per new buyer; week-4 subscription retention",
+          "would_tell_us_it_failed": "Trial converts but week-4 retention collapses — bought once, back to the vendor",
+          "id": "5bc23774",
+          "source": "model",
+          "added": "2026-08-27 20:26"
+        },
+        {
+          "role": "advocacy",
+          "leading": "Creator posts delivered + referral participation rate",
+          "lagging": "Comment sentiment and advocate NPS over the flight",
+          "would_tell_us_it_failed": "Posts deliver but sentiment neutral/negative, or referrals under 2% of base — voices carrying nothing",
+          "id": "a7c69e34",
+          "source": "model",
+          "added": "2026-08-27 20:26"
+        }
+      ],
+      "sig": "",
+      "house_under": "48f61dee66aeeee9"
+    },
+    "governance": {
+      "layer": "governance",
+      "rows": [
+        {
+          "who": "Brand lead (owner unknown — CMO to name)",
+          "speaks_on": "Core message, pillar assignment, brand codes, 'Pure Doodh Ki Shakti' line",
+          "boundary": "No lab-coat, test-tube, factory-purity or clinical white-and-blue imagery; every piece carries FSSAI mark and the mandatory line",
+          "decides_changes": "Approves any change to messaging or codes",
+          "id": "bb6151a4",
+          "source": "model",
+          "added": "2026-08-27 20:26"
+        },
+        {
+          "who": "Cold-chain / operations lead (owner unknown — ops head to name)",
+          "speaks_on": "Cold-chain proof claims — the unbroken-clock run, chill-within-hours timing",
+          "boundary": "May only claim what the cold-chain data verifies; no timing shown that ops cannot stand behind",
+          "decides_changes": "Signs off proof-claim accuracy before it airs",
+          "id": "672e347d",
+          "source": "model",
+          "added": "2026-08-27 20:26"
+        },
+        {
+          "who": "Media / channel lead (owner unknown — head of marketing to name)",
+          "speaks_on": "Channel roles, phasing, brand/activation split, spend allocation",
+          "boundary": "Holds the declared split; may not move a proof channel onto an unsourced RTB",
+          "decides_changes": "Approves reallocation within the plan; escalates split change to brand lead",
+          "id": "372f7006",
+          "source": "model",
+          "added": "2026-08-27 20:26"
+        },
+        {
+          "who": "Regional / GT + home-delivery lead (owner unknown — sales head to name)",
+          "speaks_on": "General trade, home delivery, local-language execution across South India states",
+          "boundary": "Local idiom kept in Hindi/local tongue, not translated; no claim beyond what the house permits",
+          "decides_changes": "Approves regional adaptation within house boundaries",
+          "id": "ab7d46e6",
+          "source": "model",
+          "added": "2026-08-27 20:26"
+        },
+        {
+          "who": "Social / advocacy owner (owner unknown — marketing to name)",
+          "speaks_on": "#PureDoodhKiShakti, #HeritageFoods, community and advocacy content",
+          "boundary": "Same avoid list; must be briefed on live phases and events before posting",
+          "decides_changes": "None alone — escalates any message change to brand lead",
+          "id": "2057802a",
+          "source": "model",
+          "added": "2026-08-27 20:26"
+        },
+        {
+          "who": "Regulatory / compliance (owner unknown — legal to confirm)",
+          "speaks_on": "FSSAI mandatory mark, dairy claim compliance",
+          "boundary": "Blocks any claim not legally substantiated",
+          "decides_changes": "Holds veto on non-compliant claims",
+          "id": "e46a6360",
+          "source": "model",
+          "added": "2026-08-27 20:26"
+        }
+      ],
+      "sig": "",
+      "house_under": "9e13c9180ee98575"
+    }
+  },
+  "geography": [
+    {
+      "id": "6ce17e04",
+      "state": "mh",
+      "stratum": "urban",
+      "town_class": "metro",
+      "cities": [
+        "Mumbai",
+        "Pune"
+      ]
+    },
+    {
+      "id": "local-1788614656545",
+      "state": "mh",
+      "stratum": "rural",
+      "town_class": "",
+      "cities": []
+    },
+    {
+      "id": "local-1788614673338",
+      "state": "mh",
+      "stratum": "urban",
+      "town_class": "tier1",
+      "cities": []
+    },
+    {
+      "id": "local-1788614689244",
+      "state": "mh",
+      "stratum": "urban",
+      "town_class": "restofurban",
+      "cities": []
+    }
+  ],
+  "status": "approved",
+  "pending_approval": null,
+  "approval_log": [
+    {
+      "action": "submitted",
+      "level": 1,
+      "by": "Puneet",
+      "at": "2026-09-05 13:31"
+    },
+    {
+      "action": "approved",
+      "level": 1,
+      "by": "Ravi K. (L1 — Team Lead)",
+      "user_id": "ravi",
+      "at": "2026-09-05 13:32"
+    },
+    {
+      "action": "approved",
+      "level": 2,
+      "by": "Ananya R. (L3 — Head/CMO)",
+      "user_id": "ananya",
+      "at": "2026-09-05 13:32"
+    }
+  ]
+}

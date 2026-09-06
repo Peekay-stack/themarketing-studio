@@ -1,0 +1,316 @@
+{
+  "id": "8750af3fa3",
+  "brand": "Heritage",
+  "house": "68c50487e3",
+  "created": "2026-09-02 18:15",
+  "updated": "2026-09-03 12:41",
+  "project": "Heritage — house, August 2026",
+  "balance": {
+    "brand_share": 60,
+    "reason": "",
+    "basis": "year",
+    "declared": true,
+    "source": "user"
+  },
+  "nodes": {
+    "objectives": {
+      "layer": "objectives",
+      "rows": [
+        {
+          "level": "business",
+          "statement": "Grow Heritage Pure Milk volume share in core South India (TG, AP, KA, TN) by winning switchers from loose milk and rival packs.",
+          "measure": "+X pts volume share vs baseline — Heritage to set X and baseline [unverified]",
+          "by_when": "FY27 — Heritage leadership to confirm",
+          "id": "ad28fad8",
+          "source": "model",
+          "added": "2026-09-02 18:16"
+        },
+        {
+          "level": "marketing",
+          "statement": "Convert daily buyers of loose/unbranded and rival branded milk to a Heritage Pure Milk daily habit, and lift repeat frequency among trialists.",
+          "measure": "Household penetration in core markets + repeat-purchase rate — targets to be set against panel data Heritage holds",
+          "by_when": "end FY27",
+          "id": "1ef4499d",
+          "source": "model",
+          "added": "2026-09-02 18:16"
+        },
+        {
+          "level": "communication",
+          "statement": "Make 'purity you can trust every morning' the reason families choose Heritage — land the unbroken cold-chain proof and the everyday-strength belief.",
+          "measure": "Prompted brand consideration + agreement with 'purest everyday milk' among core-market milk buyers — brand-tracker to baseline",
+          "by_when": "tracked quarterly from launch, read at 12 months",
+          "id": "3d0721a3",
+          "source": "model",
+          "added": "2026-09-02 18:16"
+        }
+      ],
+      "sig": "",
+      "house_under": "9e13c9180ee98575"
+    },
+    "audiences": {
+      "layer": "audiences",
+      "rows": [
+        {
+          "audience": "Loose-milk households in core South India — the daily buyer (often the woman running the kitchen) who takes milk from a local vendor or dairy booth, boils it each morning, trusts 'fresh and local'",
+          "rank": "1",
+          "believes_now": "Believes loose milk is fresher and cheaper because it comes straight from a nearby source, and that packaged milk is 'older' or watered down. Does not see a hygiene or purity risk in her current habit — the vendor is known and trusted. This is the largest switchable volume pool and the one the marketing objective names first. She is beaten by proof, not by warmth: the unbroken cold-chain clock directly attacks the 'loose is fresher' belief.",
+          "pillar": "functional",
+          "id": "fec479b9",
+          "source": "model",
+          "added": "2026-09-02 18:20"
+        },
+        {
+          "audience": "Rival branded-milk households — families already buying Amul, Nandini, Dodla or Arokya packs on daily delivery or from general trade",
+          "rank": "2",
+          "believes_now": "Already accepts packaged milk as safe and convenient, so the purity/hygiene argument is table stakes here and does not move them. Chooses on habit, availability and price. To switch them you must offer a reason beyond 'also safe' — that Heritage milk is richer, more nourishing, the strength the family runs on. Emotional pillar does the work; leading with functional proof only confirms what they already believe about their current brand.",
+          "pillar": "emotional",
+          "id": "424af6e7",
+          "source": "model",
+          "added": "2026-09-02 18:20"
+        },
+        {
+          "audience": "Aspirational young families and new parents in metro/tier-1 core markets — recently formed households, first child, actively upgrading what they buy for the home",
+          "rank": "3",
+          "believes_now": "Actively questioning what is 'good enough' for a child and willing to pay up for reassurance, but not yet loyal to any dairy brand. Reads purity as care. Smaller in volume than ranks 1 and 2 but high repeat value and premium-tolerant — the segment that most readily pays for 'won't compromise'. The nourishment-for-a-growing-family argument lands hardest here.",
+          "pillar": "emotional",
+          "id": "ea340e67",
+          "source": "model",
+          "added": "2026-09-02 18:20"
+        },
+        {
+          "audience": "Existing Heritage buyers at risk of lapsing to loose milk on price — current daily customers whose loyalty is soft",
+          "rank": "4",
+          "believes_now": "Buys Heritage today but treats milk as a commodity and would drift back to a cheaper loose vendor on a bad week. Needs the reason-to-stay made concrete and repeatable. Retention volume, not new volume — cheaper to hold than to win. The cold-chain proof reminds them what the price gap actually buys.",
+          "pillar": "functional",
+          "id": "029e33dd",
+          "source": "model",
+          "added": "2026-09-02 18:20"
+        }
+      ],
+      "sig": "",
+      "house_under": "4a8007ee589a489c"
+    },
+    "channels": {
+      "layer": "channels",
+      "rows": [
+        {
+          "channel": "Cold-chain clock film, 30s + cutdowns, Telugu/Kannada/Tamil",
+          "medium": "tv",
+          "role": "proof",
+          "job": "Make 'the cold never breaks' believable against loose milk — the continuous-clock RTB, functional pillar",
+          "measure": "Purity/freshness attribute shift vs loose milk in tracker; not GRPs alone",
+          "side": "brand",
+          "share": "26",
+          "owner": "Brand + agency creative",
+          "lead": "yes",
+          "id": "32335140",
+          "source": "model",
+          "added": "2026-09-02 18:36"
+        },
+        {
+          "channel": "15s vertical cutdowns of the clock film, regional-language",
+          "medium": "digital-video",
+          "role": "proof",
+          "job": "Extend the cold-chain proof to younger/metro viewers off TV — same functional RTB",
+          "measure": "View-through + attribute lift in exposed vs control",
+          "side": "brand",
+          "share": "9",
+          "owner": "Digital lead",
+          "lead": "",
+          "id": "3a9e19fe",
+          "source": "model",
+          "added": "2026-09-02 18:36"
+        },
+        {
+          "channel": "Steel-vessel-on-flame masthead, morning-boil imagery",
+          "medium": "ooh",
+          "role": "reach",
+          "job": "Put the brand in front of loose-milk households near booths and GT clusters in core South cities",
+          "measure": "Covered reach and cost per reach in target pincodes",
+          "side": "brand",
+          "share": "11",
+          "owner": "OOH planning",
+          "lead": "",
+          "id": "410e1a6d",
+          "source": "model",
+          "added": "2026-09-02 18:36"
+        },
+        {
+          "channel": "Morning-drive 'roz subah, taaza doodh' spots, regional",
+          "medium": "radio",
+          "role": "reach",
+          "job": "Own the pre-dawn-boil / first-coffee moment for rank 1 and 4 during the daily buying window",
+          "measure": "Reach in target markets at breakfast daypart",
+          "side": "brand",
+          "share": "6",
+          "owner": "Media buying",
+          "lead": "",
+          "id": "1842e475",
+          "source": "model",
+          "added": "2026-09-02 18:36"
+        },
+        {
+          "channel": "Nourishment-for-a-growing-family films, new-parent targeting",
+          "medium": "social",
+          "role": "reach",
+          "job": "Reach rank 2 and 3 with the emotional pillar — richer, more nourishing, family runs on it",
+          "measure": "Reach + cost per reach against parent/switcher audience",
+          "side": "brand",
+          "share": "8",
+          "owner": "Social lead",
+          "lead": "",
+          "id": "914b1409",
+          "source": "model",
+          "added": "2026-09-02 18:36"
+        },
+        {
+          "channel": "Doorstep sampling + first-week trial pricing via delivery app",
+          "medium": "home-delivery",
+          "role": "conversion",
+          "job": "Turn loose-milk and rival-brand intent into a standing daily order",
+          "measure": "Trial-to-standing-order rate + CPA",
+          "side": "activation",
+          "share": "14",
+          "owner": "Home-delivery ops + trade marketing",
+          "lead": "",
+          "id": "eb43b091",
+          "source": "model",
+          "added": "2026-09-02 18:36"
+        },
+        {
+          "channel": "Crate visibility, booth conversion offers, retailer push at GT",
+          "medium": "general-trade",
+          "role": "conversion",
+          "job": "Convert at the point where daily milk is actually bought — booths and kirana",
+          "measure": "New-outlet handling rate + rate of sale per outlet",
+          "side": "activation",
+          "share": "12",
+          "owner": "Sales / trade marketing",
+          "lead": "",
+          "id": "b0912afd",
+          "source": "model",
+          "added": "2026-09-02 18:36"
+        },
+        {
+          "channel": "Brand-term + category search, delivery-signup landing",
+          "medium": "search",
+          "role": "conversion",
+          "job": "Capture aspirational families actively upgrading — route to subscription",
+          "measure": "Signup conversion rate + cost per signup",
+          "side": "activation",
+          "share": "4",
+          "owner": "Performance lead",
+          "lead": "",
+          "id": "a3244222",
+          "source": "model",
+          "added": "2026-09-02 18:36"
+        },
+        {
+          "channel": "Subscriber CRM — retention nudges, cold-chain reminder, win-back",
+          "medium": "crm",
+          "role": "advocacy",
+          "job": "Hold rank 4 lapse-risk buyers; make the reason-to-stay repeatable via referrals",
+          "measure": "Churn rate + referral participation among existing subscribers",
+          "side": "activation",
+          "share": "6",
+          "owner": "CRM / retention team",
+          "lead": "",
+          "id": "6f12c62d",
+          "source": "model",
+          "added": "2026-09-02 18:36"
+        },
+        {
+          "channel": "Quick-commerce listing + pack visibility",
+          "medium": "ecommerce",
+          "role": "conversion",
+          "job": "Catch top-up demand where q-com exists — a minor channel in this daily cold-chain category, deliberately small",
+          "measure": "Availability + units per listed store",
+          "side": "activation",
+          "share": "4",
+          "owner": "E-comm account team",
+          "lead": "",
+          "id": "f3239243",
+          "source": "model",
+          "added": "2026-09-02 18:36"
+        }
+      ],
+      "sig": "",
+      "house_under": "3816a3e7217e767f"
+    },
+    "balance": {
+      "layer": "balance",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    },
+    "phases": {
+      "layer": "phases",
+      "rows": [
+        {
+          "phase": "1 · Build the claim",
+          "window": "Weeks 1–8",
+          "occasion": "The pre-dawn boil / first-coffee ritual — the daily moment the standing-order decision is anchored to, before any switch is asked for",
+          "channels": "Cold-chain clock film (TV, lead) + 15s vertical cutdowns (digital-video) + steel-vessel OOH — proof and reach only; no conversion push yet",
+          "hands_over": "A believed purity claim and 'roz subah' salience, so Phase 2's trial ask lands on households who already trust the cold never breaks",
+          "id": "9b6482fd",
+          "source": "model",
+          "added": "2026-09-03 12:41"
+        },
+        {
+          "phase": "2 · Earn the switch",
+          "window": "Weeks 6–16 (overlaps Phase 1 by 2 weeks)",
+          "occasion": "The daily buying window — pre-dawn boil / first coffee — where loose-milk and rival-brand intent is live and a standing order is actually placed",
+          "channels": "Doorstep sampling + first-week trial (home-delivery, activation lead this phase) + GT crate/booth conversion + morning-drive radio + brand/category search — reach channels stay live underneath",
+          "hands_over": "A base of standing daily orders and new GT outlets handling, so Phase 3 has subscribers to hold and advocates to activate",
+          "id": "1a6145c2",
+          "source": "model",
+          "added": "2026-09-03 12:41"
+        },
+        {
+          "phase": "3 · Reach the family switcher",
+          "window": "Weeks 10–20 (runs alongside 2)",
+          "occasion": "The nourishment moment — feeding a growing family, when new parents and rank-2/3 households reconsider what milk goes in the glass",
+          "channels": "Nourishment-for-a-growing-family films (social, reach) targeting new parents/switchers + continued search + home-delivery trial",
+          "hands_over": "A second wave of trial from the emotional pillar, feeding the same standing-order and subscription funnel",
+          "id": "238979cc",
+          "source": "model",
+          "added": "2026-09-03 12:41"
+        },
+        {
+          "phase": "4 · Hold and multiply",
+          "window": "Weeks 16 onward — continuous",
+          "occasion": "The daily repeat pour — the ritual once you're the household's milk, where retention and referral are won or lost every morning",
+          "channels": "Subscriber CRM (advocacy) — retention nudges, cold-chain reminder, win-back, referral + quick-commerce listing for top-up demand",
+          "hands_over": "Retained subscribers and referrals that lower Phase 2's future CPA; feeds back into the next annual build cycle",
+          "id": "dc2c14be",
+          "source": "model",
+          "added": "2026-09-03 12:41"
+        },
+        {
+          "phase": "Seasonal overlay",
+          "window": "festival to be confirmed by brand calendar",
+          "occasion": "Festival / gifting and heavy-consumption windows (curd/ghee season, festival cooking) that pull families into upgrading — dates depend on regional calendar",
+          "channels": "Weighting shift toward activation within the window; channel mix unchanged",
+          "hands_over": "brand to confirm seasonal windows and value-added dairy priorities",
+          "id": "3bd4a614",
+          "source": "model",
+          "added": "2026-09-03 12:41"
+        }
+      ],
+      "sig": "",
+      "house_under": "b19cd4679df4b5d5"
+    },
+    "measures": {
+      "layer": "measures",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    },
+    "governance": {
+      "layer": "governance",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    }
+  }
+}

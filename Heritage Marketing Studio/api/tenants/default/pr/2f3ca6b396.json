@@ -1,0 +1,69 @@
+{
+  "id": "2f3ca6b396",
+  "brand": "Heritage",
+  "mode": "campaign",
+  "kind": "",
+  "phase": "launch",
+  "plan": "abfaac5fe0",
+  "house": "f7801a3886",
+  "execution": "",
+  "created": "2026-08-26 12:06",
+  "updated": "2026-08-26 12:10",
+  "objectives": [
+    {
+      "id": "a9f7ab86",
+      "statement": "Get the 500-checks-before-7am purity claim verified in the Telugu and English press before the paid work asks anyone to switch",
+      "statement_id": "5994c2c3",
+      "level": "communication",
+      "rung": "verify",
+      "proof": "The checkpoint count is auditable at the plant: 500 dairy professionals, named shifts, daily QC log.",
+      "note": ""
+    }
+  ],
+  "messages": [
+    {
+      "id": "30d4ef01",
+      "text": "500 dairy professionals check Heritage milk every single day, before 7am.",
+      "proof": "Every morning, the milk is chosen fresh from good farmers and quality-checked before it reaches her door — so the start she gives her family is never left to chance.",
+      "proof_id": "20472a57",
+      "sourced": true,
+      "proof_missing": false
+    },
+    {
+      "id": "e2bbd4e3",
+      "text": "The milk is chosen fresh from named farmers each morning and quality-checked before it reaches a doorstep.",
+      "proof": "500 dairy professionals check the milk every single day — purity here is people doing a job, not a slogan.",
+      "proof_id": "9c5aaee5",
+      "sourced": true,
+      "proof_missing": false
+    }
+  ],
+  "release": {
+    "language": "en",
+    "headline": "Heritage Foods publishes its daily 7am quality log",
+    "dateline": "Hyderabad, 26 August 2026",
+    "lead_text": "Heritage Foods said on Tuesday that the quality checks completed on every collection before 7am each morning are now published as a daily log for home-delivery subscribers across Andhra Pradesh and Telangana.",
+    "support": "500 dairy professionals complete the checks daily; the log records shift, checkpoint and time.",
+    "quote": "A mother should not have to take our word for it. The log is what 500 people did before her morning started.",
+    "quote_by": "[named spokesperson to be confirmed]",
+    "quote_role": "Quality head",
+    "background": "",
+    "boilerplate": "Heritage Foods is an Indian dairy company operating across Andhra Pradesh and Telangana, sourcing from farmer suppliers and distributing packaged milk and value-added dairy.",
+    "contact": "[press contact name, phone and email to be filled by the company]",
+    "five_w": {
+      "who": "Heritage Foods",
+      "what": "published its daily pre-7am quality-check log",
+      "when": "from this week",
+      "where": "Andhra Pradesh and Telangana",
+      "why": "so a household can see the checks rather than take purity on trust"
+    },
+    "carries": [
+      "30d4ef01"
+    ],
+    "mandatories": [],
+    "embargo": "",
+    "translations": {},
+    "created": "2026-08-26 12:09",
+    "updated": "2026-08-26 12:10"
+  }
+}

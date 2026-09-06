@@ -1,0 +1,341 @@
+{
+  "id": "abfaac5fe0",
+  "brand": "Heritage",
+  "house": "f7801a3886",
+  "created": "2026-08-17 12:09",
+  "updated": "2026-08-17 23:10",
+  "project": "Heritage — house, August 2026",
+  "balance": {
+    "brand_share": 60,
+    "reason": "Hold the Binet-Field optimum: this is a trust-led purity story where the brand-building work — the 500-person morning on TV, the freshness code on OOH, the '500 before 7am' proof on social — is what pulls loose-milk households toward a packaged brand at all, and that effect compounds; activation converts the demand but starts from the same baseline every burst if brand is starved. The declared 60 sits against an actual 43/57 computed on channel count, which is the finding: three of four conversion/advocacy channels are activation, so the plan currently behaves like a performance plan while claiming a brand one. Closing that gap is a spend-weighting decision, not a channel-count one — TV and OOH must carry the majority of budget for the declared 60 to be real.",
+    "basis": "year"
+  },
+  "nodes": {
+    "objectives": {
+      "layer": "objectives",
+      "rows": [
+        {
+          "level": "business",
+          "statement": "Grow Heritage Pure Milk revenue by winning home-delivery households from loose/unbranded milk in core South India markets.",
+          "measure": "finance/sales to set target — e.g. % milk-revenue growth or net new daily-delivery households",
+          "by_when": "leadership to set — suggest FY27",
+          "id": "dfecf837",
+          "source": "model",
+          "added": "2026-08-17 12:10"
+        },
+        {
+          "level": "marketing",
+          "statement": "Convert trust-driven mothers into daily home-delivery subscribers by reframing purity as a visible, checked-every-day guarantee against price-parity rivals and loose milk.",
+          "measure": "net new home-delivery subscriptions; subscription retention rate",
+          "by_when": "marketing to confirm against business date",
+          "id": "5f6fcfe1",
+          "source": "model",
+          "added": "2026-08-17 12:10"
+        },
+        {
+          "level": "communication",
+          "statement": "Make '500 people check your milk before 7am' the one purity proof mothers believe and repeat, lifting consideration for daily delivery over loose/unbranded milk.",
+          "measure": "prompted claim recall of the '500 checks' proof; consideration/intent shift for Heritage daily delivery",
+          "by_when": "tie to the marketing window once set",
+          "id": "5994c2c3",
+          "source": "model",
+          "added": "2026-08-17 12:10"
+        }
+      ],
+      "sig": "",
+      "house_under": "5850291c13341042"
+    },
+    "audiences": {
+      "layer": "audiences",
+      "rows": [
+        {
+          "audience": "Trust-driven mothers currently on loose/unbranded milk, core South India",
+          "rank": "1",
+          "believes_now": "Fresh-from-the-cow loose milk is purest and most affordable; branded milk is processed and distant. She is the first up at 6am and decides what her child drinks. She trusts what she can see over what she's told, and does not yet believe a packaged brand is checked more carefully than her local milkman.",
+          "pillar": "functional",
+          "id": "274cbaa6",
+          "source": "model",
+          "added": "2026-08-17 12:10"
+        }
+      ],
+      "sig": "",
+      "house_under": "e235c4f692c2b9dd"
+    },
+    "channels": {
+      "layer": "channels",
+      "rows": [
+        {
+          "channel": "TV (regional GEC + connected TV, South)",
+          "role": "reach",
+          "job": "Dramatise the 500-person morning to a mother who buys on trust — get to loose-milk households who don't yet think a packaged brand is checked more carefully than her milkman.",
+          "measure": "Coverage and cost per reach against South India dairy-buying mothers",
+          "side": "brand",
+          "share": "",
+          "owner": "Brand + media agency; budget to confirm",
+          "lead": "",
+          "id": "3ac3b854",
+          "source": "user",
+          "added": "2026-08-17 12:19",
+          "edited": "2026-08-17 12:19"
+        },
+        {
+          "channel": "Social (15s vertical reel — '500 before 7am' counter)",
+          "role": "proof",
+          "job": "Prove the sourced functional RTB — 500 people checked this milk before 7am — in a scroll-stopping, no-voiceover format to a younger mother who trusts what she can see.",
+          "measure": "Whether the claim lands: completion rate on the counter, saves/shares, prompted belief lift — not clicks",
+          "side": "brand",
+          "share": "",
+          "owner": "Social/content team; budget to confirm",
+          "lead": "True",
+          "id": "3274e2c9",
+          "source": "user",
+          "added": "2026-08-17 12:19",
+          "edited": "2026-08-17 12:19"
+        },
+        {
+          "channel": "On-ground (RWA / apartment activation, promoter)",
+          "role": "conversion",
+          "job": "Recruit the home-delivery mother face to face using the 6am ritual as the demo — tanker-journey card plus first-tumbler sample, against loose milk as her default.",
+          "measure": "Delivery sign-ups per activation and cost per acquisition",
+          "side": "activation",
+          "share": "",
+          "owner": "Field marketing / promoter agency; budget to confirm",
+          "lead": "",
+          "id": "2dd4ac27",
+          "source": "model",
+          "added": "2026-08-17 12:19"
+        },
+        {
+          "channel": "Digital ('Track your milk' shoppable landing + home-delivery sign-up)",
+          "role": "conversion",
+          "job": "Convert intent from proof and activation into a daily-delivery subscription — the checkpoint journey ending in 'Start daily delivery to your doorstep,' in the channel quick commerce can't compete in.",
+          "measure": "Sign-up conversion rate and cost per acquisition",
+          "side": "activation",
+          "share": "",
+          "owner": "Digital / performance team; budget to confirm",
+          "lead": "",
+          "id": "816e0112",
+          "source": "model",
+          "added": "2026-08-17 12:19"
+        },
+        {
+          "channel": "OOH (hero freshness visual + '500 before your morning' line)",
+          "role": "reach",
+          "job": "Own the freshness-and-warmth code on the street and plant the 500 number for the mass commuter who buys on trust — no product features.",
+          "measure": "Coverage and cost per reach in target South metros/towns",
+          "side": "brand",
+          "share": "",
+          "owner": "Media agency + OOH vendor; budget to confirm",
+          "lead": "",
+          "id": "dde6a87b",
+          "source": "model",
+          "added": "2026-08-17 12:19"
+        },
+        {
+          "channel": "POSM (fridge-edge shelf strip, general trade)",
+          "role": "conversion",
+          "job": "Win the last three seconds at the cold cabinet against Nandini and Dodla by reframing price parity as a daily purity guarantee — 'same purity check, every single day.'",
+          "measure": "Off-take / rate of sale at stocked outlets vs control",
+          "side": "activation",
+          "share": "",
+          "owner": "Trade marketing; budget to confirm",
+          "lead": "",
+          "id": "37ffd4ca",
+          "source": "model",
+          "added": "2026-08-17 12:19"
+        },
+        {
+          "channel": "Trade (distributor + retailer sell-in)",
+          "role": "advocacy",
+          "job": "Arm the retailer with the one line his customers will repeat — 'stock the trust, not just the litre' — so he carries the message at the counter on home-delivery pull-through.",
+          "measure": "Retailer participation / stocking rate and reorder velocity",
+          "side": "activation",
+          "share": "",
+          "owner": "Sales / distribution team; budget to confirm",
+          "lead": "",
+          "id": "284a306d",
+          "source": "model",
+          "added": "2026-08-17 12:19"
+        }
+      ],
+      "sig": "",
+      "house_under": "f8163f7b6c4bcd6a"
+    },
+    "balance": {
+      "layer": "balance",
+      "rows": [],
+      "sig": "",
+      "house_under": ""
+    },
+    "phases": {
+      "layer": "phases",
+      "rows": [
+        {
+          "phase": "1 · Plant the number",
+          "window": "Weeks 1–6",
+          "occasion": "The 6am doorstep can — milk arriving before the house wakes; the mother first up to take it in",
+          "channels": "TV (reach) leads; OOH (reach) supports; Social '500 before 7am' (proof) runs alongside",
+          "hands_over": "A mother who has seen the 500-person morning and now believes a packaged brand is checked — hands warmed, believing demand to the conversion channels",
+          "id": "b47562b1",
+          "source": "model",
+          "added": "2026-08-17 12:20"
+        },
+        {
+          "phase": "2 · Prove it where she watches",
+          "window": "Weeks 4–10 (overlaps phase 1)",
+          "occasion": "First tumbler of the morning — steel dabara, pour from a height, warm milk pressed into a child's hands before school",
+          "channels": "Social '500 before 7am' counter (proof, lead channel) carries; TV/OOH taper to maintain reach; Digital 'Track your milk' (conversion) goes live to catch intent",
+          "hands_over": "A younger mother who trusts what she can see and has the claim proven — hands a warm, believing audience with a place to act to the doorstep recruitment",
+          "id": "0e07e7d7",
+          "source": "model",
+          "added": "2026-08-17 12:20"
+        },
+        {
+          "phase": "3 · Win the doorstep",
+          "window": "Weeks 8–16",
+          "occasion": "The 6am doorstep can, again — now the moment of switching from the milkman to daily delivery",
+          "channels": "On-ground RWA/apartment activation (conversion) leads; Digital 'Track your milk' (conversion) captures sign-ups; POSM fridge-edge strip (conversion) wins the general-trade cabinet in parallel",
+          "hands_over": "New daily-delivery subscribers and freshly stocked general-trade outlets — hands the retailer relationship and the first cohort of buyers to advocacy",
+          "id": "c9ab0294",
+          "source": "model",
+          "added": "2026-08-17 12:20"
+        },
+        {
+          "phase": "4 · Make the retailer say it",
+          "window": "Weeks 12–20",
+          "occasion": "'Roz taaza, roz shakti' — the everyday-freshness idiom a promoter, a mother and now a retailer all repeat",
+          "channels": "Trade distributor + retailer sell-in (advocacy) leads; POSM (conversion) sustains at the cabinet; Social (proof) maintains a low-weight presence to keep the number in circulation",
+          "hands_over": "Retailers carrying the one line at the counter and reorder velocity building — hands a self-sustaining pull-through and a live claim back to a fresh reach burst when the cycle repeats",
+          "id": "ee72f8b6",
+          "source": "model",
+          "added": "2026-08-17 12:20"
+        }
+      ],
+      "sig": "",
+      "house_under": "3f92bb21192f0ed9"
+    },
+    "measures": {
+      "layer": "measures",
+      "rows": [
+        {
+          "role": "reach",
+          "leading": "Target-audience reach and frequency building against South India dairy-buying mothers; cost per reach vs plan",
+          "lagging": "Prompted brand awareness and 'checked more carefully than my milkman' association lift in tracked markets vs pre-campaign baseline",
+          "would_tell_us_it_failed": "By week 6, cost per reach runs above the media-agency benchmark with no awareness movement in tracked markets — reach bought, nothing landing. Baseline: brand + agency to set.",
+          "id": "e4fa3f94",
+          "source": "model",
+          "added": "2026-08-17 12:21"
+        },
+        {
+          "role": "proof",
+          "leading": "Counter completion rate on the '500 before 7am' reel and save/share rate — is the number being watched to the end and passed on",
+          "lagging": "Prompted belief lift: proportion who agree 'this milk is checked every day before it reaches me' among exposed vs unexposed",
+          "would_tell_us_it_failed": "By week 4, completion rate below the platform norm for a 15s vertical AND no belief-lift gap between exposed and unexposed — the claim is being scrolled past, not absorbed. Norms: social team to set.",
+          "id": "881b2c3a",
+          "source": "model",
+          "added": "2026-08-17 12:21"
+        },
+        {
+          "role": "conversion",
+          "leading": "Delivery sign-ups per activation and per landing-page session; cost per acquisition against target",
+          "lagging": "Retained daily-delivery subscribers at day 30 and day 90 — did the sign-up become a habit; off-take at POSM-stocked outlets vs control",
+          "would_tell_us_it_failed": "By month 2, cost per acquisition exceeds the delivery-margin payback threshold, OR day-30 retention falls below the level that makes a sign-up pay for itself. CPA ceiling and retention floor: finance + digital to set.",
+          "id": "5a8c3fb3",
+          "source": "model",
+          "added": "2026-08-17 12:21"
+        },
+        {
+          "role": "advocacy",
+          "leading": "Retailer stocking rate and proportion actively repeating the 'stock the trust' line at the counter (field-audit spot checks)",
+          "lagging": "Reorder velocity and home-delivery pull-through at participating outlets vs non-participating",
+          "would_tell_us_it_failed": "By month 3, stocked outlets show no reorder-velocity lift over non-stocked — retailers are shelving the litre but not carrying the message. Control set: sales team to define.",
+          "id": "712dc6d4",
+          "source": "model",
+          "added": "2026-08-17 12:21"
+        }
+      ],
+      "sig": "",
+      "house_under": "3f92bb21192f0ed9"
+    },
+    "governance": {
+      "layer": "governance",
+      "rows": [
+        {
+          "who": "Brand lead (owner unknown — Heritage marketing to name)",
+          "speaks_on": "Core message, pillar assignment, 'Pure Doodh Ki Shakti' lock-up and FSSAI mandatory",
+          "boundary": "No factory floor, white coat, lab beaker or pipette — purity shown at farm and boiling pan, never clinical",
+          "decides_changes": "Owns any change to core message or pillars",
+          "id": "23e0ae7a",
+          "source": "model",
+          "added": "2026-08-17 12:33"
+        },
+        {
+          "who": "Social / content lead (owner unknown)",
+          "speaks_on": "15s vertical reel, the '500 before 7am' counter, 'Roz taaza, roz shakti'",
+          "boundary": "Real checkpoints only, no clinical imagery; may not invent a check-count above 500",
+          "decides_changes": "Brand lead signs off before publish",
+          "id": "9b5300ba",
+          "source": "model",
+          "added": "2026-08-17 12:33"
+        },
+        {
+          "who": "Digital / performance lead (owner unknown)",
+          "speaks_on": "'Track your milk' landing and home-delivery subscription flow",
+          "boundary": "Checkpoint journey stays farm-to-doorstep, no lab codes; delivery-only claim, not quick-commerce",
+          "decides_changes": "Brand lead + delivery ops to co-sign scope",
+          "id": "99bfb61f",
+          "source": "model",
+          "added": "2026-08-17 12:33"
+        },
+        {
+          "who": "OOH / media lead (owner unknown)",
+          "speaks_on": "Hero freshness visual and 'Checked by 500 people before your morning began'",
+          "boundary": "No product-feature clutter, no clinical white; Deep Forest / Cream / Ghee-gold palette only",
+          "decides_changes": "Brand lead approves creative; media plan to confirm sites",
+          "id": "44dac8a4",
+          "source": "model",
+          "added": "2026-08-17 12:33"
+        },
+        {
+          "who": "Trade / distributor lead (owner unknown)",
+          "speaks_on": "Retailer and distributor sell-in, margin and reorder-velocity story, POSM shelf strip",
+          "boundary": "'500 checks before 7am' and FSSAI mark mandatory; no purity claim beyond sourced RTB",
+          "decides_changes": "Sales head to confirm margin figures before circulation",
+          "id": "c21b2a17",
+          "source": "model",
+          "added": "2026-08-17 12:33"
+        },
+        {
+          "who": "On-ground / field lead (owner unknown)",
+          "speaks_on": "Promoter opening line, tanker-journey card, first-tumbler sample at RWA activations",
+          "boundary": "Promoter script fixed; no ad-lib purity claims, no clinical language, 6am ritual as demo",
+          "decides_changes": "Brand lead owns script; field lead approves venue schedule",
+          "id": "59d353f4",
+          "source": "model",
+          "added": "2026-08-17 12:33"
+        },
+        {
+          "who": "Legal / regulatory (owner unknown — Heritage compliance)",
+          "speaks_on": "FSSAI mark placement, any purity or health claim wording",
+          "boundary": "Every claim must trace to a sourced RTB; the '500' figure to be verified before scaled use",
+          "decides_changes": "Holds veto on any claim; compliance to confirm 500 figure",
+          "id": "bfedb538",
+          "source": "model",
+          "added": "2026-08-17 12:33"
+        },
+        {
+          "who": "",
+          "speaks_on": "Crisis / adulteration or contamination response",
+          "boundary": "Purity is the whole positioning — a purity incident hits the core message directly",
+          "decides_changes": "Escalation owner to be named by Heritage leadership",
+          "id": "65d00d59",
+          "source": "model",
+          "added": "2026-08-17 12:33"
+        }
+      ],
+      "sig": "",
+      "house_under": "5850291c13341042"
+    }
+  },
+  "project_source": "inherited"
+}
