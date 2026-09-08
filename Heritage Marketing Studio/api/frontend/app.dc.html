@@ -164,17 +164,24 @@
       <span onClick="{{ openSettings }}" title="Studio settings" style="cursor:pointer; flex:none; width:34px; height:34px; border-radius:9px; border:1px solid {{ thChipLine }}; background:{{ thChipBg }}; color:{{ thHeaderSoft }}; display:flex; align-items:center; justify-content:center; font-size:15px;">⚙</span>
       <div style="position:relative; flex:none;">
         <span onClick="{{ toggleUserMenu }}" title="{{ userName }}" style="cursor:pointer; flex:none; width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,#E8A93C,#D8881E); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px;">{{ userInitial }}</span>
-        <sc-if value="{{ userMenuOpen }}" hint-placeholder-val="{{ false }}">
-          <div onClick="{{ closeUserMenu }}" style="position:fixed; inset:0; z-index:109;"></div>
-          <div style="position:absolute; right:0; top:44px; z-index:110; background:#fff; border:1px solid #DDD9D1; border-radius:13px; padding:14px 16px; width:200px; box-shadow:0 12px 30px rgba(23,50,94,0.14);">
-            <div style="font-size:13.5px; font-weight:700; color:#17325E;">{{ userName }}</div>
-            <div style="font-size:11.5px; color:#9AA1AC; margin-bottom:12px;">{{ userRole }}</div>
-            <div onClick="{{ doLogout }}" style="cursor:pointer; font-size:13px; font-weight:700; color:#C0392B; border-top:1px solid #F0EDE3; padding-top:10px;">Sign out</div>
-          </div>
-        </sc-if>
       </div>
     </div>
   </header>
+
+  <!-- Round 93: moved out of the header. `.hf-header` sets `overflow:hidden` (so the nav can tighten
+       without leaking scrollbar chrome — see that rule's own comment), which was silently clipping
+       this panel to the header's own 84px height: it opened, but only the sliver inside the header's
+       box was visible, reading as "hidden between the top panel and main screen." Same fix as the
+       Brand Switcher/Settings drawer just below, which were never inside the header for exactly this
+       reason — `position:fixed`, coordinates in viewport space, not clipped by anything. -->
+  <sc-if value="{{ userMenuOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeUserMenu }}" style="position:fixed; inset:0; z-index:109;"></div>
+    <div style="position:fixed; right:40px; top:84px; z-index:110; background:#fff; border:1px solid #DDD9D1; border-radius:13px; padding:14px 16px; width:200px; box-shadow:0 12px 30px rgba(23,50,94,0.14);">
+      <div style="font-size:13.5px; font-weight:700; color:#17325E;">{{ userName }}</div>
+      <div style="font-size:11.5px; color:#9AA1AC; margin-bottom:12px;">{{ userRole }}</div>
+      <div onClick="{{ doLogout }}" style="cursor:pointer; font-size:13px; font-weight:700; color:#C0392B; border-top:1px solid #F0EDE3; padding-top:10px;">Sign out</div>
+    </div>
+  </sc-if>
 
   <!-- ===================== BRAND SWITCHER ===================== -->
   <!-- Four profiles exist on the server and exactly one is active. What each one buys is shown on the
@@ -2108,8 +2115,15 @@
          input. Same shape as Social/POSM: a real quote of what the film stands on (kind:'video' was
          already supported server-side), an override checkbox, the Prompt guide moved here from the top
          of the tab, and a textarea that's additive when a platform is standing and the whole brief when
-         it's set aside or there's nothing to stand on. -->
-    <div style="background:#fff; border:1px solid #DDD9D1; border-radius:16px; padding:18px 20px; margin-bottom:20px;">
+         it's set aside or there's nothing to stand on.
+         Round 93: added the STEP 1 heading the other three producers already had — this was the only
+         card with no title of its own. -->
+    <div style="background:#fff; border:1px solid #DDD9D1; border-radius:16px; padding:18px 20px; margin-bottom:16px;">
+      <div style="display:flex; align-items:baseline; gap:11px; margin-bottom:5px;">
+        <span style="font-size:11px; font-weight:800; letter-spacing:0.07em; color:#F0561E;">STEP 1</span>
+        <span style="font-family:'Epilogue',sans-serif; font-weight:700; font-size:18px; color:#17325E;">Video concept</span>
+      </div>
+      <div style="font-size:13.5px; line-height:1.6; color:#6B7280; margin-bottom:16px; max-width:660px; text-wrap:pretty;">One concept every scene, beat and shot is built from. Say what it opens on, what it closes on, and what changes in between.</div>
       <sc-if value="{{ videoHasStandsOn }}" hint-placeholder-val="{{ false }}">
         <div style="background:#F4F7FC; border:1px solid #D6DEEC; border-radius:12px; padding:13px 16px; margin-bottom:13px;">
           <div style="font-size:10.5px; font-weight:800; letter-spacing:0.07em; text-transform:uppercase; color:#2E5EA6; margin-bottom:5px;">{{ videoStandsSource }}</div>
@@ -2168,15 +2182,18 @@
           </sc-if>
         </div>
       </sc-if>
-      <textarea value="{{ videoBrief }}" onChange="{{ onVideoBrief }}" rows="3" placeholder="e.g. Open on the empty steel glass at 5:45am — the house before anyone's awake. Close on it full, catching the first light, as the day's first sound starts outside." style="width:100%; border:1px solid #DDD9D1; border-radius:11px; padding:12px 14px; font-size:14px; line-height:1.55; color:#17325E; background:#FBFAF8; resize:vertical; font-family:inherit;"></textarea>
-    </div>
-
-    <div style="display:flex; align-items:center; gap:14px; margin-bottom:28px;">
-      <button onClick="{{ generateVideo }}" style="background:#259821; color:#fff; border:none; border-radius:12px; padding:14px 24px; font-weight:700; font-size:14px; cursor:pointer; display:flex; align-items:center; gap:9px;">
-        <sc-if value="{{ videoGenerating }}" hint-placeholder-val="{{ false }}"><span style="width:15px; height:15px; border:2px solid rgba(255,255,255,0.4); border-top-color:#fff; border-radius:50%; display:inline-block; animation:hf-spin 0.7s linear infinite;"></span></sc-if>
-        {{ videoBtnLabel }}
-      </button>
-      <sc-if value="{{ hasVideoObjective }}" hint-placeholder-val="{{ false }}"><span style="font-size:13.5px; color:#6B7280;">Objective: <b style="color:#17325E;">{{ videoObjectiveName }}</b></span></sc-if>
+      <!-- Round 93: the prompt now sits in its own navy band, same treatment as Social — a real
+           visual "type here" cue the plain white/paper textarea+green button never gave. -->
+      <div style="background:linear-gradient(135deg,#17325E,#2E5EA6); border-radius:16px; padding:18px;">
+        <textarea value="{{ videoBrief }}" onChange="{{ onVideoBrief }}" rows="3" placeholder="e.g. Open on the empty steel glass at 5:45am — the house before anyone's awake. Close on it full, catching the first light, as the day's first sound starts outside." style="width:100%; box-sizing:border-box; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.25); border-radius:12px; padding:14px 16px; color:#fff; font-size:14px; line-height:1.55; resize:vertical; font-family:inherit; margin-bottom:14px;"></textarea>
+        <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+          <button onClick="{{ generateVideo }}" style="background:#F7F5F1; color:#17325E; border:none; border-radius:12px; padding:14px 24px; font-weight:700; font-size:14px; cursor:pointer; display:flex; align-items:center; gap:9px;">
+            <sc-if value="{{ videoGenerating }}" hint-placeholder-val="{{ false }}"><span style="width:15px; height:15px; border:2px solid rgba(58,42,6,0.3); border-top-color:#3A2A06; border-radius:50%; display:inline-block; animation:hf-spin 0.7s linear infinite;"></span></sc-if>
+            {{ videoBtnLabel }}
+          </button>
+          <sc-if value="{{ hasVideoObjective }}" hint-placeholder-val="{{ false }}"><span style="font-size:13.5px; color:rgba(255,255,255,0.72);">Objective: <b style="color:#fff;">{{ videoObjectiveName }}</b></span></sc-if>
+        </div>
+      </div>
     </div>
 
     <sc-if value="{{ hasConceptRoutes }}" hint-placeholder-val="{{ false }}">
@@ -5876,8 +5893,13 @@
       </div>
     </sc-if>
 
+    <!-- Round 93 (seventh pass): labelled "SINGLE POSTS", matching the "CAROUSEL" eyebrow lower down —
+         this empty state belongs to the post flow above it, not to Carousel, and kept reading as
+         ambiguous/orphaned once Carousel's own section existed right below it. Same fix, cheaper than
+         moving anything: name which flow it is. -->
     <sc-if value="{{ socialEmpty }}" hint-placeholder-val="{{ true }}">
       <div style="text-align:center; padding:50px 20px; background:#fff; border:1px dashed #C9CEDA; border-radius:18px; color:#6B7280;">
+        <div style="font-size:11px; font-weight:800; letter-spacing:0.07em; color:#F0561E; margin-bottom:10px;">SINGLE POSTS</div>
         <div style="font-family:'Epilogue',sans-serif; font-size:18px; font-weight:700; color:#17325E; margin-bottom:6px;">Pick your platforms and hit generate</div>
         <div style="font-size:14px;">You'll get an editable caption, hashtags and a live mockup for each — Facebook, Instagram and LinkedIn.</div>
       </div>
@@ -5888,6 +5910,253 @@
         <div style="font-family:'Epilogue',sans-serif; font-size:16px; font-weight:700; color:#17325E;">Writing posts for each platform…</div>
       </div>
     </sc-if>
+
+    <!-- ===== Carousel (round 93, rebuilt after live feedback) — a separate section, own STEP1-style
+         brief box (not borrowed invisibly from the single-post flow above), own concept step that
+         returns alternative narrative routes to pick between (POSM-route-styled), assets and
+         platform/style surfaced only once a route is chosen. ===== -->
+    <div style="margin-top:40px; padding-top:32px; border-top:1px solid #DDD9D1;">
+      <div style="display:flex; align-items:baseline; gap:11px; margin-bottom:5px;">
+        <span style="font-size:11px; font-weight:800; letter-spacing:0.07em; color:#F0561E;">CAROUSEL</span>
+        <span style="font-family:'Epilogue',sans-serif; font-weight:700; font-size:18px; color:#17325E;">Storytelling, slide by slide</span>
+      </div>
+      <div style="font-size:13.5px; line-height:1.6; color:#6B7280; margin-bottom:16px; max-width:680px; text-wrap:pretty;">An ordered, swipeable set — a hook slide, several value slides, a closing call to action — read as one continuous story, reviewed as a concept before any slide is rendered.</div>
+
+      <div style="background:#fff; border:1px solid #DDD9D1; border-radius:16px; padding:22px 24px; margin-bottom:16px;">
+        <div style="display:flex; align-items:baseline; gap:11px; margin-bottom:5px;">
+          <span style="font-size:11px; font-weight:800; letter-spacing:0.07em; color:#F0561E;">STEP 1</span>
+          <span style="font-family:'Epilogue',sans-serif; font-weight:700; font-size:18px; color:#17325E;">Carousel brief</span>
+        </div>
+        <div style="font-size:13.5px; line-height:1.6; color:#6B7280; margin-bottom:14px; max-width:660px; text-wrap:pretty;">What these slides, together, have to land. Reads the same idea platform as a single post — set it aside below to write from this brief alone instead.</div>
+
+        <sc-if value="{{ carouselHasStandsOn }}" hint-placeholder-val="{{ false }}">
+          <div style="background:#F4F7FC; border:1px solid #D6DEEC; border-radius:12px; padding:13px 16px; margin-bottom:13px;">
+            <div style="font-size:10.5px; font-weight:800; letter-spacing:0.07em; text-transform:uppercase; color:#2E5EA6; margin-bottom:5px;">{{ carouselStandsSource }}</div>
+            <div style="font-size:14px; line-height:1.5; color:#17325E; font-weight:600; text-wrap:pretty;">{{ carouselStandsText }}</div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ carouselStandsAside }}" hint-placeholder-val="{{ false }}">
+          <div style="background:#F7F5F1; border:1px solid #E1E4EA; border-radius:12px; padding:13px 16px; margin-bottom:13px; font-size:12.5px; line-height:1.55; color:#6B7280; text-wrap:pretty;"><span style="font-weight:700; color:#41505F;">The idea platform is set aside</span> — turned off above, in "What this producer is given." Describe the objective below; it replaces what the platform would have said, not just adds to it.</div>
+        </sc-if>
+        <sc-if value="{{ carouselNoStandsOn }}" hint-placeholder-val="{{ true }}">
+          <div style="background:#F4FAF5; border:1px solid #C9E7CE; border-radius:12px; padding:13px 16px; margin-bottom:13px; font-size:12.5px; line-height:1.55; color:#41505F; text-wrap:pretty;"><span style="font-weight:700; color:#1E7E34;">No idea platform or house behind this yet — and that's fine.</span> Describe the objective below and generate concepts — it becomes the whole brief, nothing else is required first.</div>
+        </sc-if>
+        <sc-if value="{{ carouselNoStandsOnBriefed }}" hint-placeholder-val="{{ false }}">
+          <div style="background:#F4F7FC; border:1px solid #D6DEEC; border-radius:12px; padding:13px 16px; margin-bottom:13px; font-size:12.5px; line-height:1.55; color:#41505F; text-wrap:pretty;"><span style="font-weight:700; color:#2E5EA6;">No idea platform or house behind this yet — but this piece is briefed from the plan below.</span> Its audience, channel, occasion, measure and message still apply.</div>
+        </sc-if>
+
+        <div style="font-size:11.5px; color:#9AA1AC; margin-bottom:13px;">Controlled by the Idea platform switch in "What this producer is given" above — no separate one here, so there's only one real toggle, not two that could disagree.</div>
+
+        <details style="margin:0 0 13px;"><summary style="cursor:pointer; list-style:none; display:inline-flex; align-items:center; gap:7px; background:#fff; border:1px solid #DDD9D1; color:#17325E; border-radius:10px; padding:9px 15px; font-size:13px; font-weight:700;">Prompt guide ▾</summary>
+          <div style="margin-top:10px; background:#fff; border:1px solid #DDD9D1; border-radius:12px; padding:15px 17px;">
+            <sc-if value="{{ pgExec.none }}" hint-placeholder-val="{{ true }}">
+              <div style="font-size:13px; line-height:1.6; color:#41505F; text-wrap:pretty;">No guide is written for this producer yet. Nothing generic is shown in its place.</div>
+            </sc-if>
+            <sc-if value="{{ pgExec.available }}" hint-placeholder-val="{{ false }}">
+              <div style="font-size:13.5px; line-height:1.6; color:#41505F; text-wrap:pretty;">{{ pgExec.what }}</div>
+            </sc-if>
+          </div>
+        </details>
+
+        <!-- Round 93 (fourth pass): the actual prompt now sits in its own navy band, matching every
+             other producer's STEP 1 — a real visual "type here" cue the plain white textarea never
+             gave. Platform/style moved up here too (still Social's own shared state, not a copy —
+             see the note below the band) so they're visible before generating, not deferred past it. -->
+        <div style="background:linear-gradient(135deg,#17325E,#2E5EA6); border-radius:16px; padding:18px;">
+          <textarea value="{{ carouselBrief }}" onChange="{{ onCarouselBrief }}" rows="3" placeholder="e.g. Launch the campaign line — say what these slides, together, have to land" style="width:100%; box-sizing:border-box; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.25); border-radius:12px; padding:14px 16px; color:#fff; font-size:14px; line-height:1.55; resize:vertical; font-family:inherit; margin-bottom:14px;"></textarea>
+
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+            <span style="font-size:11.5px; font-weight:700; color:rgba(255,255,255,0.65);">Platform</span>
+            <sc-for list="{{ platformChips }}" as="p" hint-placeholder-count="3">
+              <span onClick="{{ p.toggle }}" style="cursor:pointer; background:{{ p.bg }}; color:{{ p.fg }}; border:1px solid {{ p.border }}; font-size:12.5px; font-weight:700; padding:6px 13px; border-radius:30px;">{{ p.label }}</span>
+            </sc-for>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px; padding-bottom:14px; border-bottom:1px solid rgba(255,255,255,0.16);">
+            <span style="font-size:11.5px; font-weight:700; color:rgba(255,255,255,0.65);">Visual style</span>
+            <sc-for list="{{ socialStyles }}" as="v" hint-placeholder-count="4">
+              <span onClick="{{ v.set }}" title="{{ v.hint }}" style="cursor:pointer; background:{{ v.bg }}; color:{{ v.fg }}; border:1px solid {{ v.border }}; font-size:12px; font-weight:700; padding:6px 12px; border-radius:30px;">{{ v.label }}</span>
+            </sc-for>
+          </div>
+
+          <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span style="font-size:11.5px; font-weight:700; color:rgba(255,255,255,0.65);">Slides</span>
+              <span onClick="{{ onCarouselManual }}" style="cursor:pointer; font-size:12px; font-weight:700; padding:6px 10px; border-radius:20px; background:{{ carouselManualBg }}; color:{{ carouselManualFg }}; border:1px solid {{ carouselManualBorder }};">{{ carouselSlideCount }}</span>
+              <input type="range" min="3" max="10" value="{{ carouselSlideCount }}" onChange="{{ onCarouselSlideCount }}" onClick="{{ onCarouselManual }}" style="width:90px;" />
+              <span onClick="{{ onCarouselAuto }}" style="cursor:pointer; font-size:12px; font-weight:700; padding:6px 10px; border-radius:20px; background:{{ carouselAutoBg }}; color:{{ carouselAutoFg }}; border:1px solid {{ carouselAutoBorder }};">Let the studio decide</span>
+            </div>
+            <button onClick="{{ generateCarouselRoutes }}" style="background:#F7F5F1; color:#17325E; border:none; border-radius:12px; padding:12px 22px; font-weight:700; font-size:13.5px; cursor:pointer; margin-left:auto;">{{ carouselRoutesLabel }}</button>
+          </div>
+        </div>
+        <div style="font-size:11.5px; color:#9AA1AC; margin-top:10px;">Same platform and visual style as the single posts above — one shared choice, not a second one that could disagree.</div>
+      </div>
+
+      <!-- Alternative concepts — POSM-route-styled: genuinely different narrative angles, each with
+           its own recommended slide count, picked before anything is edited. -->
+      <sc-if value="{{ hasCarouselRoutes }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-bottom:20px;">
+          <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#6B7280; margin-bottom:9px;">Carousel concepts · pick one to develop</div>
+          <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:14px;">
+            <sc-for list="{{ carouselRoutes }}" as="r" hint-placeholder-count="3">
+              <div onClick="{{ r.pick }}" style="cursor:pointer; border:2px solid {{ r.chosen ? '#17325E' : '#DDD9D1' }}; background:{{ r.chosen ? '#F4F7FC' : '#fff' }}; border-radius:14px; padding:16px 18px;">
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px;">
+                  <span style="font-family:'Epilogue',sans-serif; font-weight:700; font-size:14.5px; color:#17325E;">{{ r.name }}</span>
+                  <span style="font-size:10.5px; font-weight:800; color:#6B7280; background:#F4F2ED; border-radius:6px; padding:3px 8px; white-space:nowrap;">{{ r.slideCount }} slides</span>
+                </div>
+                <div style="font-size:12.5px; line-height:1.55; color:#41505F;">{{ r.rationale }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- Everything past this point only appears once a concept has been chosen — assets and
+           platform/style are informed by that choice, not asked for blind up front. -->
+      <sc-if value="{{ carouselHasChosenRoute }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#fff; border:1px solid #DDD9D1; border-radius:16px; padding:20px 22px; margin-bottom:18px;">
+          <div style="font-size:11px; font-weight:800; letter-spacing:0.07em; text-transform:uppercase; color:#6B7280; margin-bottom:12px;">Assets for this carousel — picked once, used on every slide</div>
+          <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:14px; margin-bottom:16px;">
+            <div>
+              <div style="font-size:11.5px; font-weight:700; color:#17325E; margin-bottom:6px;">Pack shot</div>
+              <select value="{{ carouselPackCard.value }}" onChange="{{ carouselPackCard.pick }}" style="width:100%; border:1px solid #DDD9D1; border-radius:10px; padding:9px 11px; font-size:12.5px; color:#17325E; background:#fff; font-family:inherit;">
+                <option value="">Not used in this carousel</option>
+                <sc-for list="{{ carouselPackCard.options }}" as="o" hint-placeholder-count="0">
+                  <option value="{{ o.id }}">{{ o.name }}</option>
+                </sc-for>
+              </select>
+            </div>
+            <div>
+              <div style="font-size:11.5px; font-weight:700; color:#17325E; margin-bottom:6px;">Logo <span style="font-weight:400; color:#9AA1AC;">(reference only — not yet composited)</span></div>
+              <select value="{{ carouselLogoCard.value }}" onChange="{{ carouselLogoCard.pick }}" style="width:100%; border:1px solid #DDD9D1; border-radius:10px; padding:9px 11px; font-size:12.5px; color:#17325E; background:#fff; font-family:inherit;">
+                <option value="">Not used in this carousel</option>
+                <sc-for list="{{ carouselLogoCard.options }}" as="o" hint-placeholder-count="0">
+                  <option value="{{ o.id }}">{{ o.name }}</option>
+                </sc-for>
+              </select>
+            </div>
+          </div>
+
+          <!-- Cast is opt-in — confirmed live: keep the field, but generating one is a deliberate
+               choice, not every carousel's default. -->
+          <div style="display:flex; align-items:center; gap:9px; margin-bottom:10px; padding-top:6px; border-top:1px solid #E6E3DC;">
+            <span onClick="{{ toggleCarouselWantCast }}" style="cursor:pointer; width:18px; height:18px; flex:none; border-radius:6px; background:{{ carouselCastCheckBg }}; border:1.5px solid {{ carouselCastCheckBorder }}; color:#fff; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; margin-top:6px;">{{ carouselCastCheckMark }}</span>
+            <span onClick="{{ toggleCarouselWantCast }}" style="cursor:pointer; font-size:12.5px; font-weight:600; color:#17325E; margin-top:6px;">Include a recurring model/cast in this carousel</span>
+          </div>
+          <sc-if value="{{ carouselWantCast }}" hint-placeholder-val="{{ false }}">
+            <div style="max-width:340px;">
+              <select value="{{ carouselCastCard.value }}" onChange="{{ carouselCastCard.pick }}" style="width:100%; border:1px solid #DDD9D1; border-radius:10px; padding:9px 11px; font-size:12.5px; color:#17325E; background:#fff; font-family:inherit; margin-bottom:8px;">
+                <option value="">Not used in this carousel</option>
+                <sc-for list="{{ carouselCastCard.options }}" as="o" hint-placeholder-count="0">
+                  <option value="{{ o.id }}">{{ o.name }}</option>
+                </sc-for>
+              </select>
+              <span onClick="{{ draftCarouselCast }}" style="cursor:pointer; font-size:12px; font-weight:700; color:#2E5EA6; text-decoration:underline;">{{ carouselCastBusy ? 'Drafting…' : '✦ AI-draft a cast reference, from this concept' }}</span>
+              <sc-if value="{{ hasCarouselCastCandidates }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex; gap:8px; margin-top:9px; flex-wrap:wrap;">
+                  <sc-for list="{{ carouselCastCandidates }}" as="cc" hint-placeholder-count="3">
+                    <div style="width:64px;">
+                      <img src="{{ cc.url }}" style="width:64px; height:64px; border-radius:8px; object-fit:cover; display:block; margin-bottom:4px;" />
+                      <span onClick="{{ cc.adopt }}" style="cursor:pointer; font-size:10.5px; font-weight:700; color:#1E7E34;">Use — sign it in</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-if>
+            </div>
+          </sc-if>
+
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:16px;">
+          <sc-for list="{{ carouselConcept }}" as="sl" hint-placeholder-count="5">
+            <div style="background:#fff; border:1px solid #DDD9D1; border-radius:13px; padding:14px 16px;">
+              <div style="display:flex; align-items:center; gap:10px; margin-bottom:9px;">
+                <span style="font-size:10.5px; font-weight:800; color:#9AA1AC;">{{ sl.n }}</span>
+                <span style="font-size:10.5px; font-weight:800; background:{{ sl.roleBg }}; color:{{ sl.roleFg }}; border-radius:9px; padding:3px 9px; text-transform:uppercase; letter-spacing:0.04em;">{{ sl.roleLabel }}</span>
+                <div style="margin-left:auto; display:flex; align-items:center; gap:14px;">
+                  <span onClick="{{ sl.toggleText }}" style="cursor:pointer; font-size:11px; font-weight:700; color:{{ sl.isTextFg }};">{{ sl.isTextLabel }}</span>
+                  <span onClick="{{ sl.up }}" style="cursor:pointer; color:#6B7280; font-size:13px;">↑</span>
+                  <span onClick="{{ sl.down }}" style="cursor:pointer; color:#6B7280; font-size:13px;">↓</span>
+                  <span onClick="{{ sl.remove }}" style="cursor:pointer; color:#C0392B; font-size:13px;">✕</span>
+                </div>
+              </div>
+              <input value="{{ sl.headline }}" onChange="{{ sl.onHeadline }}" placeholder="on-slide headline" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:9px; padding:9px 11px; font-size:13.5px; font-weight:600; color:#17325E; background:#FBFAF8; font-family:inherit; margin-bottom:8px;" />
+              <!-- Round 93 (sixth pass): where the headline lands, composited as real text over the
+                   image — never asked of the image model, see `carouselNoTextPrompt`'s own comment. -->
+              <sc-if value="{{ sl.notText }}" hint-placeholder-val="{{ true }}">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                  <span style="font-size:11px; font-weight:700; color:#6B7280;">Headline position</span>
+                  <sc-for list="{{ sl.posChips }}" as="pc" hint-placeholder-count="3">
+                    <span onClick="{{ pc.set }}" style="cursor:pointer; background:{{ pc.bg }}; color:{{ pc.fg }}; border:1px solid {{ pc.border }}; font-size:11px; font-weight:700; padding:4px 10px; border-radius:20px;">{{ pc.label }}</span>
+                  </sc-for>
+                </div>
+              </sc-if>
+              <sc-if value="{{ sl.isText }}" hint-placeholder-val="{{ false }}">
+                <div style="font-size:11.5px; color:#9AA1AC; line-height:1.5;">Renders as a plain text card, no image generated — good for an opening question, a stat, or a closing line.</div>
+              </sc-if>
+              <sc-if value="{{ sl.notText }}" hint-placeholder-val="{{ true }}">
+                <textarea value="{{ sl.visual_note }}" onChange="{{ sl.onVisual }}" rows="2" placeholder="what the image shows — never the words themselves, those go in the headline above" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:9px; padding:9px 11px; font-size:12.5px; color:#41505F; background:#FBFAF8; resize:vertical; font-family:inherit;"></textarea>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex; align-items:center; gap:16px; margin-bottom:24px;">
+          <sc-if value="{{ canAddSlide }}" hint-placeholder-val="{{ true }}">
+            <span onClick="{{ addSlide }}" style="cursor:pointer; font-size:13px; font-weight:700; color:#17325E; text-decoration:underline;">+ Add a slide</span>
+          </sc-if>
+          <button onClick="{{ produceCarouselSlides }}" style="background:#259821; color:#fff; border:none; border-radius:12px; padding:12px 22px; font-weight:700; font-size:13.5px; cursor:pointer; margin-left:auto;">{{ carouselProduceLabel }}</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ hasCarouselSlides }}" hint-placeholder-val="{{ false }}">
+        <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:14px;">
+          <sc-for list="{{ carouselSlides }}" as="sl" hint-placeholder-count="5">
+            <div style="background:#fff; border:1px solid #DDD9D1; border-radius:14px; overflow:hidden;">
+              <sc-if value="{{ sl.isText }}" hint-placeholder-val="{{ false }}">
+                <!-- A real slide format, not a placeholder — same brand palette as the rest of the
+                     carousel band, no image call made for this one at all. -->
+                <div style="aspect-ratio:4/5; background:linear-gradient(135deg,#17325E,#2E5EA6); display:flex; align-items:center; justify-content:center; padding:22px;">
+                  <div style="font-family:'Epilogue',sans-serif; font-size:17px; font-weight:700; color:#fff; line-height:1.35; text-align:center; text-wrap:balance;">{{ sl.headline }}</div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ sl.notText }}" hint-placeholder-val="{{ true }}">
+                <div style="position:relative; aspect-ratio:4/5; background:#F4F2ED; display:flex; align-items:center; justify-content:center;">
+                  <sc-if value="{{ sl.busy }}" hint-placeholder-val="{{ false }}">
+                    <span style="width:22px; height:22px; border:3px solid #DDD9D1; border-top-color:#259821; border-radius:50%; display:inline-block; animation:hf-spin 0.7s linear infinite;"></span>
+                  </sc-if>
+                  <sc-if value="{{ sl.imageUrl }}" hint-placeholder-val="{{ false }}">
+                    <img src="{{ sl.imageUrl }}" style="width:100%; height:100%; object-fit:cover;" />
+                    <!-- Round 93 (sixth pass): the headline as a real overlay, not image-model text —
+                         a gradient scrim for legibility on any photo, bold white Epilogue on top. Can't
+                         misspell anything: it is literally the string in the headline field above. -->
+                    <sc-if value="{{ sl.overlayBottom }}" hint-placeholder-val="{{ false }}">
+                      <div style="position:absolute; left:0; right:0; bottom:0; padding:22px 14px 14px; background:linear-gradient(to top, rgba(0,0,0,0.72), transparent);">
+                        <div style="font-family:'Epilogue',sans-serif; font-size:14.5px; font-weight:700; color:#fff; line-height:1.3; text-wrap:balance;">{{ sl.headline }}</div>
+                      </div>
+                    </sc-if>
+                    <sc-if value="{{ sl.overlayTop }}" hint-placeholder-val="{{ false }}">
+                      <div style="position:absolute; left:0; right:0; top:0; padding:14px 14px 22px; background:linear-gradient(to bottom, rgba(0,0,0,0.72), transparent);">
+                        <div style="font-family:'Epilogue',sans-serif; font-size:14.5px; font-weight:700; color:#fff; line-height:1.3; text-wrap:balance;">{{ sl.headline }}</div>
+                      </div>
+                    </sc-if>
+                  </sc-if>
+                </div>
+              </sc-if>
+              <div style="padding:11px 13px;">
+                <div style="font-size:10px; font-weight:800; color:#9AA1AC; margin-bottom:3px;">{{ sl.n }} · {{ sl.roleLabel }}</div>
+                <div style="font-size:12.5px; font-weight:600; color:#17325E; line-height:1.4; margin-bottom:8px;">{{ sl.headline }}</div>
+                <!-- Round 93 (fifth pass): "Adjust — keep everything else the same", matching the
+                     per-post Adjust pattern (`adjustPost`) — a note field, not a blind re-roll. Only
+                     for image slides; a text-only slide has nothing to regenerate. -->
+                <sc-if value="{{ sl.notText }}" hint-placeholder-val="{{ true }}">
+                  <textarea value="{{ sl.adjustNote }}" onChange="{{ sl.onAdjustNote }}" rows="2" placeholder="what to change — keep everything else the same" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 9px; font-size:11.5px; color:#41505F; background:#FBFAF8; resize:vertical; font-family:inherit; margin-bottom:7px;"></textarea>
+                  <span onClick="{{ sl.regenerate }}" style="cursor:pointer; font-size:11.5px; font-weight:700; color:#2E5EA6; text-decoration:underline;">{{ sl.adjustLabel }}</span>
+                </sc-if>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+    </div>
   </div>
     </sc-if>
 
@@ -5977,11 +6246,15 @@
             </sc-if>
           </div>
         </sc-if>
-        <textarea value="{{ kvBrief }}" onChange="{{ onKvBrief }}" rows="3" placeholder="e.g. the carton held up to daylight, four testing marks visible on the side, nothing else in frame. Must work at arm’s length in a lit aisle and in black and white." style="width:100%; border:1px solid #DDD9D1; border-radius:11px; padding:12px 14px; font-size:14px; line-height:1.55; color:#17325E; background:#FBFAF8; resize:vertical; font-family:inherit; margin-bottom:13px;"></textarea>
-        <button onClick="{{ developKv }}" style="background:#17325E; color:#F7F5F1; border:none; border-radius:11px; padding:12px 20px; font-weight:700; font-size:13.5px; cursor:pointer; display:flex; align-items:center; gap:9px;">
-          <sc-if value="{{ kvBusy }}" hint-placeholder-val="{{ false }}"><span style="width:14px; height:14px; border:2px solid rgba(247,245,241,0.35); border-top-color:#F7F5F1; border-radius:50%; display:inline-block; animation:hf-spin 0.7s linear infinite;"></span></sc-if>
-          {{ kvLabel }}
-        </button>
+        <!-- Round 93: the prompt now sits in its own navy band, same treatment as Social — a real
+             visual "type here" cue the plain white/paper textarea+navy button never gave. -->
+        <div style="background:linear-gradient(135deg,#17325E,#2E5EA6); border-radius:16px; padding:18px; margin-bottom:13px;">
+          <textarea value="{{ kvBrief }}" onChange="{{ onKvBrief }}" rows="3" placeholder="e.g. the carton held up to daylight, four testing marks visible on the side, nothing else in frame. Must work at arm’s length in a lit aisle and in black and white." style="width:100%; box-sizing:border-box; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.25); border-radius:12px; padding:14px 16px; color:#fff; font-size:14px; line-height:1.55; resize:vertical; font-family:inherit; margin-bottom:14px;"></textarea>
+          <button onClick="{{ developKv }}" style="background:#F7F5F1; color:#17325E; border:none; border-radius:11px; padding:12px 20px; font-weight:700; font-size:13.5px; cursor:pointer; display:flex; align-items:center; gap:9px;">
+            <sc-if value="{{ kvBusy }}" hint-placeholder-val="{{ false }}"><span style="width:14px; height:14px; border:2px solid rgba(58,42,6,0.3); border-top-color:#3A2A06; border-radius:50%; display:inline-block; animation:hf-spin 0.7s linear infinite;"></span></sc-if>
+            {{ kvLabel }}
+          </button>
+        </div>
 
         <sc-if value="{{ hasKvOptions }}" hint-placeholder-val="{{ false }}">
           <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:20px;">
@@ -6804,10 +7077,14 @@
             </sc-if>
           </div>
         </sc-if>
-        <textarea value="{{ ogIdea }}" onChange="{{ onOgIdea }}" rows="3" placeholder="e.g. A two-minute purity test a shopper runs herself, on her own carton, at the stall — and takes the result home." style="width:100%; border:1px solid #DDD9D1; border-radius:11px; padding:12px 14px; font-size:14px; line-height:1.55; color:#17325E; background:#FBFAF8; resize:vertical; font-family:inherit; margin-bottom:13px;"></textarea>
-        <div style="display:flex; gap:9px; align-items:center; flex-wrap:wrap;">
-          <button onClick="{{ developIdea }}" style="background:#17325E; color:#F7F5F1; border:none; border-radius:11px; padding:12px 20px; font-weight:700; font-size:13.5px; cursor:pointer;">{{ ogIdeaLabel }}</button>
-          <span onClick="{{ generateOgIdeas }}" style="cursor:pointer; font-size:13px; font-weight:700; color:#17325E; text-decoration:underline;">{{ ogGenLabel }}</span>
+        <!-- Round 93: the prompt now sits in its own navy band, same treatment as Social — a real
+             visual "type here" cue the plain white/paper textarea+navy button never gave. -->
+        <div style="background:linear-gradient(135deg,#17325E,#2E5EA6); border-radius:16px; padding:18px;">
+          <textarea value="{{ ogIdea }}" onChange="{{ onOgIdea }}" rows="3" placeholder="e.g. A two-minute purity test a shopper runs herself, on her own carton, at the stall — and takes the result home." style="width:100%; box-sizing:border-box; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.25); border-radius:12px; padding:14px 16px; color:#fff; font-size:14px; line-height:1.55; resize:vertical; font-family:inherit; margin-bottom:14px;"></textarea>
+          <div style="display:flex; gap:14px; align-items:center; flex-wrap:wrap;">
+            <button onClick="{{ developIdea }}" style="background:#F7F5F1; color:#17325E; border:none; border-radius:11px; padding:12px 20px; font-weight:700; font-size:13.5px; cursor:pointer;">{{ ogIdeaLabel }}</button>
+            <span onClick="{{ generateOgIdeas }}" style="cursor:pointer; font-size:13px; font-weight:700; color:rgba(255,255,255,0.85); text-decoration:underline;">{{ ogGenLabel }}</span>
+          </div>
         </div>
 
         <!-- Venue-led: the trap is what a generic idea walks into at THAT venue, and capture/risk are
@@ -8556,12 +8833,21 @@
               <div style="background:#fff; border:1px dashed #C9CEDA; border-radius:14px; padding:22px 24px; font-size:13.5px; line-height:1.6; color:#41505F; text-wrap:pretty;">No plan above this sheet, so there is no ladder to write against. A standalone sheet writes its objectives on the sheet itself; a campaign sheet needs its plan.</div>
             </sc-if>
             <sc-if value="{{ prHasFunnel }}" hint-placeholder-val="{{ false }}">
-              <div style="display:flex; align-items:baseline; gap:11px; margin-bottom:13px;">
-                <span style="font-size:11px; font-weight:800; letter-spacing:0.07em; text-transform:uppercase; color:#6B7280;">The plan's ladder</span>
-                <span style="font-size:12.5px; color:#6B7280;">{{ prOwnsCount }}</span>
-              </div>
+              <sc-if value="{{ prNotSimple }}" hint-placeholder-val="{{ true }}">
+                <div style="display:flex; align-items:baseline; gap:11px; margin-bottom:13px;">
+                  <span style="font-size:11px; font-weight:800; letter-spacing:0.07em; text-transform:uppercase; color:#6B7280;">The plan's ladder</span>
+                  <span style="font-size:12.5px; color:#6B7280;">{{ prOwnsCount }}</span>
+                </div>
+                <div style="font-size:12.5px; line-height:1.6; color:#6B7280; margin-bottom:14px; max-width:600px; text-wrap:pretty;">This reads the plan's own objectives and sorts each by what PR can honestly own: a business goal (revenue/volume) is refused — PR cannot move that number — a marketing goal contributes but isn't owned, and a communication goal is what a PR objective is actually written against.</div>
+              </sc-if>
+              <sc-if value="{{ prSimple }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex; align-items:baseline; gap:11px; margin-bottom:13px;">
+                  <span style="font-size:11px; font-weight:800; letter-spacing:0.07em; text-transform:uppercase; color:#6B7280;">Write against this objective</span>
+                </div>
+              </sc-if>
               <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:16px;">
                 <sc-for list="{{ prFunnelRows }}" as="r" hint-placeholder-count="4">
+                  <sc-if value="{{ r.expanded }}" hint-placeholder-val="{{ true }}">
                   <div style="background:#fff; border:1px solid #DDD9D1; border-radius:14px; padding:16px 18px;">
                     <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px; flex-wrap:wrap;">
                       <span style="font-size:10.5px; font-weight:800; background:{{ r.pillBg }}; color:{{ r.pillFg }}; border:1px solid {{ r.pillLine }}; border-radius:9px; padding:3px 9px; text-transform:uppercase; letter-spacing:0.04em;">{{ r.stance }}</span>
@@ -8615,6 +8901,67 @@
                       <div style="font-size:12.5px; color:#9AA1AC; margin-top:10px; font-weight:700;">No objective can be written against this row, and the row stays visible so nobody writes one anyway.</div>
                     </sc-if>
                   </div>
+                  </sc-if>
+                  <!-- Round 93: the collapsed twin — same card, folded behind a one-line "why", used
+                       only when exactly one objective is genuinely writable (bagPrFunnel's `simple`).
+                       Content is deliberately identical to the expanded branch above, not a summary of
+                       it, so opening one never shows anything different from what the full ladder
+                       would have shown for this same row. -->
+                  <sc-if value="{{ r.collapsed }}" hint-placeholder-val="{{ false }}">
+                  <details>
+                    <summary style="cursor:pointer; list-style:none; font-size:12px; font-weight:700; color:#9AA1AC; padding:6px 2px;">{{ r.collapseLabel }}</summary>
+                    <div style="background:#fff; border:1px solid #DDD9D1; border-radius:14px; padding:16px 18px; margin-top:8px;">
+                      <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px; flex-wrap:wrap;">
+                        <span style="font-size:10.5px; font-weight:800; background:{{ r.pillBg }}; color:{{ r.pillFg }}; border:1px solid {{ r.pillLine }}; border-radius:9px; padding:3px 9px; text-transform:uppercase; letter-spacing:0.04em;">{{ r.stance }}</span>
+                        <span style="font-size:11px; color:#9AA1AC; font-weight:700;">{{ r.level }}</span>
+                      </div>
+                      <div style="font-size:14.5px; font-weight:700; line-height:1.5; color:{{ r.ink }}; text-decoration:{{ r.strike }}; margin-bottom:7px; text-wrap:pretty;">{{ r.statement }}</div>
+                      <sc-if value="{{ r.hasWhy }}" hint-placeholder-val="{{ false }}">
+                        <div style="background:#FDF0EE; border:1px solid #F1C9C4; border-radius:11px; padding:12px 14px; font-size:13px; line-height:1.6; color:#8A2A20; text-wrap:pretty;">{{ r.why }}</div>
+                      </sc-if>
+                      <sc-if value="{{ r.hasSuggestion }}" hint-placeholder-val="{{ false }}">
+                        <div style="background:#F4F7FC; border:1px solid #D6E0F0; border-radius:11px; padding:13px 15px; margin-top:10px;">
+                          <div style="font-size:11px; font-weight:800; letter-spacing:0.06em; text-transform:uppercase; color:#2E5EA6; margin-bottom:6px;">{{ r.sugEyebrow }}</div>
+                          <div style="font-size:13.5px; font-weight:700; color:#17325E; margin-bottom:4px;">{{ r.suggestLabel }}</div>
+                          <sc-if value="{{ r.hasSuggestWhy }}" hint-placeholder-val="{{ false }}">
+                            <div style="font-size:12.5px; line-height:1.55; color:#41505F; margin-bottom:7px; text-wrap:pretty;">{{ r.suggestWhy }}</div>
+                          </sc-if>
+                          <sc-if value="{{ r.hasPrefill }}" hint-placeholder-val="{{ false }}">
+                          <div style="font-size:13px; line-height:1.6; color:#41505F; background:#fff; border:1px solid #D6E0F0; border-radius:10px; padding:11px 13px; text-wrap:pretty;">{{ r.prefillBody }}</div>
+                          <sc-if value="{{ r.hasPrefillMeasure }}" hint-placeholder-val="{{ false }}">
+                            <div style="font-size:12px; line-height:1.55; color:#6B7280; margin-top:7px; text-wrap:pretty;">Measured by {{ r.prefillMeasure }}</div>
+                          </sc-if>
+                          <sc-if value="{{ r.hasPrefillCannot }}" hint-placeholder-val="{{ false }}">
+                            <div style="font-size:12px; line-height:1.55; color:#8A6410; margin-top:6px; text-wrap:pretty;">{{ r.prefillCannot }}</div>
+                          </sc-if>
+                          <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-top:11px;">
+                            <span onClick="{{ r.prefill }}" style="cursor:pointer; background:#fff; color:#17325E; border:1px solid #D6E0F0; border-radius:9px; padding:7px 13px; font-size:12px; font-weight:700;">{{ r.prefillLabel }}</span>
+                            <sc-if value="{{ r.hasPrefillFrom }}" hint-placeholder-val="{{ false }}">
+                              <span style="font-size:11.5px; color:#9AA1AC; line-height:1.5; text-wrap:pretty;">{{ r.prefillFrom }}</span>
+                            </sc-if>
+                          </div>
+                          </sc-if>
+                        </div>
+                      </sc-if>
+                      <sc-if value="{{ r.canWrite }}" hint-placeholder-val="{{ true }}">
+                        <div style="margin-top:12px;">
+                          <textarea data-k="{{ r.draftKey }}" value="{{ r.draft }}" onChange="{{ onPrField }}" rows="2" placeholder="what PR is being asked to do against this row" style="width:100%; border:1px solid #DDD9D1; border-radius:11px; padding:11px 13px; font-size:13.5px; line-height:1.55; color:#17325E; background:#FBFAF8; resize:vertical; font-family:inherit; margin-bottom:9px;"></textarea>
+                          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                            <select data-k="{{ r.rungKey }}" value="{{ r.rung }}" onChange="{{ onPrField }}" style="width:100%; border:1px solid #DDD9D1; border-radius:10px; padding:9px 11px; font-size:12.5px; color:#17325E; background:#fff; font-family:inherit;">
+                              <sc-for list="{{ r.rungOpts }}" as="o" hint-placeholder-count="5">
+                                <option value="{{ o.v }}">{{ o.label }}</option>
+                              </sc-for>
+                            </select>
+                            <input data-k="{{ r.proofKey }}" value="{{ r.proof }}" onChange="{{ onPrField }}" placeholder="the proof it carries (optional)" style="width:100%; border:1px solid #DDD9D1; border-radius:10px; padding:9px 11px; font-size:12.5px; color:#17325E; background:#fff; font-family:inherit;" />
+                          </div>
+                        </div>
+                      </sc-if>
+                      <sc-if value="{{ r.cannotWrite }}" hint-placeholder-val="{{ false }}">
+                        <div style="font-size:12.5px; color:#9AA1AC; margin-top:10px; font-weight:700;">No objective can be written against this row, and the row stays visible so nobody writes one anyway.</div>
+                      </sc-if>
+                    </div>
+                  </details>
+                  </sc-if>
                 </sc-for>
               </div>
               <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
@@ -10089,6 +10436,21 @@ class Component extends DCLogic {
     visualsBusy: false,
     posts: [],
     scheduled: false,
+    // Round 93 (third pass): carousel — a separate section below the single-post flow, not a mode
+    // switch inside it. Its own visible brief textarea, but NO independent idea-platform toggle —
+    // that field reads and writes `socialForceTyped`/`socialStandsOn` directly, the exact same state
+    // "What this producer is given"'s own Idea Platform card already controls. A second, separate
+    // `carousel.forceTyped` was tried first and was exactly the "two controls, only one real" bug this
+    // codebase has already fixed three times (Social/POSM/Onground) — confirmed live, reverted.
+    // Platform and visual style are likewise shared with Social's own `socialPlatforms`/`socialStyle`.
+    carousel: {
+      brief: '',
+      slideCountMode: 'manual', slideCount: 5,
+      routesBusy: false, routes: [], chosenRoute: -1,
+      wantCast: false,
+      assets: [], packChoice: '', logoChoice: '', castChoice: '', castCandidates: [], castBusy: false,
+      concept: null, slides: [], slideNotes: {}, producing: false,
+    },
     // video
     videoObjective: null,
     videoGenerating: false,
@@ -10174,7 +10536,7 @@ class Component extends DCLogic {
       const t = this.xTab();
       if (t === 'posm') this.loadPosmFormats();
       if (t === 'onground') { this.loadOgStandsOn(); this.ensureAssetLib(); }
-      if (t === 'social') this.loadSocialStandsOn();
+      if (t === 'social') { this.loadSocialStandsOn(); this.loadCarouselAssetLib(); }
     }
   };
 
@@ -11885,6 +12247,168 @@ class Component extends DCLogic {
     });
   };
 
+  // ---------- carousel (round 93, third pass) ----------
+  setCarousel = (patch) => this.setState(s => ({ carousel: { ...s.carousel, ...patch } }));
+  onCarouselBrief = (e) => this.setCarousel({ brief: e.target.value });
+
+  loadCarouselAssetLib = async () => {
+    const d = await this.apiGet('/library');
+    this.setCarousel({ assets: (d && Array.isArray(d.items)) ? d.items : [] });
+  };
+  carouselAssetOptions = (kind) => (this.state.carousel.assets || []).filter(it => it.kind === kind && it.signed_off);
+  onCarouselAsset = (field) => (e) => this.setCarousel({ [field]: e.target.value });
+  onCarouselSlideCountMode = (mode) => () => this.setCarousel({ slideCountMode: mode });
+  onCarouselSlideCount = (e) => this.setCarousel({ slideCount: Math.max(3, Math.min(10, parseInt(e.target.value, 10) || 5)) });
+  // Cast is opt-in, not assumed — confirmed live: keep the field, but generating one is a deliberate
+  // choice, not every carousel's default.
+  toggleCarouselWantCast = () => this.setCarousel({ wantCast: !this.state.carousel.wantCast });
+
+  // Same primitive POSM's cast card uses (`/cast-reference`) — a draft, not yet ground truth, until
+  // one candidate is explicitly signed in below. Draws its brief from the CHOSEN route's own slides
+  // when one exists, not the generic carousel brief — confirmed live: "it can take inputs from the
+  // concept directly."
+  draftCarouselCast = async () => {
+    if (this.state.carousel.castBusy) return;
+    const c = this.state.carousel;
+    const fromConcept = (c.concept || []).map(s => [s.headline, s.visual_note].filter(Boolean).join(' — ')).join('. ');
+    this.setCarousel({ castBusy: true, castCandidates: [] });
+    const r = await this.apiCall('/cast-reference', {
+      characters: fromConcept.trim() || (c.brief || '').trim() || 'brand protagonist',
+      style: this.state.socialStyle || 'real', n: 3 });
+    this.setCarousel({ castBusy: false });
+    const images = (r && r.ok && r.data && Array.isArray(r.data.images)) ? r.data.images : [];
+    if (!images.length) { this.showToast((r && r.data && r.data.detail) || 'No cast draft came back.', 'warn'); return; }
+    this.setCarousel({ castCandidates: images });
+  };
+  // The approval step — a draft is not ground truth until a person explicitly signs it in, same rule
+  // as POSM's own cast card (`adoptPosmCastDraft`).
+  adoptCarouselCastDraft = (url) => async () => {
+    const r = await this.apiCall('/library-adopt', { url, kind: 'cast', name: 'Carousel cast', sign: true });
+    const item = r && r.ok && r.data && r.data.item;
+    if (!item) { this.showToast((r && r.data && r.data.detail) || 'Could not sign that in.', 'warn'); return; }
+    this.setCarousel({ castChoice: item.id, castCandidates: [] });
+    this.loadCarouselAssetLib();
+    this.showToast('Cast signed in — locked for every slide in this carousel.', 'ok');
+  };
+
+  // The route step: up to three genuinely different narrative concepts, text only, before any image
+  // is generated — matching the shape Video's/POSM's own multi-route steps already use. See
+  // `producers.carousel_concept`'s own docstring for why this is routes to pick between, not one
+  // draft to edit in place.
+  generateCarouselRoutes = async () => {
+    const c = this.state.carousel, s = this.state;
+    if (c.routesBusy) return;
+    if (!(c.brief || '').trim() && !(s.socialStandsOn && s.socialStandsOn.text && !s.socialForceTyped)) {
+      this.showToast('Write what these slides have to land, or adopt an idea platform above.'); return;
+    }
+    this.setCarousel({ routesBusy: true, routes: [], chosenRoute: -1, concept: null, slides: [] });
+    const body = { objective: c.brief, slide_count_mode: c.slideCountMode, slide_count: c.slideCount,
+      force_typed: !!s.socialForceTyped };
+    const execId = (this.currentExec() || {}).id; if (execId) body.execution = execId;
+    const r = await this.apiCall('/social-carousel-concept', body);
+    this.setCarousel({ routesBusy: false });
+    const routes = (r && r.ok && r.data && Array.isArray(r.data.routes)) ? r.data.routes : [];
+    if (!routes.length) {
+      this.showToast((r && r.data && r.data.detail) || 'No concepts came back — try a more specific brief.', 'warn');
+      return;
+    }
+    this.setCarousel({ routes });
+  };
+  pickCarouselRoute = (i) => () => {
+    const route = this.state.carousel.routes[i]; if (!route) return;
+    this.setCarousel({ chosenRoute: i,
+      concept: route.slides.map((s, ix) => ({ ...s, n: ix + 1 })), slides: [] });
+  };
+  onSlideField = (i, field) => (e) => this.setCarousel({
+    concept: this.state.carousel.concept.map((s, ix) => ix === i ? { ...s, [field]: e.target.value } : s) });
+  moveSlide = (i, dir) => () => {
+    const c = this.state.carousel.concept.slice();
+    const j = i + dir; if (j < 0 || j >= c.length) return;
+    [c[i], c[j]] = [c[j], c[i]];
+    this.setCarousel({ concept: c.map((s, ix) => ({ ...s, n: ix + 1 })) });
+  };
+  removeSlide = (i) => () => {
+    if (this.state.carousel.concept.length <= 3) { this.showToast('A carousel needs at least three slides.'); return; }
+    this.setCarousel({ concept: this.state.carousel.concept.filter((_, ix) => ix !== i).map((s, ix) => ({ ...s, n: ix + 1 })) });
+  };
+  addSlide = () => {
+    if (this.state.carousel.concept.length >= 10) { this.showToast('Ten slides is the limit — the research on carousel length agrees.'); return; }
+    const c = this.state.carousel.concept.slice();
+    c.splice(c.length - 1, 0, { role: 'value', headline: '', visual_note: '' });
+    this.setCarousel({ concept: c.map((s, ix) => ({ ...s, n: ix + 1 })) });
+  };
+  // A slide marked text-only skips image generation entirely — a real carousel format (an opening
+  // question, a stat, a closing line on a plain card), not every slide needing a photograph. Toggled
+  // before production, in the editable concept list.
+  toggleSlideText = (i) => () => this.setCarousel({
+    concept: this.state.carousel.concept.map((s, ix) => ix === i ? { ...s, isText: !s.isText } : s) });
+  onSlideAdjustNote = (n) => (e) => this.setCarousel({
+    slideNotes: { ...(this.state.carousel.slideNotes || {}), [n]: e.target.value } });
+  // Round 93 (sixth pass): the headline is placed as a real text overlay, not asked of the image model
+  // — same fix POSM already made for exactly this failure (image models misspell/misalign rendered
+  // words; a CSS layer just displays the string you typed, so it can't get it wrong). `pos` is
+  // 'bottom'/'top'/'none' — 'none' keeps the headline as caption-only, no on-image text at all.
+  setSlideTextPos = (i, pos) => () => this.setCarousel({
+    concept: this.state.carousel.concept.map((s, ix) => ix === i ? { ...s, textPos: pos } : s) });
+
+  // Production reuses `/scene-still` directly, once per slide — the same route Social's own single
+  // posts already render through — with the carousel's locked pack/cast attached to every call, so
+  // the slides read as one continuous object rather than six unrelated images. Platform/style read
+  // Social's own shared state (`socialPlatforms`/`socialStyle`) — confirmed live, not a second copy.
+  // Logo is stored but not yet composited into the render itself (`/scene-still` has no logo-overlay
+  // parameter) — flagged on screen rather than silently dropped. Text-only slides never call
+  // `/scene-still` at all — there is nothing to generate, only the headline rendered as a card.
+  //
+  // Round 93 (sixth pass): the headline is NEVER sent to the image model — confirmed live, asking for
+  // precise on-image text/spelling/alignment via the prompt was slow and unreliable (image models are
+  // bad at rendering words; the fix is not a better prompt, it's not asking at all). The image is pure
+  // visual_note; the headline is composited as a real text layer on top in the template
+  // (`sl.textPos`), which can't misspell anything because it is just displaying the string typed in
+  // the concept editor. Same discipline POSM already applies (hero cutout, no baked-in type).
+  carouselNoTextPrompt(note){
+    return ' No text, no words, no letters, no writing of any kind anywhere in the frame — a clean photographic image only.' + (note ? (' Adjustment: ' + note) : '');
+  }
+  produceCarouselSlides = async () => {
+    const c = this.state.carousel;
+    if (!c.concept || !c.concept.length || c.producing) return;
+    this.setCarousel({ producing: true, slides: c.concept.map(s => ({ ...s, imageUrl: '', busy: !s.isText })) });
+    const sp = this.state.socialPlatforms || {};
+    const ratio = sp.linkedin && !sp.instagram ? '1:1' : '4:5';
+    const style = this.state.socialStyle || 'real';
+    await Promise.all(c.concept.filter(s => !s.isText).map(async (s) => {
+      const res = await this.apiJson('/scene-still', {
+        scene_no: s.n, ratio, style,
+        prompt: (s.visual_note || s.headline || '') + this.carouselNoTextPrompt(),
+        pack_id: c.packChoice || undefined, cast_id: c.wantCast ? (c.castChoice || undefined) : undefined,
+      });
+      this.setCarousel({ slides: this.state.carousel.slides.map(x =>
+        x.n === s.n ? { ...x, imageUrl: (res && res.image_url) || '', busy: false } : x) });
+    }));
+    this.setCarousel({ producing: false });
+    this.showToast('Carousel produced — review each slide below.', 'ok');
+  };
+  // "Adjust — keep everything else the same" — the note only ever touches the VISUAL now (the only
+  // thing image regeneration controls); editing the headline or its position is instant and needs no
+  // regeneration at all, which is also the direct fix for "the adjust prompt remained the same as
+  // before" — that was the image model ignoring a text-editing instruction it was never going to
+  // reliably follow, not a bug in the note field itself.
+  regenerateCarouselSlide = (n) => async () => {
+    const c = this.state.carousel;
+    const s = (c.slides || []).find(x => x.n === n); if (!s || s.busy) return;
+    this.setCarousel({ slides: c.slides.map(x => x.n === n ? { ...x, busy: true } : x) });
+    const sp = this.state.socialPlatforms || {};
+    const ratio = sp.linkedin && !sp.instagram ? '1:1' : '4:5';
+    const note = ((c.slideNotes || {})[n] || '').trim();
+    const prompt = (s.visual_note || s.headline || '') + this.carouselNoTextPrompt(note);
+    const res = await this.apiJson('/scene-still', {
+      scene_no: n, ratio, style: this.state.socialStyle || 'real',
+      prompt,
+      pack_id: c.packChoice || undefined, cast_id: c.wantCast ? (c.castChoice || undefined) : undefined,
+    });
+    this.setCarousel({ slides: this.state.carousel.slides.map(x =>
+      x.n === n ? { ...x, imageUrl: (res && res.image_url) || x.imageUrl, busy: false } : x) });
+  };
+
   // ---------- brand kit + assets ----------
   // ===== STUDIO INPUTS & CREATIVE CHECK =====
   // `GUIDELINES` was here: one client's palette, faces, tone, dos and don'ts as literals. It was the
@@ -12031,7 +12555,7 @@ class Component extends DCLogic {
       // own test, because the quote box and the grounding banner both stayed permanently stuck on
       // "nothing loaded" (not "nothing exists") when reached this way. Same fix as `openSocialExec`/
       // `goExecIdea`/`xGoTab`'s own social branch.
-      this.loadGrounding(); this.loadSocialStandsOn();
+      this.loadGrounding(); this.loadSocialStandsOn(); this.loadCarouselAssetLib();
     } else if (mode === 'video') {
       this.setState({ launcherOpen:false, linkedBrief:snap, screen:'video', videoConcept:null, videoObjective:null });
       // Round 92: same audit as Social's own — this is one of Video's six direct `screen:'video'` sites
@@ -12191,6 +12715,98 @@ class Component extends DCLogic {
       socialGroundBg: g.ok ? '#F1F8F2' : '#FFF8E8',
       socialGroundLine: g.ok ? '#C9E7CE' : '#EBD5A8',
       socialGroundDot: g.ok ? '#259821' : '#C8860F' };
+  }
+  // Round 93: carousel. Assets picked once (pack/cast — see `produceCarouselSlides`'s own comment on
+  // why logo is stored but not yet composited), a concept reviewed as text before any image renders.
+  bagCarousel(s){
+    const c = s.carousel;
+    const assetCard = (kind, field, label) => {
+      const opts = this.carouselAssetOptions(kind);
+      const chosen = opts.find(o => o.id === c[field]);
+      return { kind, label, value: c[field], options: opts, hasOptions: opts.length > 0,
+        pick: this.onCarouselAsset(field), chosenName: chosen ? (chosen.name || chosen.id) : '' };
+    };
+    const posChip = (sl, pos, label) => {
+      const on = (sl.textPos || 'bottom') === pos;
+      return { pos, label, on, set: this.setSlideTextPos(sl.n - 1, pos),
+        bg: on ? '#17325E' : '#fff', fg: on ? '#F7F5F1' : '#17325E', border: on ? '#17325E' : '#C9CEDA' };
+    };
+    const concept = (c.concept || []).map(sl => ({
+      ...sl,
+      roleLabel: sl.role === 'hook' ? 'Hook' : sl.role === 'cta' ? 'Call to action' : 'Value',
+      roleBg: sl.role === 'hook' ? '#FDEDE7' : sl.role === 'cta' ? '#EAF6EC' : '#F4F7FC',
+      roleFg: sl.role === 'hook' ? '#B0410E' : sl.role === 'cta' ? '#1E7E34' : '#2E5EA6',
+      onHeadline: this.onSlideField(sl.n - 1, 'headline'), onVisual: this.onSlideField(sl.n - 1, 'visual_note'),
+      up: this.moveSlide(sl.n - 1, -1), down: this.moveSlide(sl.n - 1, 1), remove: this.removeSlide(sl.n - 1),
+      toggleText: this.toggleSlideText(sl.n - 1), notText: !sl.isText,
+      isTextFg: sl.isText ? '#17325E' : '#9AA1AC', isTextLabel: sl.isText ? '✓ Text-only slide' : 'Text-only slide',
+      posChips: [posChip(sl, 'bottom', 'Bottom'), posChip(sl, 'top', 'Top'), posChip(sl, 'none', 'None')],
+    }));
+    const slides = (c.slides || []).map(sl => ({ ...sl,
+      roleLabel: sl.role === 'hook' ? 'Hook' : sl.role === 'cta' ? 'Call to action' : 'Value',
+      regenerate: this.regenerateCarouselSlide(sl.n), notText: !sl.isText,
+      // Overlay position: computed once here, not as a live ternary in the template's style attribute
+      // — same "attribute holes don't re-render" class of bug fixed on the platform/style chips above.
+      overlayTop: !sl.isText && (sl.textPos || 'bottom') === 'top',
+      overlayBottom: !sl.isText && (sl.textPos || 'bottom') === 'bottom',
+      adjustNote: (c.slideNotes || {})[sl.n] || '', onAdjustNote: this.onSlideAdjustNote(sl.n),
+      adjustLabel: sl.busy ? 'Adjusting…' : '↻ Adjust — keep everything else the same' }));
+    const routes = (c.routes || []).map((r, i) => ({ ...r, i,
+      slideCount: (r.slides || []).length,
+      chosen: c.chosenRoute === i,
+      pick: this.pickCarouselRoute(i) }));
+    // Reads Social's OWN quote/toggle state directly — `socialStandsOn`/`socialForceTyped`, the exact
+    // same fields "What this producer is given"'s Idea Platform card already controls (see
+    // `xInputCards`'s `standsFor.social` entry). A carousel-only copy of this toggle was tried first
+    // and reintroduced the "two controls, only one real" bug live testing caught — this card now only
+    // ever DISPLAYS that shared state, never a second way to change it.
+    const standsAvailable = !!(s.socialStandsOn && s.socialStandsOn.text && (s.socialStandsOn.has_platform || s.socialStandsOn.has_house));
+    const forceTyped = !!s.socialForceTyped;
+    const hasExec = !!this.currentExec();
+    return {
+      carouselHasStandsOn: standsAvailable && !forceTyped,
+      carouselStandsAside: standsAvailable && forceTyped,
+      carouselNoStandsOn: !standsAvailable && !hasExec,
+      carouselNoStandsOnBriefed: !standsAvailable && hasExec,
+      carouselStandsText: (s.socialStandsOn && s.socialStandsOn.text) || '',
+      carouselStandsSource: (s.socialStandsOn && s.socialStandsOn.source) || '',
+      carouselBrief: c.brief, onCarouselBrief: this.onCarouselBrief,
+      carouselWantCast: c.wantCast, toggleCarouselWantCast: this.toggleCarouselWantCast,
+      carouselCastCheckBg: c.wantCast ? '#17325E' : '#fff',
+      carouselCastCheckBorder: c.wantCast ? '#17325E' : '#C9CEDA',
+      carouselCastCheckMark: c.wantCast ? '✓' : '',
+      carouselPackCard: assetCard('pack', 'packChoice', 'Pack shot'),
+      carouselLogoCard: assetCard('logo', 'logoChoice', 'Logo'),
+      carouselCastCard: assetCard('cast', 'castChoice', 'Model / cast'),
+      carouselCastBusy: c.castBusy, carouselCastCandidates: (c.castCandidates || []).map((im, i) => ({
+        url: im.image_url, adopt: this.adoptCarouselCastDraft(im.image_url) })),
+      hasCarouselCastCandidates: (c.castCandidates || []).length > 0,
+      draftCarouselCast: this.draftCarouselCast,
+      carouselSlideCountMode: c.slideCountMode,
+      onCarouselManual: this.onCarouselSlideCountMode('manual'),
+      onCarouselAuto: this.onCarouselSlideCountMode('auto'),
+      carouselSlideCount: c.slideCount, onCarouselSlideCount: this.onCarouselSlideCount,
+      carouselIsManual: c.slideCountMode === 'manual', carouselIsAuto: c.slideCountMode === 'auto',
+      // Round 93 (fifth pass): precomputed here, not as a `{{ x ? a : b }}` ternary inside a style
+      // attribute — that pattern has already bitten this file (round 49's shape-picker/ladder-path
+      // fix) and bit it again here: it renders once and never updates, reading as "not clicking."
+      carouselManualBg: c.slideCountMode === 'manual' ? '#F7F5F1' : 'rgba(255,255,255,0.12)',
+      carouselManualFg: c.slideCountMode === 'manual' ? '#17325E' : '#fff',
+      carouselManualBorder: c.slideCountMode === 'manual' ? '#F7F5F1' : 'rgba(255,255,255,0.3)',
+      carouselAutoBg: c.slideCountMode === 'auto' ? '#F7F5F1' : 'rgba(255,255,255,0.12)',
+      carouselAutoFg: c.slideCountMode === 'auto' ? '#17325E' : '#fff',
+      carouselAutoBorder: c.slideCountMode === 'auto' ? '#F7F5F1' : 'rgba(255,255,255,0.3)',
+      generateCarouselRoutes: this.generateCarouselRoutes,
+      carouselRoutesBusy: c.routesBusy,
+      carouselRoutesLabel: c.routesBusy ? 'Drafting…' : (routes.length ? '↻ Redraft concepts' : '✦ Generate carousel concepts'),
+      carouselRoutes: routes, hasCarouselRoutes: routes.length > 0,
+      carouselHasChosenRoute: c.chosenRoute >= 0,
+      carouselConcept: concept, hasCarouselConcept: concept.length > 0,
+      addSlide: this.addSlide, canAddSlide: concept.length < 10,
+      produceCarouselSlides: this.produceCarouselSlides, carouselProducing: c.producing,
+      carouselProduceLabel: c.producing ? 'Producing…' : (slides.length ? '↻ Re-generate carousel' : 'Generate carousel'),
+      carouselSlides: slides, hasCarouselSlides: slides.length > 0,
+    };
   }
   socialGrounding(){
     // Round 92: checked first, ahead of everything else. Once "set the platform aside" is real (not
@@ -13355,7 +13971,7 @@ class Component extends DCLogic {
     return { type:'Video', title: (base ? base+' — film' : (obj + ' film')), format: (concept && concept.duration) ? concept.duration.split('·')[0].trim() : '30s film', status:'Draft' };
   }
 
-  openPostsFromCampaign = () => { const c = this.state.campaign; this.setState({ screen:'exec', xTab:'social', posts: c ? c.posts : [], linkedBrief: c ? c.brief : null }); this.loadGrounding(); this.loadSocialStandsOn(); };
+  openPostsFromCampaign = () => { const c = this.state.campaign; this.setState({ screen:'exec', xTab:'social', posts: c ? c.posts : [], linkedBrief: c ? c.brief : null }); this.loadGrounding(); this.loadSocialStandsOn(); this.loadCarouselAssetLib(); };
   goVideoTab = (k) => () => { this.setState({ screen:'video', vTab:k }); window.scrollTo(0,0);
     this.loadGrounding(); this.loadVideoStandsOn(); // round 92: video's own six-entry-point audit
     if (k === 'shots') { this.loadShots(); this.loadContinuity(); }
@@ -15007,6 +15623,7 @@ class Component extends DCLogic {
       socialBtnLabel: s.socialGenerating ? 'Generating…' : (posts.length ? 'Regenerate' : 'Generate posts'),
       posts, hasPosts: posts.length>0, socialEmpty: posts.length===0 && !s.socialGenerating,
       ...this.bagSocialGround(),
+      ...this.bagCarousel(s),
       scheduleAll:this.scheduleAll, scheduled: s.scheduled, weekDays,
       // social — visual style + rework
       socialStyles, socialStyleName: this.styleName(),
@@ -17093,11 +17710,11 @@ class Component extends DCLogic {
     this.loadGrounding();
     if (t === 'posm') this.loadPosmFormats();
     if (t === 'onground') { this.loadOgStandsOn(); this.ensureAssetLib(); }
-    if (t === 'social') this.loadSocialStandsOn();
+    if (t === 'social') { this.loadSocialStandsOn(); this.loadCarouselAssetLib(); }
   };
   toggleBrief = () => this.setState(st => ({ briefOpen: !st.briefOpen }));
   goPlans = () => { this.setState({ screen:'plans' }); window.scrollTo(0,0); };
-  openSocialExec = () => { this.setState({ screen:'exec', xTab:'social' }); window.scrollTo(0,0); this.loadGrounding(); this.loadSocialStandsOn(); };
+  openSocialExec = () => { this.setState({ screen:'exec', xTab:'social' }); window.scrollTo(0,0); this.loadGrounding(); this.loadSocialStandsOn(); this.loadCarouselAssetLib(); };
   // The real direct-brief shortcut — the copy fix on the POSM tab itself only helped once somebody was
   // already there; reaching it at all still meant Idea Platform, then Execution, then picking POS
   // material. This is the same shape as openSocialExec, just landing on 'posm' directly from the
@@ -17106,7 +17723,7 @@ class Component extends DCLogic {
     this.setState({ screen:'exec', xTab:'posm' }); window.scrollTo(0,0);
     this.loadGrounding(); this.loadPosmFormats();
   };
-  goExecIdea = () => { this.setState({ screen:'exec', xTab:'social' }); window.scrollTo(0,0); this.loadGrounding(); this.loadSocialStandsOn(); };
+  goExecIdea = () => { this.setState({ screen:'exec', xTab:'social' }); window.scrollTo(0,0); this.loadGrounding(); this.loadSocialStandsOn(); this.loadCarouselAssetLib(); };
   // Round 92: Onground had no direct-entry route at all — plan → Execution → click its tab was the
   // only path, unlike POSM's dashboard shortcut just above. Same shape as `goPosmShortcut`, using
   // `xGoTab`'s own onground-specific preloads (`loadOgStandsOn`/`ensureAssetLib`) rather than POSM's
@@ -22714,9 +23331,25 @@ class Component extends DCLogic {
         proofKey: 'obj.' + r.id + '.proof', proof: d.proof || '' };
     });
     const notes = this.prLines((f && f.notes) || []);
+    // Round 93: lead with the one row a PR objective actually gets written against, collapse the
+    // rest \u2014 three equally-weighted panels (refused/contributes/owns) reading as "why is this so
+    // complicated" was a real complaint, not a taste preference. Only when there is exactly one
+    // `owns` row is there nothing to disambiguate; zero owns (nothing writable \u2014 worth seeing why
+    // plainly) or more than one (a person has to choose) still show the full ladder, unchanged.
+    const ownsRows = rows.filter(r => r.stance === 'owns');
+    const simple = ownsRows.length === 1;
+    const ordered = simple ? ownsRows.concat(rows.filter(r => r.stance !== 'owns')) : rows;
+    const finalRows = ordered.map(r => {
+      const collapsed = simple && r.stance !== 'owns';
+      return { ...r, collapsed, expanded: !collapsed,
+        collapseLabel: r.stance === 'refused' ? 'Refused \u2014 not PR\u2019s job \u25be'
+                                                : 'Contributes, not owned \u25be' };
+    });
     return {
       prHasFunnel: rows.length > 0, prNoFunnel: rows.length === 0,
-      prFunnelRows: rows,
+      prFunnelRows: finalRows,
+      prSimple: simple, prNotSimple: !simple,
+      prOtherCount: rows.length - ownsRows.length,
       prFunnelNotes: notes, prHasFunnelNotes: notes.length > 0,
       prOwnsCount: rows.filter(r => r.stance === 'owns').length + ' owned \u00b7 '
         + rows.filter(r => r.stance === 'contributes').length + ' contributed to \u00b7 '

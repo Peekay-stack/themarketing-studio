@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Marketing Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0B1729;
+    --bg-alt: #0E1A30;
+    --surface: rgba(255,255,255,.045);
+    --ink: #FFFFFF;
+    --soft: #A9B7CC;
+    --mute: #77869E;
+    --line: rgba(255,255,255,.16);
+    --line-soft: rgba(255,255,255,.07);
+    --orange: #F0561E;
+    --shadow: 0 20px 46px -22px rgba(0,0,0,.55);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--soft);
+    font-family: 'IBM Plex Sans', -apple-system, 'Segoe UI', sans-serif;
+    line-height: 1.6; -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, .brandmark, .tier, .pc-t { font-family: 'Epilogue', sans-serif; color: var(--ink); letter-spacing: -0.03em; }
+  .mono { font-family: 'IBM Plex Mono', monospace; }
+  a { color: inherit; }
+  .wrap { max-width: 1140px; margin: 0 auto; padding: 0 32px; position: relative; z-index: 1; }
+  @media (max-width: 640px) { .wrap { padding: 0 20px; } }
+
+  header {
+    position: sticky; top: 0; z-index: 30;
+    background: rgba(11,23,41,0.55); backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--line-soft);
+  }
+  header .bar { display: flex; align-items: center; justify-content: space-between; height: 68px; gap: 20px; }
+  .brandmark { display: flex; align-items: center; gap: 9px; font-weight: 800; font-size: 15.5px; letter-spacing: -0.01em; white-space: nowrap; color: var(--ink); }
+  .brandmark svg { width: 16px; height: 16px; flex: none; }
+  nav.top { display: flex; gap: 8px; font-weight: 600; font-size: 14px; }
+  nav.top a { padding: 8px 13px; border-radius: 8px; text-decoration: none; color: var(--soft); }
+  nav.top a:hover { background: rgba(255,255,255,.06); color: var(--ink); }
+  @media (max-width: 760px) { nav.top { display: none; } }
+  .hdr-actions { display: flex; align-items: center; gap: 16px; flex: none; }
+  .cta-btn {
+    background: var(--orange); color: #fff; border: none; border-radius: 999px;
+    padding: 10px 20px; font-weight: 700; font-size: 13.5px; cursor: pointer; text-decoration: none;
+    display: inline-block; white-space: nowrap; transition: transform .15s ease;
+    box-shadow: 0 0 28px rgba(240,86,30,.38);
+  }
+  .cta-btn:hover { transform: translateY(-1px); }
+  .signin-link { font-weight: 700; font-size: 13.5px; text-decoration: none; color: var(--soft); white-space: nowrap; }
+  .signin-link:hover { color: var(--ink); }
+
+  /* ---------- hero ---------- */
+  .hero { padding: 72px 0 20px; position: relative; overflow: hidden; }
+  .hero::before {
+    content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+    background:
+      repeating-linear-gradient(45deg, rgba(240,86,30,.09) 0 1.5px, transparent 1.5px 42px),
+      repeating-linear-gradient(-45deg, rgba(255,255,255,.08) 0 1.5px, transparent 1.5px 42px);
+    -webkit-mask-image: linear-gradient(to bottom, black, transparent 88%);
+    mask-image: linear-gradient(to bottom, black, transparent 88%);
+  }
+  .hero::after {
+    content: ''; position: absolute; top: -160px; right: -160px; width: 720px; height: 720px;
+    border-radius: 50%; z-index: 0; pointer-events: none;
+    background: radial-gradient(circle, rgba(46,94,166,.4), transparent 70%);
+  }
+  .hero .glow-2 {
+    position: absolute; bottom: -180px; left: -140px; width: 520px; height: 520px; border-radius: 50%;
+    z-index: 0; pointer-events: none; background: radial-gradient(circle, rgba(240,86,30,.16), transparent 70%);
+  }
+  .hero-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; position: relative; z-index: 1; }
+  @media (max-width: 900px) { .hero-grid { grid-template-columns: 1fr; gap: 40px; } }
+  .eyebrow { font-size: 11.5px; font-weight: 700; letter-spacing: .1em; color: var(--mute); margin-bottom: 18px; display: flex; align-items: center; }
+  .eyebrow .diam { width: 8px; height: 8px; margin-right: 9px; flex: none; }
+  .eyebrow .dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--orange); margin-right:9px; vertical-align:1px; }
+  h1.display {
+    font-size: clamp(34px, 4.4vw, 50px); font-weight: 800; letter-spacing: -0.025em;
+    line-height: 1.05; margin: 0 0 20px; text-wrap: balance; color: var(--ink);
+  }
+  h1.display .hl { color: var(--orange); }
+  .lede { font-size: 16.5px; color: var(--soft); max-width: 480px; margin: 0 0 30px; text-wrap: pretty; }
+  .hero-actions { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+  .hero-actions .ghost {
+    border: 1.5px solid var(--line); color: var(--ink); border-radius: 999px;
+    padding: 9px 20px; font-size: 13.5px; font-weight: 700; text-decoration: none; background: transparent;
+  }
+
+  .hero-visual { position: relative; height: 363px; z-index: 1; display: flex; align-items: center; gap: 26px; }
+  .os-legend { display: flex; flex-direction: column; justify-content: space-between; height: 309px; }
+  .os-layer { display: flex; align-items: center; gap: 12px; text-decoration: none; padding: 6px 8px; border-radius: 10px; transition: background .15s ease; }
+  .os-layer:hover { background: rgba(255,255,255,.06); }
+  .os-plate { animation: os-rise .7s cubic-bezier(.16,1,.3,1) backwards; transform-origin: center; }
+  .os-plate path, .os-layer { transition: opacity .3s ease, filter .3s ease, background .2s ease; }
+  @keyframes os-rise { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  .os-plate.os-active path { opacity: 1 !important; filter: drop-shadow(0 0 9px rgba(240,86,30,.6)); stroke-width: 4 !important; }
+  .os-plate.os-dim path { opacity: .14 !important; }
+  .os-layer { animation: os-rise .7s cubic-bezier(.16,1,.3,1) backwards; }
+  .os-layer.os-active { background: rgba(240,86,30,.10); }
+  .os-layer.os-active b { color: #fff; }
+  .os-layer.os-dim { opacity: .4; }
+  @media (prefers-reduced-motion: reduce) { .os-plate, .os-layer { animation: none; } }
+  .os-layer .swatch { flex: none; }
+  .os-layer b { display: block; font-size: 12.5px; font-weight: 700; color: var(--ink); }
+  .os-layer span { display: block; font-size: 10.5px; color: var(--soft); line-height: 1.4; margin-top: 1px; max-width: 190px; }
+  .hv-card {
+    position: absolute; border-radius: 14px; box-shadow: var(--shadow); overflow: hidden;
+    border: 1px solid var(--line); background: var(--surface); backdrop-filter: blur(14px);
+  }
+
+
+  /* ---------- section shared ---------- */
+  section { padding: 84px 0; scroll-margin-top: 84px; position: relative; z-index: 1; }
+  .shead { max-width: 620px; margin-bottom: 44px; }
+  .shead .eyebrow { margin-bottom: 12px; }
+  .shead h2 { font-size: clamp(26px, 3.2vw, 34px); font-weight: 800; letter-spacing: -0.02em; margin: 0 0 12px; text-wrap: balance; color: var(--ink); }
+  .shead p { font-size: 15.5px; color: var(--soft); margin: 0; }
+
+  .stages { display: flex; gap: 0; overflow-x: auto; padding-bottom: 6px; margin-bottom: 8px; }
+  .stage { flex: 1; min-width: 168px; position: relative; padding: 0 22px 0 0; scroll-margin-top: 84px; }
+  .stage .sn { font-size: 10.5px; font-weight: 700; color: var(--mute); margin-bottom: 8px; display: flex; align-items: center; gap: 7px; }
+  .sn-diamond { width: 9px; height: 20px; flex: none; }
+  .stage:not(:last-child) .sn::after { content: ''; flex: 1; height: 1px; background: var(--line); margin-left: 4px; min-width: 18px; }
+  .stage .st { font-weight: 700; font-size: 14px; margin-bottom: 4px; color: var(--ink); }
+  .stage .sd { font-size: 12px; color: var(--soft); line-height: 1.5; }
+  .producers-row { display: grid; grid-template-columns: repeat(6,1fr); gap: 14px; margin-top: 34px; }
+  @media (max-width: 760px) { .producers-row { grid-template-columns: 1fr 1fr; } }
+  @media (min-width: 761px) and (max-width: 1100px) { .producers-row { grid-template-columns: repeat(3,1fr); } }
+  .producer { border-radius: 14px; padding: 20px 18px; color: #fff; min-height: 118px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: var(--shadow); }
+  .producer .pc-t { font-size: 15px; font-weight: 700; color: #fff; }
+  .producer .pc-d { font-size: 12px; opacity: .88; line-height: 1.5; margin-top: 6px; }
+
+  .uc-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 18px; }
+  @media (max-width: 900px) { .uc-grid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 640px) { .uc-grid { grid-template-columns: 1fr; } }
+  .uc-card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; box-shadow: var(--shadow); backdrop-filter: blur(14px); }
+  .uc-visual { height: 140px; display: flex; align-items: center; justify-content: center; position: relative; }
+  .uc-meta { padding: 16px 17px 18px; }
+  .uc-meta .uc-tag { font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 6px; }
+  .uc-meta h4 { margin: 0 0 6px; font-size: 14.5px; font-weight: 700; color: var(--ink); }
+  .uc-meta p { margin: 0; font-size: 12.5px; color: var(--soft); line-height: 1.5; }
+  .uc-note { margin-top: 18px; font-size: 11.5px; color: var(--mute); }
+
+  .price-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; }
+  @media (max-width: 900px) { .price-grid { grid-template-columns: 1fr 1fr; } }
+  .price-card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 24px 20px; display: flex; flex-direction: column; box-shadow: var(--shadow); backdrop-filter: blur(14px); }
+  .price-card .tier { font-size: 15px; font-weight: 800; margin-bottom: 4px; color: var(--ink); }
+  .price-card .who { font-size: 11.5px; color: var(--mute); margin-bottom: 16px; }
+  .price-card .amt { font-size: 22px; font-weight: 600; margin-bottom: 2px; color: var(--ink); }
+  .price-card .per { font-size: 10.5px; color: var(--mute); margin-bottom: 14px; }
+  .price-card .inc { font-size: 12px; line-height: 1.55; color: var(--soft); margin: 0; flex: 1; }
+  .price-card .setup { font-size: 10.5px; color: var(--mute); margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line-soft); }
+  .price-quote { margin: 0 0 32px; padding: 16px 22px; border-left: 3px solid var(--orange); background: var(--surface); border-radius: 0 12px 12px 0; font-size: 15.5px; font-weight: 700; max-width: 620px; box-shadow: var(--shadow); color: var(--ink); backdrop-filter: blur(14px); }
+  .price-note { margin-top: 22px; font-size: 12.5px; color: var(--soft); max-width: 640px; line-height: 1.6; }
+
+  .demo-panel { background: linear-gradient(135deg, var(--surface), var(--bg-alt)); border: 1px solid var(--line); border-radius: 22px; padding: 48px; color: #F7F5F1; display: grid; grid-template-columns: 1.1fr 1fr; gap: 40px; }
+  @media (max-width: 860px) { .demo-panel { grid-template-columns: 1fr; padding: 36px 26px; } }
+  .demo-panel h2 { color: #fff; font-size: clamp(24px,3vw,32px); font-weight: 800; margin: 0 0 14px; }
+  .demo-panel p.lede { color: #C9D6E8; max-width: none; }
+  .demo-q { margin-top: 18px; padding: 16px 20px; background: rgba(255,255,255,.06); border-left: 3px solid var(--orange); border-radius: 0 12px 12px 0; font-size: 13.5px; line-height: 1.6; color: #E7EDF6; }
+  .demo-form { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.14); border-radius: 16px; padding: 24px; display: flex; flex-direction: column; gap: 12px; }
+  .demo-form label { font-size: 10.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: #A9B7CC; }
+  .demo-form input, .demo-form textarea { font-family: inherit; font-size: 13.5px; padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.18); background: rgba(255,255,255,.06); color: #fff; }
+  .demo-form input::placeholder, .demo-form textarea::placeholder { color: #7E8CA3; }
+  .demo-form button { font-family: inherit; font-weight: 800; font-size: 13.5px; border: none; border-radius: 999px; padding: 13px; cursor: pointer; margin-top: 4px; background: var(--orange); color: #fff; }
+
+  footer { padding: 40px 0 56px; }
+  footer .wrap { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+  .fine { font-size: 12px; color: var(--mute); }
+  .reveal { opacity: 0; transform: translateY(18px); transition: opacity .6s cubic-bezier(.16,1,.3,1), transform .6s cubic-bezier(.16,1,.3,1); }
+  .reveal.reveal-in { opacity: 1; transform: translateY(0); }
+  .producer, .uc-card { transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease, opacity .6s cubic-bezier(.16,1,.3,1), transform .6s cubic-bezier(.16,1,.3,1); }
+  .producer:hover, .uc-card:hover { transform: translateY(-6px); box-shadow: 0 26px 54px -22px rgba(0,0,0,.65); }
+  .uc-card:hover { border-color: rgba(255,255,255,.3); }
+  @media (prefers-reduced-motion: reduce) { .reveal { opacity: 1 !important; transform: none !important; transition: none !important; } .producer:hover, .uc-card:hover { transform: none; } }
+</style>
+</head>
+<body>
+
+  <header style="background:#16233D; backdrop-filter:none; border-bottom:1px solid var(--line);">
+    <div class="wrap bar">
+      <div class="brandmark" style="gap:12px;">
+        <svg class="" style="height:34px;width:auto;display:block;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 205 84" role="img" aria-label="Monogram">
+  <title>The Marketing Studio — Monogram</title>
+  <g transform="translate(0 4)"><path transform="translate(6.00 0.00)" d="M20.94 11.72L20.94 72.0L36.02 72.0L36.02 11.72L53.74 11.72L53.74 0.0L3.27 0.0L3.27 11.72L20.94 11.72Z" fill="#FFFFFF"/>
+  <g transform="translate(69.01 0)"><path d="M0.00 36.00 L16.50 0.00 L33.00 36.00 L16.50 72.00 Z" fill="none" stroke="#FFFFFF" stroke-width="3.0" stroke-linejoin="round"/><path d="M29.70 36.00 L46.20 0.00 L62.70 36.00 L46.20 72.00 Z" fill="none" stroke="#FFFFFF" stroke-width="3.0" stroke-linejoin="round"/><path d="M14.85 36.00 L31.35 0.00 L47.85 36.00 L31.35 72.00 Z" fill="#F0561E"/></g>
+  <path transform="translate(137.71 0.00)" d="M30.36 73.17L33.43 73.08L36.35 72.79L39.12 72.32L41.73 71.66L44.2 70.8L46.49 69.77L48.56 68.56L49.97 67.54L51.67 66.03L53.16 64.35L54.42 62.49L55.19 61.0L55.81 59.43L56.41 57.19L56.69 55.42L56.82 52.91L56.71 50.48L56.5 48.78L56.02 46.66L55.34 44.72L54.44 42.95L53.34 41.35L52.07 39.86L50.24 38.14L48.58 36.89L47.21 36.03L42.63 33.66L38.0 31.72L29.36 28.55L26.68 27.42L24.96 26.57L23.16 25.49L21.65 24.32L20.45 23.06L19.73 21.9L19.35 20.88L19.13 19.8L19.09 18.54L19.2 17.4L19.45 16.36L19.82 15.41L20.33 14.56L20.98 13.8L21.75 13.14L22.65 12.56L23.67 12.08L24.79 11.69L26.02 11.38L27.83 11.11L30.91 10.99L33.44 11.21L35.59 11.75L37.38 12.61L38.27 13.27L39.03 14.05L39.68 14.93L40.21 15.9L40.83 17.75L41.12 19.87L41.15 23.04L56.28 23.04L56.27 19.41L56.15 17.39L55.75 14.86L55.08 12.51L54.14 10.35L53.26 8.85L51.88 7.01L50.29 5.36L48.49 3.9L46.49 2.62L44.29 1.54L41.91 0.64L39.38 -0.07L36.7 -0.59L33.16 -0.98L30.17 -1.07L27.3 -0.98L23.88 -0.59L21.29 -0.07L18.21 0.84L15.35 2.05L13.27 3.21L11.38 4.53L9.7 6.03L8.2 7.69L6.92 9.51L5.91 11.48L5.17 13.61L4.7 15.88L4.5 18.31L4.55 20.78L4.94 23.66L5.34 25.26L5.87 26.77L6.52 28.2L7.58 29.96L8.82 31.59L10.19 33.09L11.72 34.48L13.39 35.74L16.63 37.68L20.08 39.35L23.19 40.56L29.94 42.83L34.42 44.7L37.13 46.2L38.57 47.21L39.58 48.06L40.44 48.95L41.12 49.9L41.62 50.9L41.94 51.96L42.07 53.07L42.01 54.53L41.71 55.94L41.32 56.87L40.59 57.96L39.35 59.05L38.08 59.73L36.22 60.38L34.02 60.8L32.04 60.98L29.33 60.99L27.32 60.78L25.53 60.35L23.6 59.51L22.01 58.33L20.78 56.84L20.04 55.44L19.44 53.43L19.21 51.6L19.18 48.03L4.0 48.03L4.0 50.91L4.08 53.07L4.41 55.78L4.84 57.68L5.64 60.05L6.42 61.7L7.69 63.73L9.18 65.56L10.88 67.2L12.79 68.64L14.35 69.59L16.62 70.68L19.07 71.58L21.67 72.28L24.41 72.77L27.31 73.07L30.36 73.17Z" fill="#FFFFFF"/></g>
+</svg>
+        <span style="font-size:15px; font-weight:800; letter-spacing:.02em;">THE MARKETING STUDIO</span>
+      </div>
+      <nav class="top">
+        <a href="#product">Product</a>
+        <a href="#usecases">Use cases</a>
+        <a href="#pricing">Pricing</a>
+      </nav>
+      <div class="hdr-actions">
+        <a class="cta-btn" href="#demo">Book a demo</a>
+        <a class="signin-link" href="/app">Sign in</a>
+      </div>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="glow-2" aria-hidden="true"></div>
+    <div class="wrap hero-grid">
+      <div>
+        <div class="eyebrow"><svg class="diam" viewBox="0 0 33 72" aria-hidden="true"><path d="M0 36 16.5 0 33 36 16.5 72Z" fill="none" stroke="#F0561E" stroke-width="6"/></svg><span class="dot"></span>THE FMCG METHOD, WITHOUT THE TWENTY YEARS</div>
+        <h1 class="display">One <span class="hl">decided</span> idea, carried into everything you make.</h1>
+        <p class="lede">Harnessing the real power of AI — guided by time-tested marketing principles, and adding
+          the right dash of AI when needed. A strategy brief becomes a messaging house, becomes an idea
+          platform, becomes social posts, POS material, onground activations, film, PR statements and
+          sales enablement — each one grounded in what was actually decided upstream, never a fresh
+          guess.</p>
+        <div class="hero-actions">
+          <a class="cta-btn" href="#demo">Book a demo</a>
+          <a class="ghost" href="#product">See how it works ↓</a>
+        </div>
+      </div>
+      <div class="hero-visual" aria-hidden="true">
+        <svg viewBox="0 0 190 212" width="277" height="309.05263157894734" aria-hidden="true"><g class="os-plate" data-layer="profile" style="animation-delay:0.00s"><path d="M95 166 L190 189 L95 212 L0 189 Z" fill="#F0561E" stroke="none" stroke-width="2.5" opacity="1"/></g><g class="os-plate" data-layer="foundations" style="animation-delay:0.12s"><path d="M95 134 L190 157 L95 180 L0 157 Z" fill="none" stroke="#FFFFFF" stroke-width="2.5" opacity="0.92"/></g><g class="os-plate" data-layer="strategy" style="animation-delay:0.24s"><path d="M95 102 L190 125 L95 148 L0 125 Z" fill="none" stroke="#FFFFFF" stroke-width="2.5" opacity="0.76"/></g><g class="os-plate" data-layer="plan" style="animation-delay:0.36s"><path d="M95 70 L190 93 L95 116 L0 93 Z" fill="none" stroke="#FFFFFF" stroke-width="2.5" opacity="0.6"/></g><g class="os-plate" data-layer="execution" style="animation-delay:0.48s"><path d="M95 38 L190 61 L95 84 L0 61 Z" fill="none" stroke="#FFFFFF" stroke-width="2.5" opacity="0.44"/></g><g class="os-plate" data-layer="measurement" style="animation-delay:0.60s"><path d="M95 6 L190 29 L95 52 L0 29 Z" fill="none" stroke="#FFFFFF" stroke-width="2.5" opacity="0.28"/></g></svg>
+        <div class="os-legend"><a class="os-layer" data-layer="measurement" href="#demo" style="animation-delay:0.60s"><svg class="swatch" viewBox="0 0 33 72" width="11" height="24"><path d="M0 36 16.5 0 33 36 16.5 72Z" fill="none" stroke="#FFFFFF" stroke-width="3" opacity="0.36"/></svg><div><b>Measurement</b><span>What moved, and what did not</span></div></a><a class="os-layer" data-layer="execution" href="#stage-execution" style="animation-delay:0.48s"><svg class="swatch" viewBox="0 0 33 72" width="11" height="24"><path d="M0 36 16.5 0 33 36 16.5 72Z" fill="none" stroke="#FFFFFF" stroke-width="3" opacity="0.44"/></svg><div><b>Execution</b><span>Social, POS, onground, video, PR, sales enablers</span></div></a><a class="os-layer" data-layer="plan" href="#stage-plan" style="animation-delay:0.36s"><svg class="swatch" viewBox="0 0 33 72" width="11" height="24"><path d="M0 36 16.5 0 33 36 16.5 72Z" fill="none" stroke="#FFFFFF" stroke-width="3" opacity="0.6"/></svg><div><b>Plan</b><span>IMC plan — phasing, geography</span></div></a><a class="os-layer" data-layer="strategy" href="#stage-house" style="animation-delay:0.24s"><svg class="swatch" viewBox="0 0 33 72" width="11" height="24"><path d="M0 36 16.5 0 33 36 16.5 72Z" fill="none" stroke="#FFFFFF" stroke-width="3" opacity="0.76"/></svg><div><b>Strategy</b><span>Messaging house, idea platform</span></div></a><a class="os-layer" data-layer="foundations" href="#stage-brief" style="animation-delay:0.12s"><svg class="swatch" viewBox="0 0 33 72" width="11" height="24"><path d="M0 36 16.5 0 33 36 16.5 72Z" fill="none" stroke="#FFFFFF" stroke-width="3" opacity="0.92"/></svg><div><b>Brand Foundations</b><span>Brand key, frameworks, brief</span></div></a><a class="os-layer" data-layer="profile" href="#stage-brief" style="animation-delay:0.00s"><svg class="swatch" viewBox="0 0 33 72" width="11" height="24"><path d="M0 36 16.5 0 33 36 16.5 72Z" fill="#F0561E" stroke="#FFFFFF" stroke-width="0" opacity="1"/></svg><div><b>Brand Profile</b><span>Current truths, competition, ground truth</span></div></a></div>
+      </div>
+      <script>
+        (function(){
+          var layers = ['profile','foundations','strategy','plan','execution','measurement'];
+          if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+          var idx = 0, timer;
+          function setActive(key){
+            document.querySelectorAll('.os-plate,.os-layer').forEach(function(el){
+              var on = el.getAttribute('data-layer') === key;
+              el.classList.toggle('os-active', on);
+              el.classList.toggle('os-dim', !on);
+            });
+          }
+          function tick(){ setActive(layers[idx]); idx = (idx + 1) % layers.length; }
+          function start(){ timer = setInterval(tick, 2200); }
+          tick(); start();
+          var block = document.querySelector('.hero-visual');
+          block.addEventListener('mouseenter', function(){ clearInterval(timer); });
+          block.addEventListener('mouseleave', start);
+          document.querySelectorAll('.os-layer').forEach(function(a){
+            a.addEventListener('mouseenter', function(){ setActive(a.getAttribute('data-layer')); });
+          });
+        })();
+      </script>
+    </div>
+  </section>
+
+
+
+  <section id="refusal" style="background:var(--bg-alt); border-top:1px solid var(--line-soft); border-bottom:1px solid var(--line-soft); position:relative; overflow:hidden;">
+    <svg style="position:absolute; top:-60px; left:-90px; width:280px; height:610px; z-index:0;" viewBox="0 0 33 72" preserveAspectRatio="none" aria-hidden="true"><path d="M0 36 16.5 0 33 36 16.5 72Z" fill="none" stroke="#FFFFFF" stroke-width=".8" opacity=".06"/></svg>
+    <div class="wrap">
+      <div class="shead" style="max-width:680px;">
+        <div class="eyebrow"><svg class="diam" viewBox="0 0 33 72" aria-hidden="true"><path d="M0 36 16.5 0 33 36 16.5 72Z" fill="none" stroke="#F0561E" stroke-width="6"/></svg><span class="dot"></span>THE REFUSAL</div>
+        <h2>AI for creativity. Never for the numbers.</h2>
+        <p>We use AI for creativity, not for data generation — because we refuse to put out a figure that isn't sourced.</p>
+      </div>
+      <div class="uc-grid" style="display:grid; grid-template-columns:repeat(4,1fr); gap:16px;">
+        <div class="uc-card reveal" style="padding:22px 20px;">
+          <svg style="width:22px;height:48px;margin-bottom:14px;" viewBox="0 0 33 72" aria-hidden="true"><path d="M0 36 16.5 0 33 36 16.5 72Z" fill="none" stroke="#F0561E" stroke-width="4"/></svg>
+          <h4 style="margin:0 0 6px;font-size:14.5px;font-weight:700;color:var(--ink);">AI for creativity, not creative data interpretation</h4>
+          <p style="margin:0;font-size:12.5px;color:var(--soft);line-height:1.5;">Images, video and copy are generated. What moved and what didn't is never guessed at by a model.</p>
+        </div>
+        <div class="uc-card reveal" style="padding:22px 20px;">
+          <svg style="width:22px;height:48px;margin-bottom:14px;" viewBox="0 0 33 72" aria-hidden="true"><path d="M0 36 16.5 0 33 36 16.5 72Z" fill="none" stroke="#F0561E" stroke-width="4"/></svg>
+          <h4 style="margin:0 0 6px;font-size:14.5px;font-weight:700;color:var(--ink);">No autonomous publish</h4>
+          <p style="margin:0;font-size:12.5px;color:var(--soft);line-height:1.5;">Every asset clears a human gate before it ships — a suggestion, never a decision.</p>
+        </div>
+        <div class="uc-card reveal" style="padding:22px 20px;">
+          <svg style="width:22px;height:48px;margin-bottom:14px;" viewBox="0 0 33 72" aria-hidden="true"><path d="M0 36 16.5 0 33 36 16.5 72Z" fill="none" stroke="#F0561E" stroke-width="4"/></svg>
+          <h4 style="margin:0 0 6px;font-size:14.5px;font-weight:700;color:var(--ink);">No GRP without a currency</h4>
+          <p style="margin:0;font-size:12.5px;color:var(--soft);line-height:1.5;">BARC's ratings currency is halted — the plan says so, instead of inventing a GRP.</p>
+        </div>
+        <div class="uc-card reveal" style="padding:22px 20px;">
+          <svg style="width:22px;height:48px;margin-bottom:14px;" viewBox="0 0 33 72" aria-hidden="true"><path d="M0 36 16.5 0 33 36 16.5 72Z" fill="none" stroke="#F0561E" stroke-width="4"/></svg>
+          <h4 style="margin:0 0 6px;font-size:14.5px;font-weight:700;color:var(--ink);">No incomplete share of voice</h4>
+          <p style="margin:0;font-size:12.5px;color:var(--soft);line-height:1.5;">A missing competitor isn't dropped from the denominator — the portal names whose figure is missing.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="product">
+    <div class="wrap">
+      <div class="shead">
+        <div class="eyebrow"><svg class="diam" viewBox="0 0 33 72" aria-hidden="true"><path d="M0 36 16.5 0 33 36 16.5 72Z" fill="none" stroke="#F0561E" stroke-width="6"/></svg><span class="dot"></span>PRODUCT</div>
+        <h2>One decided idea. Five stages. Six producers.</h2>
+        <p>Every format the studio produces reads the same brief, the same house, the same plan —
+          nothing generated from a blank page, nothing that quietly disagrees with what was decided.</p>
+      </div>
+      <div class="stages">
+        <div class="stage reveal" id="stage-brief"><div class="sn"><svg class="sn-diamond" viewBox="0 0 33 72" aria-hidden="true"><path d="M0 36 16.5 0 33 36 16.5 72Z" fill="none" stroke="#F0561E" stroke-width="5"/></svg>01</div><div class="st">Brief</div><div class="sd">Seven intake formats, one strategy out</div></div>
+        <div class="stage reveal" id="stage-house"><div class="sn"><svg class="sn-diamond" viewBox="0 0 33 72" aria-hidden="true"><path d="M0 36 16.5 0 33 36 16.5 72Z" fill="none" stroke="#F0561E" stroke-width="5"/></svg>02</div><div class="st">Messaging house</div><div class="sd">Eight layers, sourced reasons to believe</div></div>
+        <div class="stage reveal" id="stage-idea"><div class="sn"><svg class="sn-diamond" viewBox="0 0 33 72" aria-hidden="true"><path d="M0 36 16.5 0 33 36 16.5 72Z" fill="none" stroke="#F0561E" stroke-width="5"/></svg>03</div><div class="st">Idea platform</div><div class="sd">One idea, tested before it's routed</div></div>
+        <div class="stage reveal" id="stage-plan"><div class="sn"><svg class="sn-diamond" viewBox="0 0 33 72" aria-hidden="true"><path d="M0 36 16.5 0 33 36 16.5 72Z" fill="none" stroke="#F0561E" stroke-width="5"/></svg>04</div><div class="st">IMC plan</div><div class="sd">Phasing, proof, real geography</div></div>
+        <div class="stage reveal" id="stage-execution"><div class="sn"><svg class="sn-diamond" viewBox="0 0 33 72" aria-hidden="true"><path d="M0 36 16.5 0 33 36 16.5 72Z" fill="none" stroke="#F0561E" stroke-width="5"/></svg>05</div><div class="st">Execution</div><div class="sd">Six producers, one idea each</div></div>
+      </div>
+      <div class="producers-row">
+        <div class="producer reveal" style="background:linear-gradient(135deg,#17325E,#2E5EA6);"><div class="pc-t">Social studio</div><div class="pc-d">FB / Instagram / LinkedIn, adapted per platform</div></div>
+        <div class="producer reveal" style="background:linear-gradient(135deg,#8A4A1E,#C46A2C);"><div class="pc-t">POS material</div><div class="pc-d">One key visual, 30+ formats re-flowed</div></div>
+        <div class="producer reveal" style="background:linear-gradient(135deg,#1E5C4A,#2F8B6F);"><div class="pc-t">Onground</div><div class="pc-d">Venue-aware ideas, a real capture mechanism</div></div>
+        <div class="producer reveal" style="background:linear-gradient(135deg,#4A2E5C,#7A4A8F);"><div class="pc-t">Video studio</div><div class="pc-d">Logline to shoot board, ready to film</div></div>
+        <div class="producer reveal" style="background:linear-gradient(135deg,#6B4A1E,#A67A3C);"><div class="pc-t">PR</div><div class="pc-d">Releases and statements, on the same idea</div></div>
+        <div class="producer reveal" style="background:linear-gradient(135deg,#2E4A5C,#4A7A8F);"><div class="pc-t">Sales enablers</div><div class="pc-d">Trade decks and pitch material, brief to close</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="usecases" style="background:var(--bg-alt); border-top:1px solid var(--line-soft); border-bottom:1px solid var(--line-soft);">
+    <div class="wrap">
+      <div class="shead">
+        <div class="eyebrow"><svg class="diam" viewBox="0 0 33 72" aria-hidden="true"><path d="M0 36 16.5 0 33 36 16.5 72Z" fill="none" stroke="#F0561E" stroke-width="6"/></svg><span class="dot"></span>USE CASES</div>
+        <h2>How it works, and what comes out the other end</h2>
+        <p>Same walkthrough every brand runs — brief, house, idea, plan — then six producers reading
+          that plan at once.</p>
+      </div>
+      <div class="uc-grid">
+        <div class="uc-card reveal">
+          <div class="uc-visual" style="background:linear-gradient(160deg,rgba(46,94,166,.26),rgba(23,50,94,.5));">
+            <div style="width:70px;height:88px;border-radius:8px;background:var(--surface);box-shadow:var(--shadow);display:flex;flex-direction:column;overflow:hidden;border:1px solid var(--line);">
+              <div style="height:14px;background:linear-gradient(135deg,#17325E,#2E5EA6);"></div>
+              <div style="flex:1;background:linear-gradient(160deg,rgba(46,94,166,.3),transparent);"></div>
+            </div>
+          </div>
+          <div class="uc-meta"><div class="uc-tag" style="color:#7FA8E0;">Social</div><h4>Festival launch, 3 platforms</h4><p>Ganesh Chaturthi launch, adapted per platform from one idea — not three captions saying the same thing once.</p></div>
+        </div>
+        <div class="uc-card reveal">
+          <div class="uc-visual" style="background:linear-gradient(160deg,rgba(240,86,30,.20),rgba(240,86,30,.08));">
+            <svg width="54" height="54" viewBox="0 0 33 72"><path d="M0 36 16.5 0 33 36 16.5 72Z" fill="#E8934A" opacity=".7"/></svg>
+          </div>
+          <div class="uc-meta"><div class="uc-tag" style="color:#D99B5C;">POS material</div><h4>Shelf-talker + 30 formats</h4><p>One key visual, re-flowed across modern-trade formats, pre-vetted against real substrates.</p></div>
+        </div>
+        <div class="uc-card reveal">
+          <div class="uc-visual" style="background:linear-gradient(160deg,rgba(30,92,74,.26),rgba(30,92,74,.5)); font-size:34px;">📍</div>
+          <div class="uc-meta"><div class="uc-tag" style="color:#6FC9A0;">Onground</div><h4>RWA sampling drive</h4><p>Venue-aware idea with a named capture mechanism — QR scan-to-win, not a stunt with nothing to show for it.</p></div>
+        </div>
+        <div class="uc-card reveal">
+          <div class="uc-visual" style="background:linear-gradient(160deg,rgba(74,46,92,.30),rgba(74,46,92,.54));">
+            <div style="display:flex;gap:4px;">
+              <span style="width:22px;height:34px;border-radius:4px;background:rgba(199,159,224,.32);"></span>
+              <span style="width:22px;height:34px;border-radius:4px;background:rgba(199,159,224,.44);"></span>
+              <span style="width:22px;height:34px;border-radius:4px;background:rgba(199,159,224,.32);"></span>
+            </div>
+          </div>
+          <div class="uc-meta"><div class="uc-tag" style="color:#C79FE0;">Video</div><h4>Logline → shoot board</h4><p>Concept, script beats and storyboard, through to an approved cut ready to shoot.</p></div>
+        </div>
+        <div class="uc-card reveal">
+          <div class="uc-visual" style="background:linear-gradient(160deg,rgba(166,122,60,.28),rgba(107,74,30,.5));">
+            <svg width="46" height="46" viewBox="0 0 33 72"><path d="M0 36 16.5 0 33 36 16.5 72Z" fill="#D9A868" opacity=".7"/></svg>
+          </div>
+          <div class="uc-meta"><div class="uc-tag" style="color:#D9A868;">PR</div><h4>Launch-day statement</h4><p>Press release and spokesperson lines drawn from the same messaging house — nothing re-argued from scratch.</p></div>
+        </div>
+        <div class="uc-card reveal">
+          <div class="uc-visual" style="background:linear-gradient(160deg,rgba(74,122,143,.28),rgba(46,74,92,.5));">
+            <svg width="46" height="46" viewBox="0 0 33 72"><path d="M0 36 16.5 0 33 36 16.5 72Z" fill="#7AB4CC" opacity=".7"/></svg>
+          </div>
+          <div class="uc-meta"><div class="uc-tag" style="color:#7AB4CC;">Sales enablers</div><h4>Trade deck, one pitch</h4><p>Distributor and retail pitch material built off the plan the sales team is walking into.</p></div>
+        </div>
+      </div>
+      <div class="uc-note">Illustrative examples of the shape of output — not real brand campaigns.</div>
+    </div>
+  </section>
+
+  <section id="pricing">
+    <div class="wrap">
+      <div class="shead">
+        <div class="eyebrow"><svg class="diam" viewBox="0 0 33 72" aria-hidden="true"><path d="M0 36 16.5 0 33 36 16.5 72Z" fill="none" stroke="#F0561E" stroke-width="6"/></svg><span class="dot"></span>PRICING</div>
+        <h2>Priced against what it actually costs to run</h2>
+        <p>Brand is already the unit everything in the system is scoped to — houses, plans, platforms,
+          media maps. Pricing matches the data model, so it expands without a renegotiation.</p>
+      </div>
+      <div class="price-quote">Per brand, per month. Desks as add-ons. Generation metered.</div>
+      <div class="price-grid">
+        <div class="price-card"><div class="tier">Studio</div><div class="who">One brand, in-house team</div><div class="amt mono">TBD</div><div class="per">per month</div><p class="inc">The spine — brand setup, brief, strategy, plan — plus one producer desk.</p><div class="setup mono">Setup TBD</div></div>
+        <div class="price-card"><div class="tier">Studio Pro</div><div class="who">Up to 3 brands</div><div class="amt mono">TBD</div><div class="per">per month</div><p class="inc">Spine plus all six desks. Competitive picture and media money included.</p><div class="setup mono">Setup TBD</div></div>
+        <div class="price-card"><div class="tier">Agency</div><div class="who">10+ brands</div><div class="amt mono">TBD</div><div class="per">per brand / month</div><p class="inc">Everything, multi-workspace, per-client isolation.</p><div class="setup mono">Setup TBD</div></div>
+        <div class="price-card"><div class="tier">Enterprise</div><div class="who">Multi-brand FMCG</div><div class="amt mono">TBD</div><div class="per">&nbsp;</div><p class="inc">SSO, DPA, audit log, security review, dedicated environment.</p><div class="setup mono">Setup TBD</div></div>
+      </div>
+      <div class="price-note">Setup is charged, not discounted — brand setup is genuinely consultative
+        (competitive set, geography, languages, category entry points) and it's the strongest predictor
+        of retention on file. Video and image generation are metered separately; a text brief is not.</div>
+    </div>
+  </section>
+
+  <section id="demo">
+    <div class="wrap">
+      <div class="demo-panel">
+        <div>
+          <div class="eyebrow" style="color:#A9B7CC;"><svg class="diam" viewBox="0 0 33 72" aria-hidden="true"><path d="M0 36 16.5 0 33 36 16.5 72Z" fill="none" stroke="#F0561E" stroke-width="6"/></svg><span class="dot"></span>BOOK A DEMO</div>
+          <h2>See one brand go through the whole spine, live</h2>
+          <p class="lede">Thirty minutes — your own brief, or a category we already know — brief to
+            messaging house to a finished piece in each of the six producers.</p>
+          <div class="demo-q">"When did you last kill a campaign because the numbers didn't support
+            it?" — the one question that tells us in advance whether this is a fit.</div>
+        </div>
+        <form class="demo-form" onsubmit="return false;">
+          <label>Name</label><input placeholder="">
+          <label>Company</label><input placeholder="">
+          <label>Work email</label><input placeholder="" type="email">
+          <label>What would you want to see?</label><textarea rows="2"></textarea>
+          <button type="submit">Request a walkthrough</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <div class="fine">The Marketing Studio — access to the studio itself is invitation-only.</div>
+      <div class="fine">© 2026</div>
+    </div>
+  </footer>
+
+  <script>
+    (function(){
+      var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (reduce) { document.querySelectorAll('.reveal').forEach(function(el){ el.classList.add('reveal-in'); }); return; }
+      var groups = document.querySelectorAll('.stages, .producers-row, .uc-grid');
+      var obs = new IntersectionObserver(function(entries){
+        entries.forEach(function(entry){
+          if (!entry.isIntersecting) return;
+          var items = entry.target.querySelectorAll('.reveal');
+          items.forEach(function(el, i){ setTimeout(function(){ el.classList.add('reveal-in'); }, i * 70); });
+          obs.unobserve(entry.target);
+        });
+      }, { threshold: .2 });
+      groups.forEach(function(g){ obs.observe(g); });
+    })();
+  </script>
+</body>
+</html>

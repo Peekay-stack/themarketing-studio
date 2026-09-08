@@ -206,34 +206,36 @@ def _execution_block(execution_id: str) -> str:
             + "\n".join(f"  {x}" for x in out))
 
 
-def spine_block(brand: dict | None = None) -> str:
-    """What has been decided upstream, as binding constraint. Empty string when nothing has been."""
-    try:
-        import ideas as ideas_mod
-        import plan as plan_mod
-        import strategy
-    except Exception as e:                                   # pragma: no cover - import guard
-        print(f"[prompts] spine_block: could not import ideas/plan/strategy: {e}",
-              file=sys.stderr, flush=True)
-        return ""
-
+def _resolve_house(brand: dict | None) -> dict | None:
+    import strategy
     want = str((brand or {}).get("brand") or "").strip().lower()
-    house = None
     try:
         for row in strategy.houses():
             if not want or str(row.get("brand", "")).lower() == want:
-                house = strategy.load(row["id"])
-                break
+                return strategy.load(row["id"])
     except Exception as e:
         # Real bug found live (round-83 audit): this used to return "" with no trace at all —
-        # indistinguishable from the normal, expected "no house for this brand yet" case just below,
-        # so a malformed house/plan document silently dropped every subsequent generation's brand
-        # grounding (core message, RTBs, avoid-list) with nothing in the logs pointing at why. Logging
-        # here doesn't change the return value — an empty spine is still the right degrade so a caller
-        # never crashes on a bad document — it just makes the failure findable instead of invisible.
-        print(f"[prompts] spine_block: could not read the house for {want or 'the brand'!r}: {e}",
+        # indistinguishable from the normal, expected "no house for this brand yet" case, so a
+        # malformed house document silently dropped every subsequent generation's brand grounding
+        # with nothing in the logs pointing at why. Logging doesn't change the return value — an
+        # empty block is still the right degrade — it just makes the failure findable, not invisible.
+        print(f"[prompts] _resolve_house: could not read the house for {want or 'the brand'!r}: {e}",
               file=sys.stderr, flush=True)
+    return None
+
+
+def house_block(brand: dict | None = None) -> str:
+    """The messaging house's own words: core/emotional/functional message, sourced RTBs, the avoid-list,
+    per-medium message. Split out (round 93) from what used to be one inseparable `spine_block()` so a
+    person can switch the house's grounding off independently of the idea platform's — see
+    `spine_block()`, which composes this with `platform_block()`/`plan_channels_block()` per three
+    independently switchable flags rather than one."""
+    try:
+        import strategy
+    except Exception as e:                                   # pragma: no cover - import guard
+        print(f"[prompts] house_block: could not import strategy: {e}", file=sys.stderr, flush=True)
         return ""
+    house = _resolve_house(brand)
     if not house:
         return ""
 
@@ -264,16 +266,33 @@ def spine_block(brand: dict | None = None) -> str:
              and str(o.get("tag", "")).lower() == "avoid"]
     if avoid:
         out.append("MUST NOT DO: " + "; ".join(avoid))
+    return "\n".join(out)
 
-    # The idea platform, when one has been chosen. It is the strongest constraint in this block: the
-    # point of adopting one is that every execution becomes a different expression of the same idea.
+
+def platform_block(brand: dict | None = None) -> str:
+    """The idea platform's own detail: insight, mechanic, territory, proof, the reason-to-believe it
+    dramatises, and how it is already expressed elsewhere. It is the strongest constraint in the spine:
+    the point of adopting a platform is that every execution becomes a different expression of the same
+    idea. Returns the "no platform adopted" guidance sentence when none is chosen for this house — that
+    sentence is about the platform's own absence, so it only appears when a caller actually asks for this
+    block, never when one has switched it off entirely."""
+    try:
+        import ideas as ideas_mod
+    except Exception as e:
+        print(f"[prompts] platform_block: could not import ideas: {e}", file=sys.stderr, flush=True)
+        return ""
+    house = _resolve_house(brand)
+    if not house:
+        return ""
+
+    out = []
     plat = None
     try:
         plat = ideas_mod.chosen_platform(ideas_mod.for_house(house.get("id", "")))
     except Exception:
         plat = None
     if plat and str(plat.get("idea") or "").strip():
-        out.append(f"\nTHE IDEA PLATFORM — \"{plat.get('name') or 'unnamed'}\": "
+        out.append(f"THE IDEA PLATFORM — \"{plat.get('name') or 'unnamed'}\": "
                    f"{str(plat['idea']).strip()}")
         # Round 92: the platform is saved with seven fields (`ideas._FIELDS`), and this block used to
         # surface only two of them (`idea`, `mechanic`) — every generator wrote from the platform's
@@ -312,10 +331,22 @@ def spine_block(brand: dict | None = None) -> str:
         out.append("Everything you write is one expression of that platform. If what you are asked for "
                    "cannot be an expression of it, say so rather than writing around it.")
     else:
-        out.append("\nNo idea platform has been adopted. Work from the messages above; do not invent a "
+        out.append("No idea platform has been adopted. Work from the messages above; do not invent a "
                    "campaign idea and present it as settled.")
+    return "\n".join(out)
 
-    # The plan says where and when. A post written against a channel nobody bought is a nice post.
+
+def plan_channels_block(brand: dict | None = None) -> str:
+    """Channels bought/audiences/phasing/measures from ANY plan matching the brand — the ambient signal,
+    not a specific bound execution (that is `_execution_block()`, gated in `system_for()` by the SAME
+    `use_plan` flag as this function, so "Plan" reads on screen as one switch, not two)."""
+    try:
+        import plan as plan_mod
+    except Exception as e:
+        print(f"[prompts] plan_channels_block: could not import plan: {e}", file=sys.stderr, flush=True)
+        return ""
+    want = str((brand or {}).get("brand") or "").strip().lower()
+    out = []
     try:
         pl = next((p for p in plan_mod.plans()
                    if not want or str(p.get("brand", "")).lower() == want), None)
@@ -332,7 +363,36 @@ def spine_block(brand: dict | None = None) -> str:
             bits = [b for b in bits if b][:6]
             if bits:
                 out.append(f"{label} (from the IMC plan): " + " | ".join(bits))
+    return "\n".join(out)
 
+
+def spine_block(brand: dict | None = None, *, use_house: bool = True,
+                use_platform: bool = True, use_plan: bool = True) -> str:
+    """What has been decided upstream, as binding constraint — composed from three independently
+    switchable pieces. Empty string when nothing has been decided, or when a caller has switched all
+    three off.
+
+    Round 93: split from one inseparable function into three (`house_block`/`platform_block`/
+    `plan_channels_block`), after a live ask specifically about video: "if all three (plan/idea/brief)
+    are switched off, only the prompt and the brand profile should be the input; the user should have a
+    choice of choosing brief, messaging house, idea platform and the plan independently." Before this,
+    turning the idea platform off silently also dropped the house's core message/RTBs/avoid-list,
+    because both lived in one function gated by one flag — a real gap between what the on-screen copy
+    promised ("the idea platform is set aside") and what actually left the prompt.
+    """
+    out = []
+    if use_house:
+        h = house_block(brand)
+        if h:
+            out.append(h)
+    if use_platform:
+        p = platform_block(brand)
+        if p:
+            out.append(p)
+    if use_plan:
+        pc = plan_channels_block(brand)
+        if pc:
+            out.append(pc)
     if not out:
         return ""
     return ("THE STRATEGY ALREADY DECIDED — BINDING\n"
@@ -340,11 +400,12 @@ def spine_block(brand: dict | None = None) -> str:
             "plan. They are not suggestions and they are not background. Where your instruction below "
             "and this section disagree, this section wins; where your instruction asks for something "
             "these do not cover, say what is missing rather than inventing it.\n\n"
-            + "\n".join(out))
+            + "\n\n".join(out))
 
 
 def system_for(messages: list[dict], brand: dict | None = None, execution: str = "",
-              force_typed: bool = False, skip_mandatories: bool = False) -> str:
+              force_typed: bool = False, skip_mandatories: bool = False,
+              use_house: bool = True, use_platform: bool = True, use_plan: bool = True) -> str:
     """Craft + this brand's grounding + what has been decided + the detected surface block.
 
     `brand` is resolved by the caller when it knows which brand is in play; otherwise the single profile
@@ -356,29 +417,42 @@ def system_for(messages: list[dict], brand: dict | None = None, execution: str =
     the plan — see the note above it. It is empty until somebody has actually decided something, so a
     first-time user's prompt is unchanged.
 
-    `force_typed` — round 92's cross-producer "set the platform aside for this piece" checkbox. Same
-    real, deliberate-override semantics as `producers.stands_on`'s own `force_typed` (that function's
-    docstring explains why this needs to be an explicit act, not a silent fallback) — this is the
-    equivalent for the producers that go through `/complete` instead of a dedicated route (Social,
-    later Video), so the checkbox means the same thing everywhere it appears. Skips `spine_block` only —
-    the house's core/RTB/medium messaging, which is what "the platform" is standing on — never
-    `_execution_block`: the plan's own audience/channel/occasion/measure/message stay binding regardless,
-    exactly what every producer's own "cannot override" notice already promises on screen.
+    Round 93 — `use_house` / `use_platform` / `use_plan`: three independent switches, one per input a
+    person can see on screen (Brief is a fourth, handled entirely client-side by the caller — it never
+    reaches this function). Each defaults on; a caller can drop any one without losing the others, which
+    `force_typed` alone could never do (it dropped house and platform together, because they used to
+    live in one inseparable function). Live ask this came from: "if all three (plan/idea/brief) are
+    switched off, only the prompt and the brand profile should be the input" — turning all three off,
+    plus not linking a brief client-side, reaches exactly that state.
 
-    `skip_mandatories` — separate from `force_typed`, and only meaningful combined with it: the caller's
-    own read on whether none of the plan/idea/brief trio applies to this piece at all. See
-    `brandprofile.voice_block`'s own docstring for exactly what this drops and why it's all-or-nothing.
+    `force_typed` — round 92's original cross-producer "set the platform aside" checkbox, kept for
+    callers not yet updated to the three-flag model above. Composes with the new flags rather than
+    fighting them: it forces house/platform/the ambient plan-channels signal off regardless of what
+    `use_house`/`use_platform`/`use_plan` say, exactly as it always did, but leaves `_execution_block`
+    (the plan's own bound audience/channel/occasion/measure/message) alone — that one only responds to
+    `use_plan` now, never to `force_typed`, matching what every producer's "cannot override" notice
+    already promised on screen before this round existed.
+
+    `skip_mandatories` — separate again: the caller's own read on whether none of the plan/idea/brief
+    trio applies to this piece at all. See `brandprofile.voice_block`'s own docstring for exactly what
+    this drops and why it's all-or-nothing.
     """
     text = " ".join(str(m.get("content", "")) for m in messages if m.get("role") != "assistant")
     b = brand or brandprofile.resolve()
     surface = _detect(text)
+    eff_house = use_house and not force_typed
+    eff_platform = use_platform and not force_typed
+    eff_plan_channels = use_plan and not force_typed
     # The spine binds executions, not briefs. A brief is upstream of the house — it is where the next
     # problem gets stated — so constraining it by the platform the LAST brief produced would quietly
     # make every brief a restatement of the current campaign, and the loop would never open again.
-    spine = "" if (surface is BRIEF or force_typed) else spine_block(b)
+    spine = "" if surface is BRIEF else spine_block(b, use_house=eff_house, use_platform=eff_platform,
+                                                     use_plan=eff_plan_channels)
     # The briefed piece goes LAST of the grounding blocks, closest to the instruction, because it is the
-    # narrowest thing in the prompt and the one the rest has to yield to.
-    this_one = "" if surface is BRIEF else _execution_block(execution)
+    # narrowest thing in the prompt and the one the rest has to yield to. Gated on `use_plan` only — the
+    # "Plan" switch a person actually sees on screen ("Briefed from the plan") — independent of
+    # `force_typed`, which never touched it before this round and still doesn't.
+    this_one = "" if (surface is BRIEF or not use_plan) else _execution_block(execution)
     parts = (GLOBAL_MASTER, "THE BRAND\n" + brandprofile.voice_block(b, skip_mandatories=skip_mandatories),
              spine, this_one, surface)
     return "\n\n".join(x for x in parts if x).strip()

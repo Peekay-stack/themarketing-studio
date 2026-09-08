@@ -86,7 +86,12 @@ KINDS = ("briefs", "brands", "houses", "plans", "platforms", "trade", "execution
          # Found unscoped in the save/location audit, same shape as `library` before its round-90 fix:
          # hardcoded its own directory next to the module file instead of asking here, so every tenant on
          # a deployment shared one corrections log and one set of promoted templates.
-         "learning")
+         "learning",
+         # `character` — brand characters (`character.py`): the recurring, brand-owned face a
+         # segmentation study does not itself settle. Scoped from day one — a character is built for
+         # one brand's segments and test 6 of its own skill is "never shared across brands"; the
+         # approved reference frame also lands in `library` as a `cast` item, which is already scoped.
+         "character")
 
 _SAFE = re.compile(r"[^a-z0-9_-]+")
 

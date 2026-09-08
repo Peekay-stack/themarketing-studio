@@ -206,14 +206,27 @@ def _plan_block(plan: dict | None) -> list[str]:
 
 
 def _ctx(house: dict | None, brief: dict | None, platform: dict | None = None,
-         plan: dict | None = None) -> str:
+         plan: dict | None = None, *, use_house: bool = True, use_platform: bool = True,
+         use_plan: bool = True) -> str:
     """The strategy this is being made against, or an explicit note that there is none.
 
     The idea platform goes in FIRST and is labelled as binding. It sits between the house and the work,
     so once one is adopted every execution is a different expression of the same idea — that is the whole
     reason the layer exists. A producer that treats it as one more piece of context alongside the brief
     will quietly write around it.
+
+    Round 93 — `use_house`/`use_platform`/`use_plan`: the same three independent switches `stands_on()`
+    and prompts.py's `system_for()` now take, so a person can turn off just one of house/platform/plan
+    without losing the others. `brief` here is the bound execution's own audience/channel/occasion/
+    measure — the same thing `use_plan` gates in `system_for()` via `_execution_block`, so it is nulled
+    alongside `plan` under this one flag rather than needing a fourth. Each defaults on; nulling the
+    inputs before the logic below runs means the existing "no strategy attached" degrade below still
+    fires correctly when everything is switched off, with no separate empty-state to maintain.
     """
+    house = house if use_house else None
+    platform = platform if use_platform else None
+    brief = brief if use_plan else None
+    plan = plan if use_plan else None
     if not house and not brief and not platform and not plan:
         return ("NO STRATEGY ATTACHED — you have only the text below. Do not invent an audience, an "
                 "occasion or a claim. Work with what is given and say what is missing.")
@@ -274,7 +287,8 @@ def _ask(prompt: str, max_tokens: int = 1500) -> tuple[dict | None, str]:
 #
 # Returns (text, source) so the screen can say where it came from rather than presenting it as neutral.
 def stands_on(kind: str, house: dict | None = None, platform: dict | None = None,
-              typed: str = "", *, force_typed: bool = False) -> tuple[str, str]:
+              typed: str = "", *, force_typed: bool = False,
+              use_house: bool = True, use_platform: bool = True) -> tuple[str, str]:
     typed = (typed or "").strip()
     # `force_typed` — a real, deliberate override, not the fallback-of-last-resort the plain `typed`
     # parameter already is. Found live: the frontend told a person typing here "this box is an
@@ -284,16 +298,24 @@ def stands_on(kind: str, house: dict | None = None, platform: dict | None = None
     # copies of one proposition drifting apart is the real failure this ordering exists to prevent),
     # but a person choosing to set the platform aside for one specific piece needs a real way to say so
     # rather than discovering the silent precedence the hard way.
+    #
+    # Round 93 — `use_house`/`use_platform`: split from `force_typed` into two independent switches
+    # (matching prompts.py's `spine_block`/`system_for` split), so a person can turn off just the
+    # platform, or just the house, without losing the other. Deliberately NOT ANDed with `force_typed`
+    # here — `force_typed` only ever acts through the early-return above, exactly as before this round:
+    # forcing it on with nothing typed to replace the platform/house with must keep falling through to
+    # them unchanged (a covered case — see test_stands_on_force_typed_with_no_typed_text_falls_through),
+    # not go silent. `use_house`/`use_platform` are the ONLY thing that suppresses these two blocks now.
     if force_typed and typed:
         return typed, "typed here — the idea platform and house were set aside for this piece"
-    if platform:
+    if platform and use_platform:
         expr = str((platform.get("expressions") or {}).get(kind, "") or "").strip()
         if expr:
             return expr, f"the idea platform, expressed for {kind}"
         line = str(platform.get("idea") or "").strip()
         if line:
             return line, "the idea platform"
-    if house:
+    if house and use_house:
         want = {"posm": "posm", "activation": "on-ground", "social": "social",
                 "video": "tv", "incentive": "trade"}.get(kind, "")
         node = (house.get("nodes") or {}).get("medium") or {}
@@ -372,7 +394,9 @@ def hero_subject(desc: str) -> str:
 
 def key_visual(brief_text: str, house: dict | None = None,
                exec_brief: dict | None = None, platform: dict | None = None,
-               plan: dict | None = None, n: int = 3, *, force_typed: bool = False) -> tuple[list[dict], str]:
+               plan: dict | None = None, n: int = 3, *, force_typed: bool = False,
+               use_house: bool = True, use_platform: bool = True,
+               use_plan: bool = True) -> tuple[list[dict], str]:
     """Treatment routes for a POS key visual. Returns (options, note).
 
     **The brief is resolved, not demanded.** This used to require typed text and offer ungrounded generic
@@ -381,9 +405,12 @@ def key_visual(brief_text: str, house: dict | None = None,
     which rung it landed on.
 
     `force_typed` — someone deliberately set the platform/house aside for this one piece; see
-    `stands_on`'s own docstring for why this needs to be opt-in rather than the default.
+    `stands_on`'s own docstring for why this needs to be opt-in rather than the default. `use_house`/
+    `use_platform` (round 93) — the same two independent switches `stands_on` itself now takes, forwarded
+    straight through.
     """
-    text, src = stands_on("posm", house, platform, brief_text, force_typed=force_typed)
+    text, src = stands_on("posm", house, platform, brief_text, force_typed=force_typed,
+                          use_house=use_house, use_platform=use_platform)
     fallback = [{"id": f"kv{i+1}", "name": name, "desc": f"{angle} {text}".strip(),
                  "layout": list(KV_LAYOUTS)[min(i, len(KV_LAYOUTS) - 1)]}
                 for i, (name, angle) in enumerate(KV_TREATMENTS[:max(1, n)])]
@@ -402,7 +429,7 @@ def key_visual(brief_text: str, house: dict | None = None,
         "masked, type set in badges and boxes, a brand block and a base band. It is NOT a photograph "
         "with words on top. A route that describes a scene filling the frame is describing the wrong "
         "object. The pack is always present and never the hero.\n\n"
-        f"THE STRATEGY\n{_ctx(house, exec_brief, platform, plan)}\n\n"
+        f"THE STRATEGY\n{_ctx(house, exec_brief, platform, plan, use_house=use_house, use_platform=use_platform, use_plan=use_plan)}\n\n"
         f"WHAT THIS STANDS ON ({src})\n{text}\n\n"
         f"Give {n} genuinely different treatment routes. They must differ in what the HERO cut-out is "
         "and what the field does — not in adjectives. For each: what is in frame, what is deliberately "
@@ -469,9 +496,88 @@ def key_visual(brief_text: str, house: dict | None = None,
     return (opts or fallback), (f"Standing on {src}." if opts else "")
 
 
+# --- carousel: alternative narrative concepts, reviewed as text before any slide is rendered ---------
+#
+# A carousel is an ordered, multi-part narrative — hook, then value slides that each deliver one real
+# point, then a call to action — not a set of independent assets the way Social's per-platform posts
+# are. That puts it in the same family as Video's beat-based concept phase, not Social's single-post
+# flow: the failure mode worth catching cheaply is a sequence that doesn't cohere (slide 4 not actually
+# delivering on slide 1's promise), and that is cheap to fix in text and expensive to fix after N
+# images already exist.
+#
+# Round 93 (live feedback, second pass): returns MULTIPLE alternative routes, matching the shape
+# `generateVideo`'s own three-creative-routes step and POSM's key-visual routes already use — a person
+# picks one genuinely different narrative direction before anything is edited, the same discipline as
+# those two, not a single draft to fix in place. Image production reuses `/scene-still` directly, once
+# per slide, with the carousel's own locked pack/cast/plate references attached — no separate image
+# route needed.
+def carousel_concept(objective: str, house: dict | None = None, platform: dict | None = None,
+                     plan: dict | None = None, exec_brief: dict | None = None,
+                     n_mode: str = "manual", n: int = 5, *, use_house: bool = True,
+                     use_platform: bool = True, use_plan: bool = True) -> tuple[list[dict], str]:
+    """Returns (routes, note). `routes` is a list of `{name, rationale, slides}` — up to three genuinely
+    different narrative directions for the same objective, each carrying its own ordered slide list
+    (`{role, headline, visual_note}`, role one of hook/value/cta) and its own slide count.
+    `n_mode:"auto"` lets each route pick its own count (3–10) based on what that route's narrative
+    actually needs; `"manual"` fixes every route to the same requested count.
+    """
+    objective = (objective or "").strip()
+    if not objective:
+        return [], ("Write what these slides have to land first — a carousel needs an objective the "
+                    "same way a single post does.")
+    if n_mode == "auto":
+        n_instruction = ("Each route decides its own slide count, between 3 and 10, based on what that "
+                        "route's narrative actually needs — the routes do not have to agree on a count.")
+    else:
+        n = max(3, min(10, int(n or 5)))
+        n_instruction = f"Every route uses exactly {n} slides."
+    ctx = _ctx(house, exec_brief, platform, plan,
+              use_house=use_house, use_platform=use_platform, use_plan=use_plan)
+    prompt = (
+        "You are writing narrative concepts for an Instagram/LinkedIn carousel — a swipeable, ordered "
+        "set of slides read as one continuous story, not independent posts. Propose THREE genuinely "
+        "different carousel concepts for the same objective — not three phrasings of one idea. Each "
+        "must take a distinct narrative angle (for example: a single-story arc, a countdown/checklist "
+        "structure, a before-and-after). Within any one route, every slide must earn the swipe to the "
+        "next — slide 3 has to actually deliver on what slide 1 promised, not restate it. The shape a "
+        "route follows: one hook slide that stops the scroll, several value slides, one closing "
+        "call-to-action slide.\n\n"
+        f"THE STRATEGY\n{ctx}\n\n"
+        f"WHAT THESE SLIDES HAVE TO LAND\n{objective}\n\n"
+        f"{n_instruction}\n"
+        "For each route give a short name, a one-line rationale for why this angle could work, and its "
+        "ordered slides — each with role (hook / value / cta), a short ON-SLIDE headline (the words "
+        "that actually appear on the slide, not a caption), and a one-line visual direction describing "
+        "what the image shows.\n"
+        'Return ONLY JSON: {"routes":[{"name":"short route name","rationale":"one line on why this '
+        'works","slides":[{"role":"hook","headline":"...","visual_note":"..."}, ...]}, '
+        '...exactly 3 routes]}')
+    data, err = _ask(prompt, 2600)
+    if not data or not data.get("routes"):
+        return [], ("No concepts available." if err == "no key" else f"Couldn't draft concepts: {err}.")
+    routes = []
+    for r in data["routes"]:
+        if not isinstance(r, dict):
+            continue
+        slides = [{"role": (str(s.get("role") or "value").strip().lower() or "value"),
+                  "headline": str(s.get("headline") or "").strip(),
+                  "visual_note": str(s.get("visual_note") or "").strip()}
+                 for s in (r.get("slides") or []) if isinstance(s, dict)]
+        slides = [s for s in slides if s["headline"] or s["visual_note"]]
+        if not slides:
+            continue
+        routes.append({"name": str(r.get("name") or "").strip() or "Untitled route",
+                       "rationale": str(r.get("rationale") or "").strip(),
+                       "slides": slides})
+    if not routes:
+        return [], "The model returned no usable routes — try again or write the objective more specifically."
+    return routes, ""
+
+
 def activation_ideas(house: dict | None = None, platform: dict | None = None,
                      plan: dict | None = None, exec_brief: dict | None = None,
-                     n: int = 3, steer: str = "") -> tuple[list[dict], str]:
+                     n: int = 3, steer: str = "", *, use_house: bool = True,
+                     use_platform: bool = True, use_plan: bool = True) -> tuple[list[dict], str]:
     """Two or three on-ground ideas, each built for a named venue. Returns (ideas, note).
 
     **This reverses an earlier rule deliberately.** On-ground used to refuse to generate an idea without
@@ -494,7 +600,8 @@ def activation_ideas(house: dict | None = None, platform: dict | None = None,
     is all one venue has not given anybody a choice.
     """
     n = max(2, min(4, int(n or 3)))
-    text, src = stands_on("activation", house, platform, steer)
+    text, src = stands_on("activation", house, platform, steer,
+                          use_house=use_house, use_platform=use_platform)
     if not text:
         return [], ("Nothing to build on. Adopt an idea platform or choose a house message first — an "
                     "activation is an expression of an idea, and there is no idea here yet.")
@@ -507,7 +614,7 @@ def activation_ideas(house: dict | None = None, platform: dict | None = None,
     prompt = (
         "You are planning consumer activations in India — real ones, that a field team has to book, "
         "staff and run.\n\n"
-        f"THE STRATEGY\n{_ctx(house, exec_brief, platform, plan)}\n\n"
+        f"THE STRATEGY\n{_ctx(house, exec_brief, platform, plan, use_house=use_house, use_platform=use_platform, use_plan=use_plan)}\n\n"
         f"WHAT THIS EXPRESSES ({src})\n{text}\n\n"
         + (f"THE PERSON ASKING ADDS\n{steer.strip()}\n\n" if steer.strip() else "")
         + f"VENUES YOU MAY USE — pick the right one per idea, and read its trap:\n{venues}\n\n"
@@ -565,7 +672,8 @@ def activation_ideas(house: dict | None = None, platform: dict | None = None,
 
 def adjust_activation_idea(idea: dict, note: str, house: dict | None = None,
                            exec_brief: dict | None = None, platform: dict | None = None,
-                           plan: dict | None = None) -> tuple[dict | None, str]:
+                           plan: dict | None = None, *, use_house: bool = True,
+                           use_platform: bool = True, use_plan: bool = True) -> tuple[dict | None, str]:
     """Revise ONE already-generated activation idea per a note, keeping its structure. Returns (idea, note).
 
     `sharpen_idea`'s twin for the CARD shape rather than a plain string. `activation_ideas` returns a
@@ -591,7 +699,7 @@ def adjust_activation_idea(idea: dict, note: str, house: dict | None = None,
     prompt = (
         "You are refining ONE consumer activation idea for India — a field team has to book, staff and "
         "run it.\n\n"
-        f"THE STRATEGY\n{_ctx(house, exec_brief, platform, plan)}\n\n"
+        f"THE STRATEGY\n{_ctx(house, exec_brief, platform, plan, use_house=use_house, use_platform=use_platform, use_plan=use_plan)}\n\n"
         f"THE IDEA AS IT STANDS\n{json.dumps(current)}\n\n"
         f"THE CHANGE ASKED FOR\n{note}\n\n"
         f"VENUES — pick the right one only if the venue itself has to change:\n{venues}\n\n"
@@ -671,7 +779,8 @@ def elements_for(idea: dict | None) -> list[dict]:
 def sharpen_idea(idea: str, house: dict | None = None,
                  exec_brief: dict | None = None,
                  platform: dict | None = None,
-                 plan: dict | None = None) -> tuple[str, str]:
+                 plan: dict | None = None, *, use_house: bool = True,
+                 use_platform: bool = True, use_plan: bool = True) -> tuple[str, str]:
     """Turn an activation idea into one that can be built. Returns (idea, note).
 
     Returns the idea unchanged rather than inventing one when there is nothing to work from. An empty
@@ -682,7 +791,7 @@ def sharpen_idea(idea: str, house: dict | None = None,
         return "", "Write the idea first — this sharpens one, it does not supply one."
     prompt = (
         "You are planning a consumer activation in India — a stall, a van, a promoter, a street.\n\n"
-        f"THE STRATEGY\n{_ctx(house, exec_brief, platform, plan)}\n\n"
+        f"THE STRATEGY\n{_ctx(house, exec_brief, platform, plan, use_house=use_house, use_platform=use_platform, use_plan=use_plan)}\n\n"
         f"THE IDEA AS WRITTEN\n{idea}\n\n"
         "Tighten it into something buildable in two or three sentences. Name what a person physically "
         "DOES at it — not what they feel or learn. An activation whose central action is 'engages with "
@@ -703,7 +812,8 @@ def sharpen_idea(idea: str, house: dict | None = None,
 def element_brief(element: str, brief_text: str, idea: str, house: dict | None = None,
                   exec_brief: dict | None = None,
                   platform: dict | None = None,
-                 plan: dict | None = None) -> tuple[str, str]:
+                 plan: dict | None = None, *, use_house: bool = True,
+                 use_platform: bool = True, use_plan: bool = True) -> tuple[str, str]:
     """Brief one element of an on-ground activation against the idea. Returns (brief, note)."""
     spec = OG_ELEMENTS.get(element)
     if not spec:
@@ -712,7 +822,7 @@ def element_brief(element: str, brief_text: str, idea: str, house: dict | None =
         return "", "Settle the activation idea first — the four elements are briefed against it."
     prompt = (
         "You are writing a production brief for one element of a consumer activation in India.\n\n"
-        f"THE STRATEGY\n{_ctx(house, exec_brief, platform, plan)}\n\n"
+        f"THE STRATEGY\n{_ctx(house, exec_brief, platform, plan, use_house=use_house, use_platform=use_platform, use_plan=use_plan)}\n\n"
         f"THE ACTIVATION\n{idea.strip()}\n\n"
         f"THE ELEMENT: {element} — {spec}\n"
         f"WHAT THE AUTHOR HAS WRITTEN SO FAR\n{(brief_text or '(nothing yet)').strip()}\n\n"

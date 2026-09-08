@@ -2473,7 +2473,91 @@ key and every bag key to a real API response field by hand; checkfe/census still
 - Live verification of all three items above, once there's a real render to test against.
 
 
-## Round 54 — your round-59 POSM asset panel + photoshoot system adopted; "include pack" toggle built
+## Round 56 — brand fixed, the refusal made concrete, the spine turned into a live diagram
+
+**Still `landing.html`, not `app.dc.html`.** Built directly with the user this round, no new ASK_DESIGN —
+recording it here so the file and the reasoning travel together.
+
+**Brand name fixed.** The page said "Heritage Marketing Studio" throughout; the brand book says "The
+Marketing Studio." Renamed everywhere (title, header, footer). The header's logo was also functionally
+invisible — it was using the brand book's full lockup, which bakes in a tiny byline at a scale that
+disappears at header height. Swapped to the clean Monogram (T · three diamonds · S, no byline) at 34px,
+paired with our own set text, and moved the header to a solid elevated navy strip (`#16233D`) instead of
+the blurred transparent one, both picked by the user from real options.
+
+**"The Refusal" — a new section, the actual differentiator.** The homepage had never said the one thing
+that makes the product worth paying for: it won't print a number it can't source. Added a section right
+after the hero — headline "AI for creativity. Never for the numbers," four cards grounded in real product
+behavior (No GRP without a currency — names BARC's halted ratings currency specifically; No incomplete
+share of voice — names the missing competitor rather than dropping it; AI for creativity, not creative
+data interpretation; No autonomous publish — every asset clears a human gate). Two cards (No AVE, No
+blended reach) were cut on user instruction as weaker than the other two. Icons are plain diamond
+outlines — an earlier pass tried clip-path fragments (half/quarter diamonds) per a literal "halves and
+quarters" ask, but clipped strokes render as unrecognizable slivers (a `V`, a `\`), not shapes — reverted
+to the uniform glyph.
+
+**The 5-stage spine is now a diagram, not a sentence.** Replaced the hero's static device-card collage
+with 6 concentric diamond "layers" (Brand Profile → Brand Foundations → Strategy → Plan → Execution →
+Measurement) — nested flattened plates, orange only at the base (Brand Profile — the "live" layer, per
+the brand book's own rule that orange marks the one thing currently running). Each layer is a real link:
+Brand Profile/Foundations → `#stage-brief`, Strategy → `#stage-house`, Plan → `#stage-plan`, Execution →
+`#stage-execution`, Measurement → `#demo` — added matching `id`s to the Product section's stage cards so
+these are working in-page jumps, not decoration. Went through several failed placements first (a bleed
+diamond that cut through the headline, one that hid behind the hero cards) before landing it inside
+`.hero-visual`, which never overlaps text — logged so it isn't retried.
+
+**It's animated now, not static.** On load, the six layers rise in bottom-up with a stagger (foundation
+first). An auto-cycling spotlight steps through all six every 2.2s, dimming the rest and syncing the
+legend row — pauses on hover, jumps to whatever layer you hover over, and the whole thing is inert under
+`prefers-reduced-motion`. The Product, Use Cases and Refusal card grids got the same treatment: a
+scroll-triggered stagger-reveal (IntersectionObserver) plus a hover lift. One real bug from this: the
+Refusal section's card grid was a bare `<div style="display:grid">` with no class, so the observer never
+watched it and the cards sat at `opacity:0` forever — invisible on first load, only found because the user
+looked at a live screenshot. Fixed by giving it the `uc-grid` class so the observer picks it up. Worth
+naming as its own lesson: **a reveal-on-scroll target needs an explicit hook, and a hook you forgot to add
+fails silently — it doesn't error, it just never appears.**
+
+**Six producers, not four.** PR and Sales enablers were real gaps — the product has six producer desks,
+the page only showed four. Added both to the Product grid, the Use Cases grid (real example cards, same
+tone as the rest — a launch-day statement, a trade deck), the Execution layer's description, and every
+"four producers" / "four desks" reference in copy (hero lede, Product h2, stage 05, Use Cases intro, demo
+copy, Studio Pro's tier description).
+
+**All prices → `TBD`.** Every ₹ figure and setup fee across the four tiers, on request — the business-
+model numbers aren't ready to publish yet. Left the pricing *mechanic* copy (per brand/month, desks as
+add-ons, generation metered, "setup is charged, not discounted") since that's policy, not a figure.
+
+**Dropped the marquee.** The two auto-scrolling chip lanes were saying the same six-ish claims the new
+Refusal section and the animated spine now say better and with real specificity — kept as repetition
+would have been, on the user's call.
+
+## Round 55 — public homepage restyled to Deep Navy Immersive (ASK_DESIGN_59)
+
+**Not `app.dc.html`.** `landing.html` (your `be9cfc81…`, plain static file, served at `GET /`), adopted
+as sent and restyled in place — no diff needed since this file has no prior design-side edits to re-apply.
+
+Restyled the whole visual system to Option B of the direction you specified: full-bleed dark navy
+(`#0B1729`/`#0E1A30`/`#111F38` family) across nav, hero, marquee, every section and the footer; frosted-
+glass cards (`backdrop-filter: blur`) over the dark ground; a dual radial glow behind the hero (blue
+top-right, a faint orange bottom-left); the diamond hairline texture behind the hero at ~9% opacity;
+and a small diamond-outline glyph beside every section eyebrow, tying the section-label convention back
+to the brand mark. Orange stays rationed to the CTA pill (now solid orange with a soft glow), the
+eyebrow/marquee dot, and one word in the headline ("decided") — nowhere else. Headings are pure white;
+body copy is `#A9B7CC`. I ran two variants past the user first (Option A: single soft glow, flat panels
+— Option B: dual glow, frosted glass, diamond accents) plus a tactical follow-up round; Option B is what
+shipped.
+
+Nothing else changed: marquee mechanism (`.lane.left/.right`, hover-pause, `prefers-reduced-motion`
+guard), all section copy, the four real pricing tiers and their ₹ figures, the Book a Demo qualifying
+question, the hand-drawn hero device cards (recolored to sit on the dark ground, not replaced), and nav
+structure (`#product`/`#usecases`/`#pricing` anchors, `/app` sign-in link, unwired demo form) are all
+untouched — restyle only, per the ask.
+
+No `checkfe.py` coverage on this file (plain HTML, not a DC) — please do the manual pass: load `/`,
+confirm the marquee still animates and pauses on hover, anchor nav still scrolls to each section, and
+`prefers-reduced-motion` still kills the marquee.
+
+
 
 **Base: your `2272f038399c` (round 59 on your numbering, 20,445 lines), adopted whole.** Snapshot of my
 round-53 file is `handover-2026-08/app.round53.dc.html`. New structural state: `sc-if` 861/861,

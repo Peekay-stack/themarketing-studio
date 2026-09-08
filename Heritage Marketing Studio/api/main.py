@@ -38,6 +38,8 @@ from fastapi import (
 )
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import RedirectResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -49,6 +51,7 @@ import briefguide
 import briefstore
 import campaign as campaign_mod
 import catalog
+import character as character_mod
 import complete as completion
 import composite
 import continuity
@@ -89,7 +92,7 @@ import shots
 import socialplan
 import strategy
 import tenancy
-from database import get_db, init_db
+from database import SessionLocal, get_db, init_db
 import people
 from models import Brief, ChatMessage, Deliverable, User
 from models import Session as SessionRow
@@ -99,6 +102,54 @@ app.add_middleware(
     CORSMiddleware, allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
     allow_methods=["*"], allow_headers=["*"],
 )
+
+# Round 92: the studio itself gated behind real login, at last. Everything up to now had the
+# pieces (auth.py's sessions, /login, /logout, /me, and the frontend's own checkSession/authPhase
+# gate — see app.dc.html's own comment: "the global 401 handler every other route falls through to
+# once the backend's require_auth reaches them") but only ~10 of 274 routes actually required it.
+# A person could always bypass the login SCREEN by calling any real route directly with no cookie
+# at all. This is a default-deny gate, not a per-route opt-in, precisely so a new route added later
+# is protected by default rather than by whoever remembers to add `Depends(current_user)` to it.
+#
+# `/` is deliberately NOT gated — it now serves the public marketing page, never the studio, so
+# there's nothing on it to protect. The studio's own HTML shell (`/app`) IS left public: it's markup
+# and JS with no tenant data baked in, and it has to load before its own JS can even ask `/me`
+# whether a session exists. Every route the shell actually calls to read or write data is what this
+# gate protects.
+_PUBLIC_PATHS = {
+    "/", "/health", "/login", "/logout", "/me", "/app",
+    "/support.js", "/image-slot.js", "/favicon.ico",
+    "/docs", "/redoc", "/openapi.json",
+}
+_PUBLIC_PREFIXES = ("/assets/", "/static/")
+
+
+class RequireLoginMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        path = request.url.path
+        if path in _PUBLIC_PATHS or path.startswith(_PUBLIC_PREFIXES):
+            return await call_next(request)
+        token = request.cookies.get(auth_mod.COOKIE_NAME)
+        valid = False
+        if token:
+            db = SessionLocal()
+            try:
+                row = db.get(SessionRow, token)
+                valid = bool(row and row.expires >= auth_mod.utcnow())
+            finally:
+                db.close()
+        if valid:
+            return await call_next(request)
+        # A browser navigating directly (not the app's own fetch calls) gets sent to the studio
+        # shell, whose own login screen takes it from there — an API-style call gets the same 401
+        # shape every other refusal in this API uses, which is exactly what the frontend's existing
+        # `onSessionExpired` handler already expects from any route.
+        if request.method == "GET" and "text/html" in request.headers.get("accept", ""):
+            return RedirectResponse(url="/app")
+        return JSONResponse(status_code=401, content={"detail": "Not signed in."})
+
+
+app.add_middleware(RequireLoginMiddleware)
 
 
 @app.on_event("startup")
@@ -267,7 +318,10 @@ def complete_endpoint(payload: dict):
     out = completion.complete(payload.get("messages", []),
                               execution=str(payload.get("execution") or ""),
                               force_typed=bool(payload.get("force_typed")),
-                              skip_mandatories=bool(payload.get("skip_mandatories")))
+                              skip_mandatories=bool(payload.get("skip_mandatories")),
+                              use_house=payload.get("use_house", True) is not False,
+                              use_platform=payload.get("use_platform", True) is not False,
+                              use_plan=payload.get("use_plan", True) is not False)
     if not str(out or "").strip():
         # A live key that returns nothing is a failure too, and an empty string dressed as success is the
         # version of it nobody can debug.
@@ -4582,6 +4636,144 @@ def actuals_remove(payload: dict):
     return {"entries": doc["entries"]}
 
 
+# --- Brand characters: a recurring, brand-owned face, held in ground truth ----------------------
+#
+# The store and the discipline behind `character_skill/SKILL.md`. Same convention as the rest of this
+# file: thin route here, every rule in `character.py`. `can_approve()` is a real gate — a character
+# is not approved until the skill's six tests actually pass and a named person signs it.
+
+@app.get("/characters")
+def characters_list(brand: str = ""):
+    """Every character for a brand (all left blank = every character), approved first."""
+    return {"characters": character_mod.list_characters(brand),
+            "tests": [{"key": k, "label": v} for k, v in character_mod.TESTS]}
+
+
+@app.get("/character/{cid}")
+def character_get(cid: str):
+    doc = character_mod.load(cid)
+    if not doc:
+        return JSONResponse(status_code=404, content={"detail": "no character with that id"})
+    ok, missing = character_mod.can_approve(doc)
+    return {"character": doc, "can_approve": ok, "missing": missing,
+            "cast_lock_block": character_mod.cast_lock_block(doc)}
+
+
+@app.post("/character-draft")
+def character_draft(payload: dict):
+    """Draft a full character from a pen portrait or segment description, following the skill.
+    `{brand, seed, segment?, segment_source?}` → a `draft`-state document, nothing approved."""
+    doc, err = character_mod.draft(
+        brand=str(payload.get("brand") or ""), seed=str(payload.get("seed") or ""),
+        segment=str(payload.get("segment") or ""),
+        segment_source=str(payload.get("segment_source") or "assumed"))
+    if err or not doc:
+        return JSONResponse(status_code=400, content={"detail": err or "could not draft"})
+    return {"character": character_mod.save(doc)}
+
+
+@app.post("/character-save")
+def character_save(payload: dict):
+    """Create or update a character document. `{character}` — the full document, edited in place.
+    A blank `id` creates; state is always recomputed from what has actually happened."""
+    doc = payload.get("character")
+    if not isinstance(doc, dict):
+        return JSONResponse(status_code=400, content={"detail": "no character document in payload"})
+    if not doc.get("brand") or not doc.get("name"):
+        return JSONResponse(status_code=400, content={"detail": "a character needs a brand and a name"})
+    return {"character": character_mod.save(doc)}
+
+
+@app.post("/character-route")
+def character_route(payload: dict):
+    """Select and confirm the hook route. `{id, tag, confirmed?}`."""
+    doc = character_mod.load(str(payload.get("id") or ""))
+    if not doc:
+        return JSONResponse(status_code=404, content={"detail": "no character with that id"})
+    character_mod.set_route(doc, str(payload.get("tag") or ""),
+                            confirmed=bool(payload.get("confirmed", True)))
+    return {"character": character_mod.save(doc)}
+
+
+@app.post("/character-test")
+def character_test(payload: dict):
+    """Record one of the six tests. `{id, key, pass, note?}` — `pass` is true / false / null."""
+    doc = character_mod.load(str(payload.get("id") or ""))
+    if not doc:
+        return JSONResponse(status_code=404, content={"detail": "no character with that id"})
+    doc, err = character_mod.record_test(doc, str(payload.get("key") or ""),
+                                         payload.get("pass"), str(payload.get("note") or ""))
+    if err:
+        return JSONResponse(status_code=400, content={"detail": err})
+    return {"character": character_mod.save(doc)}
+
+
+@app.post("/character-audition")
+def character_audition(payload: dict):
+    """Record the audition turn. `{id, run?, passed?, note?}`."""
+    doc = character_mod.load(str(payload.get("id") or ""))
+    if not doc:
+        return JSONResponse(status_code=404, content={"detail": "no character with that id"})
+    character_mod.record_audition(doc, run=bool(payload.get("run", True)),
+                                  passed=payload.get("passed"), note=str(payload.get("note") or ""))
+    return {"character": character_mod.save(doc)}
+
+
+@app.post("/character-pressure")
+def character_pressure(payload: dict):
+    """Record one pressure-test shot. `{id, index, done?, result?, run_by?}`."""
+    doc = character_mod.load(str(payload.get("id") or ""))
+    if not doc:
+        return JSONResponse(status_code=404, content={"detail": "no character with that id"})
+    doc, err = character_mod.record_pressure_shot(
+        doc, int(payload.get("index", -1)), done=bool(payload.get("done", True)),
+        result=str(payload.get("result") or ""), run_by=str(payload.get("run_by") or ""))
+    if err:
+        return JSONResponse(status_code=400, content={"detail": err})
+    return {"character": character_mod.save(doc)}
+
+
+@app.post("/character-reference")
+def character_reference(payload: dict):
+    """Point the character at its signed-off `cast` library item. `{id, library_id}`."""
+    doc = character_mod.load(str(payload.get("id") or ""))
+    if not doc:
+        return JSONResponse(status_code=404, content={"detail": "no character with that id"})
+    character_mod.attach_reference(doc, str(payload.get("library_id") or ""))
+    return {"character": character_mod.save(doc)}
+
+
+@app.post("/character-approve")
+def character_approve(payload: dict):
+    """Approve a character — refused unless the six tests pass and everything the skill requires is
+    in place. `{id, who}`."""
+    doc = character_mod.load(str(payload.get("id") or ""))
+    if not doc:
+        return JSONResponse(status_code=404, content={"detail": "no character with that id"})
+    doc, err = character_mod.approve(doc, str(payload.get("who") or ""))
+    if err:
+        return JSONResponse(status_code=400, content={"detail": err})
+    return {"character": character_mod.save(doc)}
+
+
+@app.post("/character-retire")
+def character_retire(payload: dict):
+    """Retire a character — it is no longer offered to a cast-lock. `{id, note?}`."""
+    doc = character_mod.load(str(payload.get("id") or ""))
+    if not doc:
+        return JSONResponse(status_code=404, content={"detail": "no character with that id"})
+    character_mod.retire(doc, str(payload.get("note") or ""))
+    return {"character": character_mod.save(doc)}
+
+
+@app.post("/character-remove")
+def character_remove(payload: dict):
+    """Delete a character document. `{id}`. The library reference, if any, is left untouched."""
+    if not character_mod.remove(str(payload.get("id") or "")):
+        return JSONResponse(status_code=404, content={"detail": "no character with that id"})
+    return {"ok": True}
+
+
 # --- PR: the sheet, the objectives funnel, the message set --------------------------------------
 #
 # Two modes on one store. Every route resolves the plan and house itself rather than trusting the
@@ -5420,7 +5612,10 @@ def producer_stands_on(payload: dict):
     house, _brief, platform, _plan = _exec_ctx(payload)
     typed = str(payload.get("typed") or "")
     force_typed = bool(payload.get("force_typed"))
-    text, src = producers.stands_on(kind, house, platform, typed, force_typed=force_typed)
+    use_house = payload.get("use_house", True) is not False
+    use_platform = payload.get("use_platform", True) is not False
+    text, src = producers.stands_on(kind, house, platform, typed, force_typed=force_typed,
+                                    use_house=use_house, use_platform=use_platform)
     return {"text": text, "source": src, "has_platform": bool(platform), "has_house": bool(house)}
 
 
@@ -5444,15 +5639,46 @@ def posm_keyvisual(payload: dict):
     house, brief, platform, plan = _exec_ctx(payload)
     typed = str(payload.get("brief") or "")
     force_typed = bool(payload.get("ignore_platform"))
-    text, src = producers.stands_on("posm", house, platform, typed, force_typed=force_typed)
+    use_house = payload.get("use_house", True) is not False
+    use_platform = payload.get("use_platform", True) is not False
+    use_plan = payload.get("use_plan", True) is not False
+    text, src = producers.stands_on("posm", house, platform, typed, force_typed=force_typed,
+                                    use_house=use_house, use_platform=use_platform)
     try:
         n = max(1, min(6, int(payload.get("n") or 3)))
     except (TypeError, ValueError):
         n = 3
-    options, note = producers.key_visual(typed, house, brief, platform, plan, n, force_typed=force_typed)
+    options, note = producers.key_visual(typed, house, brief, platform, plan, n, force_typed=force_typed,
+                                         use_house=use_house, use_platform=use_platform, use_plan=use_plan)
     return {"options": options, "note": note, "layouts": producers.KV_LAYOUTS,
             "stands_on": {"text": text, "source": src},
             "default_brief": text, "default_source": src}
+
+
+@app.post("/social-carousel-concept")
+def social_carousel_concept(payload: dict):
+    """Alternative narrative concepts for a carousel — up to three genuinely different directions, each
+    an ordered list of slides (`{role, headline, visual_note}`), reviewed as text before any image is
+    generated. See `producers.carousel_concept`'s own docstring for why this returns routes to choose
+    between rather than one draft to edit in place.
+
+    `{objective, slide_count_mode:"manual"|"auto", slide_count?, use_house?, use_platform?, use_plan?}`
+    -> `{routes:[{name, rationale, slides:[...]}], count, note}`. Image production for the chosen route
+    reuses `/scene-still` directly, once per slide — no separate image route, since `/scene-still`
+    already accepts the same `pack_id`/`cast_id`/`plate_id` locked references this feature needs.
+    """
+    house, brief, platform, plan = _exec_ctx(payload)
+    objective = str(payload.get("objective") or "")
+    n_mode = str(payload.get("slide_count_mode") or "manual")
+    n = payload.get("slide_count")
+    routes, note = producers.carousel_concept(
+        objective, house, platform, plan, brief, n_mode=n_mode, n=n,
+        use_house=payload.get("use_house", True) is not False,
+        use_platform=payload.get("use_platform", True) is not False,
+        use_plan=payload.get("use_plan", True) is not False)
+    if not routes:
+        return JSONResponse(status_code=400, content={"detail": note})
+    return {"routes": routes, "count": len(routes), "note": note}
 
 
 @app.post("/posm-image")
@@ -6892,6 +7118,9 @@ def activation_idea(payload: dict):
     """
     house, brief, platform, plan = _exec_ctx(payload)
     typed = str(payload.get("idea") or "").strip()
+    use_house = payload.get("use_house", True) is not False
+    use_platform = payload.get("use_platform", True) is not False
+    use_plan = payload.get("use_plan", True) is not False
 
     # Three requests arrive here and they are told apart by whether `idea` is present at all:
     #
@@ -6904,7 +7133,8 @@ def activation_idea(payload: dict):
     # forty-second generation nobody asked for. That was my doing: I widened the route without checking
     # who was already calling it with an empty idea.
     if "idea" in payload and not typed:
-        stood, src = producers.stands_on("activation", house, platform, "")
+        stood, src = producers.stands_on("activation", house, platform, "",
+                                         use_house=use_house, use_platform=use_platform)
         return {"stands_on": {"text": stood, "source": src}, "ideas": [], "count": 0,
                 "venues": producers.VENUES,
                 "detail": "Nothing generated — send no `idea` key at all to generate ideas."}
@@ -6920,19 +7150,25 @@ def activation_idea(payload: dict):
         except (TypeError, ValueError):
             n = 3
         ideas, note = producers.activation_ideas(house, platform, plan, brief, n,
-                                                 str(payload.get("steer") or ""))
+                                                 str(payload.get("steer") or ""),
+                                                 use_house=use_house, use_platform=use_platform,
+                                                 use_plan=use_plan)
         if not ideas:
-            stood, src = producers.stands_on("activation", house, platform, "")
+            stood, src = producers.stands_on("activation", house, platform, "",
+                                             use_house=use_house, use_platform=use_platform)
             return JSONResponse(status_code=400, content={
                 "detail": note, "stands_on": {"text": stood, "source": src}})
+        stood, src = producers.stands_on("activation", house, platform, "",
+                                         use_house=use_house, use_platform=use_platform)
         return {"ideas": ideas, "count": len(ideas), "note": note,
                 "venues": producers.VENUES,
-                "stands_on": {"text": producers.stands_on("activation", house, platform, "")[0],
-                              "source": producers.stands_on("activation", house, platform, "")[1]}}
+                "stands_on": {"text": stood, "source": src}}
 
-    idea, note = producers.sharpen_idea(typed, house, brief, platform, plan)
+    idea, note = producers.sharpen_idea(typed, house, brief, platform, plan,
+                                        use_house=use_house, use_platform=use_platform, use_plan=use_plan)
     if not idea:
-        stood, src = producers.stands_on("activation", house, platform, "")
+        stood, src = producers.stands_on("activation", house, platform, "",
+                                         use_house=use_house, use_platform=use_platform)
         return JSONResponse(status_code=400,
                             content={"detail": note, "stands_on": {"text": stood, "source": src}})
     return {"idea": idea, "note": note}
@@ -6950,7 +7186,11 @@ def activation_idea_adjust(payload: dict):
     house, brief, platform, plan = _exec_ctx(payload)
     idea = payload.get("idea") if isinstance(payload.get("idea"), dict) else {}
     note = str(payload.get("note") or "")
-    out, err = producers.adjust_activation_idea(idea, note, house, brief, platform, plan)
+    out, err = producers.adjust_activation_idea(
+        idea, note, house, brief, platform, plan,
+        use_house=payload.get("use_house", True) is not False,
+        use_platform=payload.get("use_platform", True) is not False,
+        use_plan=payload.get("use_plan", True) is not False)
     if not out:
         return JSONResponse(status_code=400, content={"detail": err})
     return {"idea": out}
@@ -7008,9 +7248,12 @@ def activation_element(payload: dict):
     else:
         idea_text = str(raw or "")
 
-    out, note = producers.element_brief(str(payload.get("element") or ""),
-                                        str(payload.get("brief") or ""),
-                                        idea_text, house, brief, platform, plan)
+    out, note = producers.element_brief(
+        str(payload.get("element") or ""), str(payload.get("brief") or ""),
+        idea_text, house, brief, platform, plan,
+        use_house=payload.get("use_house", True) is not False,
+        use_platform=payload.get("use_platform", True) is not False,
+        use_plan=payload.get("use_plan", True) is not False)
     if not out:
         return JSONResponse(status_code=400, content={"detail": note})
     return {"brief": out, "note": note,
@@ -7477,8 +7720,18 @@ window.claude.complete = async function(arg){
 
 
 @app.get("/", response_class=HTMLResponse)
+def landing():
+    """The public marketing page — themarketing-studio.com's front door. No session, no data, nothing
+    to gate. The studio itself lives at /app now; this page's own "Sign in" link points there."""
+    path = os.path.join(os.path.dirname(__file__), "static", "landing.html")
+    return HTMLResponse(open(path, encoding="utf-8").read())
+
+
+@app.get("/app", response_class=HTMLResponse)
 def index():
-    # Primary front end = the Claude Design build (Design Component + dc-runtime).
+    # Primary front end = the Claude Design build (Design Component + dc-runtime). Publicly
+    # reachable on purpose (see RequireLoginMiddleware's own comment) — it's markup and JS, no
+    # tenant data, and its own checkSession()/authPhase gate is what actually shows a login screen.
     html = open(os.path.join(_FE, "app.dc.html"), encoding="utf-8").read()
     if _BRIDGE_MARK not in html:
         html = html.replace("<head>", "<head>" + _HEAD_INJECT, 1) if "<head>" in html else _HEAD_INJECT + html

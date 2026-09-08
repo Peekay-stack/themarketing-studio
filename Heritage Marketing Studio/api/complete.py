@@ -26,7 +26,8 @@ def has_key() -> bool:
 
 
 def complete(messages: list[dict], execution: str = "", force_typed: bool = False,
-             skip_mandatories: bool = False) -> str:
+             skip_mandatories: bool = False, use_house: bool = True, use_platform: bool = True,
+             use_plan: bool = True) -> str:
     if not has_key():
         return ""  # front end falls back to its own placeholder content
     import anthropic
@@ -36,10 +37,14 @@ def complete(messages: list[dict], execution: str = "", force_typed: bool = Fals
     norm = [{"role": m.get("role", "user"), "content": str(m.get("content", ""))} for m in messages]
     # `execution` names the one briefed piece this call is for, so the spine can bind to its audience and
     # its channel rather than offering the whole plan and letting the model choose. `force_typed` — round
-    # 92's "set the platform aside" checkbox, see `system_for`'s own note on exactly what it does and does
-    # not skip. `skip_mandatories` — same round, separate flag: the caller's own read on whether none of
-    # the plan/idea/brief trio applies to this piece; see `brandprofile.voice_block`'s docstring.
-    system = system_for(norm, execution=execution, force_typed=force_typed, skip_mandatories=skip_mandatories)
+    # 92's "set the platform aside" checkbox, kept for callers not yet updated. `use_house`/`use_platform`/
+    # `use_plan` — round 93's three independent switches (replacing the one-flag "set the platform aside"
+    # with "brief / messaging house / idea platform / plan", each a person can turn off on its own); see
+    # `system_for`'s own note on exactly how they compose with `force_typed`. `skip_mandatories` — the
+    # caller's own read on whether none of the plan/idea/brief trio applies to this piece at all; see
+    # `brandprofile.voice_block`'s docstring.
+    system = system_for(norm, execution=execution, force_typed=force_typed, skip_mandatories=skip_mandatories,
+                         use_house=use_house, use_platform=use_platform, use_plan=use_plan)
     # 2000 was too tight once a surface asks for several posts or several scenes: the reply is JSON, so a
     # truncation is not a short answer, it is an unparseable one — which reaches the person as the
     # feature silently doing nothing.
