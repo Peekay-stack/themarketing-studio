@@ -26,7 +26,9 @@ api/learning/
 *.db-wal
 
 # --- handover / snapshot files, not runtime inputs ---
-**/research_*/
+# NOTE: patterns here must not glob-match real modules. `research_*` once ate research_parse.py.
+# Scratch research folders are dated (research_2026-08/ etc.); match only those.
+**/research_[0-9]*/
 api/frontend/parts/
 api/frontend/app.dc.html.bak-*
 api/frontend/app.dc.html.pre-*
@@ -39,3 +41,10 @@ ask-design-round*/
 *.zip
 .git/
 .claude/
+
+# --- safety net: real modules that share a name-prefix with an excluded data dir ---
+# (a later !pattern wins; keep this list narrow — a broad !api/**/*.py would drag the venv back in)
+!api/research_parse.py
+!api/library.py
+!api/learning.py
+!api/media.py
