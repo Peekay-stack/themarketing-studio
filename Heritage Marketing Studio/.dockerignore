@@ -1,7 +1,41 @@
+# Build context hygiene. The image ships code only — never secrets, never local state, never the venv.
+
+# --- secrets: must never enter an image layer ---
+**/.env
+**/.env.*
+!**/.env.example
+
+# --- python / node build junk ---
 **/__pycache__/
 **/*.pyc
 **/.venv/
 web/node_modules/
 web/dist/
+api/brief_assets/node_modules/
+
+# --- local state: the deployed app writes all of this to STUDIO_DATA_DIR, not the image ---
+# (~730MB of dev test data + generated media if left in — and it would shadow nothing, just bloat)
+api/tenants/
+api/media/
+api/renders/
+api/edits/
+api/library/
+api/learning/
 *.db
+*.db-journal
+*.db-wal
+
+# --- handover / snapshot files, not runtime inputs ---
 **/research_*/
+api/frontend/parts/
+api/frontend/app.dc.html.bak-*
+api/frontend/app.dc.html.pre-*
+app.dc.*.html
+app.dc-*.html
+ASK_DESIGN_*.md
+HANDOVER_*.md
+handover.md
+ask-design-round*/
+*.zip
+.git/
+.claude/

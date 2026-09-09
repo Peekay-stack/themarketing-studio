@@ -22,6 +22,8 @@ import json
 import os
 import re
 
+import brandprofile
+import character
 import jsonout
 import posm
 import strategy
@@ -223,13 +225,19 @@ def _ctx(house: dict | None, brief: dict | None, platform: dict | None = None,
     inputs before the logic below runs means the existing "no strategy attached" degrade below still
     fires correctly when everything is switched off, with no separate empty-state to maintain.
     """
+    # The brand's approved recurring character (empty when there is none). Resolved from the ORIGINAL
+    # house/brief before the switches below can null them — a character is a brand fact, not one of
+    # the house/platform/plan inputs a person turns off. POSM, POSM carousel and Onground all reach
+    # generation through this one context builder.
+    char = character.for_prompt(brandprofile.resolve(house, brief))
     house = house if use_house else None
     platform = platform if use_platform else None
     brief = brief if use_plan else None
     plan = plan if use_plan else None
     if not house and not brief and not platform and not plan:
-        return ("NO STRATEGY ATTACHED — you have only the text below. Do not invent an audience, an "
+        base = ("NO STRATEGY ATTACHED — you have only the text below. Do not invent an audience, an "
                 "occasion or a claim. Work with what is given and say what is missing.")
+        return base + ("\n\n" + char if char else "")
     out = []
     if platform:
         line = str(platform.get("idea") or "").strip()
@@ -264,6 +272,8 @@ def _ctx(house: dict | None, brief: dict | None, platform: dict | None = None,
         if avoid:
             out.append("MUST AVOID: " + "; ".join(avoid))
     out.extend(_plan_block(plan))
+    if char:
+        out.append(char)
     return "\n".join(out) or "NO STRATEGY ATTACHED — work from the text alone."
 
 

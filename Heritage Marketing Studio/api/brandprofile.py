@@ -220,6 +220,203 @@ SPEC_BY_KEY = {s["key"]: s for s in SPEC}
 CORE = tuple(s["key"] for s in SPEC if s.get("required"))
 
 
+# --- brand core: the enduring brand key / essence, above the messaging house -------------------
+#
+# Optional. Where an organisation has one and follows it, it is the fixed root every campaign has to
+# ladder to, and the boundary for what the brand can and cannot do — a guardrail, not a brief.
+# Distinct from `positioning`/`master_idea` (a sentence) and from the messaging house (campaign-
+# flexible): this does not move between campaigns, and the house must not contradict it.
+#
+# One shape for all models: an `essence` line + framework-specific `layers` + a `boundaries` list
+# (the "will not do" the user asked for — every model implies it, none of the classic ones name it,
+# so it is always present regardless of framework). The frontend renders the picker from
+# BRAND_CORE_FRAMEWORKS, so adding a model is a backend change and the two sides cannot drift.
+BRAND_CORE_FRAMEWORKS: dict = {
+    "brand_key": {
+        "name": "Brand Key (Unilever)",
+        "blurb": "The FMCG standard. Nine boxes in a keyhole, built on the brand's own root strength "
+                 "and a single owned discriminator. Maps almost 1:1 onto a messaging house.",
+        "essence_label": "Brand essence",
+        "essence_help": "Two or three words that hold components 5–8 together.",
+        "layers": [
+            {"key": "root_strength", "label": "Root strength",
+             "help": "What first made the brand famous — the deep equity it can always draw on."},
+            {"key": "competitive_environment", "label": "Competitive environment",
+             "help": "The set the brand is judged against, and where it sits in it."},
+            {"key": "target", "label": "Target",
+             "help": "The person the brand is for, in human terms, not a media age-band."},
+            {"key": "insight", "label": "Consumer insight",
+             "help": "The hidden tension in the target's life the brand is uniquely placed to resolve."},
+            {"key": "benefits", "label": "Benefits",
+             "help": "What the target gets — functional and emotional, both."},
+            {"key": "values_personality", "label": "Values & personality",
+             "help": "What the brand believes, and how it behaves."},
+            {"key": "reasons_to_believe", "label": "Reasons to believe",
+             "help": "Why the promise is credible — the proof behind it."},
+            {"key": "discriminator", "label": "Discriminator",
+             "help": "The single thing this brand owns that a competitor could not also claim."},
+        ],
+    },
+    "pyramid": {
+        "name": "Brand Pyramid",
+        "blurb": "The lite option. Four tiers from tangible to intangible, up to a single essence. "
+                 "Fast to fill; no relationship or self-image dimension.",
+        "essence_label": "Brand essence",
+        "essence_help": "The one idea at the tip — what the brand is, in a breath.",
+        "layers": [
+            {"key": "attributes", "label": "Attributes",
+             "help": "The concrete features of the product or service."},
+            {"key": "functional_benefits", "label": "Functional benefits",
+             "help": "What those attributes do for the buyer, and the edge over rivals."},
+            {"key": "emotional_benefits", "label": "Emotional benefits",
+             "help": "How the brand makes the buyer feel."},
+            {"key": "personality_values", "label": "Personality & values",
+             "help": "The character and beliefs the brand carries."},
+        ],
+    },
+    "prism": {
+        "name": "Kapferer Identity Prism",
+        "blurb": "A balanced hexagon rather than a ladder. Strong on relationship and how the buyer "
+                 "sees themselves — dimensions a pyramid ignores. Good for identity-led categories.",
+        "essence_label": "Central identity",
+        "essence_help": "The single idea the six facets all express.",
+        "layers": [
+            {"key": "physique", "label": "Physique",
+             "help": "The brand's tangible features and its most recognisable physical signs."},
+            {"key": "personality", "label": "Personality",
+             "help": "The character the brand would have if it were a person."},
+            {"key": "culture", "label": "Culture",
+             "help": "The values and origin the brand's behaviour comes from."},
+            {"key": "relationship", "label": "Relationship",
+             "help": "The kind of bond between brand and buyer — mentor, ally, provocateur."},
+            {"key": "reflection", "label": "Reflection",
+             "help": "Who the outside world assumes the buyer is, from the brand they use."},
+            {"key": "self_image", "label": "Self-image",
+             "help": "Who the buyer feels they become by using the brand."},
+        ],
+    },
+    "wheel": {
+        "name": "Brand Essence Wheel",
+        "blurb": "Concentric rings — attributes and benefits outside, values and personality inside, "
+                 "essence at the core. Structurally close to the pyramid but read as layers to peel.",
+        "essence_label": "Brand essence",
+        "essence_help": "The core promise, in one line.",
+        "layers": [
+            {"key": "attributes_benefits", "label": "Attributes & benefits",
+             "help": "The surface facts and what the buyer gets from them."},
+            {"key": "values_personality", "label": "Values & personality",
+             "help": "What the brand stands for and how it comes across."},
+            {"key": "discriminator", "label": "Discriminator",
+             "help": "The one difference the brand can defend."},
+        ],
+    },
+    "aaker": {
+        "name": "Aaker Identity System",
+        "blurb": "Separates a fixed core (3–5 immovable ideas) from a rich extended identity, seen as "
+                 "brand-as-product / organisation / person / symbol. Good for masterbrands.",
+        "essence_label": "Brand essence",
+        "essence_help": "The one idea at the centre of the core identity.",
+        "layers": [
+            {"key": "core_identity", "label": "Core identity",
+             "help": "The 3–5 ideas that must stay true across every product, market and year."},
+            {"key": "extended_identity", "label": "Extended identity",
+             "help": "Personality, heritage, design codes, programmes — the texture around the core."},
+            {"key": "brand_as_organisation", "label": "Brand as organisation",
+             "help": "What the company behind the brand stands for — the part a product claim can't carry."},
+            {"key": "brand_as_symbol", "label": "Brand as symbol",
+             "help": "The visual metaphor, imagery and heritage that stand in for the brand."},
+        ],
+    },
+}
+
+
+def _normalise_brand_core(raw) -> dict:
+    """Coerce a submitted brand core to a stored shape: a known framework, its own layer keys only,
+    a plain essence line, and a boundaries list. An unknown framework clears the core rather than
+    storing a form the frontend can't render."""
+    if not isinstance(raw, dict):
+        return {}
+    fw = str(raw.get("framework") or "").strip()
+    if fw and fw not in BRAND_CORE_FRAMEWORKS:
+        return {}
+    tmpl = BRAND_CORE_FRAMEWORKS.get(fw, {})
+    submitted = raw.get("layers") or {}
+    if not isinstance(submitted, dict):
+        submitted = {}
+    layers = {}
+    for spec in tmpl.get("layers", []):
+        v = str(submitted.get(spec["key"], "") or "").strip()
+        if v:
+            layers[spec["key"]] = v
+    return {
+        "framework": fw,
+        "essence": str(raw.get("essence", "") or "").strip(),
+        "layers": layers,
+        "boundaries": _listify(raw.get("boundaries")),
+    }
+
+
+def brand_core_view(b: dict | None) -> dict:
+    """The brand core, joined to its framework template, for the picker to render from."""
+    core = (b or {}).get("brand_core") or {}
+    fw = str(core.get("framework") or "")
+    tmpl = BRAND_CORE_FRAMEWORKS.get(fw, {})
+    layers = [
+        {**spec, "value": (core.get("layers") or {}).get(spec["key"], "")}
+        for spec in tmpl.get("layers", [])
+    ]
+    return {
+        "framework": fw,
+        "framework_name": tmpl.get("name", ""),
+        "essence": core.get("essence", ""),
+        "essence_label": tmpl.get("essence_label", "Brand essence"),
+        "essence_help": tmpl.get("essence_help", ""),
+        "boundaries": core.get("boundaries") or [],
+        # `layers` reflects the SAVED framework (its fields, with any stored values). The picker needs
+        # every framework's field template up front so choosing one shows its fields with no round
+        # trip, so each `frameworks[]` entry carries its own `layers` spec (no values).
+        "layers": layers,
+        "set": bool(fw and (core.get("essence") or layers and any(l["value"] for l in layers))),
+        "frameworks": [
+            {"key": k, "name": v["name"], "blurb": v["blurb"],
+             "layer_count": len(v["layers"]),
+             "essence_label": v.get("essence_label", "Brand essence"),
+             "essence_help": v.get("essence_help", ""),
+             "layers": [dict(spec) for spec in v["layers"]]}
+            for k, v in BRAND_CORE_FRAMEWORKS.items()
+        ],
+    }
+
+
+def brand_core_block(b: dict | None) -> str:
+    """The brand-core fragment of the grounding paragraph. Empty when no core is set. Phrased as the
+    fixed root every line ladders to, with boundaries as hard constraints (stronger than `avoid`,
+    which is campaign-level)."""
+    core = (b or {}).get("brand_core") or {}
+    fw = str(core.get("framework") or "")
+    tmpl = BRAND_CORE_FRAMEWORKS.get(fw, {})
+    essence = str(core.get("essence") or "").strip()
+    layers = core.get("layers") or {}
+    boundaries = core.get("boundaries") or []
+    if not (essence or layers or boundaries):
+        return ""
+    out = []
+    label = tmpl.get("name", "brand core")
+    if essence:
+        out.append(f"BRAND CORE — {label}: \"{essence}\". This is fixed across every campaign; "
+                   f"everything you write ladders up to it.")
+    else:
+        out.append(f"BRAND CORE — {label} (no single essence line set):")
+    for spec in tmpl.get("layers", []):
+        v = str(layers.get(spec["key"], "") or "").strip()
+        if v:
+            out.append(f"  {spec['label']}: {v}")
+    if boundaries:
+        out.append("THIS BRAND WILL NOT (hard boundary — a line that crosses one of these is off-brand, "
+                   "not a style note): " + "; ".join(boundaries))
+    return "\n".join(out)
+
+
 def _now() -> str:
     return time.strftime("%Y-%m-%d %H:%M", time.localtime())
 
@@ -395,6 +592,11 @@ def put(data: dict, brand_id: str = "") -> dict:
     b.setdefault("colours", {})
     if isinstance(data.get("colours"), dict):
         b["colours"].update({k: str(v or "").strip() for k, v in data["colours"].items()})
+    # Brand core (the enduring brand key / essence). Sent whole, not field-by-field — it is one nested
+    # object with a framework-dependent shape, so it is replaced rather than merged, same as a rows
+    # field. `_normalise_brand_core` keeps only the chosen framework's own layer keys.
+    if "brand_core" in data:
+        b["brand_core"] = _normalise_brand_core(data.get("brand_core"))
     b.setdefault("name", str(data.get("name") or "").strip() or "Unnamed brand")
     for f in LIST_FIELDS:
         b.setdefault(f, [])
@@ -702,6 +904,11 @@ def voice_block(b: dict | None, *, brief_brand: str = "", skip_mandatories: bool
         lines.append(f"MASTER BRAND IDEA: {b['master_idea']} — everything ladders to this.")
     if b.get("positioning"):
         lines.append(f"POSITIONING: {b['positioning']}")
+    # The enduring brand key / essence, when the brand has one. Stated before tone and pillars because
+    # it is the fixed thing they all have to be consistent with, and its boundaries are hard.
+    core_block = brand_core_block(b)
+    if core_block:
+        lines.append(core_block)
     if b.get("tone"):
         lines.append(f"TONE: {b['tone']}")
     if b.get("hashtags"):

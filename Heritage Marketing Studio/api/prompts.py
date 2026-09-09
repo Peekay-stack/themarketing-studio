@@ -21,6 +21,7 @@ from __future__ import annotations
 import sys
 
 import brandprofile
+import character
 
 # ---------------------------------------------------------------- global master
 # Brand-agnostic on purpose. The one thing it must NOT do is imply a category, a market or a claim the
@@ -453,6 +454,10 @@ def system_for(messages: list[dict], brand: dict | None = None, execution: str =
     # "Plan" switch a person actually sees on screen ("Briefed from the plan") — independent of
     # `force_typed`, which never touched it before this round and still doesn't.
     this_one = "" if (surface is BRIEF or not use_plan) else _execution_block(execution)
+    # The brand's approved recurring character, when it has one. A brand fact, not a campaign
+    # decision, so it sits with the voice block — but suppressed on a BRIEF, which is upstream of any
+    # casting. Social posts, carousels and video scripts all reach this function through /complete.
+    character_block = "" if surface is BRIEF else character.for_prompt(b)
     parts = (GLOBAL_MASTER, "THE BRAND\n" + brandprofile.voice_block(b, skip_mandatories=skip_mandatories),
-             spine, this_one, surface)
+             character_block, spine, this_one, surface)
     return "\n\n".join(x for x in parts if x).strip()

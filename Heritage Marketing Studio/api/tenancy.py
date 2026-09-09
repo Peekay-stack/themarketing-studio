@@ -27,7 +27,14 @@ import re
 import shutil
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
-TENANTS = os.path.join(ROOT, "tenants")
+
+# STUDIO_DATA_DIR relocates every writable store — all tenant documents and every generated asset —
+# onto one directory, so a containerised deploy can mount a persistent volume there and a redeploy
+# does not wipe it. Unset (local dev, tests) → everything stays beside the code exactly as before.
+# The legacy read-only asset dirs (`legacy_asset_dir`) are NOT moved: they only ever held the
+# pre-tenancy shared files, and a fresh deploy has none.
+DATA_DIR = os.environ.get("STUDIO_DATA_DIR", "").strip() or ROOT
+TENANTS = os.path.join(DATA_DIR, "tenants")
 DEFAULT = "default"
 
 # Every per-tenant document store. Listed rather than discovered so a new kind is a deliberate addition

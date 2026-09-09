@@ -1,18 +1,65 @@
-# One-click-ish deploy to Render (https://render.com). Push this repo to GitHub,
-# then in Render: New + → Blueprint → pick the repo. It reads this file.
+# Deploy to Render (https://render.com).
+#
+# This file sits in the APP sub-directory, not the repo root, so Render's Blueprint auto-detect
+# won't find it. Deploy manually instead:
+#   New + → Web Service → connect the GitHub repo
+#   Root Directory:  Heritage Marketing Studio
+#   Runtime:         Docker    (Dockerfile Path: Dockerfile)
+#   then add the Disk and the Environment Variables below by hand, in the dashboard.
+# Everything under `disk:` and `envVars:` here is the checklist for that.
+#
+# This app keeps ALL of its state on disk — brand/house/plan documents, generated media, and the
+# auth database. The `disk` below is what makes a redeploy keep that state instead of wiping it.
+# One instance, one worker only: the filesystem is shared state and STUDIO_TENANT is per-process.
 services:
   - type: web
     name: heritage-marketing-studio
     runtime: docker
-    plan: starter          # free/low tier; upgrade for more RAM if brand-brief renders are slow
+    plan: starter          # 512MB / 0.5 CPU. Bump to `standard` if brand-brief or image renders OOM.
     dockerfilePath: ./Dockerfile
     autoDeploy: true
+    healthCheckPath: /health
+
+    # Persistent volume. Everything writable lives under here (see STUDIO_DATA_DIR):
+    #   /data/tenants/...   brand profiles, houses, plans, library, generated media, characters
+    #   /data/heritage.db   users + sessions
+    disk:
+      name: studio-data
+      mountPath: /data
+      sizeGB: 10           # generous for a beta; media accumulates. Resize up later, never down.
+
     envVars:
-      - key: ANTHROPIC_API_KEY   # real copy + brand-brief enrichment (optional)
+      # --- storage -------------------------------------------------------------------------------
+      - key: STUDIO_DATA_DIR
+        value: /data
+
+      # --- model provider keys (set these in the Render dashboard; never commit them) -----------
+      - key: ANTHROPIC_API_KEY      # copy, briefs, all text generation
         sync: false
-      - key: FAL_KEY             # real image/cinematic video (optional)
+      - key: FAL_KEY               # image + cinematic video
         sync: false
-      - key: HEYGEN_API_KEY      # real avatar video (optional)
+      - key: HEYGEN_API_KEY        # avatar video
         sync: false
+      - key: GOOGLE_API_KEY        # Gemini / Imagen image path
+        sync: false
+      - key: NVIDIA_API_KEY        # NVIDIA-hosted models
+        sync: false
+
+      # --- model choice ------------------------------------------------------------------------
       - key: GEN_MODEL
-        value: claude-sonnet-4-6
+        value: claude-opus-4-8     # matches the code's own default; change once you've confirmed
+                                   # a newer model on your Anthropic plan.
+
+      # --- real login passwords for the seeded accounts (set in the dashboard) ------------------
+      # An account with an env password is re-hashed on every boot, so rotating one is a redeploy.
+      # puneet = Creator (the account you'll actually log in with for the beta).
+      - key: SEED_PASSWORD_PUNEET
+        sync: false
+      - key: SEED_PASSWORD_RAVI
+        sync: false
+      - key: SEED_PASSWORD_MEERA
+        sync: false
+      - key: SEED_PASSWORD_ANANYA
+        sync: false
+
+      # Cookies are Secure/HTTPS-only automatically here — do NOT set STUDIO_INSECURE_COOKIES.

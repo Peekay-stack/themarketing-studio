@@ -1318,6 +1318,247 @@
       </sc-if>
     </div>
 
+    <!-- Brand characters: the third ground-truth store alongside uploaded assets and briefs. A
+         character is brand-scoped and only usable by producers once every test, the audition, the
+         pressure test and the reference frame all land. -->
+    <div style="background:#fff; border:1px solid #DDD9D1; border-radius:16px; padding:22px 24px; margin-bottom:26px;">
+      <div style="display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; margin-bottom:4px;">
+        <span style="font-family:'Epilogue',sans-serif; font-size:20px; font-weight:700; color:#17325E;">Brand characters</span>
+        <span style="font-size:12.5px; color:#6B7280;">{{ charCount }}</span>
+      </div>
+      <div style="font-size:13px; color:#6B7280; line-height:1.55; max-width:660px; margin-bottom:16px;">A recurring, brand-owned face — cast once, reused across producers until retired. Never shown for, or usable by, another brand.</div>
+
+      <sc-if value="{{ hasCharRows }}" hint-placeholder-val="{{ false }}">
+        <div style="border:1px solid #E6E3DC; border-radius:13px; overflow:hidden; margin-bottom:16px;">
+          <sc-for list="{{ charRows }}" as="cr" hint-placeholder-count="2">
+            <div onClick="{{ cr.open }}" style="cursor:pointer; display:flex; gap:13px; align-items:center; padding:14px 16px; border-bottom:1px solid #F0EDE3; background:{{ cr.rowBg }};">
+              <sc-if value="{{ cr.hasRef }}" hint-placeholder-val="{{ false }}">
+                <img src="{{ cr.refUrl }}" style="width:44px; height:44px; border-radius:10px; object-fit:cover; flex:none;" />
+              </sc-if>
+              <sc-if value="{{ cr.noRef }}" hint-placeholder-val="{{ true }}">
+                <span style="width:44px; height:44px; border-radius:10px; background:#EEF1F5; color:#6B7280; display:flex; align-items:center; justify-content:center; font-weight:800; font-family:'Epilogue',sans-serif; font-size:16px; flex:none;">{{ cr.initial }}</span>
+              </sc-if>
+              <div style="flex:1; min-width:0;">
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                  <span style="font-weight:700; font-size:14px; color:#17325E;">{{ cr.name }}</span>
+                  <span style="background:{{ cr.statePillBg }}; color:{{ cr.statePillFg }}; font-size:11px; font-weight:700; padding:3px 10px; border-radius:20px; text-transform:capitalize;">{{ cr.stateLabel }}</span>
+                  <span style="font-size:11px; color:#9AA1AC;">{{ cr.testsLabel }} tests</span>
+                </div>
+                <div style="font-size:11.5px; color:#6B7280; margin-top:2px;">{{ cr.segment }} · {{ cr.segSource }}</div>
+                <div style="font-size:12.5px; color:#41505F; line-height:1.5; margin-top:6px; font-style:{{ cr.hookStyle }};">{{ cr.hook }}</div>
+              </div>
+              <div style="text-align:right; flex:none;">
+                <div style="font-size:11.5px; font-weight:700; color:#17325E;">{{ cr.routeLabel }}</div>
+                <div style="font-size:10.5px; font-weight:700; color:{{ cr.routeConfirmFg }};">{{ cr.routeConfirmLabel }}</div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+      <sc-if value="{{ noCharRows }}" hint-placeholder-val="{{ true }}">
+        <div style="border:1px dashed #C9CEDA; border-radius:13px; padding:22px 24px; font-size:13.5px; color:#41505F; line-height:1.6; margin-bottom:16px;">No characters cast for this brand yet. Draft one from a pen portrait or a segment description below.</div>
+      </sc-if>
+
+      <div style="border:1px solid #E6E3DC; border-radius:13px; padding:16px 18px;">
+        <div style="font-weight:700; font-size:13.5px; color:#17325E; margin-bottom:10px;">Draft a character</div>
+        <input value="{{ charDraftName }}" onChange="{{ onCharDraftName }}" placeholder="Name (optional — the skill fills it)" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:10px; padding:9px 12px; font-size:13px; color:#38414F; background:#FBFAF8; font-family:inherit; margin-bottom:10px;" />
+        <textarea value="{{ charDraftSeed }}" onChange="{{ onCharDraftSeed }}" rows="3" placeholder="A pen portrait, or a segment description" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:10px; padding:10px 12px; font-size:13.5px; color:#38414F; background:#FBFAF8; resize:vertical; font-family:inherit; margin-bottom:10px;"></textarea>
+        <button onClick="{{ draftCharacter }}" style="background:#17325E; color:#F7F5F1; border:none; border-radius:10px; padding:9px 18px; font-weight:700; font-size:12.5px; cursor:pointer;">{{ charDraftLabel }}</button>
+      </div>
+
+      <sc-if value="{{ hasCharDetail }}" hint-placeholder-val="{{ false }}">
+        <div style="border-top:1px solid #E6E3DC; margin-top:20px; padding-top:20px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; flex-wrap:wrap; gap:10px;">
+            <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+              <input value="{{ charDetail.name }}" onChange="{{ charDetail.onName }}" placeholder="Name" style="font-family:'Epilogue',sans-serif; font-size:18px; font-weight:700; color:#17325E; border:1px solid #DDD9D1; border-radius:8px; padding:6px 10px; background:#FBFAF8;" />
+              <span style="font-size:11px; color:#9AA1AC; text-transform:capitalize;">{{ charDetail.state }} · v{{ charDetail.version }}</span>
+            </div>
+            <span onClick="{{ charDetail.close }}" style="cursor:pointer; font-size:12.5px; font-weight:700; color:#6B7280;">Close ✕</span>
+          </div>
+          <div style="font-size:12px; color:#B07A12; margin-bottom:16px;">{{ charDetail.scopeNote }}</div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px;">
+            <div>
+              <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#6B7280; margin-bottom:6px;">Segment</div>
+              <input value="{{ charDetail.segment }}" onChange="{{ charDetail.onSegment }}" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; background:#FBFAF8;" />
+            </div>
+            <div>
+              <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#6B7280; margin-bottom:6px;">Source (the honest label)</div>
+              <select value="{{ charDetail.segmentSource }}" onChange="{{ charDetail.onSegmentSource }}" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; background:#FBFAF8;">
+                <option value="segmentation">segmentation</option>
+                <option value="pen-portrait">pen-portrait</option>
+                <option value="assumed">assumed</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="font-family:'Epilogue',sans-serif; font-size:15px; font-weight:700; color:#17325E; margin-bottom:10px;">Pen portrait</div>
+          <sc-if value="{{ charDetail.hasIdentity }}" hint-placeholder-val="{{ false }}">
+            <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:12px;">
+              <sc-for list="{{ charDetail.identityRows }}" as="ir" hint-placeholder-count="4">
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span style="font-size:11.5px; color:#6B7280; width:90px; flex:none;">{{ ir.k }}</span>
+                  <input value="{{ ir.v }}" onChange="{{ ir.onChange }}" style="flex:1; min-width:0; border:1px solid #DDD9D1; border-radius:8px; padding:6px 9px; font-size:12.5px; background:#FBFAF8;" />
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;">
+            <textarea value="{{ charDetail.ppBackground }}" onChange="{{ charDetail.onPpBackground }}" rows="2" placeholder="Background" style="border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:12.5px; background:#FBFAF8; resize:vertical; font-family:inherit;"></textarea>
+            <textarea value="{{ charDetail.ppDayInLife }}" onChange="{{ charDetail.onPpDayInLife }}" rows="2" placeholder="A day in the life" style="border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:12.5px; background:#FBFAF8; resize:vertical; font-family:inherit;"></textarea>
+            <textarea value="{{ charDetail.ppHeadGoals }}" onChange="{{ charDetail.onPpHeadGoals }}" rows="2" placeholder="Head goals" style="border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:12.5px; background:#FBFAF8; resize:vertical; font-family:inherit;"></textarea>
+            <textarea value="{{ charDetail.ppHeartGoal }}" onChange="{{ charDetail.onPpHeartGoal }}" rows="2" placeholder="Heart goal" style="border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:12.5px; background:#FBFAF8; resize:vertical; font-family:inherit;"></textarea>
+            <textarea value="{{ charDetail.ppChallenge }}" onChange="{{ charDetail.onPpChallenge }}" rows="2" placeholder="Challenge" style="border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:12.5px; background:#FBFAF8; resize:vertical; font-family:inherit;"></textarea>
+            <textarea value="{{ charDetail.ppContext }}" onChange="{{ charDetail.onPpContext }}" rows="2" placeholder="Context" style="border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:12.5px; background:#FBFAF8; resize:vertical; font-family:inherit;"></textarea>
+          </div>
+
+          <div style="font-family:'Epilogue',sans-serif; font-size:15px; font-weight:700; color:#17325E; margin-bottom:10px;">Hook & route</div>
+          <input value="{{ charDetail.hookLine }}" onChange="{{ charDetail.onHookLine }}" placeholder="The hook, nameable in one clause" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:9px 12px; font-size:13.5px; font-weight:600; color:#17325E; background:#FBFAF8; margin-bottom:8px;" />
+          <textarea value="{{ charDetail.hookDetail }}" onChange="{{ charDetail.onHookDetail }}" rows="2" placeholder="Detail" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:12.5px; background:#FBFAF8; resize:vertical; font-family:inherit; margin-bottom:8px;"></textarea>
+          <div style="display:flex; gap:10px; align-items:center; margin-bottom:14px; flex-wrap:wrap;">
+            <input value="{{ charDetail.hookProp }}" onChange="{{ charDetail.onHookProp }}" placeholder="Prop" style="flex:1; min-width:160px; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:12.5px; background:#FBFAF8;" />
+            <label style="display:flex; align-items:center; gap:6px; font-size:12px; color:#41505F; cursor:pointer;">
+              <input type="checkbox" checked="{{ charDetail.hookPropLoad }}" onChange="{{ charDetail.toggleHookPropLoad }}" /> load-bearing
+            </label>
+          </div>
+          <sc-if value="{{ charDetail.hasRoutesConsidered }}" hint-placeholder-val="{{ false }}">
+            <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#6B7280; margin-bottom:6px;">Roads not taken</div>
+            <div style="margin-bottom:12px;">
+              <sc-for list="{{ charDetail.routesConsidered }}" as="rc" hint-placeholder-count="2">
+                <div style="font-size:12.5px; color:#6B7280; margin-bottom:4px;"><strong style="color:#41505F;">{{ rc.tag }}</strong> — {{ rc.line }}</div>
+              </sc-for>
+            </div>
+          </sc-if>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:16px;">
+            <sc-for list="{{ charDetail.routeButtons }}" as="rb" hint-placeholder-count="2">
+              <span onClick="{{ rb.pick }}" style="cursor:pointer; border:1px solid #DDD9D1; background:{{ rb.bg }}; color:{{ rb.fg }}; border-radius:20px; padding:5px 13px; font-size:12px; font-weight:700;">Route {{ rb.tag }}</span>
+            </sc-for>
+            <label style="display:flex; align-items:center; gap:6px; font-size:12px; color:#41505F; cursor:pointer; margin-left:8px;">
+              <input type="checkbox" checked="{{ charDetail.routeConfirmed }}" onChange="{{ charDetail.toggleRouteConfirm }}" /> route confirmed
+            </label>
+          </div>
+
+          <div style="font-family:'Epilogue',sans-serif; font-size:15px; font-weight:700; color:#17325E; margin-bottom:10px;">Visual brief</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:8px;">
+            <input value="{{ charDetail.vbTypeLine }}" onChange="{{ charDetail.onVbTypeLine }}" placeholder="Type line — energy/presence" style="border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:12.5px; background:#FBFAF8;" />
+            <input value="{{ charDetail.vbLook }}" onChange="{{ charDetail.onVbLook }}" placeholder="Look — age, build, hair, wardrobe" style="border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:12.5px; background:#FBFAF8;" />
+          </div>
+          <div style="display:flex; gap:10px; align-items:center; margin-bottom:8px; flex-wrap:wrap;">
+            <input value="{{ charDetail.vbRegion }}" onChange="{{ charDetail.onVbRegion }}" placeholder="Region" style="flex:1; min-width:160px; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:12.5px; background:#FBFAF8;" />
+            <label style="display:flex; align-items:center; gap:6px; font-size:12px; color:#41505F; cursor:pointer;">
+              <input type="checkbox" checked="{{ charDetail.vbRegionLoad }}" onChange="{{ charDetail.toggleVbRegionLoad }}" /> load-bearing
+            </label>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:12px;">
+            <input value="{{ charDetail.vbSetting }}" onChange="{{ charDetail.onVbSetting }}" placeholder="Setting" style="border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:12.5px; background:#FBFAF8;" />
+            <input value="{{ charDetail.vbLight }}" onChange="{{ charDetail.onVbLight }}" placeholder="Light" style="border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:12.5px; background:#FBFAF8;" />
+            <input value="{{ charDetail.vbTexture }}" onChange="{{ charDetail.onVbTexture }}" placeholder="Texture" style="border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:12.5px; background:#FBFAF8;" />
+          </div>
+          <sc-if value="{{ charDetail.hasExpressionRange }}" hint-placeholder-val="{{ false }}">
+            <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#6B7280; margin-bottom:6px;">Expression range</div>
+            <div style="margin-bottom:16px;">
+              <sc-for list="{{ charDetail.expressionRange }}" as="ex" hint-placeholder-count="2">
+                <div style="font-size:12.5px; color:#6B7280; margin-bottom:4px;"><strong style="color:#41505F;">{{ ex.expr }}</strong> — {{ ex.when }}</div>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <div style="font-family:'Epilogue',sans-serif; font-size:15px; font-weight:700; color:#17325E; margin-bottom:10px;">Cast lock</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;">
+            <div>
+              <div style="font-size:11px; color:#6B7280; margin-bottom:5px;">Never changes (one per line)</div>
+              <textarea value="{{ charDetail.clNeverChanges }}" onChange="{{ charDetail.onClNeverChanges }}" rows="3" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:12.5px; background:#FBFAF8; resize:vertical; font-family:inherit;"></textarea>
+            </div>
+            <div>
+              <div style="font-size:11px; color:#6B7280; margin-bottom:5px;">Changes freely (one per line)</div>
+              <textarea value="{{ charDetail.clChangesFreely }}" onChange="{{ charDetail.onClChangesFreely }}" rows="3" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:12.5px; background:#FBFAF8; resize:vertical; font-family:inherit;"></textarea>
+            </div>
+          </div>
+          <button onClick="{{ charDetail.save }}" style="background:#17325E; color:#F7F5F1; border:none; border-radius:10px; padding:9px 18px; font-weight:700; font-size:12.5px; cursor:pointer; margin-bottom:24px;">{{ charDetail.saveLabel }}</button>
+
+          <div style="font-family:'Epilogue',sans-serif; font-size:15px; font-weight:700; color:#17325E; margin-bottom:4px;">The six tests</div>
+          <div style="font-size:12.5px; color:#6B7280; margin-bottom:12px;">A failed test is a stage to go back to, named — not a hard stop.</div>
+          <div style="border:1px solid #E6E3DC; border-radius:12px; overflow:hidden; margin-bottom:20px;">
+            <sc-for list="{{ charDetail.testsRows }}" as="tr" hint-placeholder-count="6">
+              <div style="padding:12px 14px; border-bottom:1px solid #F0EDE3;">
+                <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:6px;">
+                  <span style="flex:1; min-width:160px; font-size:13px; font-weight:600; color:#17325E;">{{ tr.label }}</span>
+                  <span onClick="{{ tr.setPass }}" style="cursor:pointer; background:{{ tr.passBg }}; color:{{ tr.passFg }}; border:1px solid #1E7E34; border-radius:20px; padding:3px 11px; font-size:11px; font-weight:700;">Pass</span>
+                  <span onClick="{{ tr.setFail }}" style="cursor:pointer; background:{{ tr.failBg }}; color:{{ tr.failFg }}; border:1px solid #C0392B; border-radius:20px; padding:3px 11px; font-size:11px; font-weight:700;">Fail</span>
+                  <span onClick="{{ tr.setPending }}" style="cursor:pointer; background:{{ tr.pendingBg }}; color:{{ tr.pendingFg }}; border:1px solid #6B7280; border-radius:20px; padding:3px 11px; font-size:11px; font-weight:700;">Pending</span>
+                </div>
+                <input value="{{ tr.note }}" onChange="{{ tr.onNote }}" onBlur="{{ tr.saveNote }}" placeholder="Note" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:6px 9px; font-size:12px; background:#FBFAF8;" />
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="font-family:'Epilogue',sans-serif; font-size:15px; font-weight:700; color:#17325E; margin-bottom:10px;">Audition</div>
+          <sc-if value="{{ charDetail.hasAuditionSpec }}" hint-placeholder-val="{{ false }}">
+            <div style="font-size:12.5px; color:#41505F; background:#FBFAF8; border:1px solid #E6E3DC; border-radius:10px; padding:10px 12px; margin-bottom:10px; white-space:pre-wrap;">{{ charDetail.auditionSpec }}</div>
+          </sc-if>
+          <div style="display:flex; gap:10px; align-items:center; margin-bottom:8px; flex-wrap:wrap;">
+            <span onClick="{{ charDetail.runAuditionPass }}" style="cursor:pointer; background:{{ charDetail.auditionPassBg }}; color:{{ charDetail.auditionPassFg }}; border:1px solid #1E7E34; border-radius:20px; padding:5px 13px; font-size:12px; font-weight:700;">Passed</span>
+            <span onClick="{{ charDetail.runAuditionFail }}" style="cursor:pointer; background:{{ charDetail.auditionFailBg }}; color:{{ charDetail.auditionFailFg }}; border:1px solid #C0392B; border-radius:20px; padding:5px 13px; font-size:12px; font-weight:700;">Failed</span>
+          </div>
+          <input value="{{ charDetail.auditionNote }}" onChange="{{ charDetail.onAuditionNote }}" onBlur="{{ charDetail.saveAuditionNote }}" placeholder="Note" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:12.5px; background:#FBFAF8; margin-bottom:20px;" />
+
+          <div style="font-family:'Epilogue',sans-serif; font-size:15px; font-weight:700; color:#17325E; margin-bottom:4px;">Pressure test</div>
+          <sc-if value="{{ charDetail.hasShots }}" hint-placeholder-val="{{ false }}">
+            <div style="font-size:12px; color:#6B7280; margin-bottom:10px;">{{ charDetail.shotsDoneLabel }}</div>
+            <input value="{{ charDetail.pressureRunBy }}" onChange="{{ charDetail.onPressureRunBy }}" placeholder="Run by" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:12.5px; background:#FBFAF8; margin-bottom:10px;" />
+            <div style="border:1px solid #E6E3DC; border-radius:12px; overflow:hidden; margin-bottom:20px;">
+              <sc-for list="{{ charDetail.shots }}" as="sh" hint-placeholder-count="3">
+                <div style="padding:12px 14px; border-bottom:1px solid #F0EDE3;">
+                  <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+                    <span onClick="{{ sh.toggle }}" style="cursor:pointer; background:{{ sh.doneBg }}; color:{{ sh.doneFg }}; border:1px solid #1E7E34; border-radius:20px; padding:3px 11px; font-size:11px; font-weight:700;">{{ sh.label }}</span>
+                  </div>
+                  <input value="{{ sh.result }}" onChange="{{ sh.onResult }}" onBlur="{{ sh.saveResult }}" placeholder="Result" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:6px 9px; font-size:12px; background:#FBFAF8;" />
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <div style="font-family:'Epilogue',sans-serif; font-size:15px; font-weight:700; color:#17325E; margin-bottom:10px;">Reference frame</div>
+          <sc-if value="{{ charDetail.hasCastItems }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px;">
+              <sc-for list="{{ charDetail.castItems }}" as="ci" hint-placeholder-count="3">
+                <div onClick="{{ ci.pick }}" style="cursor:pointer; border:2px solid {{ ci.borderColor }}; border-radius:10px; padding:4px; width:76px;">
+                  <img src="{{ ci.url }}" style="width:100%; height:68px; object-fit:cover; border-radius:6px; display:block;" />
+                  <div style="font-size:10px; color:#41505F; text-align:center; margin-top:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ ci.name }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+          <sc-if value="{{ charDetail.noCastItems }}" hint-placeholder-val="{{ true }}">
+            <div style="font-size:12.5px; color:#B07A12; margin-bottom:20px;">No signed-off cast reference yet — sign one off in the reference library above.</div>
+          </sc-if>
+
+          <sc-if value="{{ charDetail.hasMissing }}" hint-placeholder-val="{{ false }}">
+            <div style="background:#FFF9EC; border:1px solid #F0DFB4; border-radius:10px; padding:12px 14px; margin-bottom:14px;">
+              <div style="font-size:12.5px; font-weight:700; color:#8A6410; margin-bottom:6px;">Still blocking approval</div>
+              <sc-for list="{{ charDetail.missing }}" as="ms" hint-placeholder-count="2">
+                <div style="font-size:12.5px; color:#8A6410; line-height:1.5;">· {{ ms }}</div>
+              </sc-for>
+            </div>
+          </sc-if>
+          <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:16px;">
+            <input value="{{ charDetail.approveWho }}" onChange="{{ charDetail.onApproveWho }}" placeholder="Approved by" style="flex:1; min-width:160px; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:12.5px; background:#FBFAF8;" />
+            <button onClick="{{ charDetail.approve }}" style="background:#1E7E34; color:#fff; border:none; border-radius:10px; padding:9px 18px; font-weight:700; font-size:12.5px; cursor:pointer;">{{ charDetail.approveLabel }}</button>
+          </div>
+
+          <sc-if value="{{ charDetail.hasCastLockBlock }}" hint-placeholder-val="{{ false }}">
+            <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#6B7280; margin-bottom:6px;">What the producers receive</div>
+            <div style="background:#F7F5F1; border:1px solid #E6E3DC; border-radius:10px; padding:12px 14px; font-size:12.5px; color:#41505F; white-space:pre-wrap; line-height:1.55; margin-bottom:16px;">{{ charDetail.castLockBlock }}</div>
+          </sc-if>
+
+          <div style="display:flex; gap:14px; padding-top:12px; border-top:1px solid #F0EDE3;">
+            <span onClick="{{ charDetail.retire }}" style="cursor:pointer; font-size:12px; font-weight:700; color:#B07A12;">Retire</span>
+            <span onClick="{{ charDetail.remove }}" style="cursor:pointer; font-size:12px; font-weight:700; color:#C0392B;">Remove</span>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+
     <!-- add -->
     <div style="background:#fff; border:1px solid #DDD9D1; border-radius:16px; padding:20px 22px; margin-bottom:26px;">
       <div style="font-weight:700; font-size:15px; color:#17325E; margin-bottom:12px;">Add to the library</div>
@@ -8367,6 +8608,61 @@
           </sc-for>
         </div>
 
+        <!-- Brand core: the enduring root above the messaging house. Optional, and rendered from
+             whatever GET /brand-fields returns under brand_core — nothing here hardcodes a framework's
+             fields; picking a new one and saving is what reshapes them. -->
+        <div style="background:#fff; border:1px solid #DDD9D1; border-radius:15px; padding:17px 19px; margin-top:14px;">
+          <div onClick="{{ toggleBrandCore }}" style="cursor:pointer; display:flex; align-items:baseline; gap:10px; flex-wrap:wrap;">
+            <span style="font-family:'Epilogue',sans-serif; font-weight:700; font-size:16px; color:#17325E;">Brand core</span>
+            <sc-if value="{{ bfCoreSet }}" hint-placeholder-val="{{ false }}">
+              <span style="font-size:10.5px; font-weight:800; letter-spacing:0.05em; text-transform:uppercase; background:#EAF6EC; color:#1E7E34; border:1px solid #C9E7CE; border-radius:9px; padding:3px 8px;">set</span>
+            </sc-if>
+            <span style="margin-left:auto; font-size:12.5px; font-weight:700; color:#6B7280;">{{ bfCoreToggleLabel }}</span>
+          </div>
+          <sc-if value="{{ bfCoreClosed }}" hint-placeholder-val="{{ true }}">
+            <div style="font-size:13px; line-height:1.6; color:#6B7280; margin-top:6px; text-wrap:pretty;">{{ bfCoreClosedNote }}</div>
+          </sc-if>
+
+          <sc-if value="{{ bfCoreOpen }}" hint-placeholder-val="{{ false }}">
+            <div style="font-size:13px; line-height:1.6; color:#6B7280; margin:8px 0 16px; max-width:680px; text-wrap:pretty;">The fixed root every campaign ladders to, and the boundary for what the brand can and can't do. It sits above the messaging house, which flexes per campaign — the house must not contradict it.</div>
+
+            <div style="font-size:11px; font-weight:800; letter-spacing:0.05em; text-transform:uppercase; color:#6B7280; margin-bottom:9px;">Framework</div>
+            <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:10px; margin-bottom:12px;">
+              <sc-for list="{{ bfCoreFrameworks }}" as="fw" hint-placeholder-count="5">
+                <div onClick="{{ fw.pick }}" style="cursor:pointer; border:1px solid {{ fw.border }}; background:{{ fw.bg }}; border-radius:12px; padding:12px 14px;">
+                  <div style="font-weight:700; font-size:13.5px; color:{{ fw.fg }}; margin-bottom:4px;">{{ fw.name }}</div>
+                  <div style="font-size:12px; line-height:1.5; color:#6B7280; text-wrap:pretty;">{{ fw.blurb }}</div>
+                </div>
+              </sc-for>
+            </div>
+            <sc-if value="{{ bfCoreHasFramework }}" hint-placeholder-val="{{ false }}">
+              <span onClick="{{ clearBrandCoreFramework }}" style="display:inline-block; margin-bottom:16px; cursor:pointer; font-size:12px; font-weight:700; color:#6B7280; text-decoration:underline;">Clear — no framework</span>
+            </sc-if>
+
+            <div style="font-size:11px; font-weight:800; letter-spacing:0.05em; text-transform:uppercase; color:#6B7280; margin-bottom:6px;">{{ bfCoreEssenceLabel }}</div>
+            <div style="font-size:12.5px; color:#6B7280; margin-bottom:8px; text-wrap:pretty;">{{ bfCoreEssenceHelp }}</div>
+            <input value="{{ bfCoreEssence }}" onChange="{{ onBrandCoreEssence }}" placeholder="The enduring essence" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:10px; padding:11px 13px; font-size:14px; color:#17325E; background:#FBFAF8; font-family:inherit; margin-bottom:16px;" />
+
+            <sc-if value="{{ bfCoreHasLayers }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex; flex-direction:column; gap:14px; margin-bottom:16px;">
+                <sc-for list="{{ bfCoreLayerRows }}" as="ly" hint-placeholder-count="4">
+                  <div>
+                    <div style="font-size:12.5px; font-weight:700; color:#17325E; margin-bottom:3px;">{{ ly.label }}</div>
+                    <div style="font-size:11.5px; color:#9AA1AC; margin-bottom:6px; text-wrap:pretty;">{{ ly.help }}</div>
+                    <textarea data-k="{{ ly.key }}" value="{{ ly.value }}" onChange="{{ onBrandCoreLayer }}" rows="2" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:10px; padding:9px 12px; font-size:13.5px; line-height:1.5; color:#17325E; background:#FBFAF8; resize:vertical; font-family:inherit;"></textarea>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+
+            <div style="border-left:3px solid #C0392B; background:#FDF3F2; border-radius:0 10px 10px 0; padding:13px 15px;">
+              <div style="font-size:11px; font-weight:800; letter-spacing:0.05em; text-transform:uppercase; color:#C0392B; margin-bottom:6px;">What this brand will never do</div>
+              <textarea value="{{ bfCoreBoundaries }}" onChange="{{ onBrandCoreBoundaries }}" rows="3" placeholder="One per line — a hard constraint every producer inherits" style="width:100%; box-sizing:border-box; border:1px solid #F1C9C4; border-radius:10px; padding:10px 12px; font-size:13.5px; line-height:1.5; color:#41505F; background:#fff; resize:vertical; font-family:inherit;"></textarea>
+              <div style="font-size:11px; color:#C0392B; margin-top:6px;">One per line.</div>
+            </div>
+          </sc-if>
+        </div>
+
         <div style="display:flex; gap:11px; align-items:center; flex-wrap:wrap; margin-top:20px;">
           <button onClick="{{ saveBrandFields }}" style="background:#17325E; color:#F7F5F1; border:none; border-radius:11px; padding:12px 22px; font-weight:700; font-size:13.5px; cursor:pointer;">{{ bfSaveLabel }}</button>
           <span onClick="{{ closeBrandForm }}" style="cursor:pointer; font-size:13px; font-weight:700; color:#6B7280; text-decoration:underline;">Back to the work</span>
@@ -10342,6 +10638,9 @@ class Component extends DCLogic {
     edits: [],                     // cutdowns/reframes derived from the approved master
     editBusy: '',
     library: null,                 // { kinds, items, summary } from GET /library
+    characters: [], charTestDefs: [], charSel: null, charDetail: null,
+    charDraftSeed: '', charDraftName: '', charDraftBusy: false,
+    charApproveWho: '', charPressureRunBy: '', charBusy: '',
     studio: { clientName:'', clientLogo:null, accent:'#F0561E', theme:'paper' },
     comp: { footage:null, plate:null, key:'#00B140', similarity:0.18, blend:0.08,
             label:'', status:'idle', result:null, detail:'', scrub:0 },
@@ -10521,6 +10820,7 @@ class Component extends DCLogic {
     // Ground truth holds the briefs panel, which is read out of the learning log.
     if (screen === 'library') this.loadLearning();
     if (screen === 'library') this.loadMade();
+    if (screen === 'library') this.loadCharacters();
     if (screen === 'strategy' || screen === 'plans') this.loadStrategy();
     if (screen === 'briefs' || screen === 'strategy' || screen === 'plans') this.loadBriefs();
     if (screen === 'pr') this.loadPr();
@@ -11320,6 +11620,180 @@ class Component extends DCLogic {
     if (r && r.ok) { this.loadLibrary(); }
   };
 
+  // ---------- brand characters: the third ground-truth store ----------
+  CHAR_TEST_DEFS = [
+    { key:'pen_portrait_labelled', label:'Pen portrait, labelled' },
+    { key:'signature_hook', label:'Signature hook' },
+    { key:'specific_and_presentable', label:'Specific and presentable' },
+    { key:'holds_across_contexts', label:'Holds across contexts' },
+    { key:'character_not_testimonial', label:'Character, never testimonial' },
+    { key:'brand_scoped', label:'Brand scoped' },
+  ];
+  loadCharacters = async () => {
+    const brand = this.brandName();
+    try {
+      const r = await fetch('/characters' + (brand ? ('?brand=' + encodeURIComponent(brand)) : ''));
+      if (r.ok) {
+        const d = await r.json();
+        this.setState({ characters: d.characters || [], charTestDefs: (d.tests && d.tests.length) ? d.tests : this.CHAR_TEST_DEFS });
+      }
+    } catch (e) { /* offline: the panel shows its own empty state */ }
+  };
+  openCharacter = (id) => async () => {
+    this.setState({ charSel:id, charDetail:null });
+    try {
+      const r = await fetch('/character/' + encodeURIComponent(id));
+      if (r.ok) this.setState({ charDetail: await r.json() });
+    } catch (e) { this.showToast('Could not open that character \u2014 is the backend running?'); }
+  };
+  closeCharacterDetail = () => this.setState({ charSel:null, charDetail:null });
+  onCharDraftSeed = (e) => this.setState({ charDraftSeed:e.target.value });
+  onCharDraftName = (e) => this.setState({ charDraftName:e.target.value });
+  draftCharacter = async () => {
+    const s = this.state;
+    const brand = this.brandName();
+    if (!brand) { this.showToast('Pick an active brand first \u2014 a character belongs to exactly one.'); return; }
+    if (!s.charDraftSeed.trim()) { this.showToast('Write a pen portrait or a segment description first.'); return; }
+    this.setState({ charDraftBusy:true });
+    const r = await this.apiCall('/character-draft', { brand, seed:s.charDraftSeed.trim(), ...(s.charDraftName.trim() ? { name:s.charDraftName.trim() } : {}) });
+    this.setState({ charDraftBusy:false });
+    if (!r.ok || !r.data || !r.data.character) { this.showToast((r.data && r.data.detail) || 'Could not draft that character.'); return; }
+    this.setState({ charDraftSeed:'', charDraftName:'' });
+    this.loadCharacters();
+    this.openCharacter(r.data.character.id)();
+  };
+  setCharField = (path) => (e) => {
+    const val = (e && e.target) ? e.target.value : e;
+    this.setState(s => {
+      if (!s.charDetail) return {};
+      const c = JSON.parse(JSON.stringify(s.charDetail.character));
+      const parts = path.split('.');
+      let o = c;
+      for (let i=0;i<parts.length-1;i++) o = o[parts[i]];
+      o[parts[parts.length-1]] = val;
+      return { charDetail:{ ...s.charDetail, character:c } };
+    });
+  };
+  setCharListField = (path) => (e) => {
+    const lines = e.target.value.split('\n');
+    this.setCharField(path)(lines);
+  };
+  toggleCharBoolField = (path) => () => {
+    this.setState(s => {
+      if (!s.charDetail) return {};
+      const c = JSON.parse(JSON.stringify(s.charDetail.character));
+      const parts = path.split('.');
+      let o = c; for (let i=0;i<parts.length-1;i++) o = o[parts[i]];
+      o[parts[parts.length-1]] = !o[parts[parts.length-1]];
+      return { charDetail:{ ...s.charDetail, character:c } };
+    });
+  };
+  saveCharacter = async () => {
+    const c = this.state.charDetail && this.state.charDetail.character;
+    if (!c) return;
+    this.setState({ charBusy:'save' });
+    const r = await this.apiCall('/character-save', { character:c });
+    this.setState({ charBusy:'' });
+    if (!r.ok || !r.data || !r.data.character) { this.showToast((r.data && r.data.detail) || 'Could not save.'); return; }
+    this.setState(s => ({ charDetail:{ ...s.charDetail, character:r.data.character } }));
+    this.loadCharacters();
+    this.showToast('Saved.', 'ok');
+  };
+  setCharRoute = (tag) => async () => {
+    const id = this.state.charSel; if (!id) return;
+    const cur = this.state.charDetail.character;
+    const r = await this.apiCall('/character-route', { id, tag, confirmed: !!(cur.hook && cur.hook.route_confirmed) });
+    if (r.ok && r.data && r.data.character) { this.setState(s => ({ charDetail:{ ...s.charDetail, character:r.data.character } })); this.loadCharacters(); }
+  };
+  toggleCharRouteConfirm = async () => {
+    const id = this.state.charSel; if (!id) return;
+    const c = this.state.charDetail.character;
+    const tag = c.hook && c.hook.route_selected;
+    if (!tag) { this.showToast('Select a route first.'); return; }
+    const r = await this.apiCall('/character-route', { id, tag, confirmed: !(c.hook.route_confirmed) });
+    if (r.ok && r.data && r.data.character) { this.setState(s => ({ charDetail:{ ...s.charDetail, character:r.data.character } })); this.loadCharacters(); }
+  };
+  setCharTest = (key, pass) => async () => {
+    const id = this.state.charSel; if (!id) return;
+    const note = ((this.state.charDetail.character.tests || {})[key] || {}).note || '';
+    const r = await this.apiCall('/character-test', { id, key, pass, note });
+    if (r.ok && r.data && r.data.character) { this.setState(s => ({ charDetail:{ ...s.charDetail, character:r.data.character } })); this.loadCharacters(); }
+    else this.showToast((r.data && r.data.detail) || 'Could not record that test.');
+  };
+  onCharTestNote = (key) => (e) => this.setCharField('tests.' + key + '.note')(e);
+  saveCharTestNote = (key) => async () => {
+    const id = this.state.charSel; if (!id) return;
+    const t = (this.state.charDetail.character.tests || {})[key] || {};
+    const r = await this.apiCall('/character-test', { id, key, pass: t.pass === undefined ? null : t.pass, note: t.note || '' });
+    if (r.ok && r.data && r.data.character) this.setState(s => ({ charDetail:{ ...s.charDetail, character:r.data.character } }));
+  };
+  runCharAudition = (passed) => async () => {
+    const id = this.state.charSel; if (!id) return;
+    const note = (this.state.charDetail.character.audition || {}).note || '';
+    const r = await this.apiCall('/character-audition', { id, run:true, passed, note });
+    if (r.ok && r.data && r.data.character) { this.setState(s => ({ charDetail:{ ...s.charDetail, character:r.data.character } })); this.loadCharacters(); }
+    else this.showToast((r.data && r.data.detail) || 'Could not record the audition.');
+  };
+  onCharAuditionNote = (e) => this.setCharField('audition.note')(e);
+  saveCharAuditionNote = async () => {
+    const id = this.state.charSel; if (!id) return;
+    const a = this.state.charDetail.character.audition || {};
+    const r = await this.apiCall('/character-audition', { id, run: !!a.run, passed: a.passed === undefined ? null : a.passed, note: a.note || '' });
+    if (r.ok && r.data && r.data.character) this.setState(s => ({ charDetail:{ ...s.charDetail, character:r.data.character } }));
+  };
+  toggleCharShotDone = (i) => async () => {
+    const id = this.state.charSel; if (!id) return;
+    const shot = ((this.state.charDetail.character.pressure_test || {}).shots || [])[i]; if (!shot) return;
+    const r = await this.apiCall('/character-pressure', { id, index:i, done: !shot.done, result: shot.result || '', run_by: this.state.charPressureRunBy || '' });
+    if (r.ok && r.data && r.data.character) { this.setState(s => ({ charDetail:{ ...s.charDetail, character:r.data.character } })); this.loadCharacters(); }
+    else this.showToast((r.data && r.data.detail) || 'Could not record that shot.');
+  };
+  onCharShotResult = (i) => (e) => this.setCharField('pressure_test.shots.' + i + '.result')(e);
+  saveCharShotResult = (i) => async () => {
+    const id = this.state.charSel; if (!id) return;
+    const shot = ((this.state.charDetail.character.pressure_test || {}).shots || [])[i]; if (!shot) return;
+    const r = await this.apiCall('/character-pressure', { id, index:i, done: !!shot.done, result: shot.result || '', run_by: this.state.charPressureRunBy || '' });
+    if (r.ok && r.data && r.data.character) this.setState(s => ({ charDetail:{ ...s.charDetail, character:r.data.character } }));
+  };
+  onCharPressureRunBy = (e) => this.setState({ charPressureRunBy:e.target.value });
+  pickCharReference = (libraryId) => async () => {
+    const id = this.state.charSel; if (!id) return;
+    const r = await this.apiCall('/character-reference', { id, library_id:libraryId });
+    if (r.ok && r.data && r.data.character) { this.setState(s => ({ charDetail:{ ...s.charDetail, character:r.data.character } })); this.loadCharacters(); this.showToast('Reference frame set.', 'ok'); }
+    else this.showToast((r.data && r.data.detail) || 'Could not set that reference.');
+  };
+  onCharApproveWho = (e) => this.setState({ charApproveWho:e.target.value });
+  approveCharacter = async () => {
+    const id = this.state.charSel; if (!id) return;
+    const who = this.state.charApproveWho.trim();
+    if (!who) { this.showToast('Say who is approving \u2014 the route requires a name.'); return; }
+    this.setState({ charBusy:'approve' });
+    const r = await this.apiCall('/character-approve', { id, who });
+    if (!r.ok) {
+      this.setState({ charBusy:'' });
+      try {
+        const rf = await fetch('/character/' + encodeURIComponent(id));
+        if (rf.ok) this.setState({ charDetail: await rf.json() });
+      } catch (e) {}
+      this.showToast((r.data && r.data.detail) || 'Not ready to approve yet \u2014 see what\u2019s missing below.');
+      return;
+    }
+    this.setState({ charBusy:'' });
+    this.setState(s => ({ charDetail:{ ...s.charDetail, character:r.data.character, can_approve:true, missing:[] } }));
+    this.loadCharacters();
+    this.showToast('Approved.', 'ok');
+  };
+  retireCharacter = async () => {
+    const id = this.state.charSel; if (!id) return;
+    const r = await this.apiCall('/character-retire', { id });
+    if (r.ok && r.data && r.data.character) { this.setState(s => ({ charDetail:{ ...s.charDetail, character:r.data.character } })); this.loadCharacters(); this.showToast('Retired.', 'ok'); }
+  };
+  removeCharacter = async () => {
+    const id = this.state.charSel; if (!id) return;
+    const r = await this.apiCall('/character-remove', { id });
+    if (r.ok) { this.setState({ charSel:null, charDetail:null }); this.loadCharacters(); this.showToast('Removed.', 'ok'); }
+  };
+
   // ---------- learning log ----------
   // ===== LEARNING LOG & DOCUMENT IMPORT =====
   loadLearning = async () => {
@@ -11939,6 +12413,131 @@ class Component extends DCLogic {
       memBrandNote: memBrands.length
         ? 'Every brief belongs to a brand profile, and generation is grounded in the one that is active.'
         : '',
+    };
+  }
+
+  // ---------- the bag: brand characters (Ground truth room) ----------
+  bagCharacters(s){
+    const testDefs = (s.charTestDefs && s.charTestDefs.length) ? s.charTestDefs : this.CHAR_TEST_DEFS;
+    const stPill = (st) => ({
+      draft:{bg:'#E6E3DC',fg:'#6B7280'}, candidate:{bg:'#E6E3DC',fg:'#6B7280'},
+      audition:{bg:'#FFF4DA',fg:'#B07A12'}, pressure:{bg:'#FFF4DA',fg:'#B07A12'},
+      approved:{bg:'#E6F4EA',fg:'#1E7E34'}, retired:{bg:'#EEF1F5',fg:'#9AA1AC'},
+    }[st] || {bg:'#E6E3DC',fg:'#6B7280'});
+    const libItems = (s.library && s.library.items) || [];
+    const list = (s.characters || []).slice().sort((a,b) => (a.state==='approved'?0:1) - (b.state==='approved'?0:1));
+    const charRows = list.map(c => {
+      const p = stPill(c.state || 'draft');
+      const ref = libItems.find(x => x.id === c.reference_id);
+      return {
+        id:c.id, open:this.openCharacter(c.id),
+        rowBg: s.charSel === c.id ? '#FBFAF8' : '#fff',
+        name:c.name || 'Unnamed', initial:(c.name||'?').charAt(0).toUpperCase(),
+        segment:c.segment || 'No segment yet', segSource:c.segment_source || 'assumed',
+        stateLabel:c.state||'draft', statePillBg:p.bg, statePillFg:p.fg,
+        hook: c.hook || '(no hook line yet)', hookStyle: c.hook ? 'normal' : 'italic',
+        routeLabel: c.route ? ('Route ' + c.route) : 'No route yet',
+        routeConfirmLabel: c.route_confirmed ? 'confirmed' : (c.route ? 'unconfirmed' : ''),
+        routeConfirmFg: c.route_confirmed ? '#1E7E34' : '#B07A12',
+        testsLabel: (c.tests_passed||0) + '/' + (c.tests_total||6),
+        hasRef: !!ref, noRef: !ref, refUrl: ref ? ref.url : '',
+      };
+    });
+    const cd = s.charDetail;
+    const c = cd && cd.character;
+    let detail = null;
+    if (c) {
+      const pp = c.pen_portrait || {};
+      const identityRows = Object.entries(pp.identity || {}).map(([k,v]) => ({ k, v, onChange:this.setCharField('pen_portrait.identity.'+k) }));
+      const hook = c.hook || {};
+      const vb = c.visual_brief || {};
+      const cl = c.cast_lock || {};
+      const routeTags = ['A'].concat((hook.routes_considered||[]).map(r=>r.tag));
+      const seenTags = [];
+      const routeButtons = routeTags.filter(t => { if (seenTags.indexOf(t)>=0) return false; seenTags.push(t); return true; })
+        .map(tag => ({ tag, pick: this.setCharRoute(tag),
+          bg: hook.route_selected === tag ? '#17325E' : '#fff',
+          fg: hook.route_selected === tag ? '#F7F5F1' : '#41505F' }));
+      const testsRows = testDefs.map(td => {
+        const t = (c.tests || {})[td.key] || { pass:null, note:'' };
+        return {
+          key: td.key, label: td.label, note: t.note || '',
+          onNote: this.onCharTestNote(td.key), saveNote: this.saveCharTestNote(td.key),
+          setPass: this.setCharTest(td.key, true), setFail: this.setCharTest(td.key, false), setPending: this.setCharTest(td.key, null),
+          passBg: t.pass === true ? '#1E7E34' : '#fff', passFg: t.pass === true ? '#fff' : '#41505F',
+          failBg: t.pass === false ? '#C0392B' : '#fff', failFg: t.pass === false ? '#fff' : '#41505F',
+          pendingBg: (t.pass === null || t.pass === undefined) ? '#6B7280' : '#fff',
+          pendingFg: (t.pass === null || t.pass === undefined) ? '#fff' : '#41505F',
+        };
+      });
+      const audition = c.audition || {};
+      const shots = ((c.pressure_test||{}).shots || []).map((sh, i) => ({
+        i, label: sh.label || ('Shot ' + (i+1)), result: sh.result || '',
+        toggle: this.toggleCharShotDone(i), onResult: this.onCharShotResult(i), saveResult: this.saveCharShotResult(i),
+        doneBg: sh.done ? '#1E7E34' : '#fff', doneFg: sh.done ? '#fff' : '#41505F',
+      }));
+      const doneShots = ((c.pressure_test||{}).shots || []).filter(sh=>sh.done).length;
+      const castItems = libItems.filter(x => x.kind === 'cast' && x.signed_off).map(x => {
+        const chosen = c.reference_id === x.id || ((c.reference||{}).chosen === x.id);
+        return { id:x.id, name:x.name, url:x.url, chosen, pick:this.pickCharReference(x.id), borderColor: chosen ? '#17325E' : '#DDD9D1' };
+      });
+      const missing = cd.missing || [];
+      detail = {
+        name:c.name||'', onName:this.setCharField('name'),
+        segment:c.segment||'', onSegment:this.setCharField('segment'),
+        segmentSource:c.segment_source||'assumed', onSegmentSource:this.setCharField('segment_source'),
+        state:c.state||'draft', version:c.version||1, scopeNote:c.scope_note||'',
+        identityRows, hasIdentity: identityRows.length>0,
+        ppBackground:pp.background||'', onPpBackground:this.setCharField('pen_portrait.background'),
+        ppDayInLife:pp.day_in_life||'', onPpDayInLife:this.setCharField('pen_portrait.day_in_life'),
+        ppHeadGoals:pp.head_goals||'', onPpHeadGoals:this.setCharField('pen_portrait.head_goals'),
+        ppHeartGoal:pp.heart_goal||'', onPpHeartGoal:this.setCharField('pen_portrait.heart_goal'),
+        ppChallenge:pp.challenge||'', onPpChallenge:this.setCharField('pen_portrait.challenge'),
+        ppContext:pp.context||'', onPpContext:this.setCharField('pen_portrait.context'),
+        hookLine:hook.line||'', onHookLine:this.setCharField('hook.line'),
+        hookDetail:hook.detail||'', onHookDetail:this.setCharField('hook.detail'),
+        hookProp:hook.prop||'', onHookProp:this.setCharField('hook.prop'),
+        hookPropLoad: !!hook.prop_load_bearing, toggleHookPropLoad:this.toggleCharBoolField('hook.prop_load_bearing'),
+        routesConsidered:(hook.routes_considered||[]).map(r=>({tag:r.tag, line:r.line})),
+        hasRoutesConsidered:(hook.routes_considered||[]).length>0,
+        routeButtons, routeConfirmed: !!hook.route_confirmed, toggleRouteConfirm:this.toggleCharRouteConfirm,
+        vbTypeLine:vb.type_line||'', onVbTypeLine:this.setCharField('visual_brief.type_line'),
+        vbLook:vb.look||'', onVbLook:this.setCharField('visual_brief.look'),
+        vbRegion:vb.region||'', onVbRegion:this.setCharField('visual_brief.region'),
+        vbRegionLoad: !!vb.region_load_bearing, toggleVbRegionLoad:this.toggleCharBoolField('visual_brief.region_load_bearing'),
+        vbSetting:vb.setting||'', onVbSetting:this.setCharField('visual_brief.setting'),
+        vbLight:vb.light||'', onVbLight:this.setCharField('visual_brief.light'),
+        vbTexture:vb.texture||'', onVbTexture:this.setCharField('visual_brief.texture'),
+        expressionRange:(vb.expression_range||[]).map(x=>({expr:x.expr,when:x.when})),
+        hasExpressionRange:(vb.expression_range||[]).length>0,
+        clNeverChanges:(cl.never_changes||[]).join('\n'), onClNeverChanges:this.setCharListField('cast_lock.never_changes'),
+        clChangesFreely:(cl.changes_freely||[]).join('\n'), onClChangesFreely:this.setCharListField('cast_lock.changes_freely'),
+        saveLabel: s.charBusy==='save' ? 'Saving…' : 'Save changes', save:this.saveCharacter,
+        testsRows,
+        hasAuditionSpec: !!audition.spec, auditionSpec: audition.spec||'',
+        auditionNote: audition.note||'', onAuditionNote:this.onCharAuditionNote, saveAuditionNote:this.saveCharAuditionNote,
+        runAuditionPass:this.runCharAudition(true), runAuditionFail:this.runCharAudition(false),
+        auditionPassBg: audition.passed===true?'#1E7E34':'#fff', auditionPassFg: audition.passed===true?'#fff':'#41505F',
+        auditionFailBg: audition.passed===false?'#C0392B':'#fff', auditionFailFg: audition.passed===false?'#fff':'#41505F',
+        shots, hasShots: shots.length>0, shotsDoneLabel: doneShots + ' of ' + shots.length + ' shots done',
+        pressureRunBy: s.charPressureRunBy || (c.pressure_test && c.pressure_test.run_by) || '',
+        onPressureRunBy: this.onCharPressureRunBy,
+        castItems, hasCastItems: castItems.length>0, noCastItems: castItems.length===0,
+        hasMissing: missing.length>0, missing,
+        approveWho: s.charApproveWho||'', onApproveWho:this.onCharApproveWho,
+        approve:this.approveCharacter, approveLabel: s.charBusy==='approve' ? 'Approving…' : 'Approve',
+        castLockBlock: cd.cast_lock_block||'', hasCastLockBlock: !!cd.cast_lock_block,
+        close:this.closeCharacterDetail, retire:this.retireCharacter, remove:this.removeCharacter,
+      };
+    }
+    return {
+      charRows, hasCharRows: charRows.length>0, noCharRows: charRows.length===0,
+      charCount: charRows.length + (charRows.length===1?' character':' characters'),
+      charDraftSeed: s.charDraftSeed||'', onCharDraftSeed:this.onCharDraftSeed,
+      charDraftName: s.charDraftName||'', onCharDraftName:this.onCharDraftName,
+      draftCharacter:this.draftCharacter, charDraftLabel: s.charDraftBusy ? 'Drafting…' : 'Draft a character',
+      hasCharDetail: !!detail, noCharDetail: !detail,
+      charDetail: detail,
     };
   }
 
@@ -15601,6 +16200,7 @@ class Component extends DCLogic {
       // brief picker, brief saving, the briefs panel in Memory, and the brand switcher
       ...this.bagBriefs(s, imcBrief),
       ...this.bagBrands(s),
+      ...this.bagCharacters(s),
       // linked brief
       linkedBrief: s.linkedBrief, hasLinkedBrief: !!s.linkedBrief, noLinkedBrief: !s.linkedBrief,
       linkedTitle: s.linkedBrief ? s.linkedBrief.title : '', linkedFormat: s.linkedBrief ? s.linkedBrief.format : '',
@@ -19284,7 +19884,15 @@ class Component extends DCLogic {
     const vals = {};
     (d.fields || []).forEach(f => { if (f.value !== undefined && f.value !== null) vals[f.key] = f.value; });
     this.setState(s => ({ bfLoaded:true, bf:d, bfVals: { ...vals, ...(s.bf ? (s.bfVals||{}) : {}) },
-      bfVoice: d.voice || '' }));
+      bfVoice: d.voice || '',
+      // brand_core seeds once, same rule as bfVals — a reload never overwrites a half-typed draft.
+      ...(!s.bf && d.brand_core ? {
+        bfCoreFramework: d.brand_core.framework || '',
+        bfCoreEssence: d.brand_core.essence || '',
+        bfCoreLayers: Object.fromEntries((d.brand_core.layers||[]).map(l=>[l.key, l.value||''])),
+        bfCoreBoundaries: (d.brand_core.boundaries||[]).join('\n'),
+        bfCoreOpen: !!d.brand_core.set,
+      } : {}) }));
   }
   bfSpec(){ return ((this.state.bf || {}).spec) || []; }
   bfVal(key){
@@ -19317,6 +19925,17 @@ class Component extends DCLogic {
   dismissSuggestion = (key) => () =>
     this.setState(s => ({ bfDismissed: { ...(s.bfDismissed||{}), [key]: true } }));
 
+  // ---- brand core: the enduring root above the messaging house, optional and collapsed by default ----
+  toggleBrandCore = () => this.setState(s => ({ bfCoreOpen: !s.bfCoreOpen }));
+  pickBrandCoreFramework = (key) => () => this.setState({ bfCoreFramework:key, bfDirty:true });
+  clearBrandCoreFramework = () => this.setState({ bfCoreFramework:'', bfDirty:true });
+  onBrandCoreEssence = (e) => this.setState({ bfCoreEssence:e.target.value, bfDirty:true });
+  onBrandCoreLayer = (e) => {
+    const k = e.target.dataset.k, v = e.target.value;
+    this.setState(s => ({ bfCoreLayers: { ...(s.bfCoreLayers||{}), [k]: v }, bfDirty:true }));
+  };
+  onBrandCoreBoundaries = (e) => this.setState({ bfCoreBoundaries:e.target.value, bfDirty:true });
+
   saveBrandFields = async () => {
     const spec = this.bfSpec(), vals = this.state.bfVals || {};
     const body = {};
@@ -19330,12 +19949,27 @@ class Component extends DCLogic {
     });
     const st = this.state.studio || {};
     if (!body.name && st.clientName) body.name = st.clientName;
+    // Sent whole, per the ask: framework + essence + all layers + boundaries. The backend keeps only
+    // the chosen framework's own layer keys and drops the rest — switching framework and saving is
+    // what re-labels this section, not anything computed here.
+    body.brand_core = {
+      framework: this.state.bfCoreFramework || '',
+      essence: this.state.bfCoreEssence || '',
+      layers: this.state.bfCoreLayers || {},
+      boundaries: (this.state.bfCoreBoundaries || '').split('\n').map(x => x.trim()).filter(Boolean),
+    };
     this.setState({ bfSaving:true });
     const r = await this.apiCall('/brand-fields', body);
     this.setState({ bfSaving:false });
     if (!r.ok) { this.showToast((r.data && r.data.detail) || 'The server would not take that profile.'); return; }
     const d = r.data || {};
-    this.setState(s => ({ bf: { ...(s.bf||{}), ...d }, bfVoice: d.voice || '', bfDirty:false }));
+    this.setState(s => ({ bf: { ...(s.bf||{}), ...d }, bfVoice: d.voice || '', bfDirty:false,
+      ...(d.brand_core ? {
+        bfCoreFramework: d.brand_core.framework || '',
+        bfCoreEssence: d.brand_core.essence || '',
+        bfCoreLayers: Object.fromEntries((d.brand_core.layers||[]).map(l=>[l.key, l.value||''])),
+        bfCoreBoundaries: (d.brand_core.boundaries||[]).join('\n'),
+      } : {}) }));
     this.showToast('Saved. What the model is told is on the right \u2014 worth reading before you trust it.', 'ok');
   };
 
@@ -19447,6 +20081,50 @@ class Component extends DCLogic {
       bfVoiceSize: voice ? (voice.length.toLocaleString() + ' characters') : 'nothing sent yet',
       bfVoiceFg: voice ? '#1E7E34' : '#B07A12',
       bfUnprovenCount: unproven.length,
+      ...this.bagBrandCore(s, d),
+    };
+  }
+
+  // ---------- the bag: brand core (enduring essence + boundaries, rendered from what the server sends) ----------
+  bagBrandCore(s, d){
+    const bc = (d && d.brand_core) || {};
+    const curFramework = s.bfCoreFramework !== undefined ? s.bfCoreFramework : (bc.framework || '');
+    const essence = s.bfCoreEssence !== undefined ? s.bfCoreEssence : (bc.essence || '');
+    const layerVals = s.bfCoreLayers || {};
+    const boundaries = s.bfCoreBoundaries !== undefined ? s.bfCoreBoundaries : (bc.boundaries || []).join('\n');
+    const open = !!s.bfCoreOpen;
+    const frameworks = bc.frameworks || [];
+    // The field template follows the framework picked in the UI, not the one last saved — so choosing
+    // a framework shows its fields with no round trip. `bc.layers` (the saved framework's fields, with
+    // values) is only the value source, and only when the picked framework still matches the saved one.
+    const fwSel = frameworks.find(f => f.key === curFramework) || null;
+    const layerTmpl = fwSel ? (fwSel.layers || []) : [];
+    const savedVal = (key) => ((bc.layers || []).find(x => x.key === key) || {}).value || '';
+    return {
+      bfCoreSet: !!bc.set,
+      bfCoreOpen: open, bfCoreClosed: !open,
+      toggleBrandCore: this.toggleBrandCore,
+      bfCoreToggleLabel: open ? 'Hide \u25b2' : 'Show \u25bc',
+      bfCoreClosedNote: bc.set
+        ? ((bc.framework_name || 'Brand core set') + (essence ? ' \u2014 ' + essence : ''))
+        : 'Not set \u2014 the enduring essence every campaign roots in. Optional, but a strong guardrail where the org has one.',
+      bfCoreFrameworks: frameworks.map(fw => {
+        const active = curFramework === fw.key;
+        return { key:fw.key, name:fw.name, blurb:fw.blurb, layerCount:fw.layer_count,
+          pick: this.pickBrandCoreFramework(fw.key),
+          bg: active ? '#EEF1F5' : '#fff', fg: active ? '#17325E' : '#41505F',
+          border: active ? '#17325E' : '#DDD9D1' };
+      }),
+      bfCoreHasFramework: !!curFramework,
+      clearBrandCoreFramework: this.clearBrandCoreFramework,
+      bfCoreEssenceLabel: (fwSel && fwSel.essence_label) || bc.essence_label || 'Brand essence',
+      bfCoreEssenceHelp: (fwSel && fwSel.essence_help) || bc.essence_help || 'The enduring root every campaign ladders to.',
+      bfCoreEssence: essence, onBrandCoreEssence: this.onBrandCoreEssence,
+      bfCoreLayerRows: layerTmpl.map(l => ({ key:l.key, label:l.label, help:l.help,
+        value: layerVals[l.key] !== undefined ? layerVals[l.key] : savedVal(l.key) })),
+      bfCoreHasLayers: !!curFramework && layerTmpl.length > 0,
+      onBrandCoreLayer: this.onBrandCoreLayer,
+      bfCoreBoundaries: boundaries, onBrandCoreBoundaries: this.onBrandCoreBoundaries,
     };
   }
 

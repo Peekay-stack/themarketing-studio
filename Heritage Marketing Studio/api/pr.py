@@ -1404,6 +1404,14 @@ def release_suggestions(s: dict, plan: dict | None = None, house: dict | None = 
                                 in ((plan or {}).get("nodes", {}).get("objectives", {}) or {}
                                     ).get("rows", []) or [] if str(r.get("statement") or "").strip()],
             "brand_tone": str((b or {}).get("tone") or ""),
+            # The brand core: the enduring essence a release still has to ladder to, and the hard
+            # boundaries a headline or quote must not cross. This desk writes no prose, so these are
+            # handed over as reference for whoever does — not injected into a generation prompt,
+            # because there isn't one.
+            "brand_essence": str(((b or {}).get("brand_core") or {}).get("essence") or ""),
+            "brand_boundaries": [str(x) for x in
+                                 (((b or {}).get("brand_core") or {}).get("boundaries") or [])
+                                 if str(x).strip()],
             "note": ("Everything a headline and lead would be written from, quoted from where it was "
                      "decided. Handed over rather than turned into prose."),
         },

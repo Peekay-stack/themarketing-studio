@@ -155,6 +155,28 @@ def for_brand(brand: str) -> list[dict]:
     return [load(r["id"]) for r in list_characters(brand) if r["state"] == "approved"]
 
 
+def for_prompt(brand) -> str:
+    """The cast-lock block(s) for a brand's APPROVED character(s), ready to drop into a producer
+    prompt. Empty when the brand has no approved character (a candidate is never cast). This is the
+    one function every producer threads in so an approved character actually reaches generation — not
+    just the panel. Accepts a brand name, or a dict carrying `name` / `brand`."""
+    name = ""
+    if isinstance(brand, dict):
+        name = str(brand.get("name") or brand.get("brand") or "")
+    elif isinstance(brand, str):
+        name = brand
+    if not name.strip():
+        return ""
+    blocks = [b for b in (cast_lock_block(d) for d in for_brand(name) if d) if b]
+    if not blocks:
+        return ""
+    header = ("THE BRAND CHARACTER — a recurring, approved identity for this brand. Any person shown "
+              "IS this character unless the brief explicitly calls for someone else; do not invent a "
+              "fresh face. Only the scene, the wardrobe of the day and the expression change per "
+              "piece — the identity below does not.\n")
+    return header + "\n\n".join(blocks)
+
+
 # --- document ----------------------------------------------------------------------------------
 
 def new_doc(brand: str, name: str, *, segment: str = "", segment_source: str = "assumed") -> dict:

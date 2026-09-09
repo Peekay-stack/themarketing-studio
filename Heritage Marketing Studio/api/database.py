@@ -10,7 +10,18 @@ import auth
 import domain
 from models import Base, Brief, User
 
-DB_URL = os.environ.get("DATABASE_URL", "sqlite:///./heritage.db")
+def _default_db_url() -> str:
+    """Auth DB path. On a container with STUDIO_DATA_DIR set (a mounted volume), the SQLite file lives
+    there so a redeploy keeps every login; otherwise it sits beside the code as before. An explicit
+    DATABASE_URL (e.g. a managed Postgres) always wins. The directory is expected to exist already —
+    it's a mount point in the container case; `init_db()` surfaces a clear error at startup if not."""
+    data = os.environ.get("STUDIO_DATA_DIR", "").strip()
+    if data:
+        return "sqlite:///" + os.path.join(data, "heritage.db")
+    return "sqlite:///./heritage.db"
+
+
+DB_URL = os.environ.get("DATABASE_URL") or _default_db_url()
 engine = create_engine(DB_URL, connect_args={"check_same_thread": False} if DB_URL.startswith("sqlite") else {})
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 
@@ -71,6 +82,17 @@ def _add_missing_columns() -> None:
 SEED_PASSWORDS = {"puneet": "puneet-dev", "ravi": "ravi-dev", "meera": "meera-dev",
                    "ananya": "ananya-dev"}
 
+# Real passwords for anything deployed: set SEED_PASSWORD_PUNEET / _RAVI / _MEERA / _ANANYA in the
+# environment. An account with an env password is (re)hashed on every boot, so rotating one is a
+# redeploy with a changed value — no DB surgery. Accounts with no env override keep the dev default
+# and are only ever seeded, never reset. `_ENV_PW` is the set that gets the reset treatment.
+_ENV_PW: dict[str, str] = {}
+for _uid in list(SEED_PASSWORDS):
+    _val = os.environ.get("SEED_PASSWORD_" + _uid.upper())
+    if _val:
+        SEED_PASSWORDS[_uid] = _val
+        _ENV_PW[_uid] = _val
+
 
 def init_db() -> None:
     Base.metadata.create_all(engine)
@@ -91,7 +113,11 @@ def init_db() -> None:
             for u in db.scalars(select(User)):
                 if not u.tenant:
                     u.tenant = "default"; changed = True
-                if not u.password_hash and u.id in SEED_PASSWORDS:
+                if u.id in _ENV_PW:
+                    # An env-supplied password is authoritative every boot — reset if it changed.
+                    if not auth.verify_password(_ENV_PW[u.id], u.password_hash or ""):
+                        u.password_hash = auth.hash_password(_ENV_PW[u.id]); changed = True
+                elif not u.password_hash and u.id in SEED_PASSWORDS:
                     u.password_hash = auth.hash_password(SEED_PASSWORDS[u.id]); changed = True
                 c = SEED_CONTACT.get(u.id, {})
                 if not u.email and c.get("email"):

@@ -119,7 +119,9 @@ app.add_middleware(
 _PUBLIC_PATHS = {
     "/", "/health", "/login", "/logout", "/me", "/app",
     "/support.js", "/image-slot.js", "/favicon.ico",
-    "/docs", "/redoc", "/openapi.json",
+    # `/docs`, `/redoc`, `/openapi.json` are deliberately NOT public — the interactive API browser and
+    # the full route schema stay behind login on a deployed instance. A signed-in user still reaches
+    # them normally (the cookie rides along); an anonymous visitor gets the same 401 as any route.
 }
 _PUBLIC_PREFIXES = ("/assets/", "/static/")
 
@@ -2817,7 +2819,8 @@ def brand_fields(brand: str = "", house: str = "", brief: str = ""):
     # rather than given a route of its own: `/brand-fields` already owns this form, and a second endpoint
     # returning an overlapping view of one document is how two screens start disagreeing about it.
     return {**r, "brand": b, "voice": brandprofile.voice_block(b) if b else "",
-            "setup": brandprofile.setup_view(b, h, br)}
+            "setup": brandprofile.setup_view(b, h, br),
+            "brand_core": brandprofile.brand_core_view(b)}
 
 
 @app.post("/brand-fields")
@@ -2847,7 +2850,8 @@ def brand_fields_save(payload: dict):
     # `setup` on the save response too, so the form can redraw its own groups without a second call.
     # A save that returns a different shape from the GET is a form that has to guess what changed.
     return {"brand": b, "voice": brandprofile.voice_block(b), "brands": _brand_rows(),
-            **brandprofile.readiness(b), "setup": brandprofile.setup_view(b)}
+            **brandprofile.readiness(b), "setup": brandprofile.setup_view(b),
+            "brand_core": brandprofile.brand_core_view(b)}
 
 
 @app.post("/brand-active")
