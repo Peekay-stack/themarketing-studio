@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: d3a25b08-5f19-478b-bc7e-ff283771328e
-  modified: 2026-09-09T15:34:08.431Z
+  modified: 2026-09-10T05:10:15.757Z
 ---
 
 Goal: a gated beta at **themarketing-studio.com**. Domain is at **GoDaddy** (registrar), DNS/proxy/SSL
@@ -62,17 +62,32 @@ container, one uvicorn worker, one persistent volume, HTTPS.** No serverless, no
    Fix was one env var in Render → Environment: `STUDIO_DATA_DIR=/data` → redeploy. **Lesson: when a
    Render service is made manually, every `render.yaml` env var must be re-entered by hand.**
 
-## Phase 3 — NEXT (tomorrow, 10 Sep). Domain: themarketing-studio.com
+## Phase 3 — IN PROGRESS (started 10 Sep). Domain: themarketing-studio.com
 
-Not started. First step: is `themarketing-studio.com` already in the user's Cloudflare account?
-(account id `c3cb7d8bdadbdc5c48edde69b7dead3b`). Then:
-- Cloudflare **Add a site** (if needed) → 2 nameservers → set them at **GoDaddy** (registrar).
-- Render → service → Settings → **Custom Domains** → add `themarketing-studio.com` +
-  `www.themarketing-studio.com`. Render gives the DNS target.
-- Cloudflare DNS: `CNAME @` and `CNAME www` → `themarketing-studio.onrender.com`, **Proxied**.
-  (Cert issuance may need the record briefly DNS-only then re-proxied.)
-- Cloudflare SSL/TLS → **Full (Strict)**; **Always Use HTTPS** on.
-- Verify: `https://themarketing-studio.com/app` → login; cookie is `Secure`.
+The user owns `themarketing-studio.{com,online,store,in,xyz}` at GoDaddy — **only `.com` is in play**.
+
+**Done 10 Sep:**
+- Cloudflare: site `themarketing-studio.com` added, **Free** plan. Imported-DNS review screen — **deleted
+  the 2 parked GoDaddy A records** (`15.197.148.33`, `3.33.130.190`); kept the `www` CNAME, the
+  `_domainconnect` CNAME, and the `_dmarc` TXT.
+- Cloudflare-assigned nameservers: **`carl.ns.cloudflare.com`** + **`jacqueline.ns.cloudflare.com`**.
+- GoDaddy: nameservers were **already** set to those two (pre-done in an earlier session); **DNSSEC is
+  OFF** (button reads "Turn On DNSSEC" — leave it). Nothing to change at GoDaddy.
+- Clicked "I updated my nameservers" → Cloudflare now says *"checking the nameservers… wait a few
+  hours"*. **Waiting for zone to go Active** (email will confirm).
+- Render: **both custom domains added** to the `themarketing-studio` service (apex + `www`), showing
+  unverified. Render CNAME target = **`themarketing-studio.onrender.com`**; Render A-record fallback IP
+  = **`216.24.57.1`**.
+
+**Remaining once the Cloudflare zone is Active:**
+1. Cloudflare → DNS → Records: add **`CNAME @` → `themarketing-studio.onrender.com`** and
+   **`CNAME www` → `themarketing-studio.onrender.com`**, both **DNS only / grey cloud** at first
+   (edit the imported `www` CNAME rather than adding a second).
+2. Render → Custom Domains → **Verify** both; wait for "Certificate issued" on each.
+3. Cloudflare → DNS: flip both records to **Proxied / orange cloud**.
+4. Cloudflare → SSL/TLS → Overview: **Full (Strict)**. → Edge Certificates: **Always Use HTTPS** on.
+5. Verify: `https://themarketing-studio.com/app` → login; cookie is `Secure`.
+   Grey-cloud-first matters — proxying before Render's cert issues stalls verification / throws TLS errors.
 
 ## Phase 4 — Ops (after the domain)
 
