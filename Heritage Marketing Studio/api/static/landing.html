@@ -236,6 +236,34 @@
   #product .producer { min-height: 150px; padding: 26px 22px; }
   #product .producer .pc-t { font-size: 16.5px; }
   #product .producer .pc-d { font-size: 12.5px; margin-top: 8px; }
+
+  /* ---------- mobile: collapse the desktop full-screen deck ---------- */
+  @media (max-width: 760px) {
+    html { scroll-snap-type: none; }
+    section { min-height: 0; display: block; scroll-snap-align: none; padding: 52px 0; }
+    #refusal > svg, #product > svg, #pricing > svg, #demo > svg, footer > svg { display: none; }
+    #product .shead { margin-bottom: 26px; }
+    #product .stages { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; overflow-x: visible; margin-bottom: 20px; }
+    #product .stage { min-width: 0; padding: 0; border-bottom: 0; }
+    #product .stage:not(:last-child) .sn::after { display: none; }
+    #product .producers-row { grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+    #product .producer { min-height: 0; padding: 14px 13px; justify-content: flex-start; }
+    #product .producer .pc-t { font-size: 13.5px; }
+    #product .producer .pc-d { font-size: 11px; margin-top: 5px; }
+    #pricing .price-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+    #pricing .price-card { padding: 16px 14px; }
+    #pricing .price-card .amt { font-size: 19px; }
+    #pricing .price-card .inc { font-size: 11px; }
+    #refusal .shead { margin-bottom: 26px; }
+    #refusal .uc-grid { gap: 14px; }
+    #refusal .uc-card { padding: 20px 18px !important; }
+    #demo .demo-panel { padding: 20px 16px; gap: 16px; }
+    #demo .demo-panel h2 { font-size: 22px; margin-bottom: 10px; }
+    #demo .demo-panel p.lede { font-size: 13.5px; margin-bottom: 0; }
+    #demo .demo-q { margin-top: 12px; padding: 12px 14px; font-size: 12px; }
+    #demo .demo-form { gap: 9px; padding: 16px; }
+    #demo .demo-form input, #demo .demo-form textarea { padding: 8px 10px; }
+  }
 </style>
 </head>
 <body>
