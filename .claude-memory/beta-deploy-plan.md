@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: d3a25b08-5f19-478b-bc7e-ff283771328e
-  modified: 2026-09-10T05:10:15.757Z
+  modified: 2026-09-10T05:58:09.404Z
 ---
 
 Goal: a gated beta at **themarketing-studio.com**. Domain is at **GoDaddy** (registrar), DNS/proxy/SSL
@@ -96,13 +96,29 @@ The user owns `themarketing-studio.{com,online,store,in,xyz}` at GoDaddy — **o
 - Cloudflare rate-limit on `/complete`, `/scene-still`, `/posm-image`.
 - If brand-brief/POSM renders OOM on 512MB → bump Render plan to the $25/2GB tier (disk + data survive).
 
-## Render MCP — offered, NOT set up
+## Render MCP — SET UP & WORKING (10 Sep)
 
-User tried `claude mcp add render ...` in a plain PowerShell window → `claude` not on PATH. Next
-time: write the Render MCP server straight into the MCP config (`.mcp.json` at repo root or
-`~/.claude.json` `mcpServers`) — `{command:"npx", args:["-y","@render/mcp-server"], env:{RENDER_API_KEY:"..."}}`
-— and have the user paste a Render API key (Account Settings → API Keys). Would let a session read
-Render logs / deploy status / env directly instead of screenshot ping-pong.
+Uses the **hosted** endpoint (no Node/npx — `npx` isn't installed on this machine). Config lives in
+**`.mcp.json` at the OPUS repo root** (`C:\Users\punie\Heritage-Marketing-Studio-OPUS\.mcp.json`),
+**git-ignored** (`.gitignore` line `.mcp.json`) because it holds a live Render API key:
+
+```json
+{ "mcpServers": { "render": {
+  "type": "http", "url": "https://mcp.render.com/mcp",
+  "headers": { "Authorization": "Bearer rnd_<key>" } } } }
+```
+
+API key = Render → Account Settings → API Keys (current one named `claude_code_mcp1`; the first key
+leaked in a chat screenshot and was rotated out). MCP config only loads at Claude Code **startup** —
+edit the key → restart → `/mcp` shows `render` connected. Workspace: **`Peekay-Workspace`**
+(`tea-dageqc8u01pc73fi55c0`). Service: **`themarketing-studio`** (`srv-dagfb76k1f9s73cmr8og`).
+Every Render MCP call needs `workspaceId` passed explicitly.
+
+Gives a session: `list_services` / `get_service` / `list_deploys` / `get_deploy` / `list_logs`
+(build+app+request) / `get_metrics` / `update_environment_variables` / `trigger_deploy` /
+`query_render_postgres` — no more screenshot ping-pong. **Auto-deploy is ON** (branch `master`,
+trigger `commit`); commits outside `Heritage Marketing Studio/` (e.g. `.claude-memory/`) don't
+rebuild.
 
 ## Known beta-grade rough edges (documented, not blockers)
 
