@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: d3a25b08-5f19-478b-bc7e-ff283771328e
-  modified: 2026-09-10T05:58:09.404Z
+  modified: 2026-09-10T06:27:52.519Z
 ---
 
 Goal: a gated beta at **themarketing-studio.com**. Domain is at **GoDaddy** (registrar), DNS/proxy/SSL
@@ -79,15 +79,19 @@ The user owns `themarketing-studio.{com,online,store,in,xyz}` at GoDaddy — **o
   unverified. Render CNAME target = **`themarketing-studio.onrender.com`**; Render A-record fallback IP
   = **`216.24.57.1`**.
 
-**Remaining once the Cloudflare zone is Active:**
-1. Cloudflare → DNS → Records: add **`CNAME @` → `themarketing-studio.onrender.com`** and
-   **`CNAME www` → `themarketing-studio.onrender.com`**, both **DNS only / grey cloud** at first
-   (edit the imported `www` CNAME rather than adding a second).
-2. Render → Custom Domains → **Verify** both; wait for "Certificate issued" on each.
-3. Cloudflare → DNS: flip both records to **Proxied / orange cloud**.
-4. Cloudflare → SSL/TLS → Overview: **Full (Strict)**. → Edge Certificates: **Always Use HTTPS** on.
-5. Verify: `https://themarketing-studio.com/app` → login; cookie is `Secure`.
-   Grey-cloud-first matters — proxying before Render's cert issues stalls verification / throws TLS errors.
+**DONE 10 Sep — site is LIVE at https://themarketing-studio.com** (and `/app`):
+- CF DNS: `CNAME @` + `CNAME www` → `themarketing-studio.onrender.com`. Added grey-cloud, Render
+  verified + issued Let's Encrypt certs for both, then flipped both to **Proxied / orange**.
+- `_dmarc` TXT kept; `_domainconnect` CNAME left in place (harmless GoDaddy helper).
+- Render Custom Domains: both **Verified + Certificate Issued**; `www` auto-301s to apex.
+- CF SSL/TLS: Universal SSL **Active** (covers apex + `*.`, expires 9 Dec, auto-managed);
+  **Always Use HTTPS ON**, Automatic HTTPS Rewrites ON, TLS 1.3 ON. Encryption mode should be
+  pinned to **Full (Strict)** on SSL/TLS→Overview (behaviourally already strict — clean 200s,
+  no redirect loops; user to eyeball the Overview page).
+- Verified end-to-end: `http→https` 301, `www→apex` 301, `https://themarketing-studio.com/app`
+  → 200 login screen in a real browser, valid cert.
+- Still optional (not blockers): Min TLS → 1.2, enable HSTS once http is never coming back.
+  `COOKIE_SECURE` is already on by default (no `STUDIO_INSECURE_COOKIES`).
 
 ## Phase 4 — Ops (after the domain)
 
