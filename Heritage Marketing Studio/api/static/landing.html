@@ -97,20 +97,15 @@
   .hero-visual { position: relative; height: auto; z-index: 1; display: flex; align-items: stretch; gap: clamp(14px, 3vw, 26px); }
   .os-stack { flex: 0 0 clamp(104px, 30%, 300px); display: flex; flex-direction: column; justify-content: center; min-width: 0; }
   .os-stack .plate {
-    flex: 0 0 auto; margin-top: 0; position: relative;
-    clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
-    background: rgba(255,255,255,.08);
+    flex: 0 0 auto; height: 0; margin-top: 0; position: relative; overflow: visible;
     animation: os-rise .7s cubic-bezier(.16,1,.3,1) backwards;
-    transition: opacity .3s ease, background .3s ease, filter .3s ease, height .25s ease, margin-top .25s ease;
+    transition: height .25s ease, margin-top .25s ease;
   }
   .os-stack .plate:first-child { margin-top: 0; }
-  .os-stack .plate:nth-child(2) { background: rgba(255,255,255,.10); }
-  .os-stack .plate:nth-child(3) { background: rgba(255,255,255,.13); }
-  .os-stack .plate:nth-child(4) { background: rgba(255,255,255,.17); }
-  .os-stack .plate:nth-child(5) { background: rgba(255,255,255,.22); }
-  .os-stack .plate:nth-child(6) { background: rgba(240,86,30,.55); }
-  .os-stack .plate.os-active { background: rgba(240,86,30,.4); filter: drop-shadow(0 0 9px rgba(240,86,30,.6)); }
-  .os-stack .plate.os-dim { opacity: .3; }
+  .os-stack .plate svg { display: block; width: 100%; height: 100%; overflow: visible; }
+  .os-stack .plate svg polygon { transition: opacity .3s ease, stroke-width .3s ease; }
+  .os-stack .plate.os-active svg polygon { opacity: 1 !important; stroke-width: 2; filter: drop-shadow(0 0 9px rgba(240,86,30,.6)); }
+  .os-stack .plate.os-dim svg polygon { opacity: .14 !important; }
   @keyframes os-rise { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
   .os-legend { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: space-between; gap: clamp(4px, 1.2vw, 10px); height: auto; }
   .os-layer { display: flex; align-items: center; gap: 12px; text-decoration: none; padding: 6px 8px; border-radius: 10px; transition: background .15s ease; animation: os-rise .7s cubic-bezier(.16,1,.3,1) backwards; }
@@ -273,6 +268,13 @@
     #demo .demo-form input, #demo .demo-form textarea { padding: 8px 10px; }
   }
 
+  /* ---------- tablet: hero-grid is already 1-col here, so the diagram gets the FULL
+     row width and 30% balloons past what looks balanced (desktop only gets half the
+     row; phone is caught by the 104px floor). Tighten just this zone. ---------- */
+  @media (min-width: 600px) and (max-width: 900px) {
+    #home .os-stack, #hero .os-stack { flex-basis: clamp(104px, 18%, 170px); }
+  }
+
   /* ---------- narrow cards: glyph beside the text instead of above it ---------- */
   @media (max-width: 900px) {
     #refusal .uc-card { display: grid; grid-template-columns: 22px 1fr; column-gap: 14px; align-items: start; }
@@ -336,12 +338,12 @@
       </div>
       <div class="hero-visual" aria-hidden="true">
         <div class="os-stack" aria-hidden="true">
-          <div class="plate" data-layer="measurement" style="animation-delay:0.00s"></div>
-          <div class="plate" data-layer="execution" style="animation-delay:0.09s"></div>
-          <div class="plate" data-layer="plan" style="animation-delay:0.18s"></div>
-          <div class="plate" data-layer="strategy" style="animation-delay:0.27s"></div>
-          <div class="plate" data-layer="foundations" style="animation-delay:0.36s"></div>
-          <div class="plate" data-layer="profile" style="animation-delay:0.45s"></div>
+          <div class="plate" data-layer="measurement" style="animation-delay:0.00s"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><polygon points="50,4 96,50 50,96 4,50" fill="none" stroke="#FFFFFF" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round" opacity="0.28"/></svg></div>
+          <div class="plate" data-layer="execution" style="animation-delay:0.09s"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><polygon points="50,4 96,50 50,96 4,50" fill="none" stroke="#FFFFFF" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round" opacity="0.44"/></svg></div>
+          <div class="plate" data-layer="plan" style="animation-delay:0.18s"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><polygon points="50,4 96,50 50,96 4,50" fill="none" stroke="#FFFFFF" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round" opacity="0.6"/></svg></div>
+          <div class="plate" data-layer="strategy" style="animation-delay:0.27s"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><polygon points="50,4 96,50 50,96 4,50" fill="none" stroke="#FFFFFF" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round" opacity="0.76"/></svg></div>
+          <div class="plate" data-layer="foundations" style="animation-delay:0.36s"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><polygon points="50,4 96,50 50,96 4,50" fill="none" stroke="#FFFFFF" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round" opacity="0.92"/></svg></div>
+          <div class="plate" data-layer="profile" style="animation-delay:0.45s"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><polygon points="50,4 96,50 50,96 4,50" fill="#F0561E" stroke="none"/></svg></div>
         </div>
         <div class="os-legend"><a class="os-layer" data-layer="measurement" href="#demo" style="animation-delay:0.60s"><svg class="swatch" viewBox="0 0 33 72" width="11" height="24"><path d="M0 36 16.5 0 33 36 16.5 72Z" fill="none" stroke="#FFFFFF" stroke-width="3" opacity="0.36"/></svg><div><b>Measurement</b><span>What moved, and what did not</span></div></a><a class="os-layer" data-layer="execution" href="#stage-execution" style="animation-delay:0.48s"><svg class="swatch" viewBox="0 0 33 72" width="11" height="24"><path d="M0 36 16.5 0 33 36 16.5 72Z" fill="none" stroke="#FFFFFF" stroke-width="3" opacity="0.44"/></svg><div><b>Execution</b><span>Social, POS, onground, video, PR, sales enablers</span></div></a><a class="os-layer" data-layer="plan" href="#stage-plan" style="animation-delay:0.36s"><svg class="swatch" viewBox="0 0 33 72" width="11" height="24"><path d="M0 36 16.5 0 33 36 16.5 72Z" fill="none" stroke="#FFFFFF" stroke-width="3" opacity="0.6"/></svg><div><b>Plan</b><span>Media, geography and phasing</span></div></a><a class="os-layer" data-layer="strategy" href="#stage-house" style="animation-delay:0.24s"><svg class="swatch" viewBox="0 0 33 72" width="11" height="24"><path d="M0 36 16.5 0 33 36 16.5 72Z" fill="none" stroke="#FFFFFF" stroke-width="3" opacity="0.76"/></svg><div><b>Communication Strategy</b><span>Messaging house, idea platform, big idea</span></div></a><a class="os-layer" data-layer="foundations" href="#stage-brief" style="animation-delay:0.12s"><svg class="swatch" viewBox="0 0 33 72" width="11" height="24"><path d="M0 36 16.5 0 33 36 16.5 72Z" fill="none" stroke="#FFFFFF" stroke-width="3" opacity="0.92"/></svg><div><b>Brand Foundation</b><span>Brand framework — essence, segmentation, positioning and the brief</span></div></a><a class="os-layer" data-layer="profile" href="#stage-brief" style="animation-delay:0.00s"><svg class="swatch" viewBox="0 0 33 72" width="11" height="24"><path d="M0 36 16.5 0 33 36 16.5 72Z" fill="#F0561E" stroke="#FFFFFF" stroke-width="0" opacity="1"/></svg><div><b>Brand Profile</b><span>Ground truths, category and competition</span></div></a></div>
       </div>
@@ -366,12 +368,12 @@
       </div>
       <div class="hero-visual" aria-hidden="true">
         <div class="os-stack" aria-hidden="true">
-          <div class="plate" data-layer="measurement" style="animation-delay:0.00s"></div>
-          <div class="plate" data-layer="execution" style="animation-delay:0.09s"></div>
-          <div class="plate" data-layer="plan" style="animation-delay:0.18s"></div>
-          <div class="plate" data-layer="strategy" style="animation-delay:0.27s"></div>
-          <div class="plate" data-layer="foundations" style="animation-delay:0.36s"></div>
-          <div class="plate" data-layer="profile" style="animation-delay:0.45s"></div>
+          <div class="plate" data-layer="measurement" style="animation-delay:0.00s"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><polygon points="50,4 96,50 50,96 4,50" fill="none" stroke="#FFFFFF" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round" opacity="0.28"/></svg></div>
+          <div class="plate" data-layer="execution" style="animation-delay:0.09s"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><polygon points="50,4 96,50 50,96 4,50" fill="none" stroke="#FFFFFF" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round" opacity="0.44"/></svg></div>
+          <div class="plate" data-layer="plan" style="animation-delay:0.18s"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><polygon points="50,4 96,50 50,96 4,50" fill="none" stroke="#FFFFFF" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round" opacity="0.6"/></svg></div>
+          <div class="plate" data-layer="strategy" style="animation-delay:0.27s"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><polygon points="50,4 96,50 50,96 4,50" fill="none" stroke="#FFFFFF" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round" opacity="0.76"/></svg></div>
+          <div class="plate" data-layer="foundations" style="animation-delay:0.36s"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><polygon points="50,4 96,50 50,96 4,50" fill="none" stroke="#FFFFFF" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round" opacity="0.92"/></svg></div>
+          <div class="plate" data-layer="profile" style="animation-delay:0.45s"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><polygon points="50,4 96,50 50,96 4,50" fill="#F0561E" stroke="none"/></svg></div>
         </div>
         <div class="os-legend"><a class="os-layer" data-layer="measurement" href="#demo" style="animation-delay:0.60s"><svg class="swatch" viewBox="0 0 33 72" width="11" height="24"><path d="M0 36 16.5 0 33 36 16.5 72Z" fill="none" stroke="#FFFFFF" stroke-width="3" opacity="0.36"/></svg><div><b>Measurement</b><span>What moved, and what did not</span></div></a><a class="os-layer" data-layer="execution" href="#stage-execution" style="animation-delay:0.48s"><svg class="swatch" viewBox="0 0 33 72" width="11" height="24"><path d="M0 36 16.5 0 33 36 16.5 72Z" fill="none" stroke="#FFFFFF" stroke-width="3" opacity="0.44"/></svg><div><b>Execution</b><span>Social, POS, onground, video, PR, sales enablers</span></div></a><a class="os-layer" data-layer="plan" href="#stage-plan" style="animation-delay:0.36s"><svg class="swatch" viewBox="0 0 33 72" width="11" height="24"><path d="M0 36 16.5 0 33 36 16.5 72Z" fill="none" stroke="#FFFFFF" stroke-width="3" opacity="0.6"/></svg><div><b>Plan</b><span>Media, geography and phasing</span></div></a><a class="os-layer" data-layer="strategy" href="#stage-house" style="animation-delay:0.24s"><svg class="swatch" viewBox="0 0 33 72" width="11" height="24"><path d="M0 36 16.5 0 33 36 16.5 72Z" fill="none" stroke="#FFFFFF" stroke-width="3" opacity="0.76"/></svg><div><b>Communication Strategy</b><span>Messaging house, idea platform, big idea</span></div></a><a class="os-layer" data-layer="foundations" href="#stage-brief" style="animation-delay:0.12s"><svg class="swatch" viewBox="0 0 33 72" width="11" height="24"><path d="M0 36 16.5 0 33 36 16.5 72Z" fill="none" stroke="#FFFFFF" stroke-width="3" opacity="0.92"/></svg><div><b>Brand Foundation</b><span>Brand framework — essence, segmentation, positioning and the brief</span></div></a><a class="os-layer" data-layer="profile" href="#stage-brief" style="animation-delay:0.00s"><svg class="swatch" viewBox="0 0 33 72" width="11" height="24"><path d="M0 36 16.5 0 33 36 16.5 72Z" fill="#F0561E" stroke="#FFFFFF" stroke-width="0" opacity="1"/></svg><div><b>Brand Profile</b><span>Ground truths, category and competition</span></div></a></div>
       </div>
@@ -411,7 +413,7 @@
           if (!n) return;
           var h = legend.getBoundingClientRect().height;
           if (!h) return;
-          var overlap = 0.5; // each plate overlaps the one above it by 50% of its own height
+          var overlap = 0.3; // matches the original diagram's own plate-height:overlap ratio (46:14)
           var p = h / (1 + (n - 1) * (1 - overlap));
           plates.forEach(function(pl, i){
             pl.style.height = p + 'px';
