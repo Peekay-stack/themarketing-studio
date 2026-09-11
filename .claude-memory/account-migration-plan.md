@@ -5,12 +5,19 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 2992e305-436f-4002-a763-1671cfdf2a8a
-  modified: 2026-09-08T06:18:13.673Z
+  modified: 2026-09-11T04:19:27.733Z
 ---
 
-**The account this session runs under expires around 2026-09-13.** The last 3-4 months of work on
-Heritage Marketing Studio must survive the switch to a new login. See [[studio-work-inventory]] for the
-product work itself — this file is the logistics of carrying it forward.
+**Correction (11 Sep):** the account does NOT expire 13 Sep — it renews **7–8 October 2026**. The
+urgency below was based on a wrong date; there is no fire-drill. The user still wants backups and
+memory kept current as ongoing good practice (not a deadline), and **the git repo now on GitHub
+(`Peekay-stack/themarketing-studio`) is an additional standing safety net** on top of the local zips —
+see [[beta-deploy-plan]]. The Claude Design workspace question (§3 below) is still worth checking at
+some point since it doesn't travel via git, just not urgently.
+
+~~The account this session runs under expires around 2026-09-13.~~ The last 3-4 months of work on
+Heritage Marketing Studio must survive any eventual switch to a new login. See [[studio-work-inventory]]
+for the product work itself — this file is the logistics of carrying it forward.
 
 **Why this matters for continuity:** a fresh session (new process, possibly after the account already
 switched) should know a migration is in flight and what's done vs. pending, rather than treating "carry
@@ -65,10 +72,10 @@ unverified; the third is the real open risk.
   - The running uvicorn preview had to be stopped first — `heritage.db` (SQLite) was locked and failed
     the first attempt.
 
-### Pending — Fri 2026-09-11 (final pre-migration step), user runs these
+### Routine backup cadence (not a deadline — good habit, per the user)
 
-The 2026-09-06 zips are a same-day safety net; the **Friday pair is what actually moves** to the new
-account/machine. Steps, in order:
+No hard date now that the renewal is 7-8 Oct, not 13 Sep. Re-run this pass periodically (e.g. after a
+meaningful round of work) rather than as a one-time pre-migration step. Steps, in order:
 
 1. **Stop the studio preview server first** (uvicorn on port 8000/8020 etc.) — the SQLite `heritage.db`
    lock will otherwise fail the filesystem zip, same as on the 6th. Do NOT let Claude kill an arbitrary
