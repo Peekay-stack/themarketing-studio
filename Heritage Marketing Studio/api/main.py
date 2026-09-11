@@ -2780,7 +2780,7 @@ def project_suggest(house: str = "", plan: str = ""):
 
 
 @app.get("/brand-fields")
-def brand_fields(brand: str = "", house: str = "", brief: str = ""):
+def brand_fields(brand: str = "", house: str = "", brief: str = "", new: bool = False):
     """The brand-profile form, as data. `{spec, fields, core, derivable, ready, summary, …}`.
 
     The Studio Settings form is rendered from `spec` rather than hardcoded, so adding a field is a backend
@@ -2804,10 +2804,16 @@ def brand_fields(brand: str = "", house: str = "", brief: str = ""):
     # saying "0 of 5" on a brand with two of the five already answered — while the card that sent you
     # there said "2 of 5". Falling back to the active profile matters as much: a name that matches nothing
     # should not silently become no brand at all.
+    #
+    # `new=true` is the one caller that must NOT get that fallback — the "add a brand" flow asks for a
+    # blank form on purpose, and resolving it onto the active brand instead is exactly the bug this
+    # session traced: typing a new brand's name here quietly kept showing the old brand's data because
+    # nothing named that yet existed to match.
     b = None
-    if brand:
-        b = brandprofile.load(brand) or brandprofile.by_name(brand)
-    b = b or brandprofile.resolve()
+    if not new:
+        if brand:
+            b = brandprofile.load(brand) or brandprofile.by_name(brand)
+        b = b or brandprofile.resolve()
     h = strategy.load(house) if house else None
     br = briefstore.load(brief) if brief else None
     if not h:
@@ -2846,7 +2852,15 @@ def brand_fields_save(payload: dict):
             return JSONResponse(status_code=400, content={
                 "detail": "No brand to save against. Give a name, or create the brand first."})
         bid = active["id"]
+    # A genuinely new brand — no id was bound and no existing profile answers to this name — becomes the
+    # active one the moment it is saved. Without this, creating a second brand would save it correctly
+    # but leave the studio (and every screen reading the active profile) still pointed at the old one,
+    # which looks exactly like the save silently failed.
+    is_new = (not bid and bool(str(data.get("name") or "").strip())
+              and not brandprofile.by_name(str(data.get("name") or "")))
     b = brandprofile.put(data, bid)
+    if is_new:
+        b = brandprofile.set_active(b["id"]) or b
     # `setup` on the save response too, so the form can redraw its own groups without a second call.
     # A save that returns a different shape from the GET is a form that has to guess what changed.
     return {"brand": b, "voice": brandprofile.voice_block(b), "brands": _brand_rows(),
