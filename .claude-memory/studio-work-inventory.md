@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 5e956381-ce19-4f83-93e1-71a73ced8b2b
-  modified: 2026-09-07T05:33:37.025Z
+  modified: 2026-09-11T15:57:36.211Z
 ---
 
 **The one list.** Supersedes the separate user-testing note. Status verified against the code on
@@ -2968,3 +2968,45 @@ only after the authorised login" + "a page which opens up once you have opened t
   `/docs`/`/redoc`/`/openapi.json` left public (dev convenience, exposes route shapes not tenant data) —
   a judgment call, not a settled decision — worth a second look before any real production deploy.
 - `py_compile` clean on `main.py`. `app.dc.html` untouched this round (no `checkfe.py` needed).
+
+## Round 93 (11 Sep 2026) — client-name staleness fully closed; Ground Truth found brand-blind; the brand-grounding-modes project (Stages 1-4 of 5)
+
+Full detail, plan, and testing checklist in [[brand-grounding-modes-project]] and the repo's own
+`BRAND_GROUNDING_MODES_PLAN.md` — this entry is the pointer + the parts that belong in the main
+inventory.
+
+**Part 1 — closed the client-name-override thread from ASK_DESIGN_65's merge.** The header chip's
+Studio Settings name-override field (`studio.clientName`) outranked the real active brand everywhere
+it was read — including `brandName()`'s 8 write paths (PR sheets, brief-save, IMC save), not just
+display — and nothing ever cleared it on a real brand switch, so it went stale the moment you picked a
+different brand. Fixed in `switchBrand`/the new-brand-save path: clears `clientName`, re-fetches
+`bfReady` (was also going stale — caught LIVE mid-testing when a switch's readiness numbers still
+showed the previous brand's real counts, correctly labeled "this brand"), clears leftover `bfVoice`.
+`loadBrandFields`'s existing-brand query stopped using `clientName` as the brand selector entirely (it
+should never have been one) — uses the real active brand via `activeBrand()` now. All fixed states
+verified live via the actual header-chip UI, not just endpoint tests.
+
+**Part 2 — asked "could there be more Heritage remnants," found Ground Truth is architecturally
+brand-blind.** `library.py` (pack shots, logos, cast frames, locked copy/claims) had no `brand` field
+on any item at all; `learning.py` (approved-work retrieval, corrections/house-rules) was tenant-scoped
+only despite its own `GUARDRAILS` text literally claiming brand-scoping. In a 5-brand tenant (this
+account now has Heritage/Kumkum/Loomwell/Parle G/Sthir), a signed-off asset or a logged correction for
+ONE brand was silently available to every brand's generation — worse than the resolve()-fallback bug
+class, because it affects reference IMAGES baked into finished creative, not just text.
+
+**Part 3 — the brand-grounding-modes project**, user's own design call after being asked directly:
+default Grounded everywhere, General an explicit per-tab opt-in, independently changeable, defaults
+cascade from upstream documents but never lock. Stages 1 (Ground Truth scoping), 2 (Brief), 3
+(Strategy/House) all built AND live-verified this session. Stage 4 (Producers — the `/complete`
+chokepoint + image generation) built and compile-verified; **live testing explicitly deferred to
+12 Sep morning at the user's own instruction** — this is the one piece not yet clicked through in a
+browser. Stage 5 (Plan) not started. See the dedicated memory for the full build log, what's left, and
+tomorrow's testing checklist.
+
+Caught two real incidents mid-build, both worth remembering as general lessons: (1) `library.items()`'s
+`brand=""` silently means "don't filter," not "brand-agnostic only" — a General-mode caller passing an
+empty brand would have reproduced the exact bug this project exists to close; fixed via a sentinel
+value that still correctly admits genuinely untagged items. (2) One edit corrupted `main.py` with two
+literal NULL bytes (a plain-looking string literal, cause unclear) — caught immediately because
+`py_compile` was run right after, not batched to the end. Both are argument for the same habit:
+compile-check (or byte-scan) after any edit with an unusual literal, immediately, not later.
