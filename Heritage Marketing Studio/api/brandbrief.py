@@ -134,10 +134,16 @@ def _focal_profile(payload: dict) -> dict:
     The matrix used to state "Purity-led strength" for whatever brand it was building — dairy language
     left in place when the studio became multi-category. Anything the profile does not hold comes back
     empty and prints as "not stated", which is the honest cell.
+
+    Deliberately `by_name` only, never `resolve()`. `resolve()` exists for GROUNDING and falls back to
+    whichever brand is active when the name matches nothing — right for "what should the model assume",
+    catastrophic here: a brief for a brand with no profile yet would silently print the ACTIVE brand's
+    positioning and hero product as if they belonged to the one being briefed. A brand-new brand with no
+    profile has nothing here yet, and "not stated" is the honest cell for that, not another brand's data.
     """
     try:
         import brandprofile
-        b = brandprofile.by_name(str(payload.get("brand") or "")) or brandprofile.resolve() or {}
+        b = brandprofile.by_name(str(payload.get("brand") or "")) or {}
     except Exception:
         b = {}
     return {"positioning": b.get("positioning", ""), "hero_product": b.get("hero_product", ""),
