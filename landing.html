@@ -94,23 +94,34 @@
     padding: 9px 20px; font-size: 13.5px; font-weight: 700; text-decoration: none; background: transparent;
   }
 
-  .hero-visual { position: relative; height: 363px; z-index: 1; display: flex; align-items: center; gap: 26px; }
-  .os-legend { display: flex; flex-direction: column; justify-content: space-between; height: 309px; }
-  .os-layer { display: flex; align-items: center; gap: 12px; text-decoration: none; padding: 6px 8px; border-radius: 10px; transition: background .15s ease; }
-  .os-layer:hover { background: rgba(255,255,255,.06); }
-  .os-plate { animation: os-rise .7s cubic-bezier(.16,1,.3,1) backwards; transform-origin: center; }
-  .os-plate path, .os-layer { transition: opacity .3s ease, filter .3s ease, background .2s ease; }
+  .hero-visual { position: relative; height: auto; z-index: 1; display: flex; align-items: stretch; gap: clamp(14px, 3vw, 26px); }
+  .os-stack { flex: 0 0 clamp(104px, 30%, 300px); display: flex; flex-direction: column; justify-content: center; min-width: 0; }
+  .os-stack .plate {
+    flex: 1 1 0; margin-top: -4%; position: relative;
+    clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+    background: rgba(255,255,255,.08);
+    animation: os-rise .7s cubic-bezier(.16,1,.3,1) backwards;
+    transition: opacity .3s ease, background .3s ease, filter .3s ease;
+  }
+  .os-stack .plate:first-child { margin-top: 0; }
+  .os-stack .plate:nth-child(2) { background: rgba(255,255,255,.10); }
+  .os-stack .plate:nth-child(3) { background: rgba(255,255,255,.13); }
+  .os-stack .plate:nth-child(4) { background: rgba(255,255,255,.17); }
+  .os-stack .plate:nth-child(5) { background: rgba(255,255,255,.22); }
+  .os-stack .plate:nth-child(6) { background: rgba(240,86,30,.55); }
+  .os-stack .plate.os-active { background: rgba(240,86,30,.4); filter: drop-shadow(0 0 9px rgba(240,86,30,.6)); }
+  .os-stack .plate.os-dim { opacity: .3; }
   @keyframes os-rise { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-  .os-plate.os-active path { opacity: 1 !important; filter: drop-shadow(0 0 9px rgba(240,86,30,.6)); stroke-width: 4 !important; }
-  .os-plate.os-dim path { opacity: .14 !important; }
-  .os-layer { animation: os-rise .7s cubic-bezier(.16,1,.3,1) backwards; }
+  .os-legend { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: space-between; gap: clamp(4px, 1.2vw, 10px); height: auto; }
+  .os-layer { display: flex; align-items: center; gap: 12px; text-decoration: none; padding: 6px 8px; border-radius: 10px; transition: background .15s ease; animation: os-rise .7s cubic-bezier(.16,1,.3,1) backwards; }
+  .os-layer:hover { background: rgba(255,255,255,.06); }
   .os-layer.os-active { background: rgba(240,86,30,.10); }
   .os-layer.os-active b { color: #fff; }
   .os-layer.os-dim { opacity: .4; }
-  @media (prefers-reduced-motion: reduce) { .os-plate, .os-layer { animation: none; } }
+  @media (prefers-reduced-motion: reduce) { .os-stack .plate, .os-layer { animation: none; } }
   .os-layer .swatch { flex: none; }
-  .os-layer b { display: block; font-size: 12.5px; font-weight: 700; color: var(--ink); }
-  .os-layer span { display: block; font-size: 10.5px; color: var(--soft); line-height: 1.4; margin-top: 1px; max-width: 190px; }
+  .os-layer b { display: block; font-size: clamp(11px, 1.3vw, 12.5px); font-weight: 700; color: var(--ink); }
+  .os-layer span { display: block; font-size: clamp(9.5px, 1.1vw, 10.5px); color: var(--soft); line-height: 1.4; margin-top: 1px; max-width: none; }
   .hv-card {
     position: absolute; border-radius: 14px; box-shadow: var(--shadow); overflow: hidden;
     border: 1px solid var(--line); background: var(--surface); backdrop-filter: blur(14px);
@@ -212,9 +223,6 @@
     .hero { padding-top: 84px; }
     .price-grid { grid-template-columns: 1fr; }
     .producers-row { grid-template-columns: 1fr; }
-    .hero-visual { height: auto; flex-direction: column; align-items: flex-start; gap: 20px; }
-    .hero-visual svg[width="277"] { width: 190px; height: auto; }
-    .os-legend { height: auto; gap: 10px; width: 100%; }
     .stages { flex-direction: column; overflow-x: visible; }
     .stage { min-width: 0; padding: 0 0 14px; border-bottom: 1px solid var(--line-soft); }
     .stage:not(:last-child) .sn::after { display: none; }
@@ -263,6 +271,14 @@
     #demo .demo-q { margin-top: 12px; padding: 12px 14px; font-size: 12px; }
     #demo .demo-form { gap: 9px; padding: 16px; }
     #demo .demo-form input, #demo .demo-form textarea { padding: 8px 10px; }
+  }
+
+  /* ---------- narrow cards: glyph beside the text instead of above it ---------- */
+  @media (max-width: 900px) {
+    #refusal .uc-card { display: grid; grid-template-columns: 22px 1fr; column-gap: 14px; align-items: start; }
+    #refusal .uc-card > svg { grid-row: 1 / span 2; margin-bottom: 0; }
+    #refusal .uc-card > h4  { grid-column: 2; }
+    #refusal .uc-card > p   { grid-column: 2; }
   }
 </style>
 </head>
@@ -319,7 +335,14 @@
         </div>
       </div>
       <div class="hero-visual" aria-hidden="true">
-        <svg viewBox="0 0 190 212" width="277" height="309.05263157894734" aria-hidden="true"><g class="os-plate" data-layer="profile" style="animation-delay:0.00s"><path d="M95 166 L190 189 L95 212 L0 189 Z" fill="#F0561E" stroke="none" stroke-width="2.5" opacity="1"/></g><g class="os-plate" data-layer="foundations" style="animation-delay:0.12s"><path d="M95 134 L190 157 L95 180 L0 157 Z" fill="none" stroke="#FFFFFF" stroke-width="2.5" opacity="0.92"/></g><g class="os-plate" data-layer="strategy" style="animation-delay:0.24s"><path d="M95 102 L190 125 L95 148 L0 125 Z" fill="none" stroke="#FFFFFF" stroke-width="2.5" opacity="0.76"/></g><g class="os-plate" data-layer="plan" style="animation-delay:0.36s"><path d="M95 70 L190 93 L95 116 L0 93 Z" fill="none" stroke="#FFFFFF" stroke-width="2.5" opacity="0.6"/></g><g class="os-plate" data-layer="execution" style="animation-delay:0.48s"><path d="M95 38 L190 61 L95 84 L0 61 Z" fill="none" stroke="#FFFFFF" stroke-width="2.5" opacity="0.44"/></g><g class="os-plate" data-layer="measurement" style="animation-delay:0.60s"><path d="M95 6 L190 29 L95 52 L0 29 Z" fill="none" stroke="#FFFFFF" stroke-width="2.5" opacity="0.28"/></g></svg>
+        <div class="os-stack" aria-hidden="true">
+          <div class="plate" data-layer="measurement" style="animation-delay:0.00s"></div>
+          <div class="plate" data-layer="execution" style="animation-delay:0.09s"></div>
+          <div class="plate" data-layer="plan" style="animation-delay:0.18s"></div>
+          <div class="plate" data-layer="strategy" style="animation-delay:0.27s"></div>
+          <div class="plate" data-layer="foundations" style="animation-delay:0.36s"></div>
+          <div class="plate" data-layer="profile" style="animation-delay:0.45s"></div>
+        </div>
         <div class="os-legend"><a class="os-layer" data-layer="measurement" href="#demo" style="animation-delay:0.60s"><svg class="swatch" viewBox="0 0 33 72" width="11" height="24"><path d="M0 36 16.5 0 33 36 16.5 72Z" fill="none" stroke="#FFFFFF" stroke-width="3" opacity="0.36"/></svg><div><b>Measurement</b><span>What moved, and what did not</span></div></a><a class="os-layer" data-layer="execution" href="#stage-execution" style="animation-delay:0.48s"><svg class="swatch" viewBox="0 0 33 72" width="11" height="24"><path d="M0 36 16.5 0 33 36 16.5 72Z" fill="none" stroke="#FFFFFF" stroke-width="3" opacity="0.44"/></svg><div><b>Execution</b><span>Social, POS, onground, video, PR, sales enablers</span></div></a><a class="os-layer" data-layer="plan" href="#stage-plan" style="animation-delay:0.36s"><svg class="swatch" viewBox="0 0 33 72" width="11" height="24"><path d="M0 36 16.5 0 33 36 16.5 72Z" fill="none" stroke="#FFFFFF" stroke-width="3" opacity="0.6"/></svg><div><b>Plan</b><span>Media, geography and phasing</span></div></a><a class="os-layer" data-layer="strategy" href="#stage-house" style="animation-delay:0.24s"><svg class="swatch" viewBox="0 0 33 72" width="11" height="24"><path d="M0 36 16.5 0 33 36 16.5 72Z" fill="none" stroke="#FFFFFF" stroke-width="3" opacity="0.76"/></svg><div><b>Communication Strategy</b><span>Messaging house, idea platform, big idea</span></div></a><a class="os-layer" data-layer="foundations" href="#stage-brief" style="animation-delay:0.12s"><svg class="swatch" viewBox="0 0 33 72" width="11" height="24"><path d="M0 36 16.5 0 33 36 16.5 72Z" fill="none" stroke="#FFFFFF" stroke-width="3" opacity="0.92"/></svg><div><b>Brand Foundation</b><span>Brand framework — essence, segmentation, positioning and the brief</span></div></a><a class="os-layer" data-layer="profile" href="#stage-brief" style="animation-delay:0.00s"><svg class="swatch" viewBox="0 0 33 72" width="11" height="24"><path d="M0 36 16.5 0 33 36 16.5 72Z" fill="#F0561E" stroke="#FFFFFF" stroke-width="0" opacity="1"/></svg><div><b>Brand Profile</b><span>Ground truths, category and competition</span></div></a></div>
       </div>
     </div>
@@ -342,7 +365,14 @@
         </div>
       </div>
       <div class="hero-visual" aria-hidden="true">
-        <svg viewBox="0 0 190 212" width="277" height="309.05263157894734" aria-hidden="true"><g class="os-plate" data-layer="profile" style="animation-delay:0.00s"><path d="M95 166 L190 189 L95 212 L0 189 Z" fill="#F0561E" stroke="none" stroke-width="2.5" opacity="1"/></g><g class="os-plate" data-layer="foundations" style="animation-delay:0.12s"><path d="M95 134 L190 157 L95 180 L0 157 Z" fill="none" stroke="#FFFFFF" stroke-width="2.5" opacity="0.92"/></g><g class="os-plate" data-layer="strategy" style="animation-delay:0.24s"><path d="M95 102 L190 125 L95 148 L0 125 Z" fill="none" stroke="#FFFFFF" stroke-width="2.5" opacity="0.76"/></g><g class="os-plate" data-layer="plan" style="animation-delay:0.36s"><path d="M95 70 L190 93 L95 116 L0 93 Z" fill="none" stroke="#FFFFFF" stroke-width="2.5" opacity="0.6"/></g><g class="os-plate" data-layer="execution" style="animation-delay:0.48s"><path d="M95 38 L190 61 L95 84 L0 61 Z" fill="none" stroke="#FFFFFF" stroke-width="2.5" opacity="0.44"/></g><g class="os-plate" data-layer="measurement" style="animation-delay:0.60s"><path d="M95 6 L190 29 L95 52 L0 29 Z" fill="none" stroke="#FFFFFF" stroke-width="2.5" opacity="0.28"/></g></svg>
+        <div class="os-stack" aria-hidden="true">
+          <div class="plate" data-layer="measurement" style="animation-delay:0.00s"></div>
+          <div class="plate" data-layer="execution" style="animation-delay:0.09s"></div>
+          <div class="plate" data-layer="plan" style="animation-delay:0.18s"></div>
+          <div class="plate" data-layer="strategy" style="animation-delay:0.27s"></div>
+          <div class="plate" data-layer="foundations" style="animation-delay:0.36s"></div>
+          <div class="plate" data-layer="profile" style="animation-delay:0.45s"></div>
+        </div>
         <div class="os-legend"><a class="os-layer" data-layer="measurement" href="#demo" style="animation-delay:0.60s"><svg class="swatch" viewBox="0 0 33 72" width="11" height="24"><path d="M0 36 16.5 0 33 36 16.5 72Z" fill="none" stroke="#FFFFFF" stroke-width="3" opacity="0.36"/></svg><div><b>Measurement</b><span>What moved, and what did not</span></div></a><a class="os-layer" data-layer="execution" href="#stage-execution" style="animation-delay:0.48s"><svg class="swatch" viewBox="0 0 33 72" width="11" height="24"><path d="M0 36 16.5 0 33 36 16.5 72Z" fill="none" stroke="#FFFFFF" stroke-width="3" opacity="0.44"/></svg><div><b>Execution</b><span>Social, POS, onground, video, PR, sales enablers</span></div></a><a class="os-layer" data-layer="plan" href="#stage-plan" style="animation-delay:0.36s"><svg class="swatch" viewBox="0 0 33 72" width="11" height="24"><path d="M0 36 16.5 0 33 36 16.5 72Z" fill="none" stroke="#FFFFFF" stroke-width="3" opacity="0.6"/></svg><div><b>Plan</b><span>Media, geography and phasing</span></div></a><a class="os-layer" data-layer="strategy" href="#stage-house" style="animation-delay:0.24s"><svg class="swatch" viewBox="0 0 33 72" width="11" height="24"><path d="M0 36 16.5 0 33 36 16.5 72Z" fill="none" stroke="#FFFFFF" stroke-width="3" opacity="0.76"/></svg><div><b>Communication Strategy</b><span>Messaging house, idea platform, big idea</span></div></a><a class="os-layer" data-layer="foundations" href="#stage-brief" style="animation-delay:0.12s"><svg class="swatch" viewBox="0 0 33 72" width="11" height="24"><path d="M0 36 16.5 0 33 36 16.5 72Z" fill="none" stroke="#FFFFFF" stroke-width="3" opacity="0.92"/></svg><div><b>Brand Foundation</b><span>Brand framework — essence, segmentation, positioning and the brief</span></div></a><a class="os-layer" data-layer="profile" href="#stage-brief" style="animation-delay:0.00s"><svg class="swatch" viewBox="0 0 33 72" width="11" height="24"><path d="M0 36 16.5 0 33 36 16.5 72Z" fill="#F0561E" stroke="#FFFFFF" stroke-width="0" opacity="1"/></svg><div><b>Brand Profile</b><span>Ground truths, category and competition</span></div></a></div>
       </div>
     </div>
@@ -353,7 +383,7 @@
         document.querySelectorAll('.hero-visual').forEach(function(block){
           var idx = 0, timer;
           function setActive(key){
-            block.querySelectorAll('.os-plate,.os-layer').forEach(function(el){
+            block.querySelectorAll('.plate,.os-layer').forEach(function(el){
               var on = el.getAttribute('data-layer') === key;
               el.classList.toggle('os-active', on);
               el.classList.toggle('os-dim', !on);
