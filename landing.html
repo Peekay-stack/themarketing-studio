@@ -97,11 +97,11 @@
   .hero-visual { position: relative; height: auto; z-index: 1; display: flex; align-items: stretch; gap: clamp(14px, 3vw, 26px); }
   .os-stack { flex: 0 0 clamp(104px, 30%, 300px); display: flex; flex-direction: column; justify-content: center; min-width: 0; }
   .os-stack .plate {
-    flex: 1 1 0; margin-top: -4%; position: relative;
+    flex: 0 0 auto; margin-top: 0; position: relative;
     clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
     background: rgba(255,255,255,.08);
     animation: os-rise .7s cubic-bezier(.16,1,.3,1) backwards;
-    transition: opacity .3s ease, background .3s ease, filter .3s ease;
+    transition: opacity .3s ease, background .3s ease, filter .3s ease, height .25s ease, margin-top .25s ease;
   }
   .os-stack .plate:first-child { margin-top: 0; }
   .os-stack .plate:nth-child(2) { background: rgba(255,255,255,.10); }
@@ -354,10 +354,10 @@
       <div>
         <div class="eyebrow"><svg class="diam" viewBox="0 0 33 72" aria-hidden="true"><path d="M0 36 16.5 0 33 36 16.5 72Z" fill="none" stroke="#F0561E" stroke-width="6"/></svg><span class="dot"></span>THE FMCG METHOD, WITHOUT THE TWENTY YEARS</div>
         <h2 class="display">One <span class="hl">decided</span> idea, carried into everything you make.</h2>
-        <p class="lede">Harnessing the real power of AI — guided by time-tested marketing principles, and adding
+        <p class="lede">Harnessing the real power of AI — guided by time-tested marketing principles and adding
           the right dash of AI when needed. A strategy brief becomes a messaging house, becomes an idea
-          platform, becomes social posts, POS material, onground activations, film, PR statements and
-          sales enablement — each one grounded in what was actually decided upstream, never a fresh
+          platform, becomes social posts, POS material, on-ground activations, film, PR statements and
+          sales enablement ideas — each one grounded in what was actually decided upstream, never a fresh
           guess.</p>
         <div class="hero-actions">
           <a class="cta-btn" href="#demo">Book a demo</a>
@@ -400,6 +400,34 @@
         });
       })();
     </script>
+    <script>
+      (function(){
+        function syncPlates(block){
+          var stack = block.querySelector('.os-stack');
+          var legend = block.querySelector('.os-legend');
+          if (!stack || !legend) return;
+          var plates = stack.querySelectorAll('.plate');
+          var n = plates.length;
+          if (!n) return;
+          var h = legend.getBoundingClientRect().height;
+          if (!h) return;
+          var overlap = 0.5; // each plate overlaps the one above it by 50% of its own height
+          var p = h / (1 + (n - 1) * (1 - overlap));
+          plates.forEach(function(pl, i){
+            pl.style.height = p + 'px';
+            pl.style.marginTop = i === 0 ? '0px' : (-(p * overlap)) + 'px';
+          });
+        }
+        function syncAll(){ document.querySelectorAll('.hero-visual').forEach(syncPlates); }
+        syncAll();
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(syncAll);
+        var resizeTimer;
+        window.addEventListener('resize', function(){
+          clearTimeout(resizeTimer);
+          resizeTimer = setTimeout(syncAll, 120);
+        });
+      })();
+    </script>
   </section>
 
 
@@ -410,7 +438,7 @@
       <div class="shead" style="max-width:680px;">
         <div class="eyebrow"><svg class="diam" viewBox="0 0 33 72" aria-hidden="true"><path d="M0 36 16.5 0 33 36 16.5 72Z" fill="none" stroke="#F0561E" stroke-width="6"/></svg><span class="dot"></span>THE HUMAN GATE</div>
         <h2><span class="hl">AI for creativity.</span> Never for numbers.</h2>
-        <p>It generates the work — not the evidence behind it, and never without your sign-off.</p>
+        <p>It generates the work — not the evidence behind it and never without your sign-off.</p>
       </div>
       <div class="uc-grid">
         <div class="uc-card reveal" style="padding:22px 20px;">
@@ -452,7 +480,7 @@
       <div class="producers-row">
         <div class="producer reveal" style="background:linear-gradient(135deg,#17325E,#2E5EA6);"><div class="pc-t">Social studio</div><div class="pc-d">FB / Instagram / LinkedIn, adapted per platform</div></div>
         <div class="producer reveal" style="background:linear-gradient(135deg,#B8441C,#F0561E);"><div class="pc-t">POS material</div><div class="pc-d">One key visual, 30+ formats re-flowed</div></div>
-        <div class="producer reveal" style="background:linear-gradient(135deg,#17325E,#2E5EA6);"><div class="pc-t">Onground</div><div class="pc-d">Venue-aware ideas, a real capture mechanism</div></div>
+        <div class="producer reveal" style="background:linear-gradient(135deg,#17325E,#2E5EA6);"><div class="pc-t">On-ground</div><div class="pc-d">Venue-aware ideas, a real capture mechanism</div></div>
         <div class="producer reveal" style="background:linear-gradient(135deg,#B8441C,#F0561E);"><div class="pc-t">Video studio</div><div class="pc-d">Logline to shoot board, ready to film</div></div>
         <div class="producer reveal" style="background:linear-gradient(135deg,#17325E,#2E5EA6);"><div class="pc-t">PR</div><div class="pc-d">Releases and statements, on the same idea</div></div>
         <div class="producer reveal" style="background:linear-gradient(135deg,#B8441C,#F0561E);"><div class="pc-t">Sales enablers</div><div class="pc-d">Trade decks and pitch material, brief to close</div></div>
