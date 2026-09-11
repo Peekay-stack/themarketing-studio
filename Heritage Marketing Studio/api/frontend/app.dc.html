@@ -227,6 +227,7 @@
             </div>
           </sc-for>
         </div>
+        <div onClick="{{ openNewBrandForm }}" style="cursor:pointer; display:flex; align-items:center; gap:10px; padding:12px 15px; margin-top:9px; border:1px dashed #B9C4D6; border-radius:13px; color:#2E5EA6; font-weight:700; font-size:13px;"><span style="width:32px; height:32px; border-radius:9px; background:#EEF1F5; display:flex; align-items:center; justify-content:center; font-size:17px; flex:none;">+</span>Create new brand</div>
         <div style="display:flex; align-items:center; gap:12px; margin-top:16px;">
           <span onClick="{{ openSettings }}" style="cursor:pointer; font-size:12.5px; font-weight:700; color:#2E5EA6;">Studio settings →</span>
           <span onClick="{{ closeBrandMenu }}" style="cursor:pointer; margin-left:auto; font-size:12.5px; font-weight:700; color:#6B7280;">Close</span>
@@ -265,6 +266,7 @@
              says. -->
         <div style="font-size:11px; font-weight:700; letter-spacing:0.07em; text-transform:uppercase; color:#6B7280; margin-bottom:9px;">Brand profile</div>
         <div style="font-size:12.5px; color:#41505F; line-height:1.55; margin-bottom:11px; text-wrap:pretty;">{{ brandSwitchNote }}</div>
+        <div onClick="{{ openNewBrandForm }}" style="cursor:pointer; display:flex; align-items:center; gap:10px; background:#fff; border:1px dashed #B9C4D6; border-radius:11px; padding:11px 13px; margin-bottom:10px; color:#2E5EA6; font-weight:700; font-size:13px;"><span style="width:22px; height:22px; border-radius:7px; background:#EEF1F5; display:flex; align-items:center; justify-content:center; font-size:15px; flex:none;">+</span>Create new brand</div>
         <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:10px;">
           <sc-for list="{{ brandRows }}" as="sb" hint-placeholder-count="4">
             <div onClick="{{ sb.pick }}" style="cursor:pointer; display:flex; align-items:center; gap:11px; background:{{ sb.rowBg }}; border:1px solid {{ sb.rowLine }}; border-radius:11px; padding:11px 13px;">
@@ -290,7 +292,7 @@
 
         <div style="font-size:11px; font-weight:700; letter-spacing:0.07em; text-transform:uppercase; color:#6B7280; margin-bottom:9px;">Brand name</div>
         <input value="{{ studioClientName }}" onChange="{{ onClientName }}" placeholder="{{ clientName }}" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:10px; padding:11px 13px; font-size:14px; color:#17325E; background:#fff; font-family:inherit; margin-bottom:8px;" />
-        <div style="font-size:12px; color:#6B7280; margin-bottom:24px;">Leave blank to follow the brand on the open IMC brief.</div>
+        <div style="font-size:12px; color:#6B7280; margin-bottom:24px;">Only relabels the studio for this session — it does not create or edit a brand profile. Use "+ Create new brand" above to add one.</div>
 
         <div style="font-size:11px; font-weight:700; letter-spacing:0.07em; text-transform:uppercase; color:#6B7280; margin-bottom:9px;">Brand logo</div>
         <div style="background:#fff; border:1px solid #DDD9D1; border-radius:12px; padding:16px; margin-bottom:10px; display:flex; align-items:center; gap:14px; min-height:62px;">
@@ -11376,6 +11378,10 @@ class Component extends DCLogic {
     const list = r.data && (Array.isArray(r.data) ? r.data : r.data.brands);
     if (list) this.setState({ brands:list });
     else this.setState(s => ({ brands: (s.brands||[]).map(x => ({ ...x, active: x.id === id })) }));
+    // The brand-profile form's draft belongs to whichever brand it was opened for. Left alone, its
+    // seed-once merge would show this brand's old values under the newly-active one the next time the
+    // form is opened — reset it so a reopen is a genuine reload, not a stale echo.
+    this.setState({ bf:null, bfVals:{}, bfCoreFramework:'', bfCoreEssence:'', bfCoreLayers:{}, bfCoreBoundaries:'', bfCoreOpen:false });
     this.setState({ brandMenuOpen:false, brandVoiceOpen:null, briefs:[], briefsState:'idle' });
     // The brief library belongs to the brand, so it is re-read rather than left showing the last one's.
     this.loadBriefs();
@@ -12572,6 +12578,7 @@ class Component extends DCLogic {
       brandChipTitle: ((active && active.name) || this.brandLabel()) + ' — ' + ((active && active.category) || 'no brand profile loaded'),
       brandChipInitial: (((active && active.name) || '?').trim().charAt(0) || '?').toUpperCase(),
       brandChipCaret: s.brandMenuOpen ? '▴' : '▾',
+      openNewBrandForm: this.openNewBrandForm,
       brandSwitchNote: rows.length
         ? 'Exactly one brand is active. Everything the studio drafts is grounded in its profile, so switching changes every output that follows.'
         : 'No brand profiles on the server yet.',
@@ -19866,27 +19873,57 @@ class Component extends DCLogic {
   // ================= BRAND PROFILE: rendered from the server's spec =================
   // 23 fields today, and the number is the server's business. Nothing here hardcodes a field, a label
   // or an order — a spec entry that appears on the backend appears on this screen untouched.
-  openBrandForm = () => { this.setState({ screen:'brandform', settingsOpen:false }); window.scrollTo(0,0);
+  openBrandForm = () => { this.setState({ screen:'brandform', settingsOpen:false, bfIsNew:false }); window.scrollTo(0,0);
     this.loadBrandFields(); };
   closeBrandForm = () => { this.setState({ screen:'home' }); window.scrollTo(0,0); };
+  // A brand-new profile, never seeded from whichever brand happens to be active — that is the bug this
+  // whole flow exists to fix. The blank server response (`?new=true`) is the only thing allowed to fill
+  // it. NOT even the name is pre-filled from Studio Settings' client-name override: that field is a
+  // session-dressing label, not necessarily this brand's name, and a stale value sitting in it (e.g.
+  // still reading a previous brand) would silently upsert onto THAT brand's real profile the moment
+  // this form is saved without the field being noticed and cleared first — the exact accident this whole
+  // flow exists to prevent, just relocated. Every new brand starts with a name the person typed here,
+  // never one inherited from elsewhere.
+  openNewBrandForm = () => {
+    this.setState({
+      screen:'brandform', settingsOpen:false, brandMenuOpen:false,
+      bf:null, bfVals: {},
+      bfVoice:'', bfCoreFramework:'', bfCoreEssence:'', bfCoreLayers:{},
+      bfCoreBoundaries:'', bfCoreOpen:false, bfIsNew:true,
+    });
+    window.scrollTo(0, 0);
+    this.loadBrandFields(true);
+  };
 
-  async loadBrandFields(){
-    const st = this.state.studio || {};
-    const h = this.state.house, b = this.state.linkedBrief;
-    const q = [];
-    if (st.clientName) q.push('brand=' + encodeURIComponent(st.clientName));
-    if (h && h.id) q.push('house=' + encodeURIComponent(h.id));
-    if (b && b.id) q.push('brief=' + encodeURIComponent(b.id));
-    const d = await this.apiGet('/brand-fields' + (q.length ? '?' + q.join('&') : ''));
+  async loadBrandFields(isNew){
+    let d;
+    if (isNew) {
+      // Guaranteed blank — never falls back to whatever is currently active.
+      d = await this.apiGet('/brand-fields?new=true');
+    } else {
+      const st = this.state.studio || {};
+      const h = this.state.house, b = this.state.linkedBrief;
+      const q = [];
+      if (st.clientName) q.push('brand=' + encodeURIComponent(st.clientName));
+      if (h && h.id) q.push('house=' + encodeURIComponent(h.id));
+      if (b && b.id) q.push('brief=' + encodeURIComponent(b.id));
+      d = await this.apiGet('/brand-fields' + (q.length ? '?' + q.join('&') : ''));
+    }
     if (!d) { this.setState({ bfLoaded:true }); return; }
     // The server's values seed the draft once. After that the draft is the person's, so a reload does
     // not quietly overwrite something half-typed.
     const vals = {};
     (d.fields || []).forEach(f => { if (f.value !== undefined && f.value !== null) vals[f.key] = f.value; });
-    this.setState(s => ({ bfLoaded:true, bf:d, bfVals: { ...vals, ...(s.bf ? (s.bfVals||{}) : {}) },
+    this.setState(s => ({ bfLoaded:true, bf:d,
+      bfVals: isNew
+        // A genuinely new form: seed from the blank response only, keeping the name pre-filled by
+        // openNewBrandForm if the response itself didn't override it.
+        ? { ...vals, ...((!vals.name && s.bfVals && s.bfVals.name) ? { name: s.bfVals.name } : {}) }
+        : { ...vals, ...(s.bf ? (s.bfVals||{}) : {}) },
       bfVoice: d.voice || '',
-      // brand_core seeds once, same rule as bfVals — a reload never overwrites a half-typed draft.
-      ...(!s.bf && d.brand_core ? {
+      // brand_core seeds once for an existing brand (never overwrite a half-typed draft), always for a
+      // new one (there is nothing to protect).
+      ...((isNew || !s.bf) && d.brand_core ? {
         bfCoreFramework: d.brand_core.framework || '',
         bfCoreEssence: d.brand_core.essence || '',
         bfCoreLayers: Object.fromEntries((d.brand_core.layers||[]).map(l=>[l.key, l.value||''])),
@@ -19958,11 +19995,23 @@ class Component extends DCLogic {
       layers: this.state.bfCoreLayers || {},
       boundaries: (this.state.bfCoreBoundaries || '').split('\n').map(x => x.trim()).filter(Boolean),
     };
+    const wasNew = !!this.state.bfIsNew;
     this.setState({ bfSaving:true });
     const r = await this.apiCall('/brand-fields', body);
     this.setState({ bfSaving:false });
     if (!r.ok) { this.showToast((r.data && r.data.detail) || 'The server would not take that profile.'); return; }
     const d = r.data || {};
+    if (wasNew) {
+      // The backend makes the newly-created profile active with no extra call needed — this just has to
+      // catch up the header chip and Studio Settings, which read from `brands`, not from `bf`.
+      this.setState({ screen:'home', bfIsNew:false });
+      window.scrollTo(0, 0);
+      this.loadBrands();
+      this.loadBriefs();
+      this.syncBrandLogo();
+      this.showToast('Now working on ' + (body.name || 'that brand') + ' \u2014 every generator is grounded in its profile.', 'ok');
+      return;
+    }
     this.setState(s => ({ bf: { ...(s.bf||{}), ...d }, bfVoice: d.voice || '', bfDirty:false,
       ...(d.brand_core ? {
         bfCoreFramework: d.brand_core.framework || '',
