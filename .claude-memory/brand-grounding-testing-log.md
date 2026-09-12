@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: d3a25b08-5f19-478b-bc7e-ff283771328e
-  modified: 2026-09-12T06:39:43.003Z
+  modified: 2026-09-12T06:54:34.807Z
 ---
 
 **File**: `Heritage Marketing Studio/BRAND_GROUNDING_TESTING_LOG.md` (repo root of the studio project).
@@ -25,7 +25,9 @@ round on it), after fixing it:
    build plan) and [[brand-grounding-modes-project]] (the build-status memory). Don't fold one into
    the other.
 
-Two rounds logged so far as of 12 Sep: Round 1 (toggle not reaching the IMC skill's own drafting path
-— `brief_ai.py`'s brand-invention fallback; General→Independent rename) and Round 2 (collapsed four
+Three rounds logged so far as of 12 Sep: Round 1 (toggle not reaching the IMC skill's own drafting
+path — `brief_ai.py`'s brand-invention fallback; General→Independent rename); Round 2 (collapsed four
 separate per-tab toggles into one master toggle after live testing showed two disagreeing pills read
-as broken; added an "Independent work" row to the header's brand dropdown).
+as broken; added an "Independent work" row to the header's brand dropdown); Round 3 (Grounded mode
+never auto-filled the IMC screen's Brand/Category fields from the active profile — fixed on screen
+entry, on switching back to Grounded, and on switching to a different active brand).
