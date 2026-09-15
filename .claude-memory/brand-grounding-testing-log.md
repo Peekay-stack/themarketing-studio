@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: d3a25b08-5f19-478b-bc7e-ff283771328e
-  modified: 2026-09-15T05:35:48.094Z
+  modified: 2026-09-15T06:01:55.686Z
 ---
 
 **File**: `Heritage Marketing Studio/BRAND_GROUNDING_TESTING_LOG.md` (repo root of the studio project).
@@ -39,5 +39,8 @@ those open an already-decided document and `pickBrief` doesn't. Both live-verifi
 test brief, created then deleted); Round 5 (user asked for an audit of the other producers, then a
 one-pass fix + "default on all tabs, sub tabs and layers" — Round 4's stale-draft bug turned out to be
 the studio's default shape, present in Social, Carousel, Video, POSM, Onground, PR's release tool, the
-Idea Platform and the guided Brief Builder; fixed in one pass, catching and fixing a self-inflicted
-regression along the way — see [[brand-grounding-modes-project]] for the full account).
+Idea Platform and the guided Brief Builder; fixed in one pass, then live-tested surface by surface
+across several follow-up requests, catching two self-inflicted regressions along the way where a
+blind reset would have deleted real content instead of just AI output — one on Onground's typed
+activation idea, one on an actual *adopted* Idea Platform record (a saved document, not a draft) — see
+[[brand-grounding-modes-project]] for the full account).

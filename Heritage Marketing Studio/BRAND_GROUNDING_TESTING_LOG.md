@@ -304,3 +304,42 @@ to end with a real generation call: Social, Carousel, Video, POSM, Onground, PR-
 Brief Builder. The Idea Platform is fixed with the same reviewed, field-by-field pattern and passed
 static checks, but was not itself separately exercised with a live generation call in this round —
 noted so it's not overstated as proven.
+
+---
+
+## Round 5, continued — Idea Platform live-tested on request
+
+**Request:** "Live-test the Idea Platform too."
+
+**A second, more serious version of the og.idea mistake, caught before testing did any damage:**
+opening the real Idea Platform screen to test it landed on an actual production-like record — "The
+Head Start", a fully **adopted** platform (name, line, two test verdicts, five language translations,
+seven activation-idea drafts across the producers). Adopting a platform calls `adoptIdea()` →
+`POST /idea-platform` and gets back a real server id — which makes it a saved document, the same tier
+as House/Plan/Campaign, not an in-progress client draft the way `im.draft` is. The fix as shipped in
+the first Round 5 pass would have wiped this adopted platform's `line` and `name` — the actual decided
+creative work seven other drafts point back to — the instant anyone touched the toggle, with no
+warning and no way back, on real data, not a disposable test fixture. This is worse than the og.idea
+regression: that one lost an in-progress creative brief nobody had committed to; this one would have
+lost a decision already built on.
+
+**Fixed before any toggle was tested against it:** `idea` now checks `curIdea.adopted` first — an
+adopted platform is left completely untouched (same treatment as `state.campaign`, House and Plan);
+only an unadopted, still-in-review draft gets the field-by-field clear.
+
+**Live-verified:** read "The Head Start"'s name and line, switched Grounded → Independent, re-read
+them — byte-identical, `adopted` still true. Deliberately did not push further into generating fresh
+content against this same real record (a "Redraft from these sources" call would have added genuine
+candidate options to production-like data for no proportionate benefit once the critical case was
+proven safe). Tried to reach a disposable, never-adopted platform to also re-confirm the ordinary
+clearing path live — opened a different, undecided house ("0 of 8 layers decided") expecting an empty
+platform, but the Idea Platform turned out not to be house-scoped on the frontend (`state.idea` is one
+global slot, not nested per house/plan id — a pre-existing fact about the data model, not something
+this round changed or needs to fix) — so the same adopted "Head Start" record reappeared there too, no
+disposable "fresh" state was reachable in this tenant this way. The unadopted-draft branch itself is
+unchanged from the first Round 5 pass and reuses the exact same conditional-clear pattern already
+live-proven on five other producers (Social, Video, POSM, Onground, Carousel) — code-reviewed and
+passing static checks, but not independently re-exercised live for this specific screen.
+
+**Validated:** `tools/checkfe.py` all 8 checks passed after the adopted-platform fix; LF/NULL-byte scan
+clean.
