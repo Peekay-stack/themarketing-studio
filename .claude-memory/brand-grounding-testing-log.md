@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: d3a25b08-5f19-478b-bc7e-ff283771328e
-  modified: 2026-09-15T06:01:55.686Z
+  modified: 2026-09-15T12:40:32.219Z
 ---
 
 **File**: `Heritage Marketing Studio/BRAND_GROUNDING_TESTING_LOG.md` (repo root of the studio project).
@@ -25,7 +25,7 @@ round on it), after fixing it:
    build plan) and [[brand-grounding-modes-project]] (the build-status memory). Don't fold one into
    the other.
 
-Five rounds logged so far as of 15 Sep: Round 1 (toggle not reaching the IMC skill's own drafting
+Eight rounds logged so far as of 15 Sep: Round 1 (toggle not reaching the IMC skill's own drafting
 path — `brief_ai.py`'s brand-invention fallback; General→Independent rename); Round 2 (collapsed four
 separate per-tab toggles into one master toggle after live testing showed two disagreeing pills read
 as broken; added an "Independent work" row to the header's brand dropdown); Round 3 (Grounded mode
@@ -42,5 +42,17 @@ the studio's default shape, present in Social, Carousel, Video, POSM, Onground, 
 Idea Platform and the guided Brief Builder; fixed in one pass, then live-tested surface by surface
 across several follow-up requests, catching two self-inflicted regressions along the way where a
 blind reset would have deleted real content instead of just AI output — one on Onground's typed
-activation idea, one on an actual *adopted* Idea Platform record (a saved document, not a draft) — see
-[[brand-grounding-modes-project]] for the full account).
+activation idea, one on an actual *adopted* Idea Platform record (a saved document, not a draft));
+two rounds both labeled "Round 6" (session-only persistence fixed via server-side `/studio-settings`;
+the made-ledger's empty-string-means-unfiltered footgun fixed; real "Independent" badges added to the
+brief/house/plan pickers; character-reference exemption scoped to cast only — then, separately, the
+CORE Phase-1 grounding leak found live in POSM and fixed at the two shared chokepoints,
+`prompts.py`/`producers.py`, per [[brand-grounding-modes-project]]); Round 7 (the user's own live
+testing of Phase 1 surfaced four issues from seven screenshots — `imcSnapshot()`'s brand leak, Plan's
+Channels layer never getting a real served-media list, carousel pack shots rendering as garbled
+back-of-pack text from a self-contradicting prompt clause, plus a live red-herring where a stale
+Independent toggle looked like a regression — all four fixed and live-verified); Round 8 (simplified
+the IMC Independent warning to an always-on generic reminder per the user's choice; built Social's
+missing pack/cast asset mechanism, reusing POSM's pick-or-upload card pattern per the user's choice,
+live-verified end-to-end with a real `/scene-still` call and a visual check of the rendered image).
+See [[brand-grounding-modes-project]] for the full account.

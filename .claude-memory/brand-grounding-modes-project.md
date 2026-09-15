@@ -1,11 +1,11 @@
 ---
 name: brand-grounding-modes-project
-description: "All 5 stages built and live-tested (11-15 Sep 2026) — Brief/Strategy/Plan/Producers share one Grounded/Independent toggle so \"no brand attached\" is a real, honored choice instead of an accident. Architecture collapsed from 4 per-tab toggles to 1 after user testing; 5 rounds of testing feedback fixed, incl. a studio-wide stale-draft-on-toggle bug across every producer — see the testing log."
+description: "All 5 stages built and live-tested (11-15 Sep 2026) — Brief/Strategy/Plan/Producers share one Grounded/Independent toggle so \"no brand attached\" is a real, honored choice instead of an accident. Architecture collapsed from 4 per-tab toggles to 1; 8 rounds of testing feedback fixed so far, incl. a studio-wide stale-draft-on-toggle bug, a real grounding leak fixed in phases, and Social's missing pack/cast asset mechanism — see the testing log."
 metadata:
   node_type: memory
   type: project
   originSessionId: d3a25b08-5f19-478b-bc7e-ff283771328e
-  modified: 2026-09-15T09:29:21.689Z
+  modified: 2026-09-15T12:40:49.669Z
 ---
 
 **Start here for this thread**: `BRAND_GROUNDING_MODES_PLAN.md` (repo root) has the full technical
@@ -190,6 +190,40 @@ untouched, not silently skipped: `state.campaign` (the Idea Platform's own ladde
 hub — server-persisted like House/Plan, needs that same treatment, not a client reset) and House/
 Plan's own per-layer generated-but-uncommitted suggestion rows. Full detail: see
 [[brand-grounding-testing-log]] and `BRAND_GROUNDING_TESTING_LOG.md`.
+
+## Round 8 (15 Sep, same day) — two follow-ups from Round 7, both offered as choices first
+
+User sent 2 more screenshots after Round 7 with two small inputs, each presented as an explicit choice
+(via a direct question) rather than assumed:
+1. **IMC's Independent warning, simplified.** User offered draft wording for something simpler than
+   Round 7's whole-word brand-match warning. Choice offered: keep the match-triggered version, or an
+   always-on generic reminder. **User picked always-on generic.** Replaced the `imcPromptBrandHit`
+   match logic with a flat `imcIndependent` flag; banner now always reads (while Independent): "The
+   brief is grounded entirely in what you write here — it takes nothing from the brand profile. Follow
+   the prompt guide to cover what the profile would otherwise supply." Live-verified the exact text
+   renders.
+2. **Social's single-post generator had no pack/cast asset mechanism** (unlike POSM/Onground/Carousel)
+   — `/scene-still` rendered from text description alone even with a real signed-off asset on file, in
+   both modes. User named two options: reuse the existing pick-mechanism like Carousel/other producers,
+   or a direct upload in the frame. **Recommended and user confirmed: reuse POSM's pick-or-upload
+   asset-card pattern** (one control, both a select-from-signed-off and a file-upload-that-auto-signs-
+   off-and-selects) rather than a third divergent shape. Built as a new "Assets for these posts" card
+   on Social's single-post screen — pack-shot pick/upload plus a cast checkbox that reveals the same
+   pattern — using `carouselAssetOptions()` as the options source but writing to Social's own
+   `socialPackChoice`/`socialCastChoice`/`socialWantCast` (not shared with Carousel's own picks, same
+   "two controls, one real" precedent already used elsewhere).
+
+**Live-verified end-to-end with a real generation call**: picked the real "heritage daily health pack
+shot.jpg", generated posts on all 3 platforms, a `fetch` monkey-patch confirmed all 9 `/scene-still`
+calls carried `pack_id`/`brand_mode:"grounded"` correctly, then downloaded and visually inspected one
+rendered image — pack front-on, "Heritage · Daily Health Toned Milk" clearly legible, no garbled text
+(confirms Round 7's `pack_clause` fix and this new picker hold up together under a real render). A
+verification false trail along the way: `document.body.innerText` said the new card's text wasn't on
+the page while `textContent` found it fine — root cause was `text-transform:uppercase` on the label
+(`innerText` reflects rendered case, `textContent` doesn't), not a rendering bug; confirmed by reading
+a wider slice of `innerText` and finding the uppercase text exactly where expected.
+
+Full detail: `BRAND_GROUNDING_TESTING_LOG.md` Round 8.
 
 ## Not yet built / lower priority, still open
 
