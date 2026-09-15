@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: d3a25b08-5f19-478b-bc7e-ff283771328e
-  modified: 2026-09-15T05:36:05.201Z
+  modified: 2026-09-15T05:40:59.067Z
 ---
 
 **Start here for this thread**: `BRAND_GROUNDING_MODES_PLAN.md` (repo root) has the full technical
@@ -91,9 +91,11 @@ pass in `setProducerBrandMode`: AI output clears, whatever the person typed stay
 `posm`/`og`/`idea` to `null` outright — live-testing the fix itself (not the user) caught that this
 also deletes real typed input living in the same namespace (`og.idea`, the person's own activation
 sentence); rebuilt as field-by-field clears instead, re-tested, confirmed fixed. Live-verified end to
-end with real generation calls on Social and Onground (including the regression); Video/POSM/PR/
-Carousel/Idea Platform/Brief Builder fixed with the same reviewed pattern and passed static checks
-(`checkfe.py`, LF/NULL scan) but weren't each individually live-tested this round. Deliberately left
+end with real generation calls on Social and Onground (including the regression), then Video and POSM
+on a follow-up request the same day (Video: real concept generated, toggle-cleared, typed brief
+survived; POSM: real key-visual route generated, toggle-cleared, Step 2 correctly re-locked, typed
+brief survived). PR-release/Carousel/Idea Platform/Brief Builder fixed with the same reviewed pattern
+and passed static checks (`checkfe.py`, LF/NULL scan) but weren't individually live-tested. Deliberately left
 untouched, not silently skipped: `state.campaign` (the Idea Platform's own ladder/roles/posts/video
 hub — server-persisted like House/Plan, needs that same treatment, not a client reset) and House/
 Plan's own per-layer generated-but-uncommitted suggestion rows. Full detail: see

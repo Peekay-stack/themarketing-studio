@@ -253,7 +253,22 @@ NULL-byte scan clean. **Live-verified** two producers end to end with real gener
 (generated real posts in Grounded, switched to Independent — button reverted "Regenerate" → "Generate
 posts", posts cleared) and Onground (generated real ideas in Grounded with a typed prompt, switched to
 Independent — button reverted, ideas cleared, **and the typed prompt survived**, confirming the
-regression fix). Video, POSM, PR-release, Carousel, Idea Platform and the guided Brief Builder were
-fixed with the same reviewed, field-by-field pattern and passed static checks, but were not each
-individually live-tested with a real generation call in this round — flagged so it's clear what's
-proven versus reasoned.
+regression fix). PR-release, Carousel, Idea Platform and the guided Brief Builder were fixed with the
+same reviewed, field-by-field pattern and passed static checks, but were not each individually
+live-tested with a real generation call in this round.
+
+**Follow-up same day — Video and POSM live-tested on request** ("Live-test video and POSM too"):
+- **Video**: picked an objective, typed a brief ("open on a steel glass of milk at dawn"), generated a
+  real concept in Grounded — button read "↻ Regenerate concept". Switched to Independent: button
+  reverted to "✦ Generate concept", the drafted logline/scene card was gone from the page entirely
+  (not just the label), and the typed brief was untouched.
+- **POSM**: typed a key-visual brief ("a hero shot of the pack against a dawn kitchen counter"),
+  clicked "Develop key visual" in Grounded — got back a real route ("a single tall glass of freshly
+  poured product mid-splash…", tagged "Fresh-poured metaphor") and the button read "Develop other
+  routes"; Step 2 (Formats) correctly unlocked. Switched to Independent: button reverted to "Develop
+  key visual", the generated route/key-visual card was gone, Step 2 correctly re-locked ("Locked until
+  a key visual is chosen"), and the typed brief was still there under "FROM TYPED HERE".
+
+All six of the originally-flagged producers plus the two upstream surfaces are now live-verified. Only
+PR-release, Carousel and the guided Brief Builder remain code-reviewed-only (same reviewed pattern,
+static checks passed, no live generation run against them this round).
