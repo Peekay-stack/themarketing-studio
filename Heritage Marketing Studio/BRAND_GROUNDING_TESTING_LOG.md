@@ -343,3 +343,42 @@ passing static checks, but not independently re-exercised live for this specific
 
 **Validated:** `tools/checkfe.py` all 8 checks passed after the adopted-platform fix; LF/NULL-byte scan
 clean.
+
+---
+
+## Round 5, continued — Sales enabler live-tested on request
+
+**Request:** "Live-test the Sales enabler tab too."
+
+**A different finding from every other tab: nothing to clear, because nothing here is AI-generated
+yet — the toggle is currently a no-op on this whole screen.** Traced the two backend routes this tab
+could call:
+- `/sales-element` → `sales.set_element()` — what the frontend's "Brief it first"/"Develop" button
+  actually calls. Pure record-keeping: it saves whatever text the person typed, verbatim, and flips a
+  status badge (not started → briefed → agreed). No AI call, no brand facts, no `brand_mode` — there is
+  nothing here for a toggle to affect.
+- `/sales-generate` → `sales.generate()` — the real AI-drafting route, and it **does** pull brand facts
+  unconditionally: `prompt_for()` builds every prompt with `brandprofile.voice_block(brandprofile.resolve(house, s))`,
+  no `brand_mode` parameter anywhere in the payload, no Independent-mode branch, no honest "don't
+  invent a brand" fallback — the same shape as the `/brand-brief-draft` gap Round 1 found and fixed,
+  and the same shape Stages 3–5 closed for House/Plan/every other producer. But **this route has no
+  frontend caller at all** — grepped the whole of `app.dc.html`, zero matches for `/sales-generate` or
+  any `seGenerate`-style function. It exists server-side and is simply not wired to any button yet.
+
+**Live-verified the no-op empirically, not just from reading code:** typed a real note into a trade
+element's brief box in Grounded ("moves fast, no fridge needed, easy resale"), clicked "Brief it first"
+— saved verbatim, status flipped to "briefed", label to "Develop". Switched to Independent — text and
+status both untouched, exactly as expected, since nothing here was ever brand-conditioned to begin
+with. Cleaned up the test entry afterward via a direct `/sales-element` call (the UI itself won't let
+you save an empty brief once one exists, by design) — confirmed reverted to `status: "not started"`.
+
+**Not fixed, flagged instead — this is a different kind of gap than the rest of Round 5:** every other
+fix this round was "clear stale output the same way IMC already does." This one is "an AI-generation
+path with a real grounding leak exists in the backend but isn't reachable from the UI yet" — closer to
+Round 1's `/brand-brief-draft` gap than to the stale-draft-label pattern. Fixing it means building new
+frontend wiring (a real "Develop with AI" action calling `/sales-generate`) *and* threading
+`brand_mode` through both the payload and `prompt_for()` before that wiring ships — new scope, not a
+one-pass clear. Left for the user to decide whether to build now.
+
+**Validated:** no code changed for this tab this round, so no new `checkfe.py`/byte-scan run was
+needed — this was investigation and live-testing only.

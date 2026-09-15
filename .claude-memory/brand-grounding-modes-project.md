@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: d3a25b08-5f19-478b-bc7e-ff283771328e
-  modified: 2026-09-15T06:01:48.054Z
+  modified: 2026-09-15T06:06:49.553Z
 ---
 
 **Start here for this thread**: `BRAND_GROUNDING_MODES_PLAN.md` (repo root) has the full technical
@@ -111,7 +111,17 @@ adopted platform survives a toggle flip byte-identical. Could not reach a dispos
 platform to re-confirm the ordinary clearing path live in this tenant (`state.idea` turned out not to
 be house-scoped on the frontend — one global slot, a pre-existing data-model fact, not something this
 round changed); that branch is unchanged from the original fix and reuses the same pattern already
-live-proven on five other producers. Deliberately left
+live-proven on five other producers.
+
+**Sales enabler checked, a different kind of finding:** nothing to clear because nothing here is
+AI-generated yet. The frontend's only action (`/sales-element`) is pure record-keeping — saves typed
+text verbatim, no brand facts, no toggle involvement — live-confirmed (typed text, toggled, text and
+status untouched). The real generation route, `/sales-generate`, DOES exist server-side and DOES pull
+brand facts unconditionally (`prompt_for()` → `brandprofile.voice_block(brandprofile.resolve(...))`,
+no `brand_mode` param anywhere) — the same shape as Round 1's `/brand-brief-draft` gap — but has zero
+frontend caller, so the leak is latent, not live. Not fixed: this is new wiring (a real generate
+action plus threading `brand_mode` through it) rather than a one-pass clear, left for the user to
+decide on. Deliberately left
 untouched, not silently skipped: `state.campaign` (the Idea Platform's own ladder/roles/posts/video
 hub — server-persisted like House/Plan, needs that same treatment, not a client reset) and House/
 Plan's own per-layer generated-but-uncommitted suggestion rows. Full detail: see
@@ -128,6 +138,12 @@ Plan's own per-layer generated-but-uncommitted suggestion rows. Full detail: see
 - **Explicit `cast_id`/`pack_id` overrides in `/posm-image`/`/scene-still`** are not brand-ownership
   checked even in Grounded mode (a caller naming a specific id bypasses the filter) — pre-existing,
   not introduced by this project, lower priority than the automatic-fallback bug this project targets.
+- **Sales enabler's `/sales-generate` route** — real AI generation, pulls brand facts unconditionally
+  via `brandprofile.voice_block(brandprofile.resolve(...))`, no `brand_mode` param anywhere. Not yet a
+  live bug only because it has no frontend caller at all (the tab's only wired action,
+  `/sales-element`, is pure manual record-keeping with no AI or brand involvement). Whoever wires a
+  real "Develop with AI" button to this route needs to thread `brand_mode` through it first — see
+  [[pr-sales-enabler-producer-roadmap]].
 - **Existing library items have no `brand` tag** (the field didn't exist before Stage 1) — until
   someone tags them, they stay visible to every brand's Grounded generation (the safe default for the
   transition). Worth a manual tagging pass at some point.
