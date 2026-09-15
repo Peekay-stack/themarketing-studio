@@ -269,6 +269,22 @@ live-tested with a real generation call in this round.
   key visual", the generated route/key-visual card was gone, Step 2 correctly re-locked ("Locked until
   a key visual is chosen"), and the typed brief was still there under "FROM TYPED HERE".
 
-All six of the originally-flagged producers plus the two upstream surfaces are now live-verified. Only
-PR-release, Carousel and the guided Brief Builder remain code-reviewed-only (same reviewed pattern,
-static checks passed, no live generation run against them this round).
+**Second follow-up same day — PR-release and Carousel live-tested on request** ("Live-test PR-release
+and Carousel too"):
+- **Carousel**: typed a brief ("a five-slide story on why fresh milk matters every morning"), clicked
+  "Generate carousel concepts" in Grounded — got back three real routes ("The Morning Race", "5 Signs
+  Your Milk Isn't Fresh", "The Breakfast That Changed") and the button read "↻ Redraft concepts".
+  Switched to Independent: button reverted to "✦ Generate carousel concepts", all three concept cards
+  were gone from the page, and the typed brief was still there.
+- **PR-release**: opened a real campaign-PR sheet (Heritage Foods · launch), clicked "Draft with AI"
+  in Grounded — every release field filled with real, brand-specific press-register copy ("Heritage
+  Foods says 500 dairy professionals check its milk daily before 7 a.m.", a Hyderabad dateline, a full
+  who/what/when/where/why, quote and boilerplate). Switched to Independent: the release didn't just go
+  blank, the whole sub-tool reset to its pre-start state ("No release on this sheet yet — Start the
+  release"), confirming `relStatus` (not just `rel`) drives the section's visibility. Clicked "Start
+  the release" fresh in Independent — every field came back genuinely empty, no leftover Grounded-mode
+  copy.
+
+All six of the originally-flagged producers plus the two upstream surfaces are now live-verified end
+to end. Only the guided Brief Builder (Media/Digital/Packaging/PD/PR-format) remains code-reviewed
+only — same reviewed pattern, static checks passed, no live generation run against it yet.
