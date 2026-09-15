@@ -198,3 +198,62 @@ person's own current, deliberate toggle choice, which pulling in reference text 
 resolution, e.g. asking before overriding) was a judgment call made from the `enterHouse`/`enterPlan`
 vs. `pickBrief` distinction above, not a design question put back to the user the way Round 2's
 4-vs-1-toggle question was. Flagged here in case they'd rather it worked differently.
+
+---
+
+## Round 5
+
+**Not a bug report** — the user asked directly for an audit: "find out similar error in other tabs as
+well — producers - social, video, POSM, on ground and PR" (report first), then, after the report,
+"Fix all of them the same way, one pass and also check the other tabs, though not fully developped yet
+but... i would like this to be the default on all tabs, sub tabs and layers."
+
+**What the audit found:** Round 4's fix only ever cleared the IMC screen's own `im.draft`/`status`.
+Every other generation surface keeps its own "already drafted" state with its own Redraft/Regenerate
+label driven purely by whether that state is non-empty — none of it knew the mode underneath had just
+changed. Confirmed present in: Social (`posts`), Carousel (`carousel.routes`/`concept`/`slides`),
+Video (`videoConcept`, `fullScript`, every department's `shoot[id]` card, `sceneFrames`, the cast
+reference frame), POSM (`pm.options`/`scamps`/`images`/every rendered piece), Onground (`og.ideas`),
+PR (the release sub-tool's `release`/`rel`/`relStatus`), and two upstream surfaces not in the original
+five: the Idea Platform (`idea.line`/`options`) and the guided Brief Builder used by Media/Digital/
+Packaging/PD/PR-format (`state.brief`, via the same `hasContent()`-driven label pattern). The other
+bug class from Round 4 (a picker silently flipping the toggle) did **not** recur anywhere else — the
+only writers of `producerBrandMode` are the toggle's own setter, `switchBrand`, `enterHouse`/
+`enterPlan`, and the already-fixed `pickBrief`.
+
+**Fixed:** `setProducerBrandMode` now clears the AI-generated output on every one of those surfaces,
+in the same single pass, on every toggle flip. The rule applied everywhere: the **output** goes,
+whatever the person actually **typed** (a prompt, a note, an asset pick) stays.
+
+**A real regression caught by live-testing the fix itself, not by the user:** the first pass reset
+`posm`/`og`/`idea` to `null` outright, reasoning that their own accessors already fall back to an
+empty shape. Live-tested against Onground: typed a prompt into the activation-idea box, generated real
+ideas, switched to Independent — the button correctly reverted to "Generate ideas for me", but the
+typed prompt was gone too, because it lives in that same `og` object and a blind reset doesn't know
+the difference between a person's words and the model's. This is the exact class of bug this round
+exists to fix, just self-inflicted. Rebuilt `idea`/`posm`/`og` as field-by-field clears instead (same
+discipline already used for `pr`), re-tested the same way: typed prompt survived, generated ideas and
+the button label both correctly reset.
+
+**Deliberately not touched, flagged rather than silently skipped:**
+- `state.campaign` — the Idea Platform's own ladder/roles/posts/video handoff hub. Server-persisted
+  with its own id and lifecycle, same shape as House/Plan, not an in-progress client draft — needs
+  their open-time-sync-plus-backend-route treatment, not a blind client reset.
+- House/Plan's per-layer generated-but-uncommitted suggestion rows (`pGenerateLayer`/
+  `hGenerateLayer`'s output, merged in via `applyHouse`/`applyPlan`). House/Plan already get
+  `/house-brand-mode`/`/plan-brand-mode` server correction on toggle flip (Round 4); whether that also
+  invalidates stale unchosen layer suggestions is a backend question, not verified either way.
+- Brand-character drafting — checked and confirmed unaffected: `draftCharacter` always requires an
+  active brand and never reads `producerBrandMode` at all, so Independent mode doesn't apply to it.
+- PR's other rooms (media map, crisis log, coverage record) — left alone on purpose; those are running
+  records, not disposable AI drafts the way the release sub-tool's output is.
+
+**Validated:** `tools/checkfe.py` all 8 checks passed (both before and after the regression fix); LF/
+NULL-byte scan clean. **Live-verified** two producers end to end with real generation calls: Social
+(generated real posts in Grounded, switched to Independent — button reverted "Regenerate" → "Generate
+posts", posts cleared) and Onground (generated real ideas in Grounded with a typed prompt, switched to
+Independent — button reverted, ideas cleared, **and the typed prompt survived**, confirming the
+regression fix). Video, POSM, PR-release, Carousel, Idea Platform and the guided Brief Builder were
+fixed with the same reviewed, field-by-field pattern and passed static checks, but were not each
+individually live-tested with a real generation call in this round — flagged so it's clear what's
+proven versus reasoned.

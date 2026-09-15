@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: d3a25b08-5f19-478b-bc7e-ff283771328e
-  modified: 2026-09-15T05:05:43.823Z
+  modified: 2026-09-15T05:35:48.094Z
 ---
 
 **File**: `Heritage Marketing Studio/BRAND_GROUNDING_TESTING_LOG.md` (repo root of the studio project).
@@ -25,7 +25,7 @@ round on it), after fixing it:
    build plan) and [[brand-grounding-modes-project]] (the build-status memory). Don't fold one into
    the other.
 
-Four rounds logged so far as of 15 Sep: Round 1 (toggle not reaching the IMC skill's own drafting
+Five rounds logged so far as of 15 Sep: Round 1 (toggle not reaching the IMC skill's own drafting
 path — `brief_ai.py`'s brand-invention fallback; General→Independent rename); Round 2 (collapsed four
 separate per-tab toggles into one master toggle after live testing showed two disagreeing pills read
 as broken; added an "Independent work" row to the header's brand dropdown); Round 3 (Grounded mode
@@ -36,4 +36,8 @@ bugs: `im.draft`/`status` never cleared on toggle change, so a drafted IMC scree
 brief's own `brand_mode`, silently flipping Independent back to Grounded whenever the user pulled in
 almost any pre-existing brief — removed that sync while keeping `enterHouse`/`enterPlan`'s, since
 those open an already-decided document and `pickBrief` doesn't. Both live-verified 15 Sep with a real
-test brief, created then deleted).
+test brief, created then deleted); Round 5 (user asked for an audit of the other producers, then a
+one-pass fix + "default on all tabs, sub tabs and layers" — Round 4's stale-draft bug turned out to be
+the studio's default shape, present in Social, Carousel, Video, POSM, Onground, PR's release tool, the
+Idea Platform and the guided Brief Builder; fixed in one pass, catching and fixing a self-inflicted
+regression along the way — see [[brand-grounding-modes-project]] for the full account).

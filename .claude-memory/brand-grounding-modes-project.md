@@ -1,11 +1,11 @@
 ---
 name: brand-grounding-modes-project
-description: "All 5 stages built and live-tested (11-15 Sep 2026) — Brief/Strategy/Plan/Producers share one Grounded/Independent toggle so \"no brand attached\" is a real, honored choice instead of an accident. Architecture collapsed from 4 per-tab toggles to 1 after user testing; 4 rounds of testing feedback fixed — see the testing log."
+description: "All 5 stages built and live-tested (11-15 Sep 2026) — Brief/Strategy/Plan/Producers share one Grounded/Independent toggle so \"no brand attached\" is a real, honored choice instead of an accident. Architecture collapsed from 4 per-tab toggles to 1 after user testing; 5 rounds of testing feedback fixed, incl. a studio-wide stale-draft-on-toggle bug across every producer — see the testing log."
 metadata:
   node_type: memory
   type: project
   originSessionId: d3a25b08-5f19-478b-bc7e-ff283771328e
-  modified: 2026-09-15T05:05:54.823Z
+  modified: 2026-09-15T05:36:05.201Z
 ---
 
 **Start here for this thread**: `BRAND_GROUNDING_MODES_PLAN.md` (repo root) has the full technical
@@ -68,16 +68,35 @@ via a sentinel value. (2) One edit corrupted `main.py` with two literal NULL byt
 literal encoding fluke) — caught by `py_compile` right after the edit, fixed, then swept every touched
 file for null bytes.
 
-**Then, after shipping Stage 4/5, four rounds of real user testing found and closed further gaps** — a
+**Then, after shipping Stage 4/5, five rounds of real user testing found and closed further gaps** — a
 completely separate code path (`/brand-brief-draft` → `brief_ai.py`) that had never been wired to the
 toggle at all; the 4-toggles-not-1 architecture problem above; the IMC screen never auto-filling
-Brand/Category from the active profile (Round 3); and, Round 4 (15 Sep), two bugs — `im.draft`/
-`status` not clearing on toggle change (stale "Redraft" label after switching to Independent), and
-`pickBrief` silently syncing the master toggle to a picked brief's own stored `brand_mode` (nearly
-every brief predates this feature and reads `grounded`, so pulling one while Independent snapped the
-toggle back). Fixed by clearing draft state on every toggle flip, and by removing `pickBrief`'s sync
-while deliberately keeping `enterHouse`/`enterPlan`'s (those open an already-decided document; a
-picked brief is just reference text for something not yet created). Full detail: see
+Brand/Category from the active profile (Round 3); Round 4 (15 Sep), two bugs — `im.draft`/`status` not
+clearing on toggle change (stale "Redraft" label after switching to Independent), and `pickBrief`
+silently syncing the master toggle to a picked brief's own stored `brand_mode` (nearly every brief
+predates this feature and reads `grounded`, so pulling one while Independent snapped the toggle back).
+Fixed by clearing draft state on every toggle flip, and by removing `pickBrief`'s sync while
+deliberately keeping `enterHouse`/`enterPlan`'s (those open an already-decided document; a picked
+brief is just reference text for something not yet created).
+
+**Round 5 (15 Sep, same day):** the user asked for an audit of the other producers, then "fix all of
+them the same way, one pass... default on all tabs, sub tabs and layers." Round 4's stale-draft bug
+turned out to be the studio's *default* shape, not a one-off — audited and confirmed present in Social
+(`posts`), Carousel (`routes`/`concept`/`slides`), Video (`videoConcept`/`fullScript`/every
+department's `shoot` card/`sceneFrames`/cast reference), POSM (`pm.options`/`scamps`/`images`/every
+rendered piece), Onground (`og.ideas`), PR's release sub-tool (`release`/`rel`/`relStatus`), plus two
+upstream surfaces not in the original ask — the Idea Platform (`idea.line`/`options`) and the guided
+Brief Builder used by Media/Digital/Packaging/PD/PR-format (`state.brief`). Fixed all of it in one
+pass in `setProducerBrandMode`: AI output clears, whatever the person typed stays. A first pass reset
+`posm`/`og`/`idea` to `null` outright — live-testing the fix itself (not the user) caught that this
+also deletes real typed input living in the same namespace (`og.idea`, the person's own activation
+sentence); rebuilt as field-by-field clears instead, re-tested, confirmed fixed. Live-verified end to
+end with real generation calls on Social and Onground (including the regression); Video/POSM/PR/
+Carousel/Idea Platform/Brief Builder fixed with the same reviewed pattern and passed static checks
+(`checkfe.py`, LF/NULL scan) but weren't each individually live-tested this round. Deliberately left
+untouched, not silently skipped: `state.campaign` (the Idea Platform's own ladder/roles/posts/video
+hub — server-persisted like House/Plan, needs that same treatment, not a client reset) and House/
+Plan's own per-layer generated-but-uncommitted suggestion rows. Full detail: see
 [[brand-grounding-testing-log]] and `BRAND_GROUNDING_TESTING_LOG.md`.
 
 ## Not yet built / lower priority, still open
