@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: d3a25b08-5f19-478b-bc7e-ff283771328e
-  modified: 2026-09-15T12:40:49.669Z
+  modified: 2026-09-15T15:44:41.577Z
 ---
 
 **Start here for this thread**: `BRAND_GROUNDING_MODES_PLAN.md` (repo root) has the full technical
@@ -224,6 +224,20 @@ the page while `textContent` found it fine — root cause was `text-transform:up
 a wider slice of `innerText` and finding the uppercase text exactly where expected.
 
 Full detail: `BRAND_GROUNDING_TESTING_LOG.md` Round 8.
+
+## Round 9 (15 Sep, same day) — pack reference rendered as the wrong container (bottle instead of pouch)
+
+User caught it from the Round 8 demo render itself: the real "heritage daily health pack shot.jpg"
+reference is a sealed flexible **pouch**, but the render showed a **bottle** being poured. Confirmed by
+fetching and viewing the actual reference file. Root cause: Round 7's `pack_clause` rewrite (`main.py`)
+preserved everything printed *on* the pack (colours/proportions/label) but never named the pack's own
+physical form/container type — so the model faithfully copied the logo and colours onto a bottle, the
+default "milk" visual in its training data, since nothing pinned the actual shape. Fixed by adding an
+explicit container-type clause ("pouch, bottle, carton, tub, jar — whichever the reference actually is,
+never substituted"). Live-verified with the same real pack id via a direct `/scene-still` call
+(`pack_used:true`): new render shows a correctly-shaped pouch, pinched corners, mid-pour, brand and
+product name legible. Same chokepoint as Round 7's fix — the earlier fix was real but incomplete, not
+wrong. Full detail: `BRAND_GROUNDING_TESTING_LOG.md` Round 9.
 
 ## Not yet built / lower priority, still open
 

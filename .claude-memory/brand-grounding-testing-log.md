@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: d3a25b08-5f19-478b-bc7e-ff283771328e
-  modified: 2026-09-15T12:40:32.219Z
+  modified: 2026-09-15T15:44:46.841Z
 ---
 
 **File**: `Heritage Marketing Studio/BRAND_GROUNDING_TESTING_LOG.md` (repo root of the studio project).
@@ -54,5 +54,8 @@ back-of-pack text from a self-contradicting prompt clause, plus a live red-herri
 Independent toggle looked like a regression — all four fixed and live-verified); Round 8 (simplified
 the IMC Independent warning to an always-on generic reminder per the user's choice; built Social's
 missing pack/cast asset mechanism, reusing POSM's pick-or-upload card pattern per the user's choice,
-live-verified end-to-end with a real `/scene-still` call and a visual check of the rendered image).
+live-verified end-to-end with a real `/scene-still` call and a visual check of the rendered image);
+Round 9 (the user caught, from that same Round 8 demo image, that the real pouch reference rendered as
+a bottle instead — `pack_clause` preserved colour/label but never named the container's physical form;
+fixed and re-verified with a correctly-shaped pouch render).
 See [[brand-grounding-modes-project]] for the full account.
