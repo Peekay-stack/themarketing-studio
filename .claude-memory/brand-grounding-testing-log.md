@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: d3a25b08-5f19-478b-bc7e-ff283771328e
-  modified: 2026-09-12T06:54:34.807Z
+  modified: 2026-09-15T05:05:43.823Z
 ---
 
 **File**: `Heritage Marketing Studio/BRAND_GROUNDING_TESTING_LOG.md` (repo root of the studio project).
@@ -25,9 +25,15 @@ round on it), after fixing it:
    build plan) and [[brand-grounding-modes-project]] (the build-status memory). Don't fold one into
    the other.
 
-Three rounds logged so far as of 12 Sep: Round 1 (toggle not reaching the IMC skill's own drafting
+Four rounds logged so far as of 15 Sep: Round 1 (toggle not reaching the IMC skill's own drafting
 path — `brief_ai.py`'s brand-invention fallback; General→Independent rename); Round 2 (collapsed four
 separate per-tab toggles into one master toggle after live testing showed two disagreeing pills read
 as broken; added an "Independent work" row to the header's brand dropdown); Round 3 (Grounded mode
 never auto-filled the IMC screen's Brand/Category fields from the active profile — fixed on screen
-entry, on switching back to Grounded, and on switching to a different active brand).
+entry, on switching back to Grounded, and on switching to a different active brand); Round 4 (two
+bugs: `im.draft`/`status` never cleared on toggle change, so a drafted IMC screen kept showing
+"Redraft" after switching to Independent; `pickBrief` was syncing the master toggle to a picked
+brief's own `brand_mode`, silently flipping Independent back to Grounded whenever the user pulled in
+almost any pre-existing brief — removed that sync while keeping `enterHouse`/`enterPlan`'s, since
+those open an already-decided document and `pickBrief` doesn't. Both live-verified 15 Sep with a real
+test brief, created then deleted).

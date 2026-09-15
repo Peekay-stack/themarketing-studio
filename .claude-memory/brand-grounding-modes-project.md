@@ -1,11 +1,11 @@
 ---
 name: brand-grounding-modes-project
-description: "All 5 stages built and live-tested (11-12 Sep 2026) — Brief/Strategy/Plan/Producers share one Grounded/Independent toggle so \"no brand attached\" is a real, honored choice instead of an accident. Architecture collapsed from 4 per-tab toggles to 1 after user testing — see the testing log."
+description: "All 5 stages built and live-tested (11-15 Sep 2026) — Brief/Strategy/Plan/Producers share one Grounded/Independent toggle so \"no brand attached\" is a real, honored choice instead of an accident. Architecture collapsed from 4 per-tab toggles to 1 after user testing; 4 rounds of testing feedback fixed — see the testing log."
 metadata:
   node_type: memory
   type: project
   originSessionId: d3a25b08-5f19-478b-bc7e-ff283771328e
-  modified: 2026-09-12T06:40:33.328Z
+  modified: 2026-09-15T05:05:54.823Z
 ---
 
 **Start here for this thread**: `BRAND_GROUNDING_MODES_PLAN.md` (repo root) has the full technical
@@ -68,9 +68,16 @@ via a sentinel value. (2) One edit corrupted `main.py` with two literal NULL byt
 literal encoding fluke) — caught by `py_compile` right after the edit, fixed, then swept every touched
 file for null bytes.
 
-**Then, after shipping Stage 4/5, two rounds of real user testing found and closed further gaps** — a
+**Then, after shipping Stage 4/5, four rounds of real user testing found and closed further gaps** — a
 completely separate code path (`/brand-brief-draft` → `brief_ai.py`) that had never been wired to the
-toggle at all, and the 4-toggles-not-1 architecture problem above. Full detail: see
+toggle at all; the 4-toggles-not-1 architecture problem above; the IMC screen never auto-filling
+Brand/Category from the active profile (Round 3); and, Round 4 (15 Sep), two bugs — `im.draft`/
+`status` not clearing on toggle change (stale "Redraft" label after switching to Independent), and
+`pickBrief` silently syncing the master toggle to a picked brief's own stored `brand_mode` (nearly
+every brief predates this feature and reads `grounded`, so pulling one while Independent snapped the
+toggle back). Fixed by clearing draft state on every toggle flip, and by removing `pickBrief`'s sync
+while deliberately keeping `enterHouse`/`enterPlan`'s (those open an already-decided document; a
+picked brief is just reference text for something not yet created). Full detail: see
 [[brand-grounding-testing-log]] and `BRAND_GROUNDING_TESTING_LOG.md`.
 
 ## Not yet built / lower priority, still open
