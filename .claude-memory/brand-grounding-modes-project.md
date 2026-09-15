@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: d3a25b08-5f19-478b-bc7e-ff283771328e
-  modified: 2026-09-15T06:06:49.553Z
+  modified: 2026-09-15T07:46:20.514Z
 ---
 
 **Start here for this thread**: `BRAND_GROUNDING_MODES_PLAN.md` (repo root) has the full technical
@@ -121,7 +121,39 @@ brand facts unconditionally (`prompt_for()` → `brandprofile.voice_block(brandp
 no `brand_mode` param anywhere) — the same shape as Round 1's `/brand-brief-draft` gap — but has zero
 frontend caller, so the leak is latent, not live. Not fixed: this is new wiring (a real generate
 action plus threading `brand_mode` through it) rather than a one-pass clear, left for the user to
-decide on. Deliberately left
+decide on.
+
+## Round 6 (15 Sep, same day) — a real, live grounding leak found and fixed in phases
+
+Verifying #3 of the user's own re-confirmation checklist ("where does independent work get saved") on
+POS material surfaced a genuine leak: a real `/posm-keyvisual` call, Independent selected, came back
+standing on the bound house's real core message ("Pure milk, strong family."). Root cause: the toggle
+had only ever gated **voice resolution** (`brandprofile.resolve()`/`character.for_prompt()`) — never
+the separate mechanism that pulls a *bound* house/platform/plan's content into a prompt. Two shapes:
+an "empty string means don't filter" footgun in `prompts._resolve_house()`/`plan_channels_block()` —
+`brand=None` collapsed to "match anything" instead of "match nothing" — same class already fixed once
+in `made.py` this session), and flat-out unconditional inclusion (`plan.prompt_for()`'s
+`if house: out.append(house_block(...))`, no mode check at all).
+
+**Asked to check breadth before fixing.** Confirmed by direct code read across every tab: POSM +
+Onground leak via `producers.stands_on()`/`_ctx()` (8 call sites); Social + Video + everything through
+`/complete` leak via `prompts.py`'s `house_block`/`platform_block`/`plan_channels_block`; Plan's layer
+generation leaks via an unconditional house pull; PR's `prDraftRelease()` was simply never wired to
+the toggle at all (new-wiring class, like Sales enabler, not a repair); Idea Platform's own `/idea-draft`
+leaks the same way. House's own layer generation (`strategy.prompt_for()`) is safe — checks its own
+document's `brand_mode` directly, no cross-document lookup. IMC/Brief Builder already correct.
+
+**Phase 1 (completed, user-approved scope: the shared chokepoints only):** fixed
+`prompts._resolve_house()`/`plan_channels_block()` (covers Social/Video/everything via `/complete` in
+one place) and `producers.stands_on()`/`_ctx()` plus all 6 functions and every route/frontend caller
+that reaches them (covers POSM + Onground together). Live-verified against the exact failure case: the
+same `/posm-keyvisual` call now returns empty `stands_on` and generic ungrounded routes; Onground's
+"Generate ideas for me" correctly 400s with nothing typed and, with a steer note, generates real ideas
+every one tagged `stands_on:"typed here"`, no house/platform facts anywhere in the response.
+
+**Not yet done — Phase 2 (`plan.py`'s house pull, `/idea-draft`'s unguarded house pull) and Phase 3
+(PR's `prDraftRelease` — new wiring, not a repair)** — scoped but intentionally not built this round;
+the user approved Phase 1 only. Full detail: `BRAND_GROUNDING_TESTING_LOG.md` Round 6. Deliberately left
 untouched, not silently skipped: `state.campaign` (the Idea Platform's own ladder/roles/posts/video
 hub — server-persisted like House/Plan, needs that same treatment, not a client reset) and House/
 Plan's own per-layer generated-but-uncommitted suggestion rows. Full detail: see

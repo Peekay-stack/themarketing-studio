@@ -382,3 +382,71 @@ one-pass clear. Left for the user to decide whether to build now.
 
 **Validated:** no code changed for this tab this round, so no new `checkfe.py`/byte-scan run was
 needed — this was investigation and live-testing only.
+
+---
+
+## Round 6 — a real grounding leak, found live, checked across every producer, fixed in phases
+
+**How this started:** testing item 3 of the user's own re-confirmation checklist ("where does
+independent work get saved") on POS material surfaced something worse than a labelling gap. A real
+`/posm-keyvisual` call, Independent selected, came back `"note": "Standing on the house's core
+message."` with the actual message text ("Pure milk, strong family.") in the response — a real brand
+fact, in a piece marked Independent, from a real API call, not stale state.
+
+**Root cause, once traced:** the Grounded/Independent toggle had only ever gated **voice resolution**
+(`brandprofile.resolve()`, `character.for_prompt()`) — never the separate mechanism that pulls a
+*bound* house/platform/plan's actual content into a prompt. Two shapes of the same bug:
+- An "empty string means don't filter" footgun (the same class already fixed once in `made.py` this
+  session): `brand=None` (the General-mode signal) collapsed to `want=""`, which several lookup
+  functions treated as "match anything" rather than "match nothing."
+- Flat-out unconditional inclusion: `if house: out.append(house_block(...))` with no mode check at all.
+
+**Asked to check breadth before fixing — findings, confirmed by direct code read:**
+
+| Surface | Mechanism | Status found |
+|---|---|---|
+| POSM (key visual, scene) | `producers.stands_on()`, `producers._ctx()` | **leak, live-confirmed** |
+| Onground (activation ideas, adjust, sharpen, elements) | same two functions, 8 call sites | leak (code) |
+| Social (posts) + Video (script/concept) + everything via `/complete` | `prompts.house_block()`/`platform_block()`/`plan_channels_block()` via `_resolve_house()`'s `not want` | leak (code) — the shared chokepoint |
+| Plan (layer generation) | `plan.prompt_for()`: unconditional `house_block(house, layer_id)` | leak (code) |
+| PR (release drafting) | frontend `prDraftRelease()` never reads `producerBrandMode` at all | never wired — same class as Sales enabler, not a regression |
+| Idea Platform draft (`/idea-draft`) | loads bound house's core message, no mode check | leak (code) |
+| House's own layer generation | `strategy.prompt_for()` | **safe** — checks the house's own `brand_mode` directly, no cross-document lookup |
+| IMC Brief / guided Brief Builder | already correct (Round 1, Round 5) | safe |
+| Sales enabler | no AI wired to the UI at all | already flagged separately |
+
+**Phase 1 (this round) — the shared chokepoints, requested and completed:**
+- `prompts.py`: fixed `_resolve_house()` and `plan_channels_block()`'s identical `not want` bug — empty
+  brand now returns nothing, not the newest house/plan in the tenant. Fixes Social + Video + every other
+  `/complete` caller in one place.
+- `producers.py`: `stands_on()` and `_ctx()` gained a real `brand_mode` check (independent of
+  `use_house`/`use_platform`, which govern something else) that skips house/platform content outright
+  when General. Threaded through all 6 functions that call them (`key_visual`, `carousel_concept`,
+  `activation_ideas`, `adjust_activation_idea`, `sharpen_idea`, `element_brief`) and every one of their
+  route handlers and frontend callers in `main.py`/`app.dc.html` — including `developKv` (POSM),
+  `generateOgIdeas`/`adjustOgIdea`/`developIdea`/`developElement` (Onground), `generateCarouselRoutes`
+  (Social carousel), and `loadSocialStandsOn`/`loadVideoStandsOn` (the "what this stands on" preview
+  widgets), none of which had ever sent `brand_mode` before this.
+
+**Live-verified against the exact case that found the bug:** the same "Develop key visual" call, no
+typed brief, Independent selected, house still bound — now returns `"stands_on":{"text":"","source":""}`
+and the honest `"Nothing to work from... These are the standard treatment routes, ungrounded."` note,
+with three generic, brand-free treatment options. Onground: a real "Generate ideas for me" call with
+nothing typed correctly 400s ("Nothing to build on..."); with a typed steer note it generates three
+real, detailed activation ideas, every one tagged `"stands_on":"typed here"` (not the house or
+platform), and the response's own top-level `stands_on` is empty — no brand name, no product claim,
+nothing house-specific anywhere in the output.
+
+**Validated:** `py_compile` on `main.py`/`producers.py`/`prompts.py`; `checkfe.py` all 8 checks passed;
+LF/NULL-byte scan clean on `app.dc.html`.
+
+**Not yet done — Phases 2 and 3, as scoped in the plan the user approved for Phase 1 only:**
+- Phase 2: `plan.py`'s unconditional `house_block()` call in layer generation; `/idea-draft`'s
+  unguarded house pull.
+- Phase 3: PR's `prDraftRelease()` — needs real `brand_mode` wiring, not a fallback string (new wiring,
+  same shape as Sales enabler, not a repair).
+- One POSM route, `/posm-image` (the actual hero-cutout render, as opposed to `/posm-keyvisual`'s route
+  options), had its backend `stands_on()` call fixed to respect `_posm_image_mode`, but no direct
+  frontend caller of `/posm-image` was found in `app.dc.html` to confirm it sends `brand_mode` — likely
+  reached indirectly or superseded by the studio-shot pipeline; not independently confirmed reachable
+  from the UI, flagged rather than assumed fixed end-to-end.
