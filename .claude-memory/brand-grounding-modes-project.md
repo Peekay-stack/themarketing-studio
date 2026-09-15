@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: d3a25b08-5f19-478b-bc7e-ff283771328e
-  modified: 2026-09-15T05:47:06.081Z
+  modified: 2026-09-15T05:53:00.903Z
 ---
 
 **Start here for this thread**: `BRAND_GROUNDING_MODES_PLAN.md` (repo root) has the full technical
@@ -97,8 +97,11 @@ real key-visual route generated, toggle-cleared, Step 2 correctly re-locked, typ
 then Carousel and PR-release on a further follow-up (Carousel: three real routes generated,
 toggle-cleared, typed brief survived; PR-release: real press-register copy drafted for a live sheet,
 toggle reset the whole sub-tool to its pre-start "No release on this sheet yet" state — not just
-blanked fields — and a fresh Independent-mode start came back genuinely empty). Only the guided Brief
-Builder (Media/Digital/Packaging/PD/PR-format) remains code-reviewed only at this point. Deliberately left
+blanked fields — and a fresh Independent-mode start came back genuinely empty), then the guided Brief
+Builder on a final follow-up (real AI-drafted Background/Business-objective copy for a Media-format
+brief cleared on toggle, while Deliverables/Budget correctly reverted to their exact `formatDefaults`
+template seed text rather than blanking, and the typed ask survived). Only the Idea Platform itself
+remains code-reviewed only — same pattern, static checks passed, not separately live-tested. Deliberately left
 untouched, not silently skipped: `state.campaign` (the Idea Platform's own ladder/roles/posts/video
 hub — server-persisted like House/Plan, needs that same treatment, not a client reset) and House/
 Plan's own per-layer generated-but-uncommitted suggestion rows. Full detail: see

@@ -286,5 +286,21 @@ and Carousel too"):
   copy.
 
 All six of the originally-flagged producers plus the two upstream surfaces are now live-verified end
-to end. Only the guided Brief Builder (Media/Digital/Packaging/PD/PR-format) remains code-reviewed
-only — same reviewed pattern, static checks passed, no live generation run against it yet.
+to end.
+
+**Third follow-up same day — the guided Brief Builder live-tested on request** ("Live-test the Brief
+Builder too"): opened a fresh Media-format brief (a format whose `formatDefaults` pre-seeds
+Deliverables/Budget with template text, so the button already read "Redraft" before anything was
+typed — a pre-existing `hasContent()` quirk, not something this round introduced or changed). Typed a
+real ask into the AI co-writer ("a Diwali media push for Heritage milk across South India") and
+clicked Redraft in Grounded — Background and Business objective filled with real, festive/South-India-
+specific copy. Switched to Independent: Background and Business objective went back to empty,
+Deliverables and Budget went back to exactly their original template seed text (not blanked — matching
+`formatDefaults('media')` verbatim, confirming the reset target is right, not just "some text gone"),
+and the typed ask was untouched.
+
+Every surface from the original audit that the user asked to be live-tested is now live-verified end
+to end with a real generation call: Social, Carousel, Video, POSM, Onground, PR-release and the guided
+Brief Builder. The Idea Platform is fixed with the same reviewed, field-by-field pattern and passed
+static checks, but was not itself separately exercised with a live generation call in this round —
+noted so it's not overstated as proven.
