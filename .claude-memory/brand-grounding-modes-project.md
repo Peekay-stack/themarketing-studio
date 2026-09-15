@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: d3a25b08-5f19-478b-bc7e-ff283771328e
-  modified: 2026-09-15T07:46:20.514Z
+  modified: 2026-09-15T09:29:21.689Z
 ---
 
 **Start here for this thread**: `BRAND_GROUNDING_MODES_PLAN.md` (repo root) has the full technical
@@ -153,7 +153,39 @@ every one tagged `stands_on:"typed here"`, no house/platform facts anywhere in t
 
 **Not yet done — Phase 2 (`plan.py`'s house pull, `/idea-draft`'s unguarded house pull) and Phase 3
 (PR's `prDraftRelease` — new wiring, not a repair)** — scoped but intentionally not built this round;
-the user approved Phase 1 only. Full detail: `BRAND_GROUNDING_TESTING_LOG.md` Round 6. Deliberately left
+the user approved Phase 1 only. Full detail: `BRAND_GROUNDING_TESTING_LOG.md` Round 6.
+
+## Round 7 (15 Sep, same day) — user tested Phase 1 live, found 4 more issues, all fixed
+
+User tested Phase 1 directly (Independent IMC drafts, pickers, a Plan's Channels layer, a Social
+carousel with a real pack shot) and sent 7 screenshots + 2 docx files. Read everything before touching
+code, proposed fixes, user said "fix all 4":
+1. **`imcSnapshot()`** (the picker's "current draft" preview) fell back to the active brand's real name
+   with no toggle check and never set `brand_mode` — same bug class as `saveImcBrief` already had fixed
+   next to it. Fixed to match. Also built a soft warning (not a block) for when the free-text prompt
+   itself names a real brand while Independent — that's a genuine design tension (the toggle stops
+   invented facts, not facts you typed yourself), not a bug, and the two docx files the user sent both
+   confirmed it: same prompt naming "Heritage master brand" explicitly, both drafts thoroughly grounded
+   in Heritage Foods, because that's what was asked for.
+2. **Plan's Channels layer left `channel`/`medium` blank on every row** — pre-existing, unrelated to
+   brand-grounding (would happen in Grounded plans too). The prompt asked the model to pick from a
+   "served media list" that was never actually built anywhere in `plan.py`. Fixed: inject the real
+   `media.LEGACY_STRATEGY_MEDIA` vocabulary into the channels layer's instructions.
+3. **Carousel pack shot rendered as garbled back-of-pack text.** Confirmed via a direct `/scene-still`
+   test that the reference WAS reaching the model (`pack_used: true`) — not a wiring bug. The prompt's
+   `pack_clause` asked for the pack "down to the fine print," which no current image model can do, while
+   fighting a separate "no on-screen text" instruction in the same prompt — exactly the fight the
+   garbled output showed. Rewrote to ask for colour/proportions/front-facing brand mark instead of fine
+   print. Live-verified: two real carousel renders, front-of-pack, "Heritage" and "Daily Health Toned
+   Milk" both clearly legible.
+4. **A self-caught false alarm mid-investigation**: fix 3's first verification attempt kept showing
+   `pack_used: false`. Traced with a `fetch` monkey-patch (not a guess) to the real request body, which
+   showed `brand_mode: "general"` — the toggle was still on Independent from testing fixes 1–2, and
+   Independent correctly strips the pack reference by Round 6's own design (only cast is exempted).
+   Switched to Grounded, re-tested clean. Recorded in the log so this isn't re-chased as a regression.
+
+All four live-verified with real generation calls. Full detail: `BRAND_GROUNDING_TESTING_LOG.md`
+Round 7. Deliberately left
 untouched, not silently skipped: `state.campaign` (the Idea Platform's own ladder/roles/posts/video
 hub — server-persisted like House/Plan, needs that same treatment, not a client reset) and House/
 Plan's own per-layer generated-but-uncommitted suggestion rows. Full detail: see

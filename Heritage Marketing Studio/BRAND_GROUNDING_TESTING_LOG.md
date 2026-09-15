@@ -450,3 +450,65 @@ LF/NULL-byte scan clean on `app.dc.html`.
   frontend caller of `/posm-image` was found in `app.dc.html` to confirm it sends `brand_mode` — likely
   reached indirectly or superseded by the studio-shot pipeline; not independently confirmed reachable
   from the UI, flagged rather than assumed fixed end-to-end.
+
+---
+
+## Round 7 — live-testing Phase 1 surfaced four new issues; all four fixed and verified
+
+**The user tested Phase 1 directly** — Independent IMC brief drafts, Strategy/Plan pickers, a Plan's
+Channels layer, and a Social carousel with a real pack shot selected — and reported back seven
+screenshots plus two downloaded `.docx` files. Read all of it before touching anything, per the user's
+own instruction, then proposed fixes; the user said "fix all 4."
+
+**1 — IMC picker preview leaked the active brand's name (`imcSnapshot()`).** The two docx files and
+PIC 1 turned out to be a real design question, not a bug: Independent mode has never (and structurally
+should not) override a brand name the *person themselves* typed into the free-text prompt — the skill
+correctly stopped inventing anything beyond what was asked, and the prompt asked for "Heritage master
+brand" by name. Built a soft, dismissible warning instead of silently drafting it: a whole-word match
+against any real brand on file, shown above the prompt only while Independent, explaining the
+distinction rather than blocking. PIC 2's actual bug was separate and real: `imcSnapshot()` — the "your
+current draft" preview that feeds the picker — fell back to `this.brandLabel()` (the active brand's
+real name) whenever the draft's own brand field was blank, with no check on the toggle at all, and
+never set `brand_mode` on the object it returned either. `saveImcBrief` right below it already had the
+correct logic; the preview function just never got the same fix. Both fixed together in
+`app.dc.html`. **Live-verified**: typed a prompt naming "Heritage" while Independent — the warning
+correctly named "Heritage Foods" as the real brand on file; drafted anyway; the picker's top row now
+reads "Independent — IMC Brief" with the Independent badge, no leaked brand name.
+
+**2 — Plan's Channels layer left `channel`/`medium` blank on every row (PIC 4).** Real bug, but
+pre-existing and unrelated to brand-grounding — confirmed it would happen in Grounded plans too. The
+prompt told the model to pick "one medium from the served media list" in three places and that list
+was never actually built or included anywhere in `plan.prompt_for()`. The model, correctly, would not
+invent a channel/medium it had nothing real to choose from, and left both columns honestly blank while
+still reasoning generally in Job/Measure/Side. Fixed in `plan.py`: `_column_rules()` now injects the
+real seven-id vocabulary (`media.LEGACY_STRATEGY_MEDIA` — the same one the house's own medium layer
+already uses) into the channels layer's instructions, and softened the old "not-one-medium option"
+line (no such option exists in that vocabulary) to "leave it empty and say why" instead, consistent
+with every other empty-cell rule already in the prompt. **Live-verified**: regenerated the exact Plan
+layer from PIC 4 — banner now reads "6 OF 6 CHANNELS STATE A MEDIUM" and "6 OF 6 CHANNELS WEIGHTED".
+
+**3 — Carousel pack shot rendered as garbled back-of-pack text, not the real front label (PIC 5–7).**
+Traced with real evidence rather than guessing: confirmed the selected pack WAS reaching the image
+model as a real reference (`pack_used: true`) by testing `/scene-still` directly — so this wasn't the
+wiring gap it looked like. The actual cause was the prompt itself: `pack_clause` in `main.py` asked the
+model to reproduce the pack "down to the fine print" — something no current image model can actually
+do — while a separate instruction in the same prompt said "No on-screen text ... anywhere in the
+frame," two instructions fighting each other. The result the user saw exactly matches that fight: the
+back of the pack, nutrition panel facing camera, every word garbled nonsense ("Nutritioal Info",
+"Calcoha tsited, Pleochet milk"). Rewrote the clause to ask for what the model can actually hold onto —
+colour, proportions, overall label design, shown FRONT-ON so the brand mark reads clearly — and to
+explicitly not fabricate legible fine print. **Live-verified** with the real signed-off pack shot
+("heritage daily health pack shot.jpg", confirmed `signed_off: true` in the library manifest before
+touching anything): two fresh carousel renders both show the pack front-on, "Heritage" and "Daily
+Health Toned Milk" clearly legible, no garbled text.
+
+**A live red herring during this same investigation, worth recording:** the first attempt to verify
+fix 3 kept coming back `pack_used: false` despite everything about the frontend wiring checking out —
+traced via a `fetch` monkey-patch to log the real outgoing request body, which showed `"brand_mode":
+"general"`. Not a bug: the toggle had been left on Independent from the fix-1/2 verification, and
+Independent mode correctly strips the pack reference by design (Round 6's own fix — only cast/character
+is exempted, per the user's own scoped approval, not pack). Switching to Grounded and re-testing gave
+the clean result above. Recorded so the same false alarm doesn't get chased again.
+
+**Validated:** `py_compile` on `main.py`/`plan.py`; `checkfe.py` all 8 checks passed; LF/NULL-byte scan
+clean on `app.dc.html`. All four fixes live-tested with real generation calls, not just code review.
