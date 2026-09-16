@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: d3a25b08-5f19-478b-bc7e-ff283771328e
-  modified: 2026-09-15T15:44:41.577Z
+  modified: 2026-09-16T04:55:44.361Z
 ---
 
 **Start here for this thread**: `BRAND_GROUNDING_MODES_PLAN.md` (repo root) has the full technical
@@ -238,6 +238,39 @@ never substituted"). Live-verified with the same real pack id via a direct `/sce
 (`pack_used:true`): new render shows a correctly-shaped pouch, pinched corners, mid-pour, brand and
 product name legible. Same chokepoint as Round 7's fix — the earlier fix was real but incomplete, not
 wrong. Full detail: `BRAND_GROUNDING_TESTING_LOG.md` Round 9.
+
+## Round 10 (16 Sep) — real use of the Social asset picker surfaced three more issues, all fixed
+
+User ran the actual intended workflow (uploaded pack, wrote a real objective, generated 6 posts,
+adjusted two) and reported three problems together; investigated and root-caused all three before
+touching code, then the user approved all three at once. All in `app.dc.html` unless noted:
+1. **1/6 posts had wrong/cropped dimensions** — `creative.py`'s fal fallback path (`ideogram/character`,
+   used only when fal's primary reference model errors) hardcoded `image_size:"landscape_16_9"`
+   regardless of the requested ratio; a 1:1 request that fell through got a 16:9 image back, cropped by
+   the post frame's `cover` fit. Fixed to read the same `_IMAGE_SIZES` map the primary fal path uses.
+2. **Adjust drifted the product to a different real SKU** ("Pure Milk" instead of "Daily Health," even
+   after the user named the right one explicitly) — neither `generateSocial` nor `adjustPost` ever told
+   the model which pack/SKU was actually pinned by reference, so the brand's own house/plan grounding
+   (centered on the flagship line) pulled text toward the wrong product. Added `socialAssetAnchor()` —
+   names the pinned asset's real file name, says never to rename/substitute it — wired into both prompts.
+3. **Every Adjust fully re-rendered the image** — "new setting, new style, cast keeps changing," even on
+   caption-only notes — contradicting the UI's own "keep everything else the same" promise. Root cause:
+   the code decided whether to redo the image via `data.visual !== post.visual`, but an LLM told to
+   return a field is not going to reproduce it byte-for-byte, so this fired on nearly every adjustment
+   regardless of intent. Replaced with an explicit `visual_changed` boolean the model judges directly
+   (old string-diff kept only as a fallback). When a redo IS warranted, the post's own previous render is
+   now passed to `/scene-still` as an extra identity reference (existing mechanism, not a new one) so the
+   same people carry across rounds — a partial fix, not a full scene-lock, since that reference mechanism
+   is explicitly allowed to vary setting/camera by design (shared with Video's continuity use).
+
+**Live-verified end-to-end**: real 6-post generation with the anchor text confirmed reaching the prompt
+verbatim; a caption-only adjust fired zero `/scene-still` calls (confirms 3 actually suppresses
+unwanted re-renders now); a genuine visual-change adjust fired exactly one call, correct `pack_id` +
+`reference_url` pointing at the prior render, caption/visual still said "Daily Health," and the
+resulting image showed the same woman as before (continuity working). One honest caveat recorded, not
+chased further: that same render's container drifted from the pinned pouch shape to a carton shape —
+likely ordinary generation variance rather than a Round 9 regression (both references shown were the
+correct pouch), worth watching if it recurs. Full detail: `BRAND_GROUNDING_TESTING_LOG.md` Round 10.
 
 ## Not yet built / lower priority, still open
 

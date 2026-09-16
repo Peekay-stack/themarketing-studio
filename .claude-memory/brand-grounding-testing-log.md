@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: d3a25b08-5f19-478b-bc7e-ff283771328e
-  modified: 2026-09-15T15:44:46.841Z
+  modified: 2026-09-16T04:55:50.683Z
 ---
 
 **File**: `Heritage Marketing Studio/BRAND_GROUNDING_TESTING_LOG.md` (repo root of the studio project).
@@ -57,5 +57,10 @@ missing pack/cast asset mechanism, reusing POSM's pick-or-upload card pattern pe
 live-verified end-to-end with a real `/scene-still` call and a visual check of the rendered image);
 Round 9 (the user caught, from that same Round 8 demo image, that the real pouch reference rendered as
 a bottle instead — `pack_clause` preserved colour/label but never named the container's physical form;
-fixed and re-verified with a correctly-shaped pouch render).
+fixed and re-verified with a correctly-shaped pouch render); Round 10 (the user's own real use of the
+Social asset picker — upload, objective, generate, adjust — surfaced three more issues in one session:
+a fal-fallback path ignoring the requested image ratio, Adjust drifting the product to the wrong real
+SKU with no anchor telling the model which pack was pinned, and Adjust fully re-rendering the image on
+every note because of a brittle text-equality check instead of an explicit model judgment; all three
+root-caused and fixed together, live-verified end to end).
 See [[brand-grounding-modes-project]] for the full account.
