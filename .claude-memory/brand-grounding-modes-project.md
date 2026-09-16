@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: d3a25b08-5f19-478b-bc7e-ff283771328e
-  modified: 2026-09-16T07:26:22.898Z
+  modified: 2026-09-16T07:51:14.376Z
 ---
 
 **Start here for this thread**: `BRAND_GROUNDING_MODES_PLAN.md` (repo root) has the full technical
@@ -339,6 +339,20 @@ not a live gap. Explained the literal prompt reaching `/scene-still` (reference 
 bytes, style register, the exact pack_clause text, the post's own scene line) and named the honest
 limit: even a correct reference doesn't guarantee 100% model fidelity every render. Full detail:
 `BRAND_GROUNDING_TESTING_LOG.md` Round 13.
+
+## Round 14 (16 Sep) — "Include a recurring model/cast" did nothing when unchecked
+
+User noticed identical-looking cast across a batch and asked if that's expected. Confirmed:
+`library.shot_references()` auto-attached the most-recently-signed-off cast whenever one existed, with
+no way to suppress it — cast has always been unconditional (unlike `pack`'s opt-in `want_pack`), so the
+checkbox unchecked still silently pinned the same person to every post. **Fixed the actual behavior**:
+`shot_references()` gained `want_cast` (default `True`, every existing caller unaffected); `/scene-still`
+reads an explicit `use_cast` from the payload, `None` (nothing sent) keeps the old default. An explicit
+`cast_id` still wins regardless, same rule `pack_id` already follows. Same fix applied to Carousel's
+identical checkbox/bug (its own code comment had wrongly asserted cast was "already opt-in"). **Fixed the
+wording too**: added a plain-text line under both checkboxes stating what actually happens either way.
+Live-verified: no `use_cast` sent → cast still auto-attaches (old default preserved); `use_cast:false` →
+`from_reference:false`, no cast at all. Full detail: `BRAND_GROUNDING_TESTING_LOG.md` Round 14.
 
 ## Not yet built / lower priority, still open
 
