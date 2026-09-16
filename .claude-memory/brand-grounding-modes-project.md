@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: d3a25b08-5f19-478b-bc7e-ff283771328e
-  modified: 2026-09-16T05:43:45.397Z
+  modified: 2026-09-16T06:19:38.583Z
 ---
 
 **Start here for this thread**: `BRAND_GROUNDING_MODES_PLAN.md` (repo root) has the full technical
@@ -302,6 +302,28 @@ injects. Same tension Round 7 named for IMC and the user accepted; not closed th
 deliberate design call. Also noted, not fixed: the Palette/Tone display block still shows the active
 brand's kit regardless of mode — confirmed purely decorative (display-only, never read by any prompt
 function), cosmetic not functional. Full detail: `BRAND_GROUNDING_TESTING_LOG.md` Round 11.
+
+## Round 12 (16 Sep) — the real "only 1/6 posts resembled the pack" cause; a new design-choice option
+
+Continuing Round 11: user reported only 1 of 6 Independent-mode posts resembled the real pinned pack
+shot. Root cause confirmed via network capture: `/scene-still` stripped `pack`/`plate` unconditionally
+whenever `brand_mode=="general"`, treating an EXPLICITLY-picked pack (via the real asset card) exactly
+like an auto-attached one — contradicting the precedent already set for cast. Fixed: an explicit
+`pack_id` that resolves now survives Independent; only auto-resolved packs still get stripped. Same fix
+applied to `/posm-scene` (POSM's integrated-scene lane, identical bug). Live-verified: direct call with
+`brand_mode:"general"` + real `pack_id` now returns `pack_used:true`.
+**New option built, at the user's suggestion**: pack dropdown gained "Let the studio design one" for
+when no real photo exists yet — threaded as `pack_generate:true` (only engages when nothing real
+resolves), with a new prompt clause telling the model to design a plausible pack rather than leave the
+product absent, without fabricating specific claims/certifications. Live-tested: model designed an
+obviously-generic "Farm Fresh Milk" pack rather than guessing at the real Heritage design — safe,
+non-misleading.
+**A second frontend bug found while verifying Round 11's `/grounding` fix**: `socialGrounding()` only
+trusted the server's `summary` when `grounded` was true — when false (the Independent case), it
+discarded the server's real sentence for its own generic hardcoded text, silently swallowing Round 11's
+fix before it ever reached the screen. Fixed to always use the server's summary when sent. Live-
+verified: banner now correctly reads "This piece is Independent — nothing is grounding it but what you
+write here." Full detail: `BRAND_GROUNDING_TESTING_LOG.md` Round 12.
 
 ## Not yet built / lower priority, still open
 

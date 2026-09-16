@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: d3a25b08-5f19-478b-bc7e-ff283771328e
-  modified: 2026-09-16T05:43:52.108Z
+  modified: 2026-09-16T06:19:45.622Z
 ---
 
 **File**: `Heritage Marketing Studio/BRAND_GROUNDING_TESTING_LOG.md` (repo root of the studio project).
@@ -66,5 +66,10 @@ root-caused and fixed together, live-verified end to end); Round 11 (testing Ind
 surfaced a real leak in a second, previously-unaudited layer — `brandPreamble()`, the shared client-
 side preamble behind 8 producers, only checked Independent inside its "no brand at all" fallback, so
 it did nothing when a real brand was active; `inputsContext()` had the same bug; both fixed, plus the
-pack-upload UX trap removed by pointing at the one real mechanism instead of leaving two).
+pack-upload UX trap removed by pointing at the one real mechanism instead of leaving two); Round 12
+(the real cause of "only 1/6 posts resembled the pack" — `/scene-still`/`/posm-scene` stripped even an
+explicitly-picked pack reference in Independent mode, contradicting cast's own precedent; fixed both,
+added a "Let the studio design one" option for when no real pack exists yet, and fixed a second
+frontend bug where the grounding banner discarded the server's honest summary whenever `grounded` was
+false, silently undoing Round 11's own `/grounding` fix before it reached the screen).
 See [[brand-grounding-modes-project]] for the full account.
