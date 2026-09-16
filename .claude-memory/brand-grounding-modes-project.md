@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: d3a25b08-5f19-478b-bc7e-ff283771328e
-  modified: 2026-09-16T07:22:41.171Z
+  modified: 2026-09-16T07:26:22.898Z
 ---
 
 **Start here for this thread**: `BRAND_GROUNDING_MODES_PLAN.md` (repo root) has the full technical
@@ -331,7 +331,8 @@ User asked two questions: what "the producer is working from memory" means, and 
 missed on 2/3 posts in a batch, with a direct ask for what literally reaches the image generator.
 "Working from memory" is a real, accurate status (checks the separate "plan brief"/"idea platform"
 toggles, not brand mode) but collided with the app's own "Memory" tab — reworded to "the producer works
-from general knowledge alone, not the plan or platform," same meaning, no collision. Re-ran the user's
+from pre-trained knowledge alone, not the plan or platform" (user specified this exact final wording,
+replacing an initial draft), same meaning, no collision. Re-ran the user's
 exact scenario fresh: 3/3 posts came back `pack_used:true` with the real pouch correctly rendered,
 confirming Round 12's fix holds — the earlier 2/3-wrong batch was pre-fix or ordinary model variance,
 not a live gap. Explained the literal prompt reaching `/scene-still` (reference photos as real image
