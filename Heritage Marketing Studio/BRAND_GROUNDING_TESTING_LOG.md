@@ -915,3 +915,68 @@ above it was fixed and put back in front of the user to test again.
 to the actual product code. Every fix above — spanning `main.py`, `library.py`, `creative.py`,
 `prompts.py`, `producers.py`, `plan.py`, and `app.dc.html` — remains local, pending the user's own
 review and an explicit instruction to ship.
+
+## Round 15 — the last three known gaps closed: the cosmetic display, Phase 2, and Phase 3
+
+The user asked for these three in order, to be held locally until a final ship decision after more
+user testing: (1) hide the Palette/Tone display block while Independent, (2) Phase 2, (3) Phase 3.
+
+**1 — Palette/Tone display block, hidden while Independent.** Previously flagged (Rounds 11/14) as
+cosmetic-only — never read by any prompt-building function — but still visually contradicted the
+now-honest "Brand guidelines — off while Independent" chip sitting right above it. `kitAnything`/
+`kitNothing` (the bag fields gating this block, shared by both Video's and Social's copies of the
+panel) now both require `!glIndependent`; a new `kitIndependent` state shows a short explanatory line
+("Hidden while Independent — none of it is used for this piece.") instead of leaving an unexplained
+gap. Live-verified both directions: Independent shows the new line and no palette/tone content
+anywhere on the page; switching back to Grounded shows the full kit again, unchanged.
+
+**2 — Phase 2: `plan.py`'s own house pull, and `/idea-draft`'s unguarded house pull.**
+- `plan.py`'s `prompt_for()` called `house_block(house, layer_id)` — the bound house's real pillars,
+  RTBs and avoid-list — unconditionally whenever a house was bound, regardless of the PLAN's own
+  `brand_mode`. A General plan with a house bound for its other layers (audiences, channels) would
+  still stand on that house's real core message for the layer actually being generated. Gated on
+  `p.get("brand_mode") == "general"`, same as the `voice_block` call two lines above it already was.
+- `/idea-draft` (and `ideas.py`'s `draft_prompt`/`draft_lines` underneath it) pulled the bound house's
+  real core message, pillars and RTBs unconditionally, AND called `brandprofile.resolve(brief, house)`
+  with no mode check at all — the same "falls back to whichever brand is globally ACTIVE" footgun this
+  project has fixed everywhere else. The frontend (`ideaDraft()`) never even sent `brand_mode` to this
+  route in the first place. Fixed at three points: the route now refuses to load the house at all when
+  General (not just gated deeper in), `draft_prompt`/`draft_lines` gained their own `brand_mode` param
+  so `resolve()` and the house pull are both blocked together, and the frontend now sends
+  `brand_mode: this.state.producerBrandMode`.
+
+  **Live-verified with a real, already-Independent plan on file** (`bef00167fa`, house `cbc994747d`
+  bound) via a direct `/plan-generate` call on its Channels layer: no "Heritage"/"Pure Doodh" anywhere
+  in the response, and — the clearest possible confirmation the fix is real, not cosmetic — one row
+  came back **"HELD: no sourced RTBs exist. Move to reach or hold until the house supplies verified
+  facts"**, the model correctly refusing to invent a proof point it no longer had real house RTBs to
+  draw from. Also verified `/idea-draft` directly: the same house, General mode, no typed brief →
+  correctly refused ("Nothing to draft from"), proving the house's core was never pulled in; the
+  identical call with a typed brief → succeeded with a fully generic platform line, no house/brand
+  content; the same house in Grounded mode → succeeded normally with real house-grounded content
+  (regression check, unaffected).
+
+**3 — Phase 3: PR's `prDraftRelease()`, never wired to the toggle at all.** Unlike every other producer
+this project has fixed, this screen has no typed-brief box of its own to fall back on — a press release
+has nothing to draft FROM except the brand profile, the bound house's core message, and the sheet's own
+declared messages, all of which are real brand-specific facts by the standard this whole project has
+held everywhere else (a text/claim, not a photo reference — the one narrow exemption already carved
+out for cast). So "new wiring" here correctly means a clean refusal, not a half-working generic mode:
+`producerBrandMode === 'general'` now short-circuits before any of the brand/house-pulling code runs,
+with an honest message naming what Independent deliberately keeps out and pointing at the alternative
+(switch to Grounded, or fill the fields by hand) — the same "never invent from nothing, say so instead"
+pattern `draft_lines()`/`brandPreamble()` already use elsewhere.
+
+**Live-verified on a real campaign PR sheet** (`2f3ca6b396`, Heritage, launch phase): toggled
+Independent, clicked "Draft with AI" on the Release tab — captured zero `/complete` calls, confirmed
+twice. Switched to Grounded, clicked the same button — one real call fired, opening "You are drafting a
+press release for Heritage..." exactly as before, confirming no regression to the working feature.
+
+**Validated:** `py_compile` on `plan.py`/`ideas.py`/`main.py`; `checkfe.py` all 8 checks passed;
+LF/NULL-byte scan clean on `app.dc.html`. Server restarted before testing (backend changes, no
+hot-reload).
+
+This closes every item on the "still open" list from the last full review — Phase 2 and Phase 3 were
+the last two scoped-but-deferred gaps, and the Palette/Tone block was the last known cosmetic
+inconsistency. Per the user's own framing: all of this stays local, to be shipped together in one
+render once satisfied with further user testing — nothing here has been committed to product code.

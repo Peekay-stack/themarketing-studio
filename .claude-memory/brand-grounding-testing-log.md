@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: d3a25b08-5f19-478b-bc7e-ff283771328e
-  modified: 2026-09-16T07:51:27.417Z
+  modified: 2026-09-16T08:20:21.810Z
 ---
 
 **File**: `Heritage Marketing Studio/BRAND_GROUNDING_TESTING_LOG.md` (repo root of the studio project).
@@ -79,5 +79,9 @@ image generator at the user's request); Round 14 ("Include a recurring model/cas
 unchecked — cast auto-attached unconditionally in `library.shot_references()` with no way to suppress
 it, unlike pack's opt-in; fixed the actual behavior with a new `want_cast`/`use_cast` gate, defaulting
 to the old always-on behavior for every existing caller, plus the identical bug in Carousel's own
-checkbox; added plain-text notes under both checkboxes stating what each state actually does).
+checkbox; added plain-text notes under both checkboxes stating what each state actually does); Round 15
+(at the user's request, closed the last three known gaps in order: hid the Palette/Tone display block
+while Independent, built Phase 2 — `plan.py`'s own house pull and `/idea-draft`'s unguarded one — and
+Phase 3 — PR's `prDraftRelease`, fixed as a clean refusal since that screen has no typed-brief
+fallback; all three live-verified, closing every item that was on the "still open" list).
 See [[brand-grounding-modes-project]] for the full account.

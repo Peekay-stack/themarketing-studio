@@ -1,11 +1,11 @@
 ---
 name: brand-grounding-modes-project
-description: "All 5 stages built and live-tested (11-15 Sep 2026) — Brief/Strategy/Plan/Producers share one Grounded/Independent toggle so \"no brand attached\" is a real, honored choice instead of an accident. Architecture collapsed from 4 per-tab toggles to 1; 8 rounds of testing feedback fixed so far, incl. a studio-wide stale-draft-on-toggle bug, a real grounding leak fixed in phases, and Social's missing pack/cast asset mechanism — see the testing log."
+description: "All 5 stages built + Phases 1-3 of the grounding-leak fix all now done, 15 rounds of live user-testing feedback fixed (11-16 Sep 2026) — Brief/Strategy/Plan/Producers share one Grounded/Independent toggle so \"no brand attached\" is a real, honored choice instead of an accident. Every scoped gap closed; still 100% local, to be shipped together once user testing is satisfied — see the testing log."
 metadata:
   node_type: memory
   type: project
   originSessionId: d3a25b08-5f19-478b-bc7e-ff283771328e
-  modified: 2026-09-16T07:51:14.376Z
+  modified: 2026-09-16T08:20:14.029Z
 ---
 
 **Start here for this thread**: `BRAND_GROUNDING_MODES_PLAN.md` (repo root) has the full technical
@@ -354,6 +354,32 @@ wording too**: added a plain-text line under both checkboxes stating what actual
 Live-verified: no `use_cast` sent → cast still auto-attaches (old default preserved); `use_cast:false` →
 `from_reference:false`, no cast at all. Full detail: `BRAND_GROUNDING_TESTING_LOG.md` Round 14.
 
+## Round 15 (16 Sep) — the last three known gaps closed: cosmetic display, Phase 2, Phase 3
+
+User asked for these three, in order, held locally until a final ship decision after more testing:
+1. **Palette/Tone display block hidden while Independent** — `kitAnything`/`kitNothing` now gated on
+   `!glIndependent`, with a new `kitIndependent` explanatory line instead of an unexplained gap.
+2. **Phase 2** — `plan.py`'s `prompt_for()` gained the same `brand_mode` gate on `house_block()` that
+   `voice_block` two lines above it already had. `/idea-draft` (route + `ideas.py`'s `draft_prompt`/
+   `draft_lines`) gained real `brand_mode` handling — the house is never even loaded for General, and
+   `brandprofile.resolve()`'s own active-brand-fallback footgun is blocked with it; the frontend
+   (`ideaDraft()`) now actually sends `brand_mode`, which it never did before.
+3. **Phase 3** — PR's `prDraftRelease()` has no typed-brief fallback the way Social/Video do, so the
+   correct fix is a clean refusal (not a half-working generic mode): Independent now short-circuits
+   before any brand/house pull, with an honest message, matching `draft_lines()`'s own "never invent
+   from nothing" pattern.
+
+**Live-verified all three**: the display block confirmed both directions; Phase 2 confirmed on a real
+already-Independent plan — a `/plan-generate` call came back with a row correctly marked "HELD: no
+sourced RTBs exist" (the model refusing to invent a proof it no longer had real house facts for) and
+zero "Heritage"/"Pure Doodh" leakage, plus `/idea-draft` correctly refusing with no typed brief and
+succeeding generically with one; Phase 3 confirmed on a real campaign PR sheet — zero `/complete` calls
+while Independent (checked twice), one real call firing normally in Grounded (no regression).
+
+This closes every item that was on the "still open" list — Phase 2/3 were the last scoped-but-deferred
+gaps, the display block was the last known cosmetic inconsistency. Full detail:
+`BRAND_GROUNDING_TESTING_LOG.md` Round 15.
+
 ## Not yet built / lower priority, still open
 
 - **POSM's `/posm-assemble`/`/posm-artwork`/`/posm-print`** (downstream compositing/export, as opposed
@@ -377,8 +403,9 @@ Live-verified: no `use_cast` sent → cast still auto-attaches (old default pres
 - **The IMC Brief prompt textarea is never cleared** when switching to Independent (only Brand/
   Category are) — a deliberate choice (it's the person's own analysis request, not a brand fact),
   flagged to the user, not yet confirmed as final either way.
-- Nothing in this feature has been committed or pushed as of 12 Sep — still sitting local pending the
-  user's own review.
+- Nothing in this feature has been committed or pushed as of 16 Sep (15 rounds in) — still sitting
+  local, by the user's own explicit choice: ship it all together in one render once satisfied with
+  further user testing, not incrementally.
 
 ## Related
 
