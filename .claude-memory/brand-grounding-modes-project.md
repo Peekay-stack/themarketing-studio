@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: d3a25b08-5f19-478b-bc7e-ff283771328e
-  modified: 2026-09-16T04:55:44.361Z
+  modified: 2026-09-16T05:43:45.397Z
 ---
 
 **Start here for this thread**: `BRAND_GROUNDING_MODES_PLAN.md` (repo root) has the full technical
@@ -271,6 +271,37 @@ resulting image showed the same woman as before (continuity working). One honest
 chased further: that same render's container drifted from the pinned pouch shape to a carton shape —
 likely ordinary generation variance rather than a Round 9 regression (both references shown were the
 correct pouch), worth watching if it recurs. Full detail: `BRAND_GROUNDING_TESTING_LOG.md` Round 10.
+
+## Round 11 (16 Sep) — a real Independent-mode leak in a second, previously-unaudited layer
+
+User tested Independent mode directly (not Grounded) this time. Found: **`brandPreamble()`** — the
+shared client-side preamble builder behind 8 producers (both brief writers, Social, Video script +
+department heads, campaign lead, measurement) — only checked `allowGeneral`/Independent inside its
+"no brand configured at all" fallback branch, so it did NOTHING whenever a real brand was actually
+active (the normal case): every Independent-mode call from any of these 8 still opened "You are ...
+for Heritage Foods" plus the full voice block. This predates and sits BELOW everything Rounds 1-10
+verified, because those rounds tested the server-side `/complete` route's own `brand_mode` handling
+directly, never through this specific client-side prompt-builder. Confirmed live via a
+`window.claude.complete` monkey-patch. Fixed: `allowGeneral` now wins outright, checked first.
+**`inputsContext()`** had the identical bug (unconditional brand-guidelines pull on the "guidelines"
+toggle) — same fix. The guidelines chip itself was also lying (stayed green/branded regardless of
+Independent) — now reads "Brand guidelines — off while Independent."
+**Pack shot still not reaching the image**, root-caused as UX not a new bug: the user (reasonably)
+uploaded via the pre-existing "Inputs to guide generation" uploader, which never uploads anything real
+— `handleStudioUpload` only remembers the filename as TEXT context, never a real photo reference. The
+real mechanism (Round 8's "Assets for these posts" card) sat unused. Per the user's direction, removed
+the misleading upload button from Social's copy of that panel specifically (Video's own copy is
+untouched — no competing mechanism there) and pointed at the real card in its place.
+**Live-verified**: panel now reads honestly, no upload button; a real Independent-mode generation's
+captured `/complete` prompt opened "No brand profile is attached to this piece... do NOT invent a
+brand" with zero "Heritage Foods"/"HERO PRODUCT" leakage.
+**Separate, NOT-a-bug finding, recorded not hidden**: captions still came back fully Heritage-voiced
+(tagline, hashtags, FSSAI claims) because the objective itself said "create a post for heritage milk"
+— a real, well-known brand the model already knows from training, independent of anything this app
+injects. Same tension Round 7 named for IMC and the user accepted; not closed this round, would need a
+deliberate design call. Also noted, not fixed: the Palette/Tone display block still shows the active
+brand's kit regardless of mode — confirmed purely decorative (display-only, never read by any prompt
+function), cosmetic not functional. Full detail: `BRAND_GROUNDING_TESTING_LOG.md` Round 11.
 
 ## Not yet built / lower priority, still open
 

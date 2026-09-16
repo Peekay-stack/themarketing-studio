@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: d3a25b08-5f19-478b-bc7e-ff283771328e
-  modified: 2026-09-16T04:55:50.683Z
+  modified: 2026-09-16T05:43:52.108Z
 ---
 
 **File**: `Heritage Marketing Studio/BRAND_GROUNDING_TESTING_LOG.md` (repo root of the studio project).
@@ -62,5 +62,9 @@ Social asset picker — upload, objective, generate, adjust — surfaced three m
 a fal-fallback path ignoring the requested image ratio, Adjust drifting the product to the wrong real
 SKU with no anchor telling the model which pack was pinned, and Adjust fully re-rendering the image on
 every note because of a brittle text-equality check instead of an explicit model judgment; all three
-root-caused and fixed together, live-verified end to end).
+root-caused and fixed together, live-verified end to end); Round 11 (testing Independent mode directly
+surfaced a real leak in a second, previously-unaudited layer — `brandPreamble()`, the shared client-
+side preamble behind 8 producers, only checked Independent inside its "no brand at all" fallback, so
+it did nothing when a real brand was active; `inputsContext()` had the same bug; both fixed, plus the
+pack-upload UX trap removed by pointing at the one real mechanism instead of leaving two).
 See [[brand-grounding-modes-project]] for the full account.
