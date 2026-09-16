@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: d3a25b08-5f19-478b-bc7e-ff283771328e
-  modified: 2026-09-16T06:19:45.622Z
+  modified: 2026-09-16T07:22:56.245Z
 ---
 
 **File**: `Heritage Marketing Studio/BRAND_GROUNDING_TESTING_LOG.md` (repo root of the studio project).
@@ -71,5 +71,9 @@ pack-upload UX trap removed by pointing at the one real mechanism instead of lea
 explicitly-picked pack reference in Independent mode, contradicting cast's own precedent; fixed both,
 added a "Let the studio design one" option for when no real pack exists yet, and fixed a second
 frontend bug where the grounding banner discarded the server's honest summary whenever `grounded` was
-false, silently undoing Round 11's own `/grounding` fix before it reached the screen).
+false, silently undoing Round 11's own `/grounding` fix before it reached the screen);
+Round 13 (reworded "the producer is working from memory," which collided with the app's own Memory
+tab, to "works from general knowledge alone, not the plan or platform"; re-verified Round 12's pack fix
+fresh with a 3/3 clean batch; explained the literal prompt reaching the image generator at the user's
+request).
 See [[brand-grounding-modes-project]] for the full account.

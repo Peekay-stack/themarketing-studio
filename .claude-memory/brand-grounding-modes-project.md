@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: d3a25b08-5f19-478b-bc7e-ff283771328e
-  modified: 2026-09-16T06:19:38.583Z
+  modified: 2026-09-16T07:22:41.171Z
 ---
 
 **Start here for this thread**: `BRAND_GROUNDING_MODES_PLAN.md` (repo root) has the full technical
@@ -324,6 +324,20 @@ discarded the server's real sentence for its own generic hardcoded text, silentl
 fix before it ever reached the screen. Fixed to always use the server's summary when sent. Live-
 verified: banner now correctly reads "This piece is Independent — nothing is grounding it but what you
 write here." Full detail: `BRAND_GROUNDING_TESTING_LOG.md` Round 12.
+
+## Round 13 (16 Sep) — wording fix + clean re-verification of Round 12
+
+User asked two questions: what "the producer is working from memory" means, and why the pack still
+missed on 2/3 posts in a batch, with a direct ask for what literally reaches the image generator.
+"Working from memory" is a real, accurate status (checks the separate "plan brief"/"idea platform"
+toggles, not brand mode) but collided with the app's own "Memory" tab — reworded to "the producer works
+from general knowledge alone, not the plan or platform," same meaning, no collision. Re-ran the user's
+exact scenario fresh: 3/3 posts came back `pack_used:true` with the real pouch correctly rendered,
+confirming Round 12's fix holds — the earlier 2/3-wrong batch was pre-fix or ordinary model variance,
+not a live gap. Explained the literal prompt reaching `/scene-still` (reference photos as real image
+bytes, style register, the exact pack_clause text, the post's own scene line) and named the honest
+limit: even a correct reference doesn't guarantee 100% model fidelity every render. Full detail:
+`BRAND_GROUNDING_TESTING_LOG.md` Round 13.
 
 ## Not yet built / lower priority, still open
 
