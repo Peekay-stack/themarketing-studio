@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: d3a25b08-5f19-478b-bc7e-ff283771328e
-  modified: 2026-09-17T10:19:24.270Z
+  modified: 2026-09-17T10:50:56.945Z
 ---
 
 **File**: `Heritage Marketing Studio/BRAND_GROUNDING_TESTING_LOG.md`, section "New thread — IMC brief
@@ -194,3 +194,28 @@ indistinguishable from the benign "no API key" case. Fixed: logs the exception n
 generate()` distinguishes genuine failure from no-key and appends an honest caveat to the document
 naming which sections are structural defaults. Verified both paths (forced failure + benign no-key).
 Committed and deployed.
+
+**Chart-upload slot routing fix (17 Sep, later still).** User asked whether the split-ingestion fix
+could accidentally sweep NeedScope wheel / CB-CA chart uploads into the research pipeline. Traced it and
+found a real gap: the upload UI accepts `.pdf` for both chart slots but neither the frontend nor backend
+image-extension lists included pdf, so a PDF chart silently got Map/Synthesized as a document instead of
+read via vision. Confirmed design with the user before building: read-via-vision-and-redraw (not embed
+the original file verbatim — that's separate, unrequested work), and route by UPLOAD SLOT rather than
+file extension (the user dropping a file in the wheel box already says what it is). PPTX/DOCX charts
+built from native shapes need real rendering (LibreOffice) to read fully — checked and it's technically
+possible (the Render service is Docker-based) but the plan is `0.5c-512mb`, genuinely too tight to risk
+safely (could OOM the whole container, not just fail one chart read) — raised this plainly, user chose to
+ship image+PDF now and defer native-shape rendering until instance sizing is revisited, per their
+explicit principle: "user control on this is absolutely critical" — never silently drop what was
+uploaded, so an unreadable-as-chart file still reaches the brief as research content instead.
+
+Built `research_parse.chart_image_from_upload()` (images pass through, PDFs rasterize via pypdfium2 —
+already a dependency — page 1 → PNG), new `chart_wheel`/`chart_cbca` fields on `/brand-brief-draft`,
+per-image labels in `brief_ai.py`'s vision prompt ("NeedScope wheel reference" / "CB/CA reference") for
+the "unified" reading the user asked for, and frontend slot-based classification
+(`isChartCapable`/`researchDocFiles`) shared by ingestion-caching and drafting, plus updated `IMC_SLOTS`
+guidance text. Live-verified with a real distinctive test: a synthetic PDF reading "ZEBRAFLUX anchored in
+DISCERNMENT," attached via the real browser — confirmed no `/research-ingest` call fired (correctly
+chart-only) and the actual draft JSON contained the exact content, with the model explicitly reasoning
+about it as a test artifact without letting it corrupt the real analysis. No server errors. Committed and
+deployed. PPTX/DOCX-native-shape rendering remains open, deliberately deferred.

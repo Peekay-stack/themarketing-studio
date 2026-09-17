@@ -171,6 +171,13 @@ def draft_brief(base: dict, research: dict | None = None,
     content: list[dict] = [{"type": "text", "text": _payload_context(base, research)}]
     for img in (images or [])[:4]:
         if img.get("data_b64") and img.get("media_type"):
+            # A label ahead of each image (when the caller has one — main.py's chart_wheel/chart_cbca
+            # fields set this) tells the model which reference it's looking at rather than leaving it to
+            # infer wheel-vs-CB/CA from the picture alone — cheap, and directly serves "the brief reads
+            # unified throughout": the model can now cite a specific uploaded chart by name in its
+            # reasoning instead of a generic "the attached image."
+            if img.get("label"):
+                content.append({"type": "text", "text": f"[{img['label']}]"})
             content.append({"type": "image", "source": {
                 "type": "base64", "media_type": img["media_type"], "data": img["data_b64"]}})
 

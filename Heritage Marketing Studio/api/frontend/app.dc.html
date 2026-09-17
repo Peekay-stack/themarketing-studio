@@ -10956,8 +10956,8 @@ class Component extends DCLogic {
   IMC_SLOTS = [
     { id:'market',    label:'Market share & sales', accept:'.xlsx,.xls,.csv', note:'Used verbatim in the competitor & pricing sections' },
     { id:'household', label:'Household data',       accept:'.xlsx,.xls,.csv', note:'Penetration & consumption — sizes the audience and the shift' },
-    { id:'wheel',     label:'NeedScope wheel',      accept:'.png,.jpg,.jpeg,.pdf', note:'Optional — the AI reads pin positions from your chart' },
-    { id:'cbca',      label:'CB/CA → DB/DA',        accept:'.png,.jpg,.jpeg,.pdf', note:'Optional reference chart' },
+    { id:'wheel',     label:'NeedScope wheel',      accept:'.png,.jpg,.jpeg,.pdf', note:'Optional — the AI reads pin positions from your chart. Upload an image or PDF of the wheel alone — a wheel embedded in a larger deck or doc won’t be read as the chart.' },
+    { id:'cbca',      label:'CB/CA → DB/DA',        accept:'.png,.jpg,.jpeg,.pdf', note:'Optional reference chart. Upload an image or PDF of the chart alone — embedded in a larger deck or doc, it won’t be read as the chart.' },
     { id:'research',  label:'Research & decks',     accept:'.pdf,.pptx,.docx', note:'Mined for verbatim consumer quotes & positioning' },
   ];
   TERRITORIES = ['Power','Freedom','Vitality','Belonging','Security','Discernment'];
@@ -12073,15 +12073,33 @@ class Component extends DCLogic {
   // or the synthesis deck. This runs it once, caches the result in im.research, and every one of those
   // three calls sends the cached result instead of re-uploading files and re-running it. The cache is
   // invalidated (im.research:null) by onImcFiles/removeImcFile whenever the attached file set changes.
+  // A wheel/CB-CA upload only gets read as the chart it is when it's an image or a PDF (the server
+  // rasterizes a PDF page — see research_parse.chart_image_from_upload()); anything else uploaded to
+  // those two slots (a PPTX/DOCX built from native shapes, no single image to extract) can't be read as
+  // the chart yet, so it's treated as a regular research document instead of silently dropped — the
+  // IMC_SLOTS note under each of those two upload boxes says this up front.
+  CHART_EXT = ['png','jpg','jpeg','gif','webp','pdf'];
+  isChartCapable(f){ return this.CHART_EXT.includes((f.name.split('.').pop()||'').toLowerCase()); }
+  // Every attached file EXCEPT a chart-capable wheel/cbca upload (those are read as the chart itself,
+  // not mined as a document) — the one list both ensureResearchIngested() and draftBrief() key off, so
+  // the two stay in agreement about what counts as "research" versus "a chart."
+  researchDocFiles(im){
+    const out = [];
+    Object.keys(im.files||{}).forEach(k => (im.files[k]||[]).forEach(f => {
+      if ((k === 'wheel' || k === 'cbca') && this.isChartCapable(f)) return;
+      out.push(f);
+    }));
+    return out;
+  }
   ensureResearchIngested = async () => {
     const im = this.state.imc;
-    const hasFiles = Object.keys(im.files||{}).some(k => (im.files[k]||[]).length);
-    if (!hasFiles) return null;
+    const docFiles = this.researchDocFiles(im);
+    if (!docFiles.length) return null;
     if (im.research) return im.research;
     this.setImc({ ingesting:true });
     const fd = new FormData();
     fd.append('payload', JSON.stringify({ brand: im.brand, category: im.category, prompt: im.prompt }));
-    Object.keys(im.files).forEach(k => (im.files[k]||[]).forEach(f => fd.append('research', f)));
+    docFiles.forEach(f => fd.append('research', f));
     try {
       const r = await fetch('/research-ingest', { method:'POST', body: fd });
       if (!r.ok) throw new Error('server returned ' + r.status);
@@ -12098,7 +12116,7 @@ class Component extends DCLogic {
     const im = this.state.imc;
     if (im.status === 'drafting') return;
     if (!im.prompt.trim()) { this.showToast('Describe the brief first — the prompt anchors everything.'); return; }
-    this.setImc({ status:'drafting', message: im.files && Object.values(im.files).some(a=>(a||[]).length) && !im.research ? 'Reading your attached research…' : 'Running the brand-brief skill…' });
+    this.setImc({ status:'drafting', message: this.researchDocFiles(im).length && !im.research ? 'Reading your attached research…' : 'Running the brand-brief skill…' });
     const research = await this.ensureResearchIngested();
     this.setImc({ message:'Running the brand-brief skill…' });
     const isGeneral = this.state.producerBrandMode === 'general';
@@ -12109,13 +12127,13 @@ class Component extends DCLogic {
     fd.append('payload', JSON.stringify({ brand: isGeneral ? '' : im.brand, category:im.category, prepared_for:im.preparedFor,
       prompt:im.prompt, market_data:im.marketData||null, household_data:im.householdData||null,
       brand_mode: this.state.producerBrandMode, research }));
-    // Research already ingested above — only images (NeedScope/CB-CA reference charts) still need to
-    // travel as raw bytes here, since draft_brief() reads those directly for vision. Documents are
-    // covered by `research` in the payload now, not re-sent.
-    const IMAGE_EXT = ['png','jpg','jpeg','gif','webp'];
-    Object.keys(im.files).forEach(k => (im.files[k]||[]).forEach(f => {
-      if (IMAGE_EXT.includes((f.name.split('.').pop()||'').toLowerCase())) fd.append('research', f);
-    }));
+    // Research (including any wheel/cbca upload that couldn't be read as a chart) is already ingested
+    // above and travels in `research`. Only chart-capable wheel/cbca files still need to go as raw
+    // bytes, in their own fields — draft_brief() reads those directly for vision.
+    let uncharted = 0;
+    (im.files.wheel||[]).forEach(f => { if (this.isChartCapable(f)) fd.append('chart_wheel', f); else uncharted++; });
+    (im.files.cbca||[]).forEach(f => { if (this.isChartCapable(f)) fd.append('chart_cbca', f); else uncharted++; });
+    if (uncharted) this.showToast('Your wheel/CB-CA upload isn’t an image or PDF, so it was included as general research instead of read as the chart directly.', 'info');
     try {
       const r = await fetch('/brand-brief-draft', { method:'POST', body: fd });
       if (r.status === 400) {

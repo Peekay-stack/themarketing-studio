@@ -592,6 +592,42 @@ def analyze_upload(path: str) -> dict:
     return {"filename": blob["filename"], "kind": "text", "format": ext, "content": blob["text"]}
 
 
+_CHART_IMAGE_MEDIA = {"png": "image/png", "jpg": "image/jpeg", "jpeg": "image/jpeg",
+                      "gif": "image/gif", "webp": "image/webp"}
+
+
+def chart_image_from_upload(path: str) -> dict | None:
+    """For a NeedScope wheel / CB-CA reference chart upload: return {"media_type", "data_b64"} if the
+    file can be read as an image the model can see — either because it already is one, or because it's
+    a PDF (rasterize page 1 — pypdfium2 is already a dependency via pdfplumber, so this needed nothing
+    new). Returns None for anything else: a PPTX/DOCX chart built from native shapes has no single image
+    to extract without a real rendering engine (LibreOffice) this deployment's instance size can't
+    safely carry yet — see BRAND_GROUNDING_TESTING_LOG.md's entry on why that was deliberately deferred
+    rather than risking the whole app's memory budget. Callers should fold a None result into the
+    regular research pipeline instead of silently dropping it — the chart's raw content still reaches
+    the brief that way, just not as the wheel/CB-CA reading specifically.
+    """
+    import base64
+    ext = os.path.splitext(path)[1].lower().lstrip(".")
+    if ext in _CHART_IMAGE_MEDIA:
+        with open(path, "rb") as f:
+            return {"media_type": _CHART_IMAGE_MEDIA[ext], "data_b64": base64.b64encode(f.read()).decode("ascii")}
+    if ext == "pdf":
+        try:
+            import io
+            import pypdfium2 as pdfium
+            pdf = pdfium.PdfDocument(path)
+            if len(pdf) == 0:
+                return None
+            pil_img = pdf[0].render(scale=2.0).to_pil().convert("RGB")
+            buf = io.BytesIO()
+            pil_img.save(buf, format="PNG")
+            return {"media_type": "image/png", "data_b64": base64.b64encode(buf.getvalue()).decode("ascii")}
+        except Exception:
+            return None
+    return None
+
+
 # ---------------------------------------------------------------------------------------------------
 # Map, second half: bounded per-file LLM extraction for decks/docs/PDF.
 #

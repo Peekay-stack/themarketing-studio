@@ -1404,3 +1404,62 @@ own regardless: silent failure with zero diagnostics was always a real gap, what
 particular one.
 
 **Status**: Committed and deployed.
+
+### Chart uploads (NeedScope wheel / CB-CA) routed by slot, not extension (17 Sep, later still)
+
+User asked, before the split-ingestion fix could be trusted for wheel/CB-CA uploads: are those two
+image-upload slots wired differently from the research pipeline, or could they get accidentally swept
+into it? Traced it and found a real, pre-existing gap: the wheel/CB-CA upload UI explicitly accepts
+`.png,.jpg,.jpeg,.pdf`, but neither the frontend's image filter nor the backend's `_IMAGE_TYPES` dict
+included `.pdf` — so a chart uploaded as a PDF (a real, expected case, not an edge case) silently fell
+into the research-ingestion pipeline and got Map/Synthesized as a document instead of read via vision as
+the chart it was.
+
+**Design confirmed with the user before building**: the fix should read a chart "as is" meaning the AI
+reads it via vision and redraws the brief's own branded wheel/CB-CA diagram from that reading (same as
+image uploads already worked) — not embed the original file verbatim in the exported doc, which would be
+separate, unrequested document-assembly work. Also confirmed: extension-based guessing across one shared
+`research` field was the wrong mechanism generally — the right fix is to route by which UPLOAD SLOT a
+file came from, since the user's own act of dropping a file in the "NeedScope wheel" box already says
+what it is, regardless of its format.
+
+**PPTX/DOCX charts built from native shapes** (no embedded picture to extract) surfaced a real
+infrastructure question: fully rendering an arbitrary slide/page needs a real rendering engine
+(LibreOffice headless), and while the deployment turned out to be Docker-based (so installing it is
+technically possible), the Render plan is `0.5c-512mb` — genuinely too little headroom to risk safely,
+given LibreOffice's memory footprint could OOM-crash the whole container for every user, not just fail
+the one chart read. Raised this plainly rather than deciding silently. User's call: ship image+PDF now
+(the real architectural fix), defer PPTX/DOCX-native-shape rendering until instance sizing is
+revisited, and add clear UI guidance steering people to upload an image or PDF of the chart alone in the
+meantime — with the explicit principle behind that call: "the user control on this is absolutely
+critical" (uploaded input should never be silently dropped) — so a PPTX/DOCX chart that lands in these
+slots anyway still reaches the brief as research content, just not read as the intended chart.
+
+**Built**: `research_parse.chart_image_from_upload()` — images pass through as-is, PDFs get rasterized
+(pypdfium2, already a dependency, page 1 → PNG) and fed to vision exactly like an image; anything else
+returns `None` so the caller can fall back rather than drop it. `/brand-brief-draft` gained two new
+fields, `chart_wheel`/`chart_cbca`, resolved through that function; a file that yields no image falls
+back into the regular research `doc_paths`. `brief_ai.py`'s vision call now labels each image
+("NeedScope wheel reference" / "CB/CA → DB/DA reference") ahead of it in the prompt, directly serving the
+user's "brief reads unified throughout" ask — the model can now cite a specific uploaded chart by name
+rather than a generic "the attached image." Frontend: `isChartCapable()`/`researchDocFiles()` classify by
+slot (wheel/cbca) + extension (image or PDF = chart; anything else = research document), shared by
+`ensureResearchIngested()` (excludes chart-capable wheel/cbca files from ingestion entirely — a
+correctness improvement, since they used to get needlessly sent through Map/Synthesize before being
+filtered server-side) and `draftBrief()` (sends chart-capable files via the new dedicated fields, shows a
+toast if a wheel/cbca upload fell back to research instead). `IMC_SLOTS`' note text under both upload
+boxes now says plainly: upload an image or PDF of the chart alone, or it won't be read as the chart.
+
+**Live-verified with a real, distinctive test**: generated a synthetic PDF chart reading "ZEBRAFLUX
+anchored in DISCERNMENT" (content that could never appear in a real draft unless the model actually read
+this specific file), attached it to the wheel slot in the real running browser, and drafted. Confirmed
+via network log that no `/research-ingest` call fired at all (correctly recognized as chart-only, nothing
+to ingest) and the actual drafted JSON contained the exact test content — with the model explicitly
+reasoning about it: *"The uploaded synthetic test chart placed ZEBRAFLUX in Discernment, confirming the
+chart-reading path, though that brand is out of scope for this dairy set."* Unambiguous, live proof the
+full PDF→rasterize→vision chain works, and that the model correctly isolates a clearly-test artifact from
+corrupting its real analysis. No server errors. Test brief/ledger entry and the temporary test asset
+cleaned up afterward.
+
+**Status**: Committed and deployed. PPTX/DOCX-native-shape chart rendering remains open, deliberately
+deferred pending an instance-sizing decision.

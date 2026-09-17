@@ -8161,12 +8161,24 @@ _IMAGE_TYPES = {"png": "image/png", "jpg": "image/jpeg", "jpeg": "image/jpeg",
 
 
 @app.post("/brand-brief-draft")
-def brand_brief_draft(payload: str = Form(...), research: list[UploadFile] = File(default=[])):
+def brand_brief_draft(payload: str = Form(...), research: list[UploadFile] = File(default=[]),
+                      chart_wheel: list[UploadFile] = File(default=[]),
+                      chart_cbca: list[UploadFile] = File(default=[])):
     """Run the brand-brief SKILL to DRAFT the whole brief from a prompt + files.
 
     Returns the builder payload (competitors, NeedScope pins, CB/CA, SMP, defence, unlocks)
     for the front end to populate its editors so the user can review/edit before generating
     the Word document via /brand-brief. Requires ANTHROPIC_API_KEY.
+
+    chart_wheel / chart_cbca: the NeedScope wheel and CB/CA reference chart uploads, sent as their own
+    fields now rather than mixed into `research` and told apart by extension — that used to mean a
+    user's own uploaded chart could only be read as intended if it happened to be a PNG/JPG; a PDF chart
+    (which the upload UI explicitly accepts) silently fell into the RESEARCH pipeline and got mined as a
+    document instead of read as the chart it was. Each file here is resolved via
+    research_parse.chart_image_from_upload() — images pass straight through, PDFs get rasterized to one
+    — and only a file that yields no image at all (a PPTX/DOCX chart built from native shapes, not yet
+    supported — see that function's docstring) falls back to the regular research pipeline below, so its
+    content still reaches the brief even though it can't be read as the wheel/CB-CA specifically.
     """
     import base64
     import tempfile
@@ -8184,10 +8196,27 @@ def brand_brief_draft(payload: str = Form(...), research: list[UploadFile] = Fil
         base["brand"] = ""
     images, doc_paths = [], []
     tmp = tempfile.mkdtemp(prefix="draft_")
+
+    def _add_chart(files, label):
+        for f in files:
+            dest = os.path.join(tmp, os.path.basename(f.filename or "file"))
+            with open(dest, "wb") as out:
+                out.write(f.file.read())
+            img = research_parse.chart_image_from_upload(dest)
+            if img:
+                images.append({"filename": f.filename, "label": label, **img})
+            else:
+                doc_paths.append(dest)  # not readable as a chart — still reaches the brief as research
+
+    _add_chart(chart_wheel, "NeedScope wheel reference")
+    _add_chart(chart_cbca, "CB/CA → DB/DA reference")
+
     for f in research:
         ext = os.path.splitext(f.filename or "")[1].lower().lstrip(".")
         raw = f.file.read()
         if ext in _IMAGE_TYPES:
+            # Backward-compat path: a caller that still sends everything under `research` (not the new
+            # split fields) gets the same behaviour as before this change.
             images.append({"filename": f.filename, "media_type": _IMAGE_TYPES[ext],
                            "data_b64": base64.b64encode(raw).decode("ascii")})
         else:
