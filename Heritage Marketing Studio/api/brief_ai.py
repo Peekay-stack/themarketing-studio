@@ -66,7 +66,13 @@ present, and sensibly inferred (and later flagged in caveats) where the inputs a
     "consumer_insights": [string, ...],   // 3-5 specific, citable findings from qualitative research; say so if none supplied
     "problem_statement": string           // ONE paragraph: the real business/marketing problem CB/CA and the SMP must answer
   },
-  "competitors": [                        // 3-5 direct competitors
+  "competitors": [                        // 3-5 direct competitors. Cite real figures from the research
+                                           // verbatim wherever the competitor's numbers appear there
+                                           // (share, distribution, penetration, equity/tracker scores) —
+                                           // same discipline as the backgrounder above. A live brief was
+                                           // caught with a well-reasoned but entirely un-numbered
+                                           // competitor table on a run where real per-competitor figures
+                                           // WERE in the uploaded research — don't leave them on the table.
     { "name": string, "hero_brands": string, "positioning": string, "recent_moves": string }
   ],
   "needscope": {

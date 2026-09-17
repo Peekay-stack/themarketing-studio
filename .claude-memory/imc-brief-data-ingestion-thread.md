@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: d3a25b08-5f19-478b-bc7e-ff283771328e
-  modified: 2026-09-17T10:50:56.945Z
+  modified: 2026-09-17T12:32:23.624Z
 ---
 
 **File**: `Heritage Marketing Studio/BRAND_GROUNDING_TESTING_LOG.md`, section "New thread — IMC brief
@@ -219,3 +219,21 @@ DISCERNMENT," attached via the real browser — confirmed no `/research-ingest` 
 chart-only) and the actual draft JSON contained the exact content, with the model explicitly reasoning
 about it as a test artifact without letting it corrupt the real analysis. No server errors. Committed and
 deployed. PPTX/DOCX-native-shape rendering remains open, deliberately deferred.
+
+**Real user run reviewed (17 Sep, later still).** Synthesis deck confirmed genuinely excellent on a real
+run with the original 524-triggering file mix — geometrically verified no layout overflow, found a real
+non-obvious cross-source tension (qualitative treats "South India" as one market; hard data shows
+Heritage's real footprint is only AP/Telangana), correctly flagged a single-source claim, honestly
+flagged zero real data for the brief's own stated 25-44-women audience. A "test-deck.pptx could not be
+parsed" message gave a false impression of total failure — matches no real file anywhere, source
+unconfirmed, degraded exactly as designed (honest per-file note, not a crash) without affecting the other
+6 real files. The brief docx's own Caveats section confirmed the earlier `enrich_with_ai()` visibility fix
+is working (explicitly said several sections were structural defaults) — same root failure as before,
+now disclosed instead of silent. While diagnosing it further: pulled real Render logs for the exact
+request and found the diagnostic print never appeared anywhere — root cause, the Dockerfile never set
+`PYTHONUNBUFFERED=1`, so Python block-buffers stdout under uvicorn/Docker by default, meaning every
+print()-based log added today was potentially silently useless in production. Fixed (`ENV
+PYTHONUNBUFFERED=1`). Also found and fixed a real instruction gap: the competitors field never told the
+model to cite real figures verbatim (the backgrounder does) — natural model variance, not a malfunction,
+but fixed for consistency. Both deployed. Next real run should finally surface the actual
+`enrich_with_ai()` exception for a real root-cause fix.

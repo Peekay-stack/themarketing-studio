@@ -1,6 +1,13 @@
 # Heritage Marketing Studio — full stack in one container (backend serves the front end).
 FROM python:3.12-slim
 
+# Python block-buffers stdout by default when it isn't a TTY — exactly the case here under uvicorn.
+# A real print()-based diagnostic (brandbrief.py's enrich_with_ai() failure log) was added to help
+# debug a live export failure, then never showed up anywhere in Render's log stream — the exception
+# was real (confirmed by the honest caveat it left in the actual document) but sat in a buffer instead
+# of reaching the log tail. Standard, low-risk fix: force unbuffered output for the whole process.
+ENV PYTHONUNBUFFERED=1
+
 # System libs: cairo (brand-brief figures), fonts, and Node.js (brand-brief .docx builder).
 RUN apt-get update && apt-get install -y --no-install-recommends \
       libcairo2 fonts-dejavu-core curl ca-certificates gnupg \

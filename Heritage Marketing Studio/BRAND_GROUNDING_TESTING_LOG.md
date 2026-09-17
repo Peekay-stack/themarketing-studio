@@ -1463,3 +1463,57 @@ cleaned up afterward.
 
 **Status**: Committed and deployed. PPTX/DOCX-native-shape chart rendering remains open, deliberately
 deferred pending an instance-sizing decision.
+
+### Real user run: synthesis deck confirmed excellent; found the logging pipe was broken (17 Sep, later)
+
+User ran a real draft on the deployed site with the exact file mix that produced the original 524 (2
+spreadsheets + 5 decks) and sent both real outputs for review. First, a false alarm worth recording: a
+"test-deck.pptx: could not be parsed (PackageNotFoundError)" message gave the impression the whole run
+had failed — that filename matches nothing anywhere on disk and doesn't correspond to any of the user's
+real files; it degraded exactly as designed (an honest per-file failure note, not a crash), and did not
+affect the other 6 real files, whose content is visibly present and correctly cited throughout both
+outputs. Source unconfirmed — flagged to the user rather than guessed at.
+
+**The synthesis deck (`.pptx`) is genuinely excellent** on this real run — read line-by-line via
+python-pptx and independently verified geometrically that neither linkage slide overflows its layout box
+(measured actual text-wrap height against the allocated box height for all three linkage slides; the
+tightest was 4.00in of a 4.30in budget). Slide 2's headline is a real, substantive pattern, not "no
+pattern." Slide 4 catches something genuinely sophisticated: the qualitative research treats all five
+cities as "one South India market," but the hard Nielsen/household data shows Heritage's real footprint
+is only AP/Telangana — a real tension between source types, not a manufactured one. Slide 5 correctly
+flags the curd-as-ownable-occasion claim as resting on one source, not real triangulation. The closing
+read explicitly states that none of the seven uploaded sources contain the 25-44-women/cultural-insight
+data the brief's own prompt asked for — an honest, hard gap-flag, not a fabrication.
+
+**The brief (`.docx`) surfaced two real, distinct issues on this same run**, both diagnosed precisely:
+
+1. **The same `enrich_with_ai()` failure as before, now correctly disclosed** — the document's own
+   Caveats section read "AI enrichment could not complete for this export... Redraft or regenerate to
+   retry," confirming the honest-failure fix from earlier today is working exactly as designed. This
+   explains the "awkward at the start, gets better" pattern directly: Executive Summary, Pricing/
+   Distribution, Opportunities & Threats and Recommended Actions were the same `to_skill_brief()`
+   hardcoded defaults as the last time this happened (verified by exact string match again), while the
+   Backgrounder/NeedScope/CB-CA/SMP — all drafted at the earlier, separate step — were rich and correct.
+2. **A real Docker/Python logging gap, found while trying to diagnose #1**: pulled the live Render
+   request log for the exact `/brand-brief` call (12:12:15 UTC, 43s, 200 OK) and searched the app log
+   window around it for `enrich_with_ai()`'s new failure print — nothing. Root cause: the Dockerfile
+   never set `PYTHONUNBUFFERED=1`, so Python block-buffers stdout by default when it isn't a TTY (exactly
+   the case under uvicorn in Docker) — the exception was real (proven by the caveat it left in the
+   document) but the diagnostic print sat in a buffer instead of reaching Render's log stream. This
+   means EVERY print()-based server log added earlier today was potentially silently ineffective in
+   production, not just this one.
+3. **A third, separate, non-bug finding**: the competitor table's total lack of numeric figures compared
+   to an earlier real brief (which had explicit figures like "distinctiveness (81), modern relevance
+   (74)") traced to a real instruction gap — the Backgrounder's `_OUTPUT_CONTRACT` field explicitly tells
+   the model to cite real figures verbatim; the competitors field never did. Natural model variance, not
+   a malfunction, but a legitimate, fixable inconsistency.
+
+**Fixed, with the user's go-ahead on all three**: `Dockerfile` now sets `ENV PYTHONUNBUFFERED=1` (a
+standard, low-risk, one-line fix that should make every server-side print-log actually reach Render's
+logs going forward). `brief_ai.py`'s `_OUTPUT_CONTRACT` now explicitly instructs the competitors field to
+cite real figures verbatim, same discipline as the backgrounder. Both deployed; the next real run's
+export failure (if it recurs) should now show its actual exception in the logs, letting the true root
+cause of `enrich_with_ai()`'s failure finally be fixed rather than continuing to guess at it.
+
+**Status**: Committed and deployed. Re-diagnosing the real `enrich_with_ai()` root cause is the
+immediate next step once logging is confirmed working.
