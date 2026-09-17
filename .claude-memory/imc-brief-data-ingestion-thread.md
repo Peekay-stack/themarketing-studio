@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: d3a25b08-5f19-478b-bc7e-ff283771328e
-  modified: 2026-09-17T08:54:27.409Z
+  modified: 2026-09-17T10:14:30.790Z
 ---
 
 **File**: `Heritage Marketing Studio/BRAND_GROUNDING_TESTING_LOG.md`, section "New thread — IMC brief
@@ -162,3 +162,23 @@ clicked with no files attached (correct guard toast fired), then simulated attac
 clicked again — a real `POST /research-synthesis-deck` fired, returned 200, and the UI showed "Downloaded
 Heritage_Foods_Research_Synthesis.pptx," confirming the full chain end to end. Console errors checked —
 only the same pre-existing, unrelated template-placeholder 404s already flagged.
+
+**Real production bug found and fixed (17 Sep, later still) — split ingestion from drafting to fix a
+genuine 524.** User tested the deployed site and hit a real Cloudflare 524 (proxy timeout, ~100s window)
+drafting a brief with 5 decks attached — `ingest_for_brief()` ran Map sequentially, so 5 decks + Synthesize
++ the draft call itself easily exceeded it. First fix: parallelized Map via `ThreadPoolExecutor` (8
+workers) — real 2-3x speedup (170s+ → 70-74s for the exact file mix that broke), but the full pipeline
+still totalled ~119s, still over the line, since Draft's own call can't be parallelized away. User then
+proposed running research synthesis as its own step before Draft, asked me to confirm the brief skill
+doesn't need raw files once synthesis has run — traced every downstream consumer
+(`brief_ai._payload_context`, `brandbrief.enrich_with_ai`, `synthesis.build_linkages`) and confirmed none
+ever reads `file_results`, only `research["synth"]`. Built new `POST /research-ingest` (Map+Synthesize
+only, JSON out); `/brand-brief-draft`/`/brand-brief`/`/research-synthesis-deck` now accept a pre-computed
+`research` object and skip re-ingesting when given. `app.dc.html`'s `ensureResearchIngested()` caches the
+result in `im.research`, invalidated on file add/remove; all three action buttons call it first. Caught and
+fixed two real bugs while building this (an undefined `tmp` workdir on the new code path in
+`/research-synthesis-deck`, and a missing image/document split in `/research-ingest`) before they shipped.
+Live-verified end to end in the real browser: draft → ingest-then-draft; export and synthesis-deck reuse
+the cache (no re-ingestion); adding a file and redrafting correctly re-ingests. No server errors. This is
+real, verified progress for the case that broke — very large file counts (~20, the original design target)
+untested at that scale and could still be marginal even for the ingestion step alone.

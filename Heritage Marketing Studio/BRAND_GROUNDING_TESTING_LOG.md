@@ -1301,5 +1301,65 @@ the filename, confirming the full FormData → fetch → blob → download chain
 errors were checked and are the same pre-existing, unrelated template-placeholder 404s already flagged
 this session (`{{ cr.refUrl }}` etc. — not something this work touched or caused).
 
-**Status**: Frontend trigger built and live-verified. All four phases plus their UI entry point are now
-complete for this initiative.
+**Status**: Frontend trigger built and live-verified. All four phases plus their UI entry point are
+complete. Real production bug found and fixed next, see below.
+
+### Real production 524 found and fixed (17 Sep, later same day) — split ingestion from drafting
+
+User tested the deployed site for real and hit a genuine `524` (Cloudflare's proxy timing out waiting for
+Render — the standard ~100s window on a non-Enterprise plan) trying to draft a brief with 5 decks
+attached (2 spreadsheets + 4 quarterly trackers + 1 qualitative deck). Root cause: `ingest_for_brief()`
+ran every file's Map step sequentially — 5 decks meant 5 sequential bounded LLM calls, plus Synthesize,
+plus the draft call itself, comfortably past 100s.
+
+**First fix — parallelize Map**: `_map_one_file()` split out of the loop to run in a `ThreadPoolExecutor`
+(capped at 8 workers) instead of sequentially — each file's Map step is independent (its own parse, its
+own fresh `anthropic.Anthropic()` client inside `ask_json`), so concurrency is safe, not just faster.
+Wrapped in a blanket try/except so one file's failure can't abort the whole batch under concurrency.
+Verified against the exact file mix that produced the 524: Map+Synthesize dropped from an extrapolated
+~170s+ sequential to 70-74s parallel. Real progress, but the full `/brand-brief-draft` pipeline
+(Map+Synthesize+Draft) on the same 7-file case still totalled ~119s — still over the window, since
+Draft's own call is a single sequential step no parallelization removes.
+
+**User's proposed fix, evaluated then built**: instead of an infrastructure change (bypass Cloudflare) or
+a full async/poll rebuild, the user suggested running research synthesis as its own step *before* Draft
+is pressed — asking me to first confirm the brief skill doesn't need the raw files once synthesis has
+run. Traced every downstream consumer (`brief_ai._payload_context`, `brandbrief.enrich_with_ai`,
+`synthesis.build_linkages`) and confirmed none of them ever reads `research["file_results"]` — all three
+only ever read `research["synth"]` (via `research_parse.research_context_block()`). The split is
+architecturally clean: one ingestion step produces `{filenames, synth}`, and Draft, export-enrich, and
+synthesis-deck-linkage-building can each consume that directly without ever touching the original files
+again.
+
+**Built**: new `POST /research-ingest` (Map+Synthesize only, returns JSON, no drafting/rendering).
+`/brand-brief-draft`, `/brand-brief`, `/research-synthesis-deck` all now accept a pre-computed `research`
+object in their JSON payload and skip re-ingesting when it's present, falling back to inline ingestion
+only when nothing was given (backward-compat safety net). Caught and fixed a real bug in my own edit
+while doing this: `/research-synthesis-deck`'s render step referenced a `tmp` workdir variable that was
+only defined inside the inline-ingestion branch — a `NameError` on the new pre-ingested path, fixed
+before it ever shipped. Also caught that `/research-ingest` needed the same image/document split
+`/brand-brief-draft` already does (a NeedScope/CB-CA chart upload is not a document to summarize) —
+added before wiring the frontend to it.
+
+`app.dc.html`: new `ensureResearchIngested()` caches the ingestion result in `im.research`; `onImcFiles`/
+`removeImcFile` invalidate the cache (`research:null`) whenever the attached file set changes.
+`draftBrief()`, `generateImcDocx()`, `generateSynthesisDeck()` all call it first and send the cached
+result instead of re-uploading files — `draftBrief()` still re-sends image files specifically (needed for
+vision), the other two send none.
+
+**Live-verified end to end** in the real running browser: attached a file, clicked Draft — network log
+showed `/research-ingest` complete, then `/brand-brief-draft` fire and succeed. Clicked "Generate IMC
+brief (.docx)" — no second `/research-ingest` call, went straight to `/brand-brief` (cache reused).
+Clicked "Research synthesis (.pptx)" — same, no re-ingestion. Then attached a second file and clicked
+Redraft — a fresh `/research-ingest` fired before the redraft, confirming cache invalidation works. No
+server errors across the whole sequence. Test brief and its ledger entry cleaned up afterward.
+
+Net effect on the case that actually broke: the slow step (ingestion, ~74-90s for this file mix) now runs
+alone in its own request, comfortably under the ~100s window, and every subsequent request (Draft ~30-50s,
+export's enrich ~20-30s, synthesis's build_linkages+render ~20-40s) is independently fast. This is real,
+verified progress for the specific case that produced the 524; very large file counts (approaching the
+~20-file design target) could still be marginal even for the ingestion step alone — not yet tested at
+that scale, worth watching for.
+
+**Status**: Committed. This closes the real production issue the user found while testing, on top of the
+four phases and their UI entry point already complete.

@@ -10686,7 +10686,13 @@ class Component extends DCLogic {
       marketData:null, householdData:null,
       status:'idle', message:'', draft:null, tab:'brand', activePin:0,
       genStatus:'', genMessage:'', showJson:false,
-      synthStatus:'', synthMessage:'' },
+      synthStatus:'', synthMessage:'',
+      // Cached /research-ingest result — null means "not ingested yet, or stale" (see onImcFiles/
+      // removeImcFile, which clear it whenever the attached file set changes). See
+      // ensureResearchIngested() for why this exists: ingestion is the slow step in this whole
+      // pipeline, so it runs once and gets reused by drafting, exporting and the synthesis deck,
+      // instead of each of those re-ingesting the same files and risking a proxy timeout.
+      research:null, ingesting:false },
     launcherOpen: false,
     briefPickerOpen: false,
     briefPickerFor: 'social',
@@ -10971,12 +10977,14 @@ class Component extends DCLogic {
   onImcFiles = (slot) => (e) => {
     const files = [...e.target.files]; e.target.value = '';
     if (!files.length) return;
-    this.setState(s => ({ imc:{ ...s.imc, files:{ ...s.imc.files, [slot]: [...(s.imc.files[slot]||[]), ...files] } } }));
+    // research:null invalidates the ingest cache — see ensureResearchIngested(). The file set just
+    // changed, so whatever was already ingested no longer reflects what's attached.
+    this.setState(s => ({ imc:{ ...s.imc, files:{ ...s.imc.files, [slot]: [...(s.imc.files[slot]||[]), ...files] }, research:null } }));
     if (slot==='market' || slot==='household') this.parseSheet(slot, files[0]);
   };
   removeImcFile = (slot, i) => () => this.setState(s => {
     const next = (s.imc.files[slot]||[]).filter((_,j)=>j!==i);
-    const patch = { files:{ ...s.imc.files, [slot]: next } };
+    const patch = { files:{ ...s.imc.files, [slot]: next }, research:null };
     if (!next.length && slot==='market') patch.marketData = null;
     if (!next.length && slot==='household') patch.householdData = null;
     return { imc:{ ...s.imc, ...patch } };
@@ -12058,12 +12066,41 @@ class Component extends DCLogic {
   };
   discardImport = () => { this.setState({ importReview:null }); this.showToast('Discarded — nothing was changed.'); };
 
-  // ===== IMC BRIEF: drafting & export =====
+  // ===== IMC BRIEF: research ingestion, drafting & export =====
+  // Ingestion (Map: one bounded LLM call per attached deck, then Synthesize: one cross-file call) is
+  // the slow part of the whole research pipeline — a real brief with several decks attached took long
+  // enough to trip a reverse-proxy's timeout when it ran inside the SAME request as drafting, exporting
+  // or the synthesis deck. This runs it once, caches the result in im.research, and every one of those
+  // three calls sends the cached result instead of re-uploading files and re-running it. The cache is
+  // invalidated (im.research:null) by onImcFiles/removeImcFile whenever the attached file set changes.
+  ensureResearchIngested = async () => {
+    const im = this.state.imc;
+    const hasFiles = Object.keys(im.files||{}).some(k => (im.files[k]||[]).length);
+    if (!hasFiles) return null;
+    if (im.research) return im.research;
+    this.setImc({ ingesting:true });
+    const fd = new FormData();
+    fd.append('payload', JSON.stringify({ brand: im.brand, category: im.category, prompt: im.prompt }));
+    Object.keys(im.files).forEach(k => (im.files[k]||[]).forEach(f => fd.append('research', f)));
+    try {
+      const r = await fetch('/research-ingest', { method:'POST', body: fd });
+      if (!r.ok) throw new Error('server returned ' + r.status);
+      const result = await r.json();
+      this.setImc({ research: result, ingesting:false });
+      return result;
+    } catch (e) {
+      this.setImc({ ingesting:false });
+      this.showToast('Couldn’t process the attached research (' + e.message + ') — continuing without it.');
+      return null;
+    }
+  };
   draftBrief = async () => {
     const im = this.state.imc;
     if (im.status === 'drafting') return;
     if (!im.prompt.trim()) { this.showToast('Describe the brief first — the prompt anchors everything.'); return; }
-    this.setImc({ status:'drafting', message:'Running the brand-brief skill…' });
+    this.setImc({ status:'drafting', message: im.files && Object.values(im.files).some(a=>(a||[]).length) && !im.research ? 'Reading your attached research…' : 'Running the brand-brief skill…' });
+    const research = await this.ensureResearchIngested();
+    this.setImc({ message:'Running the brand-brief skill…' });
     const isGeneral = this.state.producerBrandMode === 'general';
     const fd = new FormData();
     // `brand` forced blank in General mode regardless of what the field shows — the field itself is
@@ -12071,8 +12108,14 @@ class Component extends DCLogic {
     // version, same as /brief-save's own server-side enforcement of the pairing.
     fd.append('payload', JSON.stringify({ brand: isGeneral ? '' : im.brand, category:im.category, prepared_for:im.preparedFor,
       prompt:im.prompt, market_data:im.marketData||null, household_data:im.householdData||null,
-      brand_mode: this.state.producerBrandMode }));
-    Object.keys(im.files).forEach(k => (im.files[k]||[]).forEach(f => fd.append('research', f)));
+      brand_mode: this.state.producerBrandMode, research }));
+    // Research already ingested above — only images (NeedScope/CB-CA reference charts) still need to
+    // travel as raw bytes here, since draft_brief() reads those directly for vision. Documents are
+    // covered by `research` in the payload now, not re-sent.
+    const IMAGE_EXT = ['png','jpg','jpeg','gif','webp'];
+    Object.keys(im.files).forEach(k => (im.files[k]||[]).forEach(f => {
+      if (IMAGE_EXT.includes((f.name.split('.').pop()||'').toLowerCase())) fd.append('research', f);
+    }));
     try {
       const r = await fetch('/brand-brief-draft', { method:'POST', body: fd });
       if (r.status === 400) {
@@ -12143,14 +12186,17 @@ class Component extends DCLogic {
   generateImcDocx = async () => {
     const im = this.state.imc, d = im.draft;
     if (!d || im.genStatus === 'generating') return;
-    this.setImc({ genStatus:'generating', genMessage:'Building your Word brief…' });
+    this.setImc({ genStatus:'generating', genMessage: im.files && Object.values(im.files).some(a=>(a||[]).length) && !im.research ? 'Reading your attached research…' : 'Building your Word brief…' });
+    const research = await this.ensureResearchIngested();
+    this.setImc({ genMessage:'Building your Word brief…' });
     const cc = d.cb_ca_db_da || {};
-    const payload = { ...d, date:this.today(), sources_note:im.sourcesNote||'',
+    const payload = { ...d, date:this.today(), sources_note:im.sourcesNote||'', research,
       market_data:im.marketData||null, household_data:im.householdData||null,
       needscope:{ ...(d.needscope||{}), reading:(d.needscope&&d.needscope.reading)||'' },
       cb_ca_db_da:{ ...cc, shift_line:'From '+(cc.shift_from||'')+' to '+(cc.shift_to||'')+'.' } };
+    // Research already ingested above and travels in payload.research; the export route doesn't read
+    // images at all (no vision step here, unlike drafting), so no files need to be re-sent.
     const fd = new FormData(); fd.append('payload', JSON.stringify(payload));
-    Object.keys(im.files).forEach(k => (im.files[k]||[]).forEach(f => fd.append('research', f)));
     const docBrand = (d.brand || this.brandName() || '').trim();
     const base = (docBrand || 'Unnamed_brand').replace(/[^a-z0-9]+/gi,'_').replace(/^_|_$/g,'');
     try {
@@ -12172,10 +12218,13 @@ class Component extends DCLogic {
     if (im.synthStatus === 'generating') return;
     const hasFiles = Object.keys(im.files||{}).some(k => (im.files[k]||[]).length);
     if (!hasFiles) { this.showToast('Attach at least one research file first — the deck reads across them, it has nothing to read otherwise.'); return; }
-    this.setImc({ synthStatus:'generating', synthMessage:'Building the cross-source synthesis deck…' });
+    this.setImc({ synthStatus:'generating', synthMessage: im.research ? 'Building the cross-source synthesis deck…' : 'Reading your attached research…' });
+    const research = await this.ensureResearchIngested();
+    this.setImc({ synthMessage:'Building the cross-source synthesis deck…' });
+    // Research already ingested above and travels in payload.research; this route has no image/vision
+    // step either, so no files need to be re-sent.
     const fd = new FormData();
-    fd.append('payload', JSON.stringify({ brand: im.brand, category: im.category, prompt: im.prompt }));
-    Object.keys(im.files).forEach(k => (im.files[k]||[]).forEach(f => fd.append('research', f)));
+    fd.append('payload', JSON.stringify({ brand: im.brand, category: im.category, prompt: im.prompt, research }));
     const docBrand = (im.brand || this.brandName() || '').trim();
     const base = (docBrand || 'Research').replace(/[^a-z0-9]+/gi,'_').replace(/^_|_$/g,'');
     try {

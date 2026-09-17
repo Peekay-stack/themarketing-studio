@@ -8127,8 +8127,15 @@ def brand_brief(payload: str = Form(...), research: list[UploadFile] = File(defa
                        source="brand-brief", brief_id=str(data.get("brief_id") or ""))
     except Exception:
         pass
-    research_result = None
-    if research:
+    # A caller that already ran /research-ingest (the normal path from the frontend now — see that
+    # route's docstring for why) sends the result back here instead of re-uploading files: ingestion is
+    # the slow part of this whole pipeline (one bounded LLM call per deck, then a cross-file synthesis
+    # call), and re-running it at export time on top of running it at draft time was both wasted work
+    # and, on a real 5-deck brief, enough extra latency to trip a reverse-proxy timeout by itself. Only
+    # fall back to ingesting files inline here when nothing pre-ingested was given — e.g. a caller that
+    # skips the two-step flow, or attaches files without ever drafting first.
+    research_result = data.get("research") if isinstance(data.get("research"), dict) and data["research"].get("synth") else None
+    if research_result is None and research:
         tmp = tempfile.mkdtemp(prefix="research_")
         paths = []
         for f in research:
@@ -8188,8 +8195,13 @@ def brand_brief_draft(payload: str = Form(...), research: list[UploadFile] = Fil
             with open(dest, "wb") as out:
                 out.write(raw)
             doc_paths.append(dest)
-    research_result = None
-    if doc_paths:
+    # See /brand-brief's matching comment: a caller that already ran /research-ingest sends the result
+    # back in the payload instead of re-uploading files, so the one slow step in this whole pipeline
+    # (per-deck LLM extraction + cross-file synthesis) runs once, in its own request, rather than eating
+    # into this request's own budget on top of the draft call itself — the combination is what produced
+    # a real 524 on a 5-deck brief. Only ingest inline here when nothing pre-ingested was given.
+    research_result = base.get("research") if isinstance(base.get("research"), dict) and base["research"].get("synth") else None
+    if research_result is None and doc_paths:
         focus = f"{base.get('brand', '')} — {base.get('category', '')} — {(base.get('prompt') or '')[:200]}"
         research_result = research_parse.ingest_for_brief(doc_paths, focus=focus)
     if not _has_brief_input(base, research):
@@ -8225,8 +8237,50 @@ def brand_brief_draft(payload: str = Form(...), research: list[UploadFile] = Fil
     return draft
 
 
+@app.post("/research-ingest")
+def research_ingest(payload: str = Form(default="{}"), research: list[UploadFile] = File(default=[])):
+    """Run just the Map->Synthesize ingestion step over uploaded research files and return the
+    synthesized result as JSON — no drafting, no rendering.
+
+    Split out for one reason: ingestion is the slow part of the whole research pipeline (one bounded
+    LLM call per deck, then a cross-file synthesis call), and stacking it inside the SAME request as
+    /brand-brief-draft's own drafting call, or /brand-brief's export-time enrichment, or
+    /research-synthesis-deck's linkage-building, meant a brief with several decks attached could
+    comfortably exceed a reverse-proxy's timeout window (a real 524 on a 5-deck brief is what surfaced
+    this). Every one of those downstream steps only ever reads the returned "synth" object — never the
+    raw files again — so calling this once and passing its result to whichever of those three comes
+    next (as payload.research) keeps each individual request fast regardless of how many files were
+    attached, without needing to make anything asynchronous.
+    """
+    import tempfile
+
+    import research_parse
+    if not research:
+        return {"filenames": [], "synth": {"claims": [], "considered_not_used": [], "pattern_note": ""}}
+    try:
+        base = json.loads(payload) if payload else {}
+    except Exception:
+        base = {}
+    tmp = tempfile.mkdtemp(prefix="ingest_")
+    paths = []
+    for f in research:
+        # Same split /brand-brief-draft already does: a NeedScope/CB-CA chart image sent through the
+        # research pipeline is not a document to summarize, it is what draft_brief() reads directly as
+        # an image. Silently skip it here rather than feeding a PNG into research_parse.analyze_upload(),
+        # which has no image handling and would only waste a Map-phase slot on it.
+        ext = os.path.splitext(f.filename or "")[1].lower().lstrip(".")
+        if ext in _IMAGE_TYPES:
+            continue
+        dest = os.path.join(tmp, os.path.basename(f.filename or "file"))
+        with open(dest, "wb") as out:
+            out.write(f.file.read())
+        paths.append(dest)
+    focus = f"{base.get('brand', '')} — {base.get('category', '')} — {(base.get('prompt') or '')[:200]}"
+    return research_parse.ingest_for_brief(paths, focus=focus)
+
+
 @app.post("/research-synthesis-deck")
-def research_synthesis_deck(payload: str = Form(default="{}"), research: list[UploadFile] = File(...)):
+def research_synthesis_deck(payload: str = Form(default="{}"), research: list[UploadFile] = File(default=[])):
     """Standalone cross-source research synthesis — a .pptx, not a brand brief.
 
     Runs the same Map->Synthesize pipeline the brand brief's ingestion uses
@@ -8234,6 +8288,11 @@ def research_synthesis_deck(payload: str = Form(default="{}"), research: list[Up
     linkages (synthesis.build_linkages()) — or says plainly that none coheres, per
     synthesis_skill/SKILL.md's core discipline. Makes no brand recommendation; that is the brand brief's
     job. Requires ANTHROPIC_API_KEY.
+
+    payload.research: an already-ingested research_parse.ingest_for_brief() result (from
+    /research-ingest), preferred over re-uploading files — see /research-ingest's docstring for why:
+    ingestion is the one slow step here, and it should run as its own request, not stack on top of the
+    build_linkages()+render call in this one and risk a reverse-proxy timeout on a large file set.
     """
     import tempfile
 
@@ -8244,23 +8303,27 @@ def research_synthesis_deck(payload: str = Form(default="{}"), research: list[Up
         raise HTTPException(
             400, "Research synthesis needs an Anthropic API key. Add ANTHROPIC_API_KEY to api/.env "
                  "and restart the server.")
-    if not research:
-        raise HTTPException(400, "Attach at least one research file to synthesize across.")
     try:
         base = json.loads(payload) if payload else {}
     except Exception:
         base = {}
-
-    tmp = tempfile.mkdtemp(prefix="synthesis_")
-    paths = []
-    for f in research:
-        dest = os.path.join(tmp, os.path.basename(f.filename or "file"))
-        with open(dest, "wb") as out:
-            out.write(f.file.read())
-        paths.append(dest)
-
     focus = f"{base.get('brand', '')} — {base.get('category', '')} — {(base.get('prompt') or '')[:200]}"
-    research_result = research_parse.ingest_for_brief(paths, focus=focus)
+    # tmp is the renderer's workdir below regardless of which path this took — was only set inside the
+    # inline-ingestion branch, a real NameError on the new pre-ingested path (nothing else needed a
+    # temp dir there since no files were re-uploaded to write to disk).
+    tmp = tempfile.mkdtemp(prefix="synthesis_")
+    research_result = base.get("research") if isinstance(base.get("research"), dict) and base["research"].get("synth") else None
+    if research_result is None:
+        if not research:
+            raise HTTPException(400, "Attach at least one research file to synthesize across.")
+        paths = []
+        for f in research:
+            dest = os.path.join(tmp, os.path.basename(f.filename or "file"))
+            with open(dest, "wb") as out:
+                out.write(f.file.read())
+            paths.append(dest)
+        research_result = research_parse.ingest_for_brief(paths, focus=focus)
+
     try:
         deck = synthesis.build_linkages(research_result, focus=focus)
     except synthesis.NoApiKey:
