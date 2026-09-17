@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: d3a25b08-5f19-478b-bc7e-ff283771328e
-  modified: 2026-09-17T10:14:30.790Z
+  modified: 2026-09-17T10:19:24.270Z
 ---
 
 **File**: `Heritage Marketing Studio/BRAND_GROUNDING_TESTING_LOG.md`, section "New thread — IMC brief
@@ -182,3 +182,15 @@ Live-verified end to end in the real browser: draft → ingest-then-draft; expor
 the cache (no re-ingestion); adding a file and redrafting correctly re-ingests. No server errors. This is
 real, verified progress for the case that broke — very large file counts (~20, the original design target)
 untested at that scale and could still be marginal even for the ingestion step alone.
+
+**Second bug found via deep-dive of a real generated brief.** User's real generated `.docx` (Heritage
+Foods, real prompt/competitors) reviewed line-by-line via python-docx. Backgrounder/NeedScope/CB-CA/SMP
+were genuinely excellent — well-differentiated, honestly caveated (the model correctly refused to invent
+a 25-44-women cultural cut nothing in the data supported). But Executive Summary, Pricing/Distribution
+snapshot, Opportunities & Threats, and Recommended Actions were all `brandbrief.to_skill_brief()`'s
+hardcoded placeholder strings verbatim — confirmed by exact string match. Root cause:
+`brandbrief.enrich_with_ai()`'s `except Exception: return None` swallowed failures with zero logging,
+indistinguishable from the benign "no API key" case. Fixed: logs the exception now; `brief_render.
+generate()` distinguishes genuine failure from no-key and appends an honest caveat to the document
+naming which sections are structural defaults. Verified both paths (forced failure + benign no-key).
+Committed and deployed.

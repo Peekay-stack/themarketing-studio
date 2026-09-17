@@ -514,6 +514,19 @@ def generate(payload: dict, research: dict | None = None, workdir: str | None = 
     ai = brandbrief.enrich_with_ai(payload, research)
     if ai:
         brief = brandbrief._apply_enrichment(brief, payload, ai)
+    elif os.environ.get("ANTHROPIC_API_KEY"):
+        # A key IS configured, so `ai is None` here means the call actually failed (not the benign
+        # "no key" case, which returns the same None — see enrich_with_ai()'s own comment on why that
+        # used to be indistinguishable). Executive summary, the pricing/distribution snapshot,
+        # opportunities & threats and recommended actions are all still sitting at their structural
+        # defaults with nothing said about it — a real export did exactly this, silently, and it took
+        # a line-by-line diff against brandbrief.py's own hardcoded strings to even notice. Say so in
+        # the document itself rather than let a reader mistake placeholder text for a tailored read.
+        note = ("AI enrichment could not complete for this export — the executive summary, pricing/"
+                "distribution snapshot, opportunities & threats and recommended actions below are "
+                "structural defaults, not a tailored read of the attached research. Redraft or "
+                "regenerate to retry.")
+        brief["caveats"] = (brief.get("caveats", "") + " " + note).strip()
     # ensure the figure paths point at the PNGs we actually drew
     brief.setdefault("needscope", {})["figure_path"] = ns_png
     brief.setdefault("cb_ca_db_da", {})["figure_path"] = cbca_png

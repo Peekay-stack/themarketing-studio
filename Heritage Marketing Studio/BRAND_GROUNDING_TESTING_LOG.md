@@ -1361,5 +1361,46 @@ verified progress for the specific case that produced the 524; very large file c
 ~20-file design target) could still be marginal even for the ingestion step alone — not yet tested at
 that scale, worth watching for.
 
-**Status**: Committed. This closes the real production issue the user found while testing, on top of the
-four phases and their UI entry point already complete.
+**Status**: Committed and deployed (confirmed live via Render). This closes the real production issue the
+user found while testing, on top of the four phases and their UI entry point already complete.
+
+### Deep-dive of a real generated brief found a second, separate bug (17 Sep, later still)
+
+The user asked for a "deep dive" on the actual `.docx` their real prompt produced (Heritage Foods master
+brand, milk+curd, south-India cultural insight, women 25-44 with kids, "purity gives strength," real
+competitors Arokya/Amul/Nandini/Hatsun/Milky Mist/Dodla). Extracted every paragraph and table via
+python-docx for a line-by-line read.
+
+**What's genuinely excellent**: the Backgrounder is well-differentiated and honestly caveated — category
+perspective is real state-by-state competitive read (Nandini leads Karnataka, Hatsun leads Tamil Nadu,
+Amul declining in AP), current situation cites real funnel figures (88-91% awareness collapsing to 19-26%
+first choice), and consumer insights include a standout line the model added unprompted: "no source
+contains real cultural fieldwork or the 25-44 women/family-specific cut the brief asks for... the
+cultural and gender framing remains to be validated" — correctly refusing to fabricate a demographic cut
+nothing in the data actually supported. Competitor snapshot and messaging matrix tables are real and
+well-differentiated per competitor, not generic. NeedScope reading, CB/CA, and SMP all cohere with the
+Backgrounder's own diagnosis.
+
+**What's wrong**: Executive Summary, the Pricing/Distribution/Content snapshot, Opportunities & Threats,
+and Recommended Actions all turned out to be `brandbrief.to_skill_brief()`'s hardcoded deterministic
+placeholder strings verbatim (confirmed via exact string match against the source — "Codify '...' as the
+single brand platform.", "Own the '...' bridge first," etc.) rather than AI-tailored content. Root cause:
+`brandbrief.enrich_with_ai()`'s `except Exception: return None` swallowed whatever went wrong with zero
+logging, indistinguishable from the benign "no API key" case — a real export silently degraded several
+sections with no trace anywhere a reader could find. (The Backgrounder/NeedScope/CB-CA/SMP were unaffected
+because those come from the *draft* step's own output, not this export-time enrichment call.)
+
+**Fixed**: `enrich_with_ai()` now prints the exception on failure. `brief_render.generate()` can now tell
+a genuine failure apart from "no key" (checks `ANTHROPIC_API_KEY` directly) and, only on a genuine
+failure, appends an honest caveat to the document itself naming exactly which sections are structural
+defaults. Verified both paths directly: forced a real exception (patched `anthropic.Anthropic` to raise)
+and confirmed the log line prints and the caveat appears correctly in the rendered docx; confirmed the
+benign no-key case still produces no caveat.
+
+Note: this specific brief was very likely generated before the ingestion-split fix above went live, so
+`/brand-brief`'s export call was doing inline re-ingestion (~70-90s) on top of its own enrichment call —
+exactly the kind of latency pressure that fix already reduces. The logging/caveat fix here stands on its
+own regardless: silent failure with zero diagnostics was always a real gap, whatever caused this
+particular one.
+
+**Status**: Committed and deployed.

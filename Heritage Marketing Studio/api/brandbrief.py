@@ -339,7 +339,17 @@ def enrich_with_ai(payload: dict, research: dict | None) -> dict | None:
         raw = raw[raw.find("{"): raw.rfind("}") + 1]
         data, _err = jsonout.extract(raw)
         return data if data is not None else {}
-    except Exception:
+    except Exception as e:
+        # Was a bare `except Exception: return None` — indistinguishable from the "no API key"
+        # case above, and with nothing printed, a real failure here (a timeout, a rate limit, a bug in
+        # this prompt) silently degraded a shared, external-facing document to its deterministic
+        # defaults with zero trace anywhere. A real user's real export did exactly this: the
+        # backgrounder and NeedScope/CB-CA/SMP came through fine (they're the draft step's own output,
+        # not this call's), but executive_summary, the pricing/distribution snapshot, opportunities &
+        # threats and recommended actions were all still the hardcoded to_skill_brief() placeholders,
+        # and nothing anywhere said so. Logged now so a future failure is diagnosable; see generate()
+        # below for how the caller turns this into an honest caveat in the document itself.
+        print(f"[brandbrief.enrich_with_ai] failed: {type(e).__name__}: {e}")
         return None
 
 
