@@ -247,9 +247,11 @@ def to_skill_brief(payload: dict, ns_png: str, cbca_png: str) -> dict:
     }
 
 
-def enrich_with_ai(payload: dict, research_blobs: list[dict] | None) -> dict | None:
+def enrich_with_ai(payload: dict, research: dict | None) -> dict | None:
     """Mine the parsed research + structured inputs into the brief's narrative sections.
 
+    research: research_parse.ingest_for_brief() output (Map+Synthesize) for uploaded docs/sheets,
+              or None when nothing was uploaded.
     Returns a dict of overrides (executive_summary, needscope reading/implication, snapshots,
     opportunities_threats, recommendations, ca_quote, da_quote, caveats) or None if no API key
     is configured or the call fails — in which case the caller keeps the synthesized defaults.
@@ -259,10 +261,11 @@ def enrich_with_ai(payload: dict, research_blobs: list[dict] | None) -> dict | N
         return None
     try:
         import anthropic
-        blobs = research_blobs or []
-        research_text = "\n\n".join(
-            f"=== {b['filename']} ({b['kind']}) ===\n{b['text']}" for b in blobs if b.get("text")
-        )[:14000]
+        import research_parse
+        # Was its own independent raw-concatenate-to-14000-chars truncation — the same bug pattern as
+        # brief_ai.py's draft step, just duplicated here for the export path. Now reads the same
+        # Map→Synthesize claims list both AI-enrichment call sites share.
+        research_text = research_parse.research_context_block(research)
         def _rows_text(data):
             if isinstance(data, dict) and data.get("rows"):
                 return "\n".join(" | ".join(str(c) for c in r) for r in data["rows"][:25])
@@ -281,7 +284,8 @@ def enrich_with_ai(payload: dict, research_blobs: list[dict] | None) -> dict | N
             + (f"BRIEF ASK (the marketer's request — anchor the brief to this):\n{brief_ask}\n\n" if brief_ask else "")
             + (f"MARKET SHARE / SALES DATA (use figures verbatim):\n{market_text}\n\n" if market_text else "")
             + (f"HOUSEHOLD / PENETRATION DATA (use figures verbatim):\n{household_text}\n\n" if household_text else "")
-            + (f"RESEARCH EXCERPTS (mine for verbatim consumer quotes, behaviours, positioning):\n{research_text}\n\n" if research_text else "")
+            # research_context_block() already carries its own "RESEARCH FINDINGS ..." header.
+            + (f"{research_text}\n\n" if research_text else "")
             + "Return ONLY a JSON object (no markdown) with keys: "
             "executive_summary (array of exactly 2 paragraphs), "
             "needscope_reading (string), needscope_strategic_implication (string), "
@@ -328,12 +332,11 @@ def _apply_enrichment(brief: dict, payload: dict, ai: dict):
     return brief
 
 
-def generate(payload: dict, research_blobs: list[dict] | None = None, workdir: str | None = None) -> str:
-    """Produce the .docx and return its path.
-
-    research_blobs: output of research_parse.parse_paths() for any uploaded files. When an
-    ANTHROPIC_API_KEY is set, the narrative sections are mined from the research; otherwise
-    the deterministic synthesis from to_skill_brief() is used.
+def generate(payload: dict, research: dict | None = None, workdir: str | None = None) -> str:
+    """Produce the .docx and return its path. NOT the live export path — main.py's /brand-brief route
+    calls brief_render.generate() (pure-Python, no Node), which calls this module's enrich_with_ai()
+    directly. This function shells out to a Node script and has no caller in main.py; kept for
+    reference only. research: research_parse.ingest_for_brief() output, or None.
     """
     workdir = workdir or tempfile.mkdtemp(prefix="brandbrief_")
     ns_png = os.path.join(workdir, "needscope_filled.png")
@@ -341,7 +344,7 @@ def generate(payload: dict, research_blobs: list[dict] | None = None, workdir: s
     build_needscope_png(payload, ns_png)
     build_cbca_png(payload, cbca_png)
     brief = to_skill_brief(payload, ns_png, cbca_png)
-    ai = enrich_with_ai(payload, research_blobs)
+    ai = enrich_with_ai(payload, research)
     if ai:
         brief = _apply_enrichment(brief, payload, ai)
     brief_path = os.path.join(workdir, "brief.json")

@@ -104,18 +104,31 @@ bridge must be an ADJACENT territory.
 """
 
 
-def _payload_context(base: dict, blobs: list[dict]) -> str:
+def _payload_context(base: dict, research: dict | None) -> str:
     def rows_text(data):
         if isinstance(data, dict) and data.get("rows"):
             return "\n".join(" | ".join(str(c) for c in r) for r in data["rows"][:30])
         return ""
     market = rows_text(base.get("market_data"))
     household = rows_text(base.get("household_data"))
-    research = "\n\n".join(
-        f"--- {b['filename']} ({b['kind']}) ---\n{b['text']}" for b in (blobs or []) if b.get("text")
-    )[:16000]
+    # Was a raw concatenate-and-truncate of every uploaded file to 16000 chars combined — the root
+    # cause the user's own A/B test surfaced (a real slide's brand-equity scorecard fell past the cut).
+    # Now reads research_parse's Map→Synthesize output: a short, cross-file-merged claims list with
+    # confidence and citations, not a dump of the source text. See research_context_block()'s docstring.
+    import research_parse
+    research = research_parse.research_context_block(research)
+    # General-mode work (deliberately not tied to a brand — see BRAND_GROUNDING_MODES_PLAN.md) must
+    # not fall into "(infer from the ask)" here: that instruction is exactly what produced the
+    # user-reported case of a brief inventing "India's favorite Biscuit" as a brand name it was never
+    # given. Category-level inference is left alone — that's legitimate analysis, not a fabricated
+    # brand identity.
+    focal_brand = base.get("brand") or (
+        "GENERAL WORK — no brand name has been given, and none should be invented or inferred. "
+        "Write category-level analysis only; where the brief needs a brand name to make sense, say "
+        "so rather than naming one."
+        if base.get("brand_mode") == "general" else "(infer from the ask)")
     lines = [
-        f"FOCAL BRAND: {base.get('brand') or '(infer from the ask)'}",
+        f"FOCAL BRAND: {focal_brand}",
         f"CATEGORY: {base.get('category') or '(infer from the ask)'}",
         f"PREPARED FOR: {base.get('prepared_for') or ''}",
         "",
@@ -127,19 +140,21 @@ def _payload_context(base: dict, blobs: list[dict]) -> str:
     if household:
         lines += ["", "HOUSEHOLD / PENETRATION DATA (use figures verbatim):", household]
     if research:
-        lines += ["", "RESEARCH & DECK EXCERPTS (mine for verbatim quotes, taglines, positioning):", research]
+        # research_context_block() already carries its own "RESEARCH FINDINGS ..." header.
+        lines += ["", research]
     lines += ["", "Any attached images are NeedScope charts or CB/CA diagrams — read their brand "
               "positions as ground truth and reproduce them on the wheel."]
     return "\n".join(lines)
 
 
-def draft_brief(base: dict, blobs: list[dict] | None = None,
+def draft_brief(base: dict, research: dict | None = None,
                 images: list[dict] | None = None) -> dict:
     """Produce the builder payload by running the skill via Claude.
 
-    base:   {brand, category, prepared_for, prompt, market_data, household_data}
-    blobs:  research_parse.parse_paths() output for uploaded docs/sheets
-    images: [{media_type, data_b64, filename}] for uploaded NeedScope/CB-CA chart images
+    base:     {brand, category, prepared_for, prompt, market_data, household_data}
+    research: research_parse.ingest_for_brief() output for uploaded docs/sheets (Map+Synthesize
+              result) — pass None when no files were uploaded
+    images:   [{media_type, data_b64, filename}] for uploaded NeedScope/CB-CA chart images
     Returns the builder-payload dict. Raises NoApiKey if no key is set.
     """
     if not has_key():
@@ -147,7 +162,7 @@ def draft_brief(base: dict, blobs: list[dict] | None = None,
     import anthropic
 
     system = _skill_instructions() + "\n\n" + _OUTPUT_CONTRACT
-    content: list[dict] = [{"type": "text", "text": _payload_context(base, blobs)}]
+    content: list[dict] = [{"type": "text", "text": _payload_context(base, research)}]
     for img in (images or [])[:4]:
         if img.get("data_b64") and img.get("media_type"):
             content.append({"type": "image", "source": {
@@ -165,11 +180,19 @@ def draft_brief(base: dict, blobs: list[dict] | None = None,
     if start == -1 or end == -1:
         raise RuntimeError("Model did not return a JSON object")
     data = json.loads(raw[start:end + 1])
-    return _normalise(data, base)
+    return _normalise(data, base, research)
 
 
-def _normalise(data: dict, base: dict) -> dict:
+def _normalise(data: dict, base: dict, research: dict | None = None) -> dict:
     """Fill defaults and derive the shift_line so the payload is render-ready."""
+    # sources_note used to be whatever the model volunteered (nothing in the output contract even
+    # asked for it) — brief_render.py printed "Sources: none attached" even when files WERE attached,
+    # a real contradiction the user's A/B test caught. Set it here from the actual filenames the route
+    # was given, deterministically, not from a model self-report.
+    # Left "" (not a fallback string) when nothing was attached — brief_render.py already has its own
+    # "none attached" copy for that case; duplicating it here risks the two drifting apart.
+    filenames = (research or {}).get("filenames") or []
+    data["sources_note"] = f"{', '.join(filenames)}." if filenames else ""
     data.setdefault("brand", base.get("brand", "Brand"))
     data.setdefault("category", base.get("category", ""))
     data.setdefault("prepared_for", base.get("prepared_for", ""))

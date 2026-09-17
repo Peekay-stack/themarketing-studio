@@ -323,7 +323,9 @@ def complete_endpoint(payload: dict):
                               skip_mandatories=bool(payload.get("skip_mandatories")),
                               use_house=payload.get("use_house", True) is not False,
                               use_platform=payload.get("use_platform", True) is not False,
-                              use_plan=payload.get("use_plan", True) is not False)
+                              use_plan=payload.get("use_plan", True) is not False,
+                              brand_mode="general" if str(payload.get("brand_mode") or "").strip().lower()
+                              == "general" else "grounded")
     if not str(out or "").strip():
         # A live key that returns nothing is a failure too, and an empty string dressed as success is the
         # version of it nobody can debug.
@@ -717,7 +719,7 @@ def continuity_status():
     picture and so does location. Reported together because a film missing either will not cut, and
     which one is missing changes what a person should go and do about it.
     """
-    return library.shot_references()
+    return library.shot_references(brand=str((brandprofile.resolve() or {}).get("name") or ""))
 
 
 @app.get("/continuity-metrics")
@@ -727,7 +729,7 @@ def continuity_metrics():
     Rendered as a panel rather than hard-coded, for the same reason the grades and the POSM formats
     are: the list of what a check does NOT cover is the part worth reading, and it changes.
     """
-    return continuity.status()
+    return continuity.status(brand=str((brandprofile.resolve() or {}).get("name") or ""))
 
 
 @app.post("/continuity-check")
@@ -742,7 +744,8 @@ def continuity_check(payload: dict):
     if not isinstance(shots, list) or not shots:
         return JSONResponse(status_code=400, content={
             "detail": "Send `shots` (or a cut's `beats`) — a list of {n, role, clip_url, seconds}."})
-    return continuity.check(shots, use_plate=payload.get("use_plate", True))
+    return continuity.check(shots, use_plate=payload.get("use_plate", True),
+                            brand=str((brandprofile.resolve() or {}).get("name") or ""))
 
 
 # The shots a generative model reliably gets wrong. Not a style opinion — each of these is a specific,
@@ -1063,6 +1066,9 @@ def produce_video(payload: dict):
         return JSONResponse(status_code=501, content={"detail": "No video provider configured (set FAL_KEY)."})
     script = payload.get("script") or {}
     board = payload.get("board") or {}
+    # See _brand_line's own note — a General-mode film should render its endframe/brand-film beats
+    # with the honest neutral phrase, not whatever brand happens to be active.
+    _vid_brand_mode = "general" if str(payload.get("brand_mode") or "").strip().lower() == "general" else "grounded"
     # Fast tier by default: a full film is several clips, so the standard tier gets expensive quickly.
     model_id = payload.get("model") or "veo-3.1-fast"
     revise = str(payload.get("revise") or payload.get("note") or "").strip()
@@ -1157,14 +1163,14 @@ def produce_video(payload: dict):
             # Animating an approved frame: the picture already fixes cast, wardrobe and set, so the
             # prompt only has to describe the MOVEMENT.
             p = (f"Animate this storyboard frame as shot {seg['index'] + 1} of {len(segments)} of a "
-                 f"{_brand_line()} brand film. Keep the people, wardrobe, set and colour grade "
+                 f"{_brand_line(brand_mode=_vid_brand_mode)} brand film. Keep the people, wardrobe, set and colour grade "
                  f"exactly as they appear in the image — do not redesign anything. {cont}"
                  f"Bring it to life for this beat: {beat}.{role_note} "
                  f"{look} Natural, restrained camera movement. Mood: {music}. "
                  "No on-screen text or logos. No dialogue or music in the clip — the soundtrack is "
                  "added in the edit.")
         else:
-            p = (f"Cinematic {aspect} brand film for {_brand_line()}. This is shot {seg['index'] + 1} of {len(segments)} in one "
+            p = (f"Cinematic {aspect} brand film for {_brand_line(brand_mode=_vid_brand_mode)}. This is shot {seg['index'] + 1} of {len(segments)} in one "
                  f"continuous film — keep the characters, wardrobe, location and grade IDENTICAL to "
                  f"the other shots so the parts cut together seamlessly. {cont}"
                  f"Film logline: {script.get('logline','')}. "
@@ -1643,9 +1649,47 @@ def scene_still(payload: dict):
         want_pack = bool(re.search(
             r"\bpack(et|s|-shot)?\b|\bcarton\b|\btetra\b|\bfssai\b|\bpour(ing|ed|s)?\b|\bbottle\b|"
             r"\bglass of milk\b|\blabel\b", subject, re.IGNORECASE))
-    lib_refs = library.shot_references(want_pack=want_pack, pack_id=str(payload.get("pack_id") or ""),
-                                       cast_id=str(payload.get("cast_id") or ""),
-                                       plate_id=str(payload.get("plate_id") or ""))
+    # See library.py's brand-scoping note: without this, a shot for one brand could pull another
+    # brand's signed-off cast/pack/plate purely because it was the most recent of its kind in the
+    # tenant. No house/brief is bound at this route, so the active profile is today's correct default.
+    #
+    # Round 5 (confirmed with the user): General mode used to skip this lookup outright. A cast/
+    # character reference is a visual asset, not invented brand voice — General means "don't invent or
+    # state brand facts in the text," not "pretend no brand exists." Cast now stays for General too
+    # (scoped to the same active brand this whole session is already scoped to); pack (the product
+    # itself) and plate (a real, specific place) are still brand-tied facts a General piece must not
+    # silently pull in, so those are stripped back out below rather than fetched at all for General.
+    _scene_mode = "general" if str(payload.get("brand_mode") or "").strip().lower() == "general" else "grounded"
+    _scene_brand_prof = brandprofile.resolve() or {}
+    _explicit_pack_id = str(payload.get("pack_id") or "").strip()
+    # Live-tested finding: cast auto-attached unconditionally (see library.shot_references's own note)
+    # whenever a signed-off one existed, so Social's "Include a recurring model/cast" checkbox did
+    # nothing when left unchecked — the same most-recent cast still silently pinned every post. Callers
+    # that care about the distinction now send `use_cast` explicitly; every caller that doesn't (Video,
+    # continuity, anything predating this) gets `None`, which keeps the old unconditional-attach
+    # behaviour exactly as it was.
+    _use_cast = payload.get("use_cast")
+    want_cast = True if _use_cast is None else bool(_use_cast)
+    lib_refs = library.shot_references(want_pack=want_pack, pack_id=_explicit_pack_id,
+                                       want_cast=want_cast, cast_id=str(payload.get("cast_id") or ""),
+                                       plate_id=str(payload.get("plate_id") or ""),
+                                       brand=str(_scene_brand_prof.get("name") or ""))
+    if _scene_mode == "general":
+        # Live-tested finding: this used to strip the pack out unconditionally in Independent mode,
+        # same as an auto-resolved "whatever's newest for the active brand" pack — but it applied
+        # identically to a pack the PERSON explicitly picked via the asset card, which is the same
+        # "a person attached it, so it is not invented brand voice" case cast is already exempted for.
+        # An explicit `pack_id` that actually resolved keeps its reference; an auto-resolved one (no
+        # `pack_id` given, `want_pack` alone pulled the newest signed-off item) still gets stripped —
+        # only the caller's own deliberate choice survives Independent mode. Plate has no explicit-id
+        # path from any caller yet, so it stays fully stripped either way.
+        _keep_pack = bool(_explicit_pack_id and lib_refs["pack"])
+        lib_refs = {**lib_refs,
+                    "refs": [u for u in lib_refs["refs"]
+                             if u and (u == lib_refs["cast"] or (_keep_pack and u == lib_refs["pack"]))],
+                    "kinds": [k for k in lib_refs["kinds"] if k == "cast" or (_keep_pack and k == "pack")],
+                    "pack": lib_refs["pack"] if _keep_pack else "", "plate": "",
+                    "has_pack": _keep_pack, "has_plate": False}
     want = [u for u in lib_refs["refs"]
             if not (u == lib_refs["plate"] and payload.get("use_plate") is False)]
     for u in want:
@@ -1655,6 +1699,16 @@ def scene_still(payload: dict):
             refs.append(u)
     plate_used = bool(lib_refs["has_plate"] and lib_refs["plate"] in refs)
     pack_used = bool(lib_refs["has_pack"] and lib_refs["pack"] in refs)
+    # An explicit, deliberate ask (the asset card's "Let the studio design one" option) for when no
+    # real pack photo exists yet — different from the silent default of simply saying nothing about
+    # the pack, which is what happens when this flag is absent. Only meaningful when there is in fact
+    # no real reference to fall back on; a real one always wins.
+    _pack_generate = bool(payload.get("pack_generate")) and not pack_used
+    pack_design_clause = (" No real pack photo is on file for this shot — design a plausible, on-brand "
+                          "product pack (pouch, bottle or carton, your choice) rather than leaving the "
+                          "product awkwardly absent, but do not invent specific on-pack claims, "
+                          "certifications or fine print beyond what is already established elsewhere "
+                          "in this brief." if _pack_generate else "")
     if refs:
         # The instruction changes when a plate is in the reference set, and this is not cosmetic. The
         # original line said "Change only the action, SETTING and camera" — an explicit instruction to
@@ -1672,9 +1726,28 @@ def scene_still(payload: dict):
         # it says something about it, and only defaults to matching the reference when it does not.
         clothing = ("their clothing as described for this new shot if it says anything about what "
                     "they are wearing, and otherwise identical clothing to the reference")
-        pack_clause = (" Reuse the EXACT product pack from the reference images — same label, colours, "
-                       "type and proportions, down to the fine print — never redrawn or reimagined."
-                       if pack_used else "")
+        # Live-tested finding: "down to the fine print" asked for something no current image model can
+        # actually do — reproduce small reference text verbatim — and it directly fought the "No
+        # on-screen text" instruction at the end of this same prompt. Caught live: a real render came
+        # back showing the BACK of the pack, nutrition panel facing camera, every word of it garbled
+        # nonsense ("Nutritioal Info", "Calcoha tsited, Pleochet milk") — the model trying to satisfy an
+        # instruction it cannot satisfy, rather than the "never redrawn" identity lock working. Softened
+        # to what the model can actually hold onto (colour, shape, proportions, the brand mark reading
+        # clearly) and pointed at the front specifically, rather than asking for a angle-unconstrained
+        # "exact" reproduction that leaves the back panel just as valid an answer as the front.
+        # Second live-tested finding: that fix still let the model swap the CONTAINER ITSELF — a real
+        # pouch reference (a sealed flexible sachet) came back rendered as a glass bottle with milk
+        # being poured, label and colours faithfully copied onto the wrong object entirely. The clause
+        # named everything printed ON the pack but never the pack's own physical form, so the model fell
+        # back to whatever "milk" evokes most strongly in its training data (a poured glass) rather than
+        # the reference's actual shape. Naming the container type explicitly closes that gap.
+        pack_clause = (" Reuse the EXACT product pack from the reference images — same container type "
+                       "and format (pouch, bottle, carton, tub, jar — whichever the reference actually "
+                       "is, never substituted for a different one), same colours, proportions and "
+                       "overall label design, shown FRONT-ON so the brand mark reads clearly, never "
+                       "redrawn or reimagined. Do not invent new legible text anywhere on the pack — any "
+                       "small print stays too small to read rather than being fabricated."
+                       if pack_used else pack_design_clause)
         if plate_used:
             prompt = (
                 "Generate the next shot of the same film. Reuse the EXACT same people from the "
@@ -1712,13 +1785,16 @@ def scene_still(payload: dict):
             _record_made("scene_still", subject[:80] or "Scene still", url=url, payload=payload,
                          route="/scene-still")
             return {"image_url": url, "from_reference": True, "provider": provider,
-                    "plate_used": plate_used, "pack_used": pack_used, "references": len(refs)}
+                    "plate_used": plate_used, "pack_used": pack_used, "pack_generated": _pack_generate,
+                    "references": len(refs)}
         print("[main] reference frame failed on both providers; falling back to text-to-image",
               file=sys.stderr, flush=True)
-    parts = [f"Marketing image for {_brand_line()}."]
+    parts = [f"Marketing image for {_brand_line(_scene_brand_prof or None, brand_mode=_scene_mode)}."]
     if characters:
         parts.append(f"Keep these characters identical and consistent across every frame: {characters}.")
     parts.append(f"Subject: {subject}.")
+    if pack_design_clause:
+        parts.append(pack_design_clause.strip())
     parts.append(craft)
     parts.append(f"Framed for a {ratio} composition with tasteful negative space. "
                  "No on-screen text, captions, typography, logos, watermarks or borders.")
@@ -1730,7 +1806,8 @@ def scene_still(payload: dict):
         if url:
             _record_made("scene_still", subject[:80] or "Scene still", url=url, payload=payload,
                          route="/scene-still")
-            return {"image_url": url, "from_reference": False, "provider": "google", "tier": tier}
+            return {"image_url": url, "from_reference": False, "provider": "google", "tier": tier,
+                    "pack_generated": _pack_generate}
     if not _use(eng, "fal"):
         return JSONResponse(status_code=502, content={
             "detail": "Google image generation failed and the engine is pinned to Google — "
@@ -1745,7 +1822,8 @@ def scene_still(payload: dict):
                       "and fal keys (see render-log.txt)."})
     _record_made("scene_still", subject[:80] or "Scene still", url=res["url"], payload=payload,
                  route="/scene-still")
-    return {"image_url": res["url"], "from_reference": False, "provider": "fal"}
+    return {"image_url": res["url"], "from_reference": False, "provider": "fal",
+            "pack_generated": _pack_generate}
 
 
 @app.post("/production-bible-docx")
@@ -1831,8 +1909,9 @@ def shot_still(payload: dict):
             "detail": "Send `id` to pull a frame from a shot's take, or `shot` and `look` to generate a "
                       "storyboard still from a description."})
     model_id = payload.get("model") or "imagen-4-ultra"
+    _shot_still_mode = "general" if str(payload.get("brand_mode") or "").strip().lower() == "general" else "grounded"
     prompt = (
-        f"Cinematic storyboard still, photorealistic, for a {_brand_line()} brand film. "
+        f"Cinematic storyboard still, photorealistic, for a {_brand_line(brand_mode=_shot_still_mode)} brand film. "
         f"Shot: {shot}. Look: {look}. Authentic setting for that market, warm natural light, no text or logos."
     )
     try:
@@ -2014,17 +2093,23 @@ def learning_decision(payload: dict):
         return JSONResponse(status_code=400, content={
             "detail": "Give a reason for the rejection — that reason is the only part that "
                       "improves the next round."})
+    # Stamped so this decision can later be scoped to the brand it was actually made against — see
+    # learning.py's brand-scoping note. An explicit `brand` in the payload wins; the active profile is
+    # the default, matching every other write path in this file.
+    _dec_brand = str(payload.get("brand") or "").strip() or str((brandprofile.resolve() or {}).get("name") or "")
     row = learning.record(str(payload.get("kind") or "work"), decision,
                           subject=str(payload.get("subject") or ""),
                           reason=str(payload.get("reason") or ""),
                           template=str(payload.get("template") or ""),
                           who=str(payload.get("who") or ""),
-                          meta=payload.get("meta") if isinstance(payload.get("meta"), dict) else {})
+                          meta=payload.get("meta") if isinstance(payload.get("meta"), dict) else {},
+                          brand=_dec_brand)
     if decision == "approve" and str(payload.get("body") or "").strip():
         learning.keep_example(str(payload.get("kind") or "work"),
                               title=str(payload.get("subject") or "approved"),
                               body=str(payload.get("body") or ""),
-                              brief=str(payload.get("brief") or ""))
+                              brief=str(payload.get("brief") or ""),
+                              brand=_dec_brand)
     return {"recorded": row, "status": learning.status()}
 
 
@@ -2037,11 +2122,12 @@ def learning_context(payload: dict):
     """
     kind = str(payload.get("kind") or "script")
     brief = str(payload.get("brief") or "")
-    block, names = learning.anchor_block(kind, brief, int(payload.get("n") or 3))
-    return {"anchors": names, "anchor_text": block, "rules": learning.house_rules(),
-            "rules_text": learning.rules_block(),
-            "locked_copy": library.locked_copy(),
-            "references": {k: library.reference_url(k) for k in ("pack", "logo", "cast")}}
+    _gen_brand = str((brandprofile.resolve() or {}).get("name") or "")
+    block, names = learning.anchor_block(kind, brief, int(payload.get("n") or 3), brand=_gen_brand)
+    return {"anchors": names, "anchor_text": block, "rules": learning.house_rules(brand=_gen_brand),
+            "rules_text": learning.rules_block(brand=_gen_brand),
+            "locked_copy": library.locked_copy(brand=_gen_brand),
+            "references": {k: library.reference_url(k, brand=_gen_brand) for k in ("pack", "logo", "cast")}}
 
 
 # =====================================================================================
@@ -2485,7 +2571,12 @@ def house_new(payload: dict):
     _proj = project.clean(payload.get("project") or (b or {}).get("project") or "")
     if _proj:
         _brief_for_house["project"] = _proj
-    h = strategy.new_house(brand, _brief_for_house)
+    # Defaults from the linked brief's own mode — a General brief starts a General house — but an
+    # explicit `brand_mode` in the payload (the house screen's own toggle) always wins, since the two
+    # are independently changeable per BRAND_GROUNDING_MODES_PLAN.md.
+    _house_brand_mode = str(payload.get("brand_mode") or "").strip().lower() \
+        or str((b or {}).get("brand_mode") or "").strip().lower()
+    h = strategy.new_house(brand, _brief_for_house, brand_mode=_house_brand_mode)
     if _proj:
         h["project_source"] = "inherited" if not payload.get("project") else "named"
         strategy.save(h)
@@ -2501,6 +2592,20 @@ def house_new(payload: dict):
     return {"house": h, "status": strategy.status(h), "claim_state": None,
             "brief": briefstore.snapshot(b) if (b and b.get("id")) else None,
             "brief_unsaved": bool(b and not b.get("id"))}
+
+
+@app.post("/house-brand-mode")
+def house_brand_mode(payload: dict):
+    """Change an existing house's grounding mode. `{id, mode:"grounded"|"general"}` -> the house.
+
+    The house-new default (inherited from its brief) is never a lock — this is the door-not-gate half:
+    a house started one way can be switched the other at any point, same as its brief could have been.
+    """
+    h = strategy.load(str(payload.get("id") or ""))
+    if not h:
+        return JSONResponse(status_code=404, content={"detail": "No such messaging house."})
+    h = strategy.set_brand_mode(h, str(payload.get("mode") or ""))
+    return {"house": h, "status": strategy.status(h)}
 
 
 # =====================================================================================
@@ -2529,14 +2634,22 @@ if _SEEDED:
     print(f"[brand] seeded the first profile: {_SEEDED['name']}", flush=True)
 
 
-def _brand_line() -> str:
+def _brand_line(brand: dict | None = None, brand_mode: str = "grounded") -> str:
     """One phrase naming the brand for an image or video prompt — "Name (category, market, #tag)".
 
     Built from the profile so the same call works for any brand. With no profile it returns a neutral
     "a brand", which produces a generic frame rather than a confidently wrong one: an image model given
     an invented category will render it, and nobody reviewing the picture can tell it was invented.
+
+    `brand_mode="general"` reaches that same neutral phrase on purpose rather than by accident — every
+    caller used to call this with no arguments at all, which meant `resolve()` always ran and always
+    fell to whichever brand was active; a General-mode piece had no way to ask for the honest neutral
+    frame instead. `brand`, when a caller already has one resolved (house/brief-aware), is used as-is
+    rather than resolving a second time and risking the two disagreeing.
     """
-    b = brandprofile.resolve()
+    if brand_mode == "general":
+        return "a brand"
+    b = brand if brand is not None else brandprofile.resolve()
     if not b:
         return "a brand"
     bits = [x for x in (b.get("category"), b.get("market")) if x]
@@ -2923,13 +3036,19 @@ def brief_save(payload: dict):
     # that echoes the name it was given is doing the obvious thing — and if only `id` were honoured the
     # upsert would silently become an insert and every redraft would leave another near-copy in the
     # library. Taking both costs one line and removes a whole class of duplicate.
-    b = briefstore.put(fields, brand=str(payload.get("brand") or ""),
+    # A general-mode brief has no brand, full stop — enforced here too, not just trusted from the
+    # client, so a stale or buggy caller can never send `brand_mode:"general"` alongside a real brand
+    # name and have the name quietly win.
+    brand_mode = str(payload.get("brand_mode") or "").strip().lower()
+    brief_brand = "" if brand_mode == "general" else str(payload.get("brand") or "")
+    b = briefstore.put(fields, brand=brief_brand,
                        title=str(payload.get("title") or ""),
                        fmt=str(payload.get("format") or ""),
                        source=str(payload.get("source") or "saved"),
                        brief_id=str(payload.get("id") or payload.get("brief_id") or ""),
                        # Named once, here, and inherited by the house, the plan and the platform.
-                       project=str(payload.get("project") or ""))
+                       project=str(payload.get("project") or ""),
+                       brand_mode=brand_mode)
     # `brief_id` echoed back under both names for the same reason.
     return {"brief": b, "snapshot": briefstore.snapshot(b), "id": b["id"], "brief_id": b["id"]}
 
@@ -2968,13 +3087,26 @@ def house_generate(payload: dict):
     if layer not in strategy.LAYER_BY_ID:
         return JSONResponse(status_code=400, content={"detail": f"Unknown layer {layer!r}."})
     # The same grounding the film gets: approved work to match, corrections already given, and copy
-    # that must be placed verbatim.
-    brief_text = " ".join(str(v) for v in (h.get("brief") or {}).values())[:2000]
-    anchors, _names = learning.anchor_block("strategy", brief_text, 3)
+    # that must be placed verbatim — all three scoped to this house's own brand (see library.py's and
+    # learning.py's brand-scoping notes: unscoped, this could anchor a Parle G house on Heritage's
+    # approved script, or hand it Heritage's corrections as if they were rules for Parle G).
+    #
+    # A General-mode house skips all three outright rather than scoping them to "" — an empty `brand`
+    # filter still returns every brand-agnostic item, and T1/T3 anchors/rules are inherently brand
+    # flavour by nature (an approved SCRIPT, a CORRECTION someone gave), not the kind of thing that is
+    # ever genuinely brand-agnostic the way a research file can be.
+    _is_general = h.get("brand_mode") == "general"
+    _gen_brand = "" if _is_general else str((brandprofile.resolve(h.get("brief"), h) or {}).get("name") or "")
+    anchors, rules_txt, locked_txt = "", "", []
+    if not _is_general:
+        brief_text = " ".join(str(v) for v in (h.get("brief") or {}).values())[:2000]
+        anchors, _names = learning.anchor_block("strategy", brief_text, 3, brand=_gen_brand)
+        rules_txt = learning.rules_block(brand=_gen_brand)
+        locked_txt = library.locked_copy(brand=_gen_brand)
     h, note = strategy.generate(h, layer,
                                 extra=str(payload.get("note") or ""),
-                                anchors=anchors, rules=learning.rules_block(),
-                                locked=library.locked_copy(),
+                                anchors=anchors, rules=rules_txt,
+                                locked=locked_txt,
                                 replace=bool(payload.get("replace")))
     if note:
         return JSONResponse(status_code=400, content={"detail": note})
@@ -3211,7 +3343,9 @@ def shelf_status(house: str = "", brief: str = ""):
     if not h:
         prof = brandprofile.resolve() or {}
         h = strategy.newest_for(str(prof.get("name") or prof.get("brand") or ""))
-    return shelf.status(house=h, b=b)
+    else:
+        prof = brandprofile.resolve(h) or {}
+    return shelf.status(house=h, b=b, profile=prof)
 
 
 @app.post("/house-option")
@@ -3258,7 +3392,10 @@ def house_prompt(house_id: str, layer: str):
     h = strategy.load(house_id)
     if not h or layer not in strategy.LAYER_BY_ID:
         return JSONResponse(status_code=404, content={"detail": "Not found."})
-    return {"prompt": strategy.prompt_for(h, layer, locked=library.locked_copy())}
+    _is_general = h.get("brand_mode") == "general"
+    _locked = [] if _is_general else library.locked_copy(
+        brand=str((brandprofile.resolve(h.get("brief"), h) or {}).get("name") or ""))
+    return {"prompt": strategy.prompt_for(h, layer, locked=_locked)}
 
 
 # =====================================================================================
@@ -3292,7 +3429,11 @@ def plan_new(payload: dict):
         briefstore.load((h or {}).get("brief_id") or "") if h else None)
     brand = str(payload.get("brand") or "").strip() or (b or {}).get("brand") \
         or (h or {}).get("brand") or "Brand"
-    p = plan.new_plan(brand, house_id)
+    # Defaults from the bound house's own mode — a General house's plan starts General — but an
+    # explicit `brand_mode` in the payload always wins, same as /house-new's own precedent.
+    _plan_brand_mode = str(payload.get("brand_mode") or "").strip().lower() \
+        or (h or {}).get("brand_mode") or ""
+    p = plan.new_plan(brand, house_id, brand_mode=_plan_brand_mode)
     if b and b.get("id"):
         p["brief_id"] = b["id"]
         p["brief_title"] = b.get("title", "")
@@ -3309,6 +3450,18 @@ def plan_get(plan_id: str):
     return {"plan": p, "status": plan.status(p, _house_for(p))}
 
 
+@app.post("/plan-brand-mode")
+def plan_brand_mode(payload: dict):
+    """Change an existing plan's grounding mode. `{id, mode:"grounded"|"general"}` -> the plan.
+    Mirrors `/house-brand-mode` — the door-not-gate half: a plan's mode is never locked to whatever
+    it inherited from its house at creation."""
+    p = plan.load(str(payload.get("id") or ""))
+    if not p:
+        return JSONResponse(status_code=404, content={"detail": "No such plan."})
+    p = plan.set_brand_mode(p, str(payload.get("mode") or ""))
+    return {"plan": p, "status": plan.status(p, _house_for(p))}
+
+
 @app.post("/plan-generate")
 def plan_generate(payload: dict):
     p = plan.load(str(payload.get("id") or ""))
@@ -3318,11 +3471,20 @@ def plan_generate(payload: dict):
     if layer not in plan.LAYER_BY_ID:
         return JSONResponse(status_code=400, content={"detail": f"Unknown layer {layer!r}."})
     house = _house_for(p)
-    brief = " ".join(str(v) for v in ((house or {}).get("brief") or {}).values())[:2000]
-    anchors, _n = learning.anchor_block("plan", brief, 3)
+    # Same reasoning as /house-generate: a General plan skips T1/T3 retrieval and locked copy
+    # outright rather than scoping to an empty brand — approved work and corrections are inherently
+    # brand flavor, never genuinely brand-agnostic the way a research file can be.
+    _is_general = p.get("brand_mode") == "general"
+    anchors, rules_txt, locked_txt = "", "", []
+    if not _is_general:
+        _gen_brand = str((brandprofile.resolve(p, house) or {}).get("name") or "")
+        brief = " ".join(str(v) for v in ((house or {}).get("brief") or {}).values())[:2000]
+        anchors, _n = learning.anchor_block("plan", brief, 3, brand=_gen_brand)
+        rules_txt = learning.rules_block(brand=_gen_brand)
+        locked_txt = library.locked_copy(brand=_gen_brand)
     p, note = plan.generate(p, layer, house=house, extra=str(payload.get("note") or ""),
-                            anchors=anchors, rules=learning.rules_block(),
-                            locked=library.locked_copy(),
+                            anchors=anchors, rules=rules_txt,
+                            locked=locked_txt,
                             replace=bool(payload.get("replace")))
     if note:
         return JSONResponse(status_code=400, content={"detail": note})
@@ -3540,13 +3702,14 @@ def platform_generate(payload: dict):
     if not pl:
         return JSONResponse(status_code=404, content={"detail": "No such platform set."})
     h = _platform_house(pl)
+    _gen_brand = str((brandprofile.resolve(pl, h) or {}).get("name") or "")
     brief = " ".join(str(v) for v in ((h or {}).get("brief") or {}).values())[:2000]
-    anchors, _n = learning.anchor_block("platform", brief, 3)
+    anchors, _n = learning.anchor_block("platform", brief, 3, brand=_gen_brand)
     pl, note = ideas.generate(pl, h,
                                  build_from_id=str(payload.get("build_on") or ""),
                                  n=max(1, min(5, int(payload.get("n") or 3))),
                                  extra=str(payload.get("note") or ""),
-                                 anchors=anchors, rules=learning.rules_block())
+                                 anchors=anchors, rules=learning.rules_block(brand=_gen_brand))
     if note:
         return JSONResponse(status_code=400, content={"detail": note})
     return {"set": pl, "status": ideas.status(pl, h)}
@@ -3652,9 +3815,14 @@ def idea_draft(payload: dict):
     `/idea-platform`, where editing re-sources it from `model` to `user`. A draft nobody rewrites stays
     visibly the model's, which is the whole point of the five tests underneath it.
     """
+    # Phase 2 (BRAND_GROUNDING_MODES_PLAN.md): a General platform must not stand on the bound house's
+    # real core message/pillars/RTBs, the same class of leak already fixed in producers.py and plan.py.
+    # The house is never even loaded for General — not just gated at the prompt layer — so a `core`
+    # string the client happened to send along can't slip through either.
+    _idea_general = str(payload.get("brand_mode") or "").strip().lower() == "general"
     house_id = str(payload.get("house") or "")
-    h = strategy.load(house_id) if house_id else None
-    core = str(payload.get("core") or "")
+    h = strategy.load(house_id) if house_id and not _idea_general else None
+    core = "" if _idea_general else str(payload.get("core") or "")
     if h and not core:
         # Trust the house over the posted string: the client sends what it last read, and the chosen core
         # may have moved since.
@@ -3688,7 +3856,8 @@ def idea_draft(payload: dict):
     # trade angle". Rounds after the first are where a platform actually gets found, and until now every
     # round was identical to the first with no way to say what was wrong with it.
     steer = str(payload.get("steer") or payload.get("note") or "")
-    options, note = ideas.draft_lines(core=core, brief=brief, house=h, n=n, build_from=src, steer=steer)
+    options, note = ideas.draft_lines(core=core, brief=brief, house=h, n=n, build_from=src, steer=steer,
+                                      brand_mode=payload.get("brand_mode") or "")
     if note:
         return JSONResponse(status_code=400, content={"detail": note})
     # Remember what this round was told to do differently. The screen keeps it in state so the box stays
@@ -4211,11 +4380,12 @@ def sales_generate(payload: dict):
     if ch not in sales.CHANNEL_BY_KEY:
         return JSONResponse(status_code=400, content={"detail": f"No such channel {ch!r}."})
     house = _sales_house(s)
+    _gen_brand = str((brandprofile.resolve(s, house) or {}).get("name") or "")
     brief_text = " ".join(str(v) for v in ((house or {}).get("brief") or {}).values())[:2000]
-    anchors, _n = learning.anchor_block("trade", brief_text, 3)
+    anchors, _n = learning.anchor_block("trade", brief_text, 3, brand=_gen_brand)
     s, note = sales.generate(s, ch, house=house, el=str(payload.get("element") or ""),
                              extra=str(payload.get("note") or ""),
-                             anchors=anchors, rules=learning.rules_block())
+                             anchors=anchors, rules=learning.rules_block(brand=_gen_brand))
     if note:
         return JSONResponse(status_code=400, content={"detail": note})
     return {"sheet": s, "status": sales.status(s, house)}
@@ -5532,7 +5702,20 @@ def _made_brand_project(payload: dict, house: dict | None = None) -> tuple[str, 
     Reuses `_exec_ctx()`'s own house resolution when a caller hasn't already resolved one, rather than
     asking every one of the 15 generation routes to plumb brand/project through separately — most of
     them never took a brand/project field from `payload` at all before this existed.
+
+    **Independent-mode fix (brand-grounding Round 5):** when the payload or the resolved house says
+    this piece was made with no brand attached, the old code fell all the way through to
+    `brandprofile.resolve()` — which answers with whichever brand happens to be active server-side,
+    with zero awareness of the mode this specific piece was actually made under. That silently
+    mislabelled honest, brand-agnostic work as belonging to whichever brand somebody was last looking
+    at. `"Independent"` is the literal tag instead — the same word the toggle itself already shows, so
+    it reads the same way here as everywhere else — and it is deliberately non-empty: `made.list_entries`'
+    own `brand` filter treats an EMPTY brand as "unassigned, show it regardless of which brand is asked
+    for" (same convention `library.items()` uses), so a blank string here would have made independent
+    work silently reappear under every brand's own filtered view — the exact leak this whole project
+    exists to close, just one hop further downstream than the others.
     """
+    is_general = str(payload.get("brand_mode") or "").strip().lower() == "general"
     brand = str(payload.get("brand") or "").strip()
     proj = str(payload.get("project") or "").strip()
     if (not brand or not proj) and house is None:
@@ -5540,10 +5723,15 @@ def _made_brand_project(payload: dict, house: dict | None = None) -> tuple[str, 
             house = _exec_ctx(payload)[0]
         except Exception:
             house = None
+    if not is_general and house and str(house.get("brand_mode") or "").strip().lower() == "general":
+        is_general = True
     if house:
-        brand = brand or str(house.get("brand") or "")
         proj = proj or project.of(house)
-    if not brand:
+        if not is_general:
+            brand = brand or str(house.get("brand") or "")
+    if is_general:
+        brand = "Independent"
+    elif not brand:
         try:
             prof = brandprofile.resolve() or {}
             brand = str(prof.get("name") or prof.get("brand") or "")
@@ -5633,7 +5821,8 @@ def producer_stands_on(payload: dict):
     use_house = payload.get("use_house", True) is not False
     use_platform = payload.get("use_platform", True) is not False
     text, src = producers.stands_on(kind, house, platform, typed, force_typed=force_typed,
-                                    use_house=use_house, use_platform=use_platform)
+                                    use_house=use_house, use_platform=use_platform,
+                                    brand_mode=str(payload.get("brand_mode") or ""))
     return {"text": text, "source": src, "has_platform": bool(platform), "has_house": bool(house)}
 
 
@@ -5660,14 +5849,17 @@ def posm_keyvisual(payload: dict):
     use_house = payload.get("use_house", True) is not False
     use_platform = payload.get("use_platform", True) is not False
     use_plan = payload.get("use_plan", True) is not False
+    _brand_mode = str(payload.get("brand_mode") or "")
     text, src = producers.stands_on("posm", house, platform, typed, force_typed=force_typed,
-                                    use_house=use_house, use_platform=use_platform)
+                                    use_house=use_house, use_platform=use_platform,
+                                    brand_mode=_brand_mode)
     try:
         n = max(1, min(6, int(payload.get("n") or 3)))
     except (TypeError, ValueError):
         n = 3
     options, note = producers.key_visual(typed, house, brief, platform, plan, n, force_typed=force_typed,
-                                         use_house=use_house, use_platform=use_platform, use_plan=use_plan)
+                                         use_house=use_house, use_platform=use_platform, use_plan=use_plan,
+                                         brand_mode=_brand_mode)
     return {"options": options, "note": note, "layouts": producers.KV_LAYOUTS,
             "stands_on": {"text": text, "source": src},
             "default_brief": text, "default_source": src}
@@ -5693,7 +5885,8 @@ def social_carousel_concept(payload: dict):
         objective, house, platform, plan, brief, n_mode=n_mode, n=n,
         use_house=payload.get("use_house", True) is not False,
         use_platform=payload.get("use_platform", True) is not False,
-        use_plan=payload.get("use_plan", True) is not False)
+        use_plan=payload.get("use_plan", True) is not False,
+        brand_mode=str(payload.get("brand_mode") or ""))
     if not routes:
         return JSONResponse(status_code=400, content={"detail": note})
     return {"routes": routes, "count": len(routes), "note": note}
@@ -5742,9 +5935,25 @@ def posm_image(payload: dict):
     if not _have_image():
         return JSONResponse(status_code=501, content={"detail": _NO_IMAGE})
     house, brief, platform, plan = _exec_ctx(payload)
+    # See library.py's brand-scoping note: without this, the cast/pack fallbacks below picked the
+    # tenant's most recently signed-off item of each kind, regardless of whose brand it was. Defaults
+    # from the bound house's own mode; a General piece skips every reference lookup below outright —
+    # there is no brand-specific asset requirement to gate on when nothing is tied to a brand.
+    _posm_image_mode = str(payload.get("brand_mode") or "").strip().lower() or (house or {}).get("brand_mode") or "grounded"
+    _gen_brand = "" if _posm_image_mode == "general" \
+        else str((brandprofile.resolve(house, brief) or {}).get("name") or "")
 
     hero_type = str(payload.get("hero_type") or "").strip()
-    gate = posm.gate(hero_type)
+    # General mode reports an HONEST zero for every brand asset rather than bypassing the check —
+    # there genuinely is no brand-specific pack/logo/cast to have, and the hallucinated-person refusal
+    # this gate exists to enforce (endorser-with-pack, person-in-benefit) is a person-safety rule, not
+    # a brand-grounding one; it still applies with nothing to be lenient about. `_lib_brand` is the
+    # filter value used everywhere below this point — a name nothing real will ever match still
+    # correctly admits genuinely brand-agnostic items (an untagged upload), which library.py's own
+    # `items()` treats as available to everyone; passing "" here would instead mean "do not filter at
+    # all" and hand General work whichever brand's asset happened to be newest.
+    _lib_brand = "general-mode" if _posm_image_mode == "general" else _gen_brand
+    gate = posm.gate(hero_type, brand=_lib_brand)
     if not gate["can_render_assets"]:
         blocked = gate["asset_blocks"][0]
         return JSONResponse(status_code=409, content={
@@ -5759,7 +5968,8 @@ def posm_image(payload: dict):
     route_txt = str(payload.get("route") or "").strip()
     if not subject and " " in route_txt and len(route_txt) > 12:
         subject = route_txt
-    stood, src = producers.stands_on("posm", house, platform, str(payload.get("brief") or ""))
+    stood, src = producers.stands_on("posm", house, platform, str(payload.get("brief") or ""),
+                                     brand_mode=_posm_image_mode)
 
     # **The proposition is not a subject, and falling back to it is not a kindness.** This route used to
     # drop `stands_on` text in when nothing else was given, which was survivable while it was generating
@@ -5879,7 +6089,7 @@ def posm_image(payload: dict):
             # whenever no cast landed yet — whether none was requested, or an explicit `cast_id` failed
             # to resolve — so a bad id degrades to "use the most recent" rather than "use nothing".
             for kind in ("cast", "actor"):
-                u = library.reference_url(kind)
+                u = library.reference_url(kind, brand=_lib_brand)
                 if u:
                     refs.append(u)
                     roles.append("the exact person — identical face, hair, skin tone, age and build")
@@ -5892,7 +6102,7 @@ def posm_image(payload: dict):
         pack_ids = [str(payload["pack_id"])]
     if want_multi_pack:
         if not pack_ids:
-            pack_ids = [r["id"] for r in library.items("pack", signed_only=True)]
+            pack_ids = [r["id"] for r in library.items("pack", signed_only=True, brand=_lib_brand)]
         for pid in pack_ids:
             if len(refs) >= 3:
                 break
@@ -5918,7 +6128,7 @@ def posm_image(payload: dict):
             row = library.get(pid)
             u = row["url"] if row and row.get("kind") == "pack" and row.get("signed_off") else ""
         if not u:
-            u = library.reference_url("pack")
+            u = library.reference_url("pack", brand=_lib_brand)
         if u:
             refs.append(u)
             roles.append("the exact product pack — reproduce it faithfully, same label, colours, type "
@@ -6416,26 +6626,46 @@ def posm_scene(payload: dict):
             "detail": "Describe the scene — who is in it, where, doing what. This is the one image "
                       "that has to carry the whole piece, so it needs more than a hero brief does."})
 
+    # Which brand's own assets this scene may draw on — see library.py's brand-scoping note. `payload`
+    # carries no house/brief here, so the active profile is today's correct default.
+    #
+    # Round 5 (confirmed with the user): General mode used to skip this lookup outright. A cast/
+    # character reference is a visual asset, not invented brand voice — General means "don't invent or
+    # state brand facts in the text," not "pretend no brand exists." Cast is fetched unconditionally
+    # below (scoped to the same active brand this whole session is already scoped to); the product
+    # reference (`pack`) is still a brand-tied fact a General piece must not silently pull in, so that
+    # fetch stays gated on mode, same reasoning as /scene-still.
+    _posm_scene_mode = "general" if str(payload.get("brand_mode") or "").strip().lower() == "general" else "grounded"
+    _gen_brand = str((brandprofile.resolve() or {}).get("name") or "")
     cast_ids = [str(c) for c in (payload.get("cast_ids") or []) if c]
     refs, kinds = [], []
     if cast_ids:
         for cid in cast_ids[:2]:
             row = library.get(cid)
-            if row and row.get("kind") in ("cast", "actor") and row.get("signed_off"):
+            if row and row.get("kind") in ("cast", "actor") and row.get("signed_off") \
+                    and (not row.get("brand") or row.get("brand") == _gen_brand):
                 refs.append(row["url"])
                 kinds.append(f"cast:{cid}")
     else:
-        cast = library.reference_url("cast") or library.reference_url("actor")
+        cast = library.reference_url("cast", brand=_gen_brand) or library.reference_url("actor", brand=_gen_brand)
         if cast:
             refs.append(cast)
             kinds.append("cast")
     # `product_id` is `pack_id`'s category-agnostic sibling (a garment, an accessory, a device) —
     # tried first since a caller naming it explicitly means the piece isn't packaging at all.
+    #
+    # Live-tested finding, same one /scene-still had: this used to skip the pack lookup outright for
+    # General, which also threw away a pack the CALLER explicitly named — the same "a person attached
+    # it, so it is not invented brand voice" case cast is already exempted for two paragraphs up. Only
+    # an auto-resolved pack (no id given) is still gated on mode; an explicit id that actually resolves
+    # survives Independent the same way an explicit cast id already does.
     prod_id = str(payload.get("product_id") or payload.get("pack_id") or "")
     prod_row = library.get(prod_id) if prod_id else None
     prod_kind = prod_row.get("kind") if prod_row else ""
     pack = (prod_row["url"] if prod_row and prod_kind in ("pack", "product") and prod_row.get("signed_off")
-            else (library.reference_url("pack") or library.reference_url("product")))
+            and (not prod_row.get("brand") or prod_row.get("brand") == _gen_brand)
+            else (None if _posm_scene_mode == "general" else
+                  (library.reference_url("pack", brand=_gen_brand) or library.reference_url("product", brand=_gen_brand))))
     if pack and len(refs) < 3:
         refs.append(pack)
         kinds.append(prod_kind or "pack")
@@ -6459,8 +6689,11 @@ def posm_scene(payload: dict):
     if headline:
         parts.append(f'Include the line "{headline}" set as clean, legible, correctly-spelled real '
                      f"typography, prominent but not covering any face or the product.")
-    parts.append(f"Include {_brand_line()}'s logo, small, in a natural position such as a corner or on "
-                 f"signage in the scene — do not invent a different brand mark.")
+    # No logo instruction at all in General mode — asking for "a brand"'s logo would just invite the
+    # model to invent a mark for a piece that is deliberately not tied to any brand.
+    if _posm_scene_mode != "general":
+        parts.append(f"Include {_brand_line()}'s logo, small, in a natural position such as a corner or on "
+                     f"signage in the scene — do not invent a different brand mark.")
     prompt = " ".join(parts)
 
     ratio = posm.MASTER_RATIO
@@ -6537,6 +6770,14 @@ def posm_assemble(payload: dict):
     # "use the default signed-off pack", so a caller with a real reason to have NONE composited (the
     # hero already carries it faithfully — /posm-image's `pack_used`) needs a real way to say so, not
     # rely on a fallback that would just silently re-add the default anyway.
+    # Resolved before pack/logo/field below, all three of which need it — an explicit `brand` in the
+    # payload wins (by_name, no active-brand fallback: naming a brand and getting a different one back
+    # is worse than a clean 404), otherwise the active profile, same as this route always defaulted to.
+    prof = brandprofile.resolve() if not payload.get("brand") else brandprofile.by_name(
+        str(payload["brand"]))
+    prof = prof or {}
+    _gen_brand = str(prof.get("name") or "")
+
     pack_url = ""
     if not payload.get("skip_pack"):
         pack_url = str(payload.get("pack_url") or "").strip()
@@ -6551,11 +6792,8 @@ def posm_assemble(payload: dict):
             pack_url = row["url"] if row and row.get("kind") in ("pack", "product") \
                 and row.get("signed_off") else ""
         if not pack_url:
-            pack_url = library.reference_url("pack") or library.reference_url("product")
+            pack_url = library.reference_url("pack", brand=_gen_brand) or library.reference_url("product", brand=_gen_brand)
 
-    prof = brandprofile.resolve() if not payload.get("brand") else brandprofile.by_name(
-        str(payload["brand"]))
-    prof = prof or {}
     logo_url = str(payload.get("logo_url") or "").strip() or prof.get("logo") or ""
 
     # The field is the brand's colour, and it has to be a real hex — `brandprofile`'s own `palette`
@@ -6579,8 +6817,8 @@ def posm_assemble(payload: dict):
             # on a POS piece, and it was the single most visible thing wrong with a real render. The
             # measurement is the same one `/posm-palette` offers; doing it here means a person who never
             # opened that panel still gets a branded piece instead of a beige one.
-            _src = library.reference_url("logo") or library.reference_url("pack") \
-                or library.reference_url("product")
+            _src = library.reference_url("logo", brand=_gen_brand) or library.reference_url("pack", brand=_gen_brand) \
+                or library.reference_url("product", brand=_gen_brand)
             _sw = keyvisual.palette_from(_src) if _src else []
             # Skip anything too pale to knock type out of, and anything nearly black.
             _usable = [s for s in _sw if 0.06 < s["luminance"] < 0.62]
@@ -6836,8 +7074,11 @@ def posm_palette(payload: dict):
             if row and row.get("url"):
                 refs.append((row.get("name") or i, row["url"], row.get("kind") or ""))
     else:
+        _prof = (brandprofile.by_name(str(payload.get("brand") or "")) if payload.get("brand")
+                else brandprofile.resolve()) or {}
+        _gen_brand = str(_prof.get("name") or "")
         for kind in ("logo", "pack", "product"):
-            for row in library.items(kind, signed_only=True):
+            for row in library.items(kind, signed_only=True, brand=_gen_brand):
                 if row.get("url"):
                     refs.append((row.get("name") or row["id"], row["url"], kind))
     if not refs:
@@ -6899,8 +7140,8 @@ def posm_artwork(payload: dict):
     pack_url = ""
     if not payload.get("skip_pack"):
         pack_url = str(payload.get("pack_url") or "").strip() or str(payload.get("pack_id") or "") \
-            or str(payload.get("product_id") or "") or library.reference_url("pack") \
-            or library.reference_url("product")
+            or str(payload.get("product_id") or "") or library.reference_url("pack", brand=str(prof.get("name") or "")) \
+            or library.reference_url("product", brand=str(prof.get("name") or ""))
     position = str(payload.get("type_position") or payload.get("layout") or "type-locked-base")
     if position not in posm.TYPE_POSITIONS:
         position = "type-locked-base"
@@ -6955,7 +7196,8 @@ def posm_print(payload: dict):
     if not payload.get("skip_pack"):
         pack_url = str(payload.get("pack_url") or "").strip() or str(payload.get("pack_id") or "") \
             or str(payload.get("product_id") or "") \
-            or library.reference_url("pack") or library.reference_url("product")
+            or library.reference_url("pack", brand=str(prof.get("name") or "")) \
+            or library.reference_url("product", brand=str(prof.get("name") or ""))
     try:
         meta = keyvisual.assemble_print_and_store(
             fmt=fmt, dpi=dpi, colour=colour,
@@ -6992,22 +7234,31 @@ def posm_spec(payload: dict):
     generations the product itself made.
     """
     house, brief, platform, plan = _exec_ctx(payload)
-    text, src = producers.stands_on("posm", house, platform, str(payload.get("brief") or ""))
+    # Defaults from the bound house's own mode — a General house's key-visual spec stays General —
+    # with an explicit payload override still honoured for a caller with no house linked at all.
+    # Computed before `stands_on` below (Phase 1 fix) so that call gets the same mode `_ctx` gets
+    # further down — it used to run before this existed and stood on the house's real content anyway.
+    _spec_mode = str(payload.get("brand_mode") or "").strip().lower() or (house or {}).get("brand_mode") or "grounded"
+    text, src = producers.stands_on("posm", house, platform, str(payload.get("brief") or ""),
+                                    brand_mode=_spec_mode)
     formats = [f for f in (payload.get("formats") or []) if f in posm.FORMATS]
     if not formats:
         formats = posm.KIT_PRESETS.get(str(payload.get("kit") or ""), {}).get("formats", [])
 
-    prof = brandprofile.resolve() or {}
+    # Docs-based resolve, not the blind `resolve()` — this route already has house/brief in scope from
+    # `_exec_ctx`, and a bound house/brief should always win over guessing from whatever's active.
+    prof = {} if _spec_mode == "general" else (brandprofile.resolve(house, brief) or {})
     palette = ", ".join(str(v) for v in (prof.get("colours") or {}).values() if v)
     spec, note = posm.draft(
-        text, src, brand=_brand_line(), house_ctx=producers._ctx(house, brief, platform, plan),
+        text, src, brand=_brand_line(prof or None, brand_mode=_spec_mode),
+        house_ctx=producers._ctx(house, brief, platform, plan, brand_mode=_spec_mode),
         formats=formats, palette=palette, steer=str(payload.get("steer") or ""))
     if not spec:
         return JSONResponse(status_code=400, content={"detail": note, "stands_on":
                                                       {"text": text, "source": src}})
     return {"spec": spec, "note": note, "findings": spec.get("findings", []),
             "stands_on": {"text": text, "source": src}, "formats": formats,
-            "gate": posm.gate(spec.get("hero_type", "")),
+            "gate": posm.gate(spec.get("hero_type", ""), brand=str(prof.get("name") or "")),
             "cutout_prompt": posm.cutout_prompt(spec.get("hero_brief", ""))}
 
 
@@ -7039,7 +7290,7 @@ def posm_adapt(payload: dict):
 
 
 @app.get("/grounding")
-def grounding(house: str = "", plan: str = "", execution: str = ""):
+def grounding(house: str = "", plan: str = "", execution: str = "", brand_mode: str = ""):
     """What the backend will actually ground the next generation on. Returns the truth, not a guess.
 
     Built because two screens disagreed in the same app at the same moment: POS material said *"from the
@@ -7054,7 +7305,19 @@ def grounding(house: str = "", plan: str = "", execution: str = ""):
 
     `{ platform:{name,line,source}|null, house:{id,brand,core}|null, plan:{id,channels,audiences}|null,
        grounded:bool, summary:"one sentence for the screen" }`
+
+    Live-tested finding: this had no `brand_mode` awareness at all, so a screen with Independent
+    selected and NOTHING bound to this specific execution still reported "Written against the house's
+    core message" — `_exec_ctx()`'s own fallback to the newest house for the active brand, same as
+    Grounded pieces get, with nothing here to say the toggle should override it. The actual generation
+    text was never affected (Phase 1's `stands_on()`/`_ctx()` gating already stops that at the real
+    chokepoint) — this was a display-only lie, but the same "looks like it worked" failure this file has
+    named twice already. Independent now short-circuits before any house/plan resolution happens.
     """
+    if str(brand_mode or "").strip().lower() == "general":
+        return {"grounded": False,
+                "summary": "This piece is Independent — nothing is grounding it but what you write here.",
+                "platform": None, "house": None, "plan": None}
     house_obj, _brief, platform, plan_obj = _exec_ctx(
         {"house": house, "plan": plan, "execution": execution})
 
@@ -7139,6 +7402,7 @@ def activation_idea(payload: dict):
     use_house = payload.get("use_house", True) is not False
     use_platform = payload.get("use_platform", True) is not False
     use_plan = payload.get("use_plan", True) is not False
+    _brand_mode = str(payload.get("brand_mode") or "")
 
     # Three requests arrive here and they are told apart by whether `idea` is present at all:
     #
@@ -7152,7 +7416,8 @@ def activation_idea(payload: dict):
     # who was already calling it with an empty idea.
     if "idea" in payload and not typed:
         stood, src = producers.stands_on("activation", house, platform, "",
-                                         use_house=use_house, use_platform=use_platform)
+                                         use_house=use_house, use_platform=use_platform,
+                                         brand_mode=_brand_mode)
         return {"stands_on": {"text": stood, "source": src}, "ideas": [], "count": 0,
                 "venues": producers.VENUES,
                 "detail": "Nothing generated — send no `idea` key at all to generate ideas."}
@@ -7170,23 +7435,27 @@ def activation_idea(payload: dict):
         ideas, note = producers.activation_ideas(house, platform, plan, brief, n,
                                                  str(payload.get("steer") or ""),
                                                  use_house=use_house, use_platform=use_platform,
-                                                 use_plan=use_plan)
+                                                 use_plan=use_plan, brand_mode=_brand_mode)
         if not ideas:
             stood, src = producers.stands_on("activation", house, platform, "",
-                                             use_house=use_house, use_platform=use_platform)
+                                             use_house=use_house, use_platform=use_platform,
+                                             brand_mode=_brand_mode)
             return JSONResponse(status_code=400, content={
                 "detail": note, "stands_on": {"text": stood, "source": src}})
         stood, src = producers.stands_on("activation", house, platform, "",
-                                         use_house=use_house, use_platform=use_platform)
+                                         use_house=use_house, use_platform=use_platform,
+                                         brand_mode=_brand_mode)
         return {"ideas": ideas, "count": len(ideas), "note": note,
                 "venues": producers.VENUES,
                 "stands_on": {"text": stood, "source": src}}
 
     idea, note = producers.sharpen_idea(typed, house, brief, platform, plan,
-                                        use_house=use_house, use_platform=use_platform, use_plan=use_plan)
+                                        use_house=use_house, use_platform=use_platform, use_plan=use_plan,
+                                        brand_mode=_brand_mode)
     if not idea:
         stood, src = producers.stands_on("activation", house, platform, "",
-                                         use_house=use_house, use_platform=use_platform)
+                                         use_house=use_house, use_platform=use_platform,
+                                         brand_mode=_brand_mode)
         return JSONResponse(status_code=400,
                             content={"detail": note, "stands_on": {"text": stood, "source": src}})
     return {"idea": idea, "note": note}
@@ -7208,7 +7477,8 @@ def activation_idea_adjust(payload: dict):
         idea, note, house, brief, platform, plan,
         use_house=payload.get("use_house", True) is not False,
         use_platform=payload.get("use_platform", True) is not False,
-        use_plan=payload.get("use_plan", True) is not False)
+        use_plan=payload.get("use_plan", True) is not False,
+        brand_mode=str(payload.get("brand_mode") or ""))
     if not out:
         return JSONResponse(status_code=400, content={"detail": err})
     return {"idea": out}
@@ -7271,7 +7541,8 @@ def activation_element(payload: dict):
         idea_text, house, brief, platform, plan,
         use_house=payload.get("use_house", True) is not False,
         use_platform=payload.get("use_platform", True) is not False,
-        use_plan=payload.get("use_plan", True) is not False)
+        use_plan=payload.get("use_plan", True) is not False,
+        brand_mode=str(payload.get("brand_mode") or ""))
     if not out:
         return JSONResponse(status_code=400, content={"detail": note})
     return {"brief": out, "note": note,
@@ -7649,7 +7920,11 @@ def plan_prompt(plan_id: str, layer: str):
     p = plan.load(plan_id)
     if not p or layer not in plan.LAYER_BY_ID:
         return JSONResponse(status_code=404, content={"detail": "Not found."})
-    return {"prompt": plan.prompt_for(p, layer, _house_for(p), locked=library.locked_copy())}
+    house = _house_for(p)
+    _is_general = p.get("brand_mode") == "general"
+    _locked = [] if _is_general else library.locked_copy(
+        brand=str((brandprofile.resolve(p, house) or {}).get("name") or ""))
+    return {"prompt": plan.prompt_for(p, layer, house, locked=_locked)}
 
 
 # --- serve the front end (Claude Design build) ---------------------------------
@@ -7852,7 +8127,7 @@ def brand_brief(payload: str = Form(...), research: list[UploadFile] = File(defa
                        source="brand-brief", brief_id=str(data.get("brief_id") or ""))
     except Exception:
         pass
-    blobs = []
+    research_result = None
     if research:
         tmp = tempfile.mkdtemp(prefix="research_")
         paths = []
@@ -7861,10 +8136,11 @@ def brand_brief(payload: str = Form(...), research: list[UploadFile] = File(defa
             with open(dest, "wb") as out:
                 out.write(f.file.read())
             paths.append(dest)
-        blobs = research_parse.parse_paths(paths)
+        focus = f"{data.get('brand', '')} — {data.get('category', '')} — {(data.get('prompt') or '')[:200]}"
+        research_result = research_parse.ingest_for_brief(paths, focus=focus)
     try:
         # Pure-Python renderer (Pillow figures + python-docx) — no Node / cairosvg needed.
-        out = brief_render.generate(data, research_blobs=blobs)
+        out = brief_render.generate(data, research=research_result)
     except Exception as e:
         raise HTTPException(500, f"Brief generation failed: {e}")
     return FileResponse(
@@ -7895,7 +8171,11 @@ def brand_brief_draft(payload: str = Form(...), research: list[UploadFile] = Fil
             400, "AI drafting needs an Anthropic API key. Add ANTHROPIC_API_KEY to api/.env "
                  "and restart the server, or fill the brief in manually.")
     base = json.loads(payload)
-    blobs, images, doc_paths = [], [], []
+    # A General-mode draft has no brand, full stop — enforced here too, not just trusted from the
+    # client, same pairing /brief-save already guards.
+    if str(base.get("brand_mode") or "").strip().lower() == "general":
+        base["brand"] = ""
+    images, doc_paths = [], []
     tmp = tempfile.mkdtemp(prefix="draft_")
     for f in research:
         ext = os.path.splitext(f.filename or "")[1].lower().lstrip(".")
@@ -7908,14 +8188,16 @@ def brand_brief_draft(payload: str = Form(...), research: list[UploadFile] = Fil
             with open(dest, "wb") as out:
                 out.write(raw)
             doc_paths.append(dest)
+    research_result = None
     if doc_paths:
-        blobs = research_parse.parse_paths(doc_paths)
+        focus = f"{base.get('brand', '')} — {base.get('category', '')} — {(base.get('prompt') or '')[:200]}"
+        research_result = research_parse.ingest_for_brief(doc_paths, focus=focus)
     if not _has_brief_input(base, research):
         raise HTTPException(400, "Nothing to draft from — name the brand, write a prompt, or attach "
                                  "research. Given nothing, the model writes a confident brief about a "
                                  "brand nobody named.")
     try:
-        draft = brief_ai.draft_brief(base, blobs=blobs, images=images)
+        draft = brief_ai.draft_brief(base, research=research_result, images=images)
     except brief_ai.NoApiKey:
         raise HTTPException(400, "ANTHROPIC_API_KEY is not set.")
     except Exception as e:

@@ -463,8 +463,11 @@ def build_docx(brief: dict, out_path: str):
     doc.save(out_path)
 
 
-def generate(payload: dict, research_blobs: list[dict] | None = None, workdir: str | None = None) -> str:
-    """Build the rich .docx and return its path — pure Python, no Node/cairosvg."""
+def generate(payload: dict, research: dict | None = None, workdir: str | None = None) -> str:
+    """Build the rich .docx and return its path — pure Python, no Node/cairosvg.
+
+    research: research_parse.ingest_for_brief() output for any uploaded files, or None.
+    """
     workdir = workdir or tempfile.mkdtemp(prefix="imcbrief_")
     ns_png = os.path.join(workdir, "needscope.png")
     cbca_png = os.path.join(workdir, "cbca.png")
@@ -478,7 +481,17 @@ def generate(payload: dict, research_blobs: list[dict] | None = None, workdir: s
     except Exception:
         cbca_png = None
     brief = brandbrief.to_skill_brief(payload, ns_png or "", cbca_png or "")
-    ai = brandbrief.enrich_with_ai(payload, research_blobs)
+    # sources_note used to come only from payload.get("sources_note", "") — nothing in this pipeline
+    # ever set that key, so "Sources: none attached" printed even when files WERE attached (the
+    # contradiction the user's A/B test caught, alongside "Per the uploaded market data" two lines
+    # later). Set it here from the actual filenames the route was given, not a model self-report.
+    filenames = (research or {}).get("filenames") or []
+    if filenames:
+        note = f"{', '.join(filenames)}."
+        brief["sources_note"] = note
+        brief["caveats"] = (note + " NeedScope positions are as placed in the builder; validate "
+                            "market-share, pricing and competitor activity before externalising.")
+    ai = brandbrief.enrich_with_ai(payload, research)
     if ai:
         brief = brandbrief._apply_enrichment(brief, payload, ai)
     # ensure the figure paths point at the PNGs we actually drew

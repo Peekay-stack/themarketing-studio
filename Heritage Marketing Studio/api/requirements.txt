@@ -17,3 +17,11 @@ pillow>=10.0              # draws the NeedScope wheel + CB/CA figures embedded i
 pdfplumber>=0.11
 python-pptx>=0.6
 openpyxl>=3.1
+
+# deterministic aggregation/trend/correlation on uploaded research spreadsheets (research_parse.py's
+# analyze_spreadsheet) — pure numerical libraries, no ML models, no downloads. Deliberately NOT docling/
+# torch: checked, docling's default install pulls in torch+a downloaded layout model (multi-GB) for PDF
+# layout detection we don't need — PPTX/DOCX already carry native structure, and PDF gets a lightweight
+# font-size/position heuristic via pdfplumber (already a dependency above) instead.
+pandas>=2.1
+scipy>=1.11
