@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: d3a25b08-5f19-478b-bc7e-ff283771328e
-  modified: 2026-09-17T07:58:22.333Z
+  modified: 2026-09-17T08:54:27.409Z
 ---
 
 **File**: `Heritage Marketing Studio/BRAND_GROUNDING_TESTING_LOG.md`, section "New thread — IMC brief
@@ -149,3 +149,16 @@ real — one slide named itself "not cross-source corroboration" rather than ove
 was "directionally aligned, quantitatively unverified." No server errors, route writes nothing to the
 tenant store (stateless by design). Deck sent to the user directly. See
 `BRAND_GROUNDING_TESTING_LOG.md`'s Phase 4 section for full detail.
+
+**Frontend trigger built (17 Sep, later same day) — the initiative's one open item is now closed.** User
+asked where the deck shows up, told honestly it was backend-only; asked to wire a button. Added to
+`app.dc.html`'s comprehensive brand-brief builder screen (`screen:'imc'` — NOT the same "IMC Brief" label
+as the separate guided/classic creative-brief format, a real navigation trap worth remembering): a
+`generateSynthesisDeck()` method mirroring `generateImcDocx()`'s existing pattern exactly, a new "⊞
+Research synthesis (.pptx)" button in the sticky footer, and a client-side guard toast when no files are
+attached. `tools/checkfe.py` passed, LF-only line endings confirmed unchanged. Live-verified in the real
+running browser (not just compile-checked): navigated to the actual screen, confirmed the button renders,
+clicked with no files attached (correct guard toast fired), then simulated attaching a real file and
+clicked again — a real `POST /research-synthesis-deck` fired, returned 200, and the UI showed "Downloaded
+Heritage_Foods_Research_Synthesis.pptx," confirming the full chain end to end. Console errors checked —
+only the same pre-existing, unrelated template-placeholder 404s already flagged.

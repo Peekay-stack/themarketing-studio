@@ -160,6 +160,14 @@
         </span>
         <span style="font-size:11px; color:{{ thHeaderSoft }}; flex:none;">{{ brandChipCaret }}</span>
       </div>
+      <!-- Producers' one shared grounding toggle (Social/Video/POSM/On-ground/PR/Sales enablers all
+           read this single flag — see producerBrandMode's own note). Lives in the header, not on any
+           one producer screen, because it has to stay visible and reachable no matter which one is
+           open — same reasoning as the brand chip itself. -->
+      <div style="display:inline-flex; border:1px solid {{ thChipLine }}; border-radius:11px; overflow:hidden; flex:none;" title="{{ producerModeLabel }}">
+        <span onClick="{{ setProducerGrounded }}" style="cursor:pointer; padding:6px 10px; font-size:11.5px; font-weight:700; background:{{ producerModeGroundedBg }}; color:{{ producerModeGroundedFg }};">Grounded</span>
+        <span onClick="{{ setProducerGeneral }}" style="cursor:pointer; padding:6px 10px; font-size:11.5px; font-weight:700; background:{{ producerModeGeneralBg }}; color:{{ producerModeGeneralFg }};">Independent</span>
+      </div>
       <div onClick="{{ goHistory }}" class="hf-approvals" style="cursor:pointer; font-size:14px; font-weight:600; color:{{ thHeaderSoft }}; display:flex; align-items:center; gap:8px; flex:none; white-space:nowrap;"><span style="width:9px; height:9px; border-radius:50%; background:#E2231A;"></span>{{ approvalCount }} approvals</div>
       <span onClick="{{ openSettings }}" title="Studio settings" style="cursor:pointer; flex:none; width:34px; height:34px; border-radius:9px; border:1px solid {{ thChipLine }}; background:{{ thChipBg }}; color:{{ thHeaderSoft }}; display:flex; align-items:center; justify-content:center; font-size:15px;">⚙</span>
       <div style="position:relative; flex:none;">
@@ -618,6 +626,9 @@
       <label for="imc-prompt" style="display:block; font-family:'Epilogue',sans-serif; font-weight:700; font-size:17px; color:#17325E; margin-bottom:10px;">Describe the brief</label>
       <textarea id="imc-prompt" data-k="prompt" value="{{ imcPrompt }}" onChange="{{ onImcText }}" rows="4" placeholder="e.g. Festive IMC push for the flagship pack, targeting young urban families — what has to change in what they believe" style="width:100%; border:1px solid #DDD9D1; border-radius:12px; padding:14px; font-size:14.5px; line-height:1.6; color:#17325E; background:#FBFAF8; font-family:inherit; resize:vertical;"></textarea>
       <div style="font-size:12.5px; color:#6B7280; margin-top:8px;">This anchors the whole brief. Add files below, then let the skill draft it.</div>
+      <sc-if value="{{ imcIndependent }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#FFF7E8; border:1px solid #F0DFB4; border-radius:11px; padding:12px 14px; margin-top:10px; font-size:12.5px; line-height:1.6; color:#8A6410;">The brief is grounded entirely in what you write here — it takes nothing from the brand profile. Follow the prompt guide to cover what the profile would otherwise supply.</div>
+      </sc-if>
       <details style="margin-top:12px;"><summary style="cursor:pointer; list-style:none; display:inline-flex; align-items:center; gap:7px; background:#fff; border:1px solid #DDD9D1; color:#17325E; border-radius:10px; padding:9px 15px; font-size:13px; font-weight:700;">Prompt guide ▾</summary><div style="margin-top:10px; background:#fff; border:1px solid #DDD9D1; border-radius:12px; padding:15px 17px; max-width:720px;">
           <sc-if value="{{ pgImc.none }}" hint-placeholder-val="{{ true }}"><div style="font-size:13px; line-height:1.6; color:#41505F; text-wrap:pretty;">No guide is written for the IMC brief yet.</div></sc-if>
           <sc-if value="{{ pgImc.unavailable }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px; line-height:1.6; color:#8A6410; text-wrap:pretty;">{{ pgImc.unavailWhy }}</div></sc-if>
@@ -868,6 +879,14 @@
           <sc-if value="{{ imcGenerating }}" hint-placeholder-val="{{ false }}"><span style="width:15px; height:15px; border:2px solid rgba(251,246,234,0.4); border-top-color:#F7F5F1; border-radius:50%; display:inline-block; animation:hf-spin 0.7s linear infinite;"></span></sc-if>
           {{ imcGenLabel }}
         </button>
+        <!-- A separate deliverable from the brief itself — no brand recommendation, just an honest
+             cross-file read of whatever research was attached below. Reads the same files as the brief;
+             says so plainly on the deck itself when nothing coheres, rather than forcing a pattern. -->
+        <button onClick="{{ generateSynthesisDeck }}" style="background:#fff; color:#17325E; border:1px solid #C9CEDA; border-radius:11px; padding:12px 18px; font-weight:700; font-size:13.5px; cursor:pointer; display:flex; align-items:center; gap:8px;">
+          <sc-if value="{{ synthGenerating }}" hint-placeholder-val="{{ false }}"><span style="width:13px; height:13px; border:2px solid rgba(23,50,94,0.25); border-top-color:#17325E; border-radius:50%; display:inline-block; animation:hf-spin 0.7s linear infinite;"></span></sc-if>
+          {{ synthGenLabel }}
+        </button>
+        <sc-if value="{{ hasSynthGenMessage }}" hint-placeholder-val="{{ false }}"><span style="font-size:13px; font-weight:600; color:#17325E;">{{ synthGenMessage }}</span></sc-if>
         <button onClick="{{ toggleImcJson }}" style="background:#fff; color:#3F814C; border:1px solid #DDD9D1; border-radius:11px; padding:12px 18px; font-weight:700; font-size:13.5px; cursor:pointer;">{{ imcJsonLabel }}</button>
         <button onClick="{{ downloadImcJson }}" style="background:#fff; color:#3F814C; border:1px solid #DDD9D1; border-radius:11px; padding:12px 18px; font-weight:700; font-size:13.5px; cursor:pointer;">Download brief.json</button>
         <!-- Until it is saved, this brief exists only on this screen. Saving puts it in the one library
@@ -2309,6 +2328,9 @@
         </sc-if>
         <sc-if value="{{ kitNothing }}" hint-placeholder-val="{{ true }}">
           <div style="font-size:12.5px; line-height:1.6; color:#6B7280; text-wrap:pretty;">{{ kitEmptyNote }}</div>
+        </sc-if>
+        <sc-if value="{{ kitIndependent }}" hint-placeholder-val="{{ false }}">
+          <div style="font-size:12.5px; line-height:1.6; color:#6B7280; text-wrap:pretty;">Hidden while Independent — none of it is used for this piece.</div>
         </sc-if>
       </div>
       <sc-if value="{{ hasUploads }}" hint-placeholder-val="{{ false }}">
@@ -3796,6 +3818,7 @@
         <div onClick="{{ h.open }}" style="cursor:pointer; background:#fff; border:1px solid #DDD9D1; border-radius:14px; padding:16px 18px;">
           <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
             <span style="font-family:'Epilogue',sans-serif; font-weight:700; font-size:17px; color:#17325E;">{{ h.brand }}</span>
+            <sc-if value="{{ h.isIndependent }}" hint-placeholder-val="{{ false }}"><span style="font-size:10.5px; background:#17325E; color:#F7F5F1; border-radius:9px; padding:2px 8px; font-weight:800;">Independent</span></sc-if>
             <sc-if value="{{ h.stale }}" hint-placeholder-val="{{ false }}"><span style="font-size:10.5px; background:#FFF4DA; color:#B07A12; border:1px solid #F0DFB4; border-radius:9px; padding:2px 8px; font-weight:800;">stale</span></sc-if>
             <sc-if value="{{ h.blocking }}" hint-placeholder-val="{{ false }}"><span style="font-size:10.5px; background:#FBE3E1; color:#C0392B; border:1px solid #F1C9C4; border-radius:9px; padding:2px 8px; font-weight:800;">{{ h.blockingLabel }}</span></sc-if>
             <sc-if value="{{ h.hasClaim }}" hint-placeholder-val="{{ false }}"><span style="font-size:10.5px; background:{{ h.claimBg }}; color:{{ h.claimFg }}; border:1px solid {{ h.claimLine }}; border-radius:9px; padding:2px 8px; font-weight:800;">{{ h.claimLabel }}</span></sc-if>
@@ -3882,6 +3905,7 @@
         <div onClick="{{ p.open }}" style="cursor:pointer; background:#fff; border:1px solid #DDD9D1; border-radius:14px; padding:16px 18px;">
           <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
             <span style="font-family:'Epilogue',sans-serif; font-weight:700; font-size:17px; color:#17325E;">{{ p.brand }}</span>
+            <sc-if value="{{ p.isIndependent }}" hint-placeholder-val="{{ false }}"><span style="font-size:10.5px; background:#17325E; color:#F7F5F1; border-radius:9px; padding:2px 8px; font-weight:800;">Independent</span></sc-if>
             <sc-if value="{{ p.stale }}" hint-placeholder-val="{{ false }}"><span style="font-size:10.5px; background:#FFF4DA; color:#B07A12; border:1px solid #F0DFB4; border-radius:9px; padding:2px 8px; font-weight:800;">stale</span></sc-if>
             <sc-if value="{{ p.blocking }}" hint-placeholder-val="{{ false }}"><span style="font-size:10.5px; background:#FBE3E1; color:#C0392B; border:1px solid #F1C9C4; border-radius:9px; padding:2px 8px; font-weight:800;">{{ p.blockingLabel }}</span></sc-if>
             <span style="margin-left:auto; font-size:12.5px; color:#6B7280;">{{ p.progress }}</span>
@@ -5858,15 +5882,27 @@
     <!-- The title, the blurb, the prompt guide and the brief source all moved up: the title now opens
          the segment, and the brief is the third card in "what this producer is given". -->
     <!-- inputs panel -->
+    <!-- Live-tested finding: this used to carry its own "Upload images / clips" button, which does
+         NOT attach a real photo reference at all — `handleStudioUpload` only ever remembers the local
+         file's NAME to mention in the prompt as style/tone context (see `inputsContext()`), the bytes
+         never leave the browser. Sitting right above the real per-render pack/cast picker further down
+         ("Assets for these posts", which DOES upload and DOES reach `/scene-still`), it read as the
+         obvious place to attach the actual pack photo — a person did exactly that, live, and the pack
+         never showed up in a single generated image. Removed the upload control from this panel and
+         said in words where the real one is, rather than leaving two similar-looking controls where
+         only one is real. The `refs` chip-picker (mention an already-signed-off item by name) and the
+         guidelines toggle stay — they are a real, different, non-conflicting use (style/tone context
+         for the caption text, not a photo reference for the image).
+    -->
     <div style="background:#fff; border:1px solid #DDD9D1; border-radius:14px; padding:16px 18px; margin-bottom:16px;">
       <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; gap:12px; flex-wrap:wrap;">
         <div style="font-family:'Epilogue',sans-serif; font-weight:700; font-size:15px; color:#17325E;">Inputs to guide generation <span style="color:#6B7280; font-weight:600; font-size:13px;">· {{ inputCount }} attached</span></div>
-        <label style="display:inline-flex; align-items:center; gap:8px; border:1px dashed #C9D9CC; background:#F4FAF5; border-radius:10px; padding:8px 14px; cursor:pointer; color:#1E7E34; font-weight:700; font-size:13px;"><span style="font-size:15px; line-height:1;">↑</span> Upload images / clips<input type="file" multiple onChange="{{ handleStudioUpload }}" style="display:none;" /></label>
       </div>
+      <div style="font-size:12px; line-height:1.5; color:#6B7280; margin-bottom:10px; text-wrap:pretty;">Style and tone context for the caption — not a photo reference. For the actual pack shot or cast photo used in the render, use "Assets for these posts" below.</div>
       <div style="display:flex; flex-wrap:wrap; gap:8px;">
         <span onClick="{{ toggleGuideline }}" style="cursor:pointer; background:{{ glChipBg }}; color:{{ glChipFg }}; border:1px solid {{ glChipBorder }}; border-radius:20px; padding:7px 13px; font-size:12.5px; font-weight:700;">✦ {{ glChipLabel }}</span>
         <sc-if value="{{ noRefLibrary }}" hint-placeholder-val="{{ true }}">
-          <span style="font-size:12px; line-height:1.5; color:#6B7280; align-self:center; text-wrap:pretty;">No asset library is connected, so there is nothing to draw on for style or continuity — upload what the work should match.</span>
+          <span style="font-size:12px; line-height:1.5; color:#6B7280; align-self:center; text-wrap:pretty;">No signed-off library items yet to draw on for style or tone.</span>
         </sc-if>
         <sc-for list="{{ refLibrary }}" as="r" hint-placeholder-count="7">
           <span onClick="{{ r.toggle }}" style="cursor:pointer; background:{{ r.chipBg }}; color:{{ r.chipFg }}; border:1px solid {{ r.chipBorder }}; border-radius:20px; padding:7px 13px; font-size:12.5px; font-weight:600;"><b style="font-weight:800;">{{ r.kind }}</b> · {{ r.name }}</span>
@@ -5933,6 +5969,9 @@
         </sc-if>
         <sc-if value="{{ kitNothing }}" hint-placeholder-val="{{ true }}">
           <div style="font-size:12.5px; line-height:1.6; color:#6B7280; text-wrap:pretty;">{{ kitEmptyNote }}</div>
+        </sc-if>
+        <sc-if value="{{ kitIndependent }}" hint-placeholder-val="{{ false }}">
+          <div style="font-size:12.5px; line-height:1.6; color:#6B7280; text-wrap:pretty;">Hidden while Independent — none of it is used for this piece.</div>
         </sc-if>
       </div>
       <sc-if value="{{ hasUploads }}" hint-placeholder-val="{{ false }}">
@@ -6039,6 +6078,43 @@
           <sc-for list="{{ socialStyles }}" as="v" hint-placeholder-count="4">
             <span onClick="{{ v.set }}" title="{{ v.hint }}" style="cursor:pointer; background:{{ v.bg }}; color:{{ v.fg }}; border:1px solid {{ v.border }}; font-size:12.5px; font-weight:700; padding:6px 13px; border-radius:30px;">{{ v.label }}</span>
           </sc-for>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live-tested gap: unlike POSM/Onground/Carousel, single posts had no pack/cast mechanism at
+         all — /scene-still rendered from a text description only, Grounded or Independent alike, even
+         when a real signed-off asset already existed. Same pick-or-upload shape as POSM's own cards. -->
+    <div style="background:#fff; border:1px solid #DDD9D1; border-radius:16px; padding:18px 20px; margin-bottom:18px;">
+      <div style="font-size:11px; font-weight:800; letter-spacing:0.07em; text-transform:uppercase; color:#6B7280; margin-bottom:4px;">Assets for these posts — optional, used on every render</div>
+      <div style="font-size:12px; color:#6B7280; line-height:1.5; margin-bottom:12px;">Pick something already signed off, or upload one now — either way it's a real reference, not a description.</div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px;">
+        <div>
+          <div style="font-size:11.5px; font-weight:700; color:#17325E; margin-bottom:6px;">Pack shot</div>
+          <select value="{{ socialPackCard.value }}" onChange="{{ socialPackCard.pick }}" style="width:100%; border:1px solid #DDD9D1; border-radius:10px; padding:8px 10px; font-size:12.5px; color:#17325E; background:#fff; font-family:inherit; margin-bottom:8px;">
+            <option value="">Not used in these posts</option>
+            <option value="__generate__">Let the studio design one — no real pack on file yet</option>
+            <sc-for list="{{ socialPackCard.options }}" as="o" hint-placeholder-count="0">
+              <option value="{{ o.id }}">{{ o.name }}</option>
+            </sc-for>
+          </select>
+          <input type="file" onChange="{{ socialPackCard.upload }}" style="font-size:11.5px; width:100%;" />
+        </div>
+        <div>
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+            <span onClick="{{ toggleSocialWantCast }}" style="cursor:pointer; width:17px; height:17px; flex:none; border-radius:5px; background:{{ socialCastCheckBg }}; border:1.5px solid {{ socialCastCheckBorder }}; color:#fff; display:flex; align-items:center; justify-content:center; font-size:10.5px; font-weight:800;">{{ socialCastCheckMark }}</span>
+            <span onClick="{{ toggleSocialWantCast }}" style="cursor:pointer; font-size:11.5px; font-weight:700; color:#17325E;">Include a recurring model/cast</span>
+          </div>
+          <div style="font-size:11px; color:#6B7280; line-height:1.4; margin-bottom:8px;">{{ socialCastCheckNote }}</div>
+          <sc-if value="{{ socialWantCast }}" hint-placeholder-val="{{ false }}">
+            <select value="{{ socialCastCard.value }}" onChange="{{ socialCastCard.pick }}" style="width:100%; border:1px solid #DDD9D1; border-radius:10px; padding:8px 10px; font-size:12.5px; color:#17325E; background:#fff; font-family:inherit; margin-bottom:8px;">
+              <option value="">Not used in these posts</option>
+              <sc-for list="{{ socialCastCard.options }}" as="o" hint-placeholder-count="0">
+                <option value="{{ o.id }}">{{ o.name }}</option>
+              </sc-for>
+            </select>
+            <input type="file" onChange="{{ socialCastCard.upload }}" style="font-size:11.5px; width:100%;" />
+          </sc-if>
         </div>
       </div>
     </div>
@@ -6279,12 +6355,16 @@
             </div>
           </div>
 
-          <!-- Cast is opt-in — confirmed live: keep the field, but generating one is a deliberate
-               choice, not every carousel's default. -->
+          <!-- Cast is opt-in by INTENT since this comment was written, but the code behind it wasn't:
+               `library.shot_references()` auto-attached the most-recently-signed-off cast whenever one
+               existed, with no way to say "skip it" — so this checkbox, unchecked, still silently
+               pinned a face to every slide. Fixed alongside Social's identical bug: `want_cast`/
+               `use_cast` now actually gate the auto-fallback, so unchecked means what it says. -->
           <div style="display:flex; align-items:center; gap:9px; margin-bottom:10px; padding-top:6px; border-top:1px solid #E6E3DC;">
             <span onClick="{{ toggleCarouselWantCast }}" style="cursor:pointer; width:18px; height:18px; flex:none; border-radius:6px; background:{{ carouselCastCheckBg }}; border:1.5px solid {{ carouselCastCheckBorder }}; color:#fff; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; margin-top:6px;">{{ carouselCastCheckMark }}</span>
             <span onClick="{{ toggleCarouselWantCast }}" style="cursor:pointer; font-size:12.5px; font-weight:600; color:#17325E; margin-top:6px;">Include a recurring model/cast in this carousel</span>
           </div>
+          <div style="font-size:11px; color:#6B7280; line-height:1.4; margin:-6px 0 10px;">{{ carouselCastCheckNote }}</div>
           <sc-if value="{{ carouselWantCast }}" hint-placeholder-val="{{ false }}">
             <div style="max-width:340px;">
               <select value="{{ carouselCastCard.value }}" onChange="{{ carouselCastCard.pick }}" style="width:100%; border:1px solid #DDD9D1; border-radius:10px; padding:9px 11px; font-size:12.5px; color:#17325E; background:#fff; font-family:inherit; margin-bottom:8px;">
@@ -10401,6 +10481,7 @@
               <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
                 <span style="font-weight:700; font-size:14.5px; color:#17325E;">{{ b.title }}</span>
                 <sc-if value="{{ b.hasBrand }}" hint-placeholder-val="{{ false }}"><span style="background:#EEF1F5; color:#41505F; border-radius:20px; padding:2px 9px; font-size:11px; font-weight:700;">{{ b.brandLabel }}</span></sc-if>
+                <sc-if value="{{ b.isIndependentBrief }}" hint-placeholder-val="{{ false }}"><span style="background:#17325E; color:#F7F5F1; border-radius:20px; padding:2px 9px; font-size:11px; font-weight:700;">Independent</span></sc-if>
               </div>
               <div style="font-size:12px; color:#6B7280; margin-top:1px;">{{ b.format }} · {{ b.meta }}</div>
               <div style="font-size:12.5px; color:#41505F; margin-top:6px; line-height:1.45; font-style:italic;">“{{ b.proposition }}”</div>
@@ -10604,7 +10685,8 @@ class Component extends DCLogic {
       files:{ market:[], household:[], wheel:[], cbca:[], research:[] },
       marketData:null, householdData:null,
       status:'idle', message:'', draft:null, tab:'brand', activePin:0,
-      genStatus:'', genMessage:'', showJson:false },
+      genStatus:'', genMessage:'', showJson:false,
+      synthStatus:'', synthMessage:'' },
     launcherOpen: false,
     briefPickerOpen: false,
     briefPickerFor: 'social',
@@ -10614,6 +10696,16 @@ class Component extends DCLogic {
     briefId: null,                 // upsert key: from /brand-brief-draft, then from /brief-save
     briefSavedAt: null,
     briefSaveBusy: false,
+    // ONE toggle for the whole studio — Brief, Strategy/House, Plan and every Producer all read this
+    // one flag, shown once in the header next to the brand chip. Started as four separate per-tab
+    // toggles (briefBrandMode/houseBrandMode/planBrandMode/producerBrandMode); collapsed to one after
+    // live testing showed two pills on the same screen (the header's and a tab's own) disagreeing
+    // read as broken, not as flexible. 'grounded' saves/generates against the active brand profile;
+    // 'general' is a deliberate choice — genuinely brand-agnostic work, no profile attached — not the
+    // same thing as a blank brand nobody got around to typing. See BRAND_GROUNDING_MODES_PLAN.md.
+    // Threaded automatically into every this.complete() call and passed explicitly wherever a screen
+    // builds its own prompt client-side (brandPreamble, needBrand).
+    producerBrandMode: 'grounded',
     // --- brand profiles (GET /brands, POST /brand-active). Exactly one is active. ---
     brands: [],
     // Every step of a logo upload writes here, so a click always changes something on screen.
@@ -10734,6 +10826,15 @@ class Component extends DCLogic {
     // pattern - a live user pointed out that reworking one post regenerated all of them, which is both
     // more expensive and blunter feedback than adjusting the one post that's actually wrong.
     socialAdjustNotes: {}, socialAdjustingId: null,
+    // Live-tested gap: unlike POSM/Onground/Carousel, single posts had no pack/cast mechanism at
+    // all — Grounded relied purely on a text description of the brand (never a real reference image),
+    // and an Independent post had nothing brand-specific to draw on even when a real, usable asset
+    // sat in the library. Own picks, not shared with Carousel's `packChoice`/`castChoice` — the same
+    // "two controls, one real" trap this file has already been bitten by between Social's idea-
+    // platform toggle and a since-reverted separate carousel one. Reuses `carousel.assets` as the
+    // options POOL (already loaded on entry to this screen) rather than a second `/library` fetch for
+    // the same data.
+    socialPackChoice: '', socialCastChoice: '', socialWantCast: false,
     visualsBusy: false,
     posts: [],
     scheduled: false,
@@ -11150,7 +11251,31 @@ class Component extends DCLogic {
     if (s.accent && !this.hasLocalStudio) patch.accent = s.accent;
     if (s.theme && !this.hasLocalStudio) patch.theme = s.theme;
     if (Object.keys(patch).length) this.setState(st => ({ studio: { ...st.studio, ...patch } }));
+    // Round 5 (session persistence): the Grounded/Independent toggle used to reset to Grounded on
+    // every reload — plain in-memory state, never read from the server, unlike which brand is active
+    // (which does survive a reload via /brand-active). Hydrated here ONCE, on the very first call this
+    // session (afterSignIn's boot call) — this same function is also called later by switchBrand's own
+    // re-fetch and by the brand-form screen, and applying this patch on those later calls too would
+    // have a real chance of clobbering a value that caller just set itself moments before this round
+    // trip resolves (switchBrand, in particular, sets producerBrandMode to 'grounded' immediately after
+    // calling this).
+    if (!this._brandModeHydrated) {
+      this._brandModeHydrated = true;
+      const saved = s.producer_brand_mode;
+      if (saved === 'general' || saved === 'grounded') this.setState({ producerBrandMode: saved });
+    }
   };
+  // Fire-and-forget, same reasoning as saveStudio()'s own /studio-settings write: a failed sync must
+  // never block the click that caused it. Called from every place producerBrandMode changes — the
+  // toggle's own setter, switchBrand's two resets-to-grounded, and enterHouse/enterPlan's sync to an
+  // opened document's own stored mode — so a reload always comes back to whatever the toggle last
+  // genuinely read, the same guarantee brand selection already had.
+  persistBrandMode(m){
+    try {
+      fetch('/studio-settings', { method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ producer_brand_mode: m === 'general' ? 'general' : 'grounded' }) }).catch(() => {});
+    } catch (e) {}
+  }
   setStudio(patch){
     this.setState(s => { const next = { ...s.studio, ...patch }; this.saveStudio(next); return { studio: next }; });
   }
@@ -11309,8 +11434,11 @@ class Component extends DCLogic {
   }
   // One sentence for every write that needs a brand and has none. The chip is the fix, so it says so.
   BRAND_REQUIRED = 'No brand is selected, so this would be saved against nobody. Pick a brand from the chip at the top first.';
-  needBrand(){
-    if (this.brandName()) return true;
+  // `allowGeneral` — a screen passes true when the ONE studio-wide toggle (producerBrandMode) is
+  // already set to General: there IS an answer to "which brand is this for", it is "none, on
+  // purpose", which is a different thing from nobody having picked one yet. Only the second refuses.
+  needBrand(allowGeneral){
+    if (allowGeneral || this.brandName()) return true;
     this.showToast(this.BRAND_REQUIRED);
     return false;
   }
@@ -11337,7 +11465,11 @@ class Component extends DCLogic {
   complete(prompt, extra){
     if (!(window.claude && window.claude.complete)) return Promise.reject(new Error('no-api'));
     let t;
-    const call = { messages:[{ role:'user', content: prompt }], ...(extra || {}) };
+    // `brand_mode` rides on every call through the one shared Producers toggle — see producerBrandMode's
+    // own note. `extra` still wins if a caller ever needs to say something different for one specific
+    // call, but nothing today does.
+    const call = { messages:[{ role:'user', content: prompt }],
+      brand_mode: this.state.producerBrandMode || 'grounded', ...(extra || {}) };
     return Promise.race([
       Promise.resolve(window.claude.complete(call)).finally(() => clearTimeout(t)),
       new Promise((_, rej) => { t = setTimeout(() => rej(new Error('timeout')), this.MODEL_TIMEOUT_MS); }),
@@ -11356,7 +11488,28 @@ class Component extends DCLogic {
     // commercial script'. A brand reference is the brand; the product belongs in the voice block.
     return name;
   }
-  brandPreamble(role){
+  // `allowGeneral` — a caller passes `producerBrandMode === 'general'` (the one studio-wide toggle)
+  // when that's set to Independent: instead of refusing, this returns the same honest
+  // "no brand, don't invent one" instruction the server's own voice_block(None) already gives every
+  // backend generator. Every OTHER caller is unaffected — still refuses (returns null) exactly as
+  // before, since for them "no active brand" still means nobody has picked one yet, not a choice.
+  //
+  // Live-tested finding: this used to check `allowGeneral` only inside the "no brand configured at
+  // all" branch — so it did nothing whenever a real brand WAS active (the normal case), and every
+  // caller (8 of them: both brief writers, Social, Video's script writer and department heads, the
+  // campaign lead, measurement) opened its prompt with "You are ... for Heritage Foods" plus the full
+  // voice block regardless of Independent being selected. Confirmed live: `brand_mode:"general"`
+  // reached `/complete` correctly, but the message content itself still named the brand and hero
+  // product — the server-side gating never got a real say once that was already the first line. The
+  // whole point of Independent was "this piece gets no brand facts even though one is active
+  // globally," which is exactly the case the old check skipped. `allowGeneral` now wins outright,
+  // checked before anything about the active brand is even read.
+  brandPreamble(role, allowGeneral){
+    if (allowGeneral) {
+      return 'You are ' + (role || 'a senior marketer') + '. No brand profile is attached to this piece '
+        + '— do NOT invent a brand, category or product. Write from the brief alone, keep claims '
+        + 'general, and say what the work needs in order to be specific.';
+    }
     const b = this.activeBrand();
     const voice = this.brandVoiceText(b);
     if (!b || !(b.name || '').trim() || !String(voice || '').trim()) return null;
@@ -11370,7 +11523,20 @@ class Component extends DCLogic {
   switchBrand = (id) => async () => {
     const b = (this.state.brands || []).find(x => x.id === id);
     if (this.state.brandBusy) return;
-    if (b && b.active) { this.closeBrandMenu(); return; }
+    // Picking a real brand always means Grounded, even when it was already the active one — that
+    // matters specifically when Independent is currently selected: the brand didn't change
+    // server-side (so the old early-return here used to do nothing at all), but the person clicking
+    // it clearly means "go back to using this one," and the toggle has to actually move for that to
+    // be true rather than silently no-op.
+    if (b && b.active) {
+      this.closeBrandMenu();
+      if (this.state.producerBrandMode === 'general') {
+        this.setState({ producerBrandMode:'grounded' });
+        this.persistBrandMode('grounded');
+        this.showToast('Grounded in ' + b.name + ' again.', 'ok');
+      }
+      return;
+    }
     this.setState({ brandBusy:id });
     const r = await this.apiCall('/brand-active', { id });
     this.setState({ brandBusy:'' });
@@ -11380,15 +11546,51 @@ class Component extends DCLogic {
     else this.setState(s => ({ brands: (s.brands||[]).map(x => ({ ...x, active: x.id === id })) }));
     // The brand-profile form's draft belongs to whichever brand it was opened for. Left alone, its
     // seed-once merge would show this brand's old values under the newly-active one the next time the
-    // form is opened — reset it so a reopen is a genuine reload, not a stale echo.
-    this.setState({ bf:null, bfVals:{}, bfCoreFramework:'', bfCoreEssence:'', bfCoreLayers:{}, bfCoreBoundaries:'', bfCoreOpen:false });
-    this.setState({ brandMenuOpen:false, brandVoiceOpen:null, briefs:[], briefsState:'idle' });
+    // form is opened — reset it so a reopen is a genuine reload, not a stale echo. bfVoice was missing
+    // from this list: it held the OLD brand's "what the model is told" text, correct-looking but wrong,
+    // right up until something re-fetched it — caught live, mid-testing, sitting under the new brand's
+    // now-correct readiness numbers.
+    this.setState({ bf:null, bfVals:{}, bfVoice:'', bfCoreFramework:'', bfCoreEssence:'', bfCoreLayers:{}, bfCoreBoundaries:'', bfCoreOpen:false });
+    // Same reasoning, one more place: the IMC screen's Brand/Category fields would otherwise keep
+    // naming the PREVIOUS brand after a real switch — this one overwrites rather than only filling
+    // when blank, because switching brands is exactly the "no, I mean a different one now" case.
+    this.setState({ imc: { ...this.state.imc, brand: b.name || '', category: b.category || '' } });
+    // Studio Settings' name override outranks the active brand everywhere brandName() is read — including
+    // PR sheets, brief-save and the IMC save, not just the header text. Left set, switching brands keeps
+    // writing the OLD brand's typed-in name onto the new one's work. Clearing it here is what makes a
+    // switch actually a switch: brandName()/brandLabel() fall straight through to the newly-active brand.
+    this.setStudio({ clientName:'' });
+    // `bfReady` is a separate snapshot fetched once at page load (`/studio-settings`, via
+    // loadStudioServer) — it's what the Home readiness pill AND the brand-form screen's own
+    // fallback (bagBrandForm's `rd`) both read while `bf` above is still null / mid-fetch. Left
+    // unrefreshed here, that gap shows the OLD brand's real readiness numbers under the NEW
+    // brand's name for as long as the fresh fetch takes — a wrong-brand-data bug, not a blank one.
+    // Re-fetching now is the same one round trip loadStudioServer always makes; resolve() on the
+    // server already answers for whichever brand is active as of this call.
+    this.loadStudioServer();
+    // Picking a real brand always sets the studio back to Grounded — the one exception the header
+    // list allows itself to a rule it otherwise never breaks (nothing else here silently reverts the
+    // toggle), because choosing a brand IS choosing to be grounded in it.
+    this.setState({ brandMenuOpen:false, brandVoiceOpen:null, briefs:[], briefsState:'idle', producerBrandMode:'grounded' });
+    this.persistBrandMode('grounded');
     // The brief library belongs to the brand, so it is re-read rather than left showing the last one's.
     this.loadBriefs();
     // …and so does the logo. Leaving the previous brand's mark in the header is the kind of small lie
     // that makes somebody doubt everything else on the screen.
     this.syncBrandLogo();
     this.showToast('Now working on ' + ((b && b.name) || 'that brand') + ' — every generator is grounded in its profile.', 'ok');
+  };
+  // The header list's own "Independent work" row — a real, selectable option alongside the brands,
+  // not a separate control elsewhere disagreeing with this one. Does NOT touch which brand is active
+  // server-side (/brand-active is never called): the active brand stays exactly what it was, ready
+  // to fall right back into use the moment a real brand row is picked again. Delegates to the same
+  // setter the header pill uses, so the IMC-field-clearing and house/plan-sync side effects only
+  // live in one place.
+  pickIndependent = async () => {
+    if (this.state.producerBrandMode === 'general') { this.closeBrandMenu(); return; }
+    await this.setProducerBrandMode('general')();
+    this.setState({ brandMenuOpen:false });
+    this.showToast('Working independently — no brand attached, nothing invented in its place.', 'ok');
   };
   openSettings = () => this.setState({ settingsOpen:true });
   closeSettings = () => this.setState({ settingsOpen:false });
@@ -11862,9 +12064,14 @@ class Component extends DCLogic {
     if (im.status === 'drafting') return;
     if (!im.prompt.trim()) { this.showToast('Describe the brief first — the prompt anchors everything.'); return; }
     this.setImc({ status:'drafting', message:'Running the brand-brief skill…' });
+    const isGeneral = this.state.producerBrandMode === 'general';
     const fd = new FormData();
-    fd.append('payload', JSON.stringify({ brand:im.brand, category:im.category, prepared_for:im.preparedFor,
-      prompt:im.prompt, market_data:im.marketData||null, household_data:im.householdData||null }));
+    // `brand` forced blank in General mode regardless of what the field shows — the field itself is
+    // already cleared on switching (setProducerBrandMode), but this is the belt-and-suspenders
+    // version, same as /brief-save's own server-side enforcement of the pairing.
+    fd.append('payload', JSON.stringify({ brand: isGeneral ? '' : im.brand, category:im.category, prepared_for:im.preparedFor,
+      prompt:im.prompt, market_data:im.marketData||null, household_data:im.householdData||null,
+      brand_mode: this.state.producerBrandMode }));
     Object.keys(im.files).forEach(k => (im.files[k]||[]).forEach(f => fd.append('research', f)));
     try {
       const r = await fetch('/brand-brief-draft', { method:'POST', body: fd });
@@ -11956,6 +12163,35 @@ class Component extends DCLogic {
       this.setImc({ genStatus:'done', genMessage:'Server unavailable — downloaded a local copy ('+base+'_IMC_Brief.doc)' });
     }
   };
+  // A separate deliverable from the brief itself — no brand recommendation, just an honest cross-file
+  // read of whatever research was attached. Same files as the brief (im.files), same download pattern
+  // as generateImcDocx above, different endpoint and a plainer message when nothing was attached since
+  // the deck has nothing to synthesize without at least one research file.
+  generateSynthesisDeck = async () => {
+    const im = this.state.imc;
+    if (im.synthStatus === 'generating') return;
+    const hasFiles = Object.keys(im.files||{}).some(k => (im.files[k]||[]).length);
+    if (!hasFiles) { this.showToast('Attach at least one research file first — the deck reads across them, it has nothing to read otherwise.'); return; }
+    this.setImc({ synthStatus:'generating', synthMessage:'Building the cross-source synthesis deck…' });
+    const fd = new FormData();
+    fd.append('payload', JSON.stringify({ brand: im.brand, category: im.category, prompt: im.prompt }));
+    Object.keys(im.files).forEach(k => (im.files[k]||[]).forEach(f => fd.append('research', f)));
+    const docBrand = (im.brand || this.brandName() || '').trim();
+    const base = (docBrand || 'Research').replace(/[^a-z0-9]+/gi,'_').replace(/^_|_$/g,'');
+    try {
+      const r = await fetch('/research-synthesis-deck', { method:'POST', body: fd });
+      if (r.status === 400) {
+        const d = await r.json().catch(()=>({}));
+        this.setImc({ synthStatus:'error', synthMessage: d.detail || 'Needs an Anthropic API key on the server, and at least one research file.' });
+        return;
+      }
+      if (!r.ok) throw new Error('server returned ' + r.status);
+      this.triggerDownload(await r.blob(), base+'_Research_Synthesis.pptx');
+      this.setImc({ synthStatus:'done', synthMessage:'Downloaded '+base+'_Research_Synthesis.pptx' });
+    } catch (e) {
+      this.setImc({ synthStatus:'error', synthMessage:'Couldn’t reach the synthesis service (' + e.message + ').' });
+    }
+  };
   toggleImcJson = () => this.setImc({ showJson: !this.state.imc.showJson });
   downloadImcJson = () => { if (!this.state.imc.draft) return;
     this.triggerDownload(new Blob([JSON.stringify(this.state.imc.draft,null,2)],{type:'application/json'}), 'brief.json'); };
@@ -11963,11 +12199,23 @@ class Component extends DCLogic {
   // ---------- brief builder (guided entry into a brief format) ----------
   // ===== BRIEF BUILDER =====
   openBuilder = (id) => () => {
-    if (id === 'imc') { this.setState({ screen:'imc' }); return; }
+    if (id === 'imc') {
+      const a = this.activeBrand();
+      this.setState(s => ({ screen:'imc',
+        // Grounded means the skill should actually be TOLD the active brand's own facts, not have
+        // to have them retyped by hand — filled only when blank, so a draft already in progress (or
+        // a deliberate override) is never overwritten by revisiting this screen.
+        imc: (s.producerBrandMode !== 'general' && a && !s.imc.brand && !s.imc.category)
+          ? { ...s.imc, brand: a.name || '', category: a.category || '' } : s.imc }));
+      return;
+    }
     if (id === 'brand') { this.setState({ screen:'builder', format:'brand', builderReview:false, fromBuilder:true }); return; }
     this.setState({ screen:'builder', format:id, builderTab:0, builderReview:false, fromBuilder:true,
       status:'Draft', aiPrompt:'', builderObjective:'Brand awareness', builderMode:'guided',
       importText:'', importLink:'', importFiles:[],
+      // A brand-new brief inherits whatever the one studio-wide toggle is currently set to, same as
+      // any other new work would \u2014 it is not reset here, so switching screens never silently flips it.
+      briefId:null, briefSavedAt:null,
       title:this.fmt(id).name+' brief'+(this.brandName() ? ' \u2014 '+this.brandName() : ''), brief:{ ...this.formatDefaults(id) } });
   };
   builderGoTab = (i) => () => this.setState({ builderTab:i });
@@ -12027,7 +12275,7 @@ class Component extends DCLogic {
       const lbl = {};
       (this.SECTIONS[fmtId] || []).forEach(g => g.fields.forEach(fl => { lbl[fl[0]] = fl[1]; }));
       const keyList = keys.map(k => `"${k}" (${lbl[k] || k})`).join(', ');
-      const pre = this.brandPreamble('a senior brief writer');
+      const pre = this.brandPreamble('a senior brief writer', this.state.producerBrandMode === 'general');
       if (!pre) { // Every one of these eight routes sets a busy flag and then bails here when there is no brand
       // preamble — and seven of the eight bailed without clearing it, so the button span forever and the
       // route could never be retried. An early return has to undo what the route already did.
@@ -12297,7 +12545,7 @@ class Component extends DCLogic {
       const lbl = {};
       (this.SECTIONS[fmtId] || []).forEach(g => g.fields.forEach(fl => { lbl[fl[0]] = fl[1]; }));
       const keyList = keys.map(k => `"${k}" (${lbl[k] || k})`).join(', ');
-      const pre = this.brandPreamble('a senior marketing brief writer');
+      const pre = this.brandPreamble('a senior marketing brief writer', this.state.producerBrandMode === 'general');
       if (!pre) { this.showToast(this.BRAND_PREAMBLE_MISSING); this.setState({ generating:false }); return; }
       const prompt = `${pre}\n\nWrite a ${f.name} brief for this request: "${ask}". Return ONLY a JSON object (no markdown) with exactly these keys: ${keyList}. Each value 1-2 sentences, specific and India-relevant.`;
       let raw = await this.complete(prompt);
@@ -12360,7 +12608,11 @@ class Component extends DCLogic {
   // ---------- the bag: brief library, saving, the Memory panel ----------
   bagBriefs(s, imcBrief){
     const rows = (imcBrief ? [imcBrief, ...(s.briefs || [])] : (s.briefs || []))
-      .map(b => ({ ...b, pick: this.pickBrief(b), hasBrand: !!b.brand, brandLabel: b.brand || '' }));
+      .map(b => ({ ...b, pick: this.pickBrief(b), hasBrand: !!b.brand, brandLabel: b.brand || '',
+        // Round 5: a brief written Independent and a brief that simply has no brand recorded both
+        // showed as nothing here — no way to tell "on purpose" from "incomplete." /brief-list already
+        // carries brand_mode per row; this just reads it.
+        isIndependentBrief: !b.brand && b.brand_mode === 'general' }));
     const target = s.briefPickerFor;
     const forWhat = { social:'Social', video:'the film', house:'the messaging house', plan:'the IMC plan',
       idea:'the idea platform' }[target] || 'this';
@@ -12374,6 +12626,8 @@ class Component extends DCLogic {
         propLine: row.proposition || 'No proposition recorded — the producers will have nothing to carry.',
         propFg: row.proposition ? '#41505F' : '#B07A12',
         noProfile: bare, hasProfile: !bare,
+        // learning.py's own brief listing does not carry brand_mode (a separate pipeline from
+        // /brief-list) — no badge here yet for that reason, not an oversight. See BRAND_GROUNDING_TESTING_LOG.md.
         profileNote: 'No brand profile behind this brand — work generated from it is ungrounded.' };
     });
     const memBrands = ((lrn && lrn.brands) || []).map(b => {
@@ -12551,32 +12805,52 @@ class Component extends DCLogic {
   bagBrands(s){
     const list = s.brands || [];
     const active = list.find(b => b.active) || null;
+    const isIndependent = s.producerBrandMode === 'general';
     const rows = list.map(b => {
       const voice = this.brandVoiceText(b);
       const open = s.brandVoiceOpen === b.id;
+      // A real brand never reads as "Active" here while Independent is selected — otherwise this
+      // list and the header pill disagree about what's actually happening, which is the exact
+      // confusion the two-toggle version of this feature caused.
+      const shownActive = !!b.active && !isIndependent;
       return { id:b.id, name:b.name || 'Unnamed brand',
         category: b.category || 'No category set — outputs will be category-generic',
         categoryFg: b.category ? '#6B7280' : '#B07A12',
         market: b.market || '', hasMarket: !!b.market,
         idea: b.master_idea || b.positioning || '', hasIdea: !!(b.master_idea || b.positioning),
-        active: !!b.active, notActive: !b.active,
-        rowBg: b.active ? '#fff' : '#FBFAF8',
-        rowLine: b.active ? '#17325E' : '#DDD9D1',
+        active: shownActive, notActive: !shownActive,
+        rowBg: shownActive ? '#fff' : '#FBFAF8',
+        rowLine: shownActive ? '#17325E' : '#DDD9D1',
         initial: (b.name || '?').trim().charAt(0).toUpperCase(),
         pick: this.switchBrand(b.id),
         busy: s.brandBusy === b.id,
-        stateLabel: s.brandBusy === b.id ? 'Switching…' : (b.active ? 'Active' : 'Switch'),
+        stateLabel: s.brandBusy === b.id ? 'Switching…' : (shownActive ? 'Active' : 'Switch'),
         voice, hasVoice: !!voice, voiceOpen: open && !!voice,
         toggleVoice: this.toggleBrandVoice(b.id),
         voiceLabel: open ? 'Hide what the model is told' : 'What the model is told about this brand' };
     });
+    // A real, selectable row in the same list, not a separate control — this is what actually reads
+    // as "one thing can be active, and here's where it moved to" rather than a pill nobody can place.
+    // Reuses the row template's own optional fields (hasMarket/hasIdea/hasVoice all false), so nothing
+    // new is needed in the markup.
+    rows.push({ id:'__independent__', name:'Independent work',
+      category: 'No brand attached — write from the brief alone',
+      categoryFg: '#6B7280', market:'', hasMarket:false, idea:'', hasIdea:false,
+      active: isIndependent, notActive: !isIndependent,
+      rowBg: isIndependent ? '#fff' : '#FBFAF8', rowLine: isIndependent ? '#17325E' : '#DDD9D1',
+      initial: '—', pick: this.pickIndependent, busy: false,
+      stateLabel: isIndependent ? 'Active' : 'Switch',
+      voice:'', hasVoice:false, voiceOpen:false, toggleVoice: () => {}, voiceLabel:'' });
     return {
       brandRows: rows, hasBrands: rows.length > 0, noBrands: rows.length === 0,
       brandMenuOpen: s.brandMenuOpen, toggleBrandMenu: this.toggleBrandMenu, closeBrandMenu: this.closeBrandMenu,
-      brandChipName: (active && active.name) || this.brandLabel(),
-      brandChipCategory: (active && active.category) || 'No brand profile loaded',
-      brandChipTitle: ((active && active.name) || this.brandLabel()) + ' — ' + ((active && active.category) || 'no brand profile loaded'),
-      brandChipInitial: (((active && active.name) || '?').trim().charAt(0) || '?').toUpperCase(),
+      // The chip itself follows the same rule as the list above — Independent reads as its own state,
+      // not as "Heritage Foods" sitting there looking unchanged while a pill nearby says otherwise.
+      brandChipName: isIndependent ? 'Independent' : ((active && active.name) || this.brandLabel()),
+      brandChipCategory: isIndependent ? 'No brand attached' : ((active && active.category) || 'No brand profile loaded'),
+      brandChipTitle: isIndependent ? 'Independent — no brand attached'
+        : (((active && active.name) || this.brandLabel()) + ' — ' + ((active && active.category) || 'no brand profile loaded')),
+      brandChipInitial: isIndependent ? '—' : (((active && active.name) || '?').trim().charAt(0) || '?').toUpperCase(),
       brandChipCaret: s.brandMenuOpen ? '▴' : '▾',
       openNewBrandForm: this.openNewBrandForm,
       brandSwitchNote: rows.length
@@ -12592,8 +12866,17 @@ class Component extends DCLogic {
   closeBriefPicker = () => this.setState({ briefPickerOpen:false });
   pickBrief = (snap) => () => {
     const target = this.state.briefPickerFor;
+    // Does NOT touch producerBrandMode. This round 2 used to sync the one toggle to the PICKED
+    // brief's own recorded mode — reasonable-sounding, wrong in practice: the house/plan/producer
+    // piece being worked on here does not exist yet, so there is nothing whose "own truth" needs
+    // reflecting (unlike enterHouse/enterPlan, which open something ALREADY decided). Nearly every
+    // brief on file predates this feature and defaults to Grounded, so picking almost any brief while
+    // Independent silently snapped the toggle back — reported live as "it toggled back to grounded"
+    // right after switching to Independent on purpose. The toggle is the person's own current
+    // decision; pulling a brief's TEXT in for context is not the same thing as adopting its mode.
     if (target === 'social') {
-      this.setState({ briefPickerOpen:false, linkedBrief:snap, socialObjective: snap.proposition || snap.objective || this.state.socialObjective });
+      this.setState({ briefPickerOpen:false, linkedBrief:snap,
+        socialObjective: snap.proposition || snap.objective || this.state.socialObjective });
     } else if (target === 'house') {
       // The brief's own words go into the field rather than sitting behind an id. The core message is
       // drafted from what is visible here, so it has to stay readable and editable.
@@ -12650,6 +12933,7 @@ class Component extends DCLogic {
     return { id: r.id || r.brief_id || null,
       title: r.title || f.title || 'Untitled brief',
       brand: r.brand || f.brand || '',
+      brandMode: r.brand_mode || 'grounded',
       format, tag:t.tag, tint:t.tint, fg:t.fg,
       meta: [r.status || f.status || 'Saved', r.brand || '', when].filter(Boolean).join(' \u00b7 '),
       proposition: f.proposition || f.smp || f.bigIdea || f.messages || '',
@@ -12669,16 +12953,20 @@ class Component extends DCLogic {
   clock(){ const d = new Date(); return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); }
   saveBrief = (why) => async () => {
     if (this.state.briefSaveBusy) return;
-    if (!this.needBrand()) return;
     const s = this.state;
+    const isGeneral = s.producerBrandMode === 'general';
+    if (!this.needBrand(isGeneral)) return;
     const status = why === 'approve' ? 'Approved' : (why === 'submit' ? 'Pending' : (s.status || 'Draft'));
     const fields = { ...s.brief, status,
       objective: s.brief.commObjective || s.brief.businessObjective || s.brief.objective || '' };
     const had = !!s.briefId;
     this.setState({ briefSaveBusy:true });
     // Sent under both names. The draft route hands back brief_id and the save route upserts on id, so
-    // one key on its own turns a correction into a second near-copy of the same brief.
-    const r = await this.apiCall('/brief-save', { id: s.briefId || null, brief_id: s.briefId || null, brand: this.brandName(),
+    // one key on its own turns a correction into a second near-copy of the same brief. `brand_mode`
+    // is the decision; `brand` is left blank in General mode even if one happens to be active — the
+    // server enforces this pairing too, but the client should never send a contradiction on purpose.
+    const r = await this.apiCall('/brief-save', { id: s.briefId || null, brief_id: s.briefId || null,
+      brand: isGeneral ? '' : this.brandName(), brand_mode: s.producerBrandMode,
       title: s.title || (this.fmt(s.format).name + ' brief'), format: this.fmt(s.format).name, fields });
     this.setState({ briefSaveBusy:false });
     if (!r.ok) { this.showToast((r.data && r.data.detail) || 'Could not save — nothing was written to the library.'); return; }
@@ -12689,12 +12977,14 @@ class Component extends DCLogic {
   saveImcBrief = async () => {
     const im = this.state.imc, d = im.draft;
     if (!d || this.state.briefSaveBusy) return;
-    const brand = d.brand || im.brand || this.brandName();
-    if (!brand) { this.showToast(this.BRAND_REQUIRED); return; }
+    const isGeneral = this.state.producerBrandMode === 'general';
+    const brand = isGeneral ? '' : (d.brand || im.brand || this.brandName());
+    if (!brand && !isGeneral) { this.showToast(this.BRAND_REQUIRED); return; }
     const had = !!this.state.briefId;
     this.setState({ briefSaveBusy:true });
     const r = await this.apiCall('/brief-save', { id: this.state.briefId || null, brief_id: this.state.briefId || null, brand,
-      title: brand + ' — IMC brief', format:'IMC',
+      brand_mode: this.state.producerBrandMode,
+      title: (brand || 'Independent') + ' — IMC brief', format:'IMC',
       // WIRING BUG (round-83 audit, confirmed live): this used to nest the whole draft one level
       // deeper than briefstore.canonicalise() unnests (`fields.draft.cb_ca_db_da.shift_from` — two
       // levels deep) instead of spreading it like the auto-save after /brand-brief-draft does
@@ -12716,11 +13006,19 @@ class Component extends DCLogic {
     const im = this.state.imc || {};
     const d = im.draft;
     if (!d || !(d.smp || (d.competitors && d.competitors.length))) return null;
-    const brand = d.brand || im.brand || this.brandLabel();
+    // Live-tested bug: this fell straight to `this.brandLabel()` (the ACTIVE brand's real name)
+    // whenever the draft's own brand field was blank, with no check on the toggle at all — so an
+    // Independent draft's own picker preview showed a real brand name and no Independent badge, while
+    // `saveImcBrief` right below it (the same draft, saved for real) got this correctly. Same fix,
+    // same discipline: blank when General, and `brand_mode` now rides on the snapshot so the picker's
+    // own `isIndependentBrief` check (already reading this field from every other row) has something
+    // to key off here too.
+    const isGeneral = this.state.producerBrandMode === 'general';
+    const brand = isGeneral ? '' : (d.brand || im.brand || this.brandLabel());
     const ask = (im.prompt || '').trim();
     return {
-      title: brand + ' — IMC Brief', format:'IMC', tag:'IM', tint:'#FCEFC7', fg:'#A77A00',
-      meta:'Draft · just now · you',
+      title: (brand || 'Independent') + ' — IMC Brief', format:'IMC', tag:'IM', tint:'#FCEFC7', fg:'#A77A00',
+      meta:'Draft · just now · you', brand, brand_mode: this.state.producerBrandMode,
       proposition: d.smp || ask,
       audience: ask || 'Young urban families across core markets.',
       tone: 'Warm, wholesome, premium — proud but never preachy. Lead with purity & family.',
@@ -12740,11 +13038,35 @@ class Component extends DCLogic {
   styleName(){ const v = this.SOCIAL_STYLES.find(x => x.id === this.state.socialStyle); return v ? v.label : 'Real (people)'; }
   setSocialStyle = (id) => () => this.setState({ socialStyle:id });
 
-  fetchPostImages = (posts) => {
+  // `socialPackChoice` carries a real library id, '' (not used), or the sentinel '__generate__' from
+  // the dropdown's "Let the studio design one" option — this is the one place that sentinel gets
+  // translated into the two real fields `/scene-still` understands, so `fetchPostImages` and
+  // `regenerateVisuals` can't drift out of sync on what it means.
+  socialPackFields(){
+    const v = this.state.socialPackChoice;
+    if (v === '__generate__') return { pack_id: undefined, pack_generate: true };
+    return { pack_id: v || undefined, pack_generate: undefined };
+  }
+  // `continuityRefs` — optional {postId: previousImageUrl} map. Only `adjustPost` passes one (see its
+  // own comment): a fresh first-time generation has no prior render to anchor to.
+  fetchPostImages = (posts, continuityRefs) => {
+    const s0 = this.state;
+    const refs = continuityRefs || {};
+    const packFields = this.socialPackFields();
     (posts || []).forEach(async (p) => {
       const res = await this.apiJson('/scene-still', {
         scene_no: 1, ratio: '1:1', style: this.state.socialStyle || 'real',
         prompt: (p.visual || ((this.brandName() || 'Brand') + ' key visual')) + ' Square social image for ' + p.platName + '.',
+        brand_mode: this.state.producerBrandMode,
+        ...packFields,
+        // Live-tested finding: the server auto-attaches the most-recently-signed-off cast whenever one
+        // exists UNLESS told not to — leaving this checkbox unchecked used to still silently pin the
+        // same face to every post, which is exactly backwards from what "Include a recurring model/
+        // cast" implies. `use_cast` is now sent explicitly every time so unchecked really means no
+        // cast reference at all, not "auto-pick one anyway."
+        use_cast: !!s0.socialWantCast,
+        cast_id: s0.socialWantCast ? (s0.socialCastChoice || undefined) : undefined,
+        reference_url: refs[p.id] || undefined,
       });
       if (res && res.image_url) {
         this.setState(s => ({ posts: s.posts.map(x => x.id === p.id ? { ...x, imageUrl: res.image_url } : x) }));
@@ -12758,11 +13080,17 @@ class Component extends DCLogic {
     if (!posts.length || this.state.visualsBusy) return;
     this.setState({ visualsBusy:true, posts: posts.map(p => ({ ...p, imageUrl:'' })) });
     const style = this.state.socialStyle || 'real';
+    const s0 = this.state;
+    const packFields = this.socialPackFields();
     let ok = 0;
     await Promise.all(posts.map(async (p) => {
       const res = await this.apiJson('/scene-still', {
         scene_no: 1, ratio: '1:1', style,
+        ...packFields,
+        use_cast: !!s0.socialWantCast,
+        cast_id: s0.socialWantCast ? (s0.socialCastChoice || undefined) : undefined,
         prompt: (p.visual || ((this.brandName() || 'Brand') + ' key visual')) + ' Square social image for ' + p.platName + '.',
+        brand_mode: this.state.producerBrandMode,
       });
       if (res && res.image_url) { ok++; this.setState(s => ({ posts: s.posts.map(x => x.id === p.id ? { ...x, imageUrl: res.image_url } : x) })); }
     }));
@@ -12829,7 +13157,15 @@ class Component extends DCLogic {
     let data = null;
     if (window.claude && window.claude.complete) {
       try {
-        const prompt = 'Revise this one existing ' + (this.brandRef() || 'brand') + ' social post per the instruction, keeping everything else about it the same otherwise. INSTRUCTION: "' + note + '". CURRENT POST: ' + JSON.stringify(current) + '. Return ONLY JSON: {"caption":string,"hashtags":string,"visual":string}.';
+        // Live-tested finding: this used to always ask for `visual` back and infer whether the image
+        // needed redoing from `data.visual !== post.visual` — but an LLM almost never reproduces a
+        // string byte-for-byte even when told to keep it the same, so a caption-only note ("punchier
+        // hook") was quietly re-rendering the whole image anyway: new setting, new style, a different
+        // family every time. Asking the model to JUDGE and say so directly (`visual_changed`) is what
+        // it's actually good at; asking it to reproduce text exactly is not. `socialAssetAnchor()` is
+        // the other half of the same live finding — without it, an adjustment could drift the caption
+        // (and then the image) onto a different real SKU than the one actually pinned by reference.
+        const prompt = 'Revise this one existing ' + (this.brandRef() || 'brand') + ' social post per the instruction, keeping everything else about it the same otherwise.' + this.socialAssetAnchor() + ' INSTRUCTION: "' + note + '". CURRENT POST: ' + JSON.stringify(current) + '. Return ONLY JSON: {"caption":string,"hashtags":string,"visual":string,"visual_changed":boolean}. Set visual_changed to true ONLY if the instruction actually calls for something different in the image itself (a different scene, subject, composition or style) — if the instruction is about the caption, hook or hashtags only, set visual_changed to false and return "visual" completely unchanged from CURRENT POST.';
         const execId1 = (this.currentExec() || {}).id;
         // Round 92: same force_typed/skip_mandatories generateSocial/reworkPosts send.
         let raw = await this.complete(prompt, { ...(execId1 ? { execution: execId1 } : {}),
@@ -12839,7 +13175,11 @@ class Component extends DCLogic {
       } catch (e) {}
     }
     if (!data) { this.setState({ socialAdjustingId:null }); this.showToast('Couldn’t adjust that post — it’s unchanged.'); return; }
-    const visualChanged = !!(data.visual && data.visual !== post.visual);
+    // Fall back to the old string-diff only if the model failed to return the new flag at all —
+    // never trust the diff over an explicit judgment when we have one.
+    const visualChanged = typeof data.visual_changed === 'boolean' ? data.visual_changed
+      : !!(data.visual && data.visual !== post.visual);
+    const prevImageUrl = post.imageUrl;
     this.setState(s => ({
       socialAdjustingId:null,
       socialAdjustNotes: { ...s.socialAdjustNotes, [id]: '' },
@@ -12848,10 +13188,59 @@ class Component extends DCLogic {
             visual: data.visual || p.visual, imageUrl: visualChanged ? '' : p.imageUrl }
         : p),
     }), () => {
-      if (visualChanged) this.fetchPostImages(this.state.posts.filter(p => p.id === id));
+      // When the image genuinely is being redone, carry the post's own previous render forward as an
+      // identity reference (same mechanism /scene-still already uses for cast/plate continuity) —
+      // partial, not a full scene-lock (the reference prompt is explicitly allowed to vary setting/
+      // camera), but it noticeably helps the same family read as the same family across rounds
+      // instead of being reinvented from nothing each time.
+      if (visualChanged) this.fetchPostImages(this.state.posts.filter(p => p.id === id),
+        prevImageUrl ? { [id]: prevImageUrl } : {});
       this.showToast('Post adjusted' + (visualChanged ? ' — refreshing its visual.' : '.'), 'ok');
     });
   };
+
+  // ---------- single-post assets (pack/cast for /scene-still) ----------
+  // Same pick-or-upload shape as `pickPosmAsset`/`uploadPosmAsset` — proven there, reused here rather
+  // than invented fresh. Options come from `carousel.assets` (already loaded on entry to this screen);
+  // an upload appends to that same pool so Carousel's own picker sees it too, but writes the choice to
+  // Social's own field, not Carousel's — picking one never silently moves the other.
+  pickSocialAsset = (field) => (e) => this.setState({ [field]: e.target.value });
+  toggleSocialWantCast = () => this.setState(s => ({ socialWantCast: !s.socialWantCast }));
+  uploadSocialAsset = (kind, field) => async (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    const fd = new FormData();
+    fd.append('kind', kind); fd.append('files', file);
+    let addR; try { addR = await fetch('/library-add', { method:'POST', body:fd }); } catch (err) { addR = null; }
+    const addD = addR ? await addR.json().catch(() => ({})) : {};
+    if (!addR || !addR.ok || !Array.isArray(addD.added) || !addD.added.length) {
+      this.showToast('Upload failed — ' + (addD.detail || 'the server did not answer') + '.', 'bad'); return;
+    }
+    const item = addD.added[0];
+    const signR = await this.apiCall('/library-sign', { id:item.id, on:true });
+    if (!signR || !signR.ok) { this.showToast('Uploaded, but sign-off failed — sign it off from Memory.', 'warn'); return; }
+    this.setState(s => ({ carousel: { ...s.carousel, assets:[...(s.carousel.assets || []), { ...item, signed_off:true }] },
+      [field]: item.id }));
+    this.showToast(kind.charAt(0).toUpperCase()+kind.slice(1) + ' uploaded and signed off.', 'ok');
+  };
+  // Live-tested finding (round 9 follow-up): a real pack/cast photo is pinned as an IMAGE reference
+  // for /scene-still, but the TEXT-writing calls (`generateSocial`/`adjustPost`, both going through
+  // `/complete`) never knew it existed — nothing told them which SKU the post was actually about, so
+  // the house/plan's own grounding (which foregrounds the flagship line) could and did drift the
+  // caption to a different real product than the one uploaded, especially on Adjust where a person's
+  // one-line note carries less weight than the full brand grounding underneath it. Named here once,
+  // reused by both callers, so a fix doesn't have to be kept in sync in two prompts by hand.
+  socialAssetAnchor(){
+    const s = this.state;
+    const assets = s.carousel.assets || [];
+    const pack = s.socialPackChoice ? assets.find(a => a.id === s.socialPackChoice) : null;
+    const cast = (s.socialWantCast && s.socialCastChoice) ? assets.find(a => a.id === s.socialCastChoice) : null;
+    const bits = [];
+    if (pack) bits.push(`the exact product shown in the pinned reference photo, "${pack.name}" — never rename it or describe a different product or SKU, even one from the same brand`);
+    if (cast) bits.push(`the exact person/cast shown in the pinned reference photo, "${cast.name}"`);
+    return bits.length ? ` This post is pinned to a real photo reference: ${bits.join(' and ')}.` : '';
+  }
 
   // ---------- carousel (round 93, third pass) ----------
   setCarousel = (patch) => this.setState(s => ({ carousel: { ...s.carousel, ...patch } }));
@@ -12908,8 +13297,9 @@ class Component extends DCLogic {
       this.showToast('Write what these slides have to land, or adopt an idea platform above.'); return;
     }
     this.setCarousel({ routesBusy: true, routes: [], chosenRoute: -1, concept: null, slides: [] });
+    // Phase 1 (brand-grounding): never carried the toggle — same gap as POSM/Onground's own routes.
     const body = { objective: c.brief, slide_count_mode: c.slideCountMode, slide_count: c.slideCount,
-      force_typed: !!s.socialForceTyped };
+      force_typed: !!s.socialForceTyped, brand_mode: s.producerBrandMode };
     const execId = (this.currentExec() || {}).id; if (execId) body.execution = execId;
     const r = await this.apiCall('/social-carousel-concept', body);
     this.setCarousel({ routesBusy: false });
@@ -12985,7 +13375,9 @@ class Component extends DCLogic {
       const res = await this.apiJson('/scene-still', {
         scene_no: s.n, ratio, style,
         prompt: (s.visual_note || s.headline || '') + this.carouselNoTextPrompt(),
-        pack_id: c.packChoice || undefined, cast_id: c.wantCast ? (c.castChoice || undefined) : undefined,
+        pack_id: c.packChoice || undefined, use_cast: !!c.wantCast,
+        cast_id: c.wantCast ? (c.castChoice || undefined) : undefined,
+        brand_mode: this.state.producerBrandMode,
       });
       this.setCarousel({ slides: this.state.carousel.slides.map(x =>
         x.n === s.n ? { ...x, imageUrl: (res && res.image_url) || '', busy: false } : x) });
@@ -13010,6 +13402,7 @@ class Component extends DCLogic {
       scene_no: n, ratio, style: this.state.socialStyle || 'real',
       prompt,
       pack_id: c.packChoice || undefined, cast_id: c.wantCast ? (c.castChoice || undefined) : undefined,
+      brand_mode: this.state.producerBrandMode,
     });
     this.setCarousel({ slides: this.state.carousel.slides.map(x =>
       x.n === n ? { ...x, imageUrl: (res && res.image_url) || x.imageUrl, busy: false } : x) });
@@ -13104,9 +13497,14 @@ class Component extends DCLogic {
     // tone table behind it is Heritage's. On another brand that is not a stale label, it is an
     // instruction to write in a different company's voice. So: the active brand's own voice block if
     // it has one, and silence when it does not — the toggle then adds nothing rather than adding a lie.
+    //
+    // Same bug class as `brandPreamble()`, found in the same investigation: this pulled the active
+    // brand's own voice/kit unconditionally on the `guidelines` toggle, with no check on Independent
+    // mode at all — a second, separate leak living right next to the first one. Gated the same way.
+    const isGeneral = this.state.producerBrandMode === 'general';
     const gb = this.activeBrand(), gVoice = String(this.brandVoiceText(gb) || '').trim();
     const gKit = this.brandKitContext();
-    if (i.guidelines && gb && (gb.name || '').trim() && (gVoice || gKit)) {
+    if (!isGeneral && i.guidelines && gb && (gb.name || '').trim() && (gVoice || gKit)) {
       parts.push(`Follow ${gb.name}'s brand guidelines as stated in its profile:${gVoice ? ' ' + gVoice : ''}${gKit ? ' ' + gKit : ''}`);
     }
     const all = [...i.refs.map(r=>r.name+' ('+r.kind+')'), ...i.uploads.map(u=>u.name+' ('+u.kind+')')];
@@ -13186,7 +13584,8 @@ class Component extends DCLogic {
   // binding regardless, same promise the "cannot override" notice already makes on screen.
   loadSocialStandsOn = async (typed) => {
     const s = this.state;
-    const body = { kind:'social', typed: typed || '', force_typed: !!s.socialForceTyped };
+    const body = { kind:'social', typed: typed || '', force_typed: !!s.socialForceTyped,
+      brand_mode: s.producerBrandMode };
     const e = this.currentExec ? (this.currentExec() || {}) : {};
     if (e.id) body.execution = e.id;
     const d = await this.apiCall('/producer-stands-on', body);
@@ -13211,7 +13610,8 @@ class Component extends DCLogic {
   // field or quote box to attach it to. Same shape as `loadSocialStandsOn`/`onToggleSocialForceTyped`.
   loadVideoStandsOn = async (typed) => {
     const s = this.state;
-    const body = { kind:'video', typed: typed || '', force_typed: !!s.videoForceTyped };
+    const body = { kind:'video', typed: typed || '', force_typed: !!s.videoForceTyped,
+      brand_mode: s.producerBrandMode };
     const d = await this.apiCall('/producer-stands-on', body);
     if (d && d.ok && d.data) this.setState({ videoStandsOn: d.data });
   };
@@ -13279,6 +13679,7 @@ class Component extends DCLogic {
       // The audience that matters is the execution's, not the source brief's general one \u2014 two
       // things called "audience" is how a rival-pack line got written for a loose-milk buyer.
       const ctx = (brief && !forceTyped) ? ` Ground every post in this approved brief — proposition: "${brief.proposition}"; tone: "${brief.tone}".` : '';
+      const assetAnchor = this.socialAssetAnchor();
       const kit = this.inputsContext();
       const execId = (this.currentExec() || {}).id;
       // Round 92: at the user's own instruction \u2014 a piece with none of the plan/idea/brief trio behind
@@ -13288,9 +13689,9 @@ class Component extends DCLogic {
       // Three per platform, doing three different jobs. The count is governed by the requested SHAPE,
       // not by the instruction \u2014 an array of three is what makes three come back. One post per
       // platform was never a choice anybody made; it was the shape asking for one.
-      const pre = this.brandPreamble('a senior social media writer');
+      const pre = this.brandPreamble('a senior social media writer', this.state.producerBrandMode === 'general');
       if (!pre) { this.showToast(this.BRAND_PREAMBLE_MISSING); this.setState({ socialGenerating:false }); return; }
-      const prompt = `${pre}\n\nCampaign objective: "${obj}".${ctx}${kit} Write platform-adapted posts for exactly these platforms: ${plats.join(', ')}. Return ONLY a JSON object (no markdown) whose keys are the platform names, each value an ARRAY of exactly 3 post objects {"job": one of "recruit"|"prove"|"occasion", "caption": string, "hashtags": "#a #b #c", "visual": "one short line describing the key visual"}. The three must do different jobs, not say the same thing three ways: "recruit" brings a new person in, "prove" makes the claim checkable, "occasion" belongs to a moment in the year or the day. Facebook: warm, community, a little longer. Instagram: punchy, sensory, minimal emoji. LinkedIn: professional, purpose-led, no emoji.`;      let raw = await this.complete(prompt, { ...(execId ? { execution: execId } : {}), force_typed: forceTyped, skip_mandatories: noTrio });
+      const prompt = `${pre}\n\nCampaign objective: "${obj}".${ctx}${assetAnchor}${kit} Write platform-adapted posts for exactly these platforms: ${plats.join(', ')}. Return ONLY a JSON object (no markdown) whose keys are the platform names, each value an ARRAY of exactly 3 post objects {"job": one of "recruit"|"prove"|"occasion", "caption": string, "hashtags": "#a #b #c", "visual": "one short line describing the key visual"}. The three must do different jobs, not say the same thing three ways: "recruit" brings a new person in, "prove" makes the claim checkable, "occasion" belongs to a moment in the year or the day. Facebook: warm, community, a little longer. Instagram: punchy, sensory, minimal emoji. LinkedIn: professional, purpose-led, no emoji.`;      let raw = await this.complete(prompt, { ...(execId ? { execution: execId } : {}), force_typed: forceTyped, skip_mandatories: noTrio });
       raw = String(raw).trim().replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();
       const data = JSON.parse(raw.slice(raw.indexOf('{'), raw.lastIndexOf('}')+1));
       const posts = [];
@@ -13381,6 +13782,9 @@ class Component extends DCLogic {
       carouselCastCheckBg: c.wantCast ? '#17325E' : '#fff',
       carouselCastCheckBorder: c.wantCast ? '#17325E' : '#C9CEDA',
       carouselCastCheckMark: c.wantCast ? '✓' : '',
+      carouselCastCheckNote: c.wantCast
+        ? 'Every slide in this carousel pins the person below.'
+        : 'Unchecked: no cast reference is used — each slide may show a different, unreferenced person.',
       carouselPackCard: assetCard('pack', 'packChoice', 'Pack shot'),
       carouselLogoCard: assetCard('logo', 'logoChoice', 'Logo'),
       carouselCastCard: assetCard('cast', 'castChoice', 'Model / cast'),
@@ -13426,9 +13830,16 @@ class Component extends DCLogic {
     }
     // The resolver's summary wins, because it is the sentence describing what the model was actually
     // sent. The local composition below is the fallback for a server without the route.
+    //
+    // Live-tested finding: this used to only trust the server's own `summary` when `grounded` was
+    // true, and substituted a hardcoded local sentence whenever it was false \u2014 discarding the
+    // server's real answer even though `/grounding` always composes a real summary either way. That
+    // silently swallowed the honest "This piece is Independent" sentence the route was fixed to send,
+    // putting the generic "no platform adopted" text back in its place. Use the server's summary
+    // whenever it sent one, full stop; `ok` still reflects the real `grounded` flag for the banner's
+    // colour.
     const g = this.grounding();
-    if (g && g.grounded && (g.summary || '').trim()) return { text:g.summary.trim(), ok:true };
-    if (g && g.grounded === false) return { text:'Nothing is grounding these posts yet \u2014 no platform adopted, no plan bound. They will read competent and could be any dairy brand in the category.', ok:false };
+    if (g && (g.summary || '').trim()) return { text:g.summary.trim(), ok:!!g.grounded };
     const rp = this.resolvedPlatform();
     const chRows = (this.layerStatus(this.state.planStatus, 'channels') || {}).rows || [];
     const h = this.state.house;
@@ -13635,7 +14046,7 @@ class Component extends DCLogic {
     if (window.claude && window.claude.complete) {
       try {
         const dur = this.state.prodDuration, rng = this.sceneRange(dur), n = rng.ideal;
-        const pre = this.brandPreamble('a film director writing a shootable script');
+        const pre = this.brandPreamble('a film director writing a shootable script', this.state.producerBrandMode === 'general');
         if (!pre) { this.showToast(this.BRAND_PREAMBLE_MISSING); this.setState({ scriptWriting:false }); return; }
         const packSuper = this.brandName() + (this.brandIdea() ? ' — ' + this.brandIdea() : '');
         const prompt = pre + '\n\nConcept logline: "'+vc.logline+'". Concept beats: '+JSON.stringify(vc.scenes)+'. VO: "'+(vc.vo||'')+'". The finished film is '+dur+' long — write between '+rng.min+' and '+rng.max+' scenes — choose the number the story actually needs, and do not pad to reach it. No film may exceed '+rng.ceiling+' scenes: each shot is rendered separately and the shortest a shot can be is 4 seconds. Give timecodes that run continuously from 0s to '+dur+'. Every scene is rendered as its own shot, so each "visual" must be a self-contained, filmable description of what is on screen (who, where, what happens). The final scene MUST end on the pack-shot super "'+(packSuper || 'this brand\u2019s name, written naturally — no other brand\u2019s')+'". Dialogue in English + Hinglish where natural.\n\nCASTING THE SOUND: when a person is on camera and would naturally speak, give them DIALOGUE in their own words — do not describe them with narration instead. Use the voiceover only to bridge between scenes or land the brand thought at the end. A film where every line is "vo" is wrong unless the concept is genuinely wordless observation; prefer a mix, with the recurring characters from the concept actually speaking to each other. EVERY scene needs an "audio" array — this is what actually gets voiced, so it must contain ONLY words to be spoken aloud. One entry per spoken line, in the order heard. Never put speaker names, stage directions, camera notes, SFX or on-screen text inside "text"; the performance note belongs in "emotion" and the character in "speaker". Use type "vo" for narration (the brand voice) and type "dialogue" for a character speaking on camera. A scene with no speech gets "audio": []. '+this.voBudgetNote(dur, n)+'\n\nReturn ONLY JSON: {"rows":[{"no":1,"tc":"0–5s","visual":"...","camera":"shot type & movement","dialogue":"human-readable script cell, e.g. Boy (half-asleep): Ammamma…","supr":"on-screen text","audio":[{"type":"dialogue","speaker":"Boy","age":"child","emotion":"half-asleep, sleepy","language":"en","text":"Ammamma... sky is still sleeping, no?"},{"type":"vo","emotion":"warm, unhurried","language":"en","text":"Pure doodh ki shakti."}]}]}';
@@ -13930,6 +14341,7 @@ class Component extends DCLogic {
     let seed = this.state.videoSeed;
     if (!seed) { seed = Math.floor(Math.random()*900000) + 100000; this.setState({ videoSeed: seed }); }
     body.seed = seed;
+    body.brand_mode = this.state.producerBrandMode;
     const res = await this.apiJson('/scene-still', body);
     // Stamp the frame with the scene it was rendered from, so a later dialogue or timing change can
     // be seen for what it is rather than silently leaving a mismatched still on the board.
@@ -14011,7 +14423,7 @@ class Component extends DCLogic {
     let text = null;
     if (window.claude && window.claude.complete) {
       try {
-        const pre = this.brandPreamble('the ' + dept.label + ' department head');
+        const pre = this.brandPreamble('the ' + dept.label + ' department head', this.state.producerBrandMode === 'general');
         if (!pre) { this.showToast(this.BRAND_PREAMBLE_MISSING);
           this.setState(st => ({ shoot:{ ...st.shoot, [id]:{ status:'idle', text:'' } } })); return; }
         const prompt = pre + '\n\nBase your plan strictly on this APPROVED SCRIPT: '+JSON.stringify(this.state.fullScript||[])+'. Give a tight, practical '+dept.label+' plan (3-4 sentences).';
@@ -14045,7 +14457,7 @@ class Component extends DCLogic {
     if (this.state.videoGenerating) return;
     // The write routes all ask for a brand up front; this one only found out sixteen lines later, via
     // the preamble check, and by then it was already spinning.
-    if (!this.needBrand()) return;
+    if (!this.needBrand(this.state.producerBrandMode === 'general')) return;
     const isRefine = this.state.scriptVersions.length > 0 && this.state.refinePrompt.trim();
     // Round 92: the real free-text field + override, matching Social/POSM. Refuses the same way
     // generateSocial does when the platform is set aside with nothing typed to replace it.
@@ -14071,7 +14483,7 @@ class Component extends DCLogic {
       const kit = this.inputsContext();
       const refine = isRefine ? ` Here is the current script to revise: ${JSON.stringify({ logline:prev.logline, scenes:prev.scenes, vo:prev.vo })}. Apply this direction: "${this.state.refinePrompt.trim()}". Keep what works, change only what the direction asks.` : '';
       const dur = this.state.prodDuration, words = this.voWords(dur);
-      const pre = this.brandPreamble('a film director at an ad agency');
+      const pre = this.brandPreamble('a film director at an ad agency', this.state.producerBrandMode === 'general');
       if (!pre) { this.showToast(this.BRAND_PREAMBLE_MISSING); this.setState({ videoGenerating:false, videoRefusal:'' }); return; }
       // Round 92: same "no plan/idea/brief trio" mandatories override as Social - see that function's
       // own comment. "Plan" leg is now a real bound execution (`this.videoExec()`), not just `s.plan`
@@ -14506,7 +14918,7 @@ class Component extends DCLogic {
     try {
       if (!(window.claude && window.claude.complete)) throw new Error('no-api');
       const ctx = ` Ground everything in this brief \u2014 proposition: "${brief.proposition}"; audience: "${brief.audience}"; tone: "${brief.tone}".`;
-      const pre = this.brandPreamble('the lead on an integrated campaign');
+      const pre = this.brandPreamble('the lead on an integrated campaign', this.state.producerBrandMode === 'general');
       if (!pre) { this.showToast(this.BRAND_PREAMBLE_MISSING); this.setState({ campaignGenerating:false }); return; }
       const prompt = `${pre}\n\nYou are leading this brand’s integrated campaign. Objective: "${obj}".${ctx} Return ONLY JSON (no markdown): {"facebook":{"caption":...,"hashtags":...,"visual":...},"instagram":{...},"linkedin":{...},"video":{"logline":...,"duration":...,"vo":...,"scenes":[{"t":"0\u20135s","title":...,"desc":...} x4]}}. Posts adapted per platform; LinkedIn no emoji.`;
       let raw = await this.complete(prompt);
@@ -15118,7 +15530,7 @@ class Component extends DCLogic {
       if (!(window.claude && window.claude.complete)) throw new Error('no-api');
       const kpiTxt = d.kpis.map(k => `${k.label}: ${k.value} vs target ${k.target} (${k.sub})`).join('; ');
       const cohTxt = this.COHORTS.map(c => `${c.name}: quality ${c.quality}, reach ${c.reach}%, conv ${c.conv}`).join('; ');
-      const pre = this.brandPreamble('a marketing analytics lead');
+      const pre = this.brandPreamble('a marketing analytics lead', this.state.producerBrandMode === 'general');
       if (!pre) { this.showToast(this.BRAND_PREAMBLE_MISSING); this.setState({ insightsLoading:false }); return; }
       const prompt = `${pre}\n\nCampaign "${d.name}", objective: "${d.objective}". KPIs vs objectives: ${kpiTxt}. Audience cohorts: ${cohTxt}. Channels: Meta, Alphabet, Q-commerce, TV/Print. Give 4 concise, specific, action-oriented insights. Return ONLY a JSON array, each item {"kind":"Win|Opportunity|Watch-out|Linkage","text":"1-2 sentences"}.`;
       let raw = await this.complete(prompt);
@@ -15591,12 +16003,20 @@ class Component extends DCLogic {
     // A brand with a kit but no voice line still has guidelines to attach, which the old test missed.
     const glKit = this.brandKit();
     const glKitText = this.brandKitContext();
-    const glHasGuides = !!(glBrand && (glBrand.name || '').trim()
+    // Live-tested finding, same investigation as `inputsContext()`'s own fix above: this chip stayed
+    // green and named the active brand's guidelines regardless of Independent mode, because it never
+    // checked `producerBrandMode` at all — exactly the "looks like it worked" failure this file's own
+    // comment already warns about for the no-brand case, just for a second case nobody had named yet.
+    const glIndependent = s.producerBrandMode === 'general';
+    const glHasGuides = !glIndependent && !!(glBrand && (glBrand.name || '').trim()
       && (String(this.brandVoiceText(glBrand) || '').trim() || glKitText));
-    const glChipLabel = glHasGuides ? glBrand.name + ' guidelines' : 'Brand guidelines — none on file';
+    const glChipLabel = glIndependent ? 'Brand guidelines — off while Independent'
+      : glHasGuides ? glBrand.name + ' guidelines' : 'Brand guidelines — none on file';
     // Was a `title` attribute. A reason readable only by hovering is readable by nobody mid-task, and
     // this one decides whether switching the chip on does anything at all — so it is on the screen.
-    const glChipTitle = glHasGuides
+    const glChipTitle = glIndependent
+      ? 'This piece is Independent, so no brand’s guidelines are attached, even if this were switched on. Switch to Grounded to use them.'
+      : glHasGuides
       ? glBrand.name + '’s own profile goes into the prompt — tone, palette, faces and what to avoid, as the brand stated them.'
       : 'No brand profile is active, so there are no guidelines to attach. Pick a brand from the chip at the top; switching this on would add nothing.';
     // ---- video pipeline ----
@@ -15797,6 +16217,12 @@ class Component extends DCLogic {
     // ---- IMC brief ----
     const im = s.imc, dr = im.draft;
     const ns = (dr && dr.needscope) || {}, cc = (dr && dr.cb_ca_db_da) || {}, un = (dr && dr.smp_unlocks) || {};
+    // Live-tested finding: Independent mode correctly stops the skill INVENTING a brand, but was never
+    // meant to — and structurally can't reasonably — override a brand name the person typed into their
+    // own prompt. A first pass tried to detect a real brand name inside the prompt and only warn then;
+    // the user asked for something simpler instead — one standing reminder, shown the whole time
+    // Independent is on, not conditional on what the prompt happens to say.
+    const imcIndependent = s.producerBrandMode === 'general';
     const imcSlots = this.IMC_SLOTS.map(sl => {
       const parsed = sl.id==='market' ? im.marketData : (sl.id==='household' ? im.householdData : null);
       return { ...sl, onFiles:this.onImcFiles(sl.id),
@@ -16125,6 +16551,19 @@ class Component extends DCLogic {
         : '',
       isHome: s.screen==='home', isBriefs: s.screen==='briefs', isEditor,
       isBuilder: s.screen==='builder', isImc: s.screen==='imc',
+      // The ONE studio-wide grounding toggle, shown once in the header next to the brand chip —
+      // Brief, Strategy/House, Plan and every Producer all read this single flag. Default Grounded
+      // (this brand's profile + its own ground truth); opt-out to Independent (deliberately no brand
+      // attached, not the same as nobody having picked one). See BRAND_GROUNDING_MODES_PLAN.md.
+      producerModeLabel: s.producerBrandMode === 'general'
+        ? 'Independent work — no brand attached'
+        : ('Grounded in ' + (this.brandName() || 'no brand yet')),
+      producerModeGroundedBg: s.producerBrandMode !== 'general' ? '#17325E' : '#fff',
+      producerModeGroundedFg: s.producerBrandMode !== 'general' ? '#F7F5F1' : '#6B7280',
+      producerModeGeneralBg: s.producerBrandMode === 'general' ? '#17325E' : '#fff',
+      producerModeGeneralFg: s.producerBrandMode === 'general' ? '#F7F5F1' : '#6B7280',
+      setProducerGrounded: this.setProducerBrandMode('grounded'),
+      setProducerGeneral: this.setProducerBrandMode('general'),
       isHistory: s.screen==='history',
       isVideo: s.screen==='video' && (s.vTab||'film')==='film', isCampaigns: s.screen==='campaigns',
       isShots: s.screen==='video' && s.vTab==='shots',
@@ -16234,6 +16673,21 @@ class Component extends DCLogic {
       scheduleAll:this.scheduleAll, scheduled: s.scheduled, weekDays,
       // social — visual style + rework
       socialStyles, socialStyleName: this.styleName(),
+      // Live-tested gap: single posts had no pack/cast mechanism at all, unlike POSM/Onground/
+      // Carousel — an Independent post had nothing brand-specific to draw on even with a real,
+      // usable asset already signed off. Same pick-or-upload shape as POSM's own cards; options come
+      // from `carousel.assets` (one pool, already loaded on entry to this screen), picks are Social's
+      // own fields so choosing one never silently moves Carousel's.
+      socialPackCard: { value: s.socialPackChoice, options: this.carouselAssetOptions('pack'),
+        pick: this.pickSocialAsset('socialPackChoice'), upload: this.uploadSocialAsset('pack', 'socialPackChoice') },
+      socialWantCast: !!s.socialWantCast, toggleSocialWantCast: this.toggleSocialWantCast,
+      socialCastCheckBg: s.socialWantCast ? '#17325E' : '#fff', socialCastCheckBorder: s.socialWantCast ? '#17325E' : '#C9CEDA',
+      socialCastCheckMark: s.socialWantCast ? '✓' : '',
+      socialCastCheckNote: s.socialWantCast
+        ? 'Every post in this batch pins the person below.'
+        : 'Unchecked: no cast reference is used — each post may show a different, unreferenced person.',
+      socialCastCard: { value: s.socialCastChoice, options: this.carouselAssetOptions('cast'),
+        pick: this.pickSocialAsset('socialCastChoice'), upload: this.uploadSocialAsset('cast', 'socialCastChoice') },
       regenerateVisuals:this.regenerateVisuals,
       regenVisualsLabel: s.visualsBusy ? 'Regenerating visuals…' : '↻ Regenerate visuals',
       socialRefine: s.socialRefine, onSocialRefine:this.onSocialRefine,
@@ -16264,8 +16718,16 @@ class Component extends DCLogic {
       kitTone: glKit.tone, kitHasTone: !!glKit.tone,
       kitDos: glKit.dos.map(t => ({ text:t })), kitHasDos: glKit.dos.length > 0,
       kitDonts: glKit.donts.map(t => ({ text:t })), kitHasDonts: glKit.donts.length > 0,
-      kitAnything: glKit.missing.length < 5,
-      kitNothing: glKit.missing.length === 5,
+      // Live-tested finding, Round 11/14: this block displayed the active brand's palette/tone/fonts/
+      // dos/don'ts regardless of the toggle — cosmetic-only (never read by any prompt-building
+      // function), but sitting right next to the now-honest "Brand guidelines — off while Independent"
+      // chip, it looked like a contradiction: the chip says nothing is attached, the panel right below
+      // it still shows a full kit. Gated on `glIndependent`, with its own explanatory state
+      // (`kitIndependent`) rather than just going blank, so the display matches what the chip already
+      // (correctly) says instead of leaving an unexplained gap.
+      kitAnything: !glIndependent && glKit.missing.length < 5,
+      kitNothing: !glIndependent && glKit.missing.length === 5,
+      kitIndependent: glIndependent,
       kitMissingNote: glKit.missing.length
         ? 'Not on file yet: ' + glKit.missing.join(', ') + '. Those clauses are left out of the prompt rather than filled in with something plausible — add them in the brand profile.'
         : '',
@@ -16642,6 +17104,7 @@ class Component extends DCLogic {
       // ---- IMC brief ----
       briefFormats, imcFormat, otherFormats, openImc:this.openBuilder('imc'),
       imcPrompt: im.prompt, imcBrand: im.brand, imcCategory: im.category, imcPreparedFor: im.preparedFor,
+      imcIndependent,
       imcSourcesNote: im.sourcesNote, onImcText:this.onImcText,
       imcSlots, draftBrief:this.draftBrief, startManual:this.startManual,
       imcDrafting: im.status==='drafting', imcMessage: im.message, hasImcMessage: !!im.message, imcTone,
@@ -16672,6 +17135,9 @@ class Component extends DCLogic {
       generateImcDocx:this.generateImcDocx, imcGenerating: im.genStatus==='generating',
       imcGenLabel: im.genStatus==='generating' ? 'Building your Word brief…' : 'Generate IMC brief (.docx)',
       imcGenMessage: im.genMessage, hasImcGenMessage: !!im.genMessage,
+      generateSynthesisDeck:this.generateSynthesisDeck, synthGenerating: im.synthStatus==='generating',
+      synthGenLabel: im.synthStatus==='generating' ? 'Building synthesis deck…' : '⊞ Research synthesis (.pptx)',
+      synthGenMessage: im.synthMessage, hasSynthGenMessage: !!im.synthMessage,
       toggleImcJson:this.toggleImcJson, downloadImcJson:this.downloadImcJson,
       imcShowJson: im.showJson, imcJsonLabel: im.showJson ? 'Hide JSON' : 'Preview JSON',
       imcJson: dr ? JSON.stringify(dr, null, 2) : '',
@@ -16891,9 +17357,10 @@ class Component extends DCLogic {
 
   createPlan = async () => {
     const np = this.strat().np;
-    if (!np.brand.trim()) { this.showToast('Give the plan a brand first.'); return; }
+    const isGeneral = this.state.producerBrandMode === 'general';
+    if (!np.brand.trim() && !isGeneral) { this.showToast('Give the plan a brand first.'); return; }
     this.setStrat({ busy:'plan' });
-    const base = { brand:np.brand, house:np.house || null };
+    const base = { brand: isGeneral ? '' : np.brand, house:np.house || null, brand_mode: this.state.producerBrandMode };
     let r = await this.apiCall('/plan-new', np.brief ? { ...base, brief:np.brief } : base);
     // Older servers do not take a brief on this route. Losing the plan over it would be worse than
     // starting without one, so it retries clean and the chip on screen still says where it came from.
@@ -16911,7 +17378,11 @@ class Component extends DCLogic {
   };
   enterPlan = (plan, status) => {
     this.setState({ screen:'plan', plan, planStatus:status, pLayer:'objectives', pNote:'', prompt:null,
-                    pGeoRows:null });
+                    pGeoRows:null,
+                    // The opened plan's OWN stored mode syncs the one studio-wide toggle \u2014 same
+                    // reasoning as enterHouse's own sync.
+                    producerBrandMode: (plan && plan.brand_mode === 'general') ? 'general' : 'grounded' });
+    this.persistBrandMode((plan && plan.brand_mode === 'general') ? 'general' : 'grounded');
     // The priority-geography panel needs the state/town-class vocabulary from `/geo-status`, which
     // Social's own picker already loads on its own screen — `loadGeo()` skips the fetch entirely if
     // that already happened this session (see its own `if (this.geo().status) return;` guard).
@@ -16992,20 +17463,115 @@ class Component extends DCLogic {
 
   createHouse = async () => {
     const nh = this.strat().nh;
-    if (!nh.brand.trim()) { this.showToast('Give the house a brand first.'); return; }
+    const isGeneral = this.state.producerBrandMode === 'general';
+    if (!nh.brand.trim() && !isGeneral) { this.showToast('Give the house a brand first.'); return; }
     this.setStrat({ busy:'house' });
-    const r = await this.apiCall('/house-new', { brand:nh.brand, brief:nh.brief });
+    const r = await this.apiCall('/house-new', { brand: isGeneral ? '' : nh.brand, brief:nh.brief,
+      brand_mode: this.state.producerBrandMode });
     this.setStrat({ busy:'' });
     if (!r.ok || !r.data) { this.showToast('Could not start the house \u2014 is the server running?'); return; }
     this.setStrat({ nh:{ brand:'', brief:'' }, nhFrom:'' });
     this.enterHouse(r.data.house, r.data.status, r.data.claim_state);
+  };
+  // The ONE studio-wide toggle's setter. Started as four separate ones (brief/house/plan/producer) \u2014
+  // collapsed after live testing showed two pills on the same screen disagreeing reads as broken.
+  // Folds in every side-effect the four separate setters used to handle on their own:
+  //  - the IMC screen's Brand/Category fields are literal text handed straight to the drafting skill,
+  //    a real leak separate from profile-based grounding \u2014 cleared on the way INTO General so nothing
+  //    stale gets sent on the next draft, never touching im.prompt (the person's own request). Filled
+  //    from the active brand's own name/category on the way BACK to Grounded (only if still blank \u2014
+  //    never overwrites something the person typed on purpose), so Grounded actually means the skill
+  //    is told the brand's real facts, not "whatever happens to still be in the box."
+  //  - an already-drafted IMC brief (`im.draft`) is cleared on EVERY mode change, either direction \u2014
+  //    live testing caught this exactly: the Brand/Category boxes cleared correctly but the button
+  //    still read "\u21bb Redraft with AI" and every downstream tab (NeedScope, CB/CA, SMP\u2026) still showed
+  //    the OLD mode's content, because nothing had told the screen the draft itself was now stale.
+  //    Nothing is lost by this \u2014 `/brand-brief-draft` already saves every draft to the brief library
+  //    the moment it's generated, so this only clears the in-progress VIEW, not the record.
+  //  - an OPENED house or plan gets its own stored mode corrected server-side too, so reopening it
+  //    later (or another tab reading it) shows the same answer this toggle just gave \u2014 the create
+  //    forms' own local `nh`/`np` state has nothing to correct yet, since neither exists server-side
+  //    until /house-new or /plan-new actually sends this same flag.
+  //  - Round 5: live testing on the IMC screen turned out to be the studio's *default* shape, not a
+  //    one-off \u2014 every generation surface keeps its own "already drafted" state and its own Redraft/
+  //    Regenerate label driven purely by whether that state is non-empty, with nothing telling it the
+  //    mode underneath just changed. Cleared here the same way, screen by screen: the AI OUTPUT goes,
+  //    whatever the person actually typed (a prompt, a note, an asset pick) stays. A first pass reset
+  //    `posm`/`og`/`idea` to `null` outright, on the theory that their own accessors already fall back
+  //    to an empty shape so this was the one true "start fresh" path \u2014 live-tested wrong: `og.idea`,
+  //    the person's own typed activation sentence, lives in that same namespace, and a blind reset
+  //    deleted it exactly like the bug this round is fixing. Each is now cleared field-by-field instead,
+  //    same discipline as `pr` below. Not yet covered: `campaign` (the idea platform's own ladder/roles
+  //    hub) and House/Plan's per-layer suggestion rows \u2014 both are server-tracked documents with their
+  //    own id and lifecycle, same shape as House/Plan themselves, so they need that same open-time-
+  //    sync-plus-backend-route treatment rather than a client reset. Flagged, not silently skipped.
+  setProducerBrandMode = (mode) => async () => {
+    const m = mode === 'general' ? 'general' : 'grounded';
+    const a = this.activeBrand();
+    const curIdea = this.idea(), curPosm = this.posm(), curOg = this.og();
+    this.setState(s => ({ producerBrandMode: m,
+      imc: { ...(m === 'general' ? { ...s.imc, brand:'', category:'' }
+        : (a && !s.imc.brand && !s.imc.category) ? { ...s.imc, brand: a.name || '', category: a.category || '' }
+        : s.imc), draft:null, status:'idle', message:'' },
+      // guided Brief Builder (Media/Digital/Packaging/PD/PR-format) \u2014 same shape a brand-new brief
+      // of this format starts in, not a blank object that would disagree with formatDefaults elsewhere.
+      brief: this.formatDefaults(s.format), briefRefusal:'', briefRefusalFrom:'',
+      // Idea Platform \u2014 live-testing this exact case caught a second version of the og.idea mistake:
+      // `adoptIdea()` posts to `/idea-platform` and gets back a real server id the moment a line is
+      // adopted, which makes an adopted platform a saved document \u2014 the same tier as House/Plan/
+      // Campaign, not an in-progress draft \u2014 so it gets their treatment (left alone) rather than
+      // im.draft's (cleared). Only an UNADOPTED platform (still being drafted/reviewed, nothing saved
+      // yet) is cleared: `line`/`name`/`options` and everything derived from them are the drafted
+      // output; `steer` (the person's own typed steering note) and `fromBrief` (a picked reference)
+      // are never touched either way.
+      idea: curIdea.adopted ? curIdea : { ...curIdea, line:'', name:'', options:[], draftedLine:'',
+        draftedName:'', builtOn:'', pickedOption:'', judged:{}, judgeDisagreements:[], routes:{}, tests:{} },
+      // Social
+      posts: [], socialGenerating:false, socialAdjustNotes:{}, socialAdjustingId:null,
+      carousel: { ...s.carousel, routesBusy:false, routes:[], chosenRoute:-1, concept:null, slides:[], slideNotes:{}, producing:false },
+      // Video \u2014 concept, script, every department's drafted card, key frames and the cast reference
+      // image are each their own "already generated" state with no idea the mode just changed.
+      videoConcept:null, conceptRoutes:[], conceptRoute:0, videoRefusal:'',
+      fullScript:null, scriptStatus:'none', scriptPhase:'concept', shoot:{}, sceneFrames:{}, framesBatch:false,
+      castRefUrl:null, castGateHit:false, producedUrl:null,
+      // POSM \u2014 the rendered/drafted pieces (routes, sketches, isolated elements, recompositions) and
+      // the brand-fetched mandatories checklist; every typed override (subject, line, location brief,
+      // asset picks, checklist ticks) stays exactly as the person left it.
+      posm: { ...curPosm, options:[], chosen:'', sizes:[], adaptations:[], images:[], formats:null,
+        layouts:null, castCandidates:[], posmElements:{}, posmShapes:{}, scamps:[], declaredMandatories:null },
+      // Onground \u2014 the generated ideas and their rendered elements; `idea` (the person's own typed
+      // activation sentence), `venue`/`venueLabel` are left alone \u2014 the exact field a blind reset here
+      // deleted the first time round.
+      og: { ...curOg, elements:{}, ideas:[], chosenIdea:null, dynElements:null, kit:null },
+      ogShots: {}, ogAdjustNotes:{}, ogAdjustingId:null,
+      // PR \u2014 the release sub-tool only (its drafted release, the carried/mandatories checks against
+      // it); the desk's other rooms (media map, crisis, coverage) are records, not disposable AI output.
+      pr: s.pr ? { ...s.pr, relStatus:null, release:null, rel:{}, relRefusal:'', carries:null, mands:null } : s.pr,
+      // Strategy/House's ladder-path suggestions \u2014 ephemeral, never committed to the house itself.
+      ladderDrafts: [], ladderDraftNote: '',
+    }));
+    this.persistBrandMode(m);
+    const h = this.state.house;
+    if (h && h.id) {
+      const r = await this.apiCall('/house-brand-mode', { id: h.id, mode: m });
+      if (r.ok && r.data && r.data.house) this.setState({ house: r.data.house, houseStatus: r.data.status });
+    }
+    const p = this.state.plan;
+    if (p && p.id) {
+      const r = await this.apiCall('/plan-brand-mode', { id: p.id, mode: m });
+      if (r.ok && r.data && r.data.plan) this.setState({ plan: r.data.plan, planStatus: r.data.status });
+    }
   };
 
   enterHouse = (house, status, claimState) => {
     const first = this.firstOpenLayer(status, this.H_LAYERS);
     this.setState({ screen:'house', house, houseStatus:status, hLayer:first,
       houseClaimState: claimState !== undefined ? claimState : null,
+      // The opened house's OWN stored mode syncs the one studio-wide toggle — not whatever was left
+      // over from whatever you were doing before, same reasoning as switchBrand's own bf reset.
+      producerBrandMode: (house && house.brand_mode === 'general') ? 'general' : 'grounded',
       hNote:'', hOwn:'', hOwnNote:'', hOwnTag:'occasion', prompt:null });
+    this.persistBrandMode((house && house.brand_mode === 'general') ? 'general' : 'grounded');
     window.scrollTo(0, 0);
   };
 
@@ -17901,7 +18467,12 @@ class Component extends DCLogic {
     if (i.drafting) return;
     if (!core && !b) { this.showToast('Give it something to stand on first \u2014 a house, a brief, or both.'); return; }
     this.setState({ idea: { ...i, drafting:true, draftingOn: buildOn ? (buildOn.name || '') : '' } });
+    // Phase 2 (BRAND_GROUNDING_MODES_PLAN.md): this route never carried brand_mode at all, so a
+    // General platform still stood on the bound house's real core/pillars/RTBs server-side, with
+    // nothing here to say otherwise. The server now refuses to load the house at all when this is
+    // "general" rather than trusting the client to also blank `core` correctly.
     const body = { house:(this.state.house||{}).id || null, core, n:3,
+      brand_mode: this.state.producerBrandMode || 'grounded',
       brief: b ? { title:b.title, proposition:b.proposition, audience:b.audience, objective:b.objective } : null };
     // An id for a platform the server already holds; the whole object for a draft being held here and
     // not adopted yet, which has no id it would recognise.
@@ -18294,6 +18865,13 @@ class Component extends DCLogic {
     const h = this.state.house; if (h && h.id) q.push('house=' + encodeURIComponent(h.id));
     const p = this.state.plan; if (p && p.id) q.push('plan=' + encodeURIComponent(p.id));
     const e = this.currentExec(); if (e && e.id) q.push('execution=' + encodeURIComponent(e.id));
+    // Live-tested finding: brand_mode has to be part of both the request AND the cache key — without
+    // it, flipping Independent<->Grounded with the same house/plan/execution bound left the OLD mode's
+    // resolved summary on screen (`_groundingKey` unchanged, so the fetch that would have corrected it
+    // never fired), which is exactly the "looks grounded when it isn't" failure this route exists to
+    // prevent, just re-introduced by the toggle instead of by the resolver.
+    const mode = this.state.producerBrandMode || 'grounded';
+    q.push('brand_mode=' + encodeURIComponent(mode));
     const key = q.join('&');
     if (this._groundingKey === key) return;
     this._groundingKey = key;
@@ -18702,7 +19280,10 @@ class Component extends DCLogic {
     // the platform's POSM expression, then its line, then the house's POSM message, then the core, and
     // only last whatever was typed here. Asking for the proposition a second time is how two copies of
     // it end up disagreeing.
-    const body = { n:3 };
+    // Phase 1 (brand-grounding): this call never carried the toggle at all — confirmed live, a real
+    // "Develop key visual" call came back standing on a bound house's real core message while
+    // Independent was selected. Every other producer's generate call already sends this.
+    const body = { n:3, brand_mode: this.state.producerBrandMode };
     if ((p.brief || '').trim()) body.brief = p.brief.trim();
     const h = this.state.house; if (h && h.id) body.house = h.id;
     const plat = this.ideaUsable() ? this.idea() : null;
@@ -19535,7 +20116,8 @@ class Component extends DCLogic {
   generateOgIdeas = async () => {
     if (this.state.ogGenBusy) return;
     this.setState({ ogGenBusy:true });
-    const body = { n:3 };
+    // Phase 1 (brand-grounding): never carried the toggle — same gap as POSM's developKv, same fix.
+    const body = { n:3, brand_mode: this.state.producerBrandMode };
     const h = this.state.house; if (h && h.id) body.house = h.id;
     const alb = this.state.linkedBrief;
     if (alb) body.brief = { title:alb.title, proposition:alb.proposition, audience:alb.audience, objective:alb.objective, tone:alb.tone };
@@ -19567,7 +20149,7 @@ class Component extends DCLogic {
     const idea = (this.og().ideas || []).find(i => i.id === id);
     if (!idea) return;
     this.setState({ ogAdjustingId: id });
-    const r = await this.apiCall('/activation-idea-adjust', { idea, note });
+    const r = await this.apiCall('/activation-idea-adjust', { idea, note, brand_mode: this.state.producerBrandMode });
     const d = (r && r.data) || {};
     if (!r.ok || !d.idea) {
       this.setState({ ogAdjustingId:null });
@@ -19610,7 +20192,7 @@ class Component extends DCLogic {
   loadOgStandsOn = async () => {
     if (this._ogStandsAsked) return;
     this._ogStandsAsked = true;
-    const body = { idea:'' };
+    const body = { idea:'', brand_mode: this.state.producerBrandMode };
     const h = this.state.house; if (h && h.id) body.house = h.id;
     const plat = this.ideaUsable() ? this.idea() : null;
     if (plat) body.platform = { name:plat.name, line:plat.line };
@@ -19627,7 +20209,7 @@ class Component extends DCLogic {
       this.loadOgStandsOn();
       return;
     }
-    const body = { idea:o.idea };
+    const body = { idea:o.idea, brand_mode: this.state.producerBrandMode };
     const alb = this.state.linkedBrief;
     if (alb) body.brief = { title:alb.title, proposition:alb.proposition, audience:alb.audience, objective:alb.objective, tone:alb.tone };
     const h = this.state.house; if (h && h.id) body.house = h.id;
@@ -19704,7 +20286,7 @@ class Component extends DCLogic {
     // "brief it first" reappear after an idea had already been picked.
     this.setState({ ogDevelopBusy: k });
     const r = await this.apiCall('/activation-element', { element:k, brief:o.elements[k],
-      idea: o.chosenIdea || o.idea });
+      idea: o.chosenIdea || o.idea, brand_mode: this.state.producerBrandMode });
     this.setState({ ogDevelopBusy: '' });
     const d = (r && r.data) || {};
     // Real bug found live: this called the route and then did nothing with what it returned \u2014
@@ -19901,10 +20483,15 @@ class Component extends DCLogic {
       // Guaranteed blank — never falls back to whatever is currently active.
       d = await this.apiGet('/brand-fields?new=true');
     } else {
-      const st = this.state.studio || {};
       const h = this.state.house, b = this.state.linkedBrief;
       const q = [];
-      if (st.clientName) q.push('brand=' + encodeURIComponent(st.clientName));
+      // The real active brand, never the Studio Settings name override — that field is a session
+      // label, not an identifier (its own helper text says so), and using it here is what let a
+      // stale typed-in name silently reopen the WRONG brand's whole profile after a real switch.
+      // Omitting `brand=` when there is no active brand lets the server's own resolve() answer
+      // exactly like it does everywhere else.
+      const ab = this.activeBrand();
+      if (ab && ab.name) q.push('brand=' + encodeURIComponent(ab.name));
       if (h && h.id) q.push('house=' + encodeURIComponent(h.id));
       if (b && b.id) q.push('brief=' + encodeURIComponent(b.id));
       d = await this.apiGet('/brand-fields' + (q.length ? '?' + q.join('&') : ''));
@@ -20006,6 +20593,15 @@ class Component extends DCLogic {
       // catch up the header chip and Studio Settings, which read from `brands`, not from `bf`.
       this.setState({ screen:'home', bfIsNew:false });
       window.scrollTo(0, 0);
+      // Same reason as switchBrand: a leftover session name-override would keep outranking this brand's
+      // own name everywhere brandName() is read, so the new brand you just made active still wouldn't
+      // show up as itself.
+      this.setStudio({ clientName:'' });
+      // Same gap as switchBrand: refreshes `bfReady` for the brand that's active now, not whatever
+      // was active when this session first loaded — otherwise the Home readiness pill (and a
+      // reopened brand-profile form, until its own fetch lands) would show the OLD brand's numbers
+      // under the new brand's name.
+      this.loadStudioServer();
       this.loadBrands();
       this.loadBriefs();
       this.syncBrandLogo();
@@ -21039,7 +21635,10 @@ class Component extends DCLogic {
         ? 'Both. The brief says who and where; the platform says what the work does about it.'
         : (inputs.brief ? 'The brief only. Nothing carries an idea across the producers.'
           : (inputs.idea ? 'The platform only. Untargeted \u2014 nothing points at a row in the plan.'
-            : 'Nothing selected. Pick at least one, or the producer is working from memory.')),
+            // "Memory" collided with the app's own Memory tab (signed-off assets/ground truth) — this
+            // is a different thing entirely: the underlying model's own general training knowledge,
+            // not anything the studio has on file. Named plainly instead of reusing an already-taken word.
+            : 'Nothing selected. Pick at least one, or the producer works from pre-trained knowledge alone, not the plan or platform.')),
       xInputLineFg: inputs.brief && inputs.idea ? '#6B7280' : '#B07A12',
       ideaLineHere: ip.line || '', ideaNameHere: ip.name || 'Unnamed platform',
       ideaUsableNow: this.ideaUsable(), toggleIdeaInput: this.toggleInput('idea'),
@@ -22045,6 +22644,9 @@ class Component extends DCLogic {
       const nextName = (this.H_LAYERS.find(([k]) => k === h.next_layer) || [])[1];
       const nb = h.blocking || 0;
       return { brand: h.label || h.brand || 'Untitled', open: this.openHouse(h.id),
+        // Round 5: the list had no way to show which houses were written Independent versus which
+        // just have no brand recorded — both read identically. h.brand_mode now rides on the card.
+        isIndependent: h.brand_mode === 'general',
         progress: done + ' of ' + total + ' layers decided', dots: dots(done, total),
         stale: !!h.stale, blocking: nb > 0, blockingLabel: nb + (nb === 1 ? ' blocking' : ' blocking'),
         next: done >= total ? 'All decided.' : (nextName ? 'Next: ' + nextName : 'Not started.'),
@@ -22059,6 +22661,7 @@ class Component extends DCLogic {
       const nb = p.blocking || 0;
       const bound = !!p.house;
       return { brand: p.label || p.brand || 'Untitled', open: this.openPlan ? this.openPlan(p.id) : this.goStrategy,
+        isIndependent: p.brand_mode === 'general',
         progress: done + ' of 7 layers written', dots: dots(done, 7),
         stale: !!p.stale, blocking: nb > 0, blockingLabel: nb + ' blocking',
         houseNote: bound ? ('Written against ' + (p.house_brand || 'a house')) : 'No house bound — the proof gate cannot run',
@@ -23341,7 +23944,7 @@ class Component extends DCLogic {
   }
   prCreate = async () => {
     const p = this.pr();
-    if (!this.needBrand()) return;
+    if (!this.needBrand(this.state.producerBrandMode === 'general')) return;
     const body = { brand: this.brandName(), mode: p.mode };
     const h = this.state.house;
     if (h && h.id) body.house = h.id;
@@ -23661,8 +24264,20 @@ class Component extends DCLogic {
   // Never overwrites a field a person already typed, never invents a quote's attribution, and never
   // falls back to placeholder release copy if the model call fails — a fabricated fallback here is
   // the exact failure mode this feature exists to avoid, not a graceful default.
+  // Phase 3 (BRAND_GROUNDING_MODES_PLAN.md): this built its prompt from `p.sheet.brand`/`brandRef()`
+  // and `source_material` (the bound house's real core message, this sheet's own declared messages,
+  // the linked plan's real objectives) with no brand_mode check anywhere — same class of client-side
+  // leak as `brandPreamble()`/`ideaDraft()`. Unlike Social/Video, this screen has no typed-brief box
+  // to fall back on — there is nothing else to draft a press release FROM — so the honest fix is the
+  // same one `draft_lines()`/`brandPreamble()` already use when there is truly nothing to stand on:
+  // refuse cleanly rather than draft from a brand the person didn't attach, or a house/plan whose real
+  // wording isn't this piece's to state.
   prDraftRelease = async () => {
     const p = this.pr(); if (p.busy) return;
+    if (this.state.producerBrandMode === 'general') {
+      this.showToast('This piece is Independent, so there is nothing to draft from — this feature writes from the brand’s declared messages and the house’s core message, which Independent deliberately keeps out. Switch to Grounded, or fill in the release fields by hand.');
+      return;
+    }
     const sm = (p.relSuggest && p.relSuggest.source_material) || null;
     if (!sm) { this.showToast('Nothing to draft from yet — open the release first.'); return; }
     this.setPr({ busy:'reldraft' });

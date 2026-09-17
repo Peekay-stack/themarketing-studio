@@ -1269,7 +1269,37 @@ of non-forced, honest verdict this phase was built for. No server errors on eith
 nothing to the tenant store, confirmed by filesystem diff, so no cleanup was needed. Deck sent to the user
 directly for inspection.
 
-**Status**: All four phases (1 ingestion pipeline, 2 Backgrounder section, 3 House threading, 4 synthesis
-deck) built, compile-checked, and live-verified — committed (see git log). A frontend trigger for the
-synthesis deck (currently backend-only, called directly) is the one known open item across the whole
-initiative.
+**Status**: All four phases built, compile-checked, and live-verified — committed (see git log). Frontend
+trigger for the synthesis deck built next, closing the one open item — see below.
+
+### Synthesis deck frontend trigger built and live-verified (17 Sep, same day)
+
+User asked where the deck actually shows up, was told honestly: nowhere yet — Phase 4 was scoped
+backend-only. Asked to wire a button now, closing the initiative's one open item.
+
+**Built** in `app.dc.html` (the live comprehensive brand-brief builder screen, `screen:'imc'`): a new
+`generateSynthesisDeck()` method matching `generateImcDocx()`'s existing pattern exactly (same `im.files`
+research uploads, same `FormData`/`fetch`/`triggerDownload` shape, same busy/message state convention) —
+posts to `/research-synthesis-deck` and downloads the returned `.pptx`. A new `⊞ Research synthesis
+(.pptx)` button in the sticky footer, right after `Generate IMC brief (.docx)`. Client-side guard: if no
+research files are attached, shows a toast rather than calling a server that can only fail the same way —
+"the deck reads across them, it has nothing to read otherwise." `tools/checkfe.py` passed clean
+(JS lexical structure, `sc-if`/`sc-for`/`<div>` pairing, no duplicate class members) and the file's
+LF-only line endings were confirmed unchanged (0 CRLF bytes) after the edit.
+
+**Live-verified** in the real running app, not just compile-checked: minted a local test session,
+navigated the actual browser to the comprehensive brand-brief builder screen (distinct from the OTHER
+"IMC Brief" — the guided/classic creative-brief format at the same top-level label, a real mix-up worth
+noting for anyone else navigating this app by label alone), started a manual draft to reach the sticky
+footer, and confirmed the button renders with the correct label in the correct position. Clicked it with
+no files attached — the exact guard-toast text appeared, confirming the click handler fires and the guard
+logic works before ever touching the network. Then simulated attaching a real file to the "Research &
+decks" upload slot (a synthetic in-browser File, since the page JS context has no local-disk access) and
+clicked again: a real `POST /research-synthesis-deck` fired and returned 200 OK, and the UI showed
+"Downloaded Heritage_Foods_Research_Synthesis.pptx" — the brand name correctly flowed from the form into
+the filename, confirming the full FormData → fetch → blob → download chain works end to end. Console
+errors were checked and are the same pre-existing, unrelated template-placeholder 404s already flagged
+this session (`{{ cr.refUrl }}` etc. — not something this work touched or caused).
+
+**Status**: Frontend trigger built and live-verified. All four phases plus their UI entry point are now
+complete for this initiative.
