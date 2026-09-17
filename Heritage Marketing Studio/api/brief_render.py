@@ -360,16 +360,36 @@ def build_docx(brief: dict, out_path: str):
     smp_p = doc.add_paragraph(); smp_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     smp_r = smp_p.add_run(brief.get("smp", "")); smp_r.bold = True; smp_r.italic = True; smp_r.font.size = Pt(12)
 
-    # 2. Competitor snapshot
-    _heading(doc, "2. Competitor Snapshot", 1, "2A2A2A")
+    # 2. Backgrounder — orients a reader in the evidence before any framework mechanics start. See
+    # brief_skill/references/backgrounder-guidance.md for what each part is for and how it hands off
+    # to the CB/CA section several sections later.
+    _heading(doc, "2. Backgrounder", 1, "2A2A2A")
+    bg = brief.get("backgrounder", {}) or {}
+    _heading(doc, "Category perspective", 2, _GREEN)
+    doc.add_paragraph(bg.get("category_perspective") or "NOT ASSESSED. No category-level data was supplied.")
+    _heading(doc, "Current situation", 2, _GREEN)
+    doc.add_paragraph(bg.get("current_situation")
+                      or "NOT SUPPLIED. No market-share or household data was uploaded.")
+    _heading(doc, "Consumer insights", 2, _GREEN)
+    insights = bg.get("consumer_insights") or []
+    if insights:
+        for s in insights:
+            doc.add_paragraph(str(s), style="List Bullet")
+    else:
+        doc.add_paragraph("NOT ASSESSED. No qualitative research was supplied.")
+    _heading(doc, "Problem statement", 2, _GREEN)
+    doc.add_paragraph(bg.get("problem_statement") or "NOT DEFINED.")
+
+    # 3. Competitor snapshot
+    _heading(doc, "3. Competitor Snapshot", 1, "2A2A2A")
     comp_rows = [["Competitor", "Hero brands", "Positioning in one line", "Recent strategic moves"]]
     for c in brief.get("competitors", []) or []:
         comp_rows.append([c.get("name", ""), c.get("hero_brands", ""),
                           c.get("positioning", ""), c.get("recent_moves", "")])
     _table(doc, comp_rows)
 
-    # 3. Messaging comparison matrix
-    _heading(doc, "3. Messaging Comparison Matrix", 1, "2A2A2A")
+    # 4. Messaging comparison matrix
+    _heading(doc, "4. Messaging Comparison Matrix", 1, "2A2A2A")
     mm = brief.get("messaging_matrix", {}) or {}
     dims, brands, cells = mm.get("dimensions", []), mm.get("brands", []), mm.get("cells", [])
     if dims and brands:
@@ -379,8 +399,8 @@ def build_docx(brief: dict, out_path: str):
             mrows.append(row + [""] * (len(brands) + 1 - len(row)))
         _table(doc, mrows)
 
-    # 4. NeedScope
-    _heading(doc, "4. NeedScope Brand Positioning", 1, "2A2A2A")
+    # 5. NeedScope
+    _heading(doc, "5. NeedScope Brand Positioning", 1, "2A2A2A")
     doc.add_paragraph("NeedScope maps brands across six colour-coded emotional territories arranged "
                       "on a wheel. The focal brand is anchored and a dashed bridge shows the strategic "
                       "move into an adjacent territory.")
@@ -394,8 +414,8 @@ def build_docx(brief: dict, out_path: str):
     _heading(doc, "Strategic implication", 2, _GREEN)
     doc.add_paragraph(ns.get("strategic_implication", ""))
 
-    # 5. CB/CA -> DB/DA
-    _heading(doc, "5. Messaging Strategy — Current → Desired", 1, "2A2A2A")
+    # 6. CB/CA -> DB/DA
+    _heading(doc, "6. Messaging Strategy — Current → Desired", 1, "2A2A2A")
     doc.add_paragraph("The messaging job framed as the shift the work must deliver.")
     cc = brief.get("cb_ca_db_da", {}) or {}
     _picture(doc, cc.get("figure_path"), 6.3)
@@ -408,8 +428,8 @@ def build_docx(brief: dict, out_path: str):
     if cc.get("caption"):
         doc.add_paragraph(cc.get("caption"))
 
-    # 6. SMP
-    _heading(doc, "6. Single Minded Proposition", 1, "2A2A2A")
+    # 7. SMP
+    _heading(doc, "7. Single Minded Proposition", 1, "2A2A2A")
     callout = doc.add_paragraph(); callout.alignment = WD_ALIGN_PARAGRAPH.CENTER
     co = callout.add_run(brief.get("smp", "")); co.bold = True; co.italic = True
     co.font.size = Pt(16); co.font.color.rgb = RGBColor.from_string(_GREEN)
@@ -424,8 +444,8 @@ def build_docx(brief: dict, out_path: str):
         if un.get(key):
             doc.add_paragraph(f"{label}: {un.get(key)}", style="List Bullet")
 
-    # 7. Pricing / distribution / content
-    _heading(doc, "7. Pricing, Distribution & Content Snapshot", 1, "2A2A2A")
+    # 8. Pricing / distribution / content
+    _heading(doc, "8. Pricing, Distribution & Content Snapshot", 1, "2A2A2A")
     snap = brief.get("snapshots", {}) or {}
     for label, key in (("Pricing", "pricing"), ("Distribution", "distribution"),
                        ("Content & campaigns", "content_campaigns"),
@@ -433,16 +453,16 @@ def build_docx(brief: dict, out_path: str):
         _heading(doc, label, 2, _GREEN)
         doc.add_paragraph(snap.get(key, ""))
 
-    # 8. Opportunities & threats
-    _heading(doc, "8. Opportunities & Threats", 1, "2A2A2A")
+    # 9. Opportunities & threats
+    _heading(doc, "9. Opportunities & Threats", 1, "2A2A2A")
     ot_rows = [["Opportunities", "Threats"]]
     for r_ in brief.get("opportunities_threats", []) or []:
         ot_rows.append([r_.get("opportunity", ""), r_.get("threat", "")])
     if len(ot_rows) > 1:
         _table(doc, ot_rows)
 
-    # 9. Recommended actions
-    _heading(doc, "9. Recommended Actions", 1, "2A2A2A")
+    # 10. Recommended actions
+    _heading(doc, "10. Recommended Actions", 1, "2A2A2A")
     rec = brief.get("recommendations", {}) or {}
     if rec.get("preface"):
         pf = doc.add_paragraph(); pr = pf.add_run(rec.get("preface")); pr.italic = True
@@ -454,8 +474,8 @@ def build_docx(brief: dict, out_path: str):
     for s in rec.get("strategic_moves", []) or []:
         doc.add_paragraph(s, style="List Number")
 
-    # 10. Caveats
-    _heading(doc, "10. Caveats", 1, "2A2A2A")
+    # 11. Caveats
+    _heading(doc, "11. Caveats", 1, "2A2A2A")
     doc.add_paragraph(brief.get("caveats", ""))
     foot = doc.add_paragraph(); fr = foot.add_run("Prepared with the IMC Brief builder.")
     fr.italic = True; fr.font.size = Pt(9); fr.font.color.rgb = RGBColor.from_string("777777")

@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: d3a25b08-5f19-478b-bc7e-ff283771328e
-  modified: 2026-09-17T06:28:29.982Z
+  modified: 2026-09-17T06:44:35.787Z
 ---
 
 **File**: `Heritage Marketing Studio/BRAND_GROUNDING_TESTING_LOG.md`, section "New thread — IMC brief
@@ -96,3 +96,23 @@ in the qual deck's actual recommendation, sources_note lists all 3 files correct
 Phases 2–4 (2a Backgrounder section, 2b CA-CB/insight threading into House, 2c standalone synthesis deck)
 still not started — same "confirm before big architecture" discipline as brand-grounding-modes' own
 multi-phase build applies to those next.
+
+**Status update (17 Sep, later same day)**: user asked for Phases 2-4, confirmed the brief SKILL.md
+itself should be updated too (not just code — it's the file `brief_ai.py` loads into the drafting system
+prompt). Agreed sequencing: commit Phase 1 first (done), then one phase at a time with live verification
+between each, not batching 2-4 together.
+
+**Phase 2 (2a Backgrounder) DONE**: new numbered section 2 in the brief, right after Executive Summary —
+category perspective, current situation, consumer insights, problem statement. `brief_skill/SKILL.md`
+updated (new section in the numbered list, a "Backgrounder" framework-discipline subsection, input-triage
+rule, output-contract/final-check bullets) plus a new `brief_skill/references/backgrounder-guidance.md`
+matching the existing reference-file voice (definition, sourcing table, worked example with the two
+problem-statement failure modes named, how it hands off to CB/CA without duplicating it). Code: `brief_ai.py`
+(`_OUTPUT_CONTRACT` + `_REFS` + bumped max_tokens), `brandbrief.py` (`_backgrounder_defaults()` honest
+fallback pattern + `enrich_with_ai()` contract extended so export-time can also fill it), `brief_render.py`
+(new "2. Backgrounder" section in `build_docx()`, sections 3-11 renumbered). Live-verified via both real
+endpoints with the same 3 dummy files: `/brand-brief-draft`'s backgrounder is genuinely well-differentiated
+(category vs. brand vs. consumer vs. diagnosis, real Nielsen/household figures cited, problem statement
+visibly sets up the SMP that follows) and the actual exported `.docx` was inspected heading-by-heading —
+clean 1-11 numbering, Backgrounder's real content (not placeholder text) in the right place. Committed.
+Phases 3 (2b — House-layer threading) and 4 (2c — standalone synthesis deck) not started next.

@@ -1142,7 +1142,50 @@ distribution, ~0.33 penetration) are cited. No server errors. A test brief this 
 tenant store was deleted afterward along with its ledger entry (three earlier, similar test entries from
 the user's own prior A/B testing were left alone, not touched).
 
-**Status**: Phase 1 (ingestion pipeline) built, compile-checked, and live-verified end-to-end through the
-real endpoint — not committed to git yet, pending the user's review. Phases 2–4 (2a Backgrounder section,
-2b CA-CB/insight threading into the House layer, 2c standalone synthesis deck) remain as designed above,
-not started.
+**Status**: Phase 1 committed (see git log) after live verification. Phases 2–4 (2a Backgrounder section,
+2b CA-CB/insight threading into the House layer, 2c standalone synthesis deck) remain as designed above —
+Phase 2 built and verified next, see below.
+
+### Phase 2 built and live-verified (17 Sep, same day) — Backgrounder section (2a)
+
+User asked for Phases 2-4, specifically confirmed the brief skill itself should be updated (not just the
+code) — the skill is the domain-knowledge file `brief_ai.py` loads into the drafting system prompt, so a
+new section with no drafting guidance behind it would just be the model improvising structure each call.
+Two sequencing questions asked and answered: commit Phase 1 first as a checkpoint (done), and build/verify
+one phase at a time rather than batching all three before any live check.
+
+**Skill updated**: `brief_skill/SKILL.md` — new numbered section 2 (renumbers the rest), a "### Backgrounder"
+subsection under Framework discipline naming the four parts and their non-negotiable rules, an input-triage
+rule, an output-contract page-count bump, a final-check bullet, and a reference link. New
+`brief_skill/references/backgrounder-guidance.md` (matching the existing `smp-guidance.md`/
+`cb-ca-db-da-framework.md` voice): definition, a sourcing table for the four parts, per-part writing
+guidance, a worked example (with the two problem-statement failure modes named — "too vague to act on" and
+"actually a solution in disguise"), and how the problem statement should set up CB/CA without duplicating it.
+
+**Code wired**: `brief_ai.py` (`_OUTPUT_CONTRACT` gets a `backgrounder` object; `_REFS` loads the new
+guidance file; `max_tokens` 4000→5500 to fit the extra fields without a mid-JSON cutoff), `brandbrief.py`
+(`_backgrounder_defaults()` — same honest "NOT ASSESSED/NOT SUPPLIED" fallback pattern as the existing
+`_snapshots()`; `enrich_with_ai()`'s contract and `_apply_enrichment()` extended so the export-time call can
+also fill/sharpen the backgrounder; `max_tokens` 2000→3200), `brief_render.py` (`build_docx()` renders the
+new "2. Backgrounder" section with its four subsections, all subsequent sections renumbered 3–11 in both
+the heading text and the code comments).
+
+**End-to-end live verification**, real 3-file POST to both live endpoints:
+- `/brand-brief-draft`: the AI-drafted backgrounder is genuinely well-differentiated — category perspective
+  covers the category as a whole (milk vs. curd structural dynamics, real Nielsen "Others" curd share
+  29.2%/37.0%), current situation is brand-specific (Heritage's own 32.7% penetration, 76.7% distribution,
+  tied to the qualitative "named positively without being chosen first" finding), consumer insights cite
+  specific percentages from the qual research, and the problem statement is diagnosis rather than a KPI or
+  a solution-in-disguise, explicitly setting up the SMP that follows ("Heritage makes the care behind your
+  dairy visible every day" — visibly downstream of the problem statement's own language).
+- `/brand-brief` (the actual .docx export): pulled every heading from the real generated document —
+  1–11 numbered cleanly with no gaps or duplicates, "2. Backgrounder" with all four subsections populated
+  with the real content above (not placeholder "NOT ASSESSED" text), sitting correctly between "1.
+  Executive Summary" and "3. Competitor Snapshot."
+
+No server errors in either call. Test briefs and ledger entries this round's verification wrote into the
+live tenant store were deleted afterward, same as Phase 1's cleanup.
+
+**Status**: Phase 2 built, compile-checked, and live-verified end-to-end through both real endpoints —
+committed (see git log). Phases 3 (2b — CA-CB/insight threading into the House layer) and 4 (2c —
+standalone synthesis deck) not started.

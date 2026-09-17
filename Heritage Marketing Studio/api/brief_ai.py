@@ -20,7 +20,7 @@ _SKILL = os.path.join(_HERE, "brief_skill")
 
 # The framework references the model needs to reason well. Operational refs
 # (input-parsing, docx-assembly) are not needed for the JSON reasoning step.
-_REFS = ["needscope-framework.md", "cb-ca-db-da-framework.md", "smp-guidance.md"]
+_REFS = ["backgrounder-guidance.md", "needscope-framework.md", "cb-ca-db-da-framework.md", "smp-guidance.md"]
 
 
 class NoApiKey(RuntimeError):
@@ -60,6 +60,12 @@ present, and sensibly inferred (and later flagged in caveats) where the inputs a
   "brand": string,                       // focal brand
   "category": string,
   "prepared_for": string,
+  "backgrounder": {                       // see references/backgrounder-guidance.md — evidence, not conclusions
+    "category_perspective": string,       // 2-4 sentences on the CATEGORY as a whole, from real data where supplied
+    "current_situation": string,          // 2-4 sentences on the FOCAL BRAND's own share/penetration/distribution trend
+    "consumer_insights": [string, ...],   // 3-5 specific, citable findings from qualitative research; say so if none supplied
+    "problem_statement": string           // ONE paragraph: the real business/marketing problem CB/CA and the SMP must answer
+  },
   "competitors": [                        // 3-5 direct competitors
     { "name": string, "hero_brands": string, "positioning": string, "recent_moves": string }
   ],
@@ -171,7 +177,11 @@ def draft_brief(base: dict, research: dict | None = None,
     client = anthropic.Anthropic()
     resp = client.messages.create(
         model=os.environ.get("GEN_MODEL", "claude-opus-4-8"),
-        max_tokens=4000,
+        # Was 4000 before the backgrounder existed — the contract already asked for a lot (per-brand
+        # NeedScope pins, cb_ca_db_da, smp defence/unlocks) and the backgrounder adds a real chunk more
+        # (4 more fields, one a 3-5 item list). Sized up to avoid the same mid-JSON cutoff research_parse's
+        # summarize_document hit at a tighter budget.
+        max_tokens=5500,
         system=system,
         messages=[{"role": "user", "content": content}],
     )
@@ -196,6 +206,10 @@ def _normalise(data: dict, base: dict, research: dict | None = None) -> dict:
     data.setdefault("brand", base.get("brand", "Brand"))
     data.setdefault("category", base.get("category", ""))
     data.setdefault("prepared_for", base.get("prepared_for", ""))
+    bg = data.setdefault("backgrounder", {})
+    for k in ("category_perspective", "current_situation", "problem_statement"):
+        bg.setdefault(k, "")
+    bg.setdefault("consumer_insights", [])
     ns = data.setdefault("needscope", {})
     ns.setdefault("pins", [])
     ns.setdefault("bridge_territory", "")

@@ -128,6 +128,29 @@ def _snapshots(payload: dict) -> dict:
     }
 
 
+def _backgrounder_defaults(payload: dict) -> dict:
+    """Deterministic fallback for the backgrounder — same honesty pattern as _snapshots(): a real
+    figure where the data was supplied, an explicit "not supplied" where it wasn't, never a guess.
+    `enrich_with_ai()` can fill/sharpen this later; `draft_brief()` may already have filled it if the
+    brief went through AI drafting — either way this only fills gaps, never overwrites what's there.
+    """
+    bg = payload.get("backgrounder") or {}
+    md = payload.get("market_data") or payload.get("marketData") or ""
+    hd = payload.get("household_data") or payload.get("householdData") or ""
+    has_data = bool(str(md).strip()) or bool(str(hd).strip())
+    return {
+        "category_perspective": str(bg.get("category_perspective") or "").strip()
+                                or "NOT ASSESSED. No category-level data was supplied.",
+        "current_situation": str(bg.get("current_situation") or "").strip()
+                             or ("Per the supplied data — validate against the latest reads." if has_data
+                                 else "NOT SUPPLIED. No market-share or household data was uploaded, so "
+                                      "there is no current-situation read here."),
+        "consumer_insights": bg.get("consumer_insights") or [],
+        "problem_statement": str(bg.get("problem_statement") or "").strip()
+                             or "NOT DEFINED. Draft with AI, or write directly in the builder.",
+    }
+
+
 def _focal_profile(payload: dict) -> dict:
     """What the focal brand's own column should say, from its profile rather than hardcoded.
 
@@ -202,6 +225,7 @@ def to_skill_brief(payload: dict, ns_png: str, cbca_png: str) -> dict:
         "date": payload.get("date", ""),
         "sources_note": payload.get("sources_note", ""),
         "executive_summary": exec_summary,
+        "backgrounder": _backgrounder_defaults(payload),
         "smp": smp,
         "competitors": comps,
         "messaging_matrix": {"dimensions": dims, "brands": brands, "cells": cells},
@@ -288,6 +312,12 @@ def enrich_with_ai(payload: dict, research: dict | None) -> dict | None:
             + (f"{research_text}\n\n" if research_text else "")
             + "Return ONLY a JSON object (no markdown) with keys: "
             "executive_summary (array of exactly 2 paragraphs), "
+            "backgrounder (object: category_perspective, current_situation — each 2-4 sentences on the "
+            "CATEGORY vs the FOCAL BRAND respectively, from real data where given, else say not supplied; "
+            "consumer_insights — array of 3-5 specific citable findings from qualitative research, or an "
+            "empty array if none was supplied; problem_statement — ONE paragraph naming the real business/"
+            "marketing problem the SMP and CB/CA shift must answer, not a KPI target and not a solution in "
+            "disguise), "
             "needscope_reading (string), needscope_strategic_implication (string), "
             "snapshots (object: pricing, distribution, content_campaigns, content_gaps — each 1-2 sentences, "
             "using the market figures where given), "
@@ -301,7 +331,9 @@ def enrich_with_ai(payload: dict, research: dict | None) -> dict | None:
         client = anthropic.Anthropic()
         resp = client.messages.create(
             model=os.environ.get("GEN_MODEL", "claude-opus-4-8"),
-            max_tokens=2000, messages=[{"role": "user", "content": prompt}],
+            # Was 2000 before the backgrounder existed; that field alone adds a paragraph plus a 3-5 item
+            # list on top of everything already being asked for.
+            max_tokens=3200, messages=[{"role": "user", "content": prompt}],
         )
         raw = "".join(b.text for b in resp.content if getattr(b, "type", None) == "text").strip()
         raw = raw[raw.find("{"): raw.rfind("}") + 1]
@@ -321,6 +353,8 @@ def _apply_enrichment(brief: dict, payload: dict, ai: dict):
         brief["needscope"]["strategic_implication"] = ai["needscope_strategic_implication"]
     if isinstance(ai.get("snapshots"), dict):
         brief["snapshots"].update({k: v for k, v in ai["snapshots"].items() if v})
+    if isinstance(ai.get("backgrounder"), dict):
+        brief["backgrounder"].update({k: v for k, v in ai["backgrounder"].items() if v})
     if ai.get("opportunities_threats"):
         brief["opportunities_threats"] = ai["opportunities_threats"]
     if isinstance(ai.get("recommendations"), dict):
