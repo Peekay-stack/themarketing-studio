@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: d3a25b08-5f19-478b-bc7e-ff283771328e
-  modified: 2026-09-17T06:49:19.219Z
+  modified: 2026-09-17T07:58:22.333Z
 ---
 
 **File**: `Heritage Marketing Studio/BRAND_GROUNDING_TESTING_LOG.md`, section "New thread — IMC brief
@@ -130,4 +130,22 @@ whitelist (canon alone does nothing without this). Verified two ways: direct fun
 Phase 2 draft data (no LLM call, pure string-building, all 4 fields correct incl. all 6 insight bullets
 joined, no regression on pre-existing fields), and a live HTTP round-trip through the real `/house-new`
 endpoint — inspected the saved house's `brief` dict on disk, all fields present with real content. No
-server errors. Committed. Phase 4 (2c — standalone synthesis deck) not started next.
+server errors. Committed.
+
+**Phase 4 (2c standalone synthesis deck) DONE — all four phases now complete.** User confirmed two design
+choices first (this phase is genuinely new, not an extension of existing brief/house code): real `.pptx`
+(python-pptx, already a dependency), backend+skill only today (verified directly, no frontend trigger yet
+— the one known open item across the whole initiative). New `synthesis_skill/` (SKILL.md +
+linkage-construction.md + deck-structure.md) — core discipline: find real patterns, never force one, say
+plainly when nothing coheres, never let same-document claims masquerade as independent corroboration, no
+brand recommendations (that's the brief's job). `synthesis.py`'s `build_linkages()` deliberately reuses
+`research_parse.ingest_for_brief()`'s claims directly rather than re-parsing; `synthesis_render.py` builds
+the actual pptx; new stateless route `POST /research-synthesis-deck`. Live-verified with all 10 real test
+files: first run surfaced a real bug (`synthesize_research()`'s max_tokens=4000 too small at 10 files,
+silently fell back to unmerged claims — uniform "Low confidence" was the tell), fixed by raising to 7000.
+Re-run: confidence tiers genuinely differentiated, considered-not-used slide correctly flagged both known
+artifacts plus an unprompted geographic-scoping call, and the deck's own honesty discipline showed up for
+real — one slide named itself "not cross-source corroboration" rather than overclaiming, closing verdict
+was "directionally aligned, quantitatively unverified." No server errors, route writes nothing to the
+tenant store (stateless by design). Deck sent to the user directly. See
+`BRAND_GROUNDING_TESTING_LOG.md`'s Phase 4 section for full detail.

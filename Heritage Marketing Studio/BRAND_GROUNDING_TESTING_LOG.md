@@ -1223,5 +1223,53 @@ disk: `background`, `currentSituation`, `problemStatement`, and `consumerInsight
 content, not the old empty/filename-only values. No server errors. Test brief and both test houses created
 during verification deleted afterward.
 
-**Status**: Phase 3 built, compile-checked, and live-verified two ways — committed (see git log). Phase 4
-(2c — standalone cross-source synthesis deck) not started.
+**Status**: Phase 3 committed (see git log). Phase 4 built and verified next, see below.
+
+### Phase 4 built and live-verified (17 Sep, same day) — standalone cross-source synthesis deck (2c)
+
+Two design choices confirmed with the user before building, since this phase is a genuinely new
+deliverable rather than an extension of existing brief/house infrastructure (unlike Phases 1-3): real
+`.pptx` output (python-pptx, already a dependency — used for reading decks, can write them too), and
+backend + a new skill only for today, verified by generating and inspecting a real file directly rather
+than also wiring a frontend trigger — same pattern Phase 1's pipeline was built and verified under before
+any UI existed for it.
+
+**New skill**: `synthesis_skill/` (`SKILL.md` + `references/linkage-construction.md` +
+`references/deck-structure.md`), matching the project's `*_skill/` pairing convention. Its core, explicit
+discipline (the user's own load-bearing requirement, restated as the skill's central rule): a synthesis
+deck must find real patterns, never force one — say plainly when nothing coheres, present competing reads
+rather than picking whichever sounds most finished, and never let two claims sharing a document masquerade
+as independent corroboration. Explicitly makes no brand recommendation (that's the brief's job) — states
+what the evidence shows and what kind of problem it looks like, never what to do about it.
+
+**Code**: `synthesis.py` (`build_linkages()`) deliberately does NOT re-parse files — it reads
+`research_parse.ingest_for_brief()`'s already-synthesized claims list directly (the same Map→Synthesize
+output the brief's Reduce step consumes) and does exactly one more thing on top: look across those claims
+for real multi-file chains, or say none coheres. `synthesis_render.py` assembles the `.pptx` (title,
+headline/"the read", one slide per linkage or competing read, a "considered, not used" slide when
+anything was excluded, caveats/sourcing) — deliberately plain visual treatment, same green/ink palette as
+the brief's `.docx` for family resemblance. New route `POST /research-synthesis-deck` in `main.py`,
+stateless by design (no briefstore/ledger write — a one-shot download, not a tracked document).
+
+**Live-verified** with all 10 real test files (the original 3 plus 4 quarterly brand-health trackers, a
+consolidated-trends deck, and 2 category time-series spreadsheets that were already known artifacts) via
+the real endpoint. First run surfaced a real bug: `research_parse.synthesize_research()`'s `max_tokens=4000`
+(from Phase 1) was too small for 10 files and got cut off mid-JSON, silently falling back to unmerged
+claims — every citation on the deck showed uniform "Low confidence" as the tell. Fixed by raising it to
+7000 (headroom for the ~20-file case Phase 1 was designed for, not just what's been tested). Re-run after
+the fix: confidence tiers now genuinely differentiated (high/medium/low based on real corroboration), the
+considered-not-used slide correctly named both known-artifact spreadsheets with real reasons AND made a
+sophisticated geographic-scoping call on the two real spreadsheets (Karnataka/Tamil Nadu rows out of an
+AP-focused brief's scope) that wasn't explicitly asked for. The deck's own honesty discipline showed up
+concretely: one linkage slide explicitly named itself "one voice's internal consistency... not cross-source
+corroboration" rather than presenting a same-program restatement as independent triangulation, and the
+closing cross-source read landed on "directionally aligned, quantitatively unverified" — flagging that six
+of ten sources were one program's repeated restatement inflating the apparent consensus, exactly the kind
+of non-forced, honest verdict this phase was built for. No server errors on either run; the route writes
+nothing to the tenant store, confirmed by filesystem diff, so no cleanup was needed. Deck sent to the user
+directly for inspection.
+
+**Status**: All four phases (1 ingestion pipeline, 2 Backgrounder section, 3 House threading, 4 synthesis
+deck) built, compile-checked, and live-verified — committed (see git log). A frontend trigger for the
+synthesis deck (currently backend-only, called directly) is the one known open item across the whole
+initiative.

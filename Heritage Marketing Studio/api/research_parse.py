@@ -844,7 +844,11 @@ def synthesize_research(file_results: list[dict], *, focus: str = "") -> dict:
     prompt = _SYNTHESIZE_PROMPT.format(focus_line=focus_line, blocks="\n\n".join(blocks))
 
     from jsonout import ask_json
-    data, err = ask_json(prompt, max_tokens=4000)
+    # Was 4000 — proven too small with a live 10-file run (the exact scaling case Phase 1 was built
+    # for): the reply was cut off mid-JSON, silently losing the merge/confidence/considered-not-used
+    # layer to the unmerged-claims fallback below. Sized up so the ~20-file case this pipeline was
+    # designed for has real headroom, not just the file count already tested.
+    data, err = ask_json(prompt, max_tokens=7000)
     if data is None:
         # Synthesis failing must not silently mean "no research was used" — fall back to a flat,
         # unmerged claims list built straight from the Map outputs so the brief still has citable

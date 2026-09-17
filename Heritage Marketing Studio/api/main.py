@@ -8225,6 +8225,62 @@ def brand_brief_draft(payload: str = Form(...), research: list[UploadFile] = Fil
     return draft
 
 
+@app.post("/research-synthesis-deck")
+def research_synthesis_deck(payload: str = Form(default="{}"), research: list[UploadFile] = File(...)):
+    """Standalone cross-source research synthesis — a .pptx, not a brand brief.
+
+    Runs the same Map->Synthesize pipeline the brand brief's ingestion uses
+    (research_parse.ingest_for_brief()), then looks across the synthesized claims for real multi-file
+    linkages (synthesis.build_linkages()) — or says plainly that none coheres, per
+    synthesis_skill/SKILL.md's core discipline. Makes no brand recommendation; that is the brand brief's
+    job. Requires ANTHROPIC_API_KEY.
+    """
+    import tempfile
+
+    import research_parse
+    import synthesis
+    import synthesis_render
+    if not synthesis.has_key():
+        raise HTTPException(
+            400, "Research synthesis needs an Anthropic API key. Add ANTHROPIC_API_KEY to api/.env "
+                 "and restart the server.")
+    if not research:
+        raise HTTPException(400, "Attach at least one research file to synthesize across.")
+    try:
+        base = json.loads(payload) if payload else {}
+    except Exception:
+        base = {}
+
+    tmp = tempfile.mkdtemp(prefix="synthesis_")
+    paths = []
+    for f in research:
+        dest = os.path.join(tmp, os.path.basename(f.filename or "file"))
+        with open(dest, "wb") as out:
+            out.write(f.file.read())
+        paths.append(dest)
+
+    focus = f"{base.get('brand', '')} — {base.get('category', '')} — {(base.get('prompt') or '')[:200]}"
+    research_result = research_parse.ingest_for_brief(paths, focus=focus)
+    try:
+        deck = synthesis.build_linkages(research_result, focus=focus)
+    except synthesis.NoApiKey:
+        raise HTTPException(400, "ANTHROPIC_API_KEY is not set.")
+    except Exception as e:
+        raise HTTPException(500, f"Synthesis failed: {e}")
+    if base.get("brand") or base.get("category"):
+        deck["title"] = f"{base.get('brand', '')} {base.get('category', '')}".strip() \
+                        + " — Cross-Source Research Synthesis"
+
+    try:
+        out = synthesis_render.generate(deck, workdir=tmp)
+    except Exception as e:
+        raise HTTPException(500, f"Deck rendering failed: {e}")
+    return FileResponse(
+        out, filename=os.path.basename(out),
+        media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    )
+
+
 # ----------------------------------------------------------------------------- #
 # Briefs
 # ----------------------------------------------------------------------------- #
