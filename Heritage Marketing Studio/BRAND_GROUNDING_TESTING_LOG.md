@@ -980,3 +980,100 @@ This closes every item on the "still open" list from the last full review — Ph
 the last two scoped-but-deferred gaps, and the Palette/Tone block was the last known cosmetic
 inconsistency. Per the user's own framing: all of this stays local, to be shipped together in one
 render once satisfied with further user testing — nothing here has been committed to product code.
+
+---
+
+## New thread — IMC brief data-ingestion & coverage quality (17 Sep)
+
+A separate initiative from the Grounded/Independent toggle work above, tracked in the same document
+at the user's request. Triggered by a direct A/B test: the user (with Codex) built dummy research data
+— two household-panel/Nielsen xlsx files and one qualitative brand-equity pptx deck — and generated an
+IMC brief with the data attached vs. without, to see how much the data actually changed the output.
+
+### What the comparison found
+
+Read both generated briefs and all three source files in full (via python-docx/openpyxl/python-pptx),
+then traced the actual generation code (`research_parse.py` → `brief_ai.py`). Findings, verified
+against the real numbers (computed real AP milk value-share averages per company from the Nielsen file
+to check the brief's own cited ranges):
+
+1. **The brief did draw on the data, partially.** Cited competitor share ranges (Amul, Arokya, Hatsun,
+   Dodla) were close to the real computed averages — genuine digestion, not decoration.
+2. **The competitive set didn't reconcile against the uploaded file's own company list.** The data's
+   README names 9 real companies (Heritage, Amul, Nandini, Arokya, Hatsun, Vijaya, Dodla, Jersey,
+   Vishakha); the brief tracked 6, dropping three that are BIGGER than half the ones it kept — Jersey
+   (~13.1% AP value share, the real #2 player), Vishakha (~9.9%), Vijaya (~7.5%), all ahead of Amul's
+   4.2%. (Correction from the user, recorded: Milky Mist appearing in the brief is not a hallucination
+   — it's a real category player the model reasonably knows from general knowledge, just absent from
+   this specific synthetic dataset. The actual defect is that the brief never reconciled its set
+   against what the file said was there, not that it invented a brand.)
+3. **The focal brand's own number never appears.** Heritage is a dominant ~22% AP / ~20% Telangana
+   value-share #1 (roughly 2x the nearest real rival) — the single most decision-relevant fact in the
+   whole file, present nowhere in the brief.
+4. **The richest file — the qualitative deck — barely registered.** It contains a real brand-equity
+   scorecard (Heritage vs. Amul: Trust 78/88, Warmth 84/67, Distinctiveness 61/81, Modern relevance
+   55/74), a Kapferer identity prism, and an explicit recommended proposition territory ("Care you can
+   see. Trust you can feel."). The brief's actual SMP goes a different direction entirely and never
+   engages with the deck's own recommendation; its NeedScope language is generic template vocabulary,
+   not the deck's own bespoke need-state framework (Care/Control/Belonging/Reset), which never appears.
+5. **A real internal-contradiction bug**: the brief's own first line says "Sources: none attached —
+   this brief was written from the prompt alone," directly contradicted two paragraphs later by "Per
+   the uploaded market data."
+
+### Root cause, confirmed in code
+
+`research_parse.py`: `PER_FILE_CHARS = 8000` — every uploaded file is flattened to text and hard-capped
+at 8,000 characters before the model sees it. `brief_ai.py`'s `_payload_context()` then caps the
+*combined* research blob at 16,000 characters total across every file. Against what was actually
+uploaded: the household panel (145,246 real chars) survived at ~5.5%, the Nielsen file (220,970 chars)
+at ~3.6%, the qual deck (12,033 chars) at ~66% but cut off right before its most decision-useful
+slides (the scorecard onward). This single pair of constants explains nearly every gap above — the
+xlsx files get sliced off mid-way through the first sheet (Andhra Pradesh, Milk) before reaching other
+states, Curd, or Distribution data at all; the deck gets cut off before its own recommendation.
+
+### The user's three extension points, and my read as each was raised
+
+**2a — a Backgrounder section.** Agreed as a real structural gap, not a nice-to-have: the document
+currently jumps from Executive Summary straight into NeedScope mechanics, with no section orienting a
+reader — category perspective, current situation (share/penetration trends), consumer insights,
+problem statement — before the strategy starts. Agreed this should be a **new section** after the
+Executive Summary, not folded into it — the Exec Summary's job is "so what," the Backgrounder's job is
+"here's the evidence," and merging them weakens both.
+
+**2b — feed the research into CA-CB/Insights/Problem Statement, and carry it forward into the House.**
+Agreed, and flagged as the harder, more architecturally significant half: right now every layer (Brief,
+House, Plan) independently reads whatever raw files it's handed, with no single "distilled insight"
+object that survives and gets referenced downstream the way a chosen core message already does. Fixing
+extraction alone (get the deck's findings into the brief) is the easier half; making the House's own
+generation actually read and reference the Brief's insight fields — rather than re-parsing the same raw
+files from scratch, or not referencing them at all — is the real build.
+
+**2c — a separate cross-source synthesis deck** (e.g. "share falling + awareness falling + distribution
+holding + competition rising → dial up awareness"). Agreed as its own deliverable, not a brief section
+— both for audience reasons and so each linkage can carry its own citation/confidence without
+cluttering the brief. The user's own caveat is the load-bearing part of this: **the system has to be
+honest when the data doesn't cohere into one story** — offer competing reads or say the evidence is
+inconclusive rather than force a tidy causal chain because one was expected. This is the same
+"never invent, say what's missing" discipline the brand-grounding-modes project has enforced everywhere
+else (see [[brand-grounding-modes-project]]), applied to cross-source causal claims specifically —
+arguably the single highest-risk place in the whole studio for a plausible-sounding, unsupported story.
+
+### Proposed build sequence (presented, not yet built)
+
+1. **Fix the ingestion pipeline first** — prerequisite for 2a/2b/2c; no richer section is worth
+   building on a pipe currently discarding 95%+ of two of three files.
+2. **Build 2a** — new Backgrounder section, populated from the properly-digested data.
+3. **Build 2b** — targeted CA-CB/insight/problem-statement extraction from research decks, PLUS the
+   harder piece: making the House-building step actually read the Brief's distilled insight fields.
+4. **Build 2c** — standalone synthesis deck, "may not find a pattern, and that's fine" discipline
+   designed in from the start.
+
+**Scope correction from the user on Phase 1**: don't design the ingestion fix around the 3 files tested
+— it needs to hold up with as many as ~20 documents attached to one brief. See the Phase 1 design
+below/in-conversation for how that changes the approach (deterministic per-file aggregation for
+spreadsheets instead of raw-row flattening, bounded per-file summarization for decks/docs, so total
+prompt size stays roughly constant regardless of file count rather than growing linearly with either
+file size or file count).
+
+Not yet built. Presented for the user's confirmation before implementation, same discipline as every
+other non-trivial design decision this project has made.
