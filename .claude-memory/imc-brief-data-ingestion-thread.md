@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: d3a25b08-5f19-478b-bc7e-ff283771328e
-  modified: 2026-09-17T06:44:35.787Z
+  modified: 2026-09-17T06:49:19.219Z
 ---
 
 **File**: `Heritage Marketing Studio/BRAND_GROUNDING_TESTING_LOG.md`, section "New thread — IMC brief
@@ -116,3 +116,18 @@ endpoints with the same 3 dummy files: `/brand-brief-draft`'s backgrounder is ge
 visibly sets up the SMP that follows) and the actual exported `.docx` was inspected heading-by-heading —
 clean 1-11 numbering, Backgrounder's real content (not placeholder text) in the right place. Committed.
 Phases 3 (2b — House-layer threading) and 4 (2c — standalone synthesis deck) not started next.
+
+**Phase 3 (2b House threading) DONE** — traced the real architecture first: every brief (any screen) goes
+through `briefstore.canonicalise()` into one shared canon set via `ALIASES` (first-hit-wins), and
+`strategy._brief_text()` reads a whitelist of that canon into "THE BRIEF" context every House layer's
+prompt includes (core/emotional/functional, rtb_emotional/rtb_functional — the actual pillars/RTBs —
+bridge/proof/culture). Same shape as the ROUND-83 audit that added needscopeAnalysis/smpDefence/
+smpUnlocks after finding an identical no-canon-path gap. Fix: `briefstore.py` — `category_perspective`
+added to `background`'s aliases (ordered before `sources_note`, so real category content wins over a
+filename list), `consumer_insights` added to `consumerInsight`'s aliases, two new canon fields
+`currentSituation`/`problemStatement` added. `strategy.py` — same two fields added to `_brief_text()`'s
+whitelist (canon alone does nothing without this). Verified two ways: direct function test against real
+Phase 2 draft data (no LLM call, pure string-building, all 4 fields correct incl. all 6 insight bullets
+joined, no regression on pre-existing fields), and a live HTTP round-trip through the real `/house-new`
+endpoint — inspected the saved house's `brief` dict on disk, all fields present with real content. No
+server errors. Committed. Phase 4 (2c — standalone synthesis deck) not started next.

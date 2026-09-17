@@ -244,6 +244,10 @@ def houses() -> list[dict]:
             blocking = 0
         out.append({
             "id": h["id"], "brand": h.get("brand", ""),
+            # Round 5 (session persistence + picker labelling): the list card never carried this, so
+            # the Strategy screen's own house list had no way to show which houses were written
+            # Independent versus which just happen to have no brand recorded — both looked identical.
+            "brand_mode": h.get("brand_mode") or "grounded",
             "project": project_mod.of(h),
             "project_source": h.get("project_source", ""),
             "label": project_mod.label(h),
@@ -289,7 +293,7 @@ def newest_for(brand: str = "") -> dict | None:
     return load(rows[0]["id"])
 
 
-def new_house(brand: str, brief: dict | None = None) -> dict:
+def new_house(brand: str, brief: dict | None = None, brand_mode: str = "") -> dict:
     house = {
         "id": uuid.uuid4().hex[:10], "brand": brand or "Brand",
         "brief": brief or {}, "created": _now(), "updated": _now(),
@@ -299,6 +303,9 @@ def new_house(brand: str, brief: dict | None = None) -> dict:
         "project": project_mod.clean((brief or {}).get("project") or ""),
         "nodes": {l["id"]: {"layer": l["id"], "options": [], "chosen": [],
                             "sig": "", "generated_under": ""} for l in LAYERS},
+        # Defaults from whichever brief this house was started against, same as the brief's own
+        # default — a brand-new house is Grounded unless something upstream already said General.
+        "brand_mode": brand_mode or "grounded",
     }
     return save(house)
 
@@ -333,6 +340,14 @@ def stale(house: dict, layer_id: str) -> bool:
     if not node.get("options") or not node.get("generated_under"):
         return False
     return node["generated_under"] != signature(house, layer_id)
+
+
+def set_brand_mode(house: dict, mode: str) -> dict:
+    """Change a house's grounding mode after the fact — the door-not-gate half of the feature. A
+    house's mode defaults from its brief at creation but is never locked to it; this is how it
+    diverges on purpose."""
+    house["brand_mode"] = "general" if mode == "general" else "grounded"
+    return save(house)
 
 
 def ready(house: dict, layer_id: str) -> tuple[bool, str]:
@@ -889,7 +904,14 @@ def _brief_text(house: dict) -> str:
             "consumerInsight", "currentBelief", "desiredBelief", "smp", "rtbs",
             "toneOfVoice", "mandatories", "packHierarchy", "successMetrics",
             "competition", "deliverables", "budget", "timeline",
-            "needscopeAnalysis", "smpDefence", "smpUnlocks")
+            "needscopeAnalysis", "smpDefence", "smpUnlocks",
+            # IMC ingestion Phase 3: same gap the ROUND-83 audit found for needscopeAnalysis/smpDefence/
+            # smpUnlocks, this time for the brand brief's Backgrounder — briefstore.py's ALIASES now maps
+            # it into canon, but that alone does nothing unless this whitelist also asks for it. Every
+            # layer below (core/emotional/functional message, both RTB layers, bridge, proof, culture)
+            # reads THE BRIEF the same way, so this one addition threads the brief's actual problem
+            # statement and consumer insights into every layer of the house, not just one.
+            "currentSituation", "problemStatement")
     lines = [f"{k}: {b[k]}" for k in keep if str(b.get(k) or "").strip()]
     return "\n".join(lines) or "(brief is empty)"
 
@@ -934,10 +956,16 @@ def prompt_for(house: dict, layer_id: str, extra: str = "",
     # The `medium` branch that used to sit here is gone with its layer. It was already unreachable —
     # every caller guards on `layer not in LAYER_BY_ID` first — so this is dead code removed rather than
     # behaviour changed.
+    # General-mode houses (deliberately not tied to a brand — see BRAND_GROUNDING_MODES_PLAN.md) must
+    # never reach `resolve()` at all: with more than one profile on file, resolve() falls back to
+    # whichever is ACTIVE the moment this generates, which is exactly the silent-substitution bug this
+    # mode exists to prevent. `voice_block(None)` already gives the model the correct honest
+    # instruction — write from the brief alone, do not invent a brand.
+    brand_for_prompt = None if house.get("brand_mode") == "general" \
+        else brandprofile.resolve(house.get("brief"), house)
     parts = [
         _skill_text(),
-        "\n\n---\nTHE BRAND\n" + brandprofile.voice_block(
-            brandprofile.resolve(house.get("brief"), house)),
+        "\n\n---\nTHE BRAND\n" + brandprofile.voice_block(brand_for_prompt),
         "\n\n---\nTHE BRIEF\n" + _brief_text(house),
     ]
     if above:

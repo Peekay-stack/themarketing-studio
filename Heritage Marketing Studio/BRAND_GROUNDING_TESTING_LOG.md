@@ -1186,6 +1186,42 @@ the heading text and the code comments).
 No server errors in either call. Test briefs and ledger entries this round's verification wrote into the
 live tenant store were deleted afterward, same as Phase 1's cleanup.
 
-**Status**: Phase 2 built, compile-checked, and live-verified end-to-end through both real endpoints —
-committed (see git log). Phases 3 (2b — CA-CB/insight threading into the House layer) and 4 (2c —
-standalone synthesis deck) not started.
+**Status**: Phase 2 committed (see git log). Phase 3 built and verified next, see below.
+
+### Phase 3 built and live-verified (17 Sep, same day) — Backgrounder threading into the House (2b)
+
+Traced the actual architecture before writing any code (per the "confirm before big architecture"
+discipline): the House (`strategy.py`) never reads a brief's raw fields directly — every brief, regardless
+of which screen produced it, goes through `briefstore.canonicalise()`, which maps each screen's own field
+names onto one shared canonical set (`businessObjective`, `background`, `consumerInsight`, `currentBelief`,
+`desiredBelief`, `smp`, `rtbs`, ...) via a first-hit-wins `ALIASES` table. `strategy._brief_text()` then
+reads a whitelist of those canonical names into "THE BRIEF" — the context block every single House layer's
+prompt includes (`core`/`emotional`/`functional` message, `rtb_emotional`/`rtb_functional` — literally the
+pillars and RTBs the user named — plus `bridge`/`proof`/`culture`). This is exactly the same shape as the
+ROUND-83 audit that added `needscopeAnalysis`/`smpDefence`/`smpUnlocks` after finding they had no canon
+path at all.
+
+The Backgrounder had the identical gap: real content the skill now drafts, with no canon path to reach the
+house. `background` already existed as a canon field but only ever matched `sources_note` (a list of
+filenames) in a Brand Brief — nothing matched real category content. `consumerInsight` existed but nothing
+in the Brand Brief format matched any of its aliases at all. `currentSituation` and `problemStatement` had
+no canon field whatsoever — the exact "Insights, Problem Statement" the user's original 2b ask named.
+
+**Fix** (two files, both parts of the existing unification layer, no new architecture): `briefstore.py` —
+added `category_perspective` to `background`'s alias list (ordered before `sources_note`, so a real
+category read now wins over a filename list), added `consumer_insights` to `consumerInsight`'s alias list,
+added two new canon fields `currentSituation` and `problemStatement` with their own aliases. `strategy.py`
+— added those same two new field names to `_brief_text()`'s whitelist (the ROUND-83 audit's own lesson:
+adding to canon alone does nothing unless the House's own whitelist also asks for it).
+
+**Verified two ways**: (1) direct function test against the real Phase 2 draft data (no LLM call needed —
+`_brief_text()` is pure string-building) — confirmed all four fields populate correctly, `consumerInsight`
+correctly joins all 6 research-derived bullets, and none of the pre-existing canon fields regressed; (2)
+live HTTP round-trip — saved the same real draft via `briefstore.put()` (what `/brand-brief-draft` does
+internally), POSTed it to the real `/house-new` endpoint, and inspected the saved house's `brief` dict on
+disk: `background`, `currentSituation`, `problemStatement`, and `consumerInsight` all present with the real
+content, not the old empty/filename-only values. No server errors. Test brief and both test houses created
+during verification deleted afterward.
+
+**Status**: Phase 3 built, compile-checked, and live-verified two ways — committed (see git log). Phase 4
+(2c — standalone cross-source synthesis deck) not started.

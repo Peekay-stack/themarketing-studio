@@ -47,7 +47,17 @@ CANON = ("brand", "title", "format", "businessObjective", "marketingObjective", 
          # them regardless of which screen saved. `smp_unlocks` bundled in for the same reason: brand's
          # own "what this proposition unlocks" answer, drafted alongside `smp`/`smp_defence` and equally
          # absent downstream.
-         "needscopeAnalysis", "smpDefence", "smpUnlocks")
+         "needscopeAnalysis", "smpDefence", "smpUnlocks",
+         # IMC ingestion Phase 3: the brand brief's new Backgrounder section (category perspective,
+         # current situation, consumer insights, problem statement — see research_parse.py's Map/
+         # Synthesize pipeline and brief_ai.py's `backgrounder` output field) had the same gap the
+         # ROUND-83 audit found — real content the skill now drafts, with no canon path to reach the
+         # house, so every house built from a brief with real qualitative research behind it was still
+         # generated against "(brief is empty)" for the fields that matter most: what consumers actually
+         # think, and the specific problem the house exists to solve. `background`/`consumerInsight`
+         # already existed as canon fields (see ALIASES below for how they now also catch the
+         # backgrounder's content) — `currentSituation` and `problemStatement` did not, so they are new.
+         "currentSituation", "problemStatement")
 
 # How each screen's names map onto the canonical ones. First hit wins, so the more specific source is
 # listed first. A key absent from every alias simply stays in `fields` and is not lost.
@@ -56,9 +66,12 @@ ALIASES: dict[str, tuple[str, ...]] = {
     "marketingObjective": ("marketingObjective", "marketing_objective"),
     "commObjective": ("commObjective", "comms_objective", "objective", "campaign_objective",
                       "communication_objective"),
-    "background": ("background", "context", "situation", "sources_note"),
+    # `category_perspective` listed before `sources_note`: a real category read (from the backgrounder,
+    # when the brief has one) is what "background" is actually for — `sources_note` (a list of uploaded
+    # filenames) was only ever the least-wrong thing available before the backgrounder existed.
+    "background": ("background", "context", "situation", "category_perspective", "sources_note"),
     "targetAudience": ("targetAudience", "audience", "target_audience", "cohort"),
-    "consumerInsight": ("consumerInsight", "insight", "consumer_insight"),
+    "consumerInsight": ("consumerInsight", "insight", "consumer_insight", "consumer_insights"),
     "currentBelief": ("currentBelief", "current_belief", "cb", "shift_from"),
     "desiredBelief": ("desiredBelief", "desired_belief", "db", "shift_to"),
     "smp": ("smp", "proposition", "single_minded_proposition", "bigIdea", "big_idea", "messages"),
@@ -77,6 +90,8 @@ ALIASES: dict[str, tuple[str, ...]] = {
     "needscopeAnalysis": ("needscope",),
     "smpDefence": ("smp_defence",),
     "smpUnlocks": ("smp_unlocks",),
+    "currentSituation": ("currentSituation", "current_situation"),
+    "problemStatement": ("problemStatement", "problem_statement"),
 }
 
 
@@ -207,6 +222,7 @@ def snapshot(b: dict) -> dict:
             "status": str(f.get("status") or "").strip(),
             "origin": origin(b),
             "no_profile": not _has_profile(brand),
+            "brand_mode": b.get("brand_mode") or "grounded",
             "updated": b.get("updated", ""), "created": b.get("created", ""),
             **summary, "fields": dict(summary)}
 
@@ -224,11 +240,19 @@ def _has_profile(brand: str) -> bool:
 
 
 def put(fields: dict, *, brand: str = "", title: str = "", fmt: str = "",
-        source: str = "", brief_id: str = "", project: str = "") -> dict:
+        source: str = "", brief_id: str = "", project: str = "", brand_mode: str = "") -> dict:
     """Save a brief. Upserts on `brief_id`, so re-generating does not litter the store with near-copies.
 
     Called automatically by everything that produces a brief document, which is what makes the store
     fill up on its own. A store that waits for somebody to press Save is empty when it matters.
+
+    `brand_mode` — `"grounded"` or `"general"`, a DECISION someone made, not inferred from whether
+    `brand` happens to be blank. A blank `brand` has always been possible by accident (nothing typed
+    yet); it is not the same fact as "this work is deliberately not tied to a brand," and treating
+    them as one is what let generation downstream silently borrow whichever brand was active for a
+    brief that was never meant to have one. Unset (the default) preserves the prior caller's own value
+    on an edit, or falls to `"grounded"` for a brand-new brief — today's exact behavior, unchanged
+    until a caller actually starts passing `"general"` on purpose.
     """
     fields = fields or {}
     existing = load(brief_id) if brief_id else None
@@ -259,7 +283,8 @@ def put(fields: dict, *, brand: str = "", title: str = "", fmt: str = "",
         b.setdefault("project_source", "named")
     b.update({"brand": brand, "title": title, "format": fmt,
               "source": source or b.get("source", ""),
-              "fields": fields, "canon": canon})
+              "fields": fields, "canon": canon,
+              "brand_mode": brand_mode or b.get("brand_mode") or "grounded"})
     return save(b)
 
 
