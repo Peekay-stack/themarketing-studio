@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: d3a25b08-5f19-478b-bc7e-ff283771328e
-  modified: 2026-09-17T05:00:39.805Z
+  modified: 2026-09-17T06:28:29.982Z
 ---
 
 **File**: `Heritage Marketing Studio/BRAND_GROUNDING_TESTING_LOG.md`, section "New thread — IMC brief
@@ -72,5 +72,27 @@ reduce step combining the now-small per-file summaries into the brief-writing pr
 this way stays roughly constant regardless of file count or file size, rather than growing linearly
 with either — the actual requirement for a 20-file case.
 
-**Status**: design presented, not yet built. Following the same "confirm before big architecture"
-discipline as brand-grounding-modes' own multi-phase build.
+**Status update (17 Sep, same day)**: Phase 1 (ingestion pipeline) BUILT and LIVE-VERIFIED end-to-end,
+not committed to git yet. Full Map→Synthesize→Reduce pipeline in `research_parse.py`:
+`analyze_spreadsheet` (real pandas/scipy groupby/trend/correlation, 5 live bugs found+fixed against the
+real household-panel/Nielsen files, final numbers matched hand-computed values exactly), `analyze_document`
++ `summarize_document` (native pptx/docx/pdf structural extraction — pdfplumber font-size/position
+heuristic for PDF since exports-of-decks have real selectable text but no native structure, scanned pages
+flagged not OCR'd — then one bounded per-file LLM call extracting ≤25 citable findings, tested against
+the real qual deck: all 16 slides correctly titled including the exact slide the old 8000-char cap
+destroyed, with its real scorecard numbers correctly pulled), `synthesize_research` (one cross-file LLM
+call merging corroborating claims with confidence tiers, flagging real disagreement, explicitly listing
+"considered, not used" sources with reasons — tested at 9 real files, correctly merged 5 files into
+shared claims and flagged 2 spreadsheet files as data-integrity artifacts). Both live AI-enrichment call
+sites (`brief_ai.py` draft-time, `brandbrief.py` export-time `enrich_with_ai`) now read one shared
+`research_parse.research_context_block()` instead of each doing independent raw-truncation (the same bug
+existed at BOTH a 16k and a separate 14k cap — found only when tracing the actual live export path,
+`brief_render.generate()` → `brandbrief.enrich_with_ai()`, not just the draft path). The `sources_note`
+contradiction bug is fixed too — set deterministically from real filenames now, not left to the model.
+End-to-end verified via a real authenticated POST to `/brand-brief-draft` with the original 3 dummy
+files: competitive set now correctly includes Vijaya/Jersey (dropped before), SMP/CB-CA visibly grounded
+in the qual deck's actual recommendation, sources_note lists all 3 files correctly. See
+`BRAND_GROUNDING_TESTING_LOG.md`'s "Phase 1 built and live-verified (17 Sep)" section for full detail.
+Phases 2–4 (2a Backgrounder section, 2b CA-CB/insight threading into House, 2c standalone synthesis deck)
+still not started — same "confirm before big architecture" discipline as brand-grounding-modes' own
+multi-phase build applies to those next.

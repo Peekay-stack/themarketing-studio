@@ -1077,3 +1077,72 @@ file size or file count).
 
 Not yet built. Presented for the user's confirmation before implementation, same discipline as every
 other non-trivial design decision this project has made.
+
+### Phase 1 built and live-verified (17 Sep)
+
+User confirmed the corrections above ("find patterns via analytical techniques, don't just summarize
+everything"; "not everything is given equal weightage, some may not be considered at all, while similar
+findings can be merged"), asked for a search of existing MCPs/tools/skills before building custom code
+(search came back empty/inapplicable — MCPs extend what an interactive Claude session can do, not what
+the deployed FastAPI backend can call at runtime), confirmed PDF support is required (decks shared as
+PDF exports over email, not scanned documents), then gave "go ahead."
+
+**Built, in `research_parse.py`, as a real Map → Synthesize → Reduce pipeline:**
+
+- **Map — spreadsheets** (`analyze_spreadsheet`): real pandas/scipy aggregation, not the model eyeballing
+  flattened rows. Generic column classification (time/metric/dimension detected by how a column parses,
+  not by hardcoded names), header-row auto-detection (real workbooks bury the header under a title row),
+  redundant-dimension detection (skips a groupby dimension that's just a relabeling of one already
+  picked), grouped mean/min/max, trend direction via linear regression, and Pearson correlation between
+  metric pairs. Verified against the real household-panel and Nielsen files — 5 real bugs found and
+  fixed live (mixed-dtype crash, wrong header row, duplicate column names, a constant column
+  misclassified as a grouping dimension, a redundant dimension pair) — final numbers matched the
+  hand-computed values from the original investigation exactly.
+- **Map — decks/docs/PDF** (`analyze_document` + `summarize_document`): native structural extraction
+  (python-pptx placeholder/name/position title detection with a live-tested position fallback for decks
+  with zero real PowerPoint placeholders; python-docx heading-based sectioning; a pdfplumber font-size/
+  position heuristic for PDF, since a PDF export of a deck has no native structure to read but does have
+  real selectable text — scanned pages are flagged, not OCR'd, deliberately out of scope), then ONE
+  bounded LLM call per file that sees all section titles up front and extracts only what a marketer would
+  actually cite (findings/quotes/frameworks/recommendations, capped at 25, each tagged to its source
+  section for citation) — explicitly NOT a summary of the whole file. Verified against the real
+  qualitative-research deck: all 16 slides correctly titled including the one the original 8000-char cap
+  destroyed (the brand-equity scorecard), and the extraction correctly pulled its real numbers (Trust
+  78/88, Warmth 84/67, Distinctiveness 61/81, Modern relevance 55/74) plus the Kapferer prism and ladder
+  frameworks.
+- **Synthesize** (`synthesize_research`): one cross-file LLM call over the (already small) per-file Map
+  outputs — merges corroborating findings into one claim with every supporting file listed, keeps genuine
+  disagreements flagged with both sides named rather than silently resolved, ranks by confidence
+  (high/medium/low) rather than treating every finding as equally load-bearing, and explicitly lists
+  sources it reviewed but didn't use with a real reason — never a silent drop. Live-tested at 9 real
+  files (closer to the ~20-file requirement than the original 3): correctly merged 5 files' worth of
+  brand-health-tracker/qual-research findings into shared high-confidence claims, correctly flagged two
+  spreadsheet files as data-integrity artifacts (near-perfect month-to-month correlations, no real
+  signal) under "considered, not used," and its pattern_note caught a subtlety worth noting — the
+  quarterly trackers "repeat near-identical language quarter to quarter," so their agreement is the same
+  thesis restated over time, not independent corroboration — exactly the honesty-over-forced-narrative
+  standard the user set for this whole thread.
+- **Reduce**: rewired both live AI-enrichment call sites that used to each do their own raw-concatenate-
+  and-truncate (`brief_ai.py`'s draft-time call at a 16,000-char combined cap, and `brandbrief.py`'s
+  export-time `enrich_with_ai` at a separate, independent 14,000-char cap — the same bug pattern existed
+  twice) to both read `research_parse.research_context_block()`, the same rendered claims list. Also
+  fixed the `sources_note` bug found in the original investigation (the brief's own "Sources: none
+  attached" contradicting "Per the uploaded market data" two lines later) — `sources_note` was never
+  populated by anything in the pipeline; it's now set deterministically from the actual uploaded
+  filenames in both `brief_ai.py` and `brief_render.py`, not left for the model to self-report.
+
+**End-to-end live verification**: restarted the server, POSTed the real 3 original dummy files (household
+panel, Nielsen share/distribution, qualitative research) to the actual authenticated `/brand-brief-draft`
+endpoint. Result, compared directly against the original defects: `sources_note` correctly lists all 3
+real filenames; the competitive set now includes Vijaya and Jersey (the two real competitors the original
+brief dropped) alongside Amul and a correctly-identified "Others" fragmented-curd block from the Nielsen
+data; CB/CA/DB/DA and the SMP ("Heritage makes the care in your dairy something you can see") are visibly
+grounded in the qual deck's actual recommendation, not generic; real household-panel figures (~0.77
+distribution, ~0.33 penetration) are cited. No server errors. A test brief this run wrote into the live
+tenant store was deleted afterward along with its ledger entry (three earlier, similar test entries from
+the user's own prior A/B testing were left alone, not touched).
+
+**Status**: Phase 1 (ingestion pipeline) built, compile-checked, and live-verified end-to-end through the
+real endpoint — not committed to git yet, pending the user's review. Phases 2–4 (2a Backgrounder section,
+2b CA-CB/insight threading into the House layer, 2c standalone synthesis deck) remain as designed above,
+not started.
