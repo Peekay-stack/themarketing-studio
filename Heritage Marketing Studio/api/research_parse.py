@@ -883,34 +883,60 @@ def synthesize_research(file_results: list[dict], *, focus: str = "") -> dict:
 # ingestion pipeline, not two that can drift out of sync.
 # ---------------------------------------------------------------------------------------------------
 
+def _map_one_file(p: str, focus: str) -> dict:
+    """One file's whole Map step — structural extraction, then (for decks) the bounded LLM extraction
+    call. Split out of ingest_for_brief() so it can run in a worker thread: each call is independent
+    (its own local parse, its own fresh anthropic.Anthropic() client inside ask_json — no shared mutable
+    state), so N files in parallel is safe, not just faster.
+
+    Wrapped in one blanket try/except: running under ThreadPoolExecutor.map(), an uncaught exception
+    here would surface when the results are consumed and abort the WHOLE batch for every other file,
+    not just this one — worse under concurrency than the old sequential loop, where at least the files
+    before the crash had already been appended. One bad file must degrade to an error entry, never take
+    the others down with it.
+    """
+    try:
+        try:
+            analyzed = analyze_upload(p)
+        except Exception as e:
+            return {"filename": os.path.basename(p), "kind": "error", "findings": [],
+                    "why": f"{type(e).__name__}: {e}"}
+        if analyzed.get("kind") == "deck":
+            return summarize_document(analyzed, focus=focus)
+        if analyzed.get("kind") == "data":
+            return analyzed
+        # unsupported/plain-text fallback — analyze_upload's own fallback shape ({kind:"text",
+        # content:str}); give Synthesize something to at least name and skip cleanly.
+        text = str(analyzed.get("content") or "")[:PER_FILE_CHARS]
+        return {"filename": analyzed.get("filename", os.path.basename(p)),
+                "findings": ([{"claim": text[:280], "kind": "finding", "source_idx": 1,
+                              "source_label": "(plain text)", "verbatim": False}] if text.strip() else []),
+                "coverage_note": "" if text.strip() else "no extractable text"}
+    except Exception as e:
+        return {"filename": os.path.basename(p), "kind": "error", "findings": [],
+                "why": f"unexpected failure processing this file: {type(e).__name__}: {e}"}
+
+
 def ingest_for_brief(paths: list[str], *, focus: str = "") -> dict:
     """Run Map (per-file analysis/extraction) then Synthesize (cross-file merge/dissent) over every
     uploaded file for one brief. Returns {"filenames": [...], "synth": {claims, considered_not_used,
     pattern_note}, "file_results": [...]} — `file_results` is kept for callers that also want the raw
     per-file spreadsheet aggregates (e.g. for a verbatim market-data table), `synth` is what the
-    brief-writing prompts should actually read."""
+    brief-writing prompts should actually read.
+
+    Map runs one worker thread per file (capped) rather than sequentially — a real production 524
+    (Cloudflare's proxy timing out waiting for the origin) surfaced this: 5 decks meant 5 sequential
+    bounded LLM calls plus Synthesize plus the draft call itself, comfortably past the ~100s a proxy
+    will wait. Running the independent per-file calls concurrently turns that from "sum of every file's
+    call" into "the slowest single file's call," which is the only lever available here short of making
+    the whole route asynchronous (poll-for-result) — a bigger change than this bug needed.
+    """
     filenames = [os.path.basename(p) for p in paths]
-    file_results = []
-    for p in paths:
-        try:
-            analyzed = analyze_upload(p)
-        except Exception as e:
-            file_results.append({"filename": os.path.basename(p), "kind": "error",
-                                 "findings": [], "why": f"{type(e).__name__}: {e}"})
-            continue
-        if analyzed.get("kind") == "deck":
-            file_results.append(summarize_document(analyzed, focus=focus))
-        elif analyzed.get("kind") == "data":
-            file_results.append(analyzed)
-        else:
-            # unsupported/plain-text fallback — analyze_upload's own fallback shape ({kind:"text",
-            # content:str}); give Synthesize something to at least name and skip cleanly.
-            text = str(analyzed.get("content") or "")[:PER_FILE_CHARS]
-            file_results.append({"filename": analyzed.get("filename", os.path.basename(p)),
-                                 "findings": ([{"claim": text[:280], "kind": "finding", "source_idx": 1,
-                                               "source_label": "(plain text)", "verbatim": False}]
-                                              if text.strip() else []),
-                                 "coverage_note": "" if text.strip() else "no extractable text"})
+    if not paths:
+        return {"filenames": filenames, "synth": synthesize_research([], focus=focus), "file_results": []}
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(max_workers=min(8, len(paths))) as pool:
+        file_results = list(pool.map(lambda p: _map_one_file(p, focus), paths))
     synth = synthesize_research(file_results, focus=focus)
     return {"filenames": filenames, "synth": synth, "file_results": file_results}
 
