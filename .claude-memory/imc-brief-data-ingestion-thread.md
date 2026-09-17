@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: d3a25b08-5f19-478b-bc7e-ff283771328e
-  modified: 2026-09-17T12:32:23.624Z
+  modified: 2026-09-17T13:35:29.593Z
 ---
 
 **File**: `Heritage Marketing Studio/BRAND_GROUNDING_TESTING_LOG.md`, section "New thread — IMC brief
@@ -235,5 +235,6 @@ request and found the diagnostic print never appeared anywhere — root cause, t
 print()-based log added today was potentially silently useless in production. Fixed (`ENV
 PYTHONUNBUFFERED=1`). Also found and fixed a real instruction gap: the competitors field never told the
 model to cite real figures verbatim (the backgrounder does) — natural model variance, not a malfunction,
-but fixed for consistency. Both deployed. Next real run should finally surface the actual
-`enrich_with_ai()` exception for a real root-cause fix.
+but fixed for consistency. Both deployed — confirmed live via Render (finished 2026-09-17T12:35:28Z). User is picking testing back
+up tomorrow with feedback; next real export failure (if it recurs) should finally surface its actual
+exception in the logs, since the buffering gap that was hiding it is now fixed.

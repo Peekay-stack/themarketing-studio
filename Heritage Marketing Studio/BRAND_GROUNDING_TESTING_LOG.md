@@ -1515,5 +1515,7 @@ cite real figures verbatim, same discipline as the backgrounder. Both deployed; 
 export failure (if it recurs) should now show its actual exception in the logs, letting the true root
 cause of `enrich_with_ai()`'s failure finally be fixed rather than continuing to guess at it.
 
-**Status**: Committed and deployed. Re-diagnosing the real `enrich_with_ai()` root cause is the
-immediate next step once logging is confirmed working.
+**Status**: Committed and deployed — confirmed live via Render (dep-daltruvqj5pc73eae1jg, finished
+2026-09-17T12:35:28Z). Re-diagnosing the real `enrich_with_ai()` root cause is the immediate next step
+once the user runs another real export and the (now-fixed) logging actually captures the exception.
+User is picking testing back up tomorrow.
