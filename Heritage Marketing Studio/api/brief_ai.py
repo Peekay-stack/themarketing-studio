@@ -73,7 +73,15 @@ present, and sensibly inferred (and later flagged in caveats) where the inputs a
                                            // caught with a well-reasoned but entirely un-numbered
                                            // competitor table on a run where real per-competitor figures
                                            // WERE in the uploaded research — don't leave them on the table.
-    { "name": string, "hero_brands": string, "positioning": string, "recent_moves": string }
+    { "name": string, "hero_brands": string, "positioning": string, "recent_moves": string,
+      "latest_metric": string   // ONE short line: this competitor's latest market-share OR household-
+                                 // penetration reading and its move vs the same period last year,
+                                 // copied VERBATIM from the LATEST METRICS BY BRAND block below (that
+                                 // block is computed by code, not by you — never compute or estimate
+                                 // this figure yourself). E.g. "Value Share 18.2% in Sep 2026, +1.4 pts
+                                 // vs Sep 2025." If this competitor's name is not in that block, write
+                                 // exactly "Not in the attached market/panel data."
+    }
   ],
   "needscope": {
     "pins": [                             // one per brand: the focal brand AND every competitor
@@ -128,6 +136,7 @@ def _payload_context(base: dict, research: dict | None) -> str:
     # Now reads research_parse's Map→Synthesize output: a short, cross-file-merged claims list with
     # confidence and citations, not a dump of the source text. See research_context_block()'s docstring.
     import research_parse
+    latest_metrics = research_parse.latest_metrics_block((research or {}).get("file_results") or [])
     research = research_parse.research_context_block(research)
     # General-mode work (deliberately not tied to a brand — see BRAND_GROUNDING_MODES_PLAN.md) must
     # not fall into "(infer from the ask)" here: that instruction is exactly what produced the
@@ -154,6 +163,8 @@ def _payload_context(base: dict, research: dict | None) -> str:
     if research:
         # research_context_block() already carries its own "RESEARCH FINDINGS ..." header.
         lines += ["", research]
+    if latest_metrics:
+        lines += ["", latest_metrics]
     lines += ["", "Any attached images are NeedScope charts or CB/CA diagrams — read their brand "
               "positions as ground truth and reproduce them on the wheel."]
     return "\n".join(lines)

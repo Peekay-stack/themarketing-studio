@@ -23,6 +23,26 @@ def _rgb(hexcol: str):
     return RGBColor.from_string(hexcol)
 
 
+_FOOTER_MARK = os.path.join(os.path.dirname(__file__), "frontend", "assets", "tms-footer-mark.png")
+
+
+def _add_slide_footer(slide):
+    """The Marketing Studio's own mark + URL, bottom-left of every slide — this deck leaves the portal
+    and gets circulated on its own. Same asset and quiet treatment as the docx footers
+    (brief_render.py/docs.py's `_add_footer`) so every export the product produces reads as one family."""
+    from pptx.util import Inches, Pt
+    if os.path.exists(_FOOTER_MARK):
+        try:
+            slide.shapes.add_picture(_FOOTER_MARK, Inches(0.4), Inches(7.05), height=Inches(0.16))
+        except Exception:
+            pass
+    box = slide.shapes.add_textbox(Inches(0.78), Inches(7.02), Inches(3.0), Inches(0.3))
+    r = box.text_frame.paragraphs[0].add_run()
+    r.text = "themarketing-studio.com"
+    r.font.size = Pt(9)
+    r.font.color.rgb = _rgb(_GREY)
+
+
 def _title_slide(prs, title: str, subtitle: str):
     from pptx.util import Pt
     slide = prs.slides.add_slide(prs.slide_layouts[0])
@@ -35,6 +55,7 @@ def _title_slide(prs, title: str, subtitle: str):
         for p in sub.text_frame.paragraphs:
             p.font.size = Pt(13)
             p.font.color.rgb = _rgb(_GREY)
+    _add_slide_footer(slide)
 
 
 def _new_slide(prs, title: str, title_color: str = _INK):
@@ -45,6 +66,7 @@ def _new_slide(prs, title: str, title_color: str = _INK):
     tf.paragraphs[0].font.size = Pt(24)
     tf.paragraphs[0].font.color.rgb = _rgb(title_color)
     tf.word_wrap = True
+    _add_slide_footer(slide)
     return slide
 
 

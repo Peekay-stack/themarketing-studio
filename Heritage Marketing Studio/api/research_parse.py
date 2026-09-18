@@ -324,6 +324,97 @@ def _pick_group_dims(df, dims: list[str], k: int = MAX_GROUP_DIMS) -> list[str]:
     return picked
 
 
+def _yoy_latest(df, time_col: str, group_dims: list[str], metrics: list[str]) -> list[dict]:
+    """The latest reading per group/metric, and the real value from ~12 months earlier — computed with
+    code, not left for the model to eyeball off a trend list. This is what feeds the brief's Competitor
+    Snapshot table's "latest share / HH penetration (vs last year)" column: a live user (17-18 Sep) asked
+    for that comparison by name, and the same mistake this whole module exists to prevent (a model
+    asked to compute a range from flattened rows, verified against the real files, came out visibly off)
+    applies just as much to a year-over-year delta as to a mean.
+
+    Deliberately conservative: a group with no real point within 45 days of "latest minus one year"
+    contributes nothing rather than borrowing a nearer point and mislabeling it a year-over-year read —
+    a monthly series with under ~13 months of history (this pipeline's own dummy test data starts at
+    exactly 24 months) will legitimately produce no rows here for its first year, and that is correct.
+    """
+    import pandas as pd
+
+    out: list[dict] = []
+    if not (time_col and group_dims and metrics):
+        return out
+    df = df.dropna(subset=[time_col]).sort_values(time_col)
+    if df.empty:
+        return out
+    # A metric named "...%" whose values all sit in [-1.5, 1.5] is the common "0.22 means 22%" convention
+    # (confirmed in the real Nielsen/HH-panel test files: Heritage's own AP value share is stored as
+    # 0.221987, not 22.1987) — scale it to real percentage points here, once per metric, so every number
+    # this function ever returns already reads the way a person would recognize "22.4%," not "0.22%"
+    # with a misleading literal percent sign bolted onto an unscaled fraction.
+    scale = {}
+    for m in metrics:
+        if "%" not in str(m):
+            scale[m] = 1.0
+            continue
+        vals = pd.to_numeric(df[m], errors="coerce").dropna()
+        scale[m] = 100.0 if (not vals.empty and vals.abs().max() <= 1.5) else 1.0
+    for key, sub in df.groupby(group_dims, dropna=True):
+        key_t = key if isinstance(key, tuple) else (key,)
+        sub = sub.sort_values(time_col)
+        latest_date = sub[time_col].max()
+        latest_row = sub[sub[time_col] == latest_date]
+        target = latest_date - pd.DateOffset(years=1)
+        candidates = sub[(sub[time_col] - target).abs() <= pd.Timedelta(days=45)]
+        if candidates.empty:
+            continue
+        prior_date = candidates.loc[(candidates[time_col] - target).abs().idxmin(), time_col]
+        prior_row = sub[sub[time_col] == prior_date]
+        for m in metrics:
+            lv = pd.to_numeric(latest_row[m], errors="coerce").dropna()
+            pv = pd.to_numeric(prior_row[m], errors="coerce").dropna()
+            if lv.empty or pv.empty:
+                continue
+            lval, pval = float(lv.mean()) * scale[m], float(pv.mean()) * scale[m]
+            out.append({**dict(zip(group_dims, (str(k) for k in key_t))), "metric": m,
+                        "latest_period": str(latest_date.date()), "latest": round(lval, 2),
+                        "year_ago_period": str(prior_date.date()), "year_ago": round(pval, 2),
+                        "delta": round(lval - pval, 2)})
+    return out
+
+
+def latest_metrics_block(file_results: list[dict]) -> str:
+    """A complete "latest reading vs the same period last year" table across every uploaded spreadsheet's
+    grouping dimensions (typically Company/brand) — read straight from the Map phase's raw per-sheet
+    `yoy` data (see `_yoy_latest`), not through Synthesize's cross-file summarization. `synthesize_research`
+    is deliberately lossy (it merges/ranks/caps for a readable narrative), which is right for the
+    backgrounder's prose but wrong for a table that names every competitor: capping to a handful of
+    highlight bullets would silently drop some competitors' numbers, indistinguishable from "not in the
+    data" when it was really "not one of the few bullets synthesis kept." This function has no cap — every
+    group/metric `_yoy_latest` computed is included, so the brief's per-competitor field can be honest
+    about the difference between "not measured" and "measured but not surfaced."
+    """
+    lines = []
+    for r in (file_results or []):
+        if not isinstance(r, dict) or r.get("kind") != "data":
+            continue
+        fname = r.get("filename", "?")
+        for sheet in (r.get("sheets") or []):
+            for y in (sheet.get("yoy") or []):
+                dims_label = ", ".join(f"{k}={v}" for k, v in y.items()
+                                        if k not in ("metric", "latest", "latest_period", "year_ago",
+                                                      "year_ago_period", "delta"))
+                sign = "+" if y["delta"] >= 0 else ""
+                lines.append(f"[{fname} / {sheet.get('name')}] {dims_label} — {y['metric']}: "
+                             f"{y['latest']:g}% in {y['latest_period']} vs {y['year_ago']:g}% in "
+                             f"{y['year_ago_period']} ({sign}{y['delta']:g} pts)")
+    if not lines:
+        return ""
+    return ("LATEST METRICS BY BRAND (computed directly from the uploaded spreadsheets, verbatim — use "
+            "these, not the synthesized findings above, for any per-competitor market-share or household-"
+            "penetration figure and its year-over-year movement; if a competitor you are naming does not "
+            "appear here, say plainly that no such figure was in the attached data rather than estimating "
+            "one):\n" + "\n".join(f"- {l}" for l in lines))
+
+
 def _analyze_one_sheet(name: str, df) -> dict:
     import pandas as pd
 
@@ -390,6 +481,7 @@ def _analyze_one_sheet(name: str, df) -> dict:
                 if len(trend) >= MAX_AGG_ROWS:
                     break
     entry["trend"] = trend
+    entry["yoy"] = _yoy_latest(df, time_col, group_dims, metrics) if time_col else []
 
     correlations = []
     if len(metrics) >= 2:

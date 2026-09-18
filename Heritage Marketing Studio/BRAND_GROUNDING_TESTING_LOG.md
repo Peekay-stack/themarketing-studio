@@ -1519,3 +1519,72 @@ cause of `enrich_with_ai()`'s failure finally be fixed rather than continuing to
 2026-09-17T12:35:28Z). Re-diagnosing the real `enrich_with_ai()` root cause is the immediate next step
 once the user runs another real export and the (now-fixed) logging actually captures the exception.
 User is picking testing back up tomorrow.
+
+### Competitor table: latest share/HH-penetration column + document footers across all exports (18 Sep)
+
+User sent two more real files (`Heritage_Foods_IMC_Brief (7).docx`, `Heritage_Foods_Research_Synthesis
+(2).pptx`) — "much better now" / "almost there" — with two asks, both explicitly gated behind "tell me
+before you build anything": (1) add Market share / HH panel to the Competitor Snapshot table, and (2) a
+footer (TMS logo + themarketing-studio.com) on every exported document (brief, synthesis deck, house,
+idea platform, plan, PR release). Traced the real export code before answering: confirmed both are
+feasible, confirmed PR release has **no** `.docx`/`.pptx` export today (nothing to put a footer on), and
+confirmed `brief_render.py` — not the `build_brief_docx.js` Node path, which turned out to be a dead/
+superseded builder from before the pure-Python rewrite — is what actually produces the live document.
+Asked two scoped questions: user chose to skip PR release for this pass (no export exists to attach a
+footer to), and replaced the two-column idea with one merged column: "latest market share/HH penetration
+(+/- vs last year same period)."
+
+**Verified the exact comparison was computable before building it**: read the real Nielsen/household-panel
+test files directly with pandas — monthly grain, Oct 2024 through Sep 2026 (24 months), same
+Month/Category/Company shape `analyze_spreadsheet()` already parses. Real year-over-year, same-calendar-
+month data exists, so this could be a genuine deterministic computation, not the model eyeballing a
+delta — same discipline as every other number in this pipeline.
+
+**Built**: `research_parse._yoy_latest()` — for each group (brand) × metric, finds the latest data point
+and the real point within 45 days of exactly one year earlier; contributes nothing for a group/metric
+that has no real year-ago point, rather than fake a YoY read off a nearer one. `research_parse.
+latest_metrics_block()` — a complete, **uncapped** table of every computed YoY reading, read straight from
+the Map phase's raw per-file data rather than through `synthesize_research()`'s lossy cross-file
+summarization; the existing Synthesize layer caps/merges for a readable narrative, which is right for the
+backgrounder's prose but wrong here — capping would silently drop some competitors' numbers,
+indistinguishable from "not in the data." Wired as its own labeled block into `brief_ai._payload_context()`,
+separate from the existing `RESEARCH FINDINGS` block. `_OUTPUT_CONTRACT`'s competitor object gained
+`latest_metric`: instructed to copy the figure verbatim from that block, or say plainly "Not in the
+attached market/panel data" — never compute or estimate it. `brief_render.py`'s competitor table gained
+the column, plus a `w:cantSplit` fix (`_no_split()`) on every row — the screenshot showed a row splitting
+across a page boundary, worse once a 5th column made rows taller.
+
+**A real bug found and fixed before it ever reached the user**: the first version of `latest_metrics_block()`
+printed the Nielsen/household files' share values with a bare `%` appended straight onto the stored
+fraction — Heritage's real ~22% AP share came out as "0.2248%", a 100x error, because the source files
+store share as 0.221987 rather than 22.1987 despite the column being named "Value Share %". Caught by
+reading the actual function output before wiring it anywhere near a live draft call. Fixed with a
+per-metric scale detection in `_yoy_latest()` (a "...%"-named metric whose values all sit in [-1.5, 1.5]
+is the fraction convention — scale it to real percentage points once, so every number this function
+returns already reads correctly). Re-verified after the fix: Heritage's real AP milk value share came
+back "22.48% in 2026-09-01 vs 22.2% in 2025-10-01 (+0.29 pts)" — matches the hand-checked raw data.
+
+**Footers**: generated one shared PNG mark (`frontend/assets/tms-footer-mark.png`) by rasterizing the
+existing `logo-stacked-notagline.svg` (the product's own mark, already used in the app's own header/
+footer — not a client brand's logo) via a canvas conversion in the browser pane, since no SVG-to-raster
+tool was available locally (cairosvg is installed but its native cairo library isn't present on this
+Windows dev machine — works fine in the Docker deploy, but the asset only needs generating once, so a
+static PNG committed to the repo is simpler and lower-risk than converting at request time either way).
+Added `_add_footer()` to `brief_render.py` (the real brief path) and, separately, to `docs.py`'s shared
+`_new_doc()` — which every one of that module's builders already funnels through, so messaging house, idea
+platform, comm plan, the guided brief, production bible, call sheet and script all got the footer in one
+change, not six. Added the pptx equivalent (`_add_slide_footer()`) to `synthesis_render.py`, called from
+both `_title_slide()` and `_new_slide()` so every slide in the synthesis deck carries it.
+
+**Live-verified end to end** with a real authenticated session (a locally-minted test `SessionRow`, cleaned
+up after) and the real Nielsen/household-panel/qualitative-deck file trio: `/research-ingest` computed
+560 real YoY rows; `/brand-brief-draft` came back with real, distinctly-different competitor figures
+(e.g. "Dodla | Milk Value Share 11.01% in AP in Sep 2026, +1.92 pts vs Sep 2025; Telangana milk 11.17%,
++0.33 pts"); the actual exported `.docx` (`/brand-brief`) has the new 5th column with that real content,
+`w:cantSplit` set on all 6 competitor rows, and the footer mark + URL present in `section.footer`; the
+synthesis `.pptx` (`/research-synthesis-deck`) has the footer on all 7 slides; a real existing house's
+`.docx` (`/house-docx/{id}`) confirmed the shared `docs.py` footer path too. No server errors. Test brief,
+ledger entry, and session cleaned up afterward.
+
+**Status**: Committed and deployed. PR release still has no export to add a footer to — out of scope for
+this pass per the user's own choice, revisit if/when a PR-release export gets built.

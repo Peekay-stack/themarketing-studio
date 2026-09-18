@@ -297,7 +297,17 @@ def _para_hr_borders(p, color=_GREEN):
     pPr.append(pbdr)
 
 
-def _table(doc, rows):
+def _no_split(row):
+    """Set w:cantSplit on a table row so Word keeps it on one page rather than breaking it across a
+    page boundary — the fix for a real live-tested case (a Competitor Snapshot row split mid-cell, its
+    last column orphaned onto the next page). python-docx has no first-class API for this; it's one
+    OOXML element on the row's own properties."""
+    from docx.oxml import OxmlElement
+    trPr = row._tr.get_or_add_trPr()
+    trPr.append(OxmlElement("w:cantSplit"))
+
+
+def _table(doc, rows, *, no_split: bool = False):
     from docx.shared import Pt
     t = doc.add_table(rows=1, cols=len(rows[0]))
     try:
@@ -318,7 +328,34 @@ def _table(doc, rows):
             for para in cells[j].paragraphs:
                 for run in para.runs:
                     run.font.size = Pt(9)
+    if no_split:
+        for row in t.rows:
+            _no_split(row)
     return t
+
+
+_FOOTER_MARK = os.path.join(os.path.dirname(__file__), "frontend", "assets", "tms-footer-mark.png")
+
+
+def _add_footer(doc):
+    """The Marketing Studio's own mark + URL on every page — this document leaves the portal and gets
+    circulated on its own, so it should say where it came from without anyone having to ask. Small and
+    quiet on purpose: a footer competing with the brand's own brief for attention would be the wrong
+    call for a white-label deliverable."""
+    from docx.enum.text import WD_ALIGN_PARAGRAPH
+    from docx.shared import Inches, Pt, RGBColor
+    footer = doc.sections[0].footer
+    p = footer.paragraphs[0] if footer.paragraphs else footer.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    if os.path.exists(_FOOTER_MARK):
+        run = p.add_run()
+        try:
+            run.add_picture(_FOOTER_MARK, width=Inches(0.55))
+        except Exception:
+            pass
+    r = p.add_run("   themarketing-studio.com")
+    r.font.size = Pt(8)
+    r.font.color.rgb = RGBColor.from_string("999999")
 
 
 def _picture(doc, path, width_in):
@@ -337,6 +374,7 @@ def build_docx(brief: dict, out_path: str):
     doc = Document()
     normal = doc.styles["Normal"]
     normal.font.name = "Arial"; normal.font.size = Pt(11)
+    _add_footer(doc)
 
     # Title block
     t = doc.add_paragraph()
@@ -382,11 +420,13 @@ def build_docx(brief: dict, out_path: str):
 
     # 3. Competitor snapshot
     _heading(doc, "3. Competitor Snapshot", 1, "2A2A2A")
-    comp_rows = [["Competitor", "Hero brands", "Positioning in one line", "Recent strategic moves"]]
+    comp_rows = [["Competitor", "Hero brands", "Positioning in one line", "Recent strategic moves",
+                  "Latest share / HH penetration (vs LY)"]]
     for c in brief.get("competitors", []) or []:
         comp_rows.append([c.get("name", ""), c.get("hero_brands", ""),
-                          c.get("positioning", ""), c.get("recent_moves", "")])
-    _table(doc, comp_rows)
+                          c.get("positioning", ""), c.get("recent_moves", ""),
+                          c.get("latest_metric") or "Not in the attached market/panel data"])
+    _table(doc, comp_rows, no_split=True)
 
     # 4. Messaging comparison matrix
     _heading(doc, "4. Messaging Comparison Matrix", 1, "2A2A2A")
