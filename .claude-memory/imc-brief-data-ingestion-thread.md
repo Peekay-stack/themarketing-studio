@@ -271,3 +271,33 @@ in a live draft, the actual exported brief docx has the column + cantSplit + foo
 has the footer on all 7 slides, an existing house's docx confirmed the shared footer path too. No server
 errors; test brief/session cleaned up. Committed and deployed. PR-release footer remains open (no export
 exists yet) -- the user's own choice, not a gap.
+
+
+**Round: footer feedback (logo alone, bigger) + the real enrich_with_ai() root cause found (18 Sep,
+later).** User tested the footer live: logo + separate "themarketing-studio.com" caption crowded
+together since the mark already renders "the marketing studio" in its own lockup. Fixed in all three
+footer helpers -- dropped the text run, widened the docx logo 0.55in->0.9in and the pptx logo
+0.16in->0.28in tall. Live-verified via the real OOXML <a:ext> values on a re-fetched house docx and a
+fresh brief export.
+
+User also sent two more real files for a full quality check -- both genuinely excellent: the synthesis
+deck's cross-source read is honest and well-differentiated, and the brief's new competitor column shows
+real, distinct per-brand figures (including a correct "Not in the attached market/panel data" for Milky
+Mist, a brand the model knows but that isn't in this dataset). But the SAME enrich_with_ai() failure
+recurred despite yesterday's PYTHONUNBUFFERED fix being confirmed deployed well before this request --
+pulled the exact Render request log and found zero trace of the diagnostic print, meaning yesterday's
+fix genuinely didn't cover the real path.
+
+**Root cause finally found by reading the function line by line**: enrich_with_ai() has TWO failure
+paths. Yesterday's fix covered the `except Exception` path (a raised error). But `jsonout.extract(raw)`
+returning `(None, "error string")` is a NORMAL return, not an exception -- the code right after it was
+`return data if data is not None else {}`, silently discarding the error and returning an empty dict,
+never touching the except clause at all. This is exactly the shape of the original bug, just one level
+deeper than where the first fix looked. Also raised max_tokens 3200->4500 -- this contract's own old
+comment says it was sized "before the backgrounder existed," and the same token-too-small-for-a-grown-
+contract bug was already found and fixed twice in this file's own siblings. Fixed both: logged the
+extract() failure case with its real error string, raised the budget. Live-verified with a real
+ingest->draft->export round-trip (clean, no enrichment-failure caveat -- cannot force-reproduce the
+original truncation on demand, but confirms no regression). Committed and deployed. This genuinely
+closes the open item from yesterday -- the next real failure, whichever of the two paths, will now say
+why.
