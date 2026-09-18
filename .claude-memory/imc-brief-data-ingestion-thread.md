@@ -325,3 +325,15 @@ knowledge on the brand profile, same shape as Brand Core, so real category facts
 distinction feed every future brief automatically instead of being re-explained each session) -- scoped
 in conversation (small backend field + a simple UI panel + wiring into 2 prompt-builders, comparable in
 size to Brand Core), user said hold for later.
+
+
+**18 Sep, session close-out.** Three real product fixes shipped and confirmed live today, each
+live-verified with real files before deploy: (1) competitor-table latest-share/HH-penetration column +
+document footers, (2) footer redesign (logo-only, bigger) + the genuine enrich_with_ai() root cause
+(a second silent-failure path in jsonout.extract(), not just the buffering fix from 17 Sep), (3) SMP
+Defence's one-row-per-competitor fix. All three deploys confirmed live via Render (last:
+dep-damjk80u01pc7390ge1g, finished 2026-09-18T13:20:26Z). Everything committed and pushed, nothing
+outstanding uncommitted. Next open items, in rough priority: the deliberately-deferred "competitor
+notes" feature (persistent per-competitor knowledge, Brand-Core-shaped); PR-release export + footer
+(no export exists yet); untested at the ~20-file ingestion design target; PPTX/DOCX-native-shape chart
+rendering (needs LibreOffice + a bigger Render instance). No open bugs known as of this close-out.
