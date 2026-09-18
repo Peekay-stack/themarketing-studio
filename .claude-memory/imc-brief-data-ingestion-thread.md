@@ -301,3 +301,27 @@ ingest->draft->export round-trip (clean, no enrichment-failure caveat -- cannot 
 original truncation on demand, but confirms no regression). Committed and deployed. This genuinely
 closes the open item from yesterday -- the next real failure, whichever of the two paths, will now say
 why.
+
+
+**Round: Hatsun/Arokya "duplication" found and ruled not-a-bug; SMP Defence split fixed (18 Sep, later
+still).** Two more real files reviewed -- both footer and enrich_with_ai() fixes confirmed working live.
+Found what looked like a real bug: competitor table listed "Hatsun (Arokya)" and "Arokya" as two rows,
+Arokya's own description naming itself as part of Hatsun -- traced to the Nielsen file genuinely
+labeling them as two separate Company rows, carried straight into the competitor list, while the model's
+own SMP Defence section had already merged them back into one line on its own. Flagged to the user with
+a recommended consolidation fix before building anything.
+
+User's call: NOT a bug. Real category knowledge -- Hatsun and Arokya share retail-channel overlap but are
+genuinely distinct consumer brands (Arokya: Indian-village imagery, name means "health"; Hatsun: more
+international/Swiss-village, aspirational). Splitting them in the competitor table and messaging matrix
+is correct. The one real inconsistency was SMP Defence still merging them -- fixed with a one-line
+instruction change (`brief_ai.py`'s `_OUTPUT_CONTRACT`: "one row per NAMED entry... even when two share
+a parent company... never fold two competitors into one combined row"). Live-verified with a real draft
+call naming both explicitly: they now get two separate, individually-argued defence rows. Committed and
+deployed.
+
+Also surfaced and deliberately deferred: a "competitor notes" feature (persistent per-competitor
+knowledge on the brand profile, same shape as Brand Core, so real category facts like this Hatsun/Arokya
+distinction feed every future brief automatically instead of being re-explained each session) -- scoped
+in conversation (small backend field + a simple UI panel + wiring into 2 prompt-builders, comparable in
+size to Brand Core), user said hold for later.

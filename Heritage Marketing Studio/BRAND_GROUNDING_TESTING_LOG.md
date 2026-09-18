@@ -1649,3 +1649,37 @@ output (cannot force-reproduce the original truncation on demand, but this confi
 gives one more clean data point at the new size). Committed and deployed. If `enrich_with_ai()` ever
 fails again, the logs will now say exactly which of the two paths it took and why — genuinely closing
 this open item, not just moving the visibility gap somewhere else.
+
+
+### Quality check on two more real files; a real Hatsun/Arokya duplication found, then ruled not-a-bug (18 Sep, later)
+
+Both the footer fix and the enrich_with_ai() fix confirmed working on the user's next real run: clean
+footer (logo only, no crowding), no "structural defaults" caveat this time. Read both attached files in
+full. Synthesis deck: no issues, same quality bar as before, and independently caught the same AP/
+Telangana-vs-wider-geography tension its own earlier run had found. Brief: the competitor column keeps
+working correctly -- real distinct figures per competitor, Milky Mist honestly flagged as "not in the
+attached data" again.
+
+**One real finding**: the competitor table listed "Hatsun (Arokya)" AND "Arokya" as two separate rows --
+Arokya's own row description read "Hatsun's mass-freshness milk workhorse," i.e. describing itself as
+part of the row right above it. Traced to the source data: the Nielsen file's Company column genuinely
+labels "Hatsun" and "Arokya" as two separate rows, and the brief-drafting step carried both straight into
+the competitor list without reconciling them -- while the model's own SMP Defence section had ALREADY
+merged them back into one "Hatsun / Arokya" line, proving it recognized they were related even as the
+competitor list kept them apart. Flagged to the user with a recommended fix (consolidate) before building
+anything.
+
+**User's call: not a bug -- a real, informed brand distinction.** Hatsun and Arokya share retail-channel
+overlap (both stocked in the same outlets) but read as genuinely different brands to a consumer: Arokya
+carries Indian-village, health-rooted imagery (the name itself means "health"); Hatsun carries a more
+international, Swiss-village-styled, aspirational brand world. Splitting them in the Competitor Snapshot
+and Messaging Matrix is correct, not a duplication bug -- no fix needed there. This did leave one real
+inconsistency, though: SMP Defence was still merging them into one row while every other section treated
+them as distinct. **Fixed**: brief_ai.py's _OUTPUT_CONTRACT now instructs smp_defence to give "exactly
+one row per NAMED entry in competitors... even when two share a parent company... if they read as
+distinct brands to the consumer... never fold two competitors into one combined row." Live-verified with
+a real draft call that explicitly named Hatsun and Arokya: both appeared as separate competitors (as
+before) and now got two separate, individually-argued SMP Defence rows (not the old merged line).
+Committed and deployed. The persistent "competitor notes" idea (capturing this kind of standing brand
+knowledge once so it feeds every future brief automatically, rather than being re-explained per session)
+was discussed and explicitly held for later at the user's request -- not built this round.

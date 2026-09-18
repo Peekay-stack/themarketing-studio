@@ -103,7 +103,11 @@ present, and sensibly inferred (and later flagged in caveats) where the inputs a
     "caption": string                     // one sentence: layer desired ON TOP of current, never replace
   },
   "smp": string,                          // ONE sentence, <=14 words, ends in a full stop
-  "smp_defence": [                        // one row per direct competitor
+  "smp_defence": [                        // exactly one row per NAMED entry in "competitors" above —
+                                           // even when two share a parent company (e.g. Hatsun/Arokya),
+                                           // give each its own row if they read as distinct brands to
+                                           // the consumer (different imagery, naming, positioning).
+                                           // Never fold two competitors into one combined row.
     { "competitor": string, "why_collapses": string }
   ],
   "smp_unlocks": {
