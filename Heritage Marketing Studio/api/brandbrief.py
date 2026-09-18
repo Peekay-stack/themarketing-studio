@@ -331,14 +331,28 @@ def enrich_with_ai(payload: dict, research: dict | None) -> dict | None:
         client = anthropic.Anthropic()
         resp = client.messages.create(
             model=os.environ.get("GEN_MODEL", "claude-opus-4-8"),
-            # Was 2000 before the backgrounder existed; that field alone adds a paragraph plus a 3-5 item
-            # list on top of everything already being asked for.
-            max_tokens=3200, messages=[{"role": "user", "content": prompt}],
+            # Was 2000 before the backgrounder existed, then 3200. Still too small: a real 18 Sep export
+            # produced the exact same "structural defaults" caveat as before with ZERO trace in the logs
+            # even after the print-visibility fix below — traced to a SECOND silent-failure path this
+            # function had (see the jsonout.extract() call just below) rather than a buffering problem.
+            # This contract asks for a lot inside one JSON object (a 2-paragraph exec summary, the whole
+            # backgrounder incl. a 3-5 item list, needscope reading/implication, 4-field snapshots, 3
+            # opportunities/threats rows, recommendations with up to 8 bullets, 2 quotes, caveats) — the
+            # same shape of bug already found and fixed twice in this file's siblings
+            # (synthesize_research 4000→7000, summarize_document 1800→3200). Sized up with real headroom.
+            max_tokens=4500, messages=[{"role": "user", "content": prompt}],
         )
         raw = "".join(b.text for b in resp.content if getattr(b, "type", None) == "text").strip()
         raw = raw[raw.find("{"): raw.rfind("}") + 1]
-        data, _err = jsonout.extract(raw)
-        return data if data is not None else {}
+        data, err = jsonout.extract(raw)
+        if data is None:
+            # THE bug the print below couldn't catch: extract() failing (malformed/truncated JSON) is a
+            # normal return, not an exception — the real 18 Sep failure took this exact path, and the
+            # `except` clause's print never fired because nothing raised. Log it here too, with the
+            # actual parse error, so the next occurrence says WHY rather than just THAT it failed.
+            print(f"[brandbrief.enrich_with_ai] JSON extraction failed: {err}")
+            return {}
+        return data
     except Exception as e:
         # Was a bare `except Exception: return None` — indistinguishable from the "no API key"
         # case above, and with nothing printed, a real failure here (a timeout, a rate limit, a bug in

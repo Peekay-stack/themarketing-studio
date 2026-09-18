@@ -1588,3 +1588,64 @@ ledger entry, and session cleaned up afterward.
 
 **Status**: Committed and deployed. PR release still has no export to add a footer to — out of scope for
 this pass per the user's own choice, revisit if/when a PR-release export gets built.
+
+### Footer feedback (logo alone, bigger) + the real `enrich_with_ai()` root cause, finally found (18 Sep)
+
+User tested the deploy above and sent screenshots: the footer showed the TMS logo AND a separate
+"themarketing-studio.com" caption crowded right next to it — since the logo mark already renders "the
+marketing studio" as part of its own lockup, the second line was redundant. Asked for the logo alone,
+a little bigger. Fixed in all three footer helpers (`brief_render.py`, `docs.py`'s shared `_new_doc()`,
+`synthesis_render.py`'s `_add_slide_footer()`): dropped the text run entirely, widened the docx image
+from 0.55in to 0.9in and the pptx image from 0.16in to 0.28in tall (aspect ratio preserved either way —
+only one dimension is ever specified). Live-verified: re-fetched a real house docx and a freshly
+exported brief docx, confirmed via the actual OOXML `<a:ext>` values that the footer paragraph text is
+now empty and the image is 0.9in wide in both.
+
+User also attached two more real files for a quality check (`Heritage_Foods_IMC_Brief (8).docx`,
+`Heritage_Foods_Research_Synthesis (4).pptx`) — both reviewed in full via python-docx/python-pptx.
+**The synthesis deck is genuinely excellent again**: coherent confidence-tiered linkages, an honest
+"considered, not used" slide, and a closing cross-source read that explicitly flags the data as
+synthetic and names the still-missing women-25-44 cultural-insight gap — no issues found. **The brief's
+Competitor Snapshot table is working exactly as designed**: five real, distinctly different per-
+competitor `latest_metric` readings (e.g. Nandini's real 44.32% Karnataka milk share, Hatsun's real
+Tamil Nadu curd/milk shares), and Milky Mist — a brand the model knows generally but that isn't in this
+specific dummy dataset — correctly says "Not in the attached market/panel data" rather than inventing a
+number.
+
+**But the SAME `enrich_with_ai()` failure recurred** — the Caveats section again read "AI enrichment
+could not complete for this export," and Pricing/Distribution/Content and Opportunities & Threats were
+again the `to_skill_brief()` structural defaults (Recommended Actions looked real only because its own
+default template legitimately interpolates the SMP/bridge label already set by the earlier, separate,
+successful draft step — not a second bug). This time the `PYTHONUNBUFFERED=1` fix from yesterday was
+confirmed deployed well before this request, so the diagnostic print SHOULD have fired — and it didn't.
+Pulled the exact live Render request log for this request (11:45:55 UTC, 40801ms, 200 OK) and the full
+app-log window around it: nothing at all beyond the plain access-log line, no `[brandbrief.enrich_with_ai]`
+print anywhere.
+
+**Root cause, finally found by reading the function's own code line by line**: `enrich_with_ai()` has TWO
+distinct failure paths, and the print fix from yesterday only covered one of them. The `except Exception`
+clause (yesterday's fix) catches a raised exception — a real timeout, a rate limit, a genuine crash. But
+`jsonout.extract(raw)` can also fail WITHOUT raising anything: it returns `(None, "some error string")`
+as a completely normal return value when the model's reply doesn't contain valid JSON (truncated,
+malformed, wrapped in prose). The line right after it was `return data if data is not None else {}` —
+silently returning an empty dict, discarding the error string, never touching the `except` clause at
+all. This is exactly why yesterday's logging fix produced zero trace: the real 18 Sep failure took this
+second, still-silent path, not the exception path the earlier fix addressed.
+
+Very likely explanation for the failure itself, not just its invisibility: this call's `max_tokens=3200`
+was sized "before the backgrounder existed," per its own old comment — the contract now asks for a
+2-paragraph exec summary, the full backgrounder (incl. a 3-5 item list), NeedScope reading/implication,
+4-field snapshots, 3 opportunities/threats rows, recommendations with up to 8 bullets, 2 quotes, and
+caveats, all in one JSON object. The exact same shape of bug (a token budget sized for an earlier,
+smaller version of a contract, silently truncating the reply) was already found and fixed twice before
+in this file's own siblings (`synthesize_research` 4000→7000, `summarize_document` 1800→3200).
+
+**Fixed**: logged the `jsonout.extract()` failure case too (`print(f"[brandbrief.enrich_with_ai] JSON
+extraction failed: {err}")` before falling back to `{}`) — so a future occurrence, whichever of the two
+paths it takes, will say why. Raised `max_tokens` 3200→4500 to give the fuller contract real headroom,
+matching the sizing discipline already applied to its two siblings. Live-verified: a real ingest→draft→
+export round-trip completed cleanly at the new token budget with no enrichment-failure caveat in the
+output (cannot force-reproduce the original truncation on demand, but this confirms no regression and
+gives one more clean data point at the new size). Committed and deployed. If `enrich_with_ai()` ever
+fails again, the logs will now say exactly which of the two paths it took and why — genuinely closing
+this open item, not just moving the visibility gap somewhere else.

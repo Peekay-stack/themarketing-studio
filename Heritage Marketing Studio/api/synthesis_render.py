@@ -27,20 +27,17 @@ _FOOTER_MARK = os.path.join(os.path.dirname(__file__), "frontend", "assets", "tm
 
 
 def _add_slide_footer(slide):
-    """The Marketing Studio's own mark + URL, bottom-left of every slide — this deck leaves the portal
-    and gets circulated on its own. Same asset and quiet treatment as the docx footers
-    (brief_render.py/docs.py's `_add_footer`) so every export the product produces reads as one family."""
-    from pptx.util import Inches, Pt
+    """The Marketing Studio's own mark, bottom-left of every slide — this deck leaves the portal and
+    gets circulated on its own. The mark (tms-footer-mark.png) already renders "the marketing studio"
+    as part of the lockup, so no separate URL caption runs next to it — the user asked for the logo
+    alone, a touch larger, after the first version doubled up and crowded the two together. Same asset
+    and treatment as the docx footers (brief_render.py/docs.py's `_add_footer`)."""
+    from pptx.util import Inches
     if os.path.exists(_FOOTER_MARK):
         try:
-            slide.shapes.add_picture(_FOOTER_MARK, Inches(0.4), Inches(7.05), height=Inches(0.16))
+            slide.shapes.add_picture(_FOOTER_MARK, Inches(0.4), Inches(6.98), height=Inches(0.28))
         except Exception:
             pass
-    box = slide.shapes.add_textbox(Inches(0.78), Inches(7.02), Inches(3.0), Inches(0.3))
-    r = box.text_frame.paragraphs[0].add_run()
-    r.text = "themarketing-studio.com"
-    r.font.size = Pt(9)
-    r.font.color.rgb = _rgb(_GREY)
 
 
 def _title_slide(prs, title: str, subtitle: str):

@@ -338,24 +338,22 @@ _FOOTER_MARK = os.path.join(os.path.dirname(__file__), "frontend", "assets", "tm
 
 
 def _add_footer(doc):
-    """The Marketing Studio's own mark + URL on every page — this document leaves the portal and gets
-    circulated on its own, so it should say where it came from without anyone having to ask. Small and
-    quiet on purpose: a footer competing with the brand's own brief for attention would be the wrong
-    call for a white-label deliverable."""
+    """The Marketing Studio's own mark on every page — this document leaves the portal and gets
+    circulated on its own, so it should say where it came from without anyone having to ask. The mark
+    (tms-footer-mark.png) already renders "the marketing studio" as part of the lockup, so no separate
+    URL text runs alongside it — the user asked for the logo alone, a touch larger, after the first
+    version doubled up (logo + a second "themarketing-studio.com" caption crowding it)."""
     from docx.enum.text import WD_ALIGN_PARAGRAPH
-    from docx.shared import Inches, Pt, RGBColor
+    from docx.shared import Inches
     footer = doc.sections[0].footer
     p = footer.paragraphs[0] if footer.paragraphs else footer.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     if os.path.exists(_FOOTER_MARK):
         run = p.add_run()
         try:
-            run.add_picture(_FOOTER_MARK, width=Inches(0.55))
+            run.add_picture(_FOOTER_MARK, width=Inches(0.9))
         except Exception:
             pass
-    r = p.add_run("   themarketing-studio.com")
-    r.font.size = Pt(8)
-    r.font.color.rgb = RGBColor.from_string("999999")
 
 
 def _picture(doc, path, width_in):
