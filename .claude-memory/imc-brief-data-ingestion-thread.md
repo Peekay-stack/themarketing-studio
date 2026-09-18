@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: d3a25b08-5f19-478b-bc7e-ff283771328e
-  modified: 2026-09-17T13:35:29.593Z
+  modified: 2026-09-18T04:48:02.445Z
 ---
 
 **File**: `Heritage Marketing Studio/BRAND_GROUNDING_TESTING_LOG.md`, section "New thread — IMC brief
@@ -238,3 +238,36 @@ model to cite real figures verbatim (the backgrounder does) — natural model va
 but fixed for consistency. Both deployed — confirmed live via Render (finished 2026-09-17T12:35:28Z). User is picking testing back
 up tomorrow with feedback; next real export failure (if it recurs) should finally surface its actual
 exception in the logs, since the buffering gap that was hiding it is now fixed.
+
+
+**Round: competitor "latest share/HH penetration" column + document footers (18 Sep).** User sent two more
+real files ("much better now" / "almost there") plus two new asks, both gated behind "tell me before you
+build anything": add Market share/HH panel to the Competitor Snapshot table, and a TMS-logo+URL footer on
+every exported document. Traced the real code first: confirmed `brief_render.py` (pure Python), not
+`build_brief_docx.js` (Node), is what actually renders the live brief -- the Node path is dead/superseded;
+confirmed PR release has no `.docx`/`.pptx` export at all yet, so nothing to add a footer to there. User
+chose (via a scoped question) to skip PR for this pass, and replaced the two-column ask with one merged
+column: "latest market share/HH penetration (+/- vs last year same period)."
+
+Built `research_parse._yoy_latest()` -- real, deterministic year-over-year (latest vs. the closest point
+within 45 days of exactly one year earlier; contributes nothing rather than fake a YoY read off a nearer
+point) -- and `latest_metrics_block()`, an UNCAPPED per-brand table read from the Map phase's raw data,
+deliberately bypassing `synthesize_research()`'s lossy cross-file summarization so no competitor's number
+gets silently dropped by a narrative-cap. Wired into `brief_ai._payload_context()` as its own block;
+`_OUTPUT_CONTRACT`'s competitor object gained `latest_metric` (copy verbatim, or say "not in attached
+data" -- never compute it). `brief_render.py`'s competitor table gained the column plus a real `w:cantSplit`
+fix for a page-break bug the user's screenshot showed. **A real bug found before shipping**: the first
+version printed raw fractions with a bare `%` appended (Heritage's real ~22% share showed as "0.2248%")
+-- the source files store share as 0.22, not 22, despite the "...%" column name. Fixed with per-metric
+scale detection in `_yoy_latest()` itself.
+
+Footers: rasterized the existing product SVG mark to a static `frontend/assets/tms-footer-mark.png`
+(via a browser-pane canvas conversion, since cairosvg is installed but its native cairo lib isn't present
+on this Windows dev machine) and added it to `brief_render.py`, `docs.py`'s shared `_new_doc()` (covers
+house/plan/idea platform/guided brief/production bible/call sheet/script in one change), and
+`synthesis_render.py`'s slide builders. Live-verified end to end with a real minted test session and the
+real Nielsen/household/qual-deck trio: 560 real YoY rows computed, real distinct per-competitor figures
+in a live draft, the actual exported brief docx has the column + cantSplit + footer, the synthesis pptx
+has the footer on all 7 slides, an existing house's docx confirmed the shared footer path too. No server
+errors; test brief/session cleaned up. Committed and deployed. PR-release footer remains open (no export
+exists yet) -- the user's own choice, not a gap.
