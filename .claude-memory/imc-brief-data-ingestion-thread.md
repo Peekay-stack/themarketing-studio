@@ -367,3 +367,10 @@ Home follows the toggle in Independent (card "Independent work / No brand attach
 brand-idea badge/ribbon, neutral Settings placeholder). The first copy set was rejected as too clever; the
 user wants neutral, inviting, plain wording. Tooling gotcha: the shell tool eats one backslash level in
 heredocs -- build unicode escapes via chr(92).
+
+
+**19 Sep: live vs local brands.** The dummy brands (Kumkum, Loomwell, Parle G, Sthir) exist only in the LOCAL
+tenant; live (/data disk) has only Heritage Foods because .dockerignore keeps api/tenants out of the image.
+Live /brands has been 1,453 bytes (one brand) since at least 11 Sep -- not a regression, nothing deleted. User
+is recreating the dummy brands by hand on live. Remember: anything built locally does not appear on live, and
+vice versa. Offered but not built: a one-time marker-guarded seed of the four profiles.

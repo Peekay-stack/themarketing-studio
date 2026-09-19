@@ -1784,3 +1784,17 @@ artifact, though "Good afternoon" is a longer word than "Good morning"). checkfe
 session revoked, _studio.json restored.
 Tooling gotcha: the shell tool eats one backslash level even in a quoted heredoc, so a unicode escape in a
 patch script arrived as a real character and a string match failed -- build such escapes with chr(92).
+
+
+### "Dummy brands truncated" -- they were never on the live site (19 Sep)
+
+User's live drawer listed only Heritage Foods + Independent work; they remembered Kumkum Beauty, Loomwell,
+Parle G and Sthir Cement and asked why the list gets truncated whenever something changes. Checked Render:
+live /brands has returned a constant 1,453 bytes (one brand) on every logged request from 11 Sep (earliest
+retained) to today; zero /brand-remove and zero /brand-save requests in that window; and /brands is a plain
+directory listing with no filter. Root cause is structural, not a regression: live data lives on the /data
+disk (STUDIO_DATA_DIR) and .dockerignore excludes api/tenants from the image, so brands built on the local
+dev copy (five profiles locally; Parle G's json is untracked) never reach live. The stray "Parle G" client-name
+override found earlier on live is most likely someone typing it into the Brand name box there as a stand-in.
+Logs cannot show anything before 11 Sep. User chose to recreate the dummy brands by hand on live; the
+offered alternative was a one-time marker-guarded seed of the four profiles. No code changed.
