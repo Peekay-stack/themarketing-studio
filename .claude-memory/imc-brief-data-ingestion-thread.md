@@ -353,3 +353,9 @@ because the live tenant has no Parle G brand file. Replaced with: brandName() ac
 only when no brand active; heal clears any override != active brand's name. Verified with an override
 matching no brand, server+localStorage both poisoned. Lesson: reproduce with the LIVE data shape (brand
 files untracked locally are absent on Render), not just the local tenant.
+
+
+**19 Sep: sign-off footer now brand-free.** User's call after two wrong-brand bugs on that line: dropped
+"Working on <brand>." (redundant with header chip/client card; did not respect Independent mode), kept
+"Nothing here is ground truth until someone signs it off." A sign-off count, if ever wanted, belongs by the
+header approvals pill, not the footer (nobody scrolls there).

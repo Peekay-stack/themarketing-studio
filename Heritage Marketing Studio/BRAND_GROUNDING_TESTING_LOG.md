@@ -1738,3 +1738,19 @@ active (the brand profile's own name field is the place for that).
 matching no brand on file ("Parle Biscuits Ltd"), Heritage active -- footer "Working on Heritage
 Foods", server + local both cleared, and a new Media brief titled "Media brief - Heritage Foods". checkfe
 passes, LF intact. Test session revoked, _studio.json restored identical.
+
+
+### Sign-off footer: brand mention removed (19 Sep)
+
+After the stale-override fix the user asked whether the footer's "Working on <brand>." was worth keeping,
+given the header chip and client card already name the brand and this line had now been wrong twice (Round
+93 and 19 Sep) because it derived the name separately. Also noted from reading the code (not tested): it did
+not check the Grounded/Independent toggle, so in Independent it would still claim "Working on Heritage
+Foods" while the chip said "no brand attached" -- a third potential mismatch on the exact thing the toggle
+promises. User's call: keep the sign-off sentence (it is the product's core rule as a standing disclosure,
+and the only place it appears), drop the brand mention. Removed the "Working on" / "No brand is selected
+yet" spans from the footer markup; the footer is now just "Nothing here is ground truth until someone signs
+it off." clientHasBrand/clientName stay in the bag (clientCardSub and the client card still use them).
+Live-checked locally: sentence present, no "Working on", no "No brand is selected yet". checkfe passes, LF
+intact. The user also noted a live sign-off count would not be seen at the footer -- the header's
+approvals pill is where that belongs; not built.
