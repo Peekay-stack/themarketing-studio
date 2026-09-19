@@ -1824,3 +1824,54 @@ living lessons list).
 
 Not covered by any of this, stated plainly: argument values, missing required args, response shapes
 (`tools/contract.py` covers some), real data and real model output -- those still need a use case run by hand.
+
+
+## 19 Sep -- Social pack dropdown: "Not used" still attached a pack; a picked pack could be ignored
+
+**Report (with screenshot):** Social posts showed a real Heritage pouch although the Pack shot dropdown read
+"Not used in these posts" and no pack was selected. The owner asked whether that is correct.
+
+**Cause, from the code:** the Social screen sent nothing when the dropdown was on "Not used", so
+`/scene-still` decided for itself: it attaches the brand's newest signed-off pack whenever the post's own scene
+text matches a word pattern (pack, packet, carton, tetra, FSSAI, pour, bottle, glass of milk, label). That
+was a deliberate earlier design ("a shot whose own description names the product decides for itself"); the
+control's label simply promised something else -- the same class as the Round 14 cast checkbox. The response's
+`pack_used` flag would say whether it happened on those posts; it was not confirmed for the owner's specific
+batch (the image model may also have drawn a Heritage pouch from the brand name).
+
+**Mirror bug found by the sweep (reproduced locally with the real selection function, no image call):**
+in `library.shot_references` an explicit `pack_id` only counted when `want_pack` was true, and `want_pack`
+came only from the word pattern -- so a pack the person deliberately PICKED was silently ignored on any scene
+that never named the product, in Grounded and in Independent. Earlier live tests passed only because their
+scene text happened to contain "pack".
+
+**Decision (owner: option 3, default stays Automatic, server rule applies):** the dropdown now has four honest
+choices -- Automatic (used only when a post/slide shows the pack; sends nothing, so today's behaviour does not
+move), Never use a pack photo (`include_pack:false`, which the server already honoured), a specific pack
+(`pack_id` + `include_pack:true`), and Social's "Let the studio design one" (now also `include_pack:false` so a
+real pack cannot override it). Server: an explicit `pack_id` always attaches (one condition in `/scene-still`).
+Sweep result: only Social and Carousel send pack fields to `/scene-still` without `include_pack`; Video forces
+`include_pack:true` itself; POSM and Onground use other routes with their own skip-pack logic -- all left alone.
+
+**Verification:** `tools/test_pack_choice.py` (new) calls the real route in-process with the image providers,
+ledger and library lookups stubbed -- no key, no cost, scratch data: 8 cases pass; on the previous code exactly
+the two "picked pack ignored" cases fail. In the running app: the Social dropdown shows the new choices, and
+the shipped `socialPackFields`/`carouselPackFields` (extracted from the served page and run) send the intended
+fields for every choice; the Carousel pack markup was checked in the served HTML (its assets card only renders
+after an AI-generated route). checkfe passes, LF intact, smoke test passed on the committed tree.
+
+**Live gate (commit fc28635, deploy dep-dan669nf3r2c73do3l60, live 10:27:39Z):** /selfcheck ok, 1,165 calls,
+0 problems; /selfcheck/deep ok, 20 routes, 0 failed (live now has a plan and an idea platform, so their docx
+exports were exercised for the first time -- both 200); the served page has "Never use a pack photo" x2 and the
+new Automatic labels; no 5xx and no app errors in about two minutes of logs. The two remaining "Not used in
+these posts" strings are the cast dropdown (accurate there) and a code comment.
+
+**NOT verified on live -- awaiting the owner's confirmation** (needs their login and image credits): (1) a Social
+batch on Automatic with a scene that mentions the pack; (2) a Social batch on Never -- no pack photo expected;
+(3) a Social batch with a specific pack picked on a scene that does NOT mention a pack -- the pack should now
+appear; (4) a Carousel on Never. Until they confirm, treat the front-end behaviour and real image output as
+unconfirmed.
+
+**Same day, context:** the grounding backend (13 modules) was shipped after the live-500 finding (see the 19 Sep
+retrospective entry above); the working agreement, `/selfcheck`, `/selfcheck/deep` and `tools/smoke.py` are in
+place and were used for this change.

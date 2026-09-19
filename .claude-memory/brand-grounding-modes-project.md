@@ -411,3 +411,14 @@ gaps, the display block was the last known cosmetic inconsistency. Full detail:
 
 `CLAUDE.md` already covers the hot-reload gotcha hit repeatedly this project ("backend edits need a
 server restart... despite `--reload` being set") — no separate memory needed, just keep obeying it.
+
+
+**UPDATE 19 Sep -- the "nothing committed" standing fact above is no longer true.** The 13 backend modules
+(brandprofile, complete, continuity, creative, ideas, learning, library, made, plan, posm, producers, prompts,
+shelf) were shipped with the owner's go-ahead after live began returning HTTP 500s (committed `main.py` was
+calling into uncommitted modules -- 60 mismatched calls found by `api/selfcheck.py`). Live now runs the whole
+feature. Later the same day: the Social/Carousel pack dropdown was made honest (Automatic / Never / a picked
+pack / design one; an explicit pick always attaches) -- **PENDING the owner's live confirmation**: Social batch on
+Automatic, on Never, with a picked pack on a scene that doesn't mention a pack, and a Carousel on Never. The
+owner said they will confirm later; do not treat the front-end behaviour or real image output as verified until
+they do. Full entry: BRAND_GROUNDING_TESTING_LOG.md, "19 Sep -- Social pack dropdown".
