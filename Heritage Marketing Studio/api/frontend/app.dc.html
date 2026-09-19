@@ -11258,7 +11258,8 @@ class Component extends DCLogic {
     if (s.client_name && !(this.state.studio.clientName || '').trim()) patch.clientName = s.client_name;
     if (s.accent && !this.hasLocalStudio) patch.accent = s.accent;
     if (s.theme && !this.hasLocalStudio) patch.theme = s.theme;
-    if (Object.keys(patch).length) this.setState(st => ({ studio: { ...st.studio, ...patch } }));
+    if (Object.keys(patch).length) this.setState(st => ({ studio: { ...st.studio, ...patch } }),
+      () => this.healStaleClientName());
     // Round 5 (session persistence): the Grounded/Independent toggle used to reset to Grounded on
     // every reload — plain in-memory state, never read from the server, unlike which brand is active
     // (which does survive a reload via /brand-active). Hydrated here ONCE, on the very first call this
@@ -11375,7 +11376,25 @@ class Component extends DCLogic {
     this._brandsAsked = true;
     const list = Array.isArray(d) ? d : (d.brands || []);
     this.setState({ brands: list, brandVoices: (d && (d.voice || d.voices)) || {} },
-                  () => { this.syncBrandLogo(); this.maybeLandOnSetup(); });
+                  () => { this.syncBrandLogo(); this.maybeLandOnSetup(); this.healStaleClientName(); });
+  };
+  // Studio Settings' client-name override outranks the ACTIVE brand in brandName() — the header chip,
+  // the sign-off footer ("Working on …"), brief titles, PR sheets, brief-save and the IMC save all read
+  // it. A live tester saw "Working on Parle G" and "Media brief — Parle G" while Heritage Foods was the
+  // active, Grounded brand: the override still held another brand's name (typed in earlier, or restored
+  // from the server after a switch). If the override is exactly the name of a DIFFERENT brand on file it
+  // is stale by definition — a real override is the client's own name, not a sibling brand's — so drop
+  // it locally AND on the server, otherwise the next reload re-hydrates it from /studio-settings.
+  // Called from both places that can introduce it (brands arriving, settings arriving), because those
+  // two fetches race and either can land second.
+  healStaleClientName = () => {
+    const cn = ((this.state.studio && this.state.studio.clientName) || '').trim().toLowerCase();
+    if (!cn) return;
+    const brands = this.state.brands || [];
+    const active = brands.find(b => b.active);
+    if (!active) return;
+    const other = brands.find(b => !b.active && (b.name || '').trim().toLowerCase() === cn);
+    if (other) this.setStudio({ clientName:'' });
   };
   // A DOOR, not a gate. Claude Code asked for the reasoning and this is it: `ready: false` already
   // stops a brief being opened downstream, so a hard gate here buys no safety — it only makes the
@@ -11568,6 +11587,12 @@ class Component extends DCLogic {
     // writing the OLD brand's typed-in name onto the new one's work. Clearing it here is what makes a
     // switch actually a switch: brandName()/brandLabel() fall straight through to the newly-active brand.
     this.setStudio({ clientName:'' });
+    // setStudio's server write is fire-and-forget, and loadStudioServer() below immediately GETs the same
+    // record — the read can land first and hand the OLD brand's name straight back (loadStudioServer only
+    // fills a blank local name, which is exactly what was just cleared). Await one explicit clear first
+    // so the re-fetch is ordered after it.
+    try { await fetch('/studio-settings', { method:'POST', headers:{'Content-Type':'application/json'},
+                                             body: JSON.stringify({ client_name:'' }) }); } catch (e) {}
     // `bfReady` is a separate snapshot fetched once at page load (`/studio-settings`, via
     // loadStudioServer) — it's what the Home readiness pill AND the brand-form screen's own
     // fallback (bagBrandForm's `rd`) both read while `bf` above is still null / mid-fetch. Left

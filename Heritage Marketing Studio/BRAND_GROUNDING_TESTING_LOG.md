@@ -1683,3 +1683,34 @@ before) and now got two separate, individually-argued SMP Defence rows (not the 
 Committed and deployed. The persistent "competitor notes" idea (capturing this kind of standing brand
 knowledge once so it feeds every future brief automatically, rather than being re-explained per session)
 was discussed and explicitly held for later at the user's request -- not built this round.
+
+
+### Stale "Parle G" showing while Heritage Foods is active (19 Sep)
+
+First feedback of the day, with screenshots: the header chip and Grounded toggle correctly said Heritage
+Foods, but the sign-off footer read "Working on Parle G. Nothing here is ground truth until someone signs
+it off." and a new Media brief was titled "Media brief - Parle G". Execution, Idea and Messaging House
+were fine.
+
+**Root cause, reproduced locally before touching anything**: Studio Settings has a "client name" override
+that outranks the active brand inside brandName() -- the one accessor behind the footer, brief titles, PR
+sheets, brief-save and the IMC save. The header chip reads the active brand directly, which is why it
+disagreed with the footer. The override was still holding another brand's name. Poisoned the local server
+record with client_name "Parle G" while Heritage was active: header said Heritage Foods, footer said
+"Working on Parle G" -- exact match to the screenshots. Two ways it survives: (1) switchBrand's early
+return when the clicked brand is already active never clears it; (2) on a real switch, setStudio's server
+write is fire-and-forget while loadStudioServer() GETs the same record immediately, so the read can land
+first and hand the old name straight back (it only fills a blank local name, which is exactly what was
+just cleared). Round 93 had closed the local half of this and missed both of these.
+
+**Fixed (app.dc.html only)**: new healStaleClientName() -- if the override is exactly the name of a
+DIFFERENT brand on file it is stale by definition (a real override is the client's own name, not a
+sibling brand's), so it is cleared locally and on the server. Called from both places it can arrive
+(loadBrands and loadStudioServer), since those fetches race. switchBrand now awaits one explicit server
+clear before re-fetching. Because it self-heals on load, the stale value already sitting on the live
+server clears itself on the next page load -- no manual cleanup needed.
+
+**Live-verified**: with the server still poisoned, reloaded -- footer now reads "Working on Heritage
+Foods" and the server-side client_name was cleared to "". Brief titles build from the same brandName(), so
+they are fixed by the same change (title of an already-open editor is baked in until a new brief). checkfe
+all 8 passed, LF/NULL clean. Test session revoked, _studio.json restored byte-identical. Committed.

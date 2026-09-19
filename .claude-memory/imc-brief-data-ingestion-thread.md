@@ -337,3 +337,12 @@ outstanding uncommitted. Next open items, in rough priority: the deliberately-de
 notes" feature (persistent per-competitor knowledge, Brand-Core-shaped); PR-release export + footer
 (no export exists yet); untested at the ~20-file ingestion design target; PPTX/DOCX-native-shape chart
 rendering (needs LibreOffice + a bigger Render instance). No open bugs known as of this close-out.
+
+
+**19 Sep: stale client-name override ("Working on Parle G" under an active Heritage Foods).** Studio
+Settings' client-name override outranks the active brand in brandName() (footer, brief titles, PR/brief/
+IMC saves); header chip reads the active brand directly so it disagreed. Survived because switchBrand
+early-returns for an already-active brand and because setStudio's server write races loadStudioServer's
+GET. Fixed with healStaleClientName() (override equal to a DIFFERENT brand's name = stale, clear local +
+server; called from loadBrands and loadStudioServer) plus an awaited server clear in switchBrand. Reproduced
+and verified live locally; committed and pushed.
