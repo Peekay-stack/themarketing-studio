@@ -134,6 +134,29 @@ def main() -> int:
             if st != 200 or not sc.get("ok"):
                 failures.append(f"/selfcheck reports {sc.get('problems')} mismatched call(s) -- run: python api/selfcheck.py")
 
+            # The server calls its own signed-in routes (read-only, no AI) and must report all of them fine.
+            st, body = _http("GET", base + "/selfcheck/deep")
+            try:
+                dp = json.loads(body)
+            except Exception:
+                dp = {}
+            print(f"  /selfcheck/deep       {st}  ok={dp.get('ok')}  routes={dp.get('checked')}  failed={len(dp.get('failed') or [])}")
+            if st != 200 or not dp.get("ok"):
+                failures.append("/selfcheck/deep failed: " + "; ".join(dp.get("failed") or [f"HTTP {st}"]))
+
+            # From OUTSIDE the process the door must stay shut: no key, and a guessed key, are both refused.
+            for label, hdrs in (("no key", {}), ("guessed key", {"x-selfcheck-key": "guess"})):
+                req = urllib.request.Request(base + "/brands")
+                for k, v in hdrs.items():
+                    req.add_header(k, v)
+                try:
+                    code = urllib.request.urlopen(req, timeout=30).status
+                except urllib.error.HTTPError as e:
+                    code = e.code
+                print(f"  GET /brands ({label:11}) {code}  {'ok ' if code == 401 else 'FAIL'}")
+                if code != 401:
+                    failures.append(f"GET /brands with {label} answered {code}, expected 401")
+
             st, body = _http("GET", base + "/app")
             shell_ok = st == 200 and b"sc-if" in body
             print(f"  /app                  {st}  shell={'yes' if shell_ok else 'NO'}")

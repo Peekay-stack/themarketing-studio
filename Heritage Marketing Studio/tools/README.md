@@ -101,6 +101,7 @@ line runs, so a real user got HTTP 500s for a day.
 python tools/smoke.py               # BEFORE every push: exports the COMMITTED tree, boots it, checks it
 python api/selfcheck.py             # just the call-signature audit, on the working tree
 curl https://themarketing-studio.com/selfcheck    # AFTER every deploy -- login-free, returns ok + commit
+curl https://themarketing-studio.com/selfcheck/deep   # AFTER every deploy -- the server checks its OWN signed-in routes on real data
 ```
 
 - `api/selfcheck.py` reads every call from one project module into another and checks it against the real
@@ -112,3 +113,11 @@ curl https://themarketing-studio.com/selfcheck    # AFTER every deploy -- login-
   signed-in test session. No AI provider is called. Exit 0 = safe to push. It never touches real data.
 - `GET /selfcheck` is public on purpose and returns only pass/fail, counts and the deploy's commit; the
   per-call detail goes to the server log.
+- `GET /selfcheck/deep` makes the running server call its own signed-in routes (lists, open-a-house/plan,
+  the docx exports, and the routes that broke on 18-19 Sep) against its own real data and report a status
+  per route -- no login, no credential, nothing written, no AI call. Requests are in-process and carry a
+  random key that exists only in the server's memory (`selfcheck.internal_key_ok`, checked by the login
+  middleware), so an outside caller cannot use it. It also proves the door is shut: the same route with no
+  key and with a wrong key must answer 401. Output is route templates + status codes only, never data.
+  Rate-limited to one real run a minute (a repeat returns the last result, `cached: true`). It cannot see
+  routes that need a named user (`Depends(current_user)`), writes, real model output, or the browser.

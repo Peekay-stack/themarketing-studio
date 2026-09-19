@@ -47,6 +47,7 @@ import activation
 import actuals
 import auth as auth_mod
 import brandprofile
+import selfcheck
 import briefguide
 import briefstore
 import campaign as campaign_mod
@@ -117,7 +118,7 @@ app.add_middleware(
 # whether a session exists. Every route the shell actually calls to read or write data is what this
 # gate protects.
 _PUBLIC_PATHS = {
-    "/", "/health", "/selfcheck", "/login", "/logout", "/me", "/app",
+    "/", "/health", "/selfcheck", "/selfcheck/deep", "/login", "/logout", "/me", "/app",
     "/support.js", "/image-slot.js", "/favicon.ico",
     # `/docs`, `/redoc`, `/openapi.json` are deliberately NOT public — the interactive API browser and
     # the full route schema stay behind login on a deployed instance. A signed-in user still reaches
@@ -130,6 +131,10 @@ class RequireLoginMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request, call_next):
         path = request.url.path
         if path in _PUBLIC_PATHS or path.startswith(_PUBLIC_PREFIXES):
+            return await call_next(request)
+        # The server's own in-process self-check (selfcheck.deep) carries a random key that exists only in
+        # this process's memory -- never sent over a socket, never logged. Nobody outside can hold it.
+        if selfcheck.internal_key_ok(request.headers.get(selfcheck.INTERNAL_HEADER)):
             return await call_next(request)
         token = request.cookies.get(auth_mod.COOKIE_NAME)
         valid = False
@@ -169,6 +174,16 @@ def selfcheck_route():
     caught in seconds instead of by a user."""
     import selfcheck
     return selfcheck.summary()
+
+
+@app.get("/selfcheck/deep")
+def selfcheck_deep_route():
+    """The server calls its OWN signed-in routes on its own real data and reports a status per route.
+
+    No login and no credential involved (see selfcheck.deep): in-process, read-only, no AI calls, and it
+    returns route templates and status codes only -- never data. Rate-limited to one real run a minute
+    because it is public; a repeat inside that minute returns the last result with `cached: true`."""
+    return selfcheck.deep(app)
 
 
 @app.get("/health")
