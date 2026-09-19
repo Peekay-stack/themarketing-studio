@@ -209,10 +209,20 @@ def _execution_block(execution_id: str) -> str:
 
 def _resolve_house(brand: dict | None) -> dict | None:
     import strategy
+    # Round 5 (brand-grounding, discovered live): `brand=None` reaching this function IS the
+    # brand_mode="general" signal from system_for() two frames up — the caller already made the
+    # disciplined choice not to invent a brand for this piece. `not want` used to treat that the same
+    # as "no filter given, return whatever house is newest" — so a General-mode Social post or video
+    # script silently carried the newest house in the whole tenant's real core message, RTBs and
+    # avoid-list. `want` empty (whether from `brand=None` or a brand profile with no name) now means
+    # "nothing to match" — no house, not every house — same discipline the rest of this project already
+    # applies everywhere else a brand name gates a lookup.
     want = str((brand or {}).get("brand") or "").strip().lower()
+    if not want:
+        return None
     try:
         for row in strategy.houses():
-            if not want or str(row.get("brand", "")).lower() == want:
+            if str(row.get("brand", "")).lower() == want:
                 return strategy.load(row["id"])
     except Exception as e:
         # Real bug found live (round-83 audit): this used to return "" with no trace at all —
@@ -346,11 +356,15 @@ def plan_channels_block(brand: dict | None = None) -> str:
     except Exception as e:
         print(f"[prompts] plan_channels_block: could not import plan: {e}", file=sys.stderr, flush=True)
         return ""
+    # Same fix as _resolve_house() above, same reason: `brand=None` (General mode) must mean "no plan
+    # matches", not "any plan matches" — `not want` used to hand the newest plan in the tenant to a
+    # General-mode prompt, real channels/audiences/phasing/measures included.
     want = str((brand or {}).get("brand") or "").strip().lower()
     out = []
+    if not want:
+        return ""
     try:
-        pl = next((p for p in plan_mod.plans()
-                   if not want or str(p.get("brand", "")).lower() == want), None)
+        pl = next((p for p in plan_mod.plans() if str(p.get("brand", "")).lower() == want), None)
         p = plan_mod.load(pl["id"]) if pl else None
     except Exception:
         p = None
@@ -404,8 +418,8 @@ def spine_block(brand: dict | None = None, *, use_house: bool = True,
             + "\n\n".join(out))
 
 
-def system_for(messages: list[dict], brand: dict | None = None, execution: str = "",
-              force_typed: bool = False, skip_mandatories: bool = False,
+def system_for(messages: list[dict], brand: dict | None = None, brand_mode: str = "grounded",
+              execution: str = "", force_typed: bool = False, skip_mandatories: bool = False,
               use_house: bool = True, use_platform: bool = True, use_plan: bool = True) -> str:
     """Craft + this brand's grounding + what has been decided + the detected surface block.
 
@@ -413,6 +427,14 @@ def system_for(messages: list[dict], brand: dict | None = None, execution: str =
     on file is used. With no profile at all, `voice_block` returns an explicit "you do not know the
     category — do not invent one", which produces cautious copy somebody can fix rather than a confident
     invention nobody can see.
+
+    `brand_mode="general"` — SECURITY / DATA INTEGRITY, the root of the whole grounding-modes project
+    (see BRAND_GROUNDING_MODES_PLAN.md): every caller of `/complete` used to reach this function with no
+    way to say "this piece is deliberately not tied to a brand." `brand or brandprofile.resolve()` then
+    ALWAYS fell to whichever brand was active — the shared chokepoint behind nearly every text generation
+    in the app, silently grounding General-mode work in whatever happened to be active. `general` skips
+    resolution entirely, same honest `voice_block(None)` treatment as a Grounded piece with no profile
+    at all, but chosen on purpose rather than landed on by accident.
 
     `spine_block` is what makes an execution written client-side still obey the house, the platform and
     the plan — see the note above it. It is empty until somebody has actually decided something, so a
@@ -439,7 +461,7 @@ def system_for(messages: list[dict], brand: dict | None = None, execution: str =
     this drops and why it's all-or-nothing.
     """
     text = " ".join(str(m.get("content", "")) for m in messages if m.get("role") != "assistant")
-    b = brand or brandprofile.resolve()
+    b = None if brand_mode == "general" else (brand or brandprofile.resolve())
     surface = _detect(text)
     eff_house = use_house and not force_typed
     eff_platform = use_platform and not force_typed

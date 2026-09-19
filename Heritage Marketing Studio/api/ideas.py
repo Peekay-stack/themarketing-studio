@@ -1181,7 +1181,7 @@ def _route_spread(basis: dict, n: int) -> str:
 
 
 def draft_prompt(core: str, brief: dict | None, house: dict | None = None, n: int = 3,
-                 build_from: dict | None = None, steer: str = "") -> str:
+                 build_from: dict | None = None, steer: str = "", brand_mode: str = "") -> str:
     """The instruction behind *Draft the platform* — `n` first lines from a core message and a brief.
 
     Narrower than `prompt_for` above, which scores platforms against the five tests. This answers the
@@ -1195,9 +1195,16 @@ def draft_prompt(core: str, brief: dict | None, house: dict | None = None, n: in
 
     What it must not do is compose. Two strings glued together would read like an idea and be nobody's —
     so it is asked for a claim about the world, and told to say when it does not have one.
+
+    Phase 2 (BRAND_GROUNDING_MODES_PLAN.md): `brand_mode="general"` blocks BOTH unconditional pulls this
+    function used to make — `brandprofile.resolve(brief, house)` (which falls back to whichever brand is
+    globally ACTIVE once more than one is on file, the same footgun this project has fixed everywhere
+    else) and `house_basis(house)` (the house's real pillars/RTBs/avoid-list). `core` is the caller's job
+    to blank for General, same as `plan.py`'s own `prompt_for` — this function trusts what it's handed.
     """
-    b = brandprofile.resolve(brief, house)
-    basis = house_basis(house)
+    _general = str(brand_mode or "").strip().lower() == "general"
+    b = None if _general else brandprofile.resolve(brief, house)
+    basis = house_basis(None if _general else house)
     out = [_skill_text(), "\n\n---\nTHE BRAND\n" + brandprofile.voice_block(b)]
 
     if core:
@@ -1264,7 +1271,7 @@ def draft_prompt(core: str, brief: dict | None, house: dict | None = None, n: in
 
 def draft_lines(core: str = "", brief: dict | None = None, house: dict | None = None,
                 n: int = 3, build_from: dict | None = None,
-                steer: str = "") -> tuple[list[dict], str]:
+                steer: str = "", brand_mode: str = "") -> tuple[list[dict], str]:
     """Draft `n` opening platforms. Returns (ideas, note).
 
     **Never invents from nothing.** With neither a core message nor a brief there is no claim to make,
@@ -1287,7 +1294,7 @@ def draft_lines(core: str = "", brief: dict | None = None, house: dict | None = 
     if not os.environ.get("ANTHROPIC_API_KEY"):
         return [], ("No ANTHROPIC_API_KEY — the sources are held and the fields are yours to write. "
                     "A line you write yourself counts as sourced.")
-    data, err = jsonout.ask_json(draft_prompt(core, brief, house, n, build_from, steer),
+    data, err = jsonout.ask_json(draft_prompt(core, brief, house, n, build_from, steer, brand_mode),
                                  max_tokens=500 + 450 * n)
     if data is None:
         return [], f"Drafting failed: {err}"

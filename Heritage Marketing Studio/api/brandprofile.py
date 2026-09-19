@@ -1070,7 +1070,7 @@ SEED = {
 # held them in client state, which made every one of them a preference for one window rather than a
 # decision about the studio.
 
-_SETTINGS_KEYS = ("client_name", "accent", "theme", "manager_name")
+_SETTINGS_KEYS = ("client_name", "accent", "theme", "manager_name", "producer_brand_mode")
 
 
 def _settings_path() -> str:

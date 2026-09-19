@@ -724,8 +724,12 @@ def crop_gate(hero_type: str, formats: list[str] | tuple[str, ...] = ()) -> dict
 
 # --- the library gate ---------------------------------------------------------------------------
 
-def gate(hero_type: str = "") -> dict:
+def gate(hero_type: str = "", brand: str = "") -> dict:
     """What the library allows to be made right now.
+
+    `brand` scopes every count/url here to that brand's own signed-off assets (see library.py's
+    brand-scoping note) — without it, a brand with zero of its own signed-off packs would still pass
+    this gate as long as SOME other brand in the tenant had one.
 
     Two separate gates, and conflating them was costing real work. The **master key visual** is refused
     without a signed-off pack and logo: POSM's job at shelf is recognition, the shopper matches what is
@@ -750,9 +754,9 @@ def gate(hero_type: str = "") -> dict:
     generate at all, the same way a hallucinated pack is. Route it through a real reference like the
     endorser case already does.
     """
-    packs = library.items("pack", signed_only=True)
-    logos = library.items("logo", signed_only=True)
-    cast = library.items("cast", signed_only=True) + library.items("actor", signed_only=True)
+    packs = library.items("pack", signed_only=True, brand=brand)
+    logos = library.items("logo", signed_only=True, brand=brand)
+    cast = library.items("cast", signed_only=True, brand=brand) + library.items("actor", signed_only=True, brand=brand)
 
     blocks, asset_blocks = [], []
     if not packs:
@@ -786,8 +790,8 @@ def gate(hero_type: str = "") -> dict:
         "can_assemble_master": not blocks and not asset_blocks,
         "blocks": blocks + asset_blocks,
         "asset_blocks": asset_blocks,
-        "pack": {"count": len(packs), "url": library.reference_url("pack")},
-        "logo": {"count": len(logos), "url": library.reference_url("logo")},
+        "pack": {"count": len(packs), "url": library.reference_url("pack", brand=brand)},
+        "logo": {"count": len(logos), "url": library.reference_url("logo", brand=brand)},
         "cast": {"count": len(cast)},
         "note": ("The library has what the master needs." if not blocks and not asset_blocks else
                  "The hero cut-out can be rendered while the pack is sourced — the piece is blocked at "

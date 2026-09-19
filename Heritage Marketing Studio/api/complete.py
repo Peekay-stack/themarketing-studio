@@ -27,7 +27,7 @@ def has_key() -> bool:
 
 def complete(messages: list[dict], execution: str = "", force_typed: bool = False,
              skip_mandatories: bool = False, use_house: bool = True, use_platform: bool = True,
-             use_plan: bool = True) -> str:
+             use_plan: bool = True, brand_mode: str = "grounded") -> str:
     if not has_key():
         return ""  # front end falls back to its own placeholder content
     import anthropic
@@ -42,8 +42,11 @@ def complete(messages: list[dict], execution: str = "", force_typed: bool = Fals
     # with "brief / messaging house / idea platform / plan", each a person can turn off on its own); see
     # `system_for`'s own note on exactly how they compose with `force_typed`. `skip_mandatories` — the
     # caller's own read on whether none of the plan/idea/brief trio applies to this piece at all; see
-    # `brandprofile.voice_block`'s docstring.
-    system = system_for(norm, execution=execution, force_typed=force_typed, skip_mandatories=skip_mandatories,
+    # `brandprofile.voice_block`'s docstring. `brand_mode` — the studio's one shared text-generation
+    # chokepoint; see `system_for`'s own note on why "general" mattered enough to add here rather than
+    # anywhere further downstream.
+    system = system_for(norm, brand_mode=brand_mode, execution=execution, force_typed=force_typed,
+                         skip_mandatories=skip_mandatories,
                          use_house=use_house, use_platform=use_platform, use_plan=use_plan)
     # 2000 was too tight once a surface asks for several posts or several scenes: the reply is JSON, so a
     # truncation is not a short answer, it is an unparseable one — which reaches the person as the

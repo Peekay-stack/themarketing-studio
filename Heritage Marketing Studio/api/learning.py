@@ -130,31 +130,43 @@ def _read(path: str) -> list[dict]:
 # --- decisions ---------------------------------------------------------------------------------
 
 def record(kind: str, decision: str, *, subject: str = "", reason: str = "",
-           template: str = "", who: str = "", meta: dict | None = None) -> dict:
-    """Log one human decision. `reason` is the valuable part — a bare reject teaches nothing."""
+           template: str = "", who: str = "", meta: dict | None = None, brand: str = "") -> dict:
+    """Log one human decision. `reason` is the valuable part — a bare reject teaches nothing.
+
+    `brand` — same SECURITY / DATA INTEGRITY gap as `library.py` had: this store was tenant-scoped
+    (round-90 fix) but never brand-scoped within a tenant, despite `GUARDRAILS` above literally
+    claiming "what is learned here stays scoped to this brand." It didn't — a Heritage rejection
+    ("the boy sounded like an adult") would surface as a house rule on a Parle G generation. Left
+    blank for a genuinely brand-agnostic decision; every read below only filters by it when a caller
+    passes one, so this is additive.
+    """
     row = {"id": uuid.uuid4().hex[:8], "at": _now(), "kind": kind,
            "decision": (decision or "").lower(), "subject": subject[:300],
            "reason": (reason or "").strip()[:600], "template": template, "who": who,
-           "meta": meta or {}}
+           "meta": meta or {}, "brand": brand}
     _append(_decisions(), row)
     if template:
         _score(template, row["decision"])
     return row
 
 
-def decisions(limit: int = 60, kind: str = "") -> list[dict]:
+def decisions(limit: int = 60, kind: str = "", brand: str = "") -> list[dict]:
     rows = _read(_decisions())
     if kind:
         rows = [r for r in rows if r.get("kind") == kind]
+    if brand:
+        rows = [r for r in rows if not r.get("brand") or r.get("brand") == brand]
     return list(reversed(rows))[:limit]
 
 
 # --- approved work, kept as anchors -------------------------------------------------------------
 
-def keep_example(kind: str, *, title: str, body: str, brief: str = "", meta: dict | None = None) -> dict:
-    """Keep an approved piece of work so later generations can be anchored on it."""
+def keep_example(kind: str, *, title: str, body: str, brief: str = "", meta: dict | None = None,
+                 brand: str = "") -> dict:
+    """Keep an approved piece of work so later generations can be anchored on it. `brand` — see
+    `record()`'s note; the same scoping gap applied to T1 retrieval."""
     row = {"id": uuid.uuid4().hex[:8], "at": _now(), "kind": kind, "title": title[:200],
-           "brief": (brief or "")[:2000], "body": (body or "")[:8000], "meta": meta or {}}
+           "brief": (brief or "")[:2000], "body": (body or "")[:8000], "meta": meta or {}, "brand": brand}
     _append(_examples(), row)
     return row
 
@@ -163,13 +175,18 @@ def _words(s: str) -> set[str]:
     return {w for w in re.findall(r"[a-z]{4,}", (s or "").lower())}
 
 
-def anchors(kind: str, brief: str = "", n: int = 3) -> list[dict]:
+def anchors(kind: str, brief: str = "", n: int = 3, brand: str = "") -> list[dict]:
     """The most relevant approved examples of this kind.
 
     Overlap on meaningful words, which is crude but honest and needs no embedding service. Recency
     breaks ties, so the house style can move without old work outvoting it forever.
+
+    `brand` restricts retrieval to that brand's own approved work (plus brand-agnostic examples) —
+    without it, a brand-new brand's very first generation could be anchored on another brand's
+    approved script, and the output would read as finished, competent, and wrong.
     """
-    rows = [r for r in _read(_examples()) if r.get("kind") == kind]
+    rows = [r for r in _read(_examples()) if r.get("kind") == kind
+            and (not brand or not r.get("brand") or r.get("brand") == brand)]
     if not rows:
         return []
     want = _words(brief)
@@ -183,9 +200,9 @@ def anchors(kind: str, brief: str = "", n: int = 3) -> list[dict]:
     return [r for _o, _i, r in scored[:n]]
 
 
-def anchor_block(kind: str, brief: str = "", n: int = 3) -> tuple[str, list[str]]:
+def anchor_block(kind: str, brief: str = "", n: int = 3, brand: str = "") -> tuple[str, list[str]]:
     """Approved examples formatted for a prompt, plus their titles so the output can name them."""
-    picks = anchors(kind, brief, n)
+    picks = anchors(kind, brief, n, brand=brand)
     if not picks:
         return "", []
     parts = ["Work already approved for this brand. Match its judgement — its length, its restraint, "
@@ -197,11 +214,14 @@ def anchor_block(kind: str, brief: str = "", n: int = 3) -> tuple[str, list[str]
 
 # --- house rules, learned from rejections --------------------------------------------------------
 
-def house_rules(limit: int = 12) -> list[str]:
-    """Reasons given when work was rejected, newest first, deduplicated."""
+def house_rules(limit: int = 12, brand: str = "") -> list[str]:
+    """Reasons given when work was rejected, newest first, deduplicated. `brand` — see `record()`'s
+    note; without it a correction logged against one brand was silently binding on every other."""
     seen, out = set(), []
     for r in reversed(_read(_decisions())):
         if r.get("decision") != "reject":
+            continue
+        if brand and r.get("brand") and r.get("brand") != brand:
             continue
         reason = (r.get("reason") or "").strip()
         key = re.sub(r"[^a-z]", "", reason.lower())[:60]
@@ -213,9 +233,9 @@ def house_rules(limit: int = 12) -> list[str]:
     return out
 
 
-def rules_block() -> str:
+def rules_block(brand: str = "") -> str:
     """House rules as a prompt fragment. Empty until someone has actually said something."""
-    rules = house_rules()
+    rules = house_rules(brand=brand)
     if not rules:
         return ""
     lines = "\n".join(f"- {r}" for r in rules)

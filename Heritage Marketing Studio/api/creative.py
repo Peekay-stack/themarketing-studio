@@ -283,10 +283,16 @@ def image_from_reference(prompt: str, reference_urls: list[str], ratio: str = "1
     if url:
         return url
     # Fall back to the dedicated character model (takes a single reference).
+    # Live-tested finding: this used to hardcode "landscape_16_9" regardless of what ratio the
+    # caller actually asked for — a caller requesting a 1:1 social post that fell through to this
+    # second-tier fallback silently got a 16:9 image back instead, which the frontend's square post
+    # frame then force-cropped (`background-size:cover`), chopping the left/right edges off whatever
+    # text or logo sat near them. `_IMAGE_SIZES` already has the real ratio->size mapping the primary
+    # call above uses; this just needed to read from the same table instead of a fixed default.
     print("[creative] falling back to ideogram/character", file=sys.stderr, flush=True)
     return run_endpoint(REF_CHARACTER_MODEL, {
         "prompt": prompt, "reference_image_urls": refs[:1],
-        "rendering_speed": "BALANCED", "image_size": "landscape_16_9",
+        "rendering_speed": "BALANCED", "image_size": _IMAGE_SIZES.get(ratio, "landscape_16_9"),
         **({"seed": int(seed)} if seed is not None else {})})
 
 

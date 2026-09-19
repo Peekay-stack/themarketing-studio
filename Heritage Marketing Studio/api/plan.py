@@ -177,6 +177,8 @@ def plans() -> list[dict]:
             blocking = 0
         out.append({
             "id": p["id"], "brand": p.get("brand", ""), "house": house_id,
+            # Round 5 (session persistence + picker labelling) — same gap as strategy.houses()'s card.
+            "brand_mode": p.get("brand_mode") or "grounded",
             "project": project_mod.of(p) or project_mod.of(h),
             "project_source": p.get("project_source", ""),
             "label": project_mod.label(p if project_mod.of(p) else dict(p, project=project_mod.of(h))),
@@ -192,7 +194,7 @@ def plans() -> list[dict]:
     return out
 
 
-def new_plan(brand: str, house_id: str = "") -> dict:
+def new_plan(brand: str, house_id: str = "", brand_mode: str = "") -> dict:
     p = {"id": uuid.uuid4().hex[:10], "brand": brand or "Brand", "house": house_id,
          "created": _now(), "updated": _now(),
          # From the house it serves, which took it from the brief.
@@ -201,7 +203,16 @@ def new_plan(brand: str, house_id: str = "") -> dict:
          "geography": [],
          "status": "draft", "pending_approval": None, "approval_log": [],
          "nodes": {l["id"]: {"layer": l["id"], "rows": [], "sig": "", "house_under": ""}
-                   for l in LAYERS}}
+                   for l in LAYERS},
+         # Defaults from whichever house this plan was started against — a brand-new plan is Grounded
+         # unless something upstream already said General. See BRAND_GROUNDING_MODES_PLAN.md.
+         "brand_mode": brand_mode or "grounded"}
+    return save(p)
+
+
+def set_brand_mode(p: dict, mode: str) -> dict:
+    """Change a plan's grounding mode after the fact — never locked to what it started as."""
+    p["brand_mode"] = "general" if mode == "general" else "grounded"
     return save(p)
 
 
@@ -949,6 +960,20 @@ _COLUMN_RULES: dict[str, str] = {
 
 def _column_rules(layer_id: str) -> str:
     r = _COLUMN_RULES.get(layer_id, "")
+    # Live-tested bug: `medium` was told to pick "one id from the served media list" in three places in
+    # this file and the list itself was never actually built or sent anywhere — the model, correctly,
+    # would not invent a channel/medium it had nothing real to choose from, and left both columns
+    # honestly blank on every row rather than guess. `LEGACY_STRATEGY_MEDIA` is the same seven-id
+    # vocabulary the house's own medium layer already uses (tv/digital/social/on-ground/ooh/trade/posm)
+    # — a fixed studio vocabulary, not brand-specific, so this applies the same in Grounded and
+    # Independent plans alike.
+    if layer_id == "channels":
+        r += ("The served media list — the only values `medium` may hold: "
+              + ", ".join(media_mod.LEGACY_STRATEGY_MEDIA)
+              + ". There is no 'mixed' or 'multi' option on this list — a row that genuinely spans more "
+                "than one of these leaves `medium` empty and says so (e.g. 'spans tv + digital, split "
+                "not yet decided') rather than picking one and hiding the rest, same as any other cell "
+                "with nothing settled to put in it.\n")
     return ("THESE COLUMNS TAKE A VALUE, NOT A SENTENCE:\n" + r) if r else ""
 
 
@@ -1033,9 +1058,21 @@ def house_block(house: dict, layer_id: str = "") -> str:
 def prompt_for(p: dict, layer_id: str, house: dict | None = None, extra: str = "",
                anchors: str = "", rules: str = "", locked: list[dict] | None = None) -> str:
     l = LAYER_BY_ID[layer_id]
+    # General-mode plans (deliberately not tied to a brand — see BRAND_GROUNDING_MODES_PLAN.md) must
+    # never reach `resolve()` — with more than one profile on file it falls back to whichever is
+    # ACTIVE, exactly the silent substitution this mode exists to prevent. Same fix as
+    # strategy.py's own prompt_for.
+    _plan_general = p.get("brand_mode") == "general"
+    brand_for_prompt = None if _plan_general else brandprofile.resolve(p, house)
     out = [_skill_text(),
-           "\n\n---\nTHE BRAND\n" + brandprofile.voice_block(brandprofile.resolve(p, house))]
-    if house:
+           "\n\n---\nTHE BRAND\n" + brandprofile.voice_block(brand_for_prompt)]
+    # Phase 2 (BRAND_GROUNDING_MODES_PLAN.md): this used to pull the bound house's real content in
+    # unconditionally whenever one existed, same shape as the Phase 1 leaks already fixed in
+    # producers.stands_on()/_ctx() and prompts.py's house_block/platform_block — a General plan with a
+    # house bound for its OTHER layers (channels, audiences) would still stand on that house's real
+    # core message, RTBs and avoid list for the layer actually being generated. `voice_block` above is
+    # already correctly gated; this is the second, separate mechanism that needed the same gate.
+    if house and not _plan_general:
         out.append("\n\n---\n" + house_block(house, layer_id))
     for par in l["parents"]:
         rws = p["nodes"][par]["rows"]

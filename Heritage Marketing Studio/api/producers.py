@@ -209,7 +209,7 @@ def _plan_block(plan: dict | None) -> list[str]:
 
 def _ctx(house: dict | None, brief: dict | None, platform: dict | None = None,
          plan: dict | None = None, *, use_house: bool = True, use_platform: bool = True,
-         use_plan: bool = True) -> str:
+         use_plan: bool = True, brand_mode: str = "") -> str:
     """The strategy this is being made against, or an explicit note that there is none.
 
     The idea platform goes in FIRST and is labelled as binding. It sits between the house and the work,
@@ -224,14 +224,40 @@ def _ctx(house: dict | None, brief: dict | None, platform: dict | None = None,
     alongside `plan` under this one flag rather than needing a fourth. Each defaults on; nulling the
     inputs before the logic below runs means the existing "no strategy attached" degrade below still
     fires correctly when everything is switched off, with no separate empty-state to maintain.
+
+    `brand_mode` used to gate the character reference (skipped entirely for General) — Round 5 removed
+    that (a character is a visual asset, not invented brand voice; see the comment on `char` below) and
+    left the parameter gating nothing at all for one round. Phase 1 gives it back a real job: skipping
+    `house`/`platform` — the actual brand-voice sources — when General, which `use_house`/`use_platform`
+    alone never did.
     """
     # The brand's approved recurring character (empty when there is none). Resolved from the ORIGINAL
     # house/brief before the switches below can null them — a character is a brand fact, not one of
     # the house/platform/plan inputs a person turns off. POSM, POSM carousel and Onground all reach
     # generation through this one context builder.
+    #
+    # Round 5 (confirmed with the user): a character reference is a visual asset, not invented brand
+    # voice/copy — General mode means "don't invent or state brand facts in the text," not "pretend no
+    # brand exists at all." So this is NOT skipped for General any more. `brandprofile.resolve(house,
+    # brief)` already falls through to whichever brand is currently ACTIVE when neither doc names one
+    # (exactly the case for a General house, whose own `brand` field is blank by design) — so a General
+    # piece's character reference comes from the SAME brand that's active in this session, the same
+    # access boundary every other active-brand read in this tenant already respects. Nothing here
+    # widens who can see which brand's character; it only stops narrowing it further than that.
     char = character.for_prompt(brandprofile.resolve(house, brief))
-    house = house if use_house else None
-    platform = platform if use_platform else None
+    # Phase 1 (brand-grounding, discovered live testing POSM): `use_house`/`use_platform` are a
+    # SEPARATE, orthogonal pair of switches from `brand_mode` — a person can turn the house off while
+    # still Grounded, or leave it on while Independent. Before this fix, brand_mode wasn't checked here
+    # at all, so a POSM piece cold-opened onto whichever house the tenant happened to bind (Round 93's
+    # step 3, "the newest house for the active brand") carried that house's real core message, RTBs and
+    # avoid-list into an Independent piece's prompt regardless — confirmed live: a real "Develop key
+    # visual" call came back "Standing on the house's core message" with the actual message text, while
+    # Independent was selected. `_mode` falls back to the house's own stored mode only when no explicit
+    # brand_mode was passed — same pattern as the character line above and every other mode check in
+    # this project — but the caller's own current-session value always wins when given.
+    _mode = brand_mode or (house or {}).get("brand_mode") or "grounded"
+    house = house if (use_house and _mode != "general") else None
+    platform = platform if (use_platform and _mode != "general") else None
     brief = brief if use_plan else None
     plan = plan if use_plan else None
     if not house and not brief and not platform and not plan:
@@ -298,8 +324,16 @@ def _ask(prompt: str, max_tokens: int = 1500) -> tuple[dict | None, str]:
 # Returns (text, source) so the screen can say where it came from rather than presenting it as neutral.
 def stands_on(kind: str, house: dict | None = None, platform: dict | None = None,
               typed: str = "", *, force_typed: bool = False,
-              use_house: bool = True, use_platform: bool = True) -> tuple[str, str]:
+              use_house: bool = True, use_platform: bool = True,
+              brand_mode: str = "") -> tuple[str, str]:
     typed = (typed or "").strip()
+    # Phase 1 (brand-grounding): same fix as `_ctx()`'s own `_mode` — `use_house`/`use_platform` say
+    # whether the house/platform are IN SCOPE at all, a separate question from whether this piece may
+    # state their content as brand fact. Without this, an Independent POSM/Onground piece bound to any
+    # house (including the Round 93 "cold open, newest house for the active brand" fallback) stood on
+    # that house's real core message — confirmed live. Falls back to the house's own stored mode only
+    # when the caller passed nothing explicit, same precedence as everywhere else this pattern appears.
+    _mode = brand_mode or (house or {}).get("brand_mode") or "grounded"
     # `force_typed` — a real, deliberate override, not the fallback-of-last-resort the plain `typed`
     # parameter already is. Found live: the frontend told a person typing here "this box is an
     # override, not a required field," which is only true when nothing else exists — the moment a
@@ -318,14 +352,14 @@ def stands_on(kind: str, house: dict | None = None, platform: dict | None = None
     # not go silent. `use_house`/`use_platform` are the ONLY thing that suppresses these two blocks now.
     if force_typed and typed:
         return typed, "typed here — the idea platform and house were set aside for this piece"
-    if platform and use_platform:
+    if platform and use_platform and _mode != "general":
         expr = str((platform.get("expressions") or {}).get(kind, "") or "").strip()
         if expr:
             return expr, f"the idea platform, expressed for {kind}"
         line = str(platform.get("idea") or "").strip()
         if line:
             return line, "the idea platform"
-    if house and use_house:
+    if house and use_house and _mode != "general":
         want = {"posm": "posm", "activation": "on-ground", "social": "social",
                 "video": "tv", "incentive": "trade"}.get(kind, "")
         node = (house.get("nodes") or {}).get("medium") or {}
@@ -406,7 +440,7 @@ def key_visual(brief_text: str, house: dict | None = None,
                exec_brief: dict | None = None, platform: dict | None = None,
                plan: dict | None = None, n: int = 3, *, force_typed: bool = False,
                use_house: bool = True, use_platform: bool = True,
-               use_plan: bool = True) -> tuple[list[dict], str]:
+               use_plan: bool = True, brand_mode: str = "") -> tuple[list[dict], str]:
     """Treatment routes for a POS key visual. Returns (options, note).
 
     **The brief is resolved, not demanded.** This used to require typed text and offer ungrounded generic
@@ -417,10 +451,11 @@ def key_visual(brief_text: str, house: dict | None = None,
     `force_typed` — someone deliberately set the platform/house aside for this one piece; see
     `stands_on`'s own docstring for why this needs to be opt-in rather than the default. `use_house`/
     `use_platform` (round 93) — the same two independent switches `stands_on` itself now takes, forwarded
-    straight through.
+    straight through. `brand_mode` (Phase 1, brand-grounding) — forwarded to both `stands_on` and `_ctx`
+    below, so an Independent piece never stands on a bound house's real core message.
     """
     text, src = stands_on("posm", house, platform, brief_text, force_typed=force_typed,
-                          use_house=use_house, use_platform=use_platform)
+                          use_house=use_house, use_platform=use_platform, brand_mode=brand_mode)
     fallback = [{"id": f"kv{i+1}", "name": name, "desc": f"{angle} {text}".strip(),
                  "layout": list(KV_LAYOUTS)[min(i, len(KV_LAYOUTS) - 1)]}
                 for i, (name, angle) in enumerate(KV_TREATMENTS[:max(1, n)])]
@@ -439,7 +474,7 @@ def key_visual(brief_text: str, house: dict | None = None,
         "masked, type set in badges and boxes, a brand block and a base band. It is NOT a photograph "
         "with words on top. A route that describes a scene filling the frame is describing the wrong "
         "object. The pack is always present and never the hero.\n\n"
-        f"THE STRATEGY\n{_ctx(house, exec_brief, platform, plan, use_house=use_house, use_platform=use_platform, use_plan=use_plan)}\n\n"
+        f"THE STRATEGY\n{_ctx(house, exec_brief, platform, plan, use_house=use_house, use_platform=use_platform, use_plan=use_plan, brand_mode=brand_mode)}\n\n"
         f"WHAT THIS STANDS ON ({src})\n{text}\n\n"
         f"Give {n} genuinely different treatment routes. They must differ in what the HERO cut-out is "
         "and what the field does — not in adjectives. For each: what is in frame, what is deliberately "
@@ -524,7 +559,8 @@ def key_visual(brief_text: str, house: dict | None = None,
 def carousel_concept(objective: str, house: dict | None = None, platform: dict | None = None,
                      plan: dict | None = None, exec_brief: dict | None = None,
                      n_mode: str = "manual", n: int = 5, *, use_house: bool = True,
-                     use_platform: bool = True, use_plan: bool = True) -> tuple[list[dict], str]:
+                     use_platform: bool = True, use_plan: bool = True,
+                     brand_mode: str = "") -> tuple[list[dict], str]:
     """Returns (routes, note). `routes` is a list of `{name, rationale, slides}` — up to three genuinely
     different narrative directions for the same objective, each carrying its own ordered slide list
     (`{role, headline, visual_note}`, role one of hook/value/cta) and its own slide count.
@@ -542,7 +578,7 @@ def carousel_concept(objective: str, house: dict | None = None, platform: dict |
         n = max(3, min(10, int(n or 5)))
         n_instruction = f"Every route uses exactly {n} slides."
     ctx = _ctx(house, exec_brief, platform, plan,
-              use_house=use_house, use_platform=use_platform, use_plan=use_plan)
+              use_house=use_house, use_platform=use_platform, use_plan=use_plan, brand_mode=brand_mode)
     prompt = (
         "You are writing narrative concepts for an Instagram/LinkedIn carousel — a swipeable, ordered "
         "set of slides read as one continuous story, not independent posts. Propose THREE genuinely "
@@ -587,7 +623,8 @@ def carousel_concept(objective: str, house: dict | None = None, platform: dict |
 def activation_ideas(house: dict | None = None, platform: dict | None = None,
                      plan: dict | None = None, exec_brief: dict | None = None,
                      n: int = 3, steer: str = "", *, use_house: bool = True,
-                     use_platform: bool = True, use_plan: bool = True) -> tuple[list[dict], str]:
+                     use_platform: bool = True, use_plan: bool = True,
+                     brand_mode: str = "") -> tuple[list[dict], str]:
     """Two or three on-ground ideas, each built for a named venue. Returns (ideas, note).
 
     **This reverses an earlier rule deliberately.** On-ground used to refuse to generate an idea without
@@ -611,7 +648,7 @@ def activation_ideas(house: dict | None = None, platform: dict | None = None,
     """
     n = max(2, min(4, int(n or 3)))
     text, src = stands_on("activation", house, platform, steer,
-                          use_house=use_house, use_platform=use_platform)
+                          use_house=use_house, use_platform=use_platform, brand_mode=brand_mode)
     if not text:
         return [], ("Nothing to build on. Adopt an idea platform or choose a house message first — an "
                     "activation is an expression of an idea, and there is no idea here yet.")
@@ -624,7 +661,7 @@ def activation_ideas(house: dict | None = None, platform: dict | None = None,
     prompt = (
         "You are planning consumer activations in India — real ones, that a field team has to book, "
         "staff and run.\n\n"
-        f"THE STRATEGY\n{_ctx(house, exec_brief, platform, plan, use_house=use_house, use_platform=use_platform, use_plan=use_plan)}\n\n"
+        f"THE STRATEGY\n{_ctx(house, exec_brief, platform, plan, use_house=use_house, use_platform=use_platform, use_plan=use_plan, brand_mode=brand_mode)}\n\n"
         f"WHAT THIS EXPRESSES ({src})\n{text}\n\n"
         + (f"THE PERSON ASKING ADDS\n{steer.strip()}\n\n" if steer.strip() else "")
         + f"VENUES YOU MAY USE — pick the right one per idea, and read its trap:\n{venues}\n\n"
@@ -683,7 +720,8 @@ def activation_ideas(house: dict | None = None, platform: dict | None = None,
 def adjust_activation_idea(idea: dict, note: str, house: dict | None = None,
                            exec_brief: dict | None = None, platform: dict | None = None,
                            plan: dict | None = None, *, use_house: bool = True,
-                           use_platform: bool = True, use_plan: bool = True) -> tuple[dict | None, str]:
+                           use_platform: bool = True, use_plan: bool = True,
+                           brand_mode: str = "") -> tuple[dict | None, str]:
     """Revise ONE already-generated activation idea per a note, keeping its structure. Returns (idea, note).
 
     `sharpen_idea`'s twin for the CARD shape rather than a plain string. `activation_ideas` returns a
@@ -709,7 +747,7 @@ def adjust_activation_idea(idea: dict, note: str, house: dict | None = None,
     prompt = (
         "You are refining ONE consumer activation idea for India — a field team has to book, staff and "
         "run it.\n\n"
-        f"THE STRATEGY\n{_ctx(house, exec_brief, platform, plan, use_house=use_house, use_platform=use_platform, use_plan=use_plan)}\n\n"
+        f"THE STRATEGY\n{_ctx(house, exec_brief, platform, plan, use_house=use_house, use_platform=use_platform, use_plan=use_plan, brand_mode=brand_mode)}\n\n"
         f"THE IDEA AS IT STANDS\n{json.dumps(current)}\n\n"
         f"THE CHANGE ASKED FOR\n{note}\n\n"
         f"VENUES — pick the right one only if the venue itself has to change:\n{venues}\n\n"
@@ -790,7 +828,8 @@ def sharpen_idea(idea: str, house: dict | None = None,
                  exec_brief: dict | None = None,
                  platform: dict | None = None,
                  plan: dict | None = None, *, use_house: bool = True,
-                 use_platform: bool = True, use_plan: bool = True) -> tuple[str, str]:
+                 use_platform: bool = True, use_plan: bool = True,
+                 brand_mode: str = "") -> tuple[str, str]:
     """Turn an activation idea into one that can be built. Returns (idea, note).
 
     Returns the idea unchanged rather than inventing one when there is nothing to work from. An empty
@@ -801,7 +840,7 @@ def sharpen_idea(idea: str, house: dict | None = None,
         return "", "Write the idea first — this sharpens one, it does not supply one."
     prompt = (
         "You are planning a consumer activation in India — a stall, a van, a promoter, a street.\n\n"
-        f"THE STRATEGY\n{_ctx(house, exec_brief, platform, plan, use_house=use_house, use_platform=use_platform, use_plan=use_plan)}\n\n"
+        f"THE STRATEGY\n{_ctx(house, exec_brief, platform, plan, use_house=use_house, use_platform=use_platform, use_plan=use_plan, brand_mode=brand_mode)}\n\n"
         f"THE IDEA AS WRITTEN\n{idea}\n\n"
         "Tighten it into something buildable in two or three sentences. Name what a person physically "
         "DOES at it — not what they feel or learn. An activation whose central action is 'engages with "
@@ -823,7 +862,8 @@ def element_brief(element: str, brief_text: str, idea: str, house: dict | None =
                   exec_brief: dict | None = None,
                   platform: dict | None = None,
                  plan: dict | None = None, *, use_house: bool = True,
-                 use_platform: bool = True, use_plan: bool = True) -> tuple[str, str]:
+                 use_platform: bool = True, use_plan: bool = True,
+                 brand_mode: str = "") -> tuple[str, str]:
     """Brief one element of an on-ground activation against the idea. Returns (brief, note)."""
     spec = OG_ELEMENTS.get(element)
     if not spec:
@@ -832,7 +872,7 @@ def element_brief(element: str, brief_text: str, idea: str, house: dict | None =
         return "", "Settle the activation idea first — the four elements are briefed against it."
     prompt = (
         "You are writing a production brief for one element of a consumer activation in India.\n\n"
-        f"THE STRATEGY\n{_ctx(house, exec_brief, platform, plan, use_house=use_house, use_platform=use_platform, use_plan=use_plan)}\n\n"
+        f"THE STRATEGY\n{_ctx(house, exec_brief, platform, plan, use_house=use_house, use_platform=use_platform, use_plan=use_plan, brand_mode=brand_mode)}\n\n"
         f"THE ACTIVATION\n{idea.strip()}\n\n"
         f"THE ELEMENT: {element} — {spec}\n"
         f"WHAT THE AUTHOR HAS WRITTEN SO FAR\n{(brief_text or '(nothing yet)').strip()}\n\n"

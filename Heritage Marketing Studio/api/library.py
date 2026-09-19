@@ -191,12 +191,21 @@ def _bucket(source: str) -> str:
 
 
 def add(data: bytes, name: str, kind: str, *, filename: str = "", note: str = "", tags: str = "",
-        added_by: str = "", source: str = "upload") -> dict:
+        added_by: str = "", source: str = "upload", brand: str = "") -> dict:
     """Take a file into the library. Returns the manifest row.
 
     `source` is recorded rather than assumed: if a generated asset is ever admitted deliberately,
     it is visible as such instead of quietly passing as ground truth — both in the manifest field and
     in which physical bucket (`uploaded/` vs `tms-approved/`) the file lands under, see `_bucket()`.
+
+    `brand` — SECURITY / DATA INTEGRITY, found while tracing why a Parle G generation kept pulling
+    Heritage's pack shot: this module was scoped to the TENANT (round-83 fix, see the comment on
+    `_LEGACY_DIR`) but never to the BRAND within it. A tenant hosting five brands had one shared pool of
+    "ground truth" — the most recently signed-off pack shot of any brand was handed to every brand's
+    generation. Left blank on purpose for an item that is genuinely brand-agnostic (a category-wide
+    research file, say); `items()`/`reference_url()`/`shot_references()` below only filter by it when a
+    caller actually passes one, so this is additive and does not change today's behaviour until callers
+    start passing a brand.
     """
     if kind not in KINDS:
         raise ValueError(f"unknown kind {kind!r} — expected one of {', '.join(sorted(KINDS))}")
@@ -230,7 +239,7 @@ def add(data: bytes, name: str, kind: str, *, filename: str = "", note: str = ""
         "id": item_id, "name": name or fname, "kind": kind, "file": f"{kind}/{bucket}/{fname}",
         "url": f"/library-file/{kind}/{bucket}/{fname}", "bytes": len(data), "sha256": digest,
         "note": note, "tags": [t.strip() for t in (tags or "").split(",") if t.strip()],
-        "added": _now(), "added_by": added_by, "source": source,
+        "added": _now(), "added_by": added_by, "source": source, "brand": brand,
         # Ground truth is a decision, not an upload. Nothing counts until someone signs it off.
         "signed_off": False, "signed_by": "", "signed_at": "",
     }
@@ -239,12 +248,17 @@ def add(data: bytes, name: str, kind: str, *, filename: str = "", note: str = ""
     return row
 
 
-def items(kind: str = "", signed_only: bool = False) -> list[dict]:
+def items(kind: str = "", signed_only: bool = False, brand: str = "") -> list[dict]:
+    """`brand` filters to that brand's own items plus anything genuinely brand-agnostic (no brand
+    recorded at upload) — never another brand's. Empty `brand` keeps today's tenant-wide read, so a
+    caller that hasn't been updated yet is unaffected rather than silently narrowed."""
     rows = _load()
     if kind:
         rows = [r for r in rows if r.get("kind") == kind]
     if signed_only:
         rows = [r for r in rows if r.get("signed_off")]
+    if brand:
+        rows = [r for r in rows if not r.get("brand") or r.get("brand") == brand]
     return sorted(rows, key=lambda r: (not r.get("signed_off"), r.get("added", "")), reverse=False)
 
 
@@ -278,18 +292,22 @@ def remove(item_id: str) -> bool:
     return True
 
 
-def reference_url(kind: str) -> str:
+def reference_url(kind: str, brand: str = "") -> str:
     """The signed-off reference of this kind to hand a generator, or ''.
 
     Most recent wins: a pack refresh should take over from the version it replaced without anyone
-    having to delete the old one.
+    having to delete the old one. `brand` scopes "most recent" to that brand's own items (plus
+    brand-agnostic ones) — without it, the most recently signed-off pack shot of ANY brand in the
+    tenant was handed to every brand's generation, which is the actual mechanism behind "why does
+    Parle G's render have Heritage's pack in it."
     """
-    rows = [r for r in items(kind, signed_only=True)]
+    rows = [r for r in items(kind, signed_only=True, brand=brand)]
     return rows[-1]["url"] if rows else ""
 
 
 def shot_references(max_refs: int = 3, want_pack: bool = False, pack_id: str = "",
-                    cast_id: str = "", plate_id: str = "") -> dict:
+                    want_cast: bool = True, cast_id: str = "",
+                    plate_id: str = "", brand: str = "") -> dict:
     """The signed-off references a generated shot should carry, in priority order.
 
     **Identity first, then the product, then place.** A cast or actor frame is the proven channel — it
@@ -315,32 +333,51 @@ def shot_references(max_refs: int = 3, want_pack: bool = False, pack_id: str = "
     way to say otherwise. An explicit id wins; either falls back to the same "most recent signed-off"
     default as before when not given, so no existing caller's behaviour changes.
 
+    `want_cast` defaults to `True` — cast has always auto-attached whenever one exists, unlike `pack`'s
+    opt-in `want_pack`, because identity is load-bearing for continuity across shots of the same film.
+    Live-tested finding: Social's single posts are NOT shots of one film — three posts doing three
+    different jobs (recruit/prove/occasion) may deliberately want three different, unreferenced people,
+    and the "Include a recurring model/cast" checkbox implied exactly that choice while doing nothing:
+    unchecked still silently pinned the same most-recently-signed-off face to every post, because this
+    function never had a way to say "skip the auto-fallback." `want_cast=False` now does — an explicit
+    `cast_id` still wins regardless (the same "a person's own choice survives" rule `pack_id` already
+    follows), only the *auto-resolved* default is what turns off. Every existing caller passes nothing
+    for this, so `True` keeps their behaviour byte-for-byte unchanged.
+
     Ordered because the underlying APIs cap the reference count (Google takes three), so when
     something has to be dropped it should be the least load-bearing thing, not whatever happened to be
     last in a list.
 
     `plate` has been a library kind since the library existed and **no code path had ever read it**
     until this function was written; the same was true of `pack` for shot generation specifically.
+
+    `brand` scopes every fallback lookup below to that brand (plus brand-agnostic items) — without it
+    this function silently handed a Parle G render whichever brand's pack/cast/plate was most recently
+    signed off, which could be Heritage's. An *explicit* id (`pack_id`/`cast_id`/`plate_id`) is still
+    checked against `brand` too: a stale or copy-pasted id from another brand's item should not slip
+    through just because it was named directly.
     """
+    def _owned(row: dict | None) -> bool:
+        return bool(row) and (not brand or not row.get("brand") or row.get("brand") == brand)
     cast = ""
     if cast_id:
         row = get(cast_id)
-        cast = row["url"] if row and row.get("kind") in ("cast", "actor") and row.get("signed_off") else ""
-    if not cast:
-        cast = reference_url("cast") or reference_url("actor")
+        cast = row["url"] if _owned(row) and row.get("kind") in ("cast", "actor") and row.get("signed_off") else ""
+    if not cast and want_cast:
+        cast = reference_url("cast", brand=brand) or reference_url("actor", brand=brand)
     pack = ""
     if want_pack:
         if pack_id:
             row = get(pack_id)
-            pack = row["url"] if row and row.get("kind") == "pack" and row.get("signed_off") else ""
+            pack = row["url"] if _owned(row) and row.get("kind") == "pack" and row.get("signed_off") else ""
         else:
-            pack = reference_url("pack")
+            pack = reference_url("pack", brand=brand)
     plate = ""
     if plate_id:
         row = get(plate_id)
-        plate = row["url"] if row and row.get("kind") == "plate" and row.get("signed_off") else ""
+        plate = row["url"] if _owned(row) and row.get("kind") == "plate" and row.get("signed_off") else ""
     if not plate:
-        plate = reference_url("plate")
+        plate = reference_url("plate", brand=brand)
     refs, kinds = [], []
     if cast:
         refs.append(cast)
@@ -357,10 +394,10 @@ def shot_references(max_refs: int = 3, want_pack: bool = False, pack_id: str = "
         "cast": cast, "pack": pack, "plate": plate,
         "has_cast": bool(cast), "has_pack": bool(pack), "has_plate": bool(plate),
         "dropped": dropped,
-        "why": ("" if (cast and plate and (pack or not want_pack)) else
+        "why": ("" if ((cast or not want_cast) and plate and (pack or not want_pack)) else
                 "; ".join(x for x in [
-                    "" if cast else "no signed-off cast or actor frame — each shot will invent its "
-                                    "own face, and the cut will not match",
+                    "" if (cast or not want_cast) else "no signed-off cast or actor frame — each shot "
+                                    "will invent its own face, and the cut will not match",
                     "" if (pack or not want_pack) else
                         (f"no signed-off pack matching id {pack_id!r}" if pack_id else
                          "no signed-off pack shot — this shot's product will be drawn from "
@@ -372,10 +409,15 @@ def shot_references(max_refs: int = 3, want_pack: bool = False, pack_id: str = "
     }
 
 
-def locked_copy() -> list[dict]:
-    """Strings that must be placed exactly as written. Read by the script and super generators."""
+def locked_copy(brand: str = "") -> list[dict]:
+    """Strings that must be placed exactly as written. Read by the script and super generators.
+
+    `brand` matters here more than almost anywhere else in this module: an unscoped call could hand a
+    General-mode (no-brand) piece another brand's locked claim or FSSAI line verbatim — text placed
+    exactly as written, with no model in the loop to catch that it belongs to someone else.
+    """
     out = []
-    for r in items("copy", signed_only=True):
+    for r in items("copy", signed_only=True, brand=brand):
         text = (r.get("note") or "").strip() or r.get("name", "")
         if text:
             out.append({"id": r["id"], "text": text, "name": r.get("name", "")})

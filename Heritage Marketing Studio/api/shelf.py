@@ -117,19 +117,20 @@ def brief(b: dict | None) -> dict:
     }
 
 
-def evidence(house: dict | None = None) -> dict:
+def evidence(house: dict | None = None, brand: str = "") -> dict:
     """Every provable fact the brand has, each with where it came from.
 
     **The one home of the sourced flag.** Today the same 500-checks fact carries a source marker in five
     places — on the functional message, on the functional RTB, on the proof proposition, on the medium
     lines that quote it and on the platform that dramatises it. One fact, one flag: everything else
-    points here.
+    points here. `brand` — see library.py's brand-scoping note: without it, this reports another
+    brand's locked claims as if they were this shelf's own provable facts.
     """
     facts = []
     for layer in ("rtb_functional", "rtb_emotional"):
         for text in _house_layer(house, layer):
             facts.append({"text": text, "from": f"house · {layer}", "provable": True})
-    for row in library.locked_copy():
+    for row in library.locked_copy(brand=brand):
         facts.append({"text": row["text"], "from": f"library · {row.get('name') or 'locked copy'}",
                       "provable": True})
     return {
@@ -160,15 +161,15 @@ def codes(house: dict | None = None, profile: dict | None = None) -> dict:
     }
 
 
-def assets() -> dict:
+def assets(brand: str = "") -> dict:
     """The library, and what it is missing. Read straight through — the library owns its own truth."""
     s = library.summary()
     return {
         "available": s["signed"] > 0,
         "signed": s["signed"], "total": s["total"], "unsigned": s["unsigned"],
         "missing": s["missing"],
-        "pack": library.reference_url("pack"),
-        "logo": library.reference_url("logo"),
+        "pack": library.reference_url("pack", brand=brand),
+        "logo": library.reference_url("logo", brand=brand),
         "why": "" if s["signed"] else "Nothing signed off. A signature is a decision, not an upload — "
                                       "until one exists, nothing here counts as ground truth.",
     }
@@ -216,11 +217,12 @@ def status(house: dict | None = None, b: dict | None = None,
     `filled` is reported as a fraction rather than a pass mark on purpose. A shelf is never finished —
     evidence accumulates, codes get added — and a green tick would imply otherwise.
     """
+    _brand = str((profile or {}).get("name") or "")
     got = {
         "brief": brief(b),
-        "evidence": evidence(house),
+        "evidence": evidence(house, brand=_brand),
         "codes": codes(house, profile),
-        "assets": assets(),
+        "assets": assets(brand=_brand),
         "landscape": landscape(b),
         "footprint": footprint(b),
         "trade_econ": trade_econ(),

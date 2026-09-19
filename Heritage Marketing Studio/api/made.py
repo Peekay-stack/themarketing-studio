@@ -120,12 +120,19 @@ def remove(made_id: str) -> bool:
     return True
 
 
-def list_entries(kind: str = "", include_approved: bool = False) -> list[dict]:
+def list_entries(kind: str = "", include_approved: bool = False, brand: str = "") -> list[dict]:
     """Most recent first. Same-second tiebreak copied from `actuals.py` — see that module's own comment
-    on why a plain `sort(reverse=True)` silently inverts same-second ordering."""
+    on why a plain `sort(reverse=True)` silently inverts same-second ordering.
+
+    `brand` was already recorded on every row (`record()`'s own `brand=` param) but nothing ever read
+    it back — the History tab showed every brand's output mixed together regardless of which was
+    active. Empty `brand` (default) keeps that same unfiltered read; a caller passes one to scope it.
+    """
     rows = list(enumerate(_load()))
     if kind:
         rows = [(i, r) for i, r in rows if r.get("kind") == kind]
+    if brand:
+        rows = [(i, r) for i, r in rows if not r.get("brand") or r.get("brand") == brand]
     if not include_approved:
         rows = [(i, r) for i, r in rows if not r.get("approved")]
     rows.sort(key=lambda pair: (pair[1].get("made_at", ""), pair[0]), reverse=True)

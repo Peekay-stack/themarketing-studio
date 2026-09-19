@@ -249,13 +249,15 @@ def _kind_of(url: str) -> str:
     return (url.split(marker, 1)[1].split("/", 1) + [""])[0]
 
 
-def provenance(shots: list[dict]) -> dict:
+def provenance(shots: list[dict], brand: str = "") -> dict:
     """Which shots carried the cast and the plate. The half of continuity that is a matter of record.
 
     A shot is exempt when it is live-action: real footage of a real person needs no cast reference,
-    and flagging it would train people to ignore the flags.
+    and flagging it would train people to ignore the flags. `brand` — see library.py's brand-scoping
+    note: without it, "what the generator would have used" was read from the tenant's most recent
+    signed-off reference of each kind, not necessarily this film's own brand's.
     """
-    refs = library.shot_references()
+    refs = library.shot_references(brand=brand)
     rows = []
     for i, s in enumerate(shots or []):
         s = s if isinstance(s, dict) else {}
@@ -408,18 +410,18 @@ def drift(clips: list[dict], plate_path: str = "") -> dict:
     }
 
 
-def check(shots: list[dict], *, use_plate: bool = True) -> dict:
+def check(shots: list[dict], *, use_plate: bool = True, brand: str = "") -> dict:
     """Both halves, with the certain one first.
 
     `shots` is [{n, role, path|clip_url, seconds, provider?, refs?, from_frame?}].
     """
     shots = [s for s in (shots or []) if isinstance(s, dict)]
-    refs = library.shot_references()
+    refs = library.shot_references(brand=brand)
     plate_path = ""
     if use_plate and refs["plate"]:
         plate_path = library.local_path(refs["plate"].replace("/library-file/", "")) or ""
 
-    prov = provenance(shots)
+    prov = provenance(shots, brand=brand)
     clips = []
     for i, s in enumerate(shots):
         raw = str(s.get("path") or s.get("clip_url") or s.get("url") or "")
@@ -475,9 +477,9 @@ def _resolve(url: str) -> str:
     return ""
 
 
-def status() -> dict:
+def status(brand: str = "") -> dict:
     """What the checker measures and what it refuses to claim. Rendered as a panel, not hard-coded."""
-    refs = library.shot_references()
+    refs = library.shot_references(brand=brand)
     return {
         "metrics": {k: {"label": v["label"], "what": v["what"], "flags": v["flags"]}
                     for k, v in METRICS.items()},
