@@ -1714,3 +1714,27 @@ server clears itself on the next page load -- no manual cleanup needed.
 Foods" and the server-side client_name was cleared to "". Brief titles build from the same brandName(), so
 they are fixed by the same change (title of an already-open editor is baked in until a new brief). checkfe
 all 8 passed, LF/NULL clean. Test session revoked, _studio.json restored byte-identical. Committed.
+
+
+### Follow-up: first "Parle G" fix did nothing on the live site; replaced with a stricter rule (19 Sep)
+
+User hard-refreshed, closed and reopened, re-logged in: footer still "Working on Parle G", and a Media
+brief retitled to "Heritage" reverted to "Media brief - Parle G" on return. Confirmed the live site WAS
+serving the new bundle (fetched /app: healStaleClientName present, Cloudflare DYNAMIC, not cached) -- so
+the fix ran and simply didn't match.
+
+**Why**: the first fix only cleared an override equal to a DIFFERENT brand on file. The local repro had a
+Parle G brand file; the live tenant does not (that brand's json is untracked locally, never deployed), so
+"Parle G" matched nothing and was left in place.
+
+**Fixed (app.dc.html)**: brandName() now puts the ACTIVE brand first and the Studio Settings override
+only when no brand is active; the sign-off footer/client card reads brandLabel() directly;
+healStaleClientName() now clears any override that isn't the active brand's own name (local + server) so a
+reload cannot resurrect it. This removes the whole class -- an override can no longer sit under a live brand.
+Trade-off flagged to the user: typing a name in Studio Settings no longer renames work while a brand is
+active (the brand profile's own name field is the place for that).
+
+**Re-verified against the LIVE condition**: poisoned BOTH the server record and localStorage with a name
+matching no brand on file ("Parle Biscuits Ltd"), Heritage active -- footer "Working on Heritage
+Foods", server + local both cleared, and a new Media brief titled "Media brief - Heritage Foods". checkfe
+passes, LF intact. Test session revoked, _studio.json restored identical.

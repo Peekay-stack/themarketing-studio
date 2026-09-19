@@ -346,3 +346,10 @@ early-returns for an already-active brand and because setStudio's server write r
 GET. Fixed with healStaleClientName() (override equal to a DIFFERENT brand's name = stale, clear local +
 server; called from loadBrands and loadStudioServer) plus an awaited server clear in switchBrand. Reproduced
 and verified live locally; committed and pushed.
+
+
+**19 Sep follow-up:** first stale-override fix (clear only if it equals ANOTHER brand on file) did nothing live
+because the live tenant has no Parle G brand file. Replaced with: brandName() active-brand-first, override
+only when no brand active; heal clears any override != active brand's name. Verified with an override
+matching no brand, server+localStorage both poisoned. Lesson: reproduce with the LIVE data shape (brand
+files untracked locally are absent on Render), not just the local tenant.

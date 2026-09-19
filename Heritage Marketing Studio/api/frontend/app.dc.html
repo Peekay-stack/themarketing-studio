@@ -11390,11 +11390,13 @@ class Component extends DCLogic {
   healStaleClientName = () => {
     const cn = ((this.state.studio && this.state.studio.clientName) || '').trim().toLowerCase();
     if (!cn) return;
-    const brands = this.state.brands || [];
-    const active = brands.find(b => b.active);
+    const active = (this.state.brands || []).find(b => b.active);
     if (!active) return;
-    const other = brands.find(b => !b.active && (b.name || '').trim().toLowerCase() === cn);
-    if (other) this.setStudio({ clientName:'' });
+    // Any override that isn't the active brand's own name is dead weight now that brandName() puts the
+    // active brand first — clear it (locally and server-side) so a reload can't resurrect it and the
+    // Studio Settings field stops showing a name nothing uses. (The first version only cleared names
+    // matching a DIFFERENT brand on file; the live tenant didn't have that brand, so it never fired.)
+    if ((active.name || '').trim().toLowerCase() !== cn) this.setStudio({ clientName:'' });
   };
   // A DOOR, not a gate. Claude Code asked for the reasoning and this is it: `ready: false` already
   // stops a brief being opened downstream, so a hard gate here buys no safety — it only makes the
@@ -11442,7 +11444,13 @@ class Component extends DCLogic {
   // brandLabel() for the places a person reads, a refusal for the places that write.
   brandName(){
     const a = this.activeBrand();
-    return ((this.state.studio.clientName || '').trim() || (a && a.name)
+    // The ACTIVE brand outranks Studio Settings' typed-in name. It used to be the other way round, which
+    // let a leftover override ("Parle G", persisted server-side and in localStorage) sit under a live
+    // Heritage Foods brand and stamp the wrong name on the footer, brief titles, PR sheets and saves —
+    // while the header chip, which reads the active brand directly, said the right thing. A first fix
+    // that only cleared overrides matching another brand on file did nothing on the live tenant (that
+    // brand isn't on file there). The override now only names the work when NO brand is active.
+    return ((a && a.name) || (this.state.studio.clientName || '').trim()
       || (this.state.imc && this.state.imc.brand) || '').trim();
   }
   // For display only. Never send this to a route — it is a sentence, not an identifier.
@@ -16181,7 +16189,7 @@ class Component extends DCLogic {
     // selected' while the client card and the footer both said 'Heritage' in the same viewport. Two
     // answers to one question is the failure this round exists to end, so this now goes through the
     // one accessor: the name, the display sentence when there is none, and '?' rather than an H.
-    const clientName = (st.clientName || '').trim() || this.brandLabel();
+    const clientName = this.brandLabel();
     const clientInitial = ((this.brandName() || (st.clientName || '').trim() || '?').charAt(0) || '?').toUpperCase();
     // brandLabel() is a sentence, so it cannot be spliced into one: 'Working on No brand selected.'
     // is the first line a fresh tenant reads. Each state gets its own sentence instead, and the card
