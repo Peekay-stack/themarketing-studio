@@ -194,3 +194,7 @@ short pointer. Do not write the same account three times.
   modules were left uncommitted while `main.py` was committed; `selfcheck.py`/`smoke.py` now guard this.
 - 19 Sep: an AI-call fallback (`return {}` after a parse failure) hid a failure for two days -- every
   fallback must log why, and output cut off by `max_tokens` must be detected, not silently accepted.
+- 19 Sep: a control's label must say what the code does. "Not used in these posts" still let the server attach a
+  pack (it decided from the post's own words), and a pack the person PICKED was ignored when those words were
+  missing. An explicit choice must always beat a heuristic; when a heuristic is kept, name it in the label
+  ("Automatic"). `tools/test_pack_choice.py` pins the matrix.

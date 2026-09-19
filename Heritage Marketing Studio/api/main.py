@@ -1673,7 +1673,12 @@ def scene_still(payload: dict):
     # read the shot's own words to decide whether to attach the pack photograph at all.
     want_pack = payload.get("include_pack")
     if want_pack is None:
-        want_pack = bool(re.search(
+        # A pack the person explicitly PICKED (`pack_id`) always attaches. Before this, an explicit pick was
+        # honoured only when the shot's own words happened to match the pattern below, so a deliberately
+        # chosen pack was silently ignored on any scene that never named the product. The pattern still
+        # decides for the AUTOMATIC case (nothing picked, nothing forced) -- and `include_pack: false` is the
+        # caller's way to say "never", which this line leaves alone.
+        want_pack = bool(str(payload.get("pack_id") or "").strip()) or bool(re.search(
             r"\bpack(et|s|-shot)?\b|\bcarton\b|\btetra\b|\bfssai\b|\bpour(ing|ed|s)?\b|\bbottle\b|"
             r"\bglass of milk\b|\blabel\b", subject, re.IGNORECASE))
     # See library.py's brand-scoping note: without this, a shot for one brand could pull another

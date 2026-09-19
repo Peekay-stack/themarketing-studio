@@ -6092,7 +6092,8 @@
         <div>
           <div style="font-size:11.5px; font-weight:700; color:#17325E; margin-bottom:6px;">Pack shot</div>
           <select value="{{ socialPackCard.value }}" onChange="{{ socialPackCard.pick }}" style="width:100%; border:1px solid #DDD9D1; border-radius:10px; padding:8px 10px; font-size:12.5px; color:#17325E; background:#fff; font-family:inherit; margin-bottom:8px;">
-            <option value="">Not used in these posts</option>
+            <option value="">Automatic — used only when a post shows the pack</option>
+            <option value="__never__">Never use a pack photo</option>
             <option value="__generate__">Let the studio design one — no real pack on file yet</option>
             <sc-for list="{{ socialPackCard.options }}" as="o" hint-placeholder-count="0">
               <option value="{{ o.id }}">{{ o.name }}</option>
@@ -6338,7 +6339,8 @@
             <div>
               <div style="font-size:11.5px; font-weight:700; color:#17325E; margin-bottom:6px;">Pack shot</div>
               <select value="{{ carouselPackCard.value }}" onChange="{{ carouselPackCard.pick }}" style="width:100%; border:1px solid #DDD9D1; border-radius:10px; padding:9px 11px; font-size:12.5px; color:#17325E; background:#fff; font-family:inherit;">
-                <option value="">Not used in this carousel</option>
+                <option value="">Automatic — used only when a slide shows the pack</option>
+                <option value="__never__">Never use a pack photo</option>
                 <sc-for list="{{ carouselPackCard.options }}" as="o" hint-placeholder-count="0">
                   <option value="{{ o.id }}">{{ o.name }}</option>
                 </sc-for>
@@ -13146,10 +13148,25 @@ class Component extends DCLogic {
   // the dropdown's "Let the studio design one" option — this is the one place that sentinel gets
   // translated into the two real fields `/scene-still` understands, so `fetchPostImages` and
   // `regenerateVisuals` can't drift out of sync on what it means.
+  // Four choices, and each one now says what it does (the first used to read "Not used in these posts"
+  // while the server still attached the brand's pack whenever a post's own words named the product):
+  //   ''            Automatic  -- send nothing; the server attaches the pack only if the post shows it
+  //   '__never__'   Never      -- include_pack:false, so no pack photo is ever attached
+  //   a library id  Pinned     -- that pack, on every post (include_pack:true so it can never be skipped)
+  //   '__generate__' Design one -- no real pack on file; include_pack:false so a real one can't override it
   socialPackFields(){
     const v = this.state.socialPackChoice;
-    if (v === '__generate__') return { pack_id: undefined, pack_generate: true };
-    return { pack_id: v || undefined, pack_generate: undefined };
+    if (v === '__generate__') return { pack_id: undefined, pack_generate: true, include_pack: false };
+    if (v === '__never__') return { pack_id: undefined, pack_generate: undefined, include_pack: false };
+    if (v) return { pack_id: v, pack_generate: undefined, include_pack: true };
+    return { pack_id: undefined, pack_generate: undefined };
+  }
+  // Carousel has the same three meanings (no "design one" there).
+  carouselPackFields(c){
+    const v = c.packChoice;
+    if (v === '__never__') return { pack_id: undefined, include_pack: false };
+    if (v) return { pack_id: v, include_pack: true };
+    return { pack_id: undefined };
   }
   // `continuityRefs` — optional {postId: previousImageUrl} map. Only `adjustPost` passes one (see its
   // own comment): a fresh first-time generation has no prior render to anchor to.
@@ -13479,7 +13496,7 @@ class Component extends DCLogic {
       const res = await this.apiJson('/scene-still', {
         scene_no: s.n, ratio, style,
         prompt: (s.visual_note || s.headline || '') + this.carouselNoTextPrompt(),
-        pack_id: c.packChoice || undefined, use_cast: !!c.wantCast,
+        ...this.carouselPackFields(c), use_cast: !!c.wantCast,
         cast_id: c.wantCast ? (c.castChoice || undefined) : undefined,
         brand_mode: this.state.producerBrandMode,
       });
@@ -13505,7 +13522,7 @@ class Component extends DCLogic {
     const res = await this.apiJson('/scene-still', {
       scene_no: n, ratio, style: this.state.socialStyle || 'real',
       prompt,
-      pack_id: c.packChoice || undefined, cast_id: c.wantCast ? (c.castChoice || undefined) : undefined,
+      ...this.carouselPackFields(c), cast_id: c.wantCast ? (c.castChoice || undefined) : undefined,
       brand_mode: this.state.producerBrandMode,
     });
     this.setCarousel({ slides: this.state.carousel.slides.map(x =>

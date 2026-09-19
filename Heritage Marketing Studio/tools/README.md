@@ -121,3 +121,14 @@ curl https://themarketing-studio.com/selfcheck/deep   # AFTER every deploy -- th
   key and with a wrong key must answer 401. Output is route templates + status codes only, never data.
   Rate-limited to one real run a minute (a repeat returns the last result, `cached: true`). It cannot see
   routes that need a named user (`Depends(current_user)`), writes, real model output, or the browser.
+
+## test_pack_choice.py -- the pack-photo decision in /scene-still (19 Sep)
+
+```bash
+python tools/test_pack_choice.py     # exit 0 = every choice attaches (or withholds) the pack correctly
+```
+
+Calls the real `/scene-still` route in-process with the image providers stubbed (no key, no cost, no writes,
+scratch data dir) and checks the whole matrix: Automatic / Never / a picked pack / "design one", in both
+Grounded and Independent. On the code before 19 Sep it fails exactly the two cases where a picked pack was
+ignored; it proves the DECISION about references, not what an image model then draws.
