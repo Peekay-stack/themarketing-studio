@@ -359,3 +359,11 @@ files untracked locally are absent on Render), not just the local tenant.
 "Working on <brand>." (redundant with header chip/client card; did not respect Independent mode), kept
 "Nothing here is ground truth until someone signs it off." A sign-off count, if ever wanted, belongs by the
 header approvals pill, not the footer (nobody scrolls there).
+
+
+**19 Sep: Home hero copy + Independent-aware Home.** User chose "<greeting>, what would you like to work on
+today for <brand>?" (Grounded) / "...today?" (Independent) with body B; greeting now follows local time.
+Home follows the toggle in Independent (card "Independent work / No brand attached", no readiness nag, no
+brand-idea badge/ribbon, neutral Settings placeholder). The first copy set was rejected as too clever; the
+user wants neutral, inviting, plain wording. Tooling gotcha: the shell tool eats one backslash level in
+heredocs -- build unicode escapes via chr(92).

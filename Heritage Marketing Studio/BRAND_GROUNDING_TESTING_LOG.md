@@ -1754,3 +1754,33 @@ it off." clientHasBrand/clientName stay in the bag (clientCardSub and the client
 Live-checked locally: sentence present, no "Working on", no "No brand is selected yet". checkfe passes, LF
 intact. The user also noted a live sign-off count would not be seen at the footer -- the header's
 approvals pill is where that belongs; not built.
+
+
+### Home hero copy for both modes; Home follows the Independent toggle; time-of-day greeting (19 Sep)
+
+Follow-up to the Independent-mode sweep finding that the header chip said "Independent" while Home still
+read "let's make something for Heritage Foods". After two rounds of copy options (the first set was too
+clever -- "cooking", "in the room" -- the user asked for neutral and inviting), the user chose:
+Grounded: "<Good morning/afternoon/evening>, what would you like to work on today for <brand>?" and
+Independent: "<greeting>, what would you like to work on today?", with body B: Grounded "Brief, house,
+idea, plan or execution. Pick up wherever suits you; everything stays consistent with what's decided."
+Independent "...; it works from what you tell it."
+
+Built (app.dc.html only): greetingText() now follows the viewer's local clock (morning 5-12, afternoon
+12-17, evening otherwise; it used to say "Good morning" at every hour). New isIndepHome flag
+(producerBrandMode === 'general') drives: the hero title/body above; the Home client card, which now has
+its own bag values (homeCardName/homeCardSub/homeHasLogo/homeNoLogo/homeInitial) reading "Independent work /
+No brand attached" with a dash tile instead of the brand's logo; the brand-readiness nag hidden; the
+brand-idea badge and campaign ribbon suppressed; and the Studio Settings Brand name placeholder no longer
+echoing the brand. The Home card uses its own values so the Settings drawer's logo uploader is unaffected.
+The card wording was my choice (the user did not pick one from the earlier options) -- flagged to them. The
+no-brand-at-all Grounded state keeps its old copy ("let's start with the brand").
+
+Verified live locally: Grounded shows the new title with "Good afternoon" (clock was 12:xx) and body B, card
+"Heritage Foods / The work currently open", readiness nag present; Independent shows the new title, body,
+card "Independent work / No brand attached", nag gone, chip "Independent". Desktop-width screenshot checked
+(title fits on two lines; at the emulator's narrow default width "afternoon," clips -- a narrow-pane
+artifact, though "Good afternoon" is a longer word than "Good morning"). checkfe passes, LF intact. Test
+session revoked, _studio.json restored.
+Tooling gotcha: the shell tool eats one backslash level even in a quoted heredoc, so a unicode escape in a
+patch script arrived as a real character and a string match failed -- build such escapes with chr(92).

@@ -299,7 +299,7 @@
         </div>
 
         <div style="font-size:11px; font-weight:700; letter-spacing:0.07em; text-transform:uppercase; color:#6B7280; margin-bottom:9px;">Brand name</div>
-        <input value="{{ studioClientName }}" onChange="{{ onClientName }}" placeholder="{{ clientName }}" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:10px; padding:11px 13px; font-size:14px; color:#17325E; background:#fff; font-family:inherit; margin-bottom:8px;" />
+        <input value="{{ studioClientName }}" onChange="{{ onClientName }}" placeholder="{{ studioNamePlaceholder }}" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:10px; padding:11px 13px; font-size:14px; color:#17325E; background:#fff; font-family:inherit; margin-bottom:8px;" />
         <div style="font-size:12px; color:#6B7280; margin-bottom:24px;">Only relabels the studio for this session — it does not create or edit a brand profile. Use "+ Create new brand" above to add one.</div>
 
         <div style="font-size:11px; font-weight:700; letter-spacing:0.07em; text-transform:uppercase; color:#6B7280; margin-bottom:9px;">Brand logo</div>
@@ -373,14 +373,14 @@
          because they are on two different planes, which is the whole rule. -->
     <div style="display:grid; grid-template-columns:190px 1fr; gap:26px; margin-bottom:28px; align-items:start;">
       <div style="padding-top:8px;">
-        <sc-if value="{{ hasClientLogo }}" hint-placeholder-val="{{ false }}">
+        <sc-if value="{{ homeHasLogo }}" hint-placeholder-val="{{ false }}">
           <span style="display:flex; align-items:center; margin-bottom:14px;">{{ clientLogoLarge }}</span>
         </sc-if>
-        <sc-if value="{{ noClientLogo }}" hint-placeholder-val="{{ true }}">
-          <span style="width:64px; height:64px; border-radius:16px; background:{{ accent }}; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:27px; margin-bottom:14px;">{{ clientInitial }}</span>
+        <sc-if value="{{ homeNoLogo }}" hint-placeholder-val="{{ true }}">
+          <span style="width:64px; height:64px; border-radius:16px; background:{{ accent }}; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:27px; margin-bottom:14px;">{{ homeInitial }}</span>
         </sc-if>
-        <div style="font-family:'Epilogue',sans-serif; font-size:23px; font-weight:700; letter-spacing:-0.015em; color:#17325E; line-height:1.15; text-wrap:pretty;">{{ clientName }}</div>
-        <div style="font-size:12.5px; line-height:1.5; color:#6B7280; margin-top:6px;">{{ clientCardSub }}</div>
+        <div style="font-family:'Epilogue',sans-serif; font-size:23px; font-weight:700; letter-spacing:-0.015em; color:#17325E; line-height:1.15; text-wrap:pretty;">{{ homeCardName }}</div>
+        <div style="font-size:12.5px; line-height:1.5; color:#6B7280; margin-top:6px;">{{ homeCardSub }}</div>
         <sc-if value="{{ clientNotReady }}" hint-placeholder-val="{{ false }}">
           <div style="background:#FFF9EC; border:1px solid #F0DFB4; border-radius:11px; padding:10px 12px; margin-top:9px;">
             <div style="font-size:12px; line-height:1.55; color:#8A6410; text-wrap:pretty;">{{ clientReadyLine }}</div>
@@ -11465,7 +11465,11 @@ class Component extends DCLogic {
   // session. Greet the person only when the host actually named them.
   greetingText(){
     const who = String(this.props.managerName || '').trim();
-    return who ? 'Good morning, ' + who : 'Good morning';
+    // It said "Good morning" at every hour. Now follows the viewer's local clock: morning until noon,
+    // afternoon until five, evening after.
+    const h = new Date().getHours();
+    const part = h >= 5 && h < 12 ? 'Good morning' : (h >= 12 && h < 17 ? 'Good afternoon' : 'Good evening');
+    return who ? part + ', ' + who : part;
   }
   // One sentence for every write that needs a brand and has none. The chip is the fix, so it says so.
   BRAND_REQUIRED = 'No brand is selected, so this would be saved against nobody. Pick a brand from the chip at the top first.';
@@ -16196,6 +16200,7 @@ class Component extends DCLogic {
     // stops asserting open work under a heading that says there is no brand to have any.
     const clientHasBrand = !!((st.clientName || '').trim() || this.brandName());
     const clientCardSub = clientHasBrand ? 'The work currently open' : 'Pick one to see its work';
+    const isIndepHome = s.producerBrandMode === 'general';
     const themeChoices = Object.keys(this.THEMES).map(k => {
       const t = this.THEMES[k], on = th.id === k;
       return { id:k, label:t.label, set:this.setTheme(k), on,
@@ -16635,16 +16640,29 @@ class Component extends DCLogic {
       // readiness the setup screen reads is the same object; this states the consequence in one line.
       // The hero reads the active profile, never a literal. No brand, no badge — an empty ribbon is
       // better than another company's campaign on somebody's first screen.
-      heroBadge: this.brandIdea(), heroHasBadge: !!this.brandIdea(),
-      brandIdea: this.brandIdea(), hasBrandIdea: !!this.brandIdea(),
-      campaignBadgeText: this.brandIdea() ? this.brandIdea() + ' \u00b7 Integrated campaign' : 'Integrated campaign',
-      heroTitle: this.brandName()
-        ? (this.greetingText() + ', let\u2019s make something for ' + this.brandName() + '.')
-        : (this.greetingText() + ', let\u2019s start with the brand.'),
-      heroBody: this.brandName()
-        ? 'Write a brief, build the messaging house, or take an idea out to the producers — each one written against the one before it.'
-        : 'Nothing here writes anything until a brand profile says who it is for. Set that up and every generator is grounded in it.',
-      clientNotReady: !!(s.bfReady && s.bfReady.ready === false),
+      // Independent = no brand attached, on purpose. Home follows the toggle the way the header chip does:
+      // no brand idea badge or ribbon, no brand-readiness nag, a card that says so, and hero copy that
+      // names no brand. (Before, the chip said Independent while Home still said 'let's make something
+      // for Heritage Foods' - the same contradiction the sign-off footer had.)
+      heroBadge: isIndepHome ? '' : this.brandIdea(), heroHasBadge: !isIndepHome && !!this.brandIdea(),
+      brandIdea: isIndepHome ? '' : this.brandIdea(), hasBrandIdea: !isIndepHome && !!this.brandIdea(),
+      campaignBadgeText: (!isIndepHome && this.brandIdea()) ? this.brandIdea() + ' \u00b7 Integrated campaign' : 'Integrated campaign',
+      heroTitle: isIndepHome
+        ? (this.greetingText() + ', what would you like to work on today?')
+        : (this.brandName()
+          ? (this.greetingText() + ', what would you like to work on today for ' + this.brandName() + '?')
+          : (this.greetingText() + ', let\u2019s start with the brand.')),
+      heroBody: isIndepHome
+        ? 'Brief, house, idea, plan or execution. Pick up wherever suits you; it works from what you tell it.'
+        : (this.brandName()
+          ? 'Brief, house, idea, plan or execution. Pick up wherever suits you; everything stays consistent with what\u2019s decided.'
+          : 'Nothing here writes anything until a brand profile says who it is for. Set that up and every generator is grounded in it.'),
+      homeCardName: isIndepHome ? 'Independent work' : clientName,
+      homeCardSub: isIndepHome ? 'No brand attached' : clientCardSub,
+      homeHasLogo: !isIndepHome && !!st.clientLogo, homeNoLogo: isIndepHome || !st.clientLogo,
+      homeInitial: isIndepHome ? '\u2014' : clientInitial,
+      studioNamePlaceholder: isIndepHome ? 'No brand attached' : clientName,
+      clientNotReady: !isIndepHome && !!(s.bfReady && s.bfReady.ready === false),
       clientReadyLine: (s.bfReady && s.bfReady.ready === false)
         ? ((s.bfReady.core_done || 0) + ' of ' + (s.bfReady.core_total || 5)
            + ' needed answers are in, so the studio is writing from the category rather than from this brand.')
