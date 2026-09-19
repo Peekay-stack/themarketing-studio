@@ -10,11 +10,13 @@ of the function it calls.**
 What it checks (and only this -- it is deliberately narrow):
   * a keyword argument the callee does not accept        -> the exact 18 Sep failure
   * more positional arguments than the callee accepts
+  * a required argument the call never supplies          -> only when the call has no *args/**kwargs, where
+                                                            its shape is fully known
   * a project module that fails to import at all
 
-What it does NOT check: missing required arguments (a call may fill them via *args/**kwargs, which a
-static read cannot see), argument VALUES or types, or anything the frontend sends. A pass means "no call is
-shaped wrong", not "the app works" -- the live use case still has to be run.
+What it does NOT check: argument VALUES or types, required arguments on calls that unpack *args/**kwargs
+(their real shape only exists at run time), or anything the frontend sends. A pass means "no call is shaped
+wrong", not "the app works" -- the live use case still has to be run.
 
 Used two ways, same code: `GET /selfcheck` on the running server (login-free, returns only a summary --
 the detail is printed to the log), and `tools/smoke.py` against a clean export of the committed tree.
@@ -51,7 +53,8 @@ def _load(name: str):
 
 def _check_call(callee, call: ast.Call) -> str:
     """'' when the call's SHAPE fits the callee, else a short reason. Calls that use *args or **kwargs are
-    skipped -- their real shape is only known at run time."""
+    skipped -- their real shape is only known at run time. With none of those the shape is exact, so a
+    full bind (which also demands every required argument) is a real check, not a guess."""
     if any(isinstance(a, ast.Starred) for a in call.args) or any(k.arg is None for k in call.keywords):
         return ""
     try:
@@ -59,7 +62,7 @@ def _check_call(callee, call: ast.Call) -> str:
     except (TypeError, ValueError):
         return ""
     try:
-        sig.bind_partial(*[None] * len(call.args), **{k.arg: None for k in call.keywords})
+        sig.bind(*[None] * len(call.args), **{k.arg: None for k in call.keywords})
     except TypeError as e:
         return str(e)
     return ""

@@ -105,7 +105,8 @@ curl https://themarketing-studio.com/selfcheck    # AFTER every deploy -- login-
 
 - `api/selfcheck.py` reads every call from one project module into another and checks it against the real
   signature of the function it calls (unexpected keyword, too many positional args, module that will not
-  import). It does not check argument values or missing required args, and a pass does NOT mean the app works.
+  import) and a required argument a call never supplies (only where the call has no `*args`/`**kwargs`).
+  It does not check argument values or types, and a pass does NOT mean the app works.
 - `tools/smoke.py` runs that audit plus a boot test against `git archive HEAD` in a scratch folder with an
   empty data directory (the live shape), and hits the read routes and the routes that broke before with a
   signed-in test session. No AI provider is called. Exit 0 = safe to push. It never touches real data.

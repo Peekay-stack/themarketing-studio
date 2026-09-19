@@ -6,8 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 The Marketing Studio: a FastAPI backend (`api/`) serving a single-file Claude Design frontend
 (`api/frontend/app.dc.html`) for a multi-tenant marketing ops product (briefs → creative generation →
-approval → campaign/media planning → PR → POS/retail → measurement). Not a git repo — there is no
-`.git` here; versioning is done via `.bak`/timestamped copies and the `ASK_DESIGN_*.md` handover trail.
+approval → campaign/media planning → PR → POS/retail → measurement). A git repo — the root is the parent
+`Heritage-Marketing-Studio-OPUS/` folder (remote `Peekay-stack/themarketing-studio`) and Render deploys the
+committed `master`. The `.bak`/timestamped copies and `ASK_DESIGN_*.md` files are pre-git history.
 
 ## Running it
 
