@@ -1798,3 +1798,29 @@ dev copy (five profiles locally; Parle G's json is untracked) never reach live. 
 override found earlier on live is most likely someone typing it into the Brand name box there as a stand-in.
 Logs cannot show anything before 11 Sep. User chose to recreate the dummy brands by hand on live; the
 offered alternative was a one-time marker-guarded seed of the four profiles. No code changed.
+
+
+## 19 Sep -- retrospective, the live 500s, and the new working agreement
+
+Review of this log with the owner found one recurring shape: a rule fixed in one place with sibling copies
+found later (about 8 of 15 rounds), fallbacks that look like success (`enrich_with_ai` twice, the social
+grounding banner, three max_tokens truncations), and fixes verified against local data that live does not
+have (the first "Parle G" fix; the four dummy brands that exist only locally -- live has only the seeded
+Heritage). While checking, a live-log query found the worst instance: the committed `main.py` called into
+modules that were still uncommitted (the grounding backend), so Render ran a newer main.py over older
+modules and returned HTTP 500 to the owner on `/producer-stands-on` ("stands_on() got an unexpected keyword
+argument 'brand_mode'"), `/house-generate` (x4, 18 Sep) and `/learning-decision`.
+
+**Built:** `api/selfcheck.py` -- an AST audit of every cross-module call against the callee's real signature.
+On the committed tree it found 60 mismatches (library.reference_url/items/locked_copy, learning.rules_block,
+producers.stands_on/_ctx/activation_ideas, posm.gate); on the tree with the grounding modules, 0 across 1,165
+calls. `GET /selfcheck` (public, summary only, detail to the log) for after every deploy. `tools/smoke.py`
+exports the COMMITTED tree, boots it against an empty scratch data dir (the live shape) and hits read routes
+plus the routes that broke; it fails on the previously-live commit with the exact same TypeError and passes
+on the new one. **Shipped** the 13 backend modules (about 290 lines, exactly what 15 rounds tested) as one
+commit, per the owner's go-ahead. **Recorded** the working agreement in the project's CLAUDE.md and in memory
+(sweep blast radius first; plan; keep everything else the same; verify local then live; only then hand over;
+living lessons list).
+
+Not covered by any of this, stated plainly: argument values, missing required args, response shapes
+(`tools/contract.py` covers some), real data and real model output -- those still need a use case run by hand.

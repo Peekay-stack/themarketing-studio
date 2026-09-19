@@ -132,3 +132,64 @@ as a sign the "real" file is broken.
   `.py` backups (e.g. copies of `ideas.py`/`campaign.py`) — Python puts the script's own directory at
   `sys.path[0]`, ahead of the real project, so `import ideas` silently loads the stale backup instead of
   the live module. If a module looks impossibly out of date, print `mod.__file__` before anything else.
+
+## Working agreement for every change (agreed with the owner, 19 Sep 2026)
+
+This section is the standing process for any code change here, whether it starts from a bug, feedback or
+a new ask. It exists because ~8 of 15 grounding-test rounds were the same rule missing from a sibling
+place, and because for two weeks the deployed code was not the code that had been tested. **It is
+living: when we learn something new, add it under "Lessons" below with the date -- do not wait to be asked.**
+
+**0. Start from a clean baseline.** Deploy = the committed tree, nothing else. Never leave app code
+uncommitted across sessions (commit it, or put it on a branch). If the tree is dirty with someone else's
+intent, resolve that first -- a minimal diff is impossible to see against a dirty tree.
+
+**1. Sweep the blast radius BEFORE changing anything.** For the function, field or pattern being changed:
+find every caller and consumer across BOTH backend and frontend, and every *sibling* that does the same
+thing (grep the symbol, the pattern, and the mistake itself). Ask "where else does this same bug sit?"
+The list goes in the plan. Search by symbol/pattern -- do not re-read whole files (`app.dc.html` is 25k lines).
+Check what differs between local and live data (live has only the seeded brand; the dev tenant has dummies).
+
+**2. Plan, then implement.** State: the change / why / blast radius (callers + siblings found) / what I will
+NOT touch / how it will be verified (local and live) / how to roll back. Size it: *small* (copy, label)
+= one line + a quick search; *medium* (logic in one place) = full sweep + local test; *large* (prompts,
+data, cross-cutting, anything that changes behaviour users rely on) = written plan and the owner's
+approval before building. If the root cause needs a wider change than asked for, STOP and ask -- do not
+widen quietly. Design choices are the owner's; ask, do not assume.
+
+**3. Keep everything else the same.** Minimal diff. No drive-by edits, no reformatting, no renames,
+no "while I'm here". A fix and a refactor are separate commits. Every changed line must map to a line in
+the plan; check `git diff --stat` before committing. `app.dc.html` stays LF-only (0 CRLF).
+
+**4. Verify locally, against the shape live actually has.** `python tools/checkfe.py` (front end),
+`python api/selfcheck.py` (call signatures), `python tools/smoke.py` (boots the COMMITTED tree -- run it
+before every push), plus a targeted test of the change with live-shaped data (empty overrides, only the
+seeded brand), not the dev tenant's dummies. Restart uvicorn after backend edits; reload after front-end edits.
+
+**5. Deploy, then verify live -- and only then hand it over for testing.** Push, wait for the Render
+deploy to be `live`, then: `curl https://themarketing-studio.com/selfcheck` (must be `ok:true` and the
+`commit` must match what was pushed); scan Render logs since the deploy time for new 5xx/tracebacks;
+run whatever use case can be checked without a login. Say plainly what live checking could NOT cover
+(login-only routes, real data, real model output) -- never imply a full live pass. Do not use the
+owner's credentials or session; do not write test data into the live tenant unless the owner agrees.
+
+**6. Hand over honestly:** what changed, what was verified where (local / live), what was NOT verified.
+
+**7. Record once.** The testing log holds the full entry; the commit message is a few lines; memory gets a
+short pointer. Do not write the same account three times.
+
+### Environment gotchas (rediscovered too often)
+- Use the venv interpreter `api/.venv/Scripts/python.exe`; plain `python` is not on PATH. Set `PYTHONUTF8=1`
+  (the console is cp1252 and crashes on ₹, →, —).
+- The shell tool eats one backslash level even in a quoted heredoc: build `\u` escapes with `chr(92)`.
+- Local `api/tenants/` is dev data (dummy brands: Kumkum, Loomwell, Parle G, Sthir). Live data is on the
+  Render disk `/data` and is a different, smaller set; `.dockerignore` keeps tenants out of the image.
+- Git bash `cat` of files with no trailing newline runs their contents together -- delimit ids explicitly.
+
+### Lessons (append new ones, dated)
+- 19 Sep: a fix that passed locally only because the dev tenant had a Parle G brand file that live lacks --
+  always test with live-shaped data.
+- 19 Sep: 60 cross-module calls in the committed tree did not match their functions because backend
+  modules were left uncommitted while `main.py` was committed; `selfcheck.py`/`smoke.py` now guard this.
+- 19 Sep: an AI-call fallback (`return {}` after a parse failure) hid a failure for two days -- every
+  fallback must log why, and output cut off by `max_tokens` must be detected, not silently accepted.
