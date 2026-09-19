@@ -89,3 +89,25 @@ Line 33 of `app.dc.html` loads SheetJS from a CDN:
 Every other asset is local. This one means spreadsheet export silently stops working offline, and the
 portal is run from a `.bat` on a laptop. Worth vendoring into `api/frontend/` — not urgent, but it will
 be confusing the first time it happens.
+
+## selfcheck.py + smoke.py -- the backend checks that were missing (19 Sep)
+
+Added after the deployed `main.py` called `producers.stands_on(..., brand_mode=...)` while the deployed
+`producers.py` was older and had no such parameter. Nothing above can see that: `checkfe` reads only the
+front end and `contract.py` reads response shapes; Python itself only notices a wrong keyword when the
+line runs, so a real user got HTTP 500s for a day.
+
+```bash
+python tools/smoke.py               # BEFORE every push: exports the COMMITTED tree, boots it, checks it
+python api/selfcheck.py             # just the call-signature audit, on the working tree
+curl https://themarketing-studio.com/selfcheck    # AFTER every deploy -- login-free, returns ok + commit
+```
+
+- `api/selfcheck.py` reads every call from one project module into another and checks it against the real
+  signature of the function it calls (unexpected keyword, too many positional args, module that will not
+  import). It does not check argument values or missing required args, and a pass does NOT mean the app works.
+- `tools/smoke.py` runs that audit plus a boot test against `git archive HEAD` in a scratch folder with an
+  empty data directory (the live shape), and hits the read routes and the routes that broke before with a
+  signed-in test session. No AI provider is called. Exit 0 = safe to push. It never touches real data.
+- `GET /selfcheck` is public on purpose and returns only pass/fail, counts and the deploy's commit; the
+  per-call detail goes to the server log.

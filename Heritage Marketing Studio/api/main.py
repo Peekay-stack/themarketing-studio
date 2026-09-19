@@ -117,7 +117,7 @@ app.add_middleware(
 # whether a session exists. Every route the shell actually calls to read or write data is what this
 # gate protects.
 _PUBLIC_PATHS = {
-    "/", "/health", "/login", "/logout", "/me", "/app",
+    "/", "/health", "/selfcheck", "/login", "/logout", "/me", "/app",
     "/support.js", "/image-slot.js", "/favicon.ico",
     # `/docs`, `/redoc`, `/openapi.json` are deliberately NOT public — the interactive API browser and
     # the full route schema stay behind login on a deployed instance. A signed-in user still reaches
@@ -157,6 +157,18 @@ app.add_middleware(RequireLoginMiddleware)
 @app.on_event("startup")
 def _startup():
     init_db()
+
+
+@app.get("/selfcheck")
+def selfcheck_route():
+    """Login-free deploy check: does every backend call match the function it calls? See selfcheck.py.
+
+    Public on purpose (it has to answer right after a deploy, with no session) and safe to be: it returns
+    only a pass/fail summary and the deploy's commit; the per-call detail goes to the server log. Run it
+    after every deploy -- a `false` here is the 18 Sep failure (main.py newer than a module it calls)
+    caught in seconds instead of by a user."""
+    import selfcheck
+    return selfcheck.summary()
 
 
 @app.get("/health")
