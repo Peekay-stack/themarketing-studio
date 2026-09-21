@@ -198,3 +198,12 @@ short pointer. Do not write the same account three times.
   pack (it decided from the post's own words), and a pack the person PICKED was ignored when those words were
   missing. An explicit choice must always beat a heuristic; when a heuristic is kept, name it in the label
   ("Automatic"). `tools/test_pack_choice.py` pins the matrix.
+- 21 Sep: prove the risky generation step on the owner's REAL example before building anything around it. The pack
+  designer got a full backend, its own store, a panel and 35 passing tests; the owner's first real try (the
+  real Nourish+ pack attached) came back as a generic white pouch, and it was dropped. Tests on the decision
+  side (which images are attached, what the prompt says) say nothing about whether the model's output is any
+  good. For a feature whose whole value is image fidelity, show that fidelity first: one prompt, the real
+  product photo, the owner's eyes -- ten minutes, before any wiring.
+- 21 Sep: ask what real example the owner will try first, and do not merge two cases under one prompt. I designed for
+  'a product with no pack shot' and one 'shape only, ignore the artwork' instruction; the owner's real product
+  already had a clean photo and wanted 'in line with' it, which is the opposite instruction.

@@ -38,3 +38,12 @@ briefs, LLM calls that cost money) needs the owner's agreement.
 - 19 Sep: test with live-shaped data (live has only the seeded Heritage brand; dev tenant has 4 dummy brands).
 - 19 Sep: a static call-signature audit + a smoke test of the committed tree would have caught the 60 broken calls.
 - 19 Sep: every AI-call fallback must log why; detect output cut off by max_tokens instead of accepting it.
+- 21 Sep: prove the risky generation step on the owner's REAL example before building anything around it. The pack
+  designer got a full backend, its own store, a panel and 35 passing tests; the owner's first real try (the
+  real Nourish+ pack attached) came back as a generic white pouch, and it was dropped. Tests on the decision
+  side (which images are attached, what the prompt says) say nothing about whether the model's output is any
+  good. For a feature whose whole value is image fidelity, show that fidelity first: one prompt, the real
+  product photo, the owner's eyes -- ten minutes, before any wiring.
+- 21 Sep: ask what real example the owner will try first, and do not merge two cases under one prompt. I designed for
+  'a product with no pack shot' and one 'shape only, ignore the artwork' instruction; the owner's real product
+  already had a clean photo and wanted 'in line with' it, which is the opposite instruction.

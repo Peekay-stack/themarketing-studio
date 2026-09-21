@@ -431,3 +431,14 @@ Social+Carousel via `pack_mode:"auto"` so Video and /shot-reference are unchange
 (Automatic + Regenerate visuals on a "pouch" scene). Deferred: per-post label of whether a real pack was used.
 Changing the dropdown does NOT re-render existing posts -- the owner must click "Regenerate visuals" (noted UX gap).
 Full entry: BRAND_GROUNDING_TESTING_LOG.md, "21 Sep -- follow-up to the pack dropdown".
+
+
+**UPDATE 21 Sep (later) -- pack-shot rules decided; the pack designer was built, tried and DROPPED.** Owner's rules: Social
+posts always carry a pack shot (on the side), a Carousel's CTA slide always does and middle slides only if described,
+all visual styles, explicit opt-out, no silent default pack, the real pack. To serve a product with no pack shot I built
+a pack designer (describe + optional reference photo, own store outside the library); the owner's first real try (real
+Nourish+ photo attached) returned a generic pouch, so it was dropped -- patch parked at C:/Users/punie/parked-work/
+pack-designer.patch, tree back at b2a7746. Real need = upload the real pack photo. NEXT: bring the owner a re-plan for
+the always-a-pack rules with REAL packs only (chooser by name, no silent default, "no pack in these posts", Social then
+Carousel, live confirmation between); do not build before they approve it. Full entry: BRAND_GROUNDING_TESTING_LOG.md,
+"21 Sep -- pack shots". Lesson recorded: prove the risky generation step on the owner's real example before wiring.

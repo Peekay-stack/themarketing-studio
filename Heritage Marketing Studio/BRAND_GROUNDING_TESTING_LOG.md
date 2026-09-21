@@ -1926,3 +1926,49 @@ new labels confirmed in the served markup; cast/logo dropdowns untouched. checkf
 **NOT verified on live (owner to check, needs their login and image credits):** with the real pack on file, set
 Automatic and click "Regenerate visuals" on a scene whose text says "pouch": the real pack should appear. Also
 the wording of the relabelled option. Until they confirm, treat real image behaviour as unconfirmed.
+
+
+### 21 Sep -- pack shots: the "always a pack" rules decided; the pack designer built, tried by the owner, and DROPPED
+
+**Owner's decisions, in their words (the intent that stands):** Social posts always carry a pack shot, placed on the
+side (central if the scene is about the pack); a Carousel's last (CTA) slide always carries one, middle slides only if
+their concept describes it; applies across all visual styles; opt-out only when needed; Independent mode gets the same
+choices; no silent default pack (several SKUs), the screen asks which product; the pack must be the real pack.
+
+**What I built to serve a product with no pack shot (uncommitted, never deployed):** a "pack designer" -- describe the
+pack, optionally add a reference photo of a similar pack, match the look of an existing signed-off pack, preview,
+keep it in its own list (`packdesign.py`, not the library, because POSM/Onground read the library's signed-off `pack`
+as the real product). Routes /pack-design, /packs, /pack-save, /pack-remove; a panel in Social's assets card;
+`tools/test_pack_design.py` with 35 checks (which images attach and in what order, prompt wording, reference photo
+never stored, designs never reach the library, brand scoping, 401 without a session). All passed; audit 1,179 calls,
+0 problems; checkfe passed; served page carried the panel.
+
+**The owner tried it locally with real generation:** described "Heritage Nourish+ High Protein milk in line with the
+attached reference image" and attached the REAL Nourish+ pack photo (orange and blue, "18g protein", Heritage logo).
+Result: a generic white pouch with the Heritage logo and invented fine print ("Pure Milk Dairy", hashtags). Owner's
+verdict: "this will not work unless fully wired with dimensions, colour reference ... the same cycle as the POSM
+generator ... either design a comprehensive one or just drop it."
+
+**Why it failed (from the code and the screenshots):** (1) my prompt told the model to take ONLY the shape and
+material from the reference and ignore its brand, wording and artwork -- right for a different category's pack, wrong
+for the brand's own pack, so it discarded the colours and layout the owner wanted matched; (2) the description carried
+no colours or wording, and the prompt said to put only the described wording on the pack, so the model invented the
+rest; (3) a designed pack is an invented pack by nature -- it also cuts against the library's rule that a generated
+image never becomes a reference for the next one. A "comprehensive" version (structured pack spec, a faithful-redraw
+mode) would still garble small text and needs live image testing on the owner's credits each round: the POSM cycle.
+
+**Decision (owner: "yes"):** DROP the designer. The owner's real need is met by uploading the real pack photo (the
+existing upload signs it off) -- it goes to the model as pixels, not redrawn from words. A product with no photo at all
+(pre-launch) gets no pack in the posts until its real design exists. Removed from the working tree; the work is parked
+as a patch at C:/Users/punie/parked-work/pack-designer.patch (with a README there), apply with `git apply` on a tree at
+b2a7746. Tree is back to b2a7746: audit 1,165 calls / 0 problems, checkfe passes, `tools/test_pack_choice.py` passes.
+
+**Still standing:** the "always a pack" rules, re-planned for REAL packs only (chooser lists real packs by name, no
+silent default, explicit "no pack in these posts", Social always / Carousel CTA always / middle slides by description,
+placement + style wording). Plan to be brought to the owner before building; Social first, then Carousel.
+
+**Noticed, not touched:** the pack dropdown lists every brand's signed-off packs (`/library` and the dropdown do not
+filter by brand, and uploads record no brand) -- invisible on live (one brand), real on a multi-brand tenant; worth
+its own fix. The local dev tenant's `made` ledger holds a `pack_design` row from the owner's test (harmless, local only).
+**Still pending from before:** the owner's live check of the 21 Sep pouch/Automatic fix (superseded if the new chooser
+replaces Automatic).
