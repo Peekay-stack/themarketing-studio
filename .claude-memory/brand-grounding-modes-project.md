@@ -442,3 +442,12 @@ pack-designer.patch, tree back at b2a7746. Real need = upload the real pack phot
 the always-a-pack rules with REAL packs only (chooser by name, no silent default, "no pack in these posts", Social then
 Carousel, live confirmation between); do not build before they approve it. Full entry: BRAND_GROUNDING_TESTING_LOG.md,
 "21 Sep -- pack shots". Lesson recorded: prove the risky generation step on the owner's real example before wiring.
+
+
+**UPDATE 21 Sep (latest) -- library naming SHIPPED (commit 331fa94, live-gated).** Memory uploads now take a Name, every card has
+Rename (`/library-rename`), file type is read from the stored file not the name, AVIF references are converted to PNG. Owner
+confirmed the screen locally. PENDING the owner on live: rename the two live pack items (Nourish+, Happy Full Cream/"Heritage
+milk.avif"); note "Heritage milk.avif" is now the newest signed-off pack = the default wherever nobody picks one. STILL OPEN:
+the always-a-pack re-plan awaits the owner's answers (Step 0 wording trial ~8 image credits on the Nourish+ photo; brand
+scoping of the pack list; CTA slide always an image slide; session-only working reference photo; writer-suggested "no pack";
+whether to keep an "illustrative pack" rung). Full entry: BRAND_GROUNDING_TESTING_LOG.md, "21 Sep -- library naming".

@@ -207,3 +207,9 @@ short pointer. Do not write the same account three times.
 - 21 Sep: ask what real example the owner will try first, and do not merge two cases under one prompt. I designed for
   'a product with no pack shot' and one 'shape only, ignore the artwork' instruction; the owner's real product
   already had a clean photo and wanted 'in line with' it, which is the opposite instruction.
+- 21 Sep: `grep -c $'\r'` in this shell is unreliable -- it returned the line count on a pure-LF file and led to a
+  wrong 'file is CRLF' reading. Before concluding anything about line endings, count bytes with Python
+  (`b.count(b'\r\n')`).
+- 21 Sep: never infer a file's type from an item's display NAME. Two front-end places did (image vs video from the
+  name's extension); it only worked because names were file names. Once names became editable, a plain rename
+  would have broken the thumbnails -- read the type from the stored file.

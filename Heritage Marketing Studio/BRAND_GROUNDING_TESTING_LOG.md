@@ -1972,3 +1972,55 @@ filter by brand, and uploads record no brand) -- invisible on live (one brand), 
 its own fix. The local dev tenant's `made` ledger holds a `pack_design` row from the owner's test (harmless, local only).
 **Still pending from before:** the owner's live check of the 21 Sep pouch/Automatic fix (superseded if the new chooser
 replaces Automatic).
+
+
+### 21 Sep -- library naming: items showed their file names; rename added; AVIF references converted
+
+**Report (owner, screenshots, live):** two real pack photos uploaded through Memory ("Nourish+" and "Happy Full Cream")
+appeared in the pack dropdown and on the Memory cards under their FILE names ("40359965_1-heritage-noruish-milk.webp",
+"Heritage milk.avif"), not the text typed into the form's "What this is" box.
+
+**Cause (from the code):** the Memory upload form sent only `note`, `tags` and the files -- never a `name` -- so the
+server fell back to the file's own name; the typed text lands in the item's note (the small line under the card).
+There was also no way to rename an item, and re-uploading the same photo cannot fix it because the library skips bytes
+it already holds (returns the existing row).
+
+**Found by the sweep, beyond the report:** (1) the name is not cosmetic: Social's writer is told the pinned product is
+"<pack name> -- never rename it", so it was being handed a filename; (2) two front-end places decided image vs video
+from the item NAME's extension (the Memory card and the green-screen source picker), so a plain rename would have
+killed the thumbnails; (3) "Heritage milk.avif" is a format the image API is not known to accept (documented
+reference formats: PNG, JPEG, WebP, HEIC/HEIF) -- NOT confirmed with a real call; (4) that upload made it the newest
+signed-off pack, i.e. the default pack wherever nobody picks one (POSM, Onground, Video, Social Automatic) -- the flip
+warned about before the upload.
+
+**Built (commit 331fa94):** `library.rename()` + `POST /library-rename` (display name only; file, sign-off and note
+untouched; blank refused, capped at 120 chars); a Name box on the Memory upload form (not for locked copy; used when one
+file is added, else each keeps its filename); an inline Rename on every Memory card; `libExt()` reads file type from the
+stored file, not the name, at both sites; `gemini.for_api()` converts an AVIF reference to PNG (transparency kept) on
+the Gemini and fal paths -- every other format passes through byte-for-byte, and an undecodable AVIF is passed through
+unchanged with a log line. Inline uploads on Social/Carousel/POSM/Onground still default to the filename (Rename fixes
+them afterwards); the writer's anchor and every generation route are untouched.
+
+**Verification:** `tools/test_library_naming.py` (new) 22 checks pass; `tools/test_pack_choice.py` still passes;
+`tools/test_tools.py` 18 of 18; checkfe passes; call-signature audit 1,167 calls / 0 problems; the shipped `libExt`
+was extracted from the served page and run on real-shaped items (renamed WebP/AVIF/MP4 keep their types, a
+legacy name-only item works, an item with no extension gives blank); smoke test of the committed tree passed. The
+OWNER then checked it on screen locally (their signed-in session): the new name shows, the thumbnail survives, Rename
+is on the card.
+
+**Live gate (deploy dep-daof164s728c73bjpcpg, live 08:56:14Z, commit 331fa94):** /selfcheck ok 1,167 calls, 0
+problems; /selfcheck/deep 20 routes, 0 failed; anonymous POST /library-rename -> 401; the served page carries the Name
+box, the Rename action, the route and `libExt`. Logs since 08:50Z: three 502s between 08:55:34 and 08:56:15, all during
+the instance swap (two were my own polling, one Render's health check); none after the deploy finished; no application
+errors.
+
+**NOT verified on live (owner):** renaming the two live items ("40359965_1-heritage-noruish-milk.webp" and "Heritage
+milk.avif") and their thumbnails afterwards; that the AVIF conversion works on the live build (it needs the live Pillow to
+decode AVIF -- if not, the log shows "[gemini] could not convert an AVIF reference..." and the file goes as-is, no worse
+than before); and whether the image API really rejects AVIF (a guess). Safe route until confirmed: pack photos as JPG,
+PNG or WebP.
+
+**Still open:** the always-a-pack re-plan (Deploy 1 Social / Deploy 2 Carousel) awaits the owner's answers: Step 0 wording
+trial on the Nourish+ photo (~8 image credits), brand scoping of the pack list, the CTA slide always being an image
+slide, a session-only "working reference photo", writer-suggested "no pack" on non-product posts, and whether to keep an
+"illustrative pack" rung at all.
