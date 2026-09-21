@@ -53,3 +53,14 @@ briefs, LLM calls that cost money) needs the owner's agreement.
 - 21 Sep: never infer a file's type from an item's display NAME. Two front-end places did (image vs video from the
   name's extension); it only worked because names were file names. Once names became editable, a plain rename
   would have broken the thumbnails -- read the type from the stored file.
+- 21 Sep: an image model obeys the SCENE text as well as your wording. A scene that asked for 'the nutrition panel
+  visible' got an invented table on a background jar even though the prompt said no printed facts, and a scene
+  that pours from a pouch got a second drawn pouch. Fix upstream (tell the writer what NOT to describe) and
+  add a narrow deterministic backstop on the scene text; do not expect one more wording line to win.
+- 21 Sep: when a control 'does not work', reproduce it by driving the real page (real clicks, real keys, network
+  stubbed) and read the server log for whether the request ever left the page, before theorising. 'Rename does
+  not work' was 'Enter does nothing'. Every text box should save on Enter and cancel on Escape.
+- 21 Sep: a shell heredoc turned regex word-boundary escapes (backslash-b) into invisible backspace bytes in a new
+  module -- it compiled, and only a SyntaxWarning on a neighbouring escape gave it away. Write any file that
+  contains backslashes with the Write tool, never a heredoc, and check `b.count(bytes([8]))` and `python -W
+  error -m py_compile` afterwards.

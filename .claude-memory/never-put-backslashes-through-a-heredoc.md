@@ -31,3 +31,10 @@ serialiser (`json.dumps`) and read the file back to prove the value survived. Fo
 (a handover .md) use the Write tool instead: the heredoc also broke on ordinary punctuation. Always
 `ast.parse` a patched .py and diff the target before trusting the write. Related:
 [[app-dc-html-is-lf-not-crlf]], [[launch-json-lives-at-opus-root]].
+
+**Fifth incident, 21 Sep 2026:** a heredoc-written module contained regex word boundaries (backslash-b). They arrived as
+ten backspace bytes (x08) and the pattern silently matched nothing useful. It still compiled; the only clue was a
+SyntaxWarning about a neighbouring escape. Repaired by replacing the x08 bytes with backslash-b in binary mode. Rule
+reinforced: any file with regex or backslashes goes through the Write tool, then `python -W error -m py_compile` and a
+`b.count(bytes([8]))` check. Also, `grep -c` with a carriage-return argument in this shell returned the line count on a pure-LF
+file -- count line endings with Python bytes instead.

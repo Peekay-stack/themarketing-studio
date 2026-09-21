@@ -2024,3 +2024,74 @@ PNG or WebP.
 trial on the Nourish+ photo (~8 image credits), brand scoping of the pack list, the CTA slide always being an image
 slide, a session-only "working reference photo", writer-suggested "no pack" on non-product posts, and whether to keep an
 "illustrative pack" rung at all.
+
+
+### 21 Sep (later) -- pack in scenes: the wording proven on real images, Deploy 1 BUILT and HELD
+
+**State at the owner's instruction "hold it for the day":** Deploy 1 (Social, real packs only) is built and tested but
+UNCOMMITTED and NOT deployed. Live is e94e92a (library naming/rename + AVIF conversion, live-gated earlier today). The work is
+in the working tree AND saved as a patch outside the repo: C:/Users/punie/parked-work/deploy1-social-pack-in-scene.patch
+(6 files: main.py, app.dc.html, tools/README.md, tools/test_library_naming.py, tools/test_pack_choice.py, and the new
+api/packscene.py). Local preview server stopped.
+
+**The plan that survived (after the pack designer was dropped -- see the entry above):** every Social post carries the REAL
+pack; real packs only; the owner answered yes to Step 0 trial credits, brand scoping, the CTA slide always being an image slide,
+a session-only "working reference photo", and a writer-suggested "no pack" on non-product posts (visible, overridable);
+"illustrative pack" rung on hold.
+
+**Step 0 wording trial on the owner's real Nourish+ photo -- 13 image credits in total (8 + 2 + 3):**
+- T1 today's live prompt: pack small, held, skewed, print garbled. Today's opening tells the model to "reuse the EXACT same
+  people from the reference image" -- nonsense for a pack photo.
+- T2-T8 new wording (`packscene.py`): the reference IS the real product, reproduce it front-on, never redraw. Faithful and
+  legible in every STATIC placement: side (2 of 2), Product-only hero, Vector (illustrated), Infographic (corner), Carousel CTA
+  at 3:4 with the lower part kept calm. In use / pouring (T4): pack rotated, claim text garbled ("Oalulum") -- the weak case.
+- T8 added an "fssai" mark not on the reference. T8b/T8c re-runs (with and without a "no added marks" line) were both clean:
+  the slip is intermittent (1 in 3 without the line, 0 in 1 with it) -- NOT proven fixed; a human still checks every pack.
+- T9-T11 (front-only / exactly-one-pack wording): a scene that asked for "the nutrition panel visible" -- T9 fine; T11 moved the
+  panel onto a background JAR with an invented table (protein 15 g beside a pack that says 18g); T10 (mother pours from a
+  pouch) still drew a SECOND, distorted pouch. Lesson: wording protects the pack but cannot overrule what the SCENE text asks.
+
+**Owner's first real batch (local, 9 posts, Facebook/Instagram/LinkedIn, Nourish+ picked):** all 9 carry the real pack; 8 front-on;
+"side" placement held in every side post; chooser, thumbnail, per-post label and selector all rendered. Two defects: Facebook post 2
+(hero) showed the BACK of the pack with an invented nutrition panel (its caption said "check the nutrition panel", so the scene
+asked for it); two posts (FB 1, IG 2) had a second invented pouch because the scene text mentions opening/pouring one.
+
+**What Deploy 1 contains:** `packscene.py` (roles side/hero/in_use/cta/corner/none; photo vs illustrated wording; front-only +
+exactly-one-pack + no-added-marks + no-printed-facts; a pack-only opening; `clean_scene()` backstop that removes requests for
+the pack's back / nutrition panel / ingredients from the scene text -- NOT pouring, and not for in_use or callers without a
+role). `/scene-still`: optional `pack_role`, `pack_reference` (session photo as a data URI, never stored; refused if not an
+image data URI or over 8 MB; kept in Independent mode), response `pack_source` (library / reference / none -- "attached", never
+"shown"), `pack_role`, `pack_failed`, `scene_cleaned`. Callers that send no pack_role get today's prompt (pinned by test).
+`/library?for_brand=1` and `/library-add scope_brand` (opt-in brand scoping). Social screen: real-pack chooser (brand-scoped,
+thumbnail, "No pack in these posts", nothing pre-selected), session reference photo + product name (the writer is told it),
+ask-before-generate, writer suggests a per-post role, per-post label + role selector (stacked; "Pack in use (fine print may
+blur)"), a brand switch clears the choice. The Assets card heading no longer says "optional". Writer prompt: describe the scene
+only -- never the back/side of the pack, nutrition panel or ingredients, and no pouch-handling unless the post is "in use".
+
+**Verification (local):** pack test 54 checks; library naming/scoping/AVIF test; tools test 18/18; checkfe; audit 1,172 calls /
+0 problems. The Social screen was driven in the browser pane with real clicks, real keys and the network stubbed (see the
+[[drive-the-real-page-with-stubs]] memory): ask-first, chooser, per-post requests, labels, role selector, session photo, "no pack",
+layout measured. NOT verified: real images from the fixed wording (backstop and writer instruction are unproven on pictures);
+the writer's actual output (needs a session); anything on live.
+
+**Rename (also found today):** the owner said Rename "was not working". Server log: no rename request ever left the page. Driving the
+real page reproduced the cause -- Enter did nothing (only a small Save link saved). Fixed: Enter saves, Escape cancels, the box
+is focused with the name selected on open, Save is a button. (Part of the working tree, i.e. also HELD.)
+
+**Open decisions for the owner (all held):** (1) ship Deploy 1 with the known limits? (2) spend 1 credit to prove the sanitised
+nutrition scene? (3) keep the "pack in use" option in the selector? (4) the top-left brand-idea badge over each image is white on
+16% white and unreadable on bright photos -- dark translucent background, or remove it? (5) the pack looks large/pasted-on --
+add a size to the wording ("about a quarter / a third of the frame's height") and trial it (2-3 credits, together with (2)).
+
+**Known limits to state at handover:** a second drawn pouch can still appear when a scene pours from one; every published pack
+needs a human eye (an invented mark or a garbled claim is intermittent); "attached" is not "shown".
+
+**Found in the code, not yet fixed (Deploy 2, Carousel):** the image services do not support 4:5. `gemini.image_from_reference`
+maps an unsupported ratio to 16:9 and `gemini.image` to 1:1 (creative.py to 16:9), and the Carousel asks for 4:5 -- so slides with
+a pack/cast attached come back landscape and are cropped into the 4:5 frame (a pack "on the side" would be cut off). Use 3:4,
+which T8 proved works. Not seen on a live slide.
+
+**Other loose ends:** uploading a pack makes it the newest signed-off = the default wherever nobody picks one (POSM, Onground,
+Video, old Social Automatic); the owner uploaded Nourish+ and Happy Full Cream on live and must rename them with the new Rename;
+"Heritage milk.avif" (Happy Full Cream) is the newest live pack. Carousel still has its old dropdown. Every image trial output is
+in Downloads/pack_wording_trial (prompts.md, contact_sheet.jpg, T1-T11).

@@ -451,3 +451,20 @@ milk.avif"); note "Heritage milk.avif" is now the newest signed-off pack = the d
 the always-a-pack re-plan awaits the owner's answers (Step 0 wording trial ~8 image credits on the Nourish+ photo; brand
 scoping of the pack list; CTA slide always an image slide; session-only working reference photo; writer-suggested "no pack";
 whether to keep an "illustrative pack" rung). Full entry: BRAND_GROUNDING_TESTING_LOG.md, "21 Sep -- library naming".
+
+**UPDATE END OF 21 Sep -- Deploy 1 (Social pack-in-scene) BUILT and HELD (owner: "hold it for the day").** Live = e94e92a
+(library naming/rename + AVIF live). The Social pack work is UNCOMMITTED in the working tree and saved as a patch:
+C:/Users/punie/parked-work/deploy1-social-pack-in-scene.patch (main.py, app.dc.html, tools/README.md, both tools tests,
+new api/packscene.py). Proven today: the wording on the owner's real Nourish+ photo (13 image credits over 3 trials; static
+placements faithful, in-use garbles, an invented mark and invented printed facts are intermittent and scene-driven); the
+owner's real 9-post local batch (all carry the real pack). Built to fix what the batch showed: front-only/one-pack/no-facts
+wording, a scene backstop (`packscene.clean_scene`), writer instruction. Tests: pack 54, naming, tools 18, audit 1,172/0.
+UNPROVEN on pictures: the backstop and the writer instruction. RESUME: restart the local server (backend never hot-reloads),
+review `git diff`, rerun the tests, then ask the owner for the go-ahead; on yes: commit, push, wait for the deploy, live
+gate (/selfcheck commit, /selfcheck/deep, logs), record. OPEN decisions: ship Deploy 1 with known limits; optional 1-credit
+check of the sanitised scene; keep the "pack in use" option; the brand-idea badge over each image (white on 16% white,
+unreadable on bright photos: dark background or remove); pack size (add "about a quarter/third of the frame" and trial,
+2-3 credits). NEXT after Deploy 1: Deploy 2 Carousel -- CTA slide always an image slide, and ask the services for 3:4 not
+4:5 (they silently turn 4:5 into 16:9/1:1 and the slide is then cropped; found in code, not yet seen live). The owner still
+has to rename the 2 live pack items (Nourish+, Happy Full Cream = "Heritage milk.avif", the newest pack = current default).
+Full entry: BRAND_GROUNDING_TESTING_LOG.md, "21 Sep (later) -- pack in scenes". Related: [[drive-the-real-page-with-stubs]].
