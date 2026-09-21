@@ -422,3 +422,12 @@ pack / design one; an explicit pick always attaches) -- **PENDING the owner's li
 Automatic, on Never, with a picked pack on a scene that doesn't mention a pack, and a Carousel on Never. The
 owner said they will confirm later; do not treat the front-end behaviour or real image output as verified until
 they do. Full entry: BRAND_GROUNDING_TESTING_LOG.md, "19 Sep -- Social pack dropdown".
+
+
+**UPDATE 21 Sep (pack dropdown):** owner confirmed the picked-pack path on live; Never/design-one/Carousel results were
+understood, not bugs (Never = no reference photo attached; the scene text may still make the model draw a pack, e.g.
+"his face on the pack"). Found and fixed a gap: Automatic did not recognise "pouch"/"sachet"/"bag of milk". Scoped to
+Social+Carousel via `pack_mode:"auto"` so Video and /shot-reference are unchanged. PENDING the owner's live check
+(Automatic + Regenerate visuals on a "pouch" scene). Deferred: per-post label of whether a real pack was used.
+Changing the dropdown does NOT re-render existing posts -- the owner must click "Regenerate visuals" (noted UX gap).
+Full entry: BRAND_GROUNDING_TESTING_LOG.md, "21 Sep -- follow-up to the pack dropdown".

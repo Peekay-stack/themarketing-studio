@@ -53,6 +53,9 @@ client = TestClient(main.app, raise_server_exceptions=True, headers={selfcheck.I
 
 NAMES_PACK = "A woman pours milk from a packet into a steel glass in a bright kitchen"
 NO_PACK = "A family laughing together at the breakfast table"
+POUCH = "A woman holds a pouch of milk up to the kitchen window"
+SACHET = "A milk sachet resting beside a steel tumbler of filter coffee"
+BAG = "She carries a bag of milk home along the street at dawn"
 
 # (label, scene, extra payload fields, brand_mode, expect pack attached?, which url expected if attached)
 CASES = [
@@ -65,6 +68,16 @@ CASES = [
      NO_PACK, {"pack_id": PICKED}, "grounded", True, PICKED_URL),
     ("Design one (pack_generate, include_pack:false), scene names the pack -> none, design clause",
      NAMES_PACK, {"pack_generate": True, "include_pack": False}, "grounded", False, None),
+    # The 21 Sep change: Automatic (pack_mode:"auto", what Social/Carousel now send) also recognises the words a
+    # milk POUCH is actually described with. Callers that send no pack_mode (Video frames, /shot-reference)
+    # keep the original list, so they must NOT start attaching on these words.
+    ("Automatic (pack_mode auto), scene says 'pouch'   -> attaches", POUCH, {"pack_mode": "auto"}, "grounded", True, AUTO_PACK),
+    ("Automatic (pack_mode auto), scene says 'sachet'  -> attaches", SACHET, {"pack_mode": "auto"}, "grounded", True, AUTO_PACK),
+    ("Automatic (pack_mode auto), scene says 'bag of milk' -> attaches", BAG, {"pack_mode": "auto"}, "grounded", True, AUTO_PACK),
+    ("Automatic (pack_mode auto), unrelated scene       -> none", NO_PACK, {"pack_mode": "auto"}, "grounded", False, None),
+    ("NO pack_mode (Video/shot-reference style), scene says 'pouch' -> unchanged: none", POUCH, {}, "grounded", False, None),
+    ("Never beats Automatic even with pack_mode auto, scene says 'pouch' -> none", POUCH, {"pack_mode": "auto", "include_pack": False}, "grounded", False, None),
+    ("Independent + Automatic (pack_mode auto), scene says 'pouch' -> stripped", POUCH, {"pack_mode": "auto"}, "general", False, None),
     ("Independent + Automatic, scene names the pack -> stripped (auto-picked packs never survive)",
      NAMES_PACK, {}, "general", False, None),
     ("Independent + explicit pick             -> the person's own choice survives",

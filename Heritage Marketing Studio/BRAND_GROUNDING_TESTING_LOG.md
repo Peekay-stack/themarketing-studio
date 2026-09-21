@@ -1875,3 +1875,54 @@ unconfirmed.
 **Same day, context:** the grounding backend (13 modules) was shipped after the live-500 finding (see the 19 Sep
 retrospective entry above); the working agreement, `/selfcheck`, `/selfcheck/deep` and `tools/smoke.py` are in
 place and were used for this change.
+
+
+### 21 Sep -- follow-up to the pack dropdown: the owner's live results, and Automatic now recognises "pouch"
+
+**Owner's live results (screenshots, 21 Sep), all on the deployed fc28635 build:**
+- Pinned pack ("heritage daily health pack shot.jpg" picked): all three posts show the real green Daily Health
+  pouch, consistent across posts -- the server rule and `include_pack:true` work on live. (My earlier inference that
+  the live library had no signed-off pack was wrong or out of date: the dropdown lists it now; not known whether it
+  was uploaded since.)
+- Never: with a fresh full regeneration, all three posts still showed a drawn Heritage pouch. Cause: Never only
+  stops a reference PHOTO being attached; the AI-written scene text still asks for a pouch (a caption said "check
+  the FSSAI mark on every pouch"), and the image model draws one. Not a bug in the controls; a label that promised
+  more than it did.
+- Let the studio design one: three differently styled, invented pouches -- as designed.
+- Carousel on Never: slides 4-7 still show packs, because the idea platform's own concept says "his face on the pack"
+  (slide 6 shows a pouch carrying the delivery man's face). No real photo of that pack can exist yet; expected.
+- Automatic: inconclusive. Two of the owner's screenshots turned out to be byte-identical re-sends (checked by hash),
+  and one showed the pre-fix dropdown wording. Note: changing the dropdown does not re-render existing posts; the
+  owner must click "Regenerate visuals" (an unrequested UX gap, noted, not built).
+
+**Gap found in Automatic:** the word rule that decides "this scene shows the pack" (pack, packet, carton, tetra, FSSAI,
+pour, bottle, glass of milk, label) does not contain "pouch", "sachet" or "bag of milk" -- yet the owner's product
+is a pouch. Verified by running the pattern on sample phrases. POSM's own vocabulary (posm.py `_PACK_WORDS`) already
+includes pouch and sachet.
+
+**What the owner wants, from the user's side:** the pack in a social post is their real pack, or it is clear that it
+is not. So: pick a pack -> it appears (done); Automatic -> when a post shows the pack, the real one appears without
+picking; Never -> its meaning is clear (no photo attached; a pack may still be drawn if the scene needs one);
+nothing else moves.
+
+**Sweep before changing (found a wider blast radius than first assumed):** the rule lives only in main.py
+`/scene-still`. But Video frames (when "Include the locked pack" is unticked) and `/shot-reference` also send no
+explicit choice, so widening the shared list would have quietly changed them. So the change is scoped instead.
+
+**Built:** `/scene-still` accepts an optional `pack_mode`. When it is "auto", the word list also matches pouch(es),
+sachet(s), milk bag(s) and bag(s) of milk. Social and Carousel send `pack_mode:"auto"` for Automatic; Never, a picked
+pack and "design one" are unchanged; Video and shot-reference send no pack_mode and keep the original list exactly.
+Relabelled the Never option in Social and Carousel: "Don't attach a pack photo -- a pack may still be drawn if the
+scene needs one". Dropped the earlier idea of making Never keep packaging out of the picture: it would fight
+concepts like "his face on the pack". Deferred: a per-post label saying whether a real pack photo was used (about
+eight edit sites; do it separately once this is confirmed).
+
+**Verification:** `tools/test_pack_choice.py` now has 15 cases and all pass; on the committed code exactly the three
+new-word cases fail, and the "no pack_mode, scene says pouch -> unchanged" case passes on both (Video untouched).
+Ran the shipped `socialPackFields`/`carouselPackFields` from the served page: Automatic sends `pack_mode:"auto"`,
+Never `include_pack:false`, a pick `pack_id`+`include_pack:true`, design-one `pack_generate`+`include_pack:false`;
+new labels confirmed in the served markup; cast/logo dropdowns untouched. checkfe passes, LF intact.
+
+**NOT verified on live (owner to check, needs their login and image credits):** with the real pack on file, set
+Automatic and click "Regenerate visuals" on a scene whose text says "pouch": the real pack should appear. Also
+the wording of the relabelled option. Until they confirm, treat real image behaviour as unconfirmed.

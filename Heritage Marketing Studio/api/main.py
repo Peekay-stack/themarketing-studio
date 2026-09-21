@@ -1678,9 +1678,15 @@ def scene_still(payload: dict):
         # chosen pack was silently ignored on any scene that never named the product. The pattern still
         # decides for the AUTOMATIC case (nothing picked, nothing forced) -- and `include_pack: false` is the
         # caller's way to say "never", which this line leaves alone.
-        want_pack = bool(str(payload.get("pack_id") or "").strip()) or bool(re.search(
-            r"\bpack(et|s|-shot)?\b|\bcarton\b|\btetra\b|\bfssai\b|\bpour(ing|ed|s)?\b|\bbottle\b|"
-            r"\bglass of milk\b|\blabel\b", subject, re.IGNORECASE))
+        _words = (r"\bpack(et|s|-shot)?\b|\bcarton\b|\btetra\b|\bfssai\b|\bpour(ing|ed|s)?\b|\bbottle\b|"
+                  r"\bglass of milk\b|\blabel\b")
+        # Social and Carousel send pack_mode:"auto" when the person leaves the dropdown on AUTOMATIC, and get a
+        # wider vocabulary: a milk POUCH is the product, yet "pouch" and "sachet" never matched, so a scene that
+        # said "a pouch of milk" got no real pack and the model drew a made-up one (19-21 Sep live testing).
+        # Video frames and /shot-reference send no pack_mode, so they keep the original list exactly.
+        if str(payload.get("pack_mode") or "").strip().lower() == "auto":
+            _words += r"|\bpouch(es)?\b|\bsachets?\b|\bmilk bags?\b|\bbags? of milk\b"
+        want_pack = bool(str(payload.get("pack_id") or "").strip()) or bool(re.search(_words, subject, re.IGNORECASE))
     # See library.py's brand-scoping note: without this, a shot for one brand could pull another
     # brand's signed-off cast/pack/plate purely because it was the most recent of its kind in the
     # tenant. No house/brief is bound at this route, so the active profile is today's correct default.
