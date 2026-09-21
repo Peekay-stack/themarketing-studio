@@ -260,7 +260,8 @@ def _fal_ref(url: str) -> str | None:
         return None
     mime = mimetypes.guess_type(p)[0] or "image/png"
     with open(p, "rb") as fh:
-        return f"data:{mime};base64,{base64.b64encode(fh.read()).decode()}"
+        mime, data = gemini.for_api(mime, fh.read())      # an AVIF reference becomes PNG; all else unchanged
+    return f"data:{mime};base64,{base64.b64encode(data).decode()}"
 
 
 def image_from_reference(prompt: str, reference_urls: list[str], ratio: str = "16:9",

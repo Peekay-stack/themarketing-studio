@@ -180,7 +180,42 @@ def local_path(url_or_path: str) -> str | None:
     return None
 
 
+def for_api(mime: str, data: bytes) -> tuple[str, bytes]:
+    """Turn an image the image API is not known to accept into one it does. Today that is AVIF only: the
+    documented reference formats are PNG, JPEG, WebP and HEIC/HEIF, and a pack photo saved from a web page is
+    often AVIF ("Heritage milk.avif"). A wrong guess here would mean the pack silently never attaches, so
+    AVIF becomes PNG (transparency kept). Every other format is passed through exactly as before — this is
+    deliberately not a general converter. If conversion fails the original goes through unchanged (no worse
+    than before) and the reason is logged."""
+    if str(mime).lower() != "image/avif":
+        return mime, data
+    try:
+        import io
+        from PIL import Image
+        img = Image.open(io.BytesIO(data))
+        img.load()
+        buf = io.BytesIO()
+        img.convert("RGBA" if "A" in img.getbands() else "RGB").save(buf, "PNG")
+        return "image/png", buf.getvalue()
+    except Exception as e:  # noqa: BLE001 -- any decode failure: fall back to the original bytes
+        print(f"[gemini] could not convert an AVIF reference to PNG ({type(e).__name__}: {e}); sending as-is",
+              file=sys.stderr, flush=True)
+        return mime, data
+
+
 def _as_base64(src: str) -> tuple[str, str] | None:
+    """`_as_base64_raw`, with an AVIF reference converted to PNG first (see `for_api`)."""
+    pair = _as_base64_raw(src)
+    if not pair:
+        return pair
+    mime, b64 = pair
+    if str(mime).lower() != "image/avif":
+        return pair
+    mime2, data2 = for_api(mime, base64.b64decode(b64))
+    return mime2, base64.b64encode(data2).decode()
+
+
+def _as_base64_raw(src: str) -> tuple[str, str] | None:
     """Any reference image — local media path, disk path, http URL or data URI — to (mime, base64)."""
     if not src:
         return None

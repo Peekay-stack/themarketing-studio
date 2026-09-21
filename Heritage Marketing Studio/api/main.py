@@ -2003,6 +2003,18 @@ def library_sign(payload: dict):
     return {"item": row, "summary": library.summary()}
 
 
+@app.post("/library-rename")
+def library_rename(payload: dict):
+    """Rename a library item (display name only). `{id, name}` -> `{item}`."""
+    try:
+        row = library.rename(str(payload.get("id") or ""), str(payload.get("name") or ""))
+    except ValueError as e:
+        return JSONResponse(status_code=400, content={"detail": str(e)})
+    if not row:
+        return JSONResponse(status_code=404, content={"detail": "No such item."})
+    return {"item": row}
+
+
 @app.post("/library-remove")
 def library_remove(payload: dict):
     ok = library.remove(str(payload.get("id") or ""))

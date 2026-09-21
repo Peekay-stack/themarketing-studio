@@ -278,6 +278,23 @@ def sign_off(item_id: str, who: str = "", on: bool = True) -> dict | None:
     return None
 
 
+def rename(item_id: str, name: str) -> dict | None:
+    """Change an item's display name and nothing else — the file, its URL, its sign-off and its note stay
+    exactly as they were. The name is what a person picks it by, and what a writer is told the product is,
+    so it should read as a product ("Heritage Nourish+ Milk 500 ml"), not as whatever the file was called.
+    Returns the row, or None when there is no such item; raises ValueError for a blank name."""
+    name = " ".join(str(name or "").split())[:120]
+    if not name:
+        raise ValueError("Give it a name — it is how you will pick it later.")
+    rows = _load()
+    for r in rows:
+        if r.get("id") == item_id:
+            r["name"] = name
+            _save(rows)
+            return r
+    return None
+
+
 def remove(item_id: str) -> bool:
     rows = _load()
     keep = [r for r in rows if r.get("id") != item_id]

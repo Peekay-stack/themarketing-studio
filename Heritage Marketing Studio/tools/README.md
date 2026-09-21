@@ -132,3 +132,14 @@ Calls the real `/scene-still` route in-process with the image providers stubbed 
 scratch data dir) and checks the whole matrix: Automatic / Never / a picked pack / "design one", in both
 Grounded and Independent. On the code before 19 Sep it fails exactly the two cases where a picked pack was
 ignored; it proves the DECISION about references, not what an image model then draws.
+
+## test_library_naming.py -- library item names and AVIF references (21 Sep)
+
+```bash
+python tools/test_library_naming.py  # exit 0 = names, rename and the AVIF conversion all behave
+```
+
+Runs the real `/library-add`, `/library-rename` and `/library` routes in-process against a scratch data
+directory (no key, no cost). Checks that a name given on upload is used, that a rename changes the name and
+nothing else (file, sign-off, note), that blank/unknown/over-long names are handled, and that an AVIF
+reference is sent to the image services as PNG while JPG/PNG/WebP go through byte-for-byte unchanged.

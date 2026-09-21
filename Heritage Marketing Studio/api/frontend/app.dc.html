@@ -1589,6 +1589,9 @@
         </sc-for>
       </div>
       <div style="font-size:12.5px; color:#6B7280; margin-bottom:12px;">{{ libCopyHint }}</div>
+      <sc-if value="{{ libNameShown }}" hint-placeholder-val="{{ true }}">
+        <input value="{{ libName }}" onChange="{{ onLibName }}" placeholder="Name it: how you will pick it later, e.g. Heritage Nourish+ Milk 500 ml (used when you add one file)" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:10px; padding:9px 12px; font-size:13px; color:#38414F; background:#FBFAF8; font-family:inherit; margin-bottom:10px;" />
+      </sc-if>
       <textarea value="{{ libNote }}" onChange="{{ onLibNote }}" rows="2" placeholder="What this is, or the exact wording for locked copy" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:10px; padding:10px 12px; font-size:13.5px; color:#38414F; background:#FBFAF8; resize:vertical; font-family:inherit; margin-bottom:10px;"></textarea>
       <input value="{{ libTags }}" onChange="{{ onLibTags }}" placeholder="Tags, comma separated (optional)" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:10px; padding:9px 12px; font-size:13px; color:#38414F; background:#FBFAF8; font-family:inherit; margin-bottom:12px;" />
       <input type="file" multiple="true" onChange="{{ uploadToLibrary }}" style="font-size:13px; color:#41505F;" />
@@ -1654,7 +1657,18 @@
 
                     <div style="padding:13px 15px 14px; display:flex; flex-direction:column; flex:1;">
                       <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:5px;">
-                        <div style="font-weight:700; font-size:13.5px; color:#17325E; line-height:1.35; word-break:break-word;">{{ it.name }}</div>
+                        <sc-if value="{{ it.notRenaming }}" hint-placeholder-val="{{ true }}">
+                          <div style="font-weight:700; font-size:13.5px; color:#17325E; line-height:1.35; word-break:break-word;">{{ it.name }}</div>
+                        </sc-if>
+                        <sc-if value="{{ it.renaming }}" hint-placeholder-val="{{ false }}">
+                          <div style="flex:1; min-width:0;">
+                            <input value="{{ it.renameText }}" onChange="{{ it.onRenameText }}" style="width:100%; box-sizing:border-box; border:1px solid #C9CEDA; border-radius:8px; padding:6px 9px; font-size:13px; color:#17325E; background:#fff; font-family:inherit;" />
+                            <div style="display:flex; gap:14px; margin-top:6px; font-size:12px;">
+                              <span onClick="{{ it.saveRename }}" style="cursor:pointer; font-weight:700; color:#1E7E34;">Save</span>
+                              <span onClick="{{ it.cancelRename }}" style="cursor:pointer; color:#6B7280;">Cancel</span>
+                            </div>
+                          </div>
+                        </sc-if>
                         <span style="flex:none; background:{{ it.stateBg }}; color:{{ it.stateFg }}; border-radius:20px; padding:3px 9px; font-size:10.5px; font-weight:700; white-space:nowrap;">{{ it.stateLabel }}</span>
                       </div>
                       <div style="font-size:11.5px; color:#6B7280; margin-bottom:8px;">{{ it.sizeLabel }} · added {{ it.added }}</div>
@@ -1670,6 +1684,7 @@
                       <div style="display:flex; gap:8px; align-items:center; margin-top:auto; padding-top:6px;">
                         <span onClick="{{ it.sign }}" style="cursor:pointer; border:1px solid {{ it.signBorder }}; background:{{ it.signBg }}; color:{{ it.signFg }}; border-radius:8px; padding:6px 13px; font-size:12px; font-weight:700;">{{ it.signLabel }}</span>
                         <a href="{{ it.url }}" target="_blank" style="font-size:12px; color:#2E5EA6; font-weight:600; text-decoration:none;">Open</a>
+                        <span onClick="{{ it.startRename }}" style="cursor:pointer; font-size:12px; color:#2E5EA6; font-weight:600;">Rename</span>
                         <span onClick="{{ it.drop }}" style="cursor:pointer; font-size:12px; color:#6B7280; margin-left:auto;">Remove</span>
                       </div>
                     </div>
@@ -10753,7 +10768,7 @@ class Component extends DCLogic {
     importReview: null,            // { what, how, rows|fields, detail } awaiting a look before it lands
     settingsOpen: false,
     libKind: 'pack',               // which kind the upload form is adding
-    libNote: '', libTags: '', libBusy: '',
+    libNote: '', libTags: '', libBusy: '', libName: '', libRenameId: '', libRenameText: '',
     learning: null,                // GET /learning — tiers, templates, decisions, rules
     importBusy: '',                // '', 'brief', 'script' while a document is being read back
     toast: null,
@@ -11844,6 +11859,27 @@ class Component extends DCLogic {
   setLibKind = (k) => () => this.setState({ libKind:k });
   onLibNote = (e) => this.setState({ libNote:e.target.value });
   onLibTags = (e) => this.setState({ libTags:e.target.value });
+  onLibName = (e) => this.setState({ libName:e.target.value });
+  // A library item's file type comes from the FILE it holds, never from its display name. The name is now
+  // something a person can set and change ("Heritage Nourish+ Milk"), and it carries no extension.
+  libExt(it){
+    const src = String((it && (it.file || it.url)) || (it && it.name) || '').split('?')[0];
+    const last = src.split('/').pop() || '';
+    return last.indexOf('.') >= 0 ? last.split('.').pop().toLowerCase() : '';
+  }
+  startLibRename = (it) => () => this.setState({ libRenameId: it.id, libRenameText: it.name || '' });
+  onLibRenameText = (e) => this.setState({ libRenameText: e.target.value });
+  cancelLibRename = () => this.setState({ libRenameId: '', libRenameText: '' });
+  saveLibRename = (it) => async () => {
+    const name = (this.state.libRenameText || '').trim();
+    if (!name) { this.showToast('Give it a name — it is how you will pick it later.', 'warn'); return; }
+    if (name === it.name) { this.cancelLibRename(); return; }
+    const r = await this.apiCall('/library-rename', { id: it.id, name });
+    if (r && r.ok) {
+      this.cancelLibRename(); this.loadLibrary(); this.loadCarouselAssetLib();
+      this.showToast('Renamed to "' + ((r.data && r.data.item && r.data.item.name) || name) + '".', 'ok');
+    } else this.showToast((r && r.data && r.data.detail) || 'Could not rename it.', 'warn');
+  };
   uploadToLibrary = async (e) => {
     const files = Array.from(e.target.files || []);
     const s = this.state;
@@ -11856,12 +11892,13 @@ class Component extends DCLogic {
     fd.append('kind', s.libKind);
     fd.append('note', s.libNote);
     fd.append('tags', s.libTags);
+    if (files.length === 1 && (s.libName || '').trim()) fd.append('name', s.libName.trim());
     files.forEach(f => fd.append('files', f));
     try {
       const r = await fetch('/library-add', { method:'POST', body: fd });
       const d = await r.json().catch(()=>({}));
       if (!r.ok) { this.showToast(d.detail || 'Upload failed.'); this.setState({ libBusy:'' }); return; }
-      this.setState({ libBusy:'', libNote:'', libTags:'' });
+      this.setState({ libBusy:'', libNote:'', libTags:'', libName:'' });
       this.showToast((d.added||[]).length + ' added — sign it off to make it usable.', 'ok');
       this.loadLibrary();
     } catch (err) { this.setState({ libBusy:'' }); this.showToast('Upload failed — is the backend running?'); }
@@ -16276,7 +16313,7 @@ class Component extends DCLogic {
       .sort((a,b) => (b.signed_off ? 1 : 0) - (a.signed_off ? 1 : 0))
       .map(x => {
         const on = cp[slot] === x.id;
-        const ext = String(x.name || '').split('.').pop().toLowerCase();
+        const ext = this.libExt(x);
         return { id:x.id, name:x.name, on, pick:this.setCompSource(slot, x.id),
           border: on ? '#17325E' : '#DDD9D1', bg: on ? '#EEF1F5' : '#FFFFFF',
           ring: on ? '2px' : '1px',
@@ -16416,7 +16453,7 @@ class Component extends DCLogic {
       .map(it => {
         // Media kinds are images, video and audio; showing a filename where a thumbnail belongs is
         // what made this screen a list of strings instead of a library.
-        const ext = String(it.name || '').split('.').pop().toLowerCase();
+        const ext = this.libExt(it);
         const isImage = this.LIB_EXT.img.indexOf(ext) >= 0;
         const isVideo = this.LIB_EXT.vid.indexOf(ext) >= 0;
         const isAudio = this.LIB_EXT.aud.indexOf(ext) >= 0;
@@ -16437,6 +16474,9 @@ class Component extends DCLogic {
           bodyNote: isCopy ? '' : (it.note || ''),
           hasBodyNote: !isCopy && !!it.note,
           hasTags: !!(it.tags || []).length,
+          renaming: s.libRenameId === it.id, notRenaming: s.libRenameId !== it.id,
+          renameText: s.libRenameText, onRenameText: this.onLibRenameText,
+          startRename: this.startLibRename(it), saveRename: this.saveLibRename(it), cancelRename: this.cancelLibRename,
           // Unsigned is recessed rather than alarmed, and its primary action is the one that fixes it.
           cardBg: it.signed_off ? '#FFFFFF' : '#FBFAF8',
           cardBorder: it.signed_off ? '#DDD9D1' : '#C9CEDA',
@@ -16591,6 +16631,7 @@ class Component extends DCLogic {
       libFirstRun: libItems.length === 0, libStarters: this.LIB_STARTERS,
       hasLibItems: libItems.length > 0, noLibItems: libItems.length === 0,
       libNote: s.libNote, libTags: s.libTags,
+      libName: s.libName, libNameShown: s.libKind !== 'copy', onLibName: this.onLibName,
       onLibNote: this.onLibNote, onLibTags: this.onLibTags,
       uploadToLibrary: this.uploadToLibrary,
       libBusyLabel: s.libBusy ? 'Adding…' : '',
