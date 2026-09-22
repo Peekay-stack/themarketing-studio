@@ -2095,3 +2095,56 @@ which T8 proved works. Not seen on a live slide.
 Video, old Social Automatic); the owner uploaded Nourish+ and Happy Full Cream on live and must rename them with the new Rename;
 "Heritage milk.avif" (Happy Full Cream) is the newest live pack. Carousel still has its old dropdown. Every image trial output is
 in Downloads/pack_wording_trial (prompts.md, contact_sheet.jpg, T1-T11).
+
+
+### 22 Sep -- Deploy 1 (Social pack-in-scene) SHIPPED and live-gated
+
+**Owner's instruction (resuming from the 21 Sep hold):** "spend a few credits and get to a stage where you can live
+deploy" -- read as authorisation to finish the two open trials, apply the fixes, and ship, without a further
+per-decision check-in. Also noted: Rename is only on localhost, not live -- correctly diagnosed as the Enter-key
+fix (built 21 Sep, held with the rest of Deploy 1) never having reached live; the ORIGINAL /library-rename route
+and the Save-link path were already live from 331fa94.
+
+**Two remaining pre-deploy trials, 2 image credits:**
+- T15 (nutrition-panel scene, run through the shipped `clean_scene()` exactly as `/scene-still` now calls it):
+  clean front-on pack, no back, no nutrition panel, no invented facts anywhere in the frame. Fixes the T9/T11
+  failure from 21 Sep (an invented table appearing on a background jar).
+- T16 (a normal side-placement breakfast scene, with the new "about a quarter of the frame's height" size
+  instruction added to the `side` placement clause): the pack now reads as a supporting element next to mother
+  and child, not the dominant, pasted-on object the owner's first real batch showed.
+
+**Also fixed before shipping (zero image cost):** the per-post idea-badge overlay ("Pure Doodh Ki Shakti...") was
+white text on `rgba(255,255,255,0.16)` -- unreadable on bright kitchen photos, visible in the owner's own
+screenshots. Given a dark translucent background (`rgba(15,26,43,0.62)`) instead, which holds on any photo.
+
+**Decisions made without a further round-trip (owner's "get to a stage where you can live deploy" was read as
+authorisation to make these):** ship with the known limits stated at handover (a pouring scene can still draw a
+second, distorted pouch -- deliberately not touched, described as an "in use" role trade-off; an invented mark or
+a garbled claim is intermittent, not proven impossible -- every published pack still needs a human eye); keep
+"Pack in use" as a selectable option (already honestly labelled "fine print may blur") rather than removing it.
+
+**Shipped, commit 170eade, deploy dep-dap116rncjis739qnvd0 (live 05:24 UTC):** the full Deploy 1 scope from 21 Sep
+(brand-scoped real-pack chooser with no silent default, session-only reference photo, writer-suggested per-post
+role + honest label + selector, ask-before-generate, `packscene.py` wording incl. front-only/one-pack/no-marks/
+no-printed-facts/side-sizing, the scene-text backstop, brand-scoped `/library`, Rename saves on Enter/cancels on
+Escape) PLUS the two 22 Sep fixes above (badge, pack size).
+
+**Verification:** `tools/test_pack_choice.py` updated to 54 cases (the side-placement assertion now also checks
+for the size phrase) -- all pass; `tools/test_library_naming.py` passes; checkfe passes; call-signature audit
+1,172 calls / 0 problems; `tools/smoke.py` passed on the COMMITTED tree before push. Live gate: `/selfcheck` ok,
+commit matches, 1,172/0; `/selfcheck/deep` 20 routes, 0 failed; anonymous POST to `/library-rename`, `/scene-still`,
+`/library-add` all 401; served page carries the badge colour, the brand-scoped list, "Choose a pack...", "No pack
+in these posts" and the Rename key handler; logs since the deploy show only two 502s during the instance swap
+(one my own poll, one Render's health check) and no application errors.
+
+**NOT verified on live (needs the owner's login and image credits):** a real Social batch on live with a real pack
+picked -- the pack placement, size and front-only wording have only been proven on this session's own trial
+generations and the owner's LOCAL 9-post batch, never on the live build; the session-only reference-photo path on
+live; Rename via Enter on live (the route was already live, only the Enter handler is new).
+
+**Still pending from the owner's side:** rename the two live pack items (Nourish+, and "Heritage milk.avif" =
+Happy Full Cream, which remains the newest signed-off pack = the default wherever nobody picks one).
+
+**Next:** Deploy 2, Carousel -- CTA slide always an image slide, and the ratio fix found in the code on 21 Sep
+(the image services silently turn an unsupported 4:5 into 16:9/1:1; Carousel asks for 4:5; use 3:4, proven by
+trial T8). Not yet re-planned in detail; bring a short plan before building, per the working agreement.

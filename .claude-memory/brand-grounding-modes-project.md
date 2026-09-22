@@ -468,3 +468,17 @@ unreadable on bright photos: dark background or remove); pack size (add "about a
 4:5 (they silently turn 4:5 into 16:9/1:1 and the slide is then cropped; found in code, not yet seen live). The owner still
 has to rename the 2 live pack items (Nourish+, Happy Full Cream = "Heritage milk.avif", the newest pack = current default).
 Full entry: BRAND_GROUNDING_TESTING_LOG.md, "21 Sep (later) -- pack in scenes". Related: [[drive-the-real-page-with-stubs]].
+
+**UPDATE 22 Sep -- Deploy 1 (Social pack-in-scene) SHIPPED, commit 170eade, live-gated clean (dep-dap116rncjis739qnvd0,
+05:24 UTC 22 Sep).** Resumed from the 21 Sep hold on "spend a few credits and get to a stage where you can live
+deploy": ran the two remaining trials (2 credits -- nutrition-scene backstop proven clean, side placement now
+sized "about a quarter of the frame's height" and reads as a supporting element, not pasted-on), fixed the
+unreadable overlay badge (dark background, zero cost), kept "Pack in use" as an option, shipped with the stated
+known limits (pouring can still draw a second pouch; an invented mark/garbled claim is intermittent, human eye
+still needed). Full Deploy 1 scope (brand-scoped chooser, session reference photo, per-post role+label, packscene.py
+wording, scene backstop, Rename Enter/Escape) is now live. NOT verified on live: a real Social batch with the owner's
+own login and credits (proven so far only on this session's trials + the owner's LOCAL batch); the reference-photo
+path on live; Rename-by-Enter on live. Owner still to rename the 2 live pack items ("Heritage milk.avif" = Happy
+Full Cream is still the default pack wherever nobody picks one). NEXT: Deploy 2, Carousel -- CTA slide always an
+image slide, and the 4:5-silently-becomes-16:9/1:1 ratio fix (use 3:4, proven by trial T8) -- not yet re-planned,
+bring a short plan before building. Full entry: BRAND_GROUNDING_TESTING_LOG.md, "22 Sep -- Deploy 1 ... SHIPPED".

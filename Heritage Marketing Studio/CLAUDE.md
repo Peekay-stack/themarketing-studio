@@ -224,3 +224,8 @@ short pointer. Do not write the same account three times.
   module -- it compiled, and only a SyntaxWarning on a neighbouring escape gave it away. Write any file that
   contains backslashes with the Write tool, never a heredoc, and check `b.count(bytes([8]))` and `python -W
   error -m py_compile` afterwards.
+- 22 Sep: "get to a stage where you can live deploy" is the owner delegating the remaining per-item decisions (ship
+  with known limits, keep an option, style a fix) once the substance -- the trial proof -- is in hand; it is
+  not the same as silence, and proceeding through the working agreement's normal gates (tests, smoke, push,
+  live gate) still applied. Distinguish it from a genuinely open creative question (there is a right test to
+  run, not a taste call the owner has to make).
