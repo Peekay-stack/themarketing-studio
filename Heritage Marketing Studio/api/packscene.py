@@ -52,10 +52,20 @@ NO_MARKS = (" Do not add any logos, certification marks, licence numbers, badges
 # produced a pack shown from the BACK with an invented nutrition panel (numbers the model made up -- a compliance
 # risk on a published post), and scenes that mention opening or pouring a pouch got a SECOND, blurry, invented
 # pouch drawn beside the real one. So: the front only, and exactly one pack -- stated over whatever the scene says.
+#
+# Live-tested finding (22 Sep, "Count the Years" redrafted): a scene mentioning a "milk crate" -- a container
+# that in real life holds several packs -- got TWO full, sharp, front-facing packs drawn side by side, not one.
+# The existing "exactly one pack" line already said not to draw a second one, and the model still did, because
+# a crate/shelf/stack in the scene actively implies more than one -- the same class of clash as the nutrition
+# panel and personalisation cases, just not one this line named yet. Added an explicit carve-out for exactly
+# that situation.
 FRONT_ONLY_ONE_PACK = (" Show only the FRONT of the pack: never its back, its sides, a nutrition panel or an "
                        "ingredients list, even if the scene description mentions one. There is exactly one pack "
-                       "in the image; do not draw any other pouch, carton or pack. Show no nutrition table, ingredients list or "
-                       "other printed facts anywhere in the image.")
+                       "in the image; do not draw any other pouch, carton or pack. If the scene mentions a "
+                       "crate, shelf, stack, basket or delivery of packs, show only the ONE real pack clearly "
+                       "and render the rest of that crate/shelf/stack as blurred, out-of-focus or indistinct "
+                       "shapes -- never a second sharp, fully-legible pack. Show no nutrition table, ingredients "
+                       "list or other printed facts anywhere in the image.")
 
 _PLACEMENT = {
     # Live-tested finding (owner's first real batch, 21 Sep): with no size given, "side" placements came back

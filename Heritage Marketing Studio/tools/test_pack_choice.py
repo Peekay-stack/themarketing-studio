@@ -143,6 +143,8 @@ expect("side, Real: says the reference IS the real product, front-on, never redr
        "The pack in the reference image is the real product" in pr and "front-on" in pr and "Never redraw" in pr)
 expect("side, Real: front only, never the back or a nutrition panel, and exactly one pack",
        "Show only the FRONT of the pack" in pr and "nutrition panel" in pr and "exactly one pack" in pr)
+expect("side, Real: a crate/shelf/stack scene still gets only one sharp pack, the rest blurred",
+       "crate, shelf, stack, basket" in pr and "blurred, out-of-focus or indistinct" in pr)
 st2, d2, pr2, rf2 = send({**PICK, "pack_role": "in_use"}, style="vector")
 expect("every role and style carries the front-only / one-pack line (photo and illustrated alike)",
        "Show only the FRONT of the pack" in pr2 and "Show only the FRONT of the pack" in pr)
