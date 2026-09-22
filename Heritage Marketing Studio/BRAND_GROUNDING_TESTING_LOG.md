@@ -2200,3 +2200,61 @@ produced end-to-end on the live build. Owner still to rename the 2 live pack ite
 per-post/per-slide "pack used" label was the one deferred extra (already built as part of both deploys,
 so in fact done). Next open items are unrelated to packs: PR-release export+footer, the competitor-notes
 feature, PPTX/DOCX native-shape charts -- all previously deferred, still deferred.
+
+
+### 22 Sep -- Round 16: first live batches (Social + Carousel), four findings, two shipped, two diagnosed
+
+**Owner tried both deploys live for the first time** (Social + Carousel), with the two live pack items
+already renamed -- confirmed by the style-reference chips reading "Heritage Daily Health Toned Milk" /
+"Heritage Nourish+ Milk" / "Heritage Happy FC Milk" throughout. Four findings, all live (owner confirmed):
+
+**1. Social: clean batch, no defects.** 3 posts, real pack attached on every one, roles (side/in-use/side)
+matched what was drawn, labels correct. Closes the "verify a real Social batch on live" item.
+
+**2. Carousel CTA pack size.** The owner's own Adjust note on a real produced slide ("This Street, These
+Hands", a hand-off scene) asked for the pack to be "in proportion to the hands... a little smaller than
+the current" -- the `cta` placement clause had no size guide at all (only `side` got one, 21 Sep). FIXED:
+added "at its true, real-life size relative to any hands, people or objects near it -- not enlarged for
+effect" to `packscene.py`'s `cta` clause. Proven on a real hand-off generation (two people, a pack held
+between them) -- the pack now reads as an actual pouch at real scale, not the dominant object it was.
+
+**3. Carousel: the added slide's man does not match slide 2, despite two rounds of Adjust.** Root-caused
+from the owner's own screenshot, no code fix needed: "Include a recurring model/cast in this carousel" was
+UNCHECKED for this carousel, and the app's own text under it says exactly what that means -- "each slide
+may show a different, unreferenced person." Slides 1-5 held together by chance (similar wording, same craft
+style); slide 6, added later by hand with different wording, had nothing tying it to slide 2's man. Text-
+only Adjust notes cannot fix an identity mismatch -- this codebase's own long-standing principle is
+"identity travels as a picture, never as words," and this is exactly that principle playing out. Told the
+owner: turn the checkbox on, and either upload a real photo of the person (these vendor profiles are meant
+to be real people per the idea platform's own text) or use "AI-draft a cast reference, from this concept"
+to get a signed reference first, THEN produce -- both existing mechanisms, uniformly applied to every slide
+including ones added after the fact (`c.wantCast`/`c.castChoice` are carousel-level state, not per-slide).
+
+**4. Carousel: "except the last slide, [middle slides] take random packs" -- NOT reproduced from what was
+shown.** Traced `carouselPackFields`/`library.shot_references`: the pack_id sent is PROVABLY identical for
+every slide with a role != none -- no code path can select a different real pack per slide. The screenshots
+given had shows_pack=false on every slide but the last (confirmed by "No pack in this slide" labels), so
+they do not actually demonstrate the complaint. Also checked whether a shared seed could help consistency:
+`gemini.image_from_reference` (the PRIMARY path, tried before the fal fallback) has NO seed parameter at
+all -- a seed only affects the fal fallback, which is rarely the one hit -- so "pass a seed" is not the fix
+it might look like. Asked the owner for one concrete example (which carousel, which slides, ideally a fresh
+screenshot) before chasing this further; not yet reproduced, not yet fixed.
+
+**5. Nav bug, unrelated to packs, fixed alongside.** The owner's own live screenshot showed "Memory" clipped
+off the end of the top nav -- the exact "longer brand name in the chip" case a PRIOR round's own code
+comment (11 Sep) had already named as unsafe, just never revisited. Reproduced directly in the browser
+(real header markup, a real-length brand name+category in the chip, the full right-side cluster present) at
+a width sweep: STILL clipping Memory at 1600px and 1700px (worse than the prior estimate of "fits by 0px at
+1600"), clean from ~1750-1800px. Raised the wrap threshold from 1450px to 1800px, re-verified at both edges
+(1700px now wraps and shows Memory; 1850px fits in one row). This makes the nav wrap (two rows) at more
+everyday window widths than before -- a visible trade-off, made on purpose per the block's own stated
+philosophy: a wrapped nav beats a silently-missing destination.
+
+**Shipped, commit 3bc4393, deploy dep-dap264u7bikc73bb5ht0 (live ~06:43 UTC).** tools/test_pack_choice.py's
+cta assertion extended to check the size wording; checkfe, call audit (1,173/0), smoke on the committed
+tree, live gate (/selfcheck commit match, /selfcheck/deep 20/0, served page carries both fixes, logs show
+only the two expected instance-swap 502s) all clean.
+
+**Still open:** finding 4 (random packs on middle slides) awaits a concrete reproducible example from the
+owner. Finding 3 needs no further code -- the owner decides whether to turn on cast for future recurring-
+character carousels.

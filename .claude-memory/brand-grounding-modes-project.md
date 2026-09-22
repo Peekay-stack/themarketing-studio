@@ -492,3 +492,11 @@ later) are now live. NOT verified on live: a real Carousel batch with the owner'
 still to rename the 2 live pack items and try Carousel for the first time since this shipped. Full entry:
 BRAND_GROUNDING_TESTING_LOG.md, "22 Sep (later) -- Deploy 2 ... SHIPPED". No further pack-shot work planned;
 next open items are unrelated (PR-release export+footer, competitor-notes, PPTX/DOCX native-shape charts).
+
+**UPDATE 22 Sep (Round 16) -- first live batches tried, commit 3bc4393 shipped and live-gated clean
+(dep-dap264u7bikc73bb5ht0, ~06:43 UTC).** Social: clean, no defects. Carousel: CTA pack-size fix shipped
+(proven on a real hand-off generation); the added-slide identity mismatch traced to the cast checkbox being
+off (no code fix -- existing mechanism, owner's call to use it); a nav-overflow bug (Memory clipped at
+mid-large widths) found and fixed, unrelated to packs. STILL OPEN: "except the last slide, random packs"
+not yet reproduced from what was shown -- awaiting a concrete example (which carousel, which slides) from
+the owner. Full entry: BRAND_GROUNDING_TESTING_LOG.md, "22 Sep -- Round 16".

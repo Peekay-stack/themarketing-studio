@@ -73,3 +73,8 @@ briefs, LLM calls that cost money) needs the owner's agreement.
   (here, a literal \"on the side\") -- git then reads the rest of the message as separate pathspecs and
   refuses. Write any commit message with quotes, apostrophes or code fragments to a file and commit with `git
   commit -F <file>`, never inline with -m.
+- 22 Sep: when a live screenshot shows something clipped or missing, reproduce it in the browser with the REAL content
+  shape (actual-length brand name, every sibling element a real session would render) before trusting an old
+  measurement's number -- a prior round's own comment estimated '1600px fits by 0px' for this exact nav, and a
+  fresh in-browser measurement with real content found it still clipping at 1700px. Old arithmetic is not a
+  substitute for measuring the current real thing.
