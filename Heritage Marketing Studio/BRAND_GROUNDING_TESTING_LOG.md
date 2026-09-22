@@ -2514,3 +2514,43 @@ one human Adjust pass, not treated as a guarantee.
 **Shipped, commit 169e004, deploy dep-dap5gqjncjis739v62tg (live ~10:31 UTC).** checkfe, test_pack_choice
 (2 new assertions for the paperback anchor + hero-pose ban), py_compile, selfcheck, smoke on the committed
 tree, live gate (self-check commit match, deep check 20/0, only instance-swap 502s) all clean.
+
+
+### 22 Sep -- Round 19: redraft-and-retest on a fresh concept -- crate scenes drew two packs
+
+**Owner redrafted concepts specifically to stress-test yesterday's hero-pose fix on a genuinely new
+concept ("Count the Years, Not the Litres"), not the one it was tuned on.** Good news: it held -- every
+pack-visible slide came back correctly sized, no hero/presenting poses. Owner then flagged three separate
+observations in one message, which needed separating rather than treating as one bug:
+
+1. **Slide 1: an invented brass/gold vessel in the man's hand.** No pack role at all was attached to this
+slide (correctly resolved to "no pack unless you choose") -- this has nothing to do with the pack system.
+The scene ("a single weathered face ... read whole in three seconds like an OOH board") never described
+hands or a prop; the model filled the empty-handed portrait with something plausible on its own. Not a
+packscene defect -- flagged to the owner as a separate, unaddressed image-model liberty.
+
+2. **Slide 2: a milk crate scene drew TWO full, sharp packs side by side -- a real, provable defect.** The
+existing "exactly one pack ... do not draw any other pouch, carton or pack" instruction was already there
+and the model broke it anyway, because a crate in real life holds several packs, and that implication in
+the SCENE fights the one-pack rule -- the same clash class as the nutrition-panel and personalisation
+cases, just a variant the wording never named. Fixed: `FRONT_ONLY_ONE_PACK` now explicitly carves out
+crate/shelf/stack/basket scenes -- show the ONE real pack clearly, render the rest as blurred/indistinct.
+**Verified on a real generation of the owner's own exact slide-2 scene** (fal fallback, local Gemini
+credits still exhausted) -- one legible pack in the crate, the rest indistinct, correctly sized, natural
+pose. This same generation is also a clean second confirmation that Round 18's hero-pose fix holds on a
+fresh concept.
+
+3. **Slide 4: a pack attached to a scene that only said "milk crate against his hip", not "pack".** Not a
+bug -- `shows_pack` is the writer's own explicit judgment call, separate from any keyword match on the
+visual_note text; the writer's instructions already tell it to mark true whenever the scene puts someone
+near the product, even via a prop like a crate. Explained to the owner as by-design, distinct from the
+regex-based Automatic detection they may have been thinking of.
+
+**On the owner's "seeping in from Social" hypothesis:** checked and it does not apply architecturally --
+Carousel and Social share the exact same `/scene-still` route and the same `packscene.py` functions
+already (documented in app.dc.html's own comments); there are not two systems that could cross-contaminate,
+just one shared pipeline whose behaviour shows up identically in both callers.
+
+**Shipped, commit e9ab704, deploy dep-dap5p7u7bikc73ber9hg (live ~10:49 UTC).** tools/test_pack_choice.py
+pins the new crate wording. checkfe, full suite, py_compile, smoke on the committed tree, live gate
+(self-check commit match, deep check 20/0, only instance-swap 502s) all clean.

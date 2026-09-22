@@ -564,3 +564,15 @@ writer calls, 6 routes, zero hero-pose phrasing on any pack-visible slide. Docum
 wording-cannot-remove limit in packscene.py's own docstring, alongside `in_use` and the fssai slip.
 Image-level proof of the actual fix still needs the owner's next live carousel run. Full entry:
 BRAND_GROUNDING_TESTING_LOG.md, "22 Sep -- Round 18".
+
+**UPDATE 22 Sep (Round 19, crate = two packs) -- owner redrafted a FRESH concept to retest Round 18's
+hero-pose fix; it held (correctly sized, no presenting poses). New defect found instead: a "milk crate"
+scene drew TWO sharp packs, breaking the existing "exactly one pack" rule -- same clash class as
+nutrition-panel/personalisation, just not one the wording named. Commit e9ab704, live-gated clean
+(dep-dap5p7u7bikc73ber9hg).** Fixed: FRONT_ONLY_ONE_PACK now explicitly handles crate/shelf/stack scenes
+(one real pack, rest blurred). Verified on the owner's own exact scene, real generation. Also separated
+out and explained two non-bugs the owner flagged in the same message: an invented prop in a no-pack slide
+(unrelated to packscene, model's own liberty on an empty-handed portrait) and shows_pack attaching a pack
+to a "crate" mention with no literal word "pack" (the writer's own explicit judgment call, by design, not
+the regex heuristic). Ruled out "Social vs Carousel cross-contamination" -- they share one pipeline, not
+two. Full entry: BRAND_GROUNDING_TESTING_LOG.md, "22 Sep -- Round 19".
