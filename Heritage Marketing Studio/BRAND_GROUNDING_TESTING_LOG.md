@@ -2408,3 +2408,31 @@ the logs) all clean.
 is either shipped and verified, or -- for per-slide cast control, which several of today's findings point
 back to as the more complete eventual answer -- explicitly deferred, owner's call, not attempted without
 direction.
+
+
+### 22 Sep -- Round 16, one more: the 'side' role needed the same size anchor as 'cta'
+
+**Owner deliberately ran two full carousels back to back to check the age and sizing fixes.** Ageing held
+in both (confirmed separately). Pack size: the CTA slide looked right in both -- the fix from the previous
+commit held. Every OTHER slide, still on the OLD "about a quarter of the frame's height" wording, looked
+fine in one carousel's wide, environmental shots ("A Street, Then and Now") and "completely off... across
+frames" in the other's tighter close-ups ("The Man You Never Noticed") -- confirmed by reading the concept
+editor directly: slide 4's own visual_note literally says "Present-day CLOSE-UP of the woman holding the
+pack."
+
+**Root cause:** a frame-relative fraction does not travel across compositions -- 25% of a tightly-cropped
+close-up is a far bigger real object than 25% of a wide shot, because the fraction is measured against the
+FRAME, not the world. The exact lesson the `cta` fix already taught (a standing "presenting the pack" pose
+beat the earlier relative-size wording), just not yet carried to `side`.
+
+**Fixed:** replaced `side`'s frame-fraction with the identical composition-independent anchor already
+proven on `cta` -- no larger than a real pack in an adult's hand, explicitly the same real-world size in a
+wide shot or a close-up. **Verified on a real generation of the exact failure composition** (a tight
+close-up matching the owner's own slide 4 wording) -- the pack held a believable, hand-scaled size.
+
+**Shipped, commit 5a1aa4e, deploy dep-dap4miu8bjmc73ape4mg (live ~09:35 UTC).** tools/test_pack_choice.py's
+side-role case updated; checkfe, full suite, call audit (1,173/0), smoke on the committed tree, live gate
+(self-check commit match, deep check 20/0, only the two expected instance-swap 502s) all clean.
+
+**Round 16 pack-shot work is now genuinely complete** across both roles that matter (side and cta), proven
+on real generations in the exact compositions that failed, not just read from the wording.

@@ -532,3 +532,12 @@ had no test coverage at all before today). **Round 16 is closed out clean** -- e
 owner's first live batches (Social clean; Carousel's pack sizing, shows_pack, the invisible cast-draft
 link, and now ageing) is shipped and live-verified. Only per-slide cast control remains genuinely open,
 deliberately deferred, owner's call. Full entry: BRAND_GROUNDING_TESTING_LOG.md, "22 Sep -- Round 16, final".
+
+**UPDATE 22 Sep (Round 16, side-role size) -- the `side` placement gets the same real-world size anchor as
+`cta`. Commit 5a1aa4e, live-gated clean (dep-dap4miu8bjmc73ape4mg).** Owner ran two carousels back to back
+to stress-test the age and size fixes: ageing held in both; pack size held on CTA but was "completely off"
+on `side` role slides in the carousel with tighter close-ups. Root cause: a frame-height FRACTION doesn't
+scale correctly across compositions the way a real-world size anchor does. Fixed with the identical wording
+already proven on `cta`, verified on a real generation of the exact close-up composition that failed.
+**Round 16's pack-shot work is now complete** -- both `side` and `cta` proven on real generations in their
+actual failure compositions. Full entry: BRAND_GROUNDING_TESTING_LOG.md, "22 Sep -- Round 16, one more".
