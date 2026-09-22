@@ -74,6 +74,7 @@ import keyvisual
 import learning
 import library
 import made
+import packscene
 import media
 import mediaplan
 import plan
@@ -1654,6 +1655,25 @@ def scene_still(payload: dict):
     # A cast reference image pins identity in a way text never can — use it when we have one.
     refs = [u for u in (payload.get("reference_urls") or
                         ([payload["reference_url"]] if payload.get("reference_url") else [])) if u]
+    # Pack-in-scene wording (Social now, Carousel later): applies ONLY when the caller sends `pack_role`, so
+    # Video frames, /shot-reference and everything else keep their prompts byte-for-byte. See packscene.py for
+    # why (the 21 Sep trial on the real Nourish+ pack).
+    #
+    # `pack_reference` is a photo of the REAL pack (a data URI) the person supplied for this session only: it is
+    # never stored -- not in the library, not on disk -- and it is not signed off, so it is labelled as such
+    # wherever it is shown. It rides in the reference list like the library pack does.
+    _pack_role = packscene.normalise_role(payload.get("pack_role"))
+    _caller_refs = len(refs)          # references the CALLER supplied (a previous render kept for continuity)
+    _pack_ref = str(payload.get("pack_reference") or "").strip()
+    _pack_ref_used = False
+    if _pack_ref:
+        if not _pack_ref.startswith("data:image/") or len(_pack_ref) > 8_000_000:
+            return JSONResponse(status_code=400, content={
+                "detail": "That reference photo could not be used — try a smaller JPG or PNG."})
+        if _pack_role != "none":
+            refs.append(_pack_ref)
+            _pack_ref_used = True
+            _pack_role = _pack_role or "side"
     # Signed-off library references are added automatically — cast AND plate — because continuity is
     # the library's job and the client has no reason to know what it holds. Anything the caller sent
     # explicitly comes FIRST and is never displaced: a named reference for a named character is more
@@ -1700,6 +1720,9 @@ def scene_still(payload: dict):
     _scene_mode = "general" if str(payload.get("brand_mode") or "").strip().lower() == "general" else "grounded"
     _scene_brand_prof = brandprofile.resolve() or {}
     _explicit_pack_id = str(payload.get("pack_id") or "").strip()
+    if _pack_role == "none":
+        # The caller said this image carries no pack: nothing pack-related is attached, even a picked one.
+        want_pack, _explicit_pack_id = False, ""
     # Live-tested finding: cast auto-attached unconditionally (see library.shot_references's own note)
     # whenever a signed-off one existed, so Social's "Include a recurring model/cast" checkbox did
     # nothing when left unchecked — the same most-recent cast still silently pinned every post. Callers
@@ -1737,6 +1760,11 @@ def scene_still(payload: dict):
             refs.append(u)
     plate_used = bool(lib_refs["has_plate"] and lib_refs["plate"] in refs)
     pack_used = bool(lib_refs["has_pack"] and lib_refs["pack"] in refs)
+    # A pack is in this image's references (the library's, or the person's session photo), AND the caller asked
+    # for the pack-in-scene wording: switch to it. `_pack_shown` is "a pack reference was attached", not "the
+    # model drew it" -- nothing here can see the picture.
+    _pack_shown = pack_used or _pack_ref_used
+    _scene_wording = bool(_pack_role and _pack_role != "none" and _pack_shown)
     # An explicit, deliberate ask (the asset card's "Let the studio design one" option) for when no
     # real pack photo exists yet — different from the silent default of simply saying nothing about
     # the pack, which is what happens when this flag is absent. Only meaningful when there is in fact
@@ -1786,7 +1814,23 @@ def scene_still(payload: dict):
                        "redrawn or reimagined. Do not invent new legible text anywhere on the pack — any "
                        "small print stays too small to read rather than being fabricated."
                        if pack_used else pack_design_clause)
-        if plate_used:
+        # The pack-in-scene wording replaces the clause above (and the generic "no logos" tail) when the caller
+        # asked for it and a pack reference is attached. When the pack is the ONLY reference, the prompt also
+        # stops claiming there are "same people from the reference image" -- there are none in a pack photo.
+        _tail = "No on-screen text, captions, logos, watermarks or borders."
+        _pack_only = False
+        _scene_cleaned = False
+        if _scene_wording:
+            pack_clause = packscene.pack_clause(style, _pack_role)
+            # The scene text is obeyed too: a request for "the nutrition panel" got one drawn onto a background jar
+            # with invented numbers (trial T11). Requests for the pack's back / nutrition / ingredients are removed.
+            subject, _scene_cleaned = packscene.clean_scene(subject, _pack_role)
+            _tail = packscene.TAIL.strip()
+            _pack_only = bool(not (lib_refs["has_cast"] and lib_refs["cast"] in refs)
+                              and _caller_refs == 0 and not plate_used)
+        if _pack_only:
+            prompt = (f"{packscene.PACK_ONLY_OPENING}{pack_clause} Scene: {subject}. {craft} {_tail}")
+        elif plate_used:
             prompt = (
                 "Generate the next shot of the same film. Reuse the EXACT same people from the "
                 f"reference images: identical faces, hair, skin tone, body type and ages, and {clothing}."
@@ -1797,14 +1841,14 @@ def scene_still(payload: dict):
                 "blocking only if this shot's own description calls for it. Change only the action and "
                 "the camera otherwise. "
                 f"New shot: {subject}. {craft} "
-                "No on-screen text, captions, logos, watermarks or borders.")
+                f"{_tail}")
         else:
             prompt = (
                 "Generate the next shot of the same film, reusing the EXACT same people from the "
                 f"reference image: identical faces, hair, skin tone, body type and ages, and {clothing}."
                 f"{pack_clause} Change only the action, setting and camera. "
                 f"New shot: {subject}. {craft} "
-                "No on-screen text, captions, logos, watermarks or borders.")
+                f"{_tail}")
         eng = _engine(payload, "image")
         model, size, _tier = _img_tier(payload)
         url, provider = "", ""
@@ -1824,7 +1868,13 @@ def scene_still(payload: dict):
                          route="/scene-still")
             return {"image_url": url, "from_reference": True, "provider": provider,
                     "plate_used": plate_used, "pack_used": pack_used, "pack_generated": _pack_generate,
-                    "references": len(refs)}
+                    "references": len(refs),
+                    # Where the pack reference came from, so the screen can say so honestly: "library" (a signed-off
+                    # pack), "reference" (the person's session photo, not signed off) or "" (none attached).
+                    # This is "attached", not "shown" -- nothing here can see the picture.
+                    "pack_source": "library" if pack_used else ("reference" if _pack_ref_used else ""),
+                    "pack_role": _pack_role if _scene_wording else "",
+                    "scene_cleaned": _scene_cleaned}
         print("[main] reference frame failed on both providers; falling back to text-to-image",
               file=sys.stderr, flush=True)
     parts = [f"Marketing image for {_brand_line(_scene_brand_prof or None, brand_mode=_scene_mode)}."]
@@ -1845,7 +1895,7 @@ def scene_still(payload: dict):
             _record_made("scene_still", subject[:80] or "Scene still", url=url, payload=payload,
                          route="/scene-still")
             return {"image_url": url, "from_reference": False, "provider": "google", "tier": tier,
-                    "pack_generated": _pack_generate}
+                    "pack_generated": _pack_generate, "pack_source": "", "pack_failed": _pack_shown}
     if not _use(eng, "fal"):
         return JSONResponse(status_code=502, content={
             "detail": "Google image generation failed and the engine is pinned to Google — "
@@ -1861,7 +1911,7 @@ def scene_still(payload: dict):
     _record_made("scene_still", subject[:80] or "Scene still", url=res["url"], payload=payload,
                  route="/scene-still")
     return {"image_url": res["url"], "from_reference": False, "provider": "fal",
-            "pack_generated": _pack_generate}
+            "pack_generated": _pack_generate, "pack_source": "", "pack_failed": _pack_shown}
 
 
 @app.post("/production-bible-docx")
@@ -1965,23 +2015,32 @@ def shot_still(payload: dict):
 # =====================================================================================
 
 @app.get("/library")
-def library_list(kind: str = "", signed: int = 0):
+def library_list(kind: str = "", signed: int = 0, for_brand: int = 0):
+    """`for_brand=1` narrows the items to the ACTIVE brand's own (plus anything recorded with no brand) -- what a
+    pack/cast picker should offer. Without it the whole tenant's list comes back, as before (Memory shows all)."""
+    brand = str((brandprofile.resolve() or {}).get("name") or "") if for_brand else ""
     return {"kinds": [{"id": k, "label": v} for k, v in library.KINDS.items()],
-            "items": library.items(kind, signed_only=bool(signed)),
+            "items": library.items(kind, signed_only=bool(signed), brand=brand),
             "summary": library.summary()}
 
 
 @app.post("/library-add")
 async def library_add(kind: str = Form(...), name: str = Form(""), note: str = Form(""),
-                      tags: str = Form(""), who: str = Form(""),
+                      tags: str = Form(""), who: str = Form(""), scope_brand: str = Form(""),
                       files: list[UploadFile] = File(default=[])):
-    """Take files into the library. Copy-only items (a locked claim, say) need no file."""
+    """Take files into the library. Copy-only items (a locked claim, say) need no file.
+
+    `scope_brand` (opt-in, any non-empty value): record the ACTIVE brand on the item, resolved here from the same
+    profile every scoped lookup uses, so it can never disagree with them. Left off, the item is brand-agnostic
+    and visible to every brand, exactly as before."""
     added, errors = [], []
+    _brand = str((brandprofile.resolve() or {}).get("name") or "") if str(scope_brand).strip() else ""
     for f in files or []:
         try:
             data = await f.read()
             added.append(library.add(data, name or f.filename or "file", kind,
-                                     filename=f.filename or "", note=note, tags=tags, added_by=who))
+                                     filename=f.filename or "", note=note, tags=tags, added_by=who,
+                                     brand=_brand))
         except Exception as e:
             errors.append(f"{f.filename}: {e}")
     if not files and kind == "copy" and note.strip():

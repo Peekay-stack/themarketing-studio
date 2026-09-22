@@ -133,6 +133,26 @@ for ext, fmt, want in (("jpg", "JPEG", "image/jpeg"), ("png", "PNG", "image/png"
     mime, b64 = gemini._as_base64(f"/media/same.{ext}")
     check(f"{ext.upper()} reference is byte-for-byte unchanged", mime == want and base64.b64decode(b64) == raw)
 
+# ---- brand scoping of pickers (21 Sep) -----------------------------------------------------------------------
+# `scope_brand` on upload records the ACTIVE brand (resolved server-side, so it can never disagree with the scoped
+# lookups); `for_brand=1` on the list narrows to that brand plus brand-agnostic items. Neither changes any caller
+# that does not ask for it.
+active = (main.brandprofile.resolve() or {}).get("name") or ""
+check("(setup) there is an active brand to scope to", bool(active), active)
+plain = client.post("/library-add", data={"kind": "pack", "name": "Agnostic pack"},
+                    files=[("files", ("a.png", png_bytes((11, 11, 11)), "image/png"))]).json()["added"][0]
+scoped = client.post("/library-add", data={"kind": "pack", "name": "Heritage-only pack", "scope_brand": "1"},
+                     files=[("files", ("b.png", png_bytes((22, 22, 22)), "image/png"))]).json()["added"][0]
+library.add(png_bytes((33, 33, 33)), "Other brand pack", "pack", filename="c.png", brand="Parle G")
+check("an upload WITHOUT scope_brand stays brand-agnostic (unchanged behaviour)", plain["brand"] == "")
+check("an upload WITH scope_brand records the active brand", scoped["brand"] == active)
+allnames = {x["name"] for x in client.get("/library").json()["items"]}
+check("plain /library still returns everything (Memory shows all)",
+      {"Agnostic pack", "Heritage-only pack", "Other brand pack"} <= allnames)
+mine = {x["name"] for x in client.get("/library?for_brand=1").json()["items"]}
+check("/library?for_brand=1 offers this brand's items and brand-agnostic ones", {"Agnostic pack", "Heritage-only pack"} <= mine)
+check("/library?for_brand=1 never offers another brand's item", "Other brand pack" not in mine)
+
 print()
 if failures:
     print(f"{failures} check(s) FAILED")

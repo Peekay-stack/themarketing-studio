@@ -1662,9 +1662,9 @@
                         </sc-if>
                         <sc-if value="{{ it.renaming }}" hint-placeholder-val="{{ false }}">
                           <div style="flex:1; min-width:0;">
-                            <input value="{{ it.renameText }}" onChange="{{ it.onRenameText }}" style="width:100%; box-sizing:border-box; border:1px solid #C9CEDA; border-radius:8px; padding:6px 9px; font-size:13px; color:#17325E; background:#fff; font-family:inherit;" />
-                            <div style="display:flex; gap:14px; margin-top:6px; font-size:12px;">
-                              <span onClick="{{ it.saveRename }}" style="cursor:pointer; font-weight:700; color:#1E7E34;">Save</span>
+                            <input data-libren="1" value="{{ it.renameText }}" onChange="{{ it.onRenameText }}" onKeyDown="{{ it.onRenameKey }}" style="width:100%; box-sizing:border-box; border:1px solid #C9CEDA; border-radius:8px; padding:6px 9px; font-size:13px; color:#17325E; background:#fff; font-family:inherit;" />
+                            <div style="display:flex; gap:12px; align-items:center; margin-top:7px; font-size:12px;">
+                              <span onClick="{{ it.saveRename }}" style="cursor:pointer; background:#1E7E34; color:#fff; font-weight:700; border-radius:8px; padding:5px 13px;">Save</span>
                               <span onClick="{{ it.cancelRename }}" style="cursor:pointer; color:#6B7280;">Cancel</span>
                             </div>
                           </div>
@@ -6101,20 +6101,35 @@
          all — /scene-still rendered from a text description only, Grounded or Independent alike, even
          when a real signed-off asset already existed. Same pick-or-upload shape as POSM's own cards. -->
     <div style="background:#fff; border:1px solid #DDD9D1; border-radius:16px; padding:18px 20px; margin-bottom:18px;">
-      <div style="font-size:11px; font-weight:800; letter-spacing:0.07em; text-transform:uppercase; color:#6B7280; margin-bottom:4px;">Assets for these posts — optional, used on every render</div>
-      <div style="font-size:12px; color:#6B7280; line-height:1.5; margin-bottom:12px;">Pick something already signed off, or upload one now — either way it's a real reference, not a description.</div>
+      <div style="font-size:11px; font-weight:800; letter-spacing:0.07em; text-transform:uppercase; color:#6B7280; margin-bottom:4px;">Assets for these posts — used on every render</div>
+      <div style="font-size:12px; color:#6B7280; line-height:1.5; margin-bottom:12px;">Choose the pack for every batch (or "No pack in these posts"); the cast is optional. Either way it's a real reference, not a description.</div>
       <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px;">
         <div>
-          <div style="font-size:11.5px; font-weight:700; color:#17325E; margin-bottom:6px;">Pack shot</div>
-          <select value="{{ socialPackCard.value }}" onChange="{{ socialPackCard.pick }}" style="width:100%; border:1px solid #DDD9D1; border-radius:10px; padding:8px 10px; font-size:12.5px; color:#17325E; background:#fff; font-family:inherit; margin-bottom:8px;">
-            <option value="">Automatic — used only when a post shows the pack</option>
-            <option value="__never__">Don't attach a pack photo — a pack may still be drawn if the scene needs one</option>
-            <option value="__generate__">Let the studio design one — no real pack on file yet</option>
-            <sc-for list="{{ socialPackCard.options }}" as="o" hint-placeholder-count="0">
-              <option value="{{ o.id }}">{{ o.name }}</option>
-            </sc-for>
-          </select>
-          <input type="file" onChange="{{ socialPackCard.upload }}" style="font-size:11.5px; width:100%;" />
+          <div style="font-size:11.5px; font-weight:700; color:#17325E; margin-bottom:6px;">Pack shot: every post shows the real pack</div>
+          <div style="display:flex; gap:10px; align-items:flex-start; margin-bottom:6px;">
+            <select value="{{ socialPackCard.value }}" onChange="{{ socialPackCard.pick }}" style="flex:1; min-width:0; border:1px solid #DDD9D1; border-radius:10px; padding:8px 10px; font-size:12.5px; color:#17325E; background:#fff; font-family:inherit;">
+              <option value="">Choose a pack…</option>
+              <sc-for list="{{ socialPackCard.options }}" as="o" hint-placeholder-count="0">
+                <option value="{{ o.id }}">{{ o.name }}</option>
+              </sc-for>
+              <option value="__none__">No pack in these posts</option>
+            </select>
+            <sc-if value="{{ socialPackHasThumb }}" hint-placeholder-val="{{ false }}">
+              <img src="{{ socialPackThumb }}" style="width:44px; height:56px; object-fit:contain; border:1px solid #DDD9D1; border-radius:8px; background:#fff; flex:none;" />
+            </sc-if>
+          </div>
+          <div style="font-size:11px; color:#6B7280; line-height:1.4; margin-bottom:8px;">{{ socialPackHint }}</div>
+          <div style="font-size:11px; font-weight:700; color:#41505F; margin-bottom:3px;">Add a real pack shot to the library (signed off)</div>
+          <input type="file" onChange="{{ socialPackCard.upload }}" style="font-size:11.5px; width:100%; margin-bottom:10px;" />
+          <div style="border-top:1px solid #EEEAE2; padding-top:9px;">
+            <div style="font-size:11px; font-weight:700; color:#41505F; margin-bottom:3px;">No pack shot yet? Use a photo of the real pack, for this session only</div>
+            <div style="font-size:11px; color:#6B7280; line-height:1.4; margin-bottom:6px;">Any plain photo of the real pack works. It is not saved and not signed off, and it is gone when you reload.</div>
+            <input type="file" accept="image/*" onChange="{{ onSocialPackRef }}" style="font-size:11.5px; width:100%;" />
+            <sc-if value="{{ socialPackHasRef }}" hint-placeholder-val="{{ false }}">
+              <div style="font-size:11.5px; color:#1E7E34; margin-top:6px;">Using {{ socialPackRefLabel }} <span onClick="{{ clearSocialPackRef }}" style="cursor:pointer; color:#B0410E; text-decoration:underline; margin-left:6px;">remove</span></div>
+              <input type="text" value="{{ socialPackProduct }}" onChange="{{ onSocialPackProduct }}" placeholder="Which product is it? e.g. Heritage Nourish+ Milk 500 ml" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:10px; padding:7px 10px; font-size:12px; color:#17325E; background:#fff; font-family:inherit; margin-top:6px;" />
+            </sc-if>
+          </div>
         </div>
         <div>
           <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
@@ -6169,12 +6184,30 @@
             </sc-if>
             <!-- creative visual -->
             <div style="position:relative; aspect-ratio:1/1; background:{{ p.visualBg }}; display:flex; flex-direction:column; justify-content:flex-end; padding:18px; overflow:hidden;">
-              <div style="position:absolute; left:16px; top:16px; background:rgba(255,255,255,0.16); color:#fff; font-size:11px; font-weight:700; letter-spacing:0.04em; padding:4px 10px; border-radius:20px;">{{ p.ideaBadge }}</div>
+              <!-- Live-tested finding (21 Sep): white-on-16%-white was unreadable over bright kitchen photos.
+                   A dark translucent chip holds up on any background, light or dark. -->
+              <div style="position:absolute; left:16px; top:16px; background:rgba(15,26,43,0.62); color:#fff; font-size:11px; font-weight:700; letter-spacing:0.04em; padding:4px 10px; border-radius:20px;">{{ p.ideaBadge }}</div>
               <sc-if value="{{ p.noImage }}" hint-placeholder-val="{{ true }}">
                 <div style="position:absolute; right:-30px; top:-30px; width:140px; height:140px; border-radius:50%; background:rgba(240,86,30,0.22);"></div>
                 <div style="position:relative; color:rgba(255,255,255,0.9); font-size:12px; line-height:1.45;"><span style="font-weight:700; color:#F5C86E;">Key visual:</span> {{ p.visual }}</div>
               </sc-if>
             </div>
+            <!-- The pack, per post: the label says what was attached (never that it is in the picture), and the
+                 person can change the role for one post. The writer suggests "none" only where a pack would look
+                 forced, and it shows here rather than happening silently. -->
+            <sc-if value="{{ p.hasPackLine }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex; flex-direction:column; gap:6px; padding:9px 14px 0; font-size:11.5px; color:#6B7280;">
+                <span>{{ p.packLabel }}</span>
+                <sc-if value="{{ p.showPackSelect }}" hint-placeholder-val="{{ true }}">
+                  <select value="{{ p.packRoleValue }}" onChange="{{ p.onPackRole }}" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:5px 7px; font-size:11.5px; color:#17325E; background:#fff; font-family:inherit;">
+                    <option value="side">Pack on the side</option>
+                    <option value="hero">Pack as the hero</option>
+                    <option value="in_use">Pack in use (fine print may blur)</option>
+                    <option value="none">No pack in this post</option>
+                  </select>
+                </sc-if>
+              </div>
+            </sc-if>
             <!-- hashtags -->
             <div style="padding:11px 14px 6px; font-size:12.5px; color:{{ p.accent }}; font-weight:600; line-height:1.5;">{{ p.hashtags }}</div>
             <!-- engagement bar -->
@@ -10858,6 +10891,10 @@ class Component extends DCLogic {
     // options POOL (already loaded on entry to this screen) rather than a second `/library` fetch for
     // the same data.
     socialPackChoice: '', socialCastChoice: '', socialWantCast: false,
+    // The pack for these posts. '' = not chosen yet (generation asks; nothing is picked for you), a library
+    // pack id, '__ref__' = a photo of the REAL pack for this session only (never stored, never signed off),
+    // or '__none__' = 'No pack in these posts'.
+    socialPackRef: '', socialPackRefName: '', socialPackProduct: '',
     visualsBusy: false,
     posts: [],
     scheduled: false,
@@ -11607,6 +11644,10 @@ class Component extends DCLogic {
     // right up until something re-fetched it — caught live, mid-testing, sitting under the new brand's
     // now-correct readiness numbers.
     this.setState({ bf:null, bfVals:{}, bfVoice:'', bfCoreFramework:'', bfCoreEssence:'', bfCoreLayers:{}, bfCoreBoundaries:'', bfCoreOpen:false });
+    // The pack chosen for social posts belongs to the brand it was chosen under: a switch clears it (and the
+    // session photo), and the picker list is re-read for the new brand.
+    this.setState({ socialPackChoice:'', socialPackRef:'', socialPackRefName:'', socialPackProduct:'' });
+    this.loadCarouselAssetLib();
     // Same reasoning, one more place: the IMC screen's Brand/Category fields would otherwise keep
     // naming the PREVIOUS brand after a real switch — this one overwrites rather than only filling
     // when blank, because switching brands is exactly the "no, I mean a different one now" case.
@@ -11867,8 +11908,17 @@ class Component extends DCLogic {
     const last = src.split('/').pop() || '';
     return last.indexOf('.') >= 0 ? last.split('.').pop().toLowerCase() : '';
   }
-  startLibRename = (it) => () => this.setState({ libRenameId: it.id, libRenameText: it.name || '' });
+  startLibRename = (it) => () => {
+    this.setState({ libRenameId: it.id, libRenameText: it.name || '' });
+    // put the cursor in the box straight away, so typing the new name needs no extra click
+    setTimeout(() => { const el = document.querySelector('[data-libren]'); if (el) { el.focus(); el.select(); } }, 60);
+  };
   onLibRenameText = (e) => this.setState({ libRenameText: e.target.value });
+  // Enter saves, Escape cancels -- what a rename box is expected to do. (It used to save only from the Save link.)
+  onLibRenameKey = (it) => (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); this.saveLibRename(it)(); }
+    else if (e.key === 'Escape') this.cancelLibRename();
+  };
   cancelLibRename = () => this.setState({ libRenameId: '', libRenameText: '' });
   saveLibRename = (it) => async () => {
     const name = (this.state.libRenameText || '').trim();
@@ -13181,23 +13231,77 @@ class Component extends DCLogic {
   styleName(){ const v = this.SOCIAL_STYLES.find(x => x.id === this.state.socialStyle); return v ? v.label : 'Real (people)'; }
   setSocialStyle = (id) => () => this.setState({ socialStyle:id });
 
-  // `socialPackChoice` carries a real library id, '' (not used), or the sentinel '__generate__' from
-  // the dropdown's "Let the studio design one" option — this is the one place that sentinel gets
-  // translated into the two real fields `/scene-still` understands, so `fetchPostImages` and
-  // `regenerateVisuals` can't drift out of sync on what it means.
-  // Four choices, and each one now says what it does (the first used to read "Not used in these posts"
-  // while the server still attached the brand's pack whenever a post's own words named the product):
-  //   ''            Automatic  -- send pack_mode:'auto'; the server attaches the pack only if the post shows it
-  //   '__never__'   Never      -- include_pack:false, so no pack photo is ever attached
-  //   a library id  Pinned     -- that pack, on every post (include_pack:true so it can never be skipped)
-  //   '__generate__' Design one -- no real pack on file; include_pack:false so a real one can't override it
-  socialPackFields(){
-    const v = this.state.socialPackChoice;
-    if (v === '__generate__') return { pack_id: undefined, pack_generate: true, include_pack: false };
-    if (v === '__never__') return { pack_id: undefined, pack_generate: undefined, include_pack: false };
-    if (v) return { pack_id: v, pack_generate: undefined, include_pack: true };
-    return { pack_id: undefined, pack_generate: undefined, pack_mode: 'auto' };
+  // What /scene-still is told about the pack, per post. `role` is the post's own (the writer suggests one and the
+  // person can change it): side (the default), hero, in_use, or none. Nothing is guessed: an unchosen pack, "No pack
+  // in these posts" and a post set to none all send an explicit no-pack; a chosen pack always attaches. The server
+  // wording that places it is packscene.py; `pack_reference` is the session-only photo (sent, never stored).
+  socialPackFields(role){
+    const s = this.state, v = s.socialPackChoice, r = role || 'side';
+    if (!v || v === '__none__' || r === 'none') return { include_pack: false, pack_role: 'none' };
+    if (v === '__ref__') return s.socialPackRef
+      ? { include_pack: false, pack_reference: s.socialPackRef, pack_role: r }
+      : { include_pack: false, pack_role: 'none' };
+    return { pack_id: v, include_pack: true, pack_role: r };
   }
+  normPackRole(v){
+    const r = String(v || '').toLowerCase().replace('-', '_');
+    return ['side', 'hero', 'in_use', 'none'].indexOf(r) >= 0 ? r : 'side';
+  }
+  // Asked before any social post is written or re-drawn: the pack is the person's choice, never a default.
+  socialPackReady(){
+    const s = this.state, v = s.socialPackChoice;
+    if (!v) { this.showToast('Choose the pack for these posts first: a real pack, a photo of the real pack, or "No pack in these posts". Nothing is picked for you.', 'warn'); return false; }
+    if (v === '__ref__' && !s.socialPackRef) { this.showToast('Add the reference photo first, or choose another pack.', 'warn'); return false; }
+    return true;
+  }
+  // What a finished image says about its pack. "Attached" is all the server can know: it cannot see the picture,
+  // so the label says the photo was attached, never that the pack is in the image.
+  postImagePatch(res){
+    return { imageUrl: res.image_url, packStale: false,
+      packSource: res.pack_failed ? 'failed' : (res.pack_source || 'none') };
+  }
+  postPackLabel(p){
+    const c = this.state.socialPackChoice;
+    if (!c) return '';
+    if (c === '__none__') return 'No pack in these posts';
+    if (p.packStale) return 'Pack setting changed. Click Regenerate visuals to apply it.';
+    const ill = ['real', 'product'].indexOf(this.state.socialStyle || 'real') < 0 ? ' (illustrated)' : '';
+    if (p.packSource === 'library') return 'Real pack photo attached' + ill;
+    if (p.packSource === 'reference') return 'Reference photo attached (not signed off)' + ill;
+    if (p.packSource === 'failed') return 'The pack could not be attached. Regenerate visuals to try again.';
+    if (p.packSource === 'none') return 'No pack in this post';
+    return '';
+  }
+  onPostPackRole = (id) => (e) => this.setState(s => ({
+    posts: s.posts.map(x => x.id === id ? { ...x, packRole: e.target.value, packStale: true } : x) }));
+  // A phone photo can be several MB and only the pack matters, so it is shrunk here before it is ever sent.
+  shrinkImageToDataUrl = (file, maxSide) => new Promise((resolve) => {
+    try {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        const k = Math.min(1, maxSide / Math.max(img.width, img.height));
+        const c = document.createElement('canvas');
+        c.width = Math.max(1, Math.round(img.width * k)); c.height = Math.max(1, Math.round(img.height * k));
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url);
+        resolve(c.toDataURL('image/jpeg', 0.88));
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); resolve(''); };
+      img.src = url;
+    } catch (err) { resolve(''); }
+  });
+  onSocialPackRef = async (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    const dataUrl = await this.shrinkImageToDataUrl(file, 1280);
+    if (!dataUrl) { this.showToast('That photo could not be read. Try a JPG or PNG.', 'warn'); return; }
+    this.setState({ socialPackRef: dataUrl, socialPackRefName: file.name, socialPackChoice: '__ref__' });
+  };
+  clearSocialPackRef = () => this.setState(s => ({ socialPackRef: '', socialPackRefName: '', socialPackProduct: '',
+    socialPackChoice: s.socialPackChoice === '__ref__' ? '' : s.socialPackChoice }));
+  onSocialPackProduct = (e) => this.setState({ socialPackProduct: e.target.value });
   // Carousel has the same three meanings (no "design one" there).
   carouselPackFields(c){
     const v = c.packChoice;
@@ -13210,13 +13314,12 @@ class Component extends DCLogic {
   fetchPostImages = (posts, continuityRefs) => {
     const s0 = this.state;
     const refs = continuityRefs || {};
-    const packFields = this.socialPackFields();
     (posts || []).forEach(async (p) => {
       const res = await this.apiJson('/scene-still', {
         scene_no: 1, ratio: '1:1', style: this.state.socialStyle || 'real',
         prompt: (p.visual || ((this.brandName() || 'Brand') + ' key visual')) + ' Square social image for ' + p.platName + '.',
         brand_mode: this.state.producerBrandMode,
-        ...packFields,
+        ...this.socialPackFields(p.packRole),
         // Live-tested finding: the server auto-attaches the most-recently-signed-off cast whenever one
         // exists UNLESS told not to — leaving this checkbox unchecked used to still silently pin the
         // same face to every post, which is exactly backwards from what "Include a recurring model/
@@ -13227,7 +13330,7 @@ class Component extends DCLogic {
         reference_url: refs[p.id] || undefined,
       });
       if (res && res.image_url) {
-        this.setState(s => ({ posts: s.posts.map(x => x.id === p.id ? { ...x, imageUrl: res.image_url } : x) }));
+        this.setState(s => ({ posts: s.posts.map(x => x.id === p.id ? { ...x, ...this.postImagePatch(res) } : x) }));
       }
     });
   };
@@ -13236,21 +13339,21 @@ class Component extends DCLogic {
   regenerateVisuals = async () => {
     const posts = this.state.posts;
     if (!posts.length || this.state.visualsBusy) return;
+    if (!this.socialPackReady()) return;
     this.setState({ visualsBusy:true, posts: posts.map(p => ({ ...p, imageUrl:'' })) });
     const style = this.state.socialStyle || 'real';
     const s0 = this.state;
-    const packFields = this.socialPackFields();
     let ok = 0;
     await Promise.all(posts.map(async (p) => {
       const res = await this.apiJson('/scene-still', {
         scene_no: 1, ratio: '1:1', style,
-        ...packFields,
+        ...this.socialPackFields(p.packRole),
         use_cast: !!s0.socialWantCast,
         cast_id: s0.socialWantCast ? (s0.socialCastChoice || undefined) : undefined,
         prompt: (p.visual || ((this.brandName() || 'Brand') + ' key visual')) + ' Square social image for ' + p.platName + '.',
         brand_mode: this.state.producerBrandMode,
       });
-      if (res && res.image_url) { ok++; this.setState(s => ({ posts: s.posts.map(x => x.id === p.id ? { ...x, imageUrl: res.image_url } : x) })); }
+      if (res && res.image_url) { ok++; this.setState(s => ({ posts: s.posts.map(x => x.id === p.id ? { ...x, ...this.postImagePatch(res) } : x) })); }
     }));
     this.setState({ visualsBusy:false });
     this.showToast(ok ? 'Visuals refreshed — ' + this.styleName() + '.' : 'No image service available — keeping the branded placeholders.', ok ? 'ok' : 'info');
@@ -13370,6 +13473,7 @@ class Component extends DCLogic {
     if (!file) return;
     const fd = new FormData();
     fd.append('kind', kind); fd.append('files', file);
+    fd.append('scope_brand', '1');   // this brand's own pack/cast, so another brand's picker never lists it
     let addR; try { addR = await fetch('/library-add', { method:'POST', body:fd }); } catch (err) { addR = null; }
     const addD = addR ? await addR.json().catch(() => ({})) : {};
     if (!addR || !addR.ok || !Array.isArray(addD.added) || !addD.added.length) {
@@ -13392,10 +13496,14 @@ class Component extends DCLogic {
   socialAssetAnchor(){
     const s = this.state;
     const assets = s.carousel.assets || [];
-    const pack = s.socialPackChoice ? assets.find(a => a.id === s.socialPackChoice) : null;
+    const pack = (s.socialPackChoice && s.socialPackChoice.indexOf('__') !== 0) ? assets.find(a => a.id === s.socialPackChoice) : null;
     const cast = (s.socialWantCast && s.socialCastChoice) ? assets.find(a => a.id === s.socialCastChoice) : null;
     const bits = [];
     if (pack) bits.push(`the exact product shown in the pinned reference photo, "${pack.name}" — never rename it or describe a different product or SKU, even one from the same brand`);
+    if (!pack && s.socialPackChoice === '__ref__' && s.socialPackRef) {
+      const prod = (s.socialPackProduct || '').trim();
+      bits.push(`the exact product shown in the pinned reference photo${prod ? ', "' + prod + '"' : ''} \u2014 never rename it or describe a different product or SKU, even one from the same brand`);
+    }
     if (cast) bits.push(`the exact person/cast shown in the pinned reference photo, "${cast.name}"`);
     return bits.length ? ` This post is pinned to a real photo reference: ${bits.join(' and ')}.` : '';
   }
@@ -13405,7 +13513,7 @@ class Component extends DCLogic {
   onCarouselBrief = (e) => this.setCarousel({ brief: e.target.value });
 
   loadCarouselAssetLib = async () => {
-    const d = await this.apiGet('/library');
+    const d = await this.apiGet('/library?for_brand=1');   // this brand's items only (plus brand-agnostic ones)
     this.setCarousel({ assets: (d && Array.isArray(d.items)) ? d.items : [] });
   };
   carouselAssetOptions = (kind) => (this.state.carousel.assets || []).filter(it => it.kind === kind && it.signed_off);
@@ -13811,6 +13919,7 @@ class Component extends DCLogic {
       caption: data.caption || '', hashtags: data.hashtags || '', visual: data.visual || ((this.brandName() || 'The brand') + ' key visual'),
       refusal: data.refusal || '', hasRefusal: !!data.refusal,
       job: data.job || '', hasJob: !!(data.job || '').trim(),
+      packRole: this.normPackRole(data.pack), packSource: '', packStale: false,
       imageUrl: '',
       status:'Draft', pillBg: st.bg, pillFg: st.fg,
       likes: rnd(180, 2400), comments: rnd(8, 140), shares: rnd(4, 90),
@@ -13821,6 +13930,7 @@ class Component extends DCLogic {
     if (this.state.socialGenerating) return;
     const plats = Object.keys(this.state.socialPlatforms).filter(p => this.state.socialPlatforms[p]);
     if (!plats.length) return;
+    if (!this.socialPackReady()) return;
     this.setState({ socialGenerating:true });
     const brief = this.state.linkedBrief;
     const forceTyped = !!this.state.socialForceTyped;
@@ -13849,7 +13959,7 @@ class Component extends DCLogic {
       // platform was never a choice anybody made; it was the shape asking for one.
       const pre = this.brandPreamble('a senior social media writer', this.state.producerBrandMode === 'general');
       if (!pre) { this.showToast(this.BRAND_PREAMBLE_MISSING); this.setState({ socialGenerating:false }); return; }
-      const prompt = `${pre}\n\nCampaign objective: "${obj}".${ctx}${assetAnchor}${kit} Write platform-adapted posts for exactly these platforms: ${plats.join(', ')}. Return ONLY a JSON object (no markdown) whose keys are the platform names, each value an ARRAY of exactly 3 post objects {"job": one of "recruit"|"prove"|"occasion", "caption": string, "hashtags": "#a #b #c", "visual": "one short line describing the key visual"}. The three must do different jobs, not say the same thing three ways: "recruit" brings a new person in, "prove" makes the claim checkable, "occasion" belongs to a moment in the year or the day. Facebook: warm, community, a little longer. Instagram: punchy, sensory, minimal emoji. LinkedIn: professional, purpose-led, no emoji.`;      let raw = await this.complete(prompt, { ...(execId ? { execution: execId } : {}), force_typed: forceTyped, skip_mandatories: noTrio });
+      const prompt = `${pre}\n\nCampaign objective: "${obj}".${ctx}${assetAnchor}${kit} Write platform-adapted posts for exactly these platforms: ${plats.join(', ')}. Return ONLY a JSON object (no markdown) whose keys are the platform names, each value an ARRAY of exactly 3 post objects {"job": one of "recruit"|"prove"|"occasion", "caption": string, "hashtags": "#a #b #c", "visual": "one short line describing the key visual", "pack": "side"|"hero"|"in_use"|"none"}. The three must do different jobs, not say the same thing three ways: "recruit" brings a new person in, "prove" makes the claim checkable, "occasion" belongs to a moment in the year or the day. "pack" says how the product pack appears in that post\u2019s image: "side" (the default \u2014 beside the main subject), "hero" (only when the image is about the pack itself), "in_use" (only when the scene truly needs the pack opened or poured), or "none" (only when the post\u2019s job is not the product, such as recruiting people or a festival greeting, where a pack would look forced). Prefer "side". In each "visual", describe the scene only: never ask for the back or side of the pack, its nutrition panel or its ingredients, and never describe opening, pouring from or holding a pouch unless "pack" is "in_use" — the studio places the one real pack itself. Facebook: warm, community, a little longer. Instagram: punchy, sensory, minimal emoji. LinkedIn: professional, purpose-led, no emoji.`;      let raw = await this.complete(prompt, { ...(execId ? { execution: execId } : {}), force_typed: forceTyped, skip_mandatories: noTrio });
       raw = String(raw).trim().replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();
       const data = JSON.parse(raw.slice(raw.indexOf('{'), raw.lastIndexOf('}')+1));
       const posts = [];
@@ -16052,7 +16162,11 @@ class Component extends DCLogic {
                            : 'linear-gradient(150deg,#2E5EA6,#12294B)',
       // Round 92: per-post adjust, see `adjustPost`'s own comment for why this is keyed by id.
       adjustNote: s.socialAdjustNotes[p.id] || '', onAdjustNote: this.onSocialAdjustNote(p.id),
-      adjust: this.adjustPost(p.id), adjusting: s.socialAdjustingId === p.id }));
+      adjust: this.adjustPost(p.id), adjusting: s.socialAdjustingId === p.id,
+      // The pack, per post: what it is set to, and what the last image honestly says about it.
+      hasPackLine: !!s.socialPackChoice, packLabel: this.postPackLabel(p),
+      showPackSelect: !!s.socialPackChoice && s.socialPackChoice !== '__none__',
+      packRoleValue: p.packRole || 'side', onPackRole: this.onPostPackRole(p.id) }));
     const imcBrief = this.imcSnapshot();
     const platformChips = [
       { key:'facebook', label:'f  Facebook' },
@@ -16477,6 +16591,7 @@ class Component extends DCLogic {
           renaming: s.libRenameId === it.id, notRenaming: s.libRenameId !== it.id,
           renameText: s.libRenameText, onRenameText: this.onLibRenameText,
           startRename: this.startLibRename(it), saveRename: this.saveLibRename(it), cancelRename: this.cancelLibRename,
+          onRenameKey: this.onLibRenameKey(it),
           // Unsigned is recessed rather than alarmed, and its primary action is the one that fixes it.
           cardBg: it.signed_off ? '#FFFFFF' : '#FBFAF8',
           cardBorder: it.signed_off ? '#DDD9D1' : '#C9CEDA',
@@ -16854,8 +16969,23 @@ class Component extends DCLogic {
       // usable asset already signed off. Same pick-or-upload shape as POSM's own cards; options come
       // from `carousel.assets` (one pool, already loaded on entry to this screen), picks are Social's
       // own fields so choosing one never silently moves Carousel's.
-      socialPackCard: { value: s.socialPackChoice, options: this.carouselAssetOptions('pack'),
+      // The pack chooser: this brand's signed-off packs (the list is brand-scoped at load), plus the person's
+      // session-only reference photo when there is one. No default is ever pre-selected.
+      socialPackCard: { value: s.socialPackChoice,
+        options: this.carouselAssetOptions('pack').map(o => ({ id: o.id, name: o.name })).concat(s.socialPackRef
+          ? [{ id: '__ref__', name: 'Reference photo: ' + ((s.socialPackProduct || '').trim() || s.socialPackRefName || 'your photo') + ' (this session, not signed off)' }] : []),
         pick: this.pickSocialAsset('socialPackChoice'), upload: this.uploadSocialAsset('pack', 'socialPackChoice') },
+      socialPackThumb: (() => { const v = s.socialPackChoice; if (v === '__ref__') return s.socialPackRef;
+        if (!v || v === '__none__') return ''; const it = (s.carousel.assets || []).find(a => a.id === v); return it ? it.url : ''; })(),
+      socialPackHasThumb: (() => { const v = s.socialPackChoice; if (v === '__ref__') return !!s.socialPackRef;
+        if (!v || v === '__none__') return false; return !!(s.carousel.assets || []).find(a => a.id === v); })(),
+      socialPackHint: !s.socialPackChoice ? 'Choose the pack these posts show. Nothing is picked for you.'
+        : s.socialPackChoice === '__none__' ? 'No pack will be attached to these posts.'
+        : s.socialPackChoice === '__ref__' ? 'A photo you supplied for this session: not saved, not signed off. Changing the pack does not change posts already made; click Regenerate visuals.'
+        : 'A signed-off pack shot, attached as a real reference. Changing the pack does not change posts already made; click Regenerate visuals.',
+      socialPackHasRef: !!s.socialPackRef, socialPackRefLabel: s.socialPackRefName || 'your photo',
+      onSocialPackRef: this.onSocialPackRef, clearSocialPackRef: this.clearSocialPackRef,
+      socialPackProduct: s.socialPackProduct, onSocialPackProduct: this.onSocialPackProduct,
       socialWantCast: !!s.socialWantCast, toggleSocialWantCast: this.toggleSocialWantCast,
       socialCastCheckBg: s.socialWantCast ? '#17325E' : '#fff', socialCastCheckBorder: s.socialWantCast ? '#17325E' : '#C9CEDA',
       socialCastCheckMark: s.socialWantCast ? '✓' : '',

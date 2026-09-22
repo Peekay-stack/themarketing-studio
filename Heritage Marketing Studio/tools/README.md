@@ -133,6 +133,11 @@ scratch data dir) and checks the whole matrix: Automatic / Never / a picked pack
 Grounded and Independent. On the code before 19 Sep it fails exactly the two cases where a picked pack was
 ignored; it proves the DECISION about references, not what an image model then draws.
 
+21 Sep: also pins the pack-in-scene wording (`pack_role`: side / hero / in_use / cta / corner / none, photo vs illustrated
+styles, the wording when a cast frame or a previous render is also attached) and the session-only reference photo
+(`pack_reference`: attached as the pack, refused if not an image data URI or over 8 MB, and never stored -- checked
+with the real ledger write on). `packscene.py` holds the wording; it was proven on 10 real generations first.
+
 ## test_library_naming.py -- library item names and AVIF references (21 Sep)
 
 ```bash
