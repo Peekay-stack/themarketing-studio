@@ -2480,3 +2480,37 @@ invented face or text.
 pins both real sentences plus a negative case (an ordinary face IN the scene, not printed ON the pack, is
 left alone). checkfe, full suite, py_compile, smoke on the committed tree, live gate (self-check commit
 match, deep check 20/0, only the two expected instance-swap 502s) all clean.
+
+
+### 22 Sep -- Round 18: pack size in "hero shot" poses -- wording alone does not fix it, the writer does
+
+**Owner regenerated "Count the Years" and found the pack badly oversized in two slides: a man presenting
+it at arm's length toward the camera (slide 2, role `side`), and it resting alone as a centrepiece on a
+family's table (slide 5, `cta`). Corrected me mid-diagnosis on slide 4 too** -- I'd read the held packs
+there as fine; the owner pointed out slide 4 has no pack actually IN a hand either, the same underlying
+issue.
+
+**First attempt (did not hold):** strengthened packscene.py's side/cta wording with an absolute,
+hand-independent size anchor ("roughly the size of a paperback book") and an explicit ban on presenting/
+freestanding poses. Tested for real on both exact poses (fal fallback -- local Gemini credits ran out
+mid-session) and it FAILED both times: the pack still rendered oversized -- a torso-wide pouch held at
+arm's length, a pack roughly half the table's width. The size instruction cannot out-argue the model's own
+strong advertising-photo prior for these two poses, however explicit the wording.
+
+**What actually worked:** stopped the WRITER (producers.carousel_concept) proposing these poses at all --
+the same lever that fixed the personalisation bug earlier today. The prompt now tells it to describe the
+pack only being carried, handed over, tucked in a crate or set down, never presented at arm's length or
+left resting alone as a centrepiece. **Verified directly**: called carousel_concept twice on a
+milkman-relationship objective (the same shape as both concepts tested today) -- 6 routes, every
+pack-visible slide, zero hero-pose phrasing; every one was a natural carry/hand-off/set-down. Image-level
+proof (does the render come out right-sized now) still needs the owner's next real carousel run -- that
+could not be tested locally today.
+
+**packscene.py's own module docstring now documents this as a third wording-cannot-remove limit**,
+alongside `in_use`'s rotation/garbling and the intermittent fssai-badge slip -- same standing: a
+hero-posed slide (hand-typed, or the writer slipping past its own instruction) should be expected to need
+one human Adjust pass, not treated as a guarantee.
+
+**Shipped, commit 169e004, deploy dep-dap5gqjncjis739v62tg (live ~10:31 UTC).** checkfe, test_pack_choice
+(2 new assertions for the paperback anchor + hero-pose ban), py_compile, selfcheck, smoke on the committed
+tree, live gate (self-check commit match, deep check 20/0, only instance-swap 502s) all clean.

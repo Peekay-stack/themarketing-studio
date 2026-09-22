@@ -553,3 +553,14 @@ OUT as a bug: "forcing a pack into every slide" on the other concept -- the per-
 correctly respects the writer's own shows_pack:false; that concept's writer just judged nearly every beat
 of a milkman story as product-adjacent, a legitimate per-slide call, not a wiring defect. Full entry:
 BRAND_GROUNDING_TESTING_LOG.md, "22 Sep -- Round 17".
+
+**UPDATE 22 Sep (Round 18, pack size in hero poses) -- wording alone could not fix an oversized pack in
+two "advertising hero shot" poses (presented at arm's length; freestanding centrepiece on a table).
+Commit 169e004, live-gated clean (dep-dap5gqjncjis739v62tg).** Tried strengthening packscene.py's size
+wording (absolute paperback-book anchor + explicit pose ban) first -- proven to FAIL on 2 real generations
+(fal fallback, local Gemini credits exhausted). The actual fix: stop producers.carousel_concept's writer
+proposing these poses at all (same lever as the personalisation fix) -- verified directly via 2 real
+writer calls, 6 routes, zero hero-pose phrasing on any pack-visible slide. Documented as a third
+wording-cannot-remove limit in packscene.py's own docstring, alongside `in_use` and the fssai slip.
+Image-level proof of the actual fix still needs the owner's next live carousel run. Full entry:
+BRAND_GROUNDING_TESTING_LOG.md, "22 Sep -- Round 18".
