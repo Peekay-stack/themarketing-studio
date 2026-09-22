@@ -137,6 +137,20 @@ def is_illustrated(style: str) -> bool:
     return str(style or "").strip().lower() not in _PHOTO_STYLES
 
 
+# 22 Sep -- tried and proven on a live trial before shipping (3 real routes on `?exp=v2`, 2 of 3 came back
+# with every pack-bearing slide correctly sized; the one gap was the already-known "presented toward
+# camera" pose -- see BRAND_GROUNDING_TESTING_LOG.md, "22 Sep -- Round 20"). Google's own Nano Banana
+# guidance says the model understands real photographic parameters ("85mm lens at f/2.8") directly, not
+# just descriptive prose -- every size fix before this one was descriptive/prohibitive ("no larger than
+# X", "never pose it as Y"), never a camera constraint that makes an oversized pack physically implausible
+# by the rules of optics rather than a rule the model has to remember to obey. Only added for `side`/`cta`,
+# photographic styles -- the two roles the sizing fights actually happened on.
+_CAMERA_TECHNICAL = (" Shoot this as a natural mid-shot on a 35-50mm lens, normal (not wide-angle) "
+                     "perspective, the subject framed from roughly the waist up at a comfortable "
+                     "conversational distance from camera -- never a tight macro or product-shot lens, "
+                     "which is what makes a small handheld object appear to fill the frame.")
+
+
 def pack_clause(style: str, role: str) -> str:
     """The sentence(s) that say what the pack is and where it goes. Leading space, so it can be dropped into a
     prompt. '' for role 'none' or an unknown role."""
@@ -144,7 +158,10 @@ def pack_clause(style: str, role: str) -> str:
     if not role or role == "none":
         return ""
     intro = ILLUSTRATED_INTRO if is_illustrated(style) else PHOTO_INTRO
-    return " " + intro + NO_MARKS + FRONT_ONLY_ONE_PACK + _PLACEMENT[role]
+    clause = " " + intro + NO_MARKS + FRONT_ONLY_ONE_PACK + _PLACEMENT[role]
+    if role in ("side", "cta") and not is_illustrated(style):
+        clause += _CAMERA_TECHNICAL
+    return clause
 
 
 # ---- the scene text itself ---------------------------------------------------------------------------------------

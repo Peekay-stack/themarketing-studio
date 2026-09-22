@@ -1844,6 +1844,29 @@ def scene_still(payload: dict):
                               and _caller_refs == 0 and not plate_used)
         if _pack_only:
             prompt = (f"{packscene.PACK_ONLY_OPENING}{pack_clause} Scene: {subject}. {craft} {_tail}")
+        elif not plate_used and _scene_wording:
+            # 22 Sep -- a Carousel/Social call with BOTH a cast reference and a pack reference attached
+            # (the common real case: "Include a recurring model/cast" checked, a pack chosen) kept
+            # failing on pack size specifically in poses the writer no longer proposes on purpose --
+            # "presenting" the pack, or resting it as a centrepiece -- see packscene.py's own note on
+            # this being a wording-cannot-fully-remove limit. Two changes from research, tried together
+            # and proven on a live trial (3 real routes, 2 of 3 came back with every pack-bearing slide
+            # correctly sized -- BRAND_GROUNDING_TESTING_LOG.md, "22 Sep -- Round 20"):
+            # (1) explicitly label each reference image's ROLE instead of leaving it to implicit prose
+            # (Nano Banana's own guide: number/label what each attached image is for); (2) put the pack's
+            # spatial/size constraint BEFORE the character identity-lock text, matching Veo's own guidance
+            # to "lock spatial parameters before character tokens are processed". The remaining known gap
+            # (a pack "presented" toward camera) is unchanged -- still needs a human Adjust pass sometimes.
+            _ref_labels = (
+                "Among the attached reference images: the one showing a person is the CHARACTER "
+                "reference -- hold their face, hair, skin tone and body type exactly. The one showing "
+                "packaged product is the PACK reference -- reproduce it exactly, unaltered.")
+            prompt = (
+                f"{_ref_labels}{pack_clause} "
+                "Now, reusing the EXACT same person from the character reference: identical faces, "
+                f"hair, skin tone and body type, and {clothing}, and {age}. Change only the action, "
+                f"setting and camera. New shot: {subject}. {craft} "
+                f"{_tail}")
         elif plate_used:
             prompt = (
                 "Generate the next shot of the same film. Reuse the EXACT same people from the "

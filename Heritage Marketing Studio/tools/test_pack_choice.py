@@ -155,6 +155,8 @@ expect("side, Real: places it to one side, sized to a real hand-held pack (compo
 expect("side, Real: an absolute (hand-independent) size anchor, and a ban on hero-product posing",
        "roughly the size of a paperback book" in pr and "whether or not a hand is actually touching it" in pr
        and "Never pose it as a hero product shot" in pr and "held out at arm's length" in pr)
+expect("side, Real: camera-technical framing (a natural mid-shot lens, not a macro/product-shot lens)",
+       "35-50mm lens" in pr and "never a tight macro or product-shot lens" in pr)
 expect("side, Real: asks for no added marks, and replaces the generic 'no logos' tail",
        "Do not add any logos, certification marks" in pr and pr.endswith(packscene.TAIL.strip()) and "captions, logos, watermarks" not in pr)
 expect("side, Real: the picked pack is the only reference; response says library / side",
@@ -195,15 +197,19 @@ expect("no pack_role (Video frames, shot-reference, every other caller): today's
 
 print()
 print("when other references are present:")
+# 22 Sep: a pack shown ALONGSIDE another reference (a cast frame, a previous render) now gets the
+# reference-labelled, reordered opening instead of "Generate the next shot of the same film, reusing
+# the EXACT same people..." -- proven on a live trial (see packscene.py's own note above _CAMERA_TECHNICAL).
 _CAST_ON[0] = True
 st, d, pr, rf = send({**PICK, "pack_role": "side", "use_cast": True})
-expect("with a cast frame: keeps the 'same people' opening (there ARE people to reuse) + the new pack wording",
-       pr.startswith("Generate the next shot of the same film, reusing the EXACT same people")
-       and "The pack in the reference image is the real product" in pr and pr.endswith(packscene.TAIL.strip()) and rf == [CAST_URL, PICKED_URL])
+expect("with a cast frame: labels each reference's role, still gets the pack wording, cast kept identical",
+       pr.startswith("Among the attached reference images:") and "CHARACTER" in pr and "PACK reference" in pr
+       and "The pack in the reference image is the real product" in pr and pr.endswith(packscene.TAIL.strip())
+       and rf == [CAST_URL, PICKED_URL])
 _CAST_ON[0] = False
 st, d, pr, rf = send({**PICK, "pack_role": "side", "reference_url": PREV})
-expect("with a previous render for continuity: keeps the old opening, still gets the new pack wording, pack kept",
-       pr.startswith("Generate the next shot of the same film") and "The pack in the reference image is the real product" in pr
+expect("with a previous render for continuity: same reference-labelled opening, still gets the pack wording, pack kept",
+       pr.startswith("Among the attached reference images:") and "The pack in the reference image is the real product" in pr
        and rf == [PREV, PICKED_URL])
 
 print()
