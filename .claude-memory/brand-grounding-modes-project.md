@@ -541,3 +541,15 @@ scale correctly across compositions the way a real-world size anchor does. Fixed
 already proven on `cta`, verified on a real generation of the exact close-up composition that failed.
 **Round 16's pack-shot work is now complete** -- both `side` and `cta` proven on real generations in their
 actual failure compositions. Full entry: BRAND_GROUNDING_TESTING_LOG.md, "22 Sep -- Round 16, one more".
+
+**UPDATE 22 Sep (Round 17, pack personalization) -- the carousel writer was independently inventing a
+"face printed on the pack" idea in two different concepts, which fought packscene's own "reproduce it
+exactly" fidelity instruction and produced garbled, oddly-proportioned packs. Commit d48f548, live-gated
+clean (dep-dap57eou01pc73d5on1g).** Fixed both layers: the writer prompt (producers.carousel_concept) now
+forbids describing the pack's printed design changing, and packscene.clean_scene gained a `_PERSONALIZED`
+strip pattern as a backstop, same mechanism as the existing back/nutrition-panel fix. Verified on a real
+generation of the owner's own exact scene text -- pack now renders unaltered. Separately checked and ruled
+OUT as a bug: "forcing a pack into every slide" on the other concept -- the per-slide role resolver
+correctly respects the writer's own shows_pack:false; that concept's writer just judged nearly every beat
+of a milkman story as product-adjacent, a legitimate per-slide call, not a wiring defect. Full entry:
+BRAND_GROUNDING_TESTING_LOG.md, "22 Sep -- Round 17".

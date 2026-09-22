@@ -2436,3 +2436,47 @@ side-role case updated; checkfe, full suite, call audit (1,173/0), smoke on the 
 
 **Round 16 pack-shot work is now genuinely complete** across both roles that matter (side and cta), proven
 on real generations in the exact compositions that failed, not just read from the wording.
+
+
+### 22 Sep -- Round 17: the writer was putting a face on the pack's own artwork
+
+**Owner ran two full carousel concepts specifically to see how the studio handles different scripts**
+("Man You Never Noticed" and "Count the Years"), flagged "dimensions are odd" and "photo on the packs" on
+both, and asked me to find the cause myself.
+
+**Two separate findings, not one bug:**
+
+1. **A real prompt conflict (fixed).** Both concepts independently invented the same idea: a slide whose
+visual_note asked for the pack's own printed design to carry a person's face and text -- "Ramesh's face
+and '31 years on this street' printed on it" (Man You Never Noticed, slide 4), "a pack that carries their
+own face" (Count the Years, slide 4). That directly fights packscene.py's own pack-fidelity instruction --
+"reproduce it exactly ... do not invent any new legible text on it" -- so the model tried to honour both
+orders on the same object and the pack rendered garbled and oddly proportioned in exactly those slides.
+This is the identical class of bug the 21 Sep nutrition-panel fix already solved once (a scene's own words
+can override wording, so the conflicting request has to be taken out of the scene before it's sent) -- just
+a new phrasing of the same fidelity clash, not yet covered.
+
+2. **"Forcing a pack into every slide" -- checked, not a bug.** The per-slide role resolver
+(`resolveSlidePackRole`, app.dc.html) correctly honours the writer's own `shows_pack:false` -- proven by
+"Count the Years" slide 1, which correctly resolved to "no pack unless you choose" and rendered with no
+pack. "Man You Never Noticed" got a pack on every slide because the writer judged nearly every beat in a
+milkman-relationship story as product-adjacent, a legitimate per-slide call for that narrative, not a
+wiring defect. Told to the owner as-is; a person can always flip an individual slide's dropdown to "No
+pack" by hand.
+
+**Fixed (1), two layers, same pattern as the nutrition fix:**
+- `producers.carousel_concept`'s writer prompt now says explicitly not to describe the pack's printed
+  design changing -- a person's face and years belong in the scene, never printed onto the product.
+- `packscene.clean_scene` gets a second pattern, `_PERSONALIZED`, stripping any scene clause that asks for
+  a face/photo/text to be printed, carried or shown ON the pack -- a backstop for whatever still slips
+  through, or a hand-typed slide that never went through the writer. Unlike the back/nutrition check, this
+  one is NOT skipped for role `in_use` -- the conflict is about the pack's print, not how it's held.
+
+**Verified on a real generation** using the owner's own exact scene text and the real Heritage pack photo
+(the daily-health pack on file) -- the pack now renders unaltered, legible, at a natural hand-scale, no
+invented face or text.
+
+**Shipped, commit d48f548, deploy dep-dap57eou01pc73d5on1g (live ~10:11 UTC).** tools/test_pack_choice.py
+pins both real sentences plus a negative case (an ordinary face IN the scene, not printed ON the pack, is
+left alone). checkfe, full suite, py_compile, smoke on the committed tree, live gate (self-check commit
+match, deep check 20/0, only the two expected instance-swap 502s) all clean.
