@@ -45,6 +45,14 @@ def stub(routes):
               "always places the real product pack into the CLOSING (cta) slide" in prompt)
         check("the prompt asks for shows_pack in the return shape",
               '"shows_pack":false' in prompt)
+        # 22 Sep, Round 16: shows_pack was landing False on delivery/handoff shots (a man carrying a
+        # pouch at a gate) that had no explicit "pack"/"pouch"/"carton" WORD in the visual note but
+        # plainly put the product in frame -- with no real pack reference sent for those slides, the
+        # model then invented a different generic pouch each time. Broadened to "visible at all, even
+        # carried/handed off/in the middle distance", not only a deliberate close-up.
+        check("shows_pack is framed as 'visible at all' (carried/handed off), not only a close-up",
+              "would the product's pack naturally be VISIBLE" in prompt and "handed over" in prompt
+              and "even briefly or in the middle distance" in prompt)
         return {"routes": routes}, ""
     producers._ask = _ask
 
