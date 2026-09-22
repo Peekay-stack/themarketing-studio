@@ -123,23 +123,41 @@ def pack_clause(style: str, role: str) -> str:
 # touched: that is what a "pack in use" post is, and the role selector already labels it as lower fidelity.
 _RISKY = re.compile(r"nutrition\w*|ingredient\w*|\bback\s+(?:of|panel)\b|\bbackside\b|\breverse\s+(?:side|of)\b|"
                     r"\bside\s+panel\b|\bflip(?:s|ped|ping)?\s+(?:the\s+)?(?:pack|pouch|packet)\b", re.IGNORECASE)
+
+# Live-tested finding (22 Sep, two Carousel concepts run independently): the writer proposed a scene where the
+# pack's own printed artwork carries a face or extra text -- "a pack that carries their own face", "Ramesh's face
+# ... printed on it" -- the same idea invented twice, unprompted, in different stories. That directly fights
+# PHOTO_INTRO's "reproduce it exactly ... do not invent any new legible text on it", and the model tries to honour
+# both at once. The writer prompt (producers.carousel_concept) now says not to propose this; this is the backstop
+# for whatever still slips through, or a hand-typed slide that never went through the writer at all.
+_PERSONALIZED = re.compile(
+    r"(?:carr(?:y|ies|ying)|bears?|printed?\s+(?:on|with)|stamped\s+(?:on|with)|shows?\s+(?:a|his|her|their|its)\b)"
+    r"[^,;.]{0,50}\b(?:face|photo|portrait|picture|likeness)\b"
+    r"|\b(?:face|photo|portrait|picture|likeness)\b[^,;.]{0,50}"
+    r"(?:printed|carr(?:y|ies|ying)|bears?|stamped)\b", re.IGNORECASE)
 _FALLBACK_SCENE = "a bright, uncluttered everyday scene"
 
 
 def clean_scene(text: str, role) -> tuple[str, bool]:
     """`(scene, changed)`. Drops each comma/semicolon/sentence-delimited chunk that asks for the pack's back, a
-    nutrition panel or an ingredients list. Unchanged (and `changed` False) when nothing matches, when the role is
-    'in_use' (the pack is handled on purpose) or when no pack role applies."""
+    nutrition panel, an ingredients list, or the pack's own printed artwork being personalised (a face, photo or
+    extra text put ON the pack). The back/nutrition check is skipped for role 'in_use' (the pack is handled on
+    purpose, and that wording tends to describe the handling, not the pack's print); the personalisation check
+    applies to every pack role, since it fights pack fidelity regardless of how the pack is held. Unchanged (and
+    `changed` False) when nothing matches or no pack role applies."""
     role = normalise_role(role)
     text = str(text or "")
-    if not text or role in ("", "none", "in_use") or not _RISKY.search(text):
+    if not text or role in ("", "none"):
+        return text, False
+    check_risky = role != "in_use"
+    if not ((check_risky and _RISKY.search(text)) or _PERSONALIZED.search(text)):
         return text, False
     parts = re.split(r"([,;.])", text)
     kept = []
     for k in range(0, len(parts), 2):
         chunk = parts[k]
         delim = parts[k + 1] if k + 1 < len(parts) else ""
-        if _RISKY.search(chunk):
+        if (check_risky and _RISKY.search(chunk)) or _PERSONALIZED.search(chunk):
             continue
         kept.append(chunk + delim)
     cleaned = "".join(kept).strip(" ,;")

@@ -249,6 +249,24 @@ expect("a scene that is ONLY a risky request falls back to a neutral scene", ch 
 cs, ch = packscene.clean_scene("She flips the pack over to show the back of the pouch, smiling.", "hero")
 expect("flipping the pack / showing its back is removed too", "back" not in cs and "flips" not in cs and "smiling" in cs)
 
+print()
+print("scene text that personalises the pack's own printed artwork (22 Sep, both real carousel concepts):")
+FACE1 = ("Present-day close-up of the woman holding the pack, Ramesh's face and '31 years on this street' "
+         "printed on it, her expression shifting.")
+st, d, pr, rf = send({**PICK, "pack_role": "side"}, scene=FACE1)
+expect("a face + text 'printed on it' is taken out of the scene before it is sent",
+       "Ramesh's face" not in pr and "printed on it" not in pr and d.get("scene_cleaned") is True)
+expect("...the rest of that scene survives", "close-up of the woman holding the pack" in pr.lower())
+FACE2 = "A row of three named delivery personnel standing on their own streets, each holding a pack that carries their own face."
+cs, ch = packscene.clean_scene(FACE2, "side")
+expect("'a pack that carries their own face' is removed too", "face" not in cs and ch is True)
+expect("...the setup survives", "A row of three named delivery personnel" in cs)
+cs, ch = packscene.clean_scene(FACE1, "in_use")
+expect("personalisation is stripped even for role 'in_use' (unlike back/nutrition, this fidelity clash "
+       "does not depend on how the pack is held)", "printed on it" not in cs and ch is True)
+cs, ch = packscene.clean_scene("A close-up of her smiling face as she holds the pack.", "side")
+expect("an ordinary face in the scene (not printed ON the pack) is left alone", ch is False and "smiling face" in cs)
+
 # The photo must go to the model and nowhere else: not the library, not the made ledger, not the disk.
 main._record_made = _real_record_made
 send({"pack_reference": PHOTO, "include_pack": False, "pack_role": "side"})

@@ -614,7 +614,10 @@ def carousel_concept(objective: str, house: dict | None = None, platform: dict |
         "slide regardless of shows_pack — so write that slide's visual_note as a calm, uncluttered scene "
         "(a counter, a table, a plain backdrop) with the product naturally the focus of its upper frame, "
         "never a busy or wide shot, since the pack will occupy that space and the slide's own headline "
-        "the bottom.\n"
+        "the bottom. The pack itself is a real, fixed product photograph — never describe its printed "
+        "design changing: no face, name, date or any other invented wording appearing ON the pack in "
+        "any slide, however good the story beat sounds. A person's face and years-of-service belong in "
+        "the SCENE (their own face, a caption, a sign) — never printed onto the product.\n"
         'Return ONLY JSON: {"routes":[{"name":"short route name","rationale":"one line on why this '
         'works","slides":[{"role":"hook","headline":"...","visual_note":"...","shows_pack":false}, ...]}, '
         '...exactly 3 routes]}')
