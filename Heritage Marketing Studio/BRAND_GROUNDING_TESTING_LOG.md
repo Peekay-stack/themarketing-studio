@@ -2554,3 +2554,54 @@ just one shared pipeline whose behaviour shows up identically in both callers.
 **Shipped, commit e9ab704, deploy dep-dap5p7u7bikc73ber9hg (live ~10:49 UTC).** tools/test_pack_choice.py
 pins the new crate wording. checkfe, full suite, py_compile, smoke on the committed tree, live gate
 (self-check commit match, deep check 20/0, only instance-swap 502s) all clean.
+
+
+### 22 Sep -- Round 20: a prompting-technique review, tried local-only first, then shipped
+
+**Owner asked for a critical review of prompting best practice** after Rounds 17-19 kept surfacing new
+pack-fidelity issues round after round, wanting to know how confident I actually was and what else could
+be done. Researched official Google guidance for both engines this project actually uses (Gemini 3.1
+Flash Image / "Nano Banana" for stills, Veo 3.1 for video) plus the wider industry: compositing (a real
+product cutout pasted onto a generated background) is the industry-standard alternative to what this
+project does (reference-conditioned generation) for guaranteed product fidelity -- a bigger, separate
+build, not attempted here. Two things Google's own guidance said this project had never tried: the model
+understands real photographic parameters directly ("85mm lens"), not just descriptive/prohibitive prose;
+and Veo's guide says to lock spatial/camera constraints BEFORE character tokens are processed.
+
+**Built and tested LOCAL ONLY first, per the owner's explicit "don't ship it yet, I bought AI Studio
+credit."** Put the whole thing behind a `prompt_experiment:"v2"` flag (`/app?exp=v2`), on a separate git
+branch, so the shipped path stayed byte-for-byte unchanged while testing. Three changes bundled: an
+absolute camera-technical clause on `side`/`cta` placements (a natural mid-shot lens, not a macro/
+product-shot lens) alongside the existing paperback-book anchor; explicit reference-image role labelling
+when a cast reference AND a pack reference are both attached (the common real case); and putting the
+pack's spatial constraint before the character identity-lock text instead of after.
+
+**Verified before recommending it, not just written:** 6 real Gemini generations across 3 known-hard
+poses (crate, arm's-length presenting, freestanding table+cast), baseline vs experimental, each. Result:
+crate and one freestanding-table run were clear wins for the experimental wording; a REPEAT of the
+freestanding-table case failed on BOTH conditions -- honest finding that this remains the hardest pose
+regardless of wording, not a full fix. Reported this candidly rather than oversold it.
+
+**Owner then independently verified on real, unscripted work** -- reset their local login (password reset
+in `api/heritage.db` only, live untouched, done with explicit authorisation and the exact username given),
+generated 3 full carousel routes on `?exp=v2` covering ideas I never touched ("Morning Proof",
+"3-Second Checklist", "The Morning Set"). 2 of 3 routes came back with EVERY pack-bearing slide correctly
+sized; the one gap (Morning Proof, 2 slides) was the same already-known "presented toward camera" pose.
+Owner asked a sharp set of follow-up questions before shipping -- did this touch the writer (no, confirmed:
+producers.carousel_concept untouched, storyline unaffected by construction), was generic storyline caused
+by this experiment (no -- traced to the idea-platform step upstream, a separate finding), how to combine
+"the two models" (there was no real tradeoff -- writer-level fixes and this image-level wording operate at
+different pipeline stages and stack, they don't compete).
+
+**Shipped, commit dd1c7e9, deploy dep-dap9i8e7bikc73bjoch0 (live ~15:07 UTC), after the owner said "Ship
+it."** The flag is gone entirely -- folded into the only path, not an opt-in; the frontend needed zero
+changes (app.dc.html reverted to byte-identical before committing). tools/test_pack_choice.py's two cast/
+continuity cases updated for the new reference-labelled opening; one new case pins the camera-technical
+wording. tools/test_identity_lock.py confirmed unaffected (no test there attaches cast+pack together).
+checkfe, full suite, selfcheck, smoke on the committed tree, live gate (self-check commit match, deep
+check 20/0, only instance-swap 502s) all clean.
+
+**Known, explicitly documented limit, unchanged by this round:** a pack "presented" toward the camera or
+resting as a freestanding centrepiece with no hand on it remains the hardest composition -- every wording
+variant tried across Rounds 18-20 has failed on it at least once. Treated the same as `in_use` and the
+fssai-badge slip: expect an occasional miss needing a human Adjust pass, not a guarantee.

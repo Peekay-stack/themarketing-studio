@@ -576,3 +576,19 @@ out and explained two non-bugs the owner flagged in the same message: an invente
 to a "crate" mention with no literal word "pack" (the writer's own explicit judgment call, by design, not
 the regex heuristic). Ruled out "Social vs Carousel cross-contamination" -- they share one pipeline, not
 two. Full entry: BRAND_GROUNDING_TESTING_LOG.md, "22 Sep -- Round 19".
+
+**UPDATE 22 Sep (Round 20, prompting-technique review -> shipped) -- researched official Gemini/Veo
+prompting guidance after Rounds 17-19's repeated pack-fidelity issues; found two untried levers
+(camera-technical framing, reference-image role labelling + reordering). Built and proved LOCAL ONLY
+first (a `?exp=v2` flag, never shipped while gated) per the owner's explicit hold -- 6 real Gemini trials
+(mixed but net-positive: 2 clear wins, 1 wash, 1 repeat-failure on the known hardest "presented toward
+camera" pose). Owner independently verified on 3 full real routes -- 2 of 3 came back fully correct.
+Shipped after "Ship it": commit dd1c7e9, live-gated clean (dep-dap9i8e7bikc73bjoch0).** Flag removed
+entirely, folded into the only path. Confirmed by direct question-and-answer with the owner before
+shipping: this never touched the writer (producers.carousel_concept unchanged, storyline unaffected by
+construction); "generic storyline" traced to the idea-platform step, a separate, still-open observation;
+no real tradeoff between "the two models" since writer-level and image-level fixes operate at different
+pipeline stages and stack rather than compete. Known limit UNCHANGED: a pack presented toward camera or
+resting as a centrepiece with no hand on it still needs an occasional manual Adjust -- documented in
+packscene.py itself alongside in_use and the fssai slip. Full entry: BRAND_GROUNDING_TESTING_LOG.md,
+"22 Sep -- Round 20".
