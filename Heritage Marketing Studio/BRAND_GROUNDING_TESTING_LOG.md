@@ -2304,3 +2304,56 @@ all clean.
 
 **Still open, owner to decide:** whether to build per-slide cast control (finding 3's real fix), and whether
 to try regenerating "This Street, These Hands" now that shows_pack should land correctly.
+
+
+### 22 Sep -- Round 16, the real answer: the cast feature's only entry point was invisible
+
+**Owner tried again with the checkbox checked** (two fresh carousels, one with a slide added by hand to
+retest) -- same result both times: the milkman different on the added slide, the woman/girl different
+frame to frame. Then asked point-blank what "Include a recurring model/cast" actually does. Answering that
+precisely (own code, not memory) surfaced the real cause.
+
+**Root cause, confirmed in the real browser, not just read from source:** the dropdown was empty because
+nothing had ever been signed off, and there is no upload button on this card (unlike the pack card) --
+"AI-draft a cast reference, from this concept" is the ONLY way in. That link was rendering as an EMPTY
+`<span>`: `{{ carouselCastBusy ? 'Drafting…' : '✦ AI-draft a cast reference, from this concept' }}` is an
+inline ternary written directly inside a `{{ }}` hole, and this template engine does not evaluate that
+form. Confirmed the underlying mechanism was otherwise sound: dispatching a real click on the invisible
+span correctly fired `/cast-reference`. So the entire feature has been unusable, invisibly, since it was
+built in round 93 -- nobody could ever see the one button that would have solved the owner's problem.
+
+**Not a new bug class -- the third sighting of one this file had already named twice.** Its own comments
+already record round 44/49 (a ternary inside a `style=""` attribute "renders once and never updates") and
+round 93's own `carouselManualBg` fix for the identical reason. This is a worse variant (permanently empty
+text content, not merely stale) of the same root cause, missed a third time.
+
+**Fixed:** the label moved into the bag (`carouselCastDraftLabel`), matching every other conditional label
+in this file. Swept the SAME card while in there and found a second live instance: the route-picker's
+selection ring (`border:2px solid {{ r.chosen ? '#17325E' : '#DDD9D1' }}`) had the identical problem --
+clicking between concept routes never visibly moved the highlight. Fixed the same way, precomputed in the
+bag.
+
+**A bug in my own first attempt, caught by testing rather than by re-reading the diff:** the first pass
+wrote `routeBorder: r.chosen ? ... ` inside the SAME object literal that was also defining `chosen` --
+an object literal's later key cannot see an earlier key's value, so `r.chosen` always read the (nonexistent)
+field on the untouched source object, always false. Extracting the real bag output in the browser (not
+just eyeballing the template) showed the chosen route still rendering grey. Rewritten to compute `chosen`
+as a local variable first, referenced by both fields.
+
+**A permanent guard added, not just the one fix:** `checkfe.py` now scans for any `{{ ... ? ... : ... }}`
+ternary written directly inside an interpolation hole (HTML comments excluded -- two of them literally use
+that string as documented example prose) and fails the check. Self-tested by reintroducing the exact
+broken pattern in a scratch copy and confirming it is caught.
+
+**Shipped, commit 0474a11, deploy dep-dap3a4qjnfac73bdgub0 (live ~08:00 UTC).** Verified in the real
+browser, not just the source: the draft link now renders with real visible text and a working click; the
+route cards now show the correct chosen/unchosen colours, extracted directly from the live bag output
+before and after. checkfe (with the new guard) and the full existing test suite all still pass; call audit
+1,173/0; live gate clean (self-check commit match, deep check 20/0, served page carries both fixes, logs
+show only the one instance-swap 502, no application errors).
+
+**What this actually resolves:** the owner can now genuinely draft and sign in a real cast reference for
+the milkman (or any recurring figure) via the link that was always meant to be there. Whether that,
+applied uniformly across a carousel that also has DIFFERENT other people in other slides, is the right
+final answer for THIS concept specifically is still the open question from the prior round (per-slide cast
+control does not exist) -- but the tool to try it at all now actually exists.

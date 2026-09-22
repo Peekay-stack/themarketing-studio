@@ -511,3 +511,13 @@ model/cast" is one choice for the WHOLE carousel, and this concept mixes a recur
 households per slide, so turning it on would be wrong for the other slides; true per-slide cast control does
 not exist yet, flagged as a real gap, not built without the owner's go-ahead. Full entry:
 BRAND_GROUNDING_TESTING_LOG.md, "22 Sep -- Round 16 follow-up".
+
+**UPDATE 22 Sep (Round 16, the real answer) -- the cast feature's only entry point was invisible, now
+fixed. Commit 0474a11, live-gated clean (dep-dap3a4qjnfac73bdgub0).** "AI-draft a cast reference, from this
+concept" -- the ONLY way to create a cast reference for Carousel (no upload button on this card) -- was an
+inline ternary inside a `{{ }}` hole that this template engine does not evaluate; it rendered as an EMPTY,
+invisible span whose click handler worked perfectly underneath. The whole feature has been unusable since
+round 93. Fixed, plus a second live instance in the same card (the route-picker's selection ring never
+visibly updated), plus a permanent checkfe.py guard against this whole bug class (already named twice
+before in this file's own comments). The owner can now actually draft and sign in a cast reference. Full
+entry: BRAND_GROUNDING_TESTING_LOG.md, "22 Sep -- Round 16, the real answer".
