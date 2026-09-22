@@ -482,3 +482,13 @@ path on live; Rename-by-Enter on live. Owner still to rename the 2 live pack ite
 Full Cream is still the default pack wherever nobody picks one). NEXT: Deploy 2, Carousel -- CTA slide always an
 image slide, and the 4:5-silently-becomes-16:9/1:1 ratio fix (use 3:4, proven by trial T8) -- not yet re-planned,
 bring a short plan before building. Full entry: BRAND_GROUNDING_TESTING_LOG.md, "22 Sep -- Deploy 1 ... SHIPPED".
+
+**UPDATE 22 Sep (later) -- Deploy 2 (Carousel pack-in-scene) SHIPPED, commit 9a6e64d, live-gated clean
+(dep-dap1cdv40ujc73bt1uqg, ~05:49 UTC).** Carousel now has the same real-packs-only chooser as Social, plus
+its own shows_pack-driven per-slide role (writer suggests, position decides the CTA slide, person always
+overrides). Fixed the 4:5->3:4 ratio bug (proven with a real generation + simulated crop) and a latent
+use_cast bug in single-slide regenerate. Both pack-shot deploys (Social 22 Sep morning, Carousel 22 Sep
+later) are now live. NOT verified on live: a real Carousel batch with the owner's own login/credits. Owner
+still to rename the 2 live pack items and try Carousel for the first time since this shipped. Full entry:
+BRAND_GROUNDING_TESTING_LOG.md, "22 Sep (later) -- Deploy 2 ... SHIPPED". No further pack-shot work planned;
+next open items are unrelated (PR-release export+footer, competitor-notes, PPTX/DOCX native-shape charts).

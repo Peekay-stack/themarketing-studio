@@ -229,3 +229,7 @@ short pointer. Do not write the same account three times.
   not the same as silence, and proceeding through the working agreement's normal gates (tests, smoke, push,
   live gate) still applied. Distinguish it from a genuinely open creative question (there is a right test to
   run, not a taste call the owner has to make).
+- 22 Sep: a shell double-quoted -m commit message breaks the moment the message itself contains a double-quoted phrase
+  (here, a literal \"on the side\") -- git then reads the rest of the message as separate pathspecs and
+  refuses. Write any commit message with quotes, apostrophes or code fragments to a file and commit with `git
+  commit -F <file>`, never inline with -m.

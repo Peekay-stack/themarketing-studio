@@ -2148,3 +2148,55 @@ Happy Full Cream, which remains the newest signed-off pack = the default whereve
 **Next:** Deploy 2, Carousel -- CTA slide always an image slide, and the ratio fix found in the code on 21 Sep
 (the image services silently turn an unsupported 4:5 into 16:9/1:1; Carousel asks for 4:5; use 3:4, proven by
 trial T8). Not yet re-planned in detail; bring a short plan before building, per the working agreement.
+
+
+### 22 Sep (later) -- Deploy 2 (Carousel pack-in-scene) SHIPPED and live-gated
+
+**Sweep found six things before building:** (1) the ratio math -- Carousel requested 4:5, which neither
+image service supports; a pack/cast-referenced call silently returned 16:9 and, shown in the app's own
+4:5 preview box via object-fit:cover, only the CENTER 45% of its width survived -- a pack placed "to one
+side" (outer third) was almost entirely cropped away; 3:4 is genuinely supported by both services and
+only loses ~3% top/bottom in the same 4:5 box. (2) Carousel's pack dropdown was still the PRE-Deploy-1
+design (Automatic/__never__/picked). (3) the concept writer runs before a pack is even picked, so unlike
+Social there is no product to pin a caption to -- shows_pack only needs to be a narrative signal. (4) "CTA
+= last slide" must be computed by POSITION at call time, never stored as a tag, or reordering/deleting
+slides leaves a stale label -- the exact "two controls, one real" trap this file has already been bitten
+by. (5) `regenerateCarouselSlide` never sent `use_cast`, so an unchecked cast box still silently pinned a
+face on a single-slide regenerate -- found while touching that same function, bundled in. (6) switching
+brands didn't clear Carousel's pack choice the way Deploy 1 made it clear Social's.
+
+**Built:** `producers.carousel_concept` returns `shows_pack` per slide (the model's own answer trusted
+when given, `posm.looks_like_pack()` the fallback when it is not); the prompt tells the model the closing
+slide always carries the pack, so it should write a calm scene that leaves room. Frontend: Carousel's own
+real-packs-only chooser (brand-scoped list already inherited from Deploy 1, a session-only reference
+photo, "No pack in this carousel"), `resolveSlidePackRole(slide, isLast)` (explicit pick always wins;
+else the CURRENTLY-last slide resolves to 'cta'; else `shows_pack` decides 'side' vs 'none'), ask-before-
+produce/regenerate, per-slide honest label + role selector on produced slides, `carouselPackFields`
+rewritten to the real-packs-only shape, ratio 4:5->3:4 in both produce and regenerate, the missing
+`use_cast` added to regenerate, brand-switch now clears Carousel's pack fields too.
+
+**Verification:** `tools/test_carousel_concept.py` (new) -- the shows_pack contract and its fallback, all
+pass. checkfe passes; call-signature audit 1,173 calls / 0 problems; `tools/smoke.py` passed on the
+committed tree. The pack-role resolver was extracted from the SERVED page and run against the real
+staleness scenario (reorder a slide, then delete the original last slide) -- confirmed no stale 'cta' tag
+survives either edit, the currently-last slide always picks it up. Driven in the browser pane with real
+state and a stubbed network: ask-first, the chooser (brand-scoped list + reference-photo option), per-slide
+labels and the position-aware "Automatic" option text, all correct on the real DOM. One real image credit:
+a 3:4 'side' generation, then a simulated CSS object-fit:cover crop into the app's 4:5 box -- confirmed by
+eye the pack, both faces and the pouring action all survive; only ceiling/counter edges are trimmed.
+
+**Live gate (commit 9a6e64d, deploy dep-dap1cdv40ujc73bt1uqg, live ~05:49 UTC):** /selfcheck ok, 1,173
+calls, 0 problems; /selfcheck/deep 20 routes, 0 failed; anonymous POST to /social-carousel-concept and
+/scene-still both 401; served page carries the new chooser text, resolveSlidePackRole, the 3:4 ratio line
+and carouselPackReady. Logs since deploy (log service needed one retry, per the known intermittent 503):
+only two 502s during the instance swap (my own poll + Render's health check), no application errors.
+
+**NOT verified on live:** a real Carousel batch with the owner's own login and credits -- everything above
+was proven on this session's own real generation and pure-logic extraction, never yet a full carousel
+produced end-to-end on the live build. Owner still to rename the 2 live pack items (unchanged from Deploy
+1) and to try Carousel for the first time since this shipped.
+
+**Both pack-shot deploys (Social + Carousel) are now live.** Nothing further planned on this thread; the
+per-post/per-slide "pack used" label was the one deferred extra (already built as part of both deploys,
+so in fact done). Next open items are unrelated to packs: PR-release export+footer, the competitor-notes
+feature, PPTX/DOCX native-shape charts -- all previously deferred, still deferred.
