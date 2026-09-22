@@ -5,10 +5,18 @@ BRAND_GROUNDING_TESTING_LOG.md, "21 Sep -- pack shots"). What the live prompt sa
 people from the reference image" -- makes no sense for a pack photo, and it let the pack be held, rotated and its
 print garbled. This wording, which tells the model the reference IS the real product, to reproduce it front-on and
 place it deliberately, kept the pack faithful and legible in every static placement (side, hero, corner, CTA), in
-photo and illustrated styles alike. Two limits the trial also showed, and this module cannot remove:
+photo and illustrated styles alike. Three limits the trials showed, and this module cannot fully remove by wording:
   * a pack that is handled or poured ("in_use") is rotated and its fine print garbles -- so it is opt-in only;
   * a certification mark (an "fssai" badge) was once ADDED that the reference does not carry -- the line below asks
     the model not to, but an intermittent slip is not proven fixed; every published pack still needs a human eye.
+  * a pack posed as an advertising "hero" shot -- held out at arm's length toward the camera, or resting alone as
+    a centrepiece with no hand on it -- renders oversized even with an explicit real-world size anchor (tried 22
+    Sep: a paperback-book anchor plus a direct ban on the pose, confirmed still failing on two real generations).
+    The size wording alone cannot out-argue the model's own advertising-photo prior; the working fix is stopping
+    the WRITER (producers.carousel_concept) proposing that pose at all -- a pack that is carried, handed over or
+    set down (not presented) renders at the right size reliably. Any slide that still goes for a hero pose (a
+    hand-typed one, or the writer slipping past its own instruction) should be treated like `in_use`: expect to
+    need one human Adjust pass, not a guarantee from the prompt.
 
 Pure functions, no I/O: `main.scene_still` calls these only when the caller sends a `pack_role`, so every other
 caller (Video frames, /shot-reference, POSM) keeps its prompt byte-for-byte.
@@ -60,11 +68,23 @@ _PLACEMENT = {
     # table), because 25% of a tightly-cropped frame is a much bigger real object than 25% of a wide one.
     # Replaced with the same real-world, composition-independent anchor already proven on `cta` for the
     # identical reason -- a real pack does not get bigger just because the camera moved closer.
+    #
+    # Live-tested finding (22 Sep, a second round on both `side` and `cta`): the "held in the hand" anchor
+    # still failed in two related poses -- a man holding the pack out at arm's length toward the camera
+    # (`side`), and the pack resting alone on a table with no hand touching it at all (`cta`, a family
+    # group shot). Both are advertising-style "hero product" poses, and the second has no hand in frame at
+    # all for the anchor to even reference. Added an ABSOLUTE size anchor (paperback book) that holds
+    # whether or not a hand is touching the pack, plus an explicit ban on the hero-shot poses themselves --
+    # the size wording alone was not enough to stop the pose from pulling the model toward a bigger prop.
     "side": (" Place the pack to one side of the frame (the left or right third), upright and in the "
-             "foreground, no larger than a real pack held in the hand of an average-built adult, at its "
-             "true, real-life size -- not enlarged for effect, and the SAME real-world size whether this "
-             "shot is a wide scene or a tight close-up -- clearly visible but secondary to the main "
-             "subject, and not overlapping anyone's face."),
+             "foreground, no larger than a real pack held in the hand of an average-built adult -- "
+             "roughly the size of a paperback book, not a poster or a box -- at its true, real-life size, "
+             "the SAME real-world size whether this shot is a wide scene or a tight close-up, and "
+             "whether or not a hand is actually touching it. Never pose it as a hero product shot: not "
+             "held out at arm's length toward the camera, not floating or resting alone as a display "
+             "piece -- keep it close to the body or resting naturally against something the way a real "
+             "pack of milk actually would, clearly visible but secondary to the main subject, and not "
+             "overlapping anyone's face."),
     "hero": " The pack is the hero of the image, centred and upright, its front label clearly visible.",
     "in_use": " Show the pack naturally in the action of the scene, its front label turned toward the camera.",
     # Live-tested finding (22 Sep, a real Carousel CTA slide): with no size given, the pack came out
@@ -75,12 +95,15 @@ _PLACEMENT = {
     # The owner tested a sharper, concrete anchor live via Adjust ("not larger than the real pack in the
     # hand of an average built man") and confirmed it held on that exact slide; folded in as the primary
     # instruction, with the relative-size wording kept alongside it, not replaced -- both are true and
-    # reinforce each other.
+    # reinforce each other. See `side`'s own note above for the second round's fix, applied here too.
     "cta": (" Place the pack upright in the upper two-thirds of the frame, no larger than a real pack "
-            "held in the hand of an average-built adult, at its true, real-life size relative to any "
-            "hands, people or objects near it -- not enlarged for effect -- with its front label clearly "
-            "visible, and keep the lower third of the frame clean and uncluttered so a headline can be "
-            "placed there."),
+            "held in the hand of an average-built adult -- roughly the size of a paperback book, not a "
+            "poster or a box -- at its true, real-life size relative to any hands, people or objects near "
+            "it -- not enlarged for effect -- whether or not a hand is actually touching it. Never pose "
+            "it as a freestanding display piece towering over the scene -- if no hand is holding it, rest "
+            "it small against something (a table edge, a crate, a counter) at its true, pocket-sized "
+            "scale, not staged like a product-shoot hero, with its front label clearly visible, and keep "
+            "the lower third of the frame clean and uncluttered so a headline can be placed there."),
     "corner": " Show the pack as a small element in one corner of the frame, upright, secondary to the main graphic.",
 }
 

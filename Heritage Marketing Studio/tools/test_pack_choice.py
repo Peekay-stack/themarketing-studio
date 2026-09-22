@@ -150,6 +150,9 @@ expect("side, Real: places it to one side, sized to a real hand-held pack (compo
        "Place the pack to one side of the frame" in pr and "no larger than a real pack held in the hand of an average-built adult" in pr
        and "SAME real-world size whether this shot is a wide scene or a tight close-up" in pr
        and "not overlapping anyone's face" in pr)
+expect("side, Real: an absolute (hand-independent) size anchor, and a ban on hero-product posing",
+       "roughly the size of a paperback book" in pr and "whether or not a hand is actually touching it" in pr
+       and "Never pose it as a hero product shot" in pr and "held out at arm's length" in pr)
 expect("side, Real: asks for no added marks, and replaces the generic 'no logos' tail",
        "Do not add any logos, certification marks" in pr and pr.endswith(packscene.TAIL.strip()) and "captions, logos, watermarks" not in pr)
 expect("side, Real: the picked pack is the only reference; response says library / side",
@@ -167,6 +170,9 @@ st, d, pr, rf = send({**PICK, "pack_role": "cta"})
 expect("cta: upper two-thirds, sized to a real hand-held pack, true size relative to hands/people, lower third kept clear",
        "upper two-thirds" in pr and "no larger than a real pack held in the hand of an average-built adult" in pr
        and "true, real-life size" in pr and "not enlarged for effect" in pr and "lower third" in pr)
+expect("cta: an absolute (hand-independent) size anchor, and a ban on freestanding hero display",
+       "roughly the size of a paperback book" in pr and "whether or not a hand is actually touching it" in pr
+       and "Never pose it as a freestanding display piece" in pr and "pocket-sized" in pr)
 st, d, pr, rf = send({**PICK, "pack_role": "in_use"})
 expect("in_use: shown in the action, label to camera", "in the action of the scene" in pr)
 st, d, pr, rf = send({**PICK, "pack_role": "corner"}, style="infographic")
