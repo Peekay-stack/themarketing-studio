@@ -1787,11 +1787,25 @@ def scene_still(payload: dict):
         # That wording won every time regardless of what the shot's own description asked for, which is
         # exactly why a 5:45am bedroom shot came back in the same outfit as the exam hall: the fixed
         # clause and the shot's own words were never actually competing, the clause always won. Face,
-        # hair, skin tone, body type and age still lock unconditionally — that is the identity a
-        # reference image exists to hold — but clothing now follows the new shot's own description when
-        # it says something about it, and only defaults to matching the reference when it does not.
+        # hair, skin tone and body type still lock unconditionally — that is the identity a reference
+        # image exists to hold — but clothing now follows the new shot's own description when it says
+        # something about it, and only defaults to matching the reference when it does not.
         clothing = ("their clothing as described for this new shot if it says anything about what "
                     "they are wearing, and otherwise identical clothing to the reference")
+        # Live-tested finding (22 Sep, a real Carousel: a milkman's face locked across a 1994-to-present
+        # before/after, via the SAME cast reference every slide): "ages" was still in the unconditional
+        # list above until now, and it is exactly what stopped him ageing -- 1994, 2011 and "present day"
+        # all came back looking the same age, because the model was told to hold age identical no matter
+        # what the shot's own words said. Owner's own read, confirmed: this should apply ONLY to a shot
+        # whose own words call for a different age -- every other shot (which is most of them) still
+        # needs the SAME age, to keep the face reading as the same person. Given the exact clothing
+        # treatment for the same reason: age now follows the shot's own words when they say something
+        # about age, and only defaults to matching the reference when they say nothing about it.
+        age = ("their apparent age as this new shot's own description calls for, if it says anything "
+               "about how old they look or how much time has passed (a year, a decade, an age, \"young\", "
+               "\"older\", \"grey-haired\") -- keeping the same face, bone structure and identity clearly "
+               "recognisable as the reference person even when older or younger -- and otherwise "
+               "identical age to the reference")
         # Live-tested finding: "down to the fine print" asked for something no current image model can
         # actually do — reproduce small reference text verbatim — and it directly fought the "No
         # on-screen text" instruction at the end of this same prompt. Caught live: a real render came
@@ -1833,7 +1847,8 @@ def scene_still(payload: dict):
         elif plate_used:
             prompt = (
                 "Generate the next shot of the same film. Reuse the EXACT same people from the "
-                f"reference images: identical faces, hair, skin tone, body type and ages, and {clothing}."
+                f"reference images: identical faces, hair, skin tone and body type, and {clothing}, "
+                f"and {age}."
                 f"{pack_clause} Reuse the SAME location and the same light from the reference images: "
                 "the same room or place, the same time of day, the same quality and direction of "
                 "light. If this shot continues the same scene as the reference, also keep people in "
@@ -1845,7 +1860,8 @@ def scene_still(payload: dict):
         else:
             prompt = (
                 "Generate the next shot of the same film, reusing the EXACT same people from the "
-                f"reference image: identical faces, hair, skin tone, body type and ages, and {clothing}."
+                f"reference image: identical faces, hair, skin tone and body type, and {clothing}, "
+                f"and {age}."
                 f"{pack_clause} Change only the action, setting and camera. "
                 f"New shot: {subject}. {craft} "
                 f"{_tail}")

@@ -152,6 +152,17 @@ slide is handled for it. It does not decide which slide is the CTA -- that is co
 POSITION in the frontend (`resolveSlidePackRole`), never a stored tag, so reordering or deleting slides
 can never leave a stale label behind.
 
+## test_identity_lock.py -- the reuse-the-exact-people wording (22 Sep)
+
+```bash
+python tools/test_identity_lock.py  # exit 0 = age is conditional, everything else still locks
+```
+
+Face, hair, skin tone and body type still lock unconditionally against a cast/plate reference; age now
+follows the shot's own words the same way clothing already did (a real before/after Carousel held a
+recurring man's face but never let him age, until this). Checks the wording is present, not what a real
+model draws with it.
+
 ## test_library_naming.py -- library item names and AVIF references (21 Sep)
 
 ```bash

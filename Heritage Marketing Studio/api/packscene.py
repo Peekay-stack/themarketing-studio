@@ -60,12 +60,18 @@ _PLACEMENT = {
     "in_use": " Show the pack naturally in the action of the scene, its front label turned toward the camera.",
     # Live-tested finding (22 Sep, a real Carousel CTA slide): with no size given, the pack came out
     # oversized against the two people holding it -- the owner's own note asked for it "in proportion to
-    # the hands... a little smaller than the current." Told in relative terms, not a fixed frame fraction
-    # like "side" uses, because a CTA scene sometimes has the pack held and sometimes standing alone.
-    "cta": (" Place the pack upright in the upper two-thirds of the frame, at its true, real-life size "
-            "relative to any hands, people or objects near it -- not enlarged for effect -- with its "
-            "front label clearly visible, and keep the lower third of the frame clean and uncluttered so "
-            "a headline can be placed there."),
+    # the hands... a little smaller than the current." The relative-size wording below helped but did not
+    # hold in every composition: a later CTA slide (a man standing, arms extended, presenting the pack)
+    # still came out too large -- a more advertising-style pose than the hand-off scene this was tuned on.
+    # The owner tested a sharper, concrete anchor live via Adjust ("not larger than the real pack in the
+    # hand of an average built man") and confirmed it held on that exact slide; folded in as the primary
+    # instruction, with the relative-size wording kept alongside it, not replaced -- both are true and
+    # reinforce each other.
+    "cta": (" Place the pack upright in the upper two-thirds of the frame, no larger than a real pack "
+            "held in the hand of an average-built adult, at its true, real-life size relative to any "
+            "hands, people or objects near it -- not enlarged for effect -- with its front label clearly "
+            "visible, and keep the lower third of the frame clean and uncluttered so a headline can be "
+            "placed there."),
     "corner": " Show the pack as a small element in one corner of the frame, upright, secondary to the main graphic.",
 }
 
