@@ -2357,3 +2357,54 @@ the milkman (or any recurring figure) via the link that was always meant to be t
 applied uniformly across a carousel that also has DIFFERENT other people in other slides, is the right
 final answer for THIS concept specifically is still the open question from the prior round (per-slide cast
 control does not exist) -- but the tool to try it at all now actually exists.
+
+
+### 22 Sep -- Round 16, final: age unlocked (scoped, precedented), CTA pack size sharpened, both proven
+
+**With the cast-draft link fixed, the owner tried the real thing:** the milkman now held his identity
+across a 1994-to-present before/after -- the earlier fix genuinely worked. Two new findings from the same
+real carousel: (1) the man never visibly aged between "1994", "2011" and "present day" -- only slide 1,
+whose own scene called him "weathered," looked older than the rest; (2) an added CTA slide (a man standing,
+arms extended, presenting the pack) came out oversized again, in a composition the earlier size trial had
+not covered.
+
+**Age, root-caused precisely:** `/scene-still`'s reuse-the-exact-people prompt has said "identical faces,
+hair, skin tone, body type and AGES" since it was written -- a deliberate choice at the time ("that is the
+identity a reference image exists to hold"). This is the exact same failure this file already fixed once
+for CLOTHING (a 5:45am bedroom shot kept the exam-hall outfit, because the fixed clause always won over the
+shot's own words) -- just never extended to age, because age is more entangled with the face than clothing
+is, and loosening it risks weakening identity for every OTHER caller that never wants ageing at all.
+Flagged this trade-off to the owner rather than building it unasked; owner's answer, exact scope given:
+"limited to the posts which show multi-year transitions -- else it needs to be same cast, to keep face
+fidelity intact" -- precisely the clothing pattern, no wider.
+
+**Built:** age now follows the shot's own words when they say something about age (a year, a decade,
+"young," "grey-haired"), keeping the same face and bone structure recognisable, and only defaults to
+matching the reference when the shot says nothing -- mirroring `clothing`'s own conditional exactly. Face,
+hair, skin tone and body type stay unconditional, untouched.
+
+**CTA pack size:** the owner tested a sharper wording live via Adjust ("not larger than the real pack in
+the hand of an average built man") on the exact oversized slide and confirmed it worked. Folded that exact
+phrasing into `packscene.py`'s `cta` clause as a concrete anchor, alongside (not replacing) the existing
+relative-size wording.
+
+**Verified with 2 real generations (the same discipline as every other wording change here), not just
+read:** the age fix, given an older man's own photo as reference and a scene saying "this same man, 30
+years younger," returned a visibly younger man -- dark hair, fuller face -- unmistakably the same person.
+The size fix, tried on the exact harder composition that showed the regression (standing, presenting the
+pack to camera), came back with the pack correctly scaled to real hands.
+
+**Also:** `tools/test_identity_lock.py` is new -- the reuse-the-exact-people wording had NO test coverage
+at all before today, despite being the load-bearing prompt behind every cast/plate-referenced shot across
+Social, Carousel and Video. Pins that age is no longer unconditional, the conditional wording is present
+and correctly framed, and face/hair/skin tone/body type/clothing are untouched.
+
+**Shipped, commit 3117ed2, deploy dep-dap42c2jnfac73be9lbg (live ~08:52 UTC).** checkfe, the full existing
+suite (pack/carousel/naming/identity-lock), tools tests, call audit (1,173/0), smoke on the committed tree,
+and the live gate (self-check commit match, deep check 20/0, only the two expected instance-swap 502s in
+the logs) all clean.
+
+**Round 16 is now closed out clean.** Every finding from the owner's first live batches on both producers
+is either shipped and verified, or -- for per-slide cast control, which several of today's findings point
+back to as the more complete eventual answer -- explicitly deferred, owner's call, not attempted without
+direction.

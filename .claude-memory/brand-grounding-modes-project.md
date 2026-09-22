@@ -521,3 +521,14 @@ round 93. Fixed, plus a second live instance in the same card (the route-picker'
 visibly updated), plus a permanent checkfe.py guard against this whole bug class (already named twice
 before in this file's own comments). The owner can now actually draft and sign in a cast reference. Full
 entry: BRAND_GROUNDING_TESTING_LOG.md, "22 Sep -- Round 16, the real answer".
+
+**UPDATE 22 Sep (Round 16, final) -- age unlocked (scoped to shots whose own words call for it), CTA pack
+size sharpened, both proven on real generations. Commit 3117ed2, live-gated clean
+(dep-dap42c2jnfac73be9lbg).** Age in the identity-lock prompt now follows the shot's own words exactly like
+clothing already does -- the owner's own scoping: only for multi-year-transition slides, same cast
+elsewhere for face fidelity. CTA pack size got a concrete "no larger than a real pack in an average adult's
+hand" anchor, the owner's own tested wording. `tools/test_identity_lock.py` closes a real gap (this prompt
+had no test coverage at all before today). **Round 16 is closed out clean** -- every real finding from the
+owner's first live batches (Social clean; Carousel's pack sizing, shows_pack, the invisible cast-draft
+link, and now ageing) is shipped and live-verified. Only per-slide cast control remains genuinely open,
+deliberately deferred, owner's call. Full entry: BRAND_GROUNDING_TESTING_LOG.md, "22 Sep -- Round 16, final".
