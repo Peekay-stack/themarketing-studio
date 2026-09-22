@@ -163,7 +163,8 @@ for style, role, needle, label in (("vector", "side", "Draw the product pack fro
 st, d, pr, rf = send({**PICK, "pack_role": "hero"}, style="product")
 expect("Product only, hero: photographic pack, centred hero", "Reproduce it exactly" in pr and "is the hero of the image" in pr)
 st, d, pr, rf = send({**PICK, "pack_role": "cta"})
-expect("cta: upper two-thirds, lower third kept clear for a headline", "upper two-thirds" in pr and "lower third" in pr)
+expect("cta: upper two-thirds, true size relative to hands/people, lower third kept clear for a headline",
+       "upper two-thirds" in pr and "true, real-life size" in pr and "not enlarged for effect" in pr and "lower third" in pr)
 st, d, pr, rf = send({**PICK, "pack_role": "in_use"})
 expect("in_use: shown in the action, label to camera", "in the action of the scene" in pr)
 st, d, pr, rf = send({**PICK, "pack_role": "corner"}, style="infographic")

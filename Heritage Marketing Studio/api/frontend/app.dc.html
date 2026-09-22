@@ -54,10 +54,17 @@
      with nothing to spare). 1280, 1366 and 1440 are the three commonest laptop widths, so the broken
      band was most of the real audience.
 
-     Note the 1600px figure: it fits by 0px. Any twelfth destination, or a longer brand name in the
-     chip beside it, starts clipping again — a media query cannot see a sibling's width, so no
-     breakpoint here is safe against that. That one is a structure question, not a CSS one. */
-  @media (max-width: 1450px) {
+     Live-tested finding (22 Sep): 1450 was itself still too low. A live screenshot at a mid-size laptop
+     width showed Memory clipped again — the exact "longer brand name in the chip" case this comment had
+     already named as unsafe. Reproduced directly in the browser (own header markup, a real-length brand
+     name and category in the chip, the full right-side cluster — toggle, approvals, gear, avatar — all
+     present) at a sweep of widths: still overflowing and clipping Memory at 1600px AND 1700px, first
+     clean at 1750-1800px. Raised to 1800 with a small margin, over the 1450 estimate above by a wide
+     enough gap that the two are not reconcilable as the same measurement — re-verify in the browser again
+     if the header's contents change, rather than trust either number blind. This wraps the nav (a two-row
+     header) at more everyday window widths than before, on purpose — a visibly wrapped nav is a much
+     smaller cost than a destination that silently is not there, which is what this block exists to stop. */
+  @media (max-width: 1800px) {
     .hf-header { height:auto !important; min-height:84px; padding-top:12px !important; padding-bottom:12px !important; overflow:visible !important; }
     .hf-nav { flex-wrap:wrap !important; overflow:visible !important; row-gap:4px !important; align-self:center !important; }
     .hf-nav > div { height:auto !important; padding:5px 0 7px !important; }

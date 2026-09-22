@@ -58,8 +58,14 @@ _PLACEMENT = {
              "overlapping anyone's face."),
     "hero": " The pack is the hero of the image, centred and upright, its front label clearly visible.",
     "in_use": " Show the pack naturally in the action of the scene, its front label turned toward the camera.",
-    "cta": (" Place the pack upright in the upper two-thirds of the frame, its front label clearly visible, and keep "
-            "the lower third of the frame clean and uncluttered so a headline can be placed there."),
+    # Live-tested finding (22 Sep, a real Carousel CTA slide): with no size given, the pack came out
+    # oversized against the two people holding it -- the owner's own note asked for it "in proportion to
+    # the hands... a little smaller than the current." Told in relative terms, not a fixed frame fraction
+    # like "side" uses, because a CTA scene sometimes has the pack held and sometimes standing alone.
+    "cta": (" Place the pack upright in the upper two-thirds of the frame, at its true, real-life size "
+            "relative to any hands, people or objects near it -- not enlarged for effect -- with its "
+            "front label clearly visible, and keep the lower third of the frame clean and uncluttered so "
+            "a headline can be placed there."),
     "corner": " Show the pack as a small element in one corner of the frame, upright, secondary to the main graphic.",
 }
 
