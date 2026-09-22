@@ -138,6 +138,20 @@ styles, the wording when a cast frame or a previous render is also attached) and
 (`pack_reference`: attached as the pack, refused if not an image data URI or over 8 MB, and never stored -- checked
 with the real ledger write on). `packscene.py` holds the wording; it was proven on 10 real generations first.
 
+## test_carousel_concept.py -- the Carousel writer'''s shows_pack flag (Deploy 2, 22 Sep)
+
+```bash
+python tools/test_carousel_concept.py  # exit 0 = the shows_pack contract behaves
+```
+
+Stubs `producers._ask` with canned JSON -- no key, no cost. Checks that the model'''s own shows_pack
+answer is trusted when given (even against pack-sounding or pack-free wording), that a slide the model
+left the field off (or one added by hand with addSlide, which never goes through this prompt) falls back
+to `posm.looks_like_pack()` on its own visual note, and that the prompt tells the model the closing
+slide is handled for it. It does not decide which slide is the CTA -- that is computed from slide
+POSITION in the frontend (`resolveSlidePackRole`), never a stored tag, so reordering or deleting slides
+can never leave a stale label behind.
+
 ## test_library_naming.py -- library item names and AVIF references (21 Sep)
 
 ```bash

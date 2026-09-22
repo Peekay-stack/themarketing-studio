@@ -6385,14 +6385,28 @@
           <div style="font-size:11px; font-weight:800; letter-spacing:0.07em; text-transform:uppercase; color:#6B7280; margin-bottom:12px;">Assets for this carousel — picked once, used on every slide</div>
           <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:14px; margin-bottom:16px;">
             <div>
-              <div style="font-size:11.5px; font-weight:700; color:#17325E; margin-bottom:6px;">Pack shot</div>
-              <select value="{{ carouselPackCard.value }}" onChange="{{ carouselPackCard.pick }}" style="width:100%; border:1px solid #DDD9D1; border-radius:10px; padding:9px 11px; font-size:12.5px; color:#17325E; background:#fff; font-family:inherit;">
-                <option value="">Automatic — used only when a slide shows the pack</option>
-                <option value="__never__">Don't attach a pack photo — a pack may still be drawn if the scene needs one</option>
-                <sc-for list="{{ carouselPackCard.options }}" as="o" hint-placeholder-count="0">
-                  <option value="{{ o.id }}">{{ o.name }}</option>
-                </sc-for>
-              </select>
+              <div style="font-size:11.5px; font-weight:700; color:#17325E; margin-bottom:6px;">Pack shot: the CTA slide always shows it</div>
+              <div style="display:flex; gap:10px; align-items:flex-start; margin-bottom:6px;">
+                <select value="{{ carouselPackCard.value }}" onChange="{{ carouselPackCard.pick }}" style="flex:1; min-width:0; border:1px solid #DDD9D1; border-radius:10px; padding:9px 11px; font-size:12.5px; color:#17325E; background:#fff; font-family:inherit;">
+                  <option value="">Choose a pack…</option>
+                  <sc-for list="{{ carouselPackCard.options }}" as="o" hint-placeholder-count="0">
+                    <option value="{{ o.id }}">{{ o.name }}</option>
+                  </sc-for>
+                  <option value="__none__">No pack in this carousel</option>
+                </select>
+                <sc-if value="{{ carouselPackHasThumb }}" hint-placeholder-val="{{ false }}">
+                  <img src="{{ carouselPackThumb }}" style="width:38px; height:48px; object-fit:contain; border:1px solid #DDD9D1; border-radius:7px; background:#fff; flex:none;" />
+                </sc-if>
+              </div>
+              <div style="font-size:11px; color:#6B7280; line-height:1.4; margin-bottom:8px;">{{ carouselPackHint }}</div>
+              <div style="border-top:1px solid #EEEAE2; padding-top:8px;">
+                <div style="font-size:10.5px; font-weight:700; color:#41505F; margin-bottom:3px;">No pack shot yet? Use a photo of the real pack, for this session only</div>
+                <input type="file" accept="image/*" onChange="{{ onCarouselPackRef }}" style="font-size:11px; width:100%;" />
+                <sc-if value="{{ carouselPackHasRef }}" hint-placeholder-val="{{ false }}">
+                  <div style="font-size:11px; color:#1E7E34; margin-top:5px;">Using {{ carouselPackRefLabel }} <span onClick="{{ clearCarouselPackRef }}" style="cursor:pointer; color:#B0410E; text-decoration:underline; margin-left:6px;">remove</span></div>
+                  <input type="text" value="{{ carouselPackProduct }}" onChange="{{ onCarouselPackProduct }}" placeholder="Which product is it?" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:9px; padding:6px 9px; font-size:11.5px; color:#17325E; background:#fff; font-family:inherit; margin-top:5px;" />
+                </sc-if>
+              </div>
             </div>
             <div>
               <div style="font-size:11.5px; font-weight:700; color:#17325E; margin-bottom:6px;">Logo <span style="font-weight:400; color:#9AA1AC;">(reference only — not yet composited)</span></div>
@@ -6516,7 +6530,25 @@
               </sc-if>
               <div style="padding:11px 13px;">
                 <div style="font-size:10px; font-weight:800; color:#9AA1AC; margin-bottom:3px;">{{ sl.n }} · {{ sl.roleLabel }}</div>
-                <div style="font-size:12.5px; font-weight:600; color:#17325E; line-height:1.4; margin-bottom:8px;">{{ sl.headline }}</div>
+                <div style="font-size:12.5px; font-weight:600; color:#17325E; line-height:1.4; margin-bottom:6px;">{{ sl.headline }}</div>
+                <!-- The pack, per slide: an honest label (never claims the picture, only what was
+                     attached) and a selector for this ONE slide's role. The closing slide defaults to
+                     always carrying the pack — computed from its POSITION each time, not a stored tag,
+                     so reordering or deleting slides can never leave a stale label behind. -->
+                <sc-if value="{{ sl.hasPackLine }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex; flex-direction:column; gap:5px; margin-bottom:8px; font-size:11px; color:#6B7280;">
+                    <span>{{ sl.packLabel }}</span>
+                    <sc-if value="{{ sl.showPackSelect }}" hint-placeholder-val="{{ false }}">
+                      <select value="{{ sl.packRoleValue }}" onChange="{{ sl.onPackRole }}" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:5px 7px; font-size:11px; color:#17325E; background:#fff; font-family:inherit;">
+                        <option value="">{{ sl.packRoleAutoLabel }}</option>
+                        <option value="side">Pack on the side</option>
+                        <option value="hero">Pack as the hero</option>
+                        <option value="in_use">Pack in use (fine print may blur)</option>
+                        <option value="none">No pack in this slide</option>
+                      </select>
+                    </sc-if>
+                  </div>
+                </sc-if>
                 <!-- Round 93 (fifth pass): "Adjust — keep everything else the same", matching the
                      per-post Adjust pattern (`adjustPost`) — a note field, not a blind re-roll. Only
                      for image slides; a text-only slide has nothing to regenerate. -->
@@ -10911,6 +10943,9 @@ class Component extends DCLogic {
       routesBusy: false, routes: [], chosenRoute: -1,
       wantCast: false,
       assets: [], packChoice: '', logoChoice: '', castChoice: '', castCandidates: [], castBusy: false,
+      // The Carousel's OWN pack picks — deliberately not shared with Social's `socialPackChoice`/
+      // `socialPackRef` (see this file's own note above on the 'two controls, one real' trap).
+      packRef: '', packRefName: '', packProduct: '',
       concept: null, slides: [], slideNotes: {}, producing: false,
     },
     // video
@@ -11647,6 +11682,7 @@ class Component extends DCLogic {
     // The pack chosen for social posts belongs to the brand it was chosen under: a switch clears it (and the
     // session photo), and the picker list is re-read for the new brand.
     this.setState({ socialPackChoice:'', socialPackRef:'', socialPackRefName:'', socialPackProduct:'' });
+    this.setCarousel({ packChoice:'', packRef:'', packRefName:'', packProduct:'' });
     this.loadCarouselAssetLib();
     // Same reasoning, one more place: the IMC screen's Brand/Category fields would otherwise keep
     // naming the PREVIOUS brand after a real switch — this one overwrites rather than only filling
@@ -13302,12 +13338,55 @@ class Component extends DCLogic {
   clearSocialPackRef = () => this.setState(s => ({ socialPackRef: '', socialPackRefName: '', socialPackProduct: '',
     socialPackChoice: s.socialPackChoice === '__ref__' ? '' : s.socialPackChoice }));
   onSocialPackProduct = (e) => this.setState({ socialPackProduct: e.target.value });
-  // Carousel has the same three meanings (no "design one" there).
-  carouselPackFields(c){
-    const v = c.packChoice;
-    if (v === '__never__') return { pack_id: undefined, include_pack: false };
-    if (v) return { pack_id: v, include_pack: true };
-    return { pack_id: undefined, pack_mode: 'auto' };
+  // Carousel's pack: the same real-packs-only shape as Social's `socialPackFields` (see its own
+  // comment for the full reasoning), reading Carousel's OWN chooser state instead.
+  carouselPackFields(c, role){
+    const v = c.packChoice, r = role || 'side';
+    if (!v || v === '__none__' || r === 'none') return { include_pack: false, pack_role: 'none' };
+    if (v === '__ref__') return c.packRef
+      ? { include_pack: false, pack_reference: c.packRef, pack_role: r }
+      : { include_pack: false, pack_role: 'none' };
+    return { pack_id: v, include_pack: true, pack_role: r };
+  }
+  carouselPackReady(){
+    const c = this.state.carousel;
+    if (!c.packChoice) { this.showToast('Choose the pack for this carousel first: a real pack, a photo of the real pack, or "No pack in this carousel". Nothing is picked for you.', 'warn'); return false; }
+    if (c.packChoice === '__ref__' && !c.packRef) { this.showToast('Add the reference photo first, or choose another pack.', 'warn'); return false; }
+    return true;
+  }
+  // Never a stored tag: reordering or deleting slides must not leave a stale 'this one is the CTA'
+  // label behind (the exact trap this file has already been bitten by). The CURRENTLY-last slide always
+  // resolves to 'cta' unless the person explicitly overrode that one slide's own role (including
+  // explicitly opting it out to 'none' — the escape hatch stays available on the CTA slide too).
+  resolveSlidePackRole(slide, isLast){
+    if (slide.packRole) return slide.packRole;
+    return isLast ? 'cta' : (slide.shows_pack ? 'side' : 'none');
+  }
+  onCarouselSlidePackRole = (n) => (e) => this.setCarousel({
+    concept: this.state.carousel.concept.map(s => s.n === n ? { ...s, packRole: e.target.value } : s),
+    slides: (this.state.carousel.slides || []).map(s => s.n === n ? { ...s, packRole: e.target.value, packStale: true } : s) });
+  onCarouselPackRef = async (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    const dataUrl = await this.shrinkImageToDataUrl(file, 1280);
+    if (!dataUrl) { this.showToast('That photo could not be read. Try a JPG or PNG.', 'warn'); return; }
+    this.setCarousel({ packRef: dataUrl, packRefName: file.name, packChoice: '__ref__' });
+  };
+  clearCarouselPackRef = () => this.setCarousel({ packRef: '', packRefName: '', packProduct: '',
+    ...(this.state.carousel.packChoice === '__ref__' ? { packChoice: '' } : {}) });
+  onCarouselPackProduct = (e) => this.setCarousel({ packProduct: e.target.value });
+  carouselPackLabel(sl, isLast){
+    const c = this.state.carousel.packChoice;
+    if (!c) return '';
+    if (c === '__none__') return 'No pack in this carousel';
+    if (sl.packStale) return 'Pack setting changed. Click Regenerate to apply it.';
+    const ill = ['real', 'product'].indexOf(this.state.socialStyle || 'real') < 0 ? ' (illustrated)' : '';
+    if (sl.packSource === 'library') return 'Real pack photo attached' + ill;
+    if (sl.packSource === 'reference') return 'Reference photo attached (not signed off)' + ill;
+    if (sl.packSource === 'failed') return 'The pack could not be attached. Regenerate to try again.';
+    if (sl.packSource === 'none') return isLast ? 'No pack in this slide (overridden)' : 'No pack in this slide';
+    return '';
   }
   // `continuityRefs` — optional {postId: previousImageUrl} map. Only `adjustPost` passes one (see its
   // own comment): a fresh first-time generation has no prior render to anchor to.
@@ -13633,20 +13712,29 @@ class Component extends DCLogic {
   produceCarouselSlides = async () => {
     const c = this.state.carousel;
     if (!c.concept || !c.concept.length || c.producing) return;
+    if (!this.carouselPackReady()) return;
     this.setCarousel({ producing: true, slides: c.concept.map(s => ({ ...s, imageUrl: '', busy: !s.isText })) });
     const sp = this.state.socialPlatforms || {};
-    const ratio = sp.linkedin && !sp.instagram ? '1:1' : '4:5';
+    // Live-tested finding (22 Sep): the image services do not support 4:5 — a pack/cast-referenced call
+    // silently came back 16:9, a plain one 1:1, and either was then force-cropped into the app's 4:5
+    // preview box. A pack placed "to one side" in a 16:9 frame lost ~80% of its width to that crop —
+    // effectively gone. 3:4 is the closest ratio the services genuinely honour (proven by the 21 Sep pack
+    // trial's CTA shot); in the same 4:5 box it only loses ~3% off the top and bottom.
+    const ratio = sp.linkedin && !sp.instagram ? '1:1' : '3:4';
     const style = this.state.socialStyle || 'real';
+    const last = c.concept.length;
     await Promise.all(c.concept.filter(s => !s.isText).map(async (s) => {
+      const role = this.resolveSlidePackRole(s, s.n === last);
       const res = await this.apiJson('/scene-still', {
         scene_no: s.n, ratio, style,
         prompt: (s.visual_note || s.headline || '') + this.carouselNoTextPrompt(),
-        ...this.carouselPackFields(c), use_cast: !!c.wantCast,
+        ...this.carouselPackFields(c, role), use_cast: !!c.wantCast,
         cast_id: c.wantCast ? (c.castChoice || undefined) : undefined,
         brand_mode: this.state.producerBrandMode,
       });
       this.setCarousel({ slides: this.state.carousel.slides.map(x =>
-        x.n === s.n ? { ...x, imageUrl: (res && res.image_url) || '', busy: false } : x) });
+        x.n === s.n ? { ...x, imageUrl: (res && res.image_url) || '', busy: false, packStale: false,
+          packSource: (res && (res.pack_failed ? 'failed' : (res.pack_source || 'none'))) || '' } : x) });
     }));
     this.setCarousel({ producing: false });
     this.showToast('Carousel produced — review each slide below.', 'ok');
@@ -13659,19 +13747,27 @@ class Component extends DCLogic {
   regenerateCarouselSlide = (n) => async () => {
     const c = this.state.carousel;
     const s = (c.slides || []).find(x => x.n === n); if (!s || s.busy) return;
+    if (!this.carouselPackReady()) return;
     this.setCarousel({ slides: c.slides.map(x => x.n === n ? { ...x, busy: true } : x) });
     const sp = this.state.socialPlatforms || {};
-    const ratio = sp.linkedin && !sp.instagram ? '1:1' : '4:5';
+    const ratio = sp.linkedin && !sp.instagram ? '1:1' : '3:4';   // see produceCarouselSlides's own note
     const note = ((c.slideNotes || {})[n] || '').trim();
     const prompt = (s.visual_note || s.headline || '') + this.carouselNoTextPrompt(note);
+    const role = this.resolveSlidePackRole(s, n === c.slides.length);
     const res = await this.apiJson('/scene-still', {
       scene_no: n, ratio, style: this.state.socialStyle || 'real',
       prompt,
-      ...this.carouselPackFields(c), cast_id: c.wantCast ? (c.castChoice || undefined) : undefined,
+      // Found while wiring this: unlike produceCarouselSlides, this call never sent `use_cast`, so
+      // regenerating ONE slide with the cast checkbox unchecked still silently auto-pinned a signed-off
+      // cast face (`want_cast` defaults True when the field is absent) — the same class of bug already
+      // fixed everywhere else this pattern appears in this file.
+      ...this.carouselPackFields(c, role), use_cast: !!c.wantCast,
+      cast_id: c.wantCast ? (c.castChoice || undefined) : undefined,
       brand_mode: this.state.producerBrandMode,
     });
     this.setCarousel({ slides: this.state.carousel.slides.map(x =>
-      x.n === n ? { ...x, imageUrl: (res && res.image_url) || x.imageUrl, busy: false } : x) });
+      x.n === n ? { ...x, imageUrl: (res && res.image_url) || x.imageUrl, busy: false, packStale: false,
+        packSource: (res && (res.pack_failed ? 'failed' : (res.pack_source || 'none'))) || x.packSource } : x) });
   };
 
   // ---------- brand kit + assets ----------
@@ -14017,7 +14113,10 @@ class Component extends DCLogic {
       isTextFg: sl.isText ? '#17325E' : '#9AA1AC', isTextLabel: sl.isText ? '✓ Text-only slide' : 'Text-only slide',
       posChips: [posChip(sl, 'bottom', 'Bottom'), posChip(sl, 'top', 'Top'), posChip(sl, 'none', 'None')],
     }));
-    const slides = (c.slides || []).map(sl => ({ ...sl,
+    const lastSlideN = (c.slides || []).length;
+    const slides = (c.slides || []).map(sl => {
+      const isLast = sl.n === lastSlideN;
+      return { ...sl,
       roleLabel: sl.role === 'hook' ? 'Hook' : sl.role === 'cta' ? 'Call to action' : 'Value',
       regenerate: this.regenerateCarouselSlide(sl.n), notText: !sl.isText,
       // Overlay position: computed once here, not as a live ternary in the template's style attribute
@@ -14025,7 +14124,17 @@ class Component extends DCLogic {
       overlayTop: !sl.isText && (sl.textPos || 'bottom') === 'top',
       overlayBottom: !sl.isText && (sl.textPos || 'bottom') === 'bottom',
       adjustNote: (c.slideNotes || {})[sl.n] || '', onAdjustNote: this.onSlideAdjustNote(sl.n),
-      adjustLabel: sl.busy ? 'Adjusting…' : '↻ Adjust — keep everything else the same' }));
+      adjustLabel: sl.busy ? 'Adjusting…' : '↻ Adjust — keep everything else the same',
+      // The pack, per slide. `packRoleValue` is the RAW stored pick ('' = automatic); the option it
+      // resolves to if left alone is spelled out in its own label, since 'automatic' means something
+      // different on the closing slide (always on) than on any other (only if the concept called for it).
+      hasPackLine: !sl.isText && !!c.packChoice, showPackSelect: !sl.isText && !!c.packChoice && c.packChoice !== '__none__',
+      packLabel: this.carouselPackLabel(sl, isLast),
+      packRoleValue: sl.packRole || '', onPackRole: this.onCarouselSlidePackRole(sl.n),
+      packRoleAutoLabel: isLast ? 'Automatic — pack shown, room left for the headline'
+        : (sl.shows_pack ? 'Automatic — pack shown, as the concept suggested'
+                         : 'Automatic — no pack unless you choose one') };
+    });
     const routes = (c.routes || []).map((r, i) => ({ ...r, i,
       slideCount: (r.slides || []).length,
       chosen: c.chosenRoute === i,
@@ -14053,7 +14162,23 @@ class Component extends DCLogic {
       carouselCastCheckNote: c.wantCast
         ? 'Every slide in this carousel pins the person below.'
         : 'Unchecked: no cast reference is used — each slide may show a different, unreferenced person.',
-      carouselPackCard: assetCard('pack', 'packChoice', 'Pack shot'),
+      // The pack chooser: this brand's signed-off packs, plus the session-only reference photo when
+      // there is one (labelled with the product name if given). No default is ever pre-selected.
+      carouselPackCard: { value: c.packChoice,
+        options: this.carouselAssetOptions('pack').map(o => ({ id: o.id, name: o.name })).concat(c.packRef
+          ? [{ id: '__ref__', name: 'Reference photo: ' + ((c.packProduct || '').trim() || c.packRefName || 'your photo') + ' (this session, not signed off)' }] : []),
+        pick: this.onCarouselAsset('packChoice') },
+      carouselPackThumb: (() => { const v = c.packChoice; if (v === '__ref__') return c.packRef;
+        if (!v || v === '__none__') return ''; const it = (c.assets || []).find(a => a.id === v); return it ? it.url : ''; })(),
+      carouselPackHasThumb: (() => { const v = c.packChoice; if (v === '__ref__') return !!c.packRef;
+        if (!v || v === '__none__') return false; return !!(c.assets || []).find(a => a.id === v); })(),
+      carouselPackHint: !c.packChoice ? 'Choose the pack this carousel shows. Nothing is picked for you.'
+        : c.packChoice === '__none__' ? 'No pack will be attached to any slide.'
+        : c.packChoice === '__ref__' ? 'A photo you supplied for this session: not saved, not signed off.'
+        : 'A signed-off pack shot, attached as a real reference.',
+      carouselPackHasRef: !!c.packRef, carouselPackRefLabel: c.packRefName || 'your photo',
+      onCarouselPackRef: this.onCarouselPackRef, clearCarouselPackRef: this.clearCarouselPackRef,
+      carouselPackProduct: c.packProduct, onCarouselPackProduct: this.onCarouselPackProduct,
       carouselLogoCard: assetCard('logo', 'logoChoice', 'Logo'),
       carouselCastCard: assetCard('cast', 'castChoice', 'Model / cast'),
       carouselCastBusy: c.castBusy, carouselCastCandidates: (c.castCandidates || []).map((im, i) => ({

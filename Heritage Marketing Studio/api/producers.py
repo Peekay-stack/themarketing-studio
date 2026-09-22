@@ -563,9 +563,19 @@ def carousel_concept(objective: str, house: dict | None = None, platform: dict |
                      brand_mode: str = "") -> tuple[list[dict], str]:
     """Returns (routes, note). `routes` is a list of `{name, rationale, slides}` — up to three genuinely
     different narrative directions for the same objective, each carrying its own ordered slide list
-    (`{role, headline, visual_note}`, role one of hook/value/cta) and its own slide count.
+    (`{role, headline, visual_note, shows_pack}`, role one of hook/value/cta) and its own slide count.
     `n_mode:"auto"` lets each route pick its own count (3–10) based on what that route's narrative
     actually needs; `"manual"` fixes every route to the same requested count.
+
+    `shows_pack` — whether THIS slide's own story shows the product (a pour, a hand reaching for the pack,
+    a shelf) versus a slide about the idea with nothing to show (a stat, a feeling, a before/after that
+    hasn't reached the product yet). This is a narrative signal only, not tied to any real SKU — the
+    person has not picked which real pack to attach yet when this route is drafted (that happens on the
+    next screen), so the model is never asked to name one. The CLOSING (cta) slide always ends up
+    carrying the real pack regardless of this flag — the caller (`main.scene_still`, via `packscene.py`)
+    decides that structurally from slide POSITION, not from anything returned here, because a stored
+    role goes stale the moment a person reorders or deletes a slide. `shows_pack` still matters for the
+    cta slide's own WRITING: it is told to leave room for the pack rather than write a busy scene.
     """
     objective = (objective or "").strip()
     if not objective:
@@ -593,10 +603,16 @@ def carousel_concept(objective: str, house: dict | None = None, platform: dict |
         f"{n_instruction}\n"
         "For each route give a short name, a one-line rationale for why this angle could work, and its "
         "ordered slides — each with role (hook / value / cta), a short ON-SLIDE headline (the words "
-        "that actually appear on the slide, not a caption), and a one-line visual direction describing "
-        "what the image shows.\n"
+        "that actually appear on the slide, not a caption), a one-line visual direction describing what "
+        "the image shows, and shows_pack (true/false): does THIS slide's own visual actually show the "
+        "product (a pour, a hand on the pack, a shelf), as opposed to an idea, a feeling or a stat with "
+        "nothing to show yet. The studio always places the real product pack into the CLOSING (cta) "
+        "slide regardless of shows_pack — so write that slide's visual_note as a calm, uncluttered scene "
+        "(a counter, a table, a plain backdrop) with the product naturally the focus of its upper frame, "
+        "never a busy or wide shot, since the pack will occupy that space and the slide's own headline "
+        "the bottom.\n"
         'Return ONLY JSON: {"routes":[{"name":"short route name","rationale":"one line on why this '
-        'works","slides":[{"role":"hook","headline":"...","visual_note":"..."}, ...]}, '
+        'works","slides":[{"role":"hook","headline":"...","visual_note":"...","shows_pack":false}, ...]}, '
         '...exactly 3 routes]}')
     data, err = _ask(prompt, 2600)
     if not data or not data.get("routes"):
@@ -605,10 +621,19 @@ def carousel_concept(objective: str, house: dict | None = None, platform: dict |
     for r in data["routes"]:
         if not isinstance(r, dict):
             continue
-        slides = [{"role": (str(s.get("role") or "value").strip().lower() or "value"),
-                  "headline": str(s.get("headline") or "").strip(),
-                  "visual_note": str(s.get("visual_note") or "").strip()}
-                 for s in (r.get("slides") or []) if isinstance(s, dict)]
+        slides = []
+        for s in (r.get("slides") or []):
+            if not isinstance(s, dict):
+                continue
+            visual_note = str(s.get("visual_note") or "").strip()
+            # The model's own flag wins when it answered; `posm.looks_like_pack` (the same vocabulary
+            # POSM already trusts — pack/carton/tetra/pouch/sachet/bottle/jar/tub...) is only the
+            # fallback for a slide the model left the field off on, or a slide added by hand later
+            # (`addSlide`) that never went through this prompt at all.
+            shows_pack = bool(s["shows_pack"]) if "shows_pack" in s else posm.looks_like_pack(visual_note)
+            slides.append({"role": (str(s.get("role") or "value").strip().lower() or "value"),
+                           "headline": str(s.get("headline") or "").strip(),
+                           "visual_note": visual_note, "shows_pack": shows_pack})
         slides = [s for s in slides if s["headline"] or s["visual_note"]]
         if not slides:
             continue
