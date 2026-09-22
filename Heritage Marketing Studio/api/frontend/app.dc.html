@@ -6373,7 +6373,7 @@
           <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#6B7280; margin-bottom:9px;">Carousel concepts · pick one to develop</div>
           <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:14px;">
             <sc-for list="{{ carouselRoutes }}" as="r" hint-placeholder-count="3">
-              <div onClick="{{ r.pick }}" style="cursor:pointer; border:2px solid {{ r.chosen ? '#17325E' : '#DDD9D1' }}; background:{{ r.chosen ? '#F4F7FC' : '#fff' }}; border-radius:14px; padding:16px 18px;">
+              <div onClick="{{ r.pick }}" style="cursor:pointer; border:2px solid {{ r.routeBorder }}; background:{{ r.routeBg }}; border-radius:14px; padding:16px 18px;">
                 <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px;">
                   <span style="font-family:'Epilogue',sans-serif; font-weight:700; font-size:14.5px; color:#17325E;">{{ r.name }}</span>
                   <span style="font-size:10.5px; font-weight:800; color:#6B7280; background:#F4F2ED; border-radius:6px; padding:3px 8px; white-space:nowrap;">{{ r.slideCount }} slides</span>
@@ -6444,7 +6444,7 @@
                   <option value="{{ o.id }}">{{ o.name }}</option>
                 </sc-for>
               </select>
-              <span onClick="{{ draftCarouselCast }}" style="cursor:pointer; font-size:12px; font-weight:700; color:#2E5EA6; text-decoration:underline;">{{ carouselCastBusy ? 'Drafting…' : '✦ AI-draft a cast reference, from this concept' }}</span>
+              <span onClick="{{ draftCarouselCast }}" style="cursor:pointer; font-size:12px; font-weight:700; color:#2E5EA6; text-decoration:underline;">{{ carouselCastDraftLabel }}</span>
               <sc-if value="{{ hasCarouselCastCandidates }}" hint-placeholder-val="{{ false }}">
                 <div style="display:flex; gap:8px; margin-top:9px; flex-wrap:wrap;">
                   <sc-for list="{{ carouselCastCandidates }}" as="cc" hint-placeholder-count="3">
@@ -14142,10 +14142,18 @@ class Component extends DCLogic {
         : (sl.shows_pack ? 'Automatic — pack shown, as the concept suggested'
                          : 'Automatic — no pack unless you choose one') };
     });
-    const routes = (c.routes || []).map((r, i) => ({ ...r, i,
-      slideCount: (r.slides || []).length,
-      chosen: c.chosenRoute === i,
-      pick: this.pickCarouselRoute(i) }));
+    const routes = (c.routes || []).map((r, i) => {
+      // Precomputed, not a `{{ r.chosen ? a : b }}` ternary inside style="" — the exact pattern this
+      // file's own round-44/49 and round-93 comments already name: it renders once and never updates,
+      // reading as "not clicking." Found live 22 Sep while chasing an unrelated bug in the same card.
+      // The `chosen` test is written out again here rather than read back off the object literal a line
+      // below: an object literal's own later key cannot see an earlier key's value (`r.chosen` inside
+      // this same literal is always the SOURCE route's `chosen`, which does not exist -- always
+      // undefined) -- caught only by testing this in the real page, not by reading the diff.
+      const chosen = c.chosenRoute === i;
+      return { ...r, i, chosen, slideCount: (r.slides || []).length, pick: this.pickCarouselRoute(i),
+        routeBorder: chosen ? '#17325E' : '#DDD9D1', routeBg: chosen ? '#F4F7FC' : '#fff' };
+    });
     // Reads Social's OWN quote/toggle state directly — `socialStandsOn`/`socialForceTyped`, the exact
     // same fields "What this producer is given"'s Idea Platform card already controls (see
     // `xInputCards`'s `standsFor.social` entry). A carousel-only copy of this toggle was tried first
@@ -14188,6 +14196,12 @@ class Component extends DCLogic {
       carouselPackProduct: c.packProduct, onCarouselPackProduct: this.onCarouselPackProduct,
       carouselLogoCard: assetCard('logo', 'logoChoice', 'Logo'),
       carouselCastCard: assetCard('cast', 'castChoice', 'Model / cast'),
+      // Live-tested finding (22 Sep, Round 16): an inline ternary directly inside `{{ }}` was not being
+      // evaluated by the template engine -- the span rendered with EMPTY text (its onClick still fired
+      // correctly, so the feature worked, but nobody could see or find the control to click it). Every
+      // other conditional label in this file is pre-computed here, in the bag, for exactly this reason;
+      // this was the one place that wasn't.
+      carouselCastDraftLabel: c.castBusy ? 'Drafting…' : '✦ AI-draft a cast reference, from this concept',
       carouselCastBusy: c.castBusy, carouselCastCandidates: (c.castCandidates || []).map((im, i) => ({
         url: im.image_url, adopt: this.adoptCarouselCastDraft(im.image_url) })),
       hasCarouselCastCandidates: (c.castCandidates || []).length > 0,

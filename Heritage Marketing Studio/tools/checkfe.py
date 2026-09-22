@@ -230,6 +230,21 @@ def check(path: str = SRC) -> int:
     o, c = markup.count("<div"), markup.count("</div>")
     report(f"<div> pairing ({o} / {c})", [] if o == c else [f"{abs(o - c)} unmatched <div>"])
 
+    # A ternary written directly inside a `{{ }}` interpolation hole. This file's own comments already
+    # name two prior sightings of this exact class of bug (round 44/49's style-attribute ternary that
+    # "renders once and never updates", round 93's `carouselManualBg`) — and a third, worse-symptomed
+    # one (an EMPTY string, not a stale one) was found live on 22 Sep in an element's own text content,
+    # invisible for weeks with a fully working click handler underneath it. Three sightings of the same
+    # root cause is a pattern, not a coincidence — this is the fix for it not needing a fourth. The
+    # remedy every time has been the same: precompute the value in the bag, bind a plain `{{ name }}`.
+    # HTML comments are stripped first — two of them literally read `{{ x ? a : b }}` as a worked
+    # example of the pattern to avoid, which is not a real occurrence.
+    markup_no_comments = re.sub(r"<!--.*?-->", "", markup, flags=re.S)
+    ternary_holes = re.findall(r"\{\{[^{}]*\?[^{}:]*:[^{}]*\}\}", markup_no_comments)
+    report(f"no inline ternaries inside {{{{ }}}} holes ({len(ternary_holes)} found)",
+           [f"a `{{{{ ... ? ... : ... }}}}` hole — precompute it in the bag instead: {t[:90]}"
+            for t in ternary_holes])
+
     members = re.findall(r"^  ([A-Za-z_$][\w$]*)\s*[=(]", logic, re.M)
     dupes = sorted({m for m in members if members.count(m) > 1})
     report(f"class members unique ({len(members)} declared)",
