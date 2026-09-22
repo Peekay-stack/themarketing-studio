@@ -51,11 +51,20 @@ FRONT_ONLY_ONE_PACK = (" Show only the FRONT of the pack: never its back, its si
 
 _PLACEMENT = {
     # Live-tested finding (owner's first real batch, 21 Sep): with no size given, "side" placements came back
-    # looking large and pasted-on -- roughly half the frame's height in several posts. A concrete size, not just
-    # "secondary", is what actually keeps it a supporting element.
-    "side": (" Place the pack to one side of the frame (the left or right third), upright and in the foreground, "
-             "about a quarter of the frame's height, clearly visible but secondary to the main subject, and not "
-             "overlapping anyone's face."),
+    # looking large and pasted-on. A frame-fraction fix ("about a quarter of the frame's height") went out
+    # the same day and held for that batch's wider, more environmental shots.
+    #
+    # Live-tested finding (22 Sep, two full carousels run back to back specifically to check this): a FRAME
+    # fraction does not travel across compositions -- it held fine in one carousel's wide, full-body shots
+    # and came out oversized in another's tight close-ups (a pack held up near a face, a pack close on a
+    # table), because 25% of a tightly-cropped frame is a much bigger real object than 25% of a wide one.
+    # Replaced with the same real-world, composition-independent anchor already proven on `cta` for the
+    # identical reason -- a real pack does not get bigger just because the camera moved closer.
+    "side": (" Place the pack to one side of the frame (the left or right third), upright and in the "
+             "foreground, no larger than a real pack held in the hand of an average-built adult, at its "
+             "true, real-life size -- not enlarged for effect, and the SAME real-world size whether this "
+             "shot is a wide scene or a tight close-up -- clearly visible but secondary to the main "
+             "subject, and not overlapping anyone's face."),
     "hero": " The pack is the hero of the image, centred and upright, its front label clearly visible.",
     "in_use": " Show the pack naturally in the action of the scene, its front label turned toward the camera.",
     # Live-tested finding (22 Sep, a real Carousel CTA slide): with no size given, the pack came out

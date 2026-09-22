@@ -146,8 +146,9 @@ expect("side, Real: front only, never the back or a nutrition panel, and exactly
 st2, d2, pr2, rf2 = send({**PICK, "pack_role": "in_use"}, style="vector")
 expect("every role and style carries the front-only / one-pack line (photo and illustrated alike)",
        "Show only the FRONT of the pack" in pr2 and "Show only the FRONT of the pack" in pr)
-expect("side, Real: places it to one side, sized (a quarter of frame height), not over a face",
-       "Place the pack to one side of the frame" in pr and "about a quarter of the frame's height" in pr
+expect("side, Real: places it to one side, sized to a real hand-held pack (composition-independent), not over a face",
+       "Place the pack to one side of the frame" in pr and "no larger than a real pack held in the hand of an average-built adult" in pr
+       and "SAME real-world size whether this shot is a wide scene or a tight close-up" in pr
        and "not overlapping anyone's face" in pr)
 expect("side, Real: asks for no added marks, and replaces the generic 'no logos' tail",
        "Do not add any logos, certification marks" in pr and pr.endswith(packscene.TAIL.strip()) and "captions, logos, watermarks" not in pr)
