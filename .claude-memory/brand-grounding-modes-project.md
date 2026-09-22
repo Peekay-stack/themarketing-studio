@@ -500,3 +500,14 @@ off (no code fix -- existing mechanism, owner's call to use it); a nav-overflow 
 mid-large widths) found and fixed, unrelated to packs. STILL OPEN: "except the last slide, random packs"
 not yet reproduced from what was shown -- awaiting a concrete example (which carousel, which slides) from
 the owner. Full entry: BRAND_GROUNDING_TESTING_LOG.md, "22 Sep -- Round 16".
+
+**UPDATE 22 Sep (Round 16 follow-up) -- finding 4 confirmed + fixed, finding 3 clarified as an architecture
+limit. Commit 3a9102a, live-gated clean (dep-dap2dg0u01pc73d2qp10).** The owner's concrete example (3 slides,
+each a different invented pouch) confirmed shows_pack was landing false on delivery/hand-off scenes that
+plainly put the product in frame. Reworded the writer instruction to "visible at all, even carried/handed
+off" and verified on the REAL model (14/15 slides correctly true on a similar milkman objective, up from
+effectively 0 before). Finding 3 (added slide's man not matching) has no code fix -- "Include a recurring
+model/cast" is one choice for the WHOLE carousel, and this concept mixes a recurring milkman with different
+households per slide, so turning it on would be wrong for the other slides; true per-slide cast control does
+not exist yet, flagged as a real gap, not built without the owner's go-ahead. Full entry:
+BRAND_GROUNDING_TESTING_LOG.md, "22 Sep -- Round 16 follow-up".

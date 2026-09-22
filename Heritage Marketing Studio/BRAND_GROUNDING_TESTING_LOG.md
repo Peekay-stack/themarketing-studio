@@ -2258,3 +2258,49 @@ only the two expected instance-swap 502s) all clean.
 **Still open:** finding 4 (random packs on middle slides) awaits a concrete reproducible example from the
 owner. Finding 3 needs no further code -- the owner decides whether to turn on cast for future recurring-
 character carousels.
+
+
+### 22 Sep -- Round 16 follow-up: finding 4 confirmed and fixed (shows_pack too narrow), finding 3 clarified
+
+**Owner supplied the concrete example asked for:** three slides of the real "This Street, These Hands"
+carousel, each showing a DIFFERENT, unbranded, invented blue-and-white pouch (a hand reaching into a clay pot
+at a gate; a small bag in an old man's hand; a pack on a stone ledge) -- none matching the real Heritage pack
+used successfully elsewhere in the same session. Cross-checked against the earlier screenshot: all three
+slides were labelled "No pack in this slide" -- `shows_pack` had been false for every one of them.
+
+**Root cause, confirmed:** `shows_pack:false` correctly withholds the real pack REFERENCE, but does nothing
+to stop the writer's own visual_note from still describing a delivery/hand-off moment -- the narrative is
+fundamentally about a milkman, so nearly every shot naturally has something in his hand. With no real
+reference sent, the model still has to draw SOME container to make the scene make sense, and invents a
+different one each time. Not a selection bug (the pack_id sent is provably identical whenever one is sent
+at all -- traced through `carouselPackFields`/`library.shot_references`); a writer-judgment gap. Also
+checked and ruled out: a shared seed would not have helped -- `gemini.image_from_reference` (the PRIMARY
+path, tried before the fal fallback) has no seed parameter at all.
+
+**Fixed:** reworded `producers.carousel_concept`'s shows_pack instruction from "does this slide's own visual
+actually SHOW the product (a pour, a hand on the pack, a shelf)" -- read as "is this shot ABOUT the product"
+-- to "would the pack naturally be VISIBLE AT ALL -- carried, held, handed over, set down, delivered, on a
+shelf, being poured -- not only a deliberate close-up. Mark true whenever the scene puts someone near the
+product, even briefly." **Verified against the real model**, not just the stub: a fresh milkman-delivery
+objective, close to the owner's own, returned shows_pack=true on 14 of 15 slides across three routes -- every
+crate/bottle/hand-off scene correctly flagged -- with the one false slide being a tight face-only portrait
+whose own visual_note said "no product." A dramatic, real improvement, not just a wording tweak on paper.
+
+**Finding 3, no code, an architecture limit surfaced by the owner's own question:** "if I check the cast
+button, we never rendered a milkman, we always rendered a family -- what will happen?" Traced: `wantCast`/
+`castChoice` is ONE choice for the WHOLE carousel, applied uniformly to every slide via `use_cast`/`cast_id`
+in both produce and regenerate. This carousel's concept has a recurring milkman across SOME slides (1, 2, 6)
+and DIFFERENT households across others (slide 3's woman, presumably more) -- turning cast on today would
+lock one face onto every slide, including ones meant to show someone else. Told the owner plainly: with
+nothing picked, checking it changes nothing; with a real photo or a drafted reference picked, it would
+likely be WRONG for this concept's other slides. True per-slide cast control (mirroring the per-slide pack
+role already built) does not exist -- flagged as a real, separate piece of work, not attempted without the
+owner's direction.
+
+**Shipped, commit 3a9102a, deploy dep-dap2dg0u01pc73d2qp10 (live ~06:59 UTC).** tools/test_carousel_concept.py
+pins the new instruction wording (20 checks, all pass). checkfe, call audit (1,173/0), smoke on the
+committed tree, live gate (/selfcheck commit match, /selfcheck/deep 20/0, logs show only instance-swap 502s)
+all clean.
+
+**Still open, owner to decide:** whether to build per-slide cast control (finding 3's real fix), and whether
+to try regenerating "This Street, These Hands" now that shows_pack should land correctly.
