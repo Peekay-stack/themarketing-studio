@@ -157,6 +157,11 @@ expect("side, Real: an absolute (hand-independent) size anchor, and a ban on her
        and "Never pose it as a hero product shot" in pr and "held out at arm's length" in pr)
 expect("side, Real: camera-technical framing (a natural mid-shot lens, not a macro/product-shot lens)",
        "35-50mm lens" in pr and "never a tight macro or product-shot lens" in pr)
+st, d, pr, rf = send({**PICK, "pack_role": "side"}, scene="Tight crop on his hands and the pack, mid-handoff at a doorstep.")
+expect("side, Real: a scene that asks for its own tight crop does NOT also get told 'never tight' -- "
+       "the size anchor alone covers it",
+       "35-50mm lens" not in pr and "never a tight macro" not in pr
+       and "roughly the size of a paperback book" in pr and "tight close-up" in pr)
 expect("side, Real: asks for no added marks, and replaces the generic 'no logos' tail",
        "Do not add any logos, certification marks" in pr and pr.endswith(packscene.TAIL.strip()) and "captions, logos, watermarks" not in pr)
 expect("side, Real: the picked pack is the only reference; response says library / side",

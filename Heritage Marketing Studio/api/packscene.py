@@ -150,16 +150,29 @@ _CAMERA_TECHNICAL = (" Shoot this as a natural mid-shot on a 35-50mm lens, norma
                      "conversational distance from camera -- never a tight macro or product-shot lens, "
                      "which is what makes a small handheld object appear to fill the frame.")
 
+# 23 Sep -- found live: this clause is unconditional, so it fires even on a scene that explicitly asks
+# for a tight crop ("tight crop on his hands and the pack") -- the SAME prompt then tells the model both
+# "tight crop" and "never a tight ... lens" at once, flattening every pack-bearing slide toward the same
+# generic waist-up framing regardless of what the scene actually wants (a felt "photo quality" drop).
+# The absolute size anchor in _PLACEMENT already says the pack stays real-world-sized "whether wide or a
+# tight close-up" -- that is what actually needs to hold for a close scene, not a blanket lens mandate.
+# So: skip the camera clause when the scene itself already asks for a tight/close framing, and let the
+# size anchor alone carry that case; keep it as a helpful default for scenes that don't specify.
+_TIGHT_FRAMING = re.compile(r"\btight\s+(crop|shot|frame|close-?up)\b|\bclose[- ]?up\b|\bmacro\b|"
+                            r"\bextreme close\b", re.IGNORECASE)
 
-def pack_clause(style: str, role: str) -> str:
+
+def pack_clause(style: str, role: str, scene_text: str = "") -> str:
     """The sentence(s) that say what the pack is and where it goes. Leading space, so it can be dropped into a
-    prompt. '' for role 'none' or an unknown role."""
+    prompt. '' for role 'none' or an unknown role. `scene_text` is the caller's own visual_note/prompt --
+    when it already asks for a tight/close framing, the camera-technical default is skipped rather than
+    fighting that explicit choice."""
     role = normalise_role(role)
     if not role or role == "none":
         return ""
     intro = ILLUSTRATED_INTRO if is_illustrated(style) else PHOTO_INTRO
     clause = " " + intro + NO_MARKS + FRONT_ONLY_ONE_PACK + _PLACEMENT[role]
-    if role in ("side", "cta") and not is_illustrated(style):
+    if role in ("side", "cta") and not is_illustrated(style) and not _TIGHT_FRAMING.search(scene_text or ""):
         clause += _CAMERA_TECHNICAL
     return clause
 

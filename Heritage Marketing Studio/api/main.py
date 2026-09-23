@@ -1835,7 +1835,7 @@ def scene_still(payload: dict):
         _pack_only = False
         _scene_cleaned = False
         if _scene_wording:
-            pack_clause = packscene.pack_clause(style, _pack_role)
+            pack_clause = packscene.pack_clause(style, _pack_role, subject)
             # The scene text is obeyed too: a request for "the nutrition panel" got one drawn onto a background jar
             # with invented numbers (trial T11). Requests for the pack's back / nutrition / ingredients are removed.
             subject, _scene_cleaned = packscene.clean_scene(subject, _pack_role)
