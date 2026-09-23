@@ -656,3 +656,16 @@ directly into the CTA sentence; verified 6/6 clean on an outsider-role objective
 resident-role objective (3/6, as intended). Sleepwear+deep-bend pose (hem-riding-up failure) -- added a rule
 substituting standing/kneeling-straight-backed/chest-height-reach; verified 0 unsafe combinations across
 routes deliberately built around sleepwear. Full detail: BRAND_GROUNDING_TESTING_LOG.md, "23 Sep -- Round 24".
+
+**UPDATE 23 Sep (Round 25, platform-redraft staleness fixed in ideas.adopt()) -- commit 5cac610,
+live-gated clean.** Not a Carousel/producer-writer bug like Rounds 22-24 -- a real structural bug in how
+the idea platform is adopted. Owner redrafted the platform (new idea "Before The First Light") but the
+Social producer's "expressed for social" panel kept showing the OUTGOING platform's own old per-medium text
+("Ee Veedhi, Aa Chethulu"). Root cause: `ideas.adopt()` always overwrites the single "chosen platform"
+slot, and its `expressions` fallback read "whatever the prior adopted item held" without checking whether
+`prior` was the SAME platform being re-saved (correct, an earlier fix's intent) or a genuinely DIFFERENT
+one replacing it (wrong -- a redraft). Fixed: only inherit when the idea text is unchanged. Verified
+directly against `ideas.adopt()` + `producers.stands_on()` (the function every producer reads this field
+through) -- same-platform re-save still preserves its own expressions, a redraft now starts clean. Swept:
+this exact pattern is unique to `adopt()`, not present in plan.py, strategy.py, or elsewhere in ideas.py/
+campaign.py. Full detail: BRAND_GROUNDING_TESTING_LOG.md, "23 Sep -- Round 25".

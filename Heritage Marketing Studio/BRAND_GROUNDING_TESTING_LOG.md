@@ -2789,3 +2789,39 @@ alternative named in the new rule.
 **Shipped, commit eea57ff, deploy live ~09:0x UTC.** checkfe, test_pack_choice (unaffected -- this change
 doesn't touch packscene.py), selfcheck, smoke on the committed tree, live gate (selfcheck commit match,
 deep check 22/0, only instance-swap 502s in the Render log scan since the last deploy) all clean.
+
+
+### 23 Sep -- Round 25: a platform redraft was inheriting the OUTGOING platform's stale
+### per-medium expressions -- found and fixed in ideas.adopt()
+
+**Owner reported**: after refreshing the messaging house, redrafting the idea platform and refreshing the
+plan, the Social producer's "the idea platform, expressed for social" panel still showed an entirely
+unrelated OLD concept ("Ee Veedhi, Aa Chethulu" -- a running delivery-vendor series) underneath the platform
+card correctly showing the NEW adopted idea ("Before The First Light" -- an invisible-pre-dawn-hours
+concept). Two screenshots confirmed the platform card itself was current everywhere it appeared; only the
+per-medium "expressed for X" text was stale.
+
+**Traced to `ideas.adopt()`**: every Adopt call overwrites the SAME "chosen platform" record (there is only
+one adopted slot at a time, keyed by whatever was previously adopted's own id) -- a redraft does not create
+a fresh item. The function's `expressions` dict (posm/social/video/...) fell back to "whatever the prior
+adopted item held" whenever the new Adopt payload did not carry fresh expressions for a slot -- a real,
+deliberate fix from an earlier round (generating expressions and then re-pressing Adopt must not wipe them),
+but it never checked whether `prior` was the SAME platform being re-saved or a genuinely DIFFERENT one
+replacing it. A redraft, adopted before its own per-medium expressions were generated, silently kept the
+outgoing platform's old text under the new idea's name. `producers.stands_on()` reads this field directly
+for every producer (Social/POSM/Video/Activation/Incentive), so the staleness reached execution everywhere.
+
+**Fixed**: only inherit the prior item's expressions when the incoming idea text is unchanged (a genuine
+re-save, not a redraft). Swept for the same shape elsewhere (plan.py, strategy.py, the other "prior adopted"
+reads in ideas.py/campaign.py) -- this exact fallback-without-an-identity-check pattern is unique to
+`adopt()`, nothing else needed the same fix.
+
+**Verified directly against `ideas.adopt()` + `producers.stands_on()`** (save() stubbed, no tenant files
+touched): re-adopting the SAME idea with no expressions in the payload still preserves what was already
+generated (the original fix's intent, unbroken); redrafting to a DIFFERENT idea with no expressions in the
+payload now starts empty, and `stands_on()` correctly falls back to the new platform's own idea line instead
+of leaking the old one.
+
+**Shipped, commit 5cac610, deploy live ~10:2x UTC.** api/selfcheck.py, smoke on the committed tree, live gate
+(selfcheck commit match, deep check 22/0, only instance-swap 502s in the Render log scan since the deploy)
+all clean. No dedicated test file exists for ideas.py yet.
