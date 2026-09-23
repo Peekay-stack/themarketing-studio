@@ -19276,7 +19276,18 @@ class Component extends DCLogic {
     if (tab === 'sales') { this.setState({ screen:'sales' }); window.scrollTo(0,0); return; }
     if (tab === 'video') { this.setState({ screen:'video' }); window.scrollTo(0,0);
       this.loadGrounding(); this.loadVideoStandsOn(); return; } // round 92: six-entry-point audit
+    // 23 Sep -- this branch (social/posm/onground) set screen+xTab directly, the one shape the six-entry-
+    // point audit above never covered: "Take it to Social/POS material/the activation", straight off the
+    // Idea Platform's own expression-by-medium panel. Landed with whatever socialStandsOn/loadPosmFormats/
+    // ogStandsOn was already in state, so a person who had just rewritten the platform's expressions and
+    // clicked straight through still saw the OLD quote until some other action happened to refetch it --
+    // same class of bug as round 92's, on a link round 92 didn't reach. Same preload `go()`'s own
+    // `screen==='exec'` branch and `xGoTab` already run for every other way into these tabs.
     this.setState({ screen:'exec', xTab:tab }); window.scrollTo(0,0);
+    this.loadGrounding();
+    if (tab === 'posm') this.loadPosmFormats();
+    if (tab === 'onground') { this.loadOgStandsOn(); this.ensureAssetLib(); }
+    if (tab === 'social') { this.loadSocialStandsOn(); this.loadCarouselAssetLib(); }
   };
 
   // ---------- what a producer is given: the brief, the platform, or both ----------
