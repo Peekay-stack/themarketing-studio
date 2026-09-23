@@ -2825,3 +2825,38 @@ of leaking the old one.
 **Shipped, commit 5cac610, deploy live ~10:2x UTC.** api/selfcheck.py, smoke on the committed tree, live gate
 (selfcheck commit match, deep check 22/0, only instance-swap 502s in the Render log scan since the deploy)
 all clean. No dedicated test file exists for ideas.py yet.
+
+
+### 23 Sep -- Round 26: "Take it to Social/POS material/the activation" from the Idea Platform
+### screen never re-fetched the producer's own stands-on quote -- the last stale-data gap closed
+
+**Immediately after Round 25's backend fix (5cac610) shipped**, the owner did exactly the right thing to
+retroactively clean the already-stale data: opened the Idea Platform screen, used "Write these for me" to
+regenerate all five per-medium expressions fresh against the new platform, confirmed the new Social text
+("Naa Alavaatu (My Habit)...") was correctly SAVED there -- then clicked "Take it to Social" and Step 1 of
+the Social producer STILL showed the old "Ee Veedhi, Aa Chethulu" text. The backend data was now genuinely
+correct; something in the frontend was not re-reading it.
+
+**Traced to `ideaGoTo(tab)`** in app.dc.html -- the click handler behind every "Take it to X" link in the
+Idea Platform's expression-by-medium panel. For social/posm/onground it set `screen:'exec', xTab:tab`
+directly and stopped, landing on whatever `socialStandsOn`/`ogStandsOn` was already sitting in React state
+from an earlier visit to that tab -- never re-fetching. Every OTHER way into these same tabs already carries
+this fix from Round 92's "six-entry-point audit" (`openSocialExec`, `goExecIdea`, `goPosmShortcut`,
+`goOngroundShortcut`, the Launcher's post mode, `xGoTab` itself, and `go()`'s own `screen==='exec'` branch
+all call `loadGrounding()` plus the tab's own loader) -- this ONE link, added after that audit, was never
+brought into the same pattern.
+
+**Fixed**: gave `ideaGoTo` the identical three-line preload (`loadGrounding()` +
+`loadPosmFormats`/`loadOgStandsOn`+`ensureAssetLib`/`loadSocialStandsOn`+`loadCarouselAssetLib` per tab) the
+other six entry points already carry -- copied verbatim from the proven pattern, no new abstraction.
+
+**Swept**: grepped every `screen:'exec', xTab:` site in the file. All the others already had the fix.
+`medOpenStored` (media) has no analogous stands-on mechanism to refresh -- confirmed nothing to fix there.
+`ideaGoTo`'s own video branch (already fixed, Round 92) and sales branch (no stands-on box exists yet for
+Sales/incentive) needed no change.
+
+**Shipped, commit 18fb284, deploy live ~10:4x UTC.** tools/checkfe.py (0 CRLF, all pairings hold), smoke on
+the committed tree, live gate (selfcheck commit match, deep check 22/0, only instance-swap 502s since
+deploy) all clean. This closes the loop on Round 25 -- both the write-side bug (adopt()) and the read-side
+gap (this navigation entry point) are now fixed; the owner's next redraft-and-navigate should show the
+correct expression end to end with no manual "Write these for me" workaround needed.

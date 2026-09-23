@@ -669,3 +669,16 @@ directly against `ideas.adopt()` + `producers.stands_on()` (the function every p
 through) -- same-platform re-save still preserves its own expressions, a redraft now starts clean. Swept:
 this exact pattern is unique to `adopt()`, not present in plan.py, strategy.py, or elsewhere in ideas.py/
 campaign.py. Full detail: BRAND_GROUNDING_TESTING_LOG.md, "23 Sep -- Round 25".
+
+**UPDATE 23 Sep (Round 26, the last piece of the platform-staleness bug -- a frontend read-side gap) --
+commit 18fb284, live-gated clean.** Round 25 fixed the write-side bug in `ideas.adopt()`. The owner then
+did the correct retroactive cleanup (regenerated all 5 expressions via "Write these for me", confirmed
+saved) and clicked "Take it to Social" -- Step 1 STILL showed the old text. Root cause: `ideaGoTo(tab)`
+(the handler behind every "Take it to X" link on the Idea Platform screen) set `screen:'exec', xTab:tab`
+directly for social/posm/onground with no refetch, landing on stale in-memory state -- the ONE entry point
+into these tabs that Round 92's "six-entry-point audit" never reached (it was added after that audit).
+Fixed by giving it the identical preload every other entry point already carries
+(`loadGrounding()`+`loadSocialStandsOn`/`loadPosmFormats`/`loadOgStandsOn`). Swept every other
+`screen:'exec', xTab:` site in the file -- all already correct; nothing else needed the fix. This closes
+the full loop on the platform-redraft-staleness bug: write-side (Round 25) and read-side (Round 26) both
+fixed and live. Full detail: BRAND_GROUNDING_TESTING_LOG.md, "23 Sep -- Round 26".
