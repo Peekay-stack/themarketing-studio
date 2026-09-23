@@ -698,3 +698,20 @@ slide 3's crate shows multiple sharp packs instead of one-clear-rest-blurred in 
 the existing FRONT_ONLY_ONE_PACK crate carve-out). Owner is running a second, different idea through the
 same 3-way test before any fix is proposed, to confirm these are systemic rather than this one script's
 phrasing. Full detail: BRAND_GROUNDING_TESTING_LOG.md, "23 Sep -- Round 27".
+
+**UPDATE 23 Sep (Round 29, CTA pack-oversizing fixed at the root) -- commit e236d3e, live-gated clean.**
+Followed the owner's explicit process (identify issues from the log -> find the code cause -> plan ->
+confirm -> build). Root cause: producers.py's own CTA writer instruction asked for the pack as "the focus
+of its upper frame... will occupy that space" -- prominence language the writer complied with verbatim
+across all 3 scripts tested in Rounds 27-28, landing late in the real image prompt after packscene.py's own
+size anchor, and reading to the model as licence to enlarge (oversized in 4 of 6 real renders, independent
+of cast condition -- pack held constant). Fixed in both producers.py (reworded to ask for real-world
+size + position only, banning "large/dominant/filling the frame/focus of the shot") and packscene.py (a
+direct backstop sentence in the cta clause for the same phrase). Verified: 12 fresh CTAs across 2
+objectives, 0/12 prominence language, 12/12 explicit real-world-size/position language; Round 24's
+role-anchor fix confirmed unaffected. NOT yet verified against a real image render -- next real generation
+should confirm the visual outcome. Two things spotted and explicitly parked without acting: a pre-existing
+position inconsistency in the writer's own few-shot example ("lower third" vs the main instruction's "upper
+portion" -- doesn't explain oversizing, just noted), and the still-open "cast ticked, unselected"
+unreliability + one-instance phantom-product defect from Rounds 27-28. Full detail:
+BRAND_GROUNDING_TESTING_LOG.md, "23 Sep -- Round 29".

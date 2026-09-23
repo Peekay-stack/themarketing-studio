@@ -2940,3 +2940,46 @@ what was reported.
 **Next: owner asked to (1) consolidate the log into a clear issue list, (2) investigate the CTA-oversizing
 issue in the actual code, (3) plan a fix, (4) implement -- communicating at each step rather than jumping
 straight to a change.**
+
+
+### 23 Sep -- Round 29: CTA pack-oversizing fixed at the root (producers.py + packscene.py)
+
+**Followed the owner's explicit process**: consolidate the issues from the log first, then find the code
+cause, then plan, then ask before building. Root cause found in `producers.carousel_concept`'s own CTA
+instruction: it asked the writer to describe the pack as "the focus of its upper frame" that "will occupy
+that space" -- prominence language, not position. The writer complied verbatim across all three scripts
+tested (Rounds 27-28): "the real product pack naturally the focus of the upper frame", "occupies the upper
+frame naturally", "the real product sits naturally in the upper frame". That scene text rides late in the
+real image prompt (`main.py`'s `/scene-still`, right before "New shot: ..."), after `packscene.py`'s own
+real-world-size anchor for the cta role -- and the model read "focus" as licence to enlarge the pack in 4 of
+6 real CTA renders, independent of cast condition (pack photo held constant throughout).
+
+**Two-part fix, same direction, owner approved before building:**
+- `producers.py`: reworded the CTA instruction to ask for correct real-world size and upper-frame POSITION
+  only, with an explicit ban on "large, dominant, filling the frame or the focus of the shot" reaching the
+  writer's own output.
+- `packscene.py`: added a direct backstop sentence to the `cta` placement clause for any scene (older, or
+  hand-typed) that still uses "focus of the frame" language: that means well-lit and legible, never
+  physically larger than the size already given.
+
+**Verified**: 12 fresh CTA generations across 2 objectives -- 0/12 use any prominence language, 12/12 now
+state real-world size and upper-frame position explicitly. Round 24's role-anchor fix (crate/doorway on an
+outsider character's CTA) confirmed still holding unaffected. tools/test_pack_choice.py, api/selfcheck.py
+both pass.
+
+**Shipped, commit e236d3e, deploy live ~10:46 UTC.** Live gate clean (selfcheck commit match, deep check
+22/0, only instance-swap 502s in the log scan since deploy -- two of them real browser traffic from the
+owner's own IP catching the ~1-minute swap window, not an application error).
+
+**Not yet verified**: a real image render. The fix is proven at the text/prompt level (the writer no longer
+generates the trigger phrase, and the phrase is neutralised even if it did), but the actual visual outcome
+-- whether CTA packs now render correctly sized -- needs the owner's next real generation to confirm.
+
+**Two things surfaced along the way, explicitly parked, not acted on without asking:**
+- A pre-existing inconsistency spotted in `producers.py`'s own few-shot example (the "Meena" CTA slide says
+  "the real product sits naturally in the lower third", contradicting the main instruction's "upper
+  portion") -- not touched, since it wasn't part of the approved fix and doesn't explain the oversizing
+  (a position mismatch, not a size one). Worth a quick confirm with the owner before fixing separately.
+- The "cast ticked, no person selected" unreliability (2 different failure modes across 2 scripts) and the
+  one-instance "phantom product" (invented glass bottle with a fake label) from Rounds 27-28 remain open,
+  not investigated this round -- CTA oversizing was the one the owner asked to fix first.
