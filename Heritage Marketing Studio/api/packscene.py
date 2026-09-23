@@ -106,6 +106,12 @@ _PLACEMENT = {
     # hand of an average built man") and confirmed it held on that exact slide; folded in as the primary
     # instruction, with the relative-size wording kept alongside it, not replaced -- both are true and
     # reinforce each other. See `side`'s own note above for the second round's fix, applied here too.
+    # 23 Sep -- found live across three real carousels (two scripts, three cast conditions each): the
+    # writer's own CTA scene text regularly describes the pack as "the focus of the upper frame" (that
+    # wording used to be the writer's own instruction -- see producers.carousel_concept's matching fix),
+    # and the model was reading "focus" as licence to enlarge it, oversized in 4 of 6 real renders
+    # regardless of cast condition. The sentence below is a direct backstop for that exact phrase, in case
+    # a scene (this one already rewritten, or an older one, or a hand-typed slide) still uses it.
     "cta": (" Place the pack upright in the upper two-thirds of the frame, no larger than a real pack "
             "held in the hand of an average-built adult -- roughly the size of a paperback book, not a "
             "poster or a box -- at its true, real-life size relative to any hands, people or objects near "
@@ -113,7 +119,10 @@ _PLACEMENT = {
             "it as a freestanding display piece towering over the scene -- if no hand is holding it, rest "
             "it small against something (a table edge, a crate, a counter) at its true, pocket-sized "
             "scale, not staged like a product-shoot hero, with its front label clearly visible, and keep "
-            "the lower third of the frame clean and uncluttered so a headline can be placed there."),
+            "the lower third of the frame clean and uncluttered so a headline can be placed there. If the "
+            "scene describes the pack as 'the focus of the frame' or similar, that means well-lit and "
+            "clearly legible at its true size -- never physically larger than the size already given "
+            "here."),
     "corner": " Show the pack as a small element in one corner of the frame, upright, secondary to the main graphic.",
 }
 

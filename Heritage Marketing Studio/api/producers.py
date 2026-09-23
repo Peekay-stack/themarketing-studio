@@ -612,9 +612,11 @@ def carousel_concept(objective: str, house: dict | None = None, platform: dict |
         "anywhere in view — a face on its own, a stat, a feeling, an empty street. The studio always "
         "places the real product pack into the CLOSING (cta) "
         "slide regardless of shows_pack — so write that slide's visual_note as a calm, uncluttered scene "
-        "(a counter, a table, a plain backdrop) with the product naturally the focus of its upper frame, "
-        "never a busy or wide shot, since the pack will occupy that space and the slide's own headline "
-        "the bottom. If a recurring person appears on this slide and their role depends on being an "
+        "(a counter, a table, a plain backdrop) with the product positioned in the upper portion of the "
+        "frame at its correct, real-world size — roughly a paperback book held in an adult's hand, never "
+        "described as large, dominant, filling the frame or the focus of the shot — never a busy or wide "
+        "shot, and the slide's own headline at the bottom. If a recurring person appears on this slide and "
+        "their role depends on being an "
         "outsider or visitor, keep one small role-anchoring detail even in this calm frame — their "
         "crate resting at their side, a doorway or threshold just in view — a plain indoor counter "
         "with nothing marking their role reads as their own home, not a visit, even on the closing "
@@ -681,6 +683,18 @@ def carousel_concept(objective: str, house: dict | None = None, platform: dict |
         'Return ONLY JSON: {"routes":[{"name":"short route name","rationale":"one line on why this '
         'works","slides":[{"role":"hook","headline":"...","visual_note":"...","shows_pack":false}, ...]}, '
         '...exactly 3 routes]}')
+    # 23 Sep: the CTA instruction used to ask for the pack as "the focus of its upper frame" that "will
+    # occupy that space" -- language about PROMINENCE, not position. Traced from a real pattern across
+    # three separate carousels (two scripts, three cast conditions each): the writer complied verbatim
+    # ("the real product pack naturally the focus of the upper frame", "occupies the upper frame
+    # naturally"...) and the resulting image came out with an oversized, sometimes near-frame-filling pack
+    # in 4 of 6 real CTA renders, regardless of which cast condition was used -- ruling out reference-
+    # conditioning and pointing at this wording, which sits late in the actual image prompt (right before
+    # "New shot: ...", after packscene.py's own real-world-size anchor) and reads to the model as "make it
+    # big" even though "focus" doesn't strictly mean that. Reworded to ask for correct real-world size and
+    # upper-frame POSITION only, with an explicit ban on "large/dominant/filling the frame/the focus of
+    # the shot" — see packscene.py's own matching addition to its `cta` placement clause for the backstop.
+    #
     # 23 Sep: the character-locking rules (a leading time statement, a locked description restated per
     # recurring person, a worked example) made every slide's visual_note noticeably denser -- 2600 was
     # already tight for 3 routes x 6 slides and started truncating some replies outright ("longer than
