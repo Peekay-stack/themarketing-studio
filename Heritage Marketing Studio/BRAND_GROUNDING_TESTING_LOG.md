@@ -2605,3 +2605,49 @@ check 20/0, only instance-swap 502s) all clean.
 resting as a freestanding centrepiece with no hand on it remains the hardest composition -- every wording
 variant tried across Rounds 18-20 has failed on it at least once. Treated the same as `in_use` and the
 fssai-badge slip: expect an occasional miss needing a human Adjust pass, not a guarantee.
+
+
+### 23 Sep -- Round 21: identity fidelity gets the same treatment pack fidelity got yesterday
+
+**Owner ran a fresh carousel ("The Face You Never Looked At") on live and hit three related failures in
+one morning**: a recurring cast member's face drifted between slides even though the story never claimed
+he aged in that stretch; manually appending a year to the on-slide HEADLINE ("His name is Ramesh.2026")
+changed nothing in the render; and an "out of focus" phrase on the hook slide's visual_note correlated
+directly with that slide showing a different, wrong face.
+
+**Root-caused with the owner across several rounds of manual script rewrites, each proven on a real
+generation before the next hypothesis:**
+1. Headlines are composited as text overlays, never sent to the image model (confirmed architecture fact
+   from Round 93) -- so a year typed into the headline can never influence the render. Only the
+   visual_note reaches `/scene-still`.
+2. "His face out of focus behind" on an identity-critical slide directly correlated with that slide
+   rendering a different person -- confirmed by a same-day A/B (the owner reran with only that phrase
+   removed; every OTHER slide held, that one stopped being the outlier).
+3. Locking one description per recurring character, reusing it near-verbatim, and explicitly flagging any
+   new character -- the owner's own manual rewrite -- fixed identity holding across all four of the
+   character's present-day appearances in one real generation. A second, independent variable helped too:
+   the owner regenerated the AI cast reference photo FROM the finalised script, aligning what the
+   reference looks like with what the text says he looks like for the first time.
+
+**Fixed and shipped, commit 28a1ef8, deploy dep-dapncvvavr4c73eqnelg (live ~06:52 UTC):**
+- `producers.carousel_concept`'s writer prompt now requires: one fixed description per recurring person,
+  reused near-verbatim everywhere, every time-jump tied to an explicit age change INSIDE the visual_note
+  (never relying on the headline), any new person marked as new. Verified on 6 real routes / 36 slides:
+  100% of recurring descriptions held verbatim, 100% of new characters were flagged.
+- Refined per the owner's explicit steer ("I'm okay with out of focus/blurred/turned away IF the scene
+  demands it -- it adds visual drama -- but face fidelity should hold"): the instruction now actively
+  INVITES obscured/dramatic framing on hooks and non-identity slides, and only requires a clearly visible
+  face on whichever slide actually carries the identity reveal. Re-verified on the same 6-route test:
+  every occurrence of obscured framing landed on a hook or flashback; every reveal/portrait slide said
+  "clear fully visible," zero exceptions.
+- `app.dc.html`: the "Assets for this carousel" panel (pack/logo/cast, including "AI-draft a cast
+  reference") now renders AFTER the slide editor instead of before it. No backend change needed --
+  `draftCarouselCast` already read the live script at click time; the gap was purely that the button sat
+  before the script existed to read. Confirmed live in the browser.
+
+**Discussed and deliberately deferred** (owner's own question, weighed pluses/minuses, parked): should
+the cast-reference draft extract just the lead character's own description instead of joining the whole
+script? Real trade-offs both ways -- noted in the Image Engine Playbook artifact for later, not built.
+
+checkfe, full suite (test_pack_choice, test_identity_lock), py_compile, selfcheck, smoke on the committed
+tree, live gate (self-check commit match, deep check 20/0, only instance-swap 502s) all clean.

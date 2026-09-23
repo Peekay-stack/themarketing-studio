@@ -592,3 +592,19 @@ pipeline stages and stack rather than compete. Known limit UNCHANGED: a pack pre
 resting as a centrepiece with no hand on it still needs an occasional manual Adjust -- documented in
 packscene.py itself alongside in_use and the fssai slip. Full entry: BRAND_GROUNDING_TESTING_LOG.md,
 "22 Sep -- Round 20".
+
+**UPDATE 23 Sep (Round 21, identity fidelity) -- the same class of fix as Rounds 17-20's pack fidelity,
+applied to recurring-character identity. Commit 28a1ef8, live-gated clean (dep-dapncvvavr4c73eqnelg).**
+Root cause: the writer never locked one description per recurring character, and a manually-appended
+headline year did nothing (headlines never reach the image model). Fixed at producers.carousel_concept:
+lock one description, reuse verbatim, flag new characters, tie time-jumps to age inside the visual_note.
+Also found and fixed: "out of focus"/"blurred" on an identity-critical slide correlated directly with
+wrong-face renders -- not because blur confuses matching, but because the phrase gives the model
+permission to stop trying to match the reference at all, and it can render something sharp but wrong.
+Per the owner's explicit steer, the fix INVITES this language for drama on non-identity slides and only
+requires clarity on the actual reveal slide -- verified 100% correct split across 6 real routes.
+Separately: moved the Assets panel (pack/cast, including AI-cast-draft) to after the slide editor in the
+UI, since drafting a cast reference already read the live script and the only gap was sequencing.
+Deliberately deferred (owner's own call after weighing it): extracting just the lead character's
+description for cast-drafting instead of the whole script -- noted in the Image Engine Playbook, not
+built. Full entry: BRAND_GROUNDING_TESTING_LOG.md, "23 Sep -- Round 21".
