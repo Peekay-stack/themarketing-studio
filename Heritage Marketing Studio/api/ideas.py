@@ -441,26 +441,6 @@ def adopt(p: dict, data: dict) -> dict:
     # platform was first saved.
     prior = next((x for x in p["platforms"] if x.get("adopted")), None) or {}
 
-    # The five expressions, in order of authority: what was already stored, then anything a route says,
-    # then anything this payload carries explicitly.
-    #
-    # This used to start from five empty strings and fill only from `routes`, which meant generating the
-    # five expressions and then pressing Adopt wiped four of them — the two features were built a round
-    # apart and only the second one wrote to these slots. An empty route must never blank an expression
-    # somebody wrote or generated; the routes screen and the expressions block are two ways into the same
-    # field, and neither owns it.
-    expressions = {k: "" for k in EXPRESSIONS}
-    expressions.update({k: str(v or "").strip()
-                        for k, v in (prior.get("expressions") or {}).items() if k in EXPRESSIONS})
-    for route, text in routes.items():
-        kind = ROUTE_TO_KIND.get(str(route))
-        if kind and kind in expressions and str(text or "").strip():
-            expressions[kind] = str(text or "").strip()
-    if isinstance(data.get("expressions"), dict):
-        for k, v in data["expressions"].items():
-            if k in EXPRESSIONS and str(v or "").strip():
-                expressions[k] = str(v).strip()
-
     # A key the payload does not carry is unchanged; a key it carries is set, even to empty. The screen
     # sends five fields and the item has eleven, so the alternative — absent means blank — meant that
     # every Adopt silently emptied `mechanic`, `territory`, `proof` and `why`, and the repeatable device
@@ -471,10 +451,42 @@ def adopt(p: dict, data: dict) -> dict:
                 return str(data.get(k) or "").strip()
         return str(prior.get(key) or "").strip()
 
+    # `line` is the screen's name for it and wins where both arrive; `idea` is what it is stored as.
+    _new_idea = str(data["line"] or "").strip() if "line" in data else held("idea")
+
+    # The five expressions, in order of authority: what was already stored, then anything a route says,
+    # then anything this payload carries explicitly.
+    #
+    # This used to start from five empty strings and fill only from `routes`, which meant generating the
+    # five expressions and then pressing Adopt wiped four of them — the two features were built a round
+    # apart and only the second one wrote to these slots. An empty route must never blank an expression
+    # somebody wrote or generated; the routes screen and the expressions block are two ways into the same
+    # field, and neither owns it.
+    #
+    # 23 Sep -- live bug: that "what was already stored" fallback read `prior` unconditionally, and
+    # `prior` is whatever platform WAS adopted before this call -- correct when Adopt is re-saving the
+    # SAME platform (the case above was written for), wrong when it is adopting a genuinely DIFFERENT one
+    # (a redraft). A brand new platform ("Before The First Light") inherited the OUTGOING platform's own
+    # per-medium text ("the idea platform, expressed for social" kept showing the prior platform's
+    # "Ee Veedhi, Aa Chethulu" line) because nothing regenerates expressions on adopt and this fallback
+    # did not check whether the idea itself had actually changed. Only inherit when it has not.
+    _same_platform = bool(prior) and _new_idea == str(prior.get("idea") or "").strip()
+    expressions = {k: "" for k in EXPRESSIONS}
+    if _same_platform:
+        expressions.update({k: str(v or "").strip()
+                            for k, v in (prior.get("expressions") or {}).items() if k in EXPRESSIONS})
+    for route, text in routes.items():
+        kind = ROUTE_TO_KIND.get(str(route))
+        if kind and kind in expressions and str(text or "").strip():
+            expressions[kind] = str(text or "").strip()
+    if isinstance(data.get("expressions"), dict):
+        for k, v in data["expressions"].items():
+            if k in EXPRESSIONS and str(v or "").strip():
+                expressions[k] = str(v).strip()
+
     item = {
         "name": held("name"),
-        # `line` is the screen's name for it and wins where both arrive; `idea` is what it is stored as.
-        "idea": (str(data["line"] or "").strip() if "line" in data else held("idea")),
+        "idea": _new_idea,
         "mechanic": held("mechanic"),
         "territory": held("territory"),
         "proof": held("proof"),
