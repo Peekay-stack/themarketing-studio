@@ -2901,3 +2901,9 @@ genuine prompt/writer-level issue:**
 **Decision**: owner is running a SECOND, different idea through the same three-way test before any fix is
 proposed, specifically to confirm these are systemic rather than one script's phrasing. Nothing shipped this
 round -- observation only, logged per standing instruction.
+
+
+**Addendum to Round 27 (same day)**: owner confirmed the same real, explicitly-picked pack was attached in
+all three conditions -- only the cast variable changed. Rules out "Automatic pack-mode inconsistency" as an
+explanation for the CTA-oversizing and crate-multipack findings; both are confirmed independent of cast AND
+of pack-selection mode, isolating them as pure writer/prompt-level issues.
