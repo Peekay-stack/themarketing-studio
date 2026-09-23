@@ -2695,3 +2695,50 @@ is the contradiction is gone. Shipped commit c10ee13, live-gated clean.
 Both rounds: checkfe, full suite (test_pack_choice with new pinning cases for both fixes, test_identity_lock),
 py_compile, selfcheck, smoke on the committed tree, live gate (self-check commit match, deep check 20/0,
 only instance-swap 502s) all clean.
+
+
+### 23 Sep -- Round 23: on-image text (second occurrence, now a rule), "reads like the house owner", a
+### widened tight-framing detector, and cast-candidate zoom
+
+**Owner shared one real live generation from the Round 22 writer** (real cast reference signed in) and
+flagged two things: "the cast reference does not become big enough to see... can you add a zoom" and
+"the generation ... doesn't look like the milkman.. more like a house owner himself."
+
+**Confirmed both directly from the actual images:**
+- Slide 4's own visual_note had asked for "a small chalk sign on the wall beside him with his name and
+  years" -- and the render showed a wall board with real, garbled attempted text on it. Second
+  independent occurrence of this exact pattern (yesterday: "a Ghee-gold caption... overlaid in-scene") --
+  confirmed as a genuine recurring writer habit, not a fluke, and fixed as an explicit rule this time
+  instead of flagged by hand a third time.
+- Slides 4 and 5 (present-day Suresh) both showed him standing fully inside a plain domestic kitchen with
+  no crate, no doorway, no uniform distinction -- nothing marking him as a delivery man. Slide 3 (2002,
+  crate visible on a stairwell) read perfectly as a milkman by contrast -- proving the mechanism: when the
+  role-defining prop/setting is present, identity-as-role holds; when a slide shows him fully indoors with
+  nothing else marking his role, he reads as the resident.
+
+**Fixed at the writer (`producers.carousel_concept`), verified before shipping:**
+- Explicit rule: never describe a sign, chalkboard, caption, nameplate or any other on-image text --
+  the headline already carries that fact as real, correctly-spelled overlay text.
+- Explicit rule: when a recurring person's role depends on being an outsider/visitor, keep that role
+  legible in EVERY present-day appearance (a threshold, their crate/tool, a distinct uniform detail), not
+  only their locked face.
+- **Verified with 2 real writer runs (12 routes, ~72 slides)**: zero on-image text requests anywhere
+  (100%); role-anchoring words present in every slide except the CTA in 2 of 12 routes -- several routes'
+  CTAs explicitly explained the prop's purpose ("his metal crate ... to mark him the visiting milkman").
+  Large, honestly-reported improvement over the confirmed-broken baseline (zero anchoring anywhere in
+  today's real generation), not claimed as a perfect 100%.
+
+**Also fixed, same commit:**
+- `packscene.py`'s tight-framing detector from this morning only matched specific phrases and missed a
+  plainer one on the very next real carousel -- "now sharp and close" matched neither "tight crop" nor
+  "close-up", so the camera clause still fired and fought that scene too. Widened to the bare word
+  "close". Pinned with a new test using that exact phrase.
+- `app.dc.html`: AI-drafted cast candidates were unclickable 64px thumbnails. Wired them into the SAME
+  lightbox already used for storyboard frame previews (`openLightbox`/`closeLightbox`) -- no new
+  component, exact reuse of an already-working pattern. **Honestly not fully live-verified**: hit real
+  browser-automation friction in the in-app pane's narrow viewport (a sticky nav element kept intercepting
+  clicks) and did not complete a live click-through today -- noted plainly rather than claimed.
+
+**Shipped, commit f5342ae, deploy live ~08:58 UTC.** checkfe, full suite (test_pack_choice with the new
+"sharp and close" case, test_identity_lock), py_compile, selfcheck, smoke on the committed tree, live gate
+(self-check commit match, deep check 20/0, only instance-swap 502s) all clean.

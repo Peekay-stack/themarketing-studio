@@ -623,3 +623,19 @@ proven directly from today's own script. Fixed: skipped when the scene states it
 relying on the size anchor alone there. Real A/B trial: no dramatic visual swing in one sample, reported
 honestly rather than oversold -- the fix is a provable logical-contradiction removal, not a proven quality
 jump. Full entry: BRAND_GROUNDING_TESTING_LOG.md, "23 Sep -- Round 22".
+
+**UPDATE 23 Sep (Round 23, on-image text + "reads like the house owner" + zoom) -- from ONE real live
+generation with a real cast reference attached. Commit f5342ae, live-gated clean.**
+Confirmed and fixed two real writer gaps: (1) on-image text/signage -- SECOND independent occurrence of
+the writer asking for a caption/sign baked into the image (garbled render, as predicted) -- now an
+explicit rule, not a one-off catch. (2) present-day slides showing the recurring "outsider" character
+(a milkman) fully inside a domestic room with no crate/doorway/uniform trace, reading as "the house owner"
+-- fixed by requiring role-anchoring detail in every present-day appearance when the story depends on them
+being a visitor, not a resident. Verified on 2 real writer runs (12 routes, ~72 slides): 100% clean on
+on-image text, role-anchoring present everywhere except 2/12 CTAs -- large, honest improvement, not a
+claimed 100%. Also: widened the tight-framing detector (yesterday's "tight crop" fix missed "sharp and
+close" on the very next real carousel -- now catches bare "close"), and wired AI-drafted cast candidates
+into the app's existing lightbox for a zoom view (exact reuse of the frame-preview pattern; NOT fully
+live-click-verified today due to browser-automation friction in the narrow in-app pane -- noted honestly).
+Only per-slide cast control and the parked lead-character cast-extraction idea remain open. Full detail:
+BRAND_GROUNDING_TESTING_LOG.md, "23 Sep -- Round 23".
