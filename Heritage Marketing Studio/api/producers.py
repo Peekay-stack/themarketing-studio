@@ -609,7 +609,15 @@ def carousel_concept(objective: str, house: dict | None = None, platform: dict |
         "being poured — not only a deliberate close-up of it. Mark it true whenever the scene puts "
         "someone near the product, even briefly or in the middle distance; a delivery, a handoff or "
         "someone walking with it in hand all count. Mark it false only for a shot with no product "
-        "anywhere in view — a face on its own, a stat, a feeling, an empty street. The studio always "
+        "anywhere in view — a face on its own, a stat, a feeling, an empty street. A value slide is "
+        "free to show no pack at all whenever its own beat is about something else — a ritual, a "
+        "memory, an object, a gesture — and it usually should: finding somewhere plausible to set the "
+        "pack (a shelf, a sill, a counter nearby) is not a reason to include it if the scene's own "
+        "moment doesn't actually involve the product being handled, delivered or used. This matters "
+        "most once a route has already established its own recurring visual anchor for the story (a "
+        "glass, a specific object) — don't add the pack alongside it in a slide that doesn't need "
+        "both; a pack with nothing to do in the scene renders as inserted, not lived-in. The studio "
+        "always "
         "places the real product pack into the CLOSING (cta) "
         "slide regardless of shows_pack — so write that slide's visual_note as a calm, uncluttered scene "
         "(a counter, a table, a plain backdrop) with the product positioned in the upper portion of the "
@@ -627,7 +635,12 @@ def carousel_concept(objective: str, house: dict | None = None, platform: dict |
         "slide shows the pack, describe it being handled the way someone actually handles a small pack "
         "of milk — carried at the side, handed over, tucked in a crate, set down on a counter — never "
         "held out at arm's length toward the camera and never resting alone as a centrepiece with no "
-        "one touching it; both read as an advertising hero shot and the pack renders oversized.\n"
+        "one touching it; both read as an advertising hero shot and the pack renders oversized. "
+        "Whenever a glass of milk appears anywhere in a route — full, half, or already drained — "
+        "describe enough visible milk in it (liquid, a film on the sides, a ring at the base) for it "
+        "to read clearly as a MILK glass in a photograph, whatever the story calls for that glass to "
+        "be at that moment: a glass rinsed fully clear and empty is nearly invisible against most "
+        "backgrounds and quietly drops the one detail the story was using it to carry.\n"
         "EVERY slide's visual_note opens by stating its own time period plainly (\"It's 2026\", "
         "\"Still 2026\", \"It's 1999, 27 years earlier\") — never leave it implicit or only in the "
         "headline. Any person who recurs across more than one slide in a route needs ONE fixed "
@@ -683,6 +696,26 @@ def carousel_concept(objective: str, house: dict | None = None, platform: dict |
         'Return ONLY JSON: {"routes":[{"name":"short route name","rationale":"one line on why this '
         'works","slides":[{"role":"hook","headline":"...","visual_note":"...","shows_pack":false}, ...]}, '
         '...exactly 3 routes]}')
+    # 23 Sep: found live on a real carousel built around a doorframe height-marker and a recurring GLASS
+    # motif (the platform's own words: "the frame and the glass-at-the-base composition never does
+    # [change]") -- one value slide, with nothing in its own story needing the product, still added "The
+    # pack of milk sits on the low sill nearby, set down casually", breaking a clean pattern the writer
+    # otherwise held across every other slide. The old shows_pack guidance ("mark it true whenever the
+    # scene puts someone near the product, even briefly or in the middle distance") gave license to add it
+    # anywhere plausible without ever saying "no pack" is the right, common answer for most value slides --
+    # and a pack the scene gives no real interaction to render as a disconnected, floating product shot,
+    # not something set down in a lived-in scene. Added explicit permission to skip it, and a direct
+    # caution against doubling up on the product when a route has its own established visual anchor
+    # already (a glass, in this case).
+    #
+    # 23 Sep: same carousel -- the glass in three of the five value slides was described as drained/empty
+    # (deliberately, since an emptied glass is the story's own point: the ritual already happened,
+    # unwitnessed), and an empty glass is close to invisible in a photograph: it's transparent, so there is
+    # nothing for the camera to render against most backgrounds. Fixed generally, not with a fixed "always
+    # half-full" rule that would fight scenes that specifically need an empty glass (like this one) --
+    # whatever state the story calls for, the writer now describes enough visible milk residue for the
+    # glass to actually read as a MILK glass in the final image.
+    #
     # 23 Sep: the CTA instruction used to ask for the pack as "the focus of its upper frame" that "will
     # occupy that space" -- language about PROMINENCE, not position. Traced from a real pattern across
     # three separate carousels (two scripts, three cast conditions each): the writer complied verbatim
