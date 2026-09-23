@@ -162,6 +162,10 @@ expect("side, Real: a scene that asks for its own tight crop does NOT also get t
        "the size anchor alone covers it",
        "35-50mm lens" not in pr and "never a tight macro" not in pr
        and "roughly the size of a paperback book" in pr and "tight close-up" in pr)
+st, d, pr, rf = send({**PICK, "pack_role": "side"}, scene="Now sharp and close: his hands mid-handoff at a doorstep.")
+expect("side, Real: a plainer 'sharp and close' phrasing (not the literal words 'tight crop') is "
+       "caught too -- 23 Sep, the exact wording a real carousel used and the old pattern missed",
+       "35-50mm lens" not in pr and "never a tight macro" not in pr)
 expect("side, Real: asks for no added marks, and replaces the generic 'no logos' tail",
        "Do not add any logos, certification marks" in pr and pr.endswith(packscene.TAIL.strip()) and "captions, logos, watermarks" not in pr)
 expect("side, Real: the picked pack is the only reference; response says library / side",

@@ -158,8 +158,14 @@ _CAMERA_TECHNICAL = (" Shoot this as a natural mid-shot on a 35-50mm lens, norma
 # tight close-up" -- that is what actually needs to hold for a close scene, not a blanket lens mandate.
 # So: skip the camera clause when the scene itself already asks for a tight/close framing, and let the
 # size anchor alone carry that case; keep it as a helpful default for scenes that don't specify.
-_TIGHT_FRAMING = re.compile(r"\btight\s+(crop|shot|frame|close-?up)\b|\bclose[- ]?up\b|\bmacro\b|"
-                            r"\bextreme close\b", re.IGNORECASE)
+#
+# 23 Sep -- the original pattern only caught specific phrasings ("tight crop", "close-up") and missed a
+# real, plainer one on the very next carousel tested: "now sharp and close" never matched "close-up" or
+# "close up" at all, so the camera clause still fired and fought that scene too. Widened to the bare word
+# "close" -- inside a visual_note (a photographic scene description, not general prose), "close" used on
+# its own is overwhelmingly a framing/distance word ("close-up", "sharp and close", "in close", "close to
+# camera"), not the "close the door" sense that would risk a false match here.
+_TIGHT_FRAMING = re.compile(r"\btight\s+(crop|shot|frame)\b|\bclose\b|\bmacro\b", re.IGNORECASE)
 
 
 def pack_clause(style: str, role: str, scene_text: str = "") -> str:

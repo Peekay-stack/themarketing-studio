@@ -6493,7 +6493,7 @@
                 <div style="display:flex; gap:8px; margin-top:9px; flex-wrap:wrap;">
                   <sc-for list="{{ carouselCastCandidates }}" as="cc" hint-placeholder-count="3">
                     <div style="width:64px;">
-                      <img src="{{ cc.url }}" style="width:64px; height:64px; border-radius:8px; object-fit:cover; display:block; margin-bottom:4px;" />
+                      <img src="{{ cc.url }}" onClick="{{ cc.zoom }}" style="width:64px; height:64px; border-radius:8px; object-fit:cover; display:block; margin-bottom:4px; cursor:zoom-in;" />
                       <span onClick="{{ cc.adopt }}" style="cursor:pointer; font-size:10.5px; font-weight:700; color:#1E7E34;">Use — sign it in</span>
                     </div>
                   </sc-for>
@@ -14210,7 +14210,11 @@ class Component extends DCLogic {
       // this was the one place that wasn't.
       carouselCastDraftLabel: c.castBusy ? 'Drafting…' : '✦ AI-draft a cast reference, from this concept',
       carouselCastBusy: c.castBusy, carouselCastCandidates: (c.castCandidates || []).map((im, i) => ({
-        url: im.image_url, adopt: this.adoptCarouselCastDraft(im.image_url) })),
+        url: im.image_url, adopt: this.adoptCarouselCastDraft(im.image_url),
+        // 23 Sep: the 64px thumbnail is too small to actually judge a candidate before signing it in --
+        // reuses the SAME lightbox the storyboard frames already use (openLightbox/closeLightbox), not
+        // a new component.
+        zoom: this.openLightbox(im.image_url) })),
       hasCarouselCastCandidates: (c.castCandidates || []).length > 0,
       draftCarouselCast: this.draftCarouselCast,
       carouselSlideCountMode: c.slideCountMode,
