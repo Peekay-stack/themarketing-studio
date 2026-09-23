@@ -2742,3 +2742,50 @@ flagged two things: "the cast reference does not become big enough to see... can
 **Shipped, commit f5342ae, deploy live ~08:58 UTC.** checkfe, full suite (test_pack_choice with the new
 "sharp and close" case, test_identity_lock), py_compile, selfcheck, smoke on the committed tree, live gate
 (self-check commit match, deep check 20/0, only instance-swap 502s) all clean.
+
+
+### 23 Sep -- Round 24: same script rendered with and without cast proved two defects are
+### script-level, not reference-conditioning -- CTA role-anchor and a sleepwear+bend pose fixed
+
+**Owner ran the SAME carousel script twice** (once with no cast attached, once with a real AI-drafted
+cast signed in) and flagged two defects: slide 2 (no-cast render) showed a woman's nightshirt riding up
+in a bending pose picking up the pack, and slide 5/CTA (cast render) showed Ramesh standing at a plain
+indoor counter with nothing marking him as the milkman -- the same "reads like the house owner" bug from
+Round 23, but this time on the CLOSING slide specifically.
+
+**Before fixing anything, tested a live hypothesis the owner raised directly**: was the earlier felt
+"quality beating" (compared two days' generations) actually caused by TODAY's widened tight-framing regex
+suppressing the camera-technical clause more often? Measured it directly: 3 fresh writer runs, 9 routes,
+54 pack-bearing slides -- only 2/54 (4%) got the clause suppressed, both correctly (the writer used "close"
+in the exact framing sense the regex is meant to catch). Ruled out as the driver of a broad quality drop.
+Reframed as inherent to reference-conditioned generation (locking a real face across slides is a harder,
+more constrained task than free text-to-image) -- not a wording bug.
+
+**Then the owner's own A/B (same script, cast on/off) directly tested THAT theory for these two specific
+defects** -- and disproved it as the explanation here: the dress issue appeared in the NO-cast render, the
+CTA/house-owner issue in the cast render. Confirmed directly (owner checked): the no-cast render's own CTA
+ALSO showed the same hidden-behind-the-pack framing. Both defects trace to the SHARED SCRIPT TEXT (identical
+in both renders), proving they are writer-level bugs, not reference-conditioning artifacts.
+
+**Fixed at the writer (`producers.carousel_concept`), verified before shipping:**
+- The CTA slide's own instruction ("calm, uncluttered... a counter, a table, a plain backdrop") is a
+  specific, late instruction that was beating the general outsider-role-anchor rule stated earlier in the
+  same prompt -- two competing instructions, and the more specific one won. Folded the role-anchor
+  requirement directly into the CTA sentence itself.
+- A recurring person described in sleepwear/robe/nightshirt was independently also given a deep-bend pose
+  to pick up the pack -- a known image-model failure combination (hem rides up), and it rendered exactly
+  as predicted. Added a rule: sleepwear pairs with standing, kneeling-with-a-straight-back, or
+  reach-at-chest-height instead of a bend/crouch/stoop.
+
+**Verified with 2 real writer runs, deliberately built with two different objectives to test each rule
+correctly**: a milkman (outsider role) -- 6/6 CTAs now keep the crate or doorway even in the calm frame
+(up from the known "2 of 12 slipped" gap). A daughter collecting her own family's delivery (NOT an
+outsider) correctly did NOT get an anchor forced onto her CTA in 3/6 cases -- confirms the rule only fires
+when the role actually depends on being a visitor, not unconditionally. Sleepwear+bend: 0 unsafe
+combinations found across the same runs (several routes deliberately built around a groggy person in
+sleepwear) -- the writer consistently switched to "kneeling with a straight back", the exact safe
+alternative named in the new rule.
+
+**Shipped, commit eea57ff, deploy live ~09:0x UTC.** checkfe, test_pack_choice (unaffected -- this change
+doesn't touch packscene.py), selfcheck, smoke on the committed tree, live gate (selfcheck commit match,
+deep check 22/0, only instance-swap 502s in the Render log scan since the last deploy) all clean.

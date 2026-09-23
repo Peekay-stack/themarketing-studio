@@ -639,3 +639,20 @@ into the app's existing lightbox for a zoom view (exact reuse of the frame-previ
 live-click-verified today due to browser-automation friction in the narrow in-app pane -- noted honestly).
 Only per-slide cast control and the parked lead-character cast-extraction idea remain open. Full detail:
 BRAND_GROUNDING_TESTING_LOG.md, "23 Sep -- Round 23".
+
+**UPDATE 23 Sep (Round 24, CTA role-anchor + sleepwear-bend pose, both proven script-level via a real A/B)
+-- commit eea57ff, live-gated clean.**
+Owner ran the SAME script twice (cast attached / not) and this became a real controlled experiment: a
+dress-riding-up defect appeared in the NO-cast render, a "reads like the house owner" defect (same class as
+Round 23, but on the CTA specifically) appeared in the cast render -- and the owner confirmed the no-cast
+render's CTA had the identical house-owner problem too. That proves both were sitting in the shared script
+text, not caused by reference-conditioning. Along the way, also directly measured (and ruled out) whether
+Round 23's widened tight-framing regex was behind an separately-flagged felt "photo quality" drop across two
+routes: only 4% of pack slides (2/54 across 9 fresh routes) had the camera clause suppressed, and both
+correctly -- reframed that drop as the inherent cost of reference-conditioned (identity-locked) generation
+versus free generation, not a wording bug. Fixed: the CTA's own "calm, uncluttered" instruction was beating
+the general role-anchor rule (two competing instructions, more specific one won) -- folded role-anchor
+directly into the CTA sentence; verified 6/6 clean on an outsider-role objective, correctly NOT forced on a
+resident-role objective (3/6, as intended). Sleepwear+deep-bend pose (hem-riding-up failure) -- added a rule
+substituting standing/kneeling-straight-backed/chest-height-reach; verified 0 unsafe combinations across
+routes deliberately built around sleepwear. Full detail: BRAND_GROUNDING_TESTING_LOG.md, "23 Sep -- Round 24".
