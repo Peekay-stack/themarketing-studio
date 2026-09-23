@@ -2983,3 +2983,55 @@ generates the trigger phrase, and the phrase is neutralised even if it did), but
 - The "cast ticked, no person selected" unreliability (2 different failure modes across 2 scripts) and the
   one-instance "phantom product" (invented glass bottle with a fake label) from Rounds 27-28 remain open,
   not investigated this round -- CTA oversizing was the one the owner asked to fix first.
+
+
+### 23 Sep -- Round 30: the "forced pack" in slide 3 traced to the writer, not the renderer -- both fixed
+### (gratuitous pack insertion + invisible empty-glass rendering)
+
+**Owner asked me to re-read the actual script rather than assume the earlier "side"-role placement-clause
+theory.** Re-reading "The Line We Kept" line by line confirmed it directly: slides 1, 2, 4, 5 all correctly
+use the platform's own established visual motif (a GLASS at the doorframe's base -- the platform's own
+words: "the frame and the glass-at-the-base composition never does [change]") and correctly show no pack.
+Slide 3 alone breaks that pattern: "The pack of milk sits on the low sill nearby, set down casually" --
+nothing in that scene (a mother marking a child's height) needs the product, and nobody interacts with it.
+That's why it rendered as a disconnected, floating product shot: the writer gave the image model no reason
+for the pack to be there. Root cause: `shows_pack`'s guidance ("mark it true whenever the scene puts someone
+near the product, even briefly or in the middle distance") gave license to add it anywhere plausible, and
+never once said "no pack" is the right, common answer for a value slide.
+
+**Same session, a second observation from the owner**: three of that carousel's value slides show a
+drained/emptied glass -- deliberately, the story's own point (the ritual already happened, unwitnessed) --
+but an empty, rinsed-clear glass is nearly invisible in a photograph (transparent, nothing for the camera to
+render against most backgrounds). Owner explicitly asked for a GENERAL fix (not a narrow "always half-full"
+rule that would fight scenes needing an empty glass, like this one).
+
+**Fixed, both in `producers.carousel_concept`:**
+- Added explicit permission for a value slide to show no pack at all when its own beat is about something
+  else, and a direct caution against doubling the product up alongside a route's own established visual
+  anchor (a glass, an object) in the same slide.
+- Added a general rule: whenever a glass of milk appears, whatever state the story calls for (full, half,
+  emptied), describe enough visible milk residue (a film, a ring, a coating) for it to read clearly as a
+  MILK glass in a photograph.
+
+**Verified**: 2 objectives (the doorframe/glass-motif story, and a genuine milkman delivery story as a
+control), 12 routes, 36 value slides. The exact forced-pack bug pattern did not reproduce anywhere; the
+writer now actively reasons about it in its own output ("the milk itself is the anchor, so the pack isn't in
+frame. shows_pack false") -- the control story still uses the pack freely in its own value slides, so the
+fix isn't over-suppressing legitimate cases. Every empty/drained-glass mention (8 of 8) now describes visible
+milk residue. No regression to Round 29's CTA-size fix or Round 24's role-anchor fix, both confirmed intact
+in the same test batch.
+
+**Shipped, commit 116f811, deploy live ~13:1x UTC.** api/selfcheck.py, tools/test_pack_choice.py (unaffected
+-- producers.py only), smoke on the committed tree, live gate (selfcheck commit match, deep check 22/0,
+only instance-swap 502s since deploy) all clean.
+
+**Not yet verified**: a real image render of either fix. Both are proven at the text/prompt level; the next
+real carousel generation on a similarly-structured story (its own visual anchor, an empty-glass beat) is the
+actual test.
+
+**Still open from Rounds 27-29, not touched this round**: the "cast ticked, no person selected" unreliability
+(two different failure modes across two scripts); the one-instance invented-product defect (a fake-labelled
+glass bottle); and the CTA pack-oversizing fix from Round 29, which reduced but did not eliminate the issue
+(1 of 3 still failed in this round's own no-cast generation) -- worth watching whether it recurs again now
+that the forced-pack and glass-visibility fixes are also live, since a cleaner overall scene may reduce
+competing visual pressure on the CTA too.

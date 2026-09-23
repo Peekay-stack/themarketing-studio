@@ -715,3 +715,22 @@ position inconsistency in the writer's own few-shot example ("lower third" vs th
 portion" -- doesn't explain oversizing, just noted), and the still-open "cast ticked, unselected"
 unreliability + one-instance phantom-product defect from Rounds 27-28. Full detail:
 BRAND_GROUNDING_TESTING_LOG.md, "23 Sep -- Round 29".
+
+**UPDATE 23 Sep (Round 30, forced-pack + invisible-empty-glass both fixed) -- commit 116f811, live-gated
+clean.** Owner asked me to re-read the actual script rather than trust my earlier "side"-role
+placement-clause theory for slide 3's disconnected pack -- confirmed directly: 4 of 5 non-CTA slides
+correctly used the platform's own established visual motif (a glass at the doorframe's base) and showed no
+pack; slide 3 alone broke that pattern with a gratuitous, uninteracted-with pack, because shows_pack's old
+guidance ("even briefly, in the middle distance") gave license to add it anywhere plausible with no
+counter-instruction that "no pack" is the normal, right answer for most value slides. Fixed: explicit
+permission to skip the pack, and a caution against doubling up on the product alongside an established
+visual anchor. Second fix, same round: an empty/drained glass (deliberate in this story -- the ritual
+already happened, unwitnessed) renders nearly invisible since it's transparent; fixed generally (not a
+rigid "always half-full" rule) by requiring visible milk residue whatever fullness state the story calls
+for. Verified: 36 fresh value slides across 2 objectives (the glass-motif story + a milkman control) -- the
+forced-pack bug pattern didn't reproduce anywhere, the writer now actively cites the new reasoning in its
+own output, the control story's legitimate pack use wasn't suppressed, and 8/8 empty-glass mentions now
+describe visible residue. Rounds 24 and 29's fixes both confirmed still intact. NOT yet verified against a
+real image render. Still open: the "cast ticked, unselected" unreliability, a one-instance invented-product
+defect, and Round 29's CTA-oversizing fix (reduced, not eliminated -- 1/3 failed in this round's own
+no-cast render). Full detail: BRAND_GROUNDING_TESTING_LOG.md, "23 Sep -- Round 30".
