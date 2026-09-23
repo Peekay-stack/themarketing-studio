@@ -622,28 +622,53 @@ def carousel_concept(objective: str, house: dict | None = None, platform: dict |
         "of milk — carried at the side, handed over, tucked in a crate, set down on a counter — never "
         "held out at arm's length toward the camera and never resting alone as a centrepiece with no "
         "one touching it; both read as an advertising hero shot and the pack renders oversized.\n"
-        "Any person who recurs across more than one slide in a route needs ONE fixed physical "
-        "description, written the first time they appear (hair, build, one or two distinguishing "
-        "features) and reused near-verbatim in every later slide that includes them — never "
-        "re-describe them differently from how they were first introduced. If the route spans "
-        "different points in time (a headline naming a year, a decade, \"years ago\"), say so "
-        "explicitly INSIDE each of those slides' visual_note and tie it to an age change for that "
-        "recurring person — a headline is cosmetic text placed over the image afterward and never "
-        "reaches the image itself, so the time period and the age it implies belong in the "
-        "visual_note, not only in the headline. Anyone appearing for the first time who is not that "
-        "established recurring person must be marked as new in the visual_note (\"a new character: "
-        "...\") so a person aging is never confused with a different person being introduced. A "
-        "slide that does not need to PROVE identity is free to use blur, silhouette, an obscured or "
-        "turned-away face for visual drama — a mysterious hook, a shadowed figure, a shot where the "
-        "person is secondary all work well and cost nothing, since nothing is being checked against "
-        "that shot. Reserve a clearly, fully visible face for whichever slide(s) actually need the "
-        "audience to recognise this is the same established person — a reveal, a portrait, any "
-        "moment the story leans on already knowing this face. Never let an obscured framing land on "
-        "one of those identity-carrying slides; that is the one place it has to hold.\n"
+        "EVERY slide's visual_note opens by stating its own time period plainly (\"It's 2026\", "
+        "\"Still 2026\", \"It's 1999, 27 years earlier\") — never leave it implicit or only in the "
+        "headline. Any person who recurs across more than one slide in a route needs ONE fixed "
+        "description covering BOTH face/hair AND wardrobe, written in full the first time they "
+        "appear, and reused near-verbatim every later slide that includes them — this applies to "
+        "EVERY recurring person in the route, not only the lead. On a slide set in the SAME time "
+        "period as their last appearance, do not re-derive or restate how they look beyond naming "
+        "them and confirming \"identical, unchanged\" — describing fresh appearance details on every "
+        "same-era slide invites a different guess each time even when nothing should have changed. "
+        "Only describe an actual APPEARANCE CHANGE on a slide set at a genuinely different time "
+        "period, tied explicitly to that slide's own stated year. Anyone appearing for the first "
+        "time who is not an established recurring person must be marked as new (\"a new character: "
+        "...\") so aging is never confused with a different person being introduced. Never leave a "
+        "recurring person's presence in a slide implicit (\"a hand resting near it\") — name them "
+        "and reuse their locked description explicitly, including on the CLOSING slide, which is "
+        "the highest-stakes one to get right, not an exception. A slide that does not need to PROVE "
+        "identity is free to use blur, silhouette, an obscured or turned-away face for visual drama "
+        "— a mysterious hook, a shadowed figure, a shot where the person is secondary all work well "
+        "and cost nothing, since nothing is being checked against that shot. Reserve a clearly, "
+        "fully visible face for whichever slide(s) actually need the audience to recognise this is "
+        "the same established person — a reveal, a portrait, any moment the story leans on already "
+        "knowing this face. Never let an obscured framing land on one of those identity-carrying "
+        "slides; that is the one place it has to hold.\n"
+        "EXAMPLE OF THE EXPECTED DENSITY (a different story, illustrating the pattern only — never "
+        "reuse these names or this premise):\n"
+        "Slide 1 (hook): It's 2026. Meena — grey bob haircut, round glasses, a faded green cotton "
+        "saree — threading a needle at her tailoring table, morning light through a shopfront "
+        "window.\n"
+        "Slide 2 (value): Still 2026. Meena, identical to slide 1 — grey bob, round glasses, faded "
+        "green saree, unchanged — fitting a young customer's blouse in the same shop.\n"
+        "Slide 3 (value): It's 1994, 32 years earlier. The same Meena, but younger: no grey yet, "
+        "dark hair in a plait, no glasses yet, the same warm smile, mid-20s. She's stitching by "
+        "hand at a smaller table in the same shop, before the sewing machine arrived. We briefly "
+        "see a new character walking past outside: a man in his 20s, a customer who matters later.\n"
+        "Slide 4 (cta): It's 2026 again, the same year as slides 1 and 2. Meena — same grey bob, "
+        "round glasses, faded green saree as before — hands a finished shirt across her counter to "
+        "that same man, now in his 50s: her regular customer for three decades. The real product "
+        "sits naturally in the lower third, a hand's edge resting near it.\n"
         'Return ONLY JSON: {"routes":[{"name":"short route name","rationale":"one line on why this '
         'works","slides":[{"role":"hook","headline":"...","visual_note":"...","shows_pack":false}, ...]}, '
         '...exactly 3 routes]}')
-    data, err = _ask(prompt, 2600)
+    # 23 Sep: the character-locking rules (a leading time statement, a locked description restated per
+    # recurring person, a worked example) made every slide's visual_note noticeably denser -- 2600 was
+    # already tight for 3 routes x 6 slides and started truncating some replies outright ("longer than
+    # the token budget and was cut off"). n_mode:"auto" can ask for up to 10 slides a route, so sized for
+    # that worst case with real headroom, not just today's 6-slide test.
+    data, err = _ask(prompt, 6000)
     if not data or not data.get("routes"):
         return [], ("No concepts available." if err == "no key" else f"Couldn't draft concepts: {err}.")
     routes = []
