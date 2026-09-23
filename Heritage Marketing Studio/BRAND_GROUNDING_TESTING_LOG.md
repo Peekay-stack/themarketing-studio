@@ -2860,3 +2860,44 @@ the committed tree, live gate (selfcheck commit match, deep check 22/0, only ins
 deploy) all clean. This closes the loop on Round 25 -- both the write-side bug (adopt()) and the read-side
 gap (this navigation entry point) are now fixed; the owner's next redraft-and-navigate should show the
 correct expression end to end with no manual "Write these for me" workaround needed.
+
+
+### 23 Sep -- Round 27: owner's 3-way A/B/C on "Before The First Light" (no cast / cast-checked-but-
+### unselected / real AI cast) -- observations logged, NOT yet fixed, more generations requested first
+
+**Owner ran the SAME script ("The 4AM Trace") three ways** -- unchecked (no cast), checkbox ticked with no
+specific person chosen ("Not used in this carousel"), and a real AI-drafted cast selected -- specifically to
+compare and contrast. Three findings, all reviewed against the actual zoomed images, not just thumbnails:
+
+**1. Cast-identity lock overrides an unrelated slide's own scripted subject.** Slide 1's script explicitly
+calls for "a blurred child's hand... the reward moment, but framed as a starting point, not the story" -- no
+mention of Lakshmi or any named recurring person. The no-cast render correctly shows a child. Both cast-
+attached renders (ticked-unselected AND real AI cast) show a full ADULT drinking the glass instead -- the
+identity-lock instruction ("reusing the EXACT same person from the character reference... change only the
+action, setting and camera") applies uniformly to every slide regardless of whether that slide's own text is
+about someone else entirely. Not yet root-caused in code; flagged for later.
+
+**2. The "cast checkbox ticked, no specific person chosen" state does not behave like "no cast".** The
+dropdown read "Not used in this carousel" yet slide 1 still showed the same adult-substitution as the real-
+cast render, not the child the no-cast baseline correctly produced -- suggesting ticking the checkbox alone
+(independent of an actual cast_id) may fall back to a default/most-recent signed-off reference. Flagged, not
+yet confirmed against the code.
+
+**3. Two pack-fidelity defects, confirmed by directly opening the zoomed image files (not eyeballed from
+thumbnails), present in BOTH cast and no-cast renders -- so NOT a reference-conditioning artifact, a
+genuine prompt/writer-level issue:**
+   - **CTA slide (6): the pack renders wildly oversized**, in the no-cast render and the real-AI-cast render
+     both -- a giant pack essentially filling/floating over the upper frame, nowhere near "paperback book"
+     scale, with Lakshmi small in the lower corner. The checkbox-ticked-unselected render was less extreme
+     but still clearly oversized. Likely the same competing-instruction shape as Round 22's camera-clause
+     fix: producers.py's own CTA writer rule asks for the pack "naturally the focus of the upper frame",
+     which may be pulling against packscene.py's real-world size anchor on this specific phrasing.
+   - **Slide 3's crate: multiple sharp, legible packs visible**, not one clear pack with the rest blurred,
+     in both the no-cast and checkbox-ticked-unselected renders -- a direct miss of `FRONT_ONLY_ONE_PACK`'s
+     existing crate carve-out (written 22 Sep for exactly this shape of scene). The real-AI-cast render's
+     version of this slide showed a different problem again -- the container didn't clearly read as a milk
+     crate at all, more like a generic basket.
+
+**Decision**: owner is running a SECOND, different idea through the same three-way test before any fix is
+proposed, specifically to confirm these are systemic rather than one script's phrasing. Nothing shipped this
+round -- observation only, logged per standing instruction.

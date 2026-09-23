@@ -682,3 +682,19 @@ Fixed by giving it the identical preload every other entry point already carries
 `screen:'exec', xTab:` site in the file -- all already correct; nothing else needed the fix. This closes
 the full loop on the platform-redraft-staleness bug: write-side (Round 25) and read-side (Round 26) both
 fixed and live. Full detail: BRAND_GROUNDING_TESTING_LOG.md, "23 Sep -- Round 26".
+
+**UPDATE 23 Sep (Round 27, 3-way A/B/C on cast conditions -- observation only, nothing shipped).**
+Owner ran "The 4AM Trace" (a different script from Rounds 22-24's milkman one -- multi-character anthology,
+not one recurring hero) three ways: no cast / cast ticked with nobody chosen / real AI cast. Findings, all
+verified by opening the actual zoomed image files: (1) cast-identity lock overrides an unrelated slide's
+own scripted subject -- slide 1 explicitly calls for a child, both cast-attached renders substitute an
+adult instead; (2) the "checkbox ticked, no person selected" state does NOT behave like "no cast" -- same
+adult-substitution as the real-cast render, suggesting a silent fallback to a default reference, not yet
+confirmed in code; (3) two pack-fidelity defects present in BOTH cast and no-cast renders (so script/prompt-
+level, not reference-conditioning): the CTA pack renders wildly oversized in 2 of 3 conditions (a giant
+pack filling the upper frame, likely producers.py's own "pack naturally the focus of the upper frame" CTA
+instruction fighting packscene.py's size anchor -- same shape as Round 22's camera-clause conflict), and
+slide 3's crate shows multiple sharp packs instead of one-clear-rest-blurred in 2 of 3 (a direct miss of
+the existing FRONT_ONLY_ONE_PACK crate carve-out). Owner is running a second, different idea through the
+same 3-way test before any fix is proposed, to confirm these are systemic rather than this one script's
+phrasing. Full detail: BRAND_GROUNDING_TESTING_LOG.md, "23 Sep -- Round 27".
