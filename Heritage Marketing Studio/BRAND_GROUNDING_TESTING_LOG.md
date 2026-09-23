@@ -2651,3 +2651,47 @@ script? Real trade-offs both ways -- noted in the Image Engine Playbook artifact
 
 checkfe, full suite (test_pack_choice, test_identity_lock), py_compile, selfcheck, smoke on the committed
 tree, live gate (self-check commit match, deep check 20/0, only instance-swap 502s) all clean.
+
+
+### 23 Sep -- Round 22: writer density matched to a hand-written example, and a real scene-vs-instruction
+### conflict in the camera wording found and fixed
+
+**Owner tried the Round 21 fix live and found two more things.** First: the writer's actual output was
+noticeably thinner than the hand-written script the owner had used to prove the mechanism the day before
+-- correct rules, but no worked example to show the model what "done well" looks like. Second: a live
+generation with a real signed-off cast reference attached STILL showed three different faces across three
+present-day slides (worse than Round 21's single-slide drift), plus a secondary character's wardrobe
+drifting and the CTA slide going anonymous ("a hand's edge lingering", no name).
+
+**Fixed at the writer (`producers.carousel_concept`), verified before shipping:**
+- Added a literal few-shot example (a different story -- a tailor, not Suresh/Ramesh -- so it can't leak
+  names) demonstrating the exact density wanted: every slide opens by stating its own time period, a
+  locked description covers BOTH face and wardrobe for every recurring person (not just the lead), and
+  same-era slides say "identical, unchanged" instead of re-deriving appearance from scratch each time.
+  Also required every slide to name a recurring person explicitly, including the CTA -- no more implicit
+  references.
+- **Found and fixed a real regression the denser writing itself caused**: richer prose pushed some
+  replies past the existing 2600-token budget -- one of two attempts failed outright mid-session with "the
+  reply was longer than the token budget and was cut off" (the exact empty-carousel failure the owner hit
+  live). Raised to 6000, sized for n_mode "auto"'s worst case (up to 10 slides/route).
+- **Verified hard before shipping**: 3 manual-mode runs (9 routes, ~54 slides) with zero truncation
+  failures, zero missing leading-time statements, zero name leakage, every CTA naming the recurring
+  character. A separate auto-mode stress run (3 more routes) also completed cleanly. Shipped commit
+  72f88d4, live-gated clean.
+
+**Separately: the owner suspected "photo quality has gone down" since Round 20's camera-technical fix,
+and was right.** That fix appended an UNCONDITIONAL lens/framing mandate ("shoot this as a natural
+mid-shot... never a tight macro or product-shot lens") to every side/cta pack slide, regardless of what
+the scene itself asked for. Today's own script proved the exact collision: a slide whose own visual_note
+said "tight crop on his hands and the pack" was, in the same prompt, also told "never a tight ... lens" --
+the identical scene-vs-instruction fight class that's broken five other things this week. Fixed:
+`packscene.pack_clause` now takes the caller's own scene text and skips the camera-technical default when
+the scene already states its own tight/close framing, relying on the absolute size anchor alone (which
+already says "same real-world size whether wide or tight close-up") for those cases. **Verified with a
+real A/B on the exact conflicting scene** -- both came back reasonably composed and correctly sized; no
+dramatic visual swing from one sample, honestly reported as such rather than oversold. What's unambiguous
+is the contradiction is gone. Shipped commit c10ee13, live-gated clean.
+
+Both rounds: checkfe, full suite (test_pack_choice with new pinning cases for both fixes, test_identity_lock),
+py_compile, selfcheck, smoke on the committed tree, live gate (self-check commit match, deep check 20/0,
+only instance-swap 502s) all clean.

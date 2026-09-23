@@ -608,3 +608,18 @@ UI, since drafting a cast reference already read the live script and the only ga
 Deliberately deferred (owner's own call after weighing it): extracting just the lead character's
 description for cast-drafting instead of the whole script -- noted in the Image Engine Playbook, not
 built. Full entry: BRAND_GROUNDING_TESTING_LOG.md, "23 Sep -- Round 21".
+
+**UPDATE 23 Sep (Round 22, writer density + a real camera-clause conflict) -- two fixes, both verified
+before shipping. Commits 72f88d4 and c10ee13, both live-gated clean.**
+(1) The writer's output was thinner than a hand-written example the owner had proven worked -- added a
+literal few-shot example (a different story, no name leakage) plus explicit rules: leading time statement
+every slide, locked description covers wardrobe for EVERY recurring person not just the lead, same-era
+slides say "identical, unchanged" instead of re-deriving appearance, CTA always names the recurring
+person. This denser writing overran the existing 2600-token response budget and caused a real, live
+truncation failure (the empty-carousel bug) -- raised to 6000, verified clean across 9+3 real routes.
+(2) The owner suspected Round 20's camera-technical wording had hurt photo quality, and was right: it was
+unconditional, so it told a scene that explicitly asked for "tight crop" to also "never" have one --
+proven directly from today's own script. Fixed: skipped when the scene states its own tight/close framing,
+relying on the size anchor alone there. Real A/B trial: no dramatic visual swing in one sample, reported
+honestly rather than oversold -- the fix is a provable logical-contradiction removal, not a proven quality
+jump. Full entry: BRAND_GROUNDING_TESTING_LOG.md, "23 Sep -- Round 22".
