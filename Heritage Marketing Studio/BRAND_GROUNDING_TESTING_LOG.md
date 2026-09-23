@@ -2907,3 +2907,36 @@ round -- observation only, logged per standing instruction.
 all three conditions -- only the cast variable changed. Rules out "Automatic pack-mode inconsistency" as an
 explanation for the CTA-oversizing and crate-multipack findings; both are confirmed independent of cast AND
 of pack-selection mode, isolating them as pure writer/prompt-level issues.
+
+
+### 23 Sep -- Round 28: third 3-way A/B/C ("The List No One Sees" / Arun) -- CTA pack oversizing
+### confirmed systemic across 2 scripts (4/6), a new "phantom product" defect found (1 instance)
+
+**Owner ran a THIRD script through the same no-cast / cast-ticked-unselected / real-AI-cast three-way
+test.** All images opened and verified directly (not thumbnail-only):
+
+**CTA pack oversizing reproduced again** -- no-cast and real-AI-cast conditions both show a clearly
+oversized pack on the closing slide (comparable magnitude to Round 27); the ticked-unselected condition
+rendered correctly this time. Combined with Round 27 (also 2/3, different condition failing there), the
+running total is **4 of 6 CTA generations across two different scripts** -- roughly two-thirds. Does not
+correlate with any one cast condition (a different condition failed each time), consistent with the pack
+photo being held constant throughout (confirmed by the owner after Round 27) -- this is a prompt-level issue
+in how the CTA's own writer instruction competes with the size anchor, not a cast-conditioning artifact.
+**Decision: this is now past "maybe one script's phrasing" -- ready to investigate and fix.**
+
+**New defect, one instance so far:** slide 4 of the no-cast render is explicitly marked "No pack in this
+slide" (matching the script, which never mentions a product there), yet the image shows an invented glass
+milk BOTTLE with a fake blue "Pure Milk" label on the counter -- not the real Heritage brand, not asked for
+by the script or the pack setting. Did not reproduce in the other two conditions on this script. Logged, not
+yet investigated -- only one data point.
+
+**Correction to an initial read**: slide 5's glass of milk in this same script was initially flagged as
+"unnecessary" but on direct comparison against the script text, it exactly matches what was written (a
+deliberate callback to slide 1's shot, "the effortless-looking room from slide 1, now understood") and its
+own pack-mode setting is correct (no branded pack was ever asked for there). Working as intended, not a
+defect -- distinguished from a narrative-redundancy critique, which is a different, fair question but not
+what was reported.
+
+**Next: owner asked to (1) consolidate the log into a clear issue list, (2) investigate the CTA-oversizing
+issue in the actual code, (3) plan a fix, (4) implement -- communicating at each step rather than jumping
+straight to a change.**
