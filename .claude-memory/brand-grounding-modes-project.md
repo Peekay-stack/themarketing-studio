@@ -734,3 +734,5 @@ describe visible residue. Rounds 24 and 29's fixes both confirmed still intact. 
 real image render. Still open: the "cast ticked, unselected" unreliability, a one-instance invented-product
 defect, and Round 29's CTA-oversizing fix (reduced, not eliminated -- 1/3 failed in this round's own
 no-cast render). Full detail: BRAND_GROUNDING_TESTING_LOG.md, "23 Sep -- Round 30".
+
+**PAUSED 23 Sep (after Round 30)** -- the user moved on to [[pending-work-list]] ("enough time perfecting carousel"). Rounds 21-30 all shipped and live-gated; genuinely open items if this thread is picked back up again: per-slide cast control, the "cast ticked, no person selected" unreliability (2 different failure modes across 2 scripts, never root-caused), a one-instance invented-product defect (a fake-labelled glass bottle), and whether Round 29's CTA pack-oversizing fix fully held (it reduced the failure rate but a follow-up test still showed 1 of 3 failing). Not urgent -- only resume if the user raises Carousel again specifically.
