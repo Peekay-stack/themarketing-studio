@@ -1,16 +1,27 @@
 ---
 name: image-gen-engine-research
-description: "22 Sep research on image/video engine choice, compositing vs generation, and which providers are reachable — don't re-research this from scratch"
+description: "Image/video engine choice, compositing vs generation, which providers are reachable, plus the living playbook artifact that now supersedes this as the up-to-date version — check the artifact first"
 metadata: 
   node_type: memory
   type: reference
   originSessionId: 60d5a7b2-1e0f-4999-a432-7547cc82bb56
-  modified: 2026-09-22T15:12:02.201Z
+  modified: 2026-09-24T07:49:28.858Z
 ---
 
+**LIVE DOCUMENT, check this first**: [Image and Video Engine Playbook](https://claude.ai/artifact/TQ4v3So79uCASppWBmkiNF)
+— the maintained, up-to-date version of everything below, split into Part A (image: stills engine
+comparison, pack/identity fidelity work, Gemini's own image blueprint checked against our code) and
+Part B (video: engine comparison table across Veo/Kling/Seedance/Runway/Luma/Hailuo/Pika/PixVerse, a
+dedicated storyboards subsection, Gemini's own Veo blueprint checked against our code). Update the
+artifact directly (same URL, republish with `url` set) rather than writing new research only here —
+this memory file is the anchor/pointer plus the parts of the 22 Sep research not worth re-deriving from
+the artifact every time.
+
 Researched 22 Sep during [[brand-grounding-modes-project]]'s Round 20 (the prompting-technique review
-that preceded shipping the camera-technical/reference-labelling wording). Captured here so it doesn't need
-re-researching next time engine choice or product-fidelity architecture comes up.
+that preceded shipping the camera-technical/reference-labelling wording), then extended 24-25 Sep with a
+second-opinion review of two Gemini implementation blueprints (Flash image, Veo video) checked line-by-line
+against the real code, plus a fresh video-engine market scan. Captured here so it doesn't need
+re-researching from scratch — but the artifact above is the current version; this file may lag it.
 
 **What this app actually uses** (confirmed by reading `api/gemini.py`, not assumed): stills go through
 `IMAGE_MODEL = "gemini-3.1-flash-image"` (Gemini 3.1 Flash Image, aka "Nano Banana 2") via `gemini.image()`/
