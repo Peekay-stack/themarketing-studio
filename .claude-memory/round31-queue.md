@@ -5,21 +5,26 @@ metadata:
   node_type: memory
   type: reference
   originSessionId: 60d5a7b2-1e0f-4999-a432-7547cc82bb56
-  modified: 2026-09-24T07:54:38.761Z
+  modified: 2026-09-24T07:59:51.501Z
 ---
 
 **LIVE DOCUMENT**: [Round 31 Queue](https://claude.ai/artifact/UpSArgACG53yWTUCPVwFSV)
 
-Built 25 Sep by consolidating every still-open item across three research threads into one operational
-board: [[brand-grounding-modes-project]] (Carousel, Rounds 21-30), [[image-gen-engine-research]] (the
-Image and Video Engine Playbook artifact), and [[cross-category-format-study]] (the Format Signal Study
-artifact). 25 items total, sorted into three buckets, not just one flat list:
+Built 25 Sep by consolidating every still-open item across four threads into one operational board:
+[[brand-grounding-modes-project]] (Carousel, Rounds 21-30), [[image-gen-engine-research]] (the Image and
+Video Engine Playbook artifact), [[cross-category-format-study]] (the Format Signal Study artifact), and
+the [[studio-work-inventory]]/[[pending-work-list]] backend/platform items paused when Carousel work
+began (measurement ledger phase 2, Video plan-binding, multi-brand concurrency risk, beta deploy Phase 4,
+POSM/Onground brand-voice gap, brand-character's reference photo, PR/Sales-enabler parity, Video's
+doc-layer gap + Sales-enabler channel economics). 33 items total, sorted into three buckets, not just one
+flat list:
 
-- **Task list (15)** — nothing blocked on an experiment. 4 small items are genuinely ready to build now
-  (headline-safe negative space beyond the CTA, a defensive no-typography style cue, fixing the writer's
-  own few-shot inconsistency, and Video's narrowly-scoped negative_prompt wiring). The rest need scoping
-  first, including the two biggest builds (still-image compositing, a generate-verify-retry loop) which
-  stay in this bucket since nothing blocks scoping them, just sizing them.
+- **Task list (23)** — nothing blocked on an experiment. Items 1-15 are the creative-pipeline items; 4 of
+  those are genuinely ready to build now (headline-safe negative space beyond the CTA, a defensive
+  no-typography style cue, fixing the writer's own few-shot inconsistency, and Video's narrowly-scoped
+  negative_prompt wiring). Items 16-23 are the platform/infrastructure items from the pending list, all
+  needing scoping — the two flagged as the most concretely scoped starting points are #16 (measurement
+  ledger phase 2) and #20 (POSM/Onground brand-voice gap).
 - **A/B tests (3)** — Kling 3.0 vs Veo 3.1 on a multi-shot same-character sequence (tests Kling's claimed
   strength against this project's known weakness); current CTA wording vs a further revision (Round 29's
   fix reduced but didn't eliminate oversizing — is wording at its ceiling?); composited vs fully-prompted
