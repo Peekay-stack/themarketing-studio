@@ -55,5 +55,5 @@ bridge depth, core-as-synthesis, or campaign-level CACB→DADB scoring.
    the bulk call wasn't naming the real eight explicitly (only the single-row rewrite was). Fixed by
    always sending the explicit eight; re-verified live that `media` stays empty after the fix.
 
-**Status: feature-complete, fully local, nothing deployed.** User will test on local tomorrow (25 Sep).
+**Status: shipped live 25 Sep (2315e0a).** Tested by user on live; see [[project-naming-convention-gate]] for open follow-ups.
 [[round31-queue]]'s artifact still lists this as open — needs a republish once the user has tested it.

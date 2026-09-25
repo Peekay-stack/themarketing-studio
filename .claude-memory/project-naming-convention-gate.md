@@ -64,4 +64,18 @@ Also deferred: a home-page hero-row redesign question (3 shortcut buttons vs. a 
 buttons) — recommended keeping true zero-setup shortcuts distinct from plain tab links, since the top nav
 already covers tab-style navigation; parked at the user's own request, not decided.
 
-**Status: fully built, fully local, nothing deployed.** User will test on local tomorrow (25 Sep).
+**Status: see UPDATE 25 Sep below (shipped).** User will test on local tomorrow (25 Sep).
+
+## UPDATE 25 Sep — SHIPPED live as 2315e0a, then live-testing found the gap is wide (PICK UP HERE, morning 26 Sep)
+Everything above is committed, pushed and live (`/selfcheck` matched `2315e0a`). Same-day additions, also shipped in 2315e0a: house-from-brief inherits the name, duplicate-house detection ("open it instead"), campaign panel vs platform panel mutually exclusive, "Take it to X" hand-offs. Deleted the empty unnamed house `cdfecdbe41`.
+
+**Local, UNCOMMITTED edits in app.dc.html (checkfe passes, not browser-verified, not pushed):** Idea Platform house dropdown (`ideaHouseOpts`) now uses `h.label`; project-name chip beside the "The idea platform" title (`ideaProjectName`/`ideaHasProject`); "Which campaign" field hidden when the house has zero campaigns (both `xFields` and `vxFields`).
+
+**Audit the user asked for (nothing built past the above; user said HOLD, resume in the morning).** Counts are from the local tenant + code grep, not a click-through:
+- Data: briefs 1/23 named, houses 6/10 (only 2 real; 4 placeholders like "Heritage — house, September 2026"), plans 9/13 (all placeholders), platforms 2/7 (placeholders), campaigns 0, executions 0/9, PR 0/10, trade 0/1.
+- Correct (13): brief builders gate, brief-save refusal, brief library/picker, house/plan/platform/campaign inheritance at creation, house cards, plan cards, Start-a-plan house dropdown, two campaign pickers, dupe banner, house-screen name + cascade; house/platform/plan docx filenames.
+- Missing (~12): Idea Platform dropdown + header (fixed locally), plan screen header `pBrand`, plan strip/state line, media-plan header `medPlanName`, PR sheet list/header (no name field), executions (no field, producer "Briefing from the plan" shows none), trade records, all non-house/platform/plan download filenames (incl. app.dc.html ~18455), printable house sheet (~18523/18560), made ledger (accepts project, caller unconfirmed), campaign list header on platform screen (unconfirmed).
+- Root gap: placeholders were saved as if real names (label doubles brand: "Heritage Foods · Heritage Foods – house…"); names copy down only at creation; old records only fixed via the house's "Name this project" cascade.
+- **Proposed order awaiting approval:** (1) push the two Idea Platform fixes + add name to plan header/media header/printable house sheet; (2) executions + PR sheets get a name copied from their plan; (3) name in all download filenames; (4) show placeholders as "unnamed — name it" instead of doubling the brand.
+
+**Also open — carousel cast options (diagnosed, no fix):** `draftCarouselCast` sends the whole script prose (props included) as `characters` to `/cast-reference` (main.py ~1512), no India/market anchoring, variation rule too loose → oversized glasses, three different compositions, foreign-looking cast. Proposed: extract only people, anchor to brand's market, force same composition; prove on the real Nothing Cut script first (large change → approval first).
