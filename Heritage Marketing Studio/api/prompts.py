@@ -183,6 +183,17 @@ def _execution_block(execution_id: str) -> str:
         out.append(f"Serving the {b['pillar']} pillar — not the other one")
     if isinstance(b.get("message"), dict) and str(b["message"].get("text") or "").strip():
         out.append(f"The message it carries: {b['message']['text']}  — verbatim, do not paraphrase")
+    # The campaign wiring fix: a campaign bound to this execution (`execution.brief_from`) may have its
+    # own adaptation of the platform's expression for this medium — the specific season's tension rather
+    # than the platform's durable one. It is named here, in THIS PIECE OF WORK, so it inherits the
+    # "where the two differ, this wins" precedence this whole block already carries over the platform
+    # block above — the same rule `producers.stands_on` applies for POSM/Onground.
+    camp = b.get("campaign") or {}
+    camp_expr = str((camp.get("expressions") or {}).get(e.get("kind"), "") or "").strip()
+    if camp_expr:
+        out.append(f"The campaign's adaptation for this piece (“{camp.get('name') or 'this campaign'}”): "
+                   f"{camp_expr}  — this is the campaign's own expression, adapted from the platform "
+                   f"above; where they differ, this wins")
     # Priority geography (round 92) — the one field `execution.brief_from` attaches outside the six
     # cells above (see that function's own comment on why). Language is stated as an instruction, not
     # background: a plan naming a state whose principal language the studio holds no code for is a real

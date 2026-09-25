@@ -473,7 +473,11 @@ def brief_from(p: dict, house: dict | None, kind: str, sel: dict) -> tuple[dict,
     # been optional.
     if house:
         pset = ideas_mod.for_house(house.get("id", ""))
-        camp = campaign_mod.get(pset) if pset else None
+        # `sel.get("campaign_id")` is the wiring fix: a campaign PICKED for this execution, not always
+        # the platform's latest. Empty string still falls through to `campaign.get`'s own "most recent"
+        # default, so an execution briefed before this existed, or briefed with no explicit pick, behaves
+        # exactly as it always did.
+        camp = campaign_mod.get(pset, str(sel.get("campaign_id") or "")) if pset else None
         if camp:
             # `axis` resolves the proof axis from the campaign's own divisions, falling back to the
             # bridge on its ladder path. `axis_source` travels with it so a producer is never shown a
@@ -489,6 +493,10 @@ def brief_from(p: dict, house: dict | None, kind: str, sel: dict) -> tuple[dict,
                 # `available: False` when none is written, which is a real state: every execution can
                 # still be briefed from the platform's per-medium expression.
                 "big_idea": campaign_mod.big_idea(pset, camp.get("id", "")),
+                # What this campaign becomes in THIS execution's own medium — the adaptation
+                # `campaign.write_expressions` writes. `producers.stands_on` and Social's
+                # `_execution_block` both read this ahead of the platform's own, unadapted expression.
+                "expressions": camp.get("expressions") or {},
             }
         basis = ideas_mod.house_basis(house)
         # The claim is resolved through `claim_fact`, which reads `rtb_id` only and reports
@@ -617,6 +625,23 @@ def stale_because(e: dict, p: dict, house: dict | None) -> list[dict]:
                 out.append({"field": "platform", "col": "expression",
                             "was": plat.get("expression", ""), "now": now,
                             "detail": "the platform's expression for this medium has been rewritten"})
+
+    # The bound campaign, same class of check: dropped, or its expression for this medium rewritten. A
+    # producer reads this ahead of the platform's own expression (see `brief_from` above), so a stale
+    # copy here is the same silent-drift risk the platform check exists to catch — not a new one.
+    camp = brief.get("campaign") or {}
+    if camp and house:
+        pset = ideas_mod.for_house(house.get("id", ""))
+        live_camp = campaign_mod.get(pset, camp.get("id", "")) if pset else None
+        if live_camp is None:
+            out.append({"field": "campaign", "col": "chosen", "was": camp.get("name", ""), "now": "",
+                        "detail": f"the campaign “{camp.get('name')}” no longer exists"})
+        else:
+            now = str((live_camp.get("expressions") or {}).get(e.get("kind"), "") or "")
+            was = str((camp.get("expressions") or {}).get(e.get("kind"), "") or "")
+            if now != was:
+                out.append({"field": "campaign", "col": "expression", "was": was, "now": now,
+                            "detail": "the campaign's expression for this medium has been rewritten"})
 
     # And the message text can be rewritten in the house under the same id.
     msg = brief.get("message") or {}

@@ -618,12 +618,33 @@
 
   <!-- ===================== IMC BRIEF (brand-brief skill) ===================== -->
   <sc-if value="{{ isImc }}" hint-placeholder-val="{{ false }}">
+  <!-- Naming-convention gate: a project name is required before this screen does anything else. Not a
+       dismissible modal (this app has none) — a wall, because the whole point is that it cannot be
+       skipped. Everything downstream (the house, the plan, the idea platform, every campaign under it)
+       inherits this name once, here, and is never asked again. -->
+  <sc-if value="{{ imcNeedsProjectName }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed; inset:0; background:rgba(23,50,94,0.6); z-index:500; display:flex; align-items:center; justify-content:center; padding:24px;">
+    <div style="background:#fff; border-radius:20px; padding:32px; max-width:440px; width:100%; box-shadow:0 30px 60px -20px rgba(23,50,94,0.5);">
+      <div style="font-size:12px; font-weight:800; letter-spacing:0.06em; text-transform:uppercase; color:#259821; margin-bottom:8px;">Before you start</div>
+      <h2 style="font-family:'Epilogue',sans-serif; font-size:22px; font-weight:700; color:#17325E; margin:0 0 10px;">Name this project</h2>
+      <p style="font-size:13.5px; color:#6B7280; line-height:1.6; margin:0 0 18px;">Everything this brief starts — the messaging house, the plan, the idea platform, every campaign under it — inherits this name, so pickers further down can tell your work apart instead of showing the brand name two or three times over.</p>
+      <input value="{{ imcProjectDraft }}" data-k="projectDraft" onChange="{{ onImcProjectDraft }}" placeholder="e.g. Diwali same-day push" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:10px; padding:12px 14px; font-size:14.5px; color:#17325E; margin-bottom:14px;" />
+      <div style="display:flex; gap:10px;">
+        <button onClick="{{ confirmImcProjectName }}" disabled="{{ imcProjectContinueDisabled }}" style="flex:1; background:#17325E; color:#fff; border:none; border-radius:10px; padding:12px; font-weight:700; font-size:14px; cursor:pointer;">Continue</button>
+        <span onClick="{{ goBriefs }}" style="align-self:center; cursor:pointer; font-size:13px; font-weight:600; color:#6B7280;">Cancel</span>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+  <sc-if value="{{ imcHasProjectName }}" hint-placeholder-val="{{ false }}">
   <div style="max-width:1080px; margin:0 auto; padding:28px 40px 120px; animation:hf-fade 0.4s ease;">
     <div style="display:flex; align-items:center; gap:12px; margin-bottom:14px;">
       <span onClick="{{ goBriefs }}" style="cursor:pointer; font-size:14px; font-weight:600; color:#6B7280;">← Briefs</span>
       <span style="color:#A8AEB8;">/</span>
       <span style="font-size:14px; font-weight:700; color:#17325E;">IMC Brief</span>
       <span style="font-size:10px; background:#DFF0E3; color:#2F6B3C; border-radius:10px; padding:3px 9px; font-weight:800; letter-spacing:0.04em;">skill</span>
+      <span style="color:#A8AEB8;">·</span>
+      <span title="This brief's project — inherited by the house, the plan, the platform and every campaign under it." style="font-size:13px; font-weight:700; color:#2E5EA6;">{{ imcProjectDraft }}</span>
     </div>
     <h1 style="font-family:'Epilogue',sans-serif; font-size:34px; font-weight:700; letter-spacing:-0.02em; margin:0 0 6px; color:#17325E;">Write the IMC brief</h1>
     <p style="font-size:15px; color:#6B7280; margin:0 0 26px; max-width:640px;">Describe the brief, add your inputs, then let the brand-brief skill draft it. You review and edit everything before downloading the Word file.</p>
@@ -914,14 +935,33 @@
     </div>
   </sc-if>
   </sc-if>
+  </sc-if>
 
   <!-- ===================== BRIEF BUILDER (guided) ===================== -->
   <sc-if value="{{ isBuilder }}" hint-placeholder-val="{{ false }}">
+  <!-- Naming-convention gate — same wall as the IMC screen's own; see its comment. -->
+  <sc-if value="{{ builderNeedsProjectName }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed; inset:0; background:rgba(23,50,94,0.6); z-index:500; display:flex; align-items:center; justify-content:center; padding:24px;">
+    <div style="background:#fff; border-radius:20px; padding:32px; max-width:440px; width:100%; box-shadow:0 30px 60px -20px rgba(23,50,94,0.5);">
+      <div style="font-size:12px; font-weight:800; letter-spacing:0.06em; text-transform:uppercase; color:#259821; margin-bottom:8px;">Before you start</div>
+      <h2 style="font-family:'Epilogue',sans-serif; font-size:22px; font-weight:700; color:#17325E; margin:0 0 10px;">Name this project</h2>
+      <p style="font-size:13.5px; color:#6B7280; line-height:1.6; margin:0 0 18px;">Everything this brief starts — the messaging house, the plan, the idea platform, every campaign under it — inherits this name, so pickers further down can tell your work apart instead of showing the brand name two or three times over.</p>
+      <input value="{{ builderProjectDraft }}" data-field="projectDraft" onChange="{{ handleBrief }}" placeholder="e.g. Diwali same-day push" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:10px; padding:12px 14px; font-size:14.5px; color:#17325E; margin-bottom:14px;" />
+      <div style="display:flex; gap:10px;">
+        <button onClick="{{ confirmBuilderProjectName }}" disabled="{{ builderProjectContinueDisabled }}" style="flex:1; background:#17325E; color:#fff; border:none; border-radius:10px; padding:12px; font-weight:700; font-size:14px; cursor:pointer;">Continue</button>
+        <span onClick="{{ goBriefs }}" style="align-self:center; cursor:pointer; font-size:13px; font-weight:600; color:#6B7280;">Cancel</span>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+  <sc-if value="{{ builderHasProjectName }}" hint-placeholder-val="{{ false }}">
   <div style="max-width:1080px; margin:0 auto; padding:28px 40px 90px; animation:hf-fade 0.4s ease;">
     <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
       <span onClick="{{ goBriefs }}" style="cursor:pointer; font-size:14px; font-weight:600; color:#6B7280;">← Briefs</span>
       <span style="color:#A8AEB8;">/</span>
       <span style="font-size:14px; font-weight:700; color:#17325E;">New brief</span>
+      <span style="color:#A8AEB8;">·</span>
+      <span title="This brief's project — inherited by the house, the plan, the platform and every campaign under it." style="font-size:13px; font-weight:700; color:#2E5EA6;">{{ builderProjectDraft }}</span>
     </div>
     <h1 style="font-family:'Epilogue',sans-serif; font-size:30px; font-weight:700; letter-spacing:-0.02em; margin:0 0 4px; color:#17325E;">Brief Builder</h1>
     <p style="font-size:14.5px; color:#6B7280; margin:0 0 20px; max-width:680px;">Pick a format, build it tab by tab (or let the AI co-writer draft every field), then review — it flows straight into the brief format for approval &amp; sharing.</p>
@@ -1102,6 +1142,7 @@
       </div>
     </sc-if>
   </div>
+  </sc-if>
   </sc-if>
 
   <!-- ===================== BRIEF EDITOR ===================== -->
@@ -3824,6 +3865,17 @@
         </sc-if>
         <button onClick="{{ openHouseBrief }}" style="background:#fff; color:#17325E; border:1px solid #C9CEDA; border-radius:9px; padding:8px 13px; font-weight:700; font-size:12.5px; cursor:pointer; flex:none; white-space:nowrap;">Pull from a brief</button>
       </div>
+      <!-- Offered, not forced: a second house under one project is sometimes deliberate (an alternate
+           take), so this is a choice, not a block. See `pickBrief`'s own comment for the match rule. -->
+      <sc-if value="{{ hasDupeHouse }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#FFF7E8; border:1px solid #F0DFB4; border-radius:11px; padding:12px 14px; margin-bottom:12px;">
+          <div style="font-size:13px; line-height:1.6; color:#8A6410; margin-bottom:9px;">A house already exists for this project — <b>{{ dupeHouseLabel }}</b>. Open it instead of starting a duplicate, or continue if this is meant to be a second one.</div>
+          <div style="display:flex; gap:10px;">
+            <span onClick="{{ openDupeHouse }}" style="cursor:pointer; font-size:12.5px; font-weight:700; color:#17325E; text-decoration:underline;">Open it instead</span>
+            <span onClick="{{ dismissDupeHouse }}" style="cursor:pointer; font-size:12.5px; font-weight:700; color:#8A6410; text-decoration:underline;">Start a new one anyway</span>
+          </div>
+        </div>
+      </sc-if>
       <input data-k="brand" value="{{ nhBrand }}" onChange="{{ onNewHouse }}" placeholder="Brand" style="width:100%; border:1px solid #DDD9D1; border-radius:10px; padding:11px 13px; font-size:14px; color:#17325E; background:#fff; margin-bottom:10px;" />
       <textarea data-k="brief" value="{{ nhBrief }}" onChange="{{ onNewHouse }}" rows="3" placeholder="Paste or summarise the brief the house is written against. The core message is drafted from this, so what you put here is what the whole document inherits." style="width:100%; border:1px solid #DDD9D1; border-radius:10px; padding:11px 13px; font-size:13.5px; line-height:1.55; color:#17325E; background:#FBFAF8; resize:vertical; font-family:inherit; margin-bottom:12px;"></textarea>
       <button onClick="{{ createHouse }}" style="background:#17325E; color:#F7F5F1; border:none; border-radius:11px; padding:12px 22px; font-weight:700; font-size:13.5px; cursor:pointer;">{{ newHouseLabel }}</button>
@@ -4482,11 +4534,67 @@
       </sc-if>
       </sc-if>
 
+      <!-- The campaign's own expression by medium — the adaptation-not-regeneration wiring built earlier:
+           an execution bound to this campaign (the picker on the Execution/Video screens) reads this
+           ahead of the platform's own, un-adapted line for the same medium. Gated on `cpg.hasCampaign`,
+           the same condition the grid above already uses — writing an adaptation before a real campaign
+           exists has nothing to adapt from. -->
+      <sc-if value="{{ cpg.hasCampaign }}" hint-placeholder-val="{{ false }}">
+      <div id="tms-campaign-expr-by-medium" style="background:#fff; border:1px solid #DDD9D1; border-radius:16px; padding:22px 24px; margin-top:16px;">
+        <div style="display:flex; align-items:baseline; gap:11px; margin-bottom:5px;">
+          <span style="font-size:11px; font-weight:800; letter-spacing:0.07em; color:#F0561E;">CAMPAIGN</span>
+          <span style="font-family:'Epilogue',sans-serif; font-weight:700; font-size:18px; color:#17325E;">This campaign's own expression by medium</span>
+        </div>
+        <div style="font-size:13.5px; line-height:1.6; color:#6B7280; margin-bottom:16px; max-width:680px; text-wrap:pretty;">Adapted from the platform's expression above, narrowed to this campaign's own insight and resolution — not a fresh line and not a restatement. An execution bound to this campaign (picked when it's briefed) reads this ahead of the platform's, everywhere the platform's own expression would otherwise apply.</div>
+        <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-bottom:16px;">
+          <button onClick="{{ writeAllCampaignExpressions }}" style="background:#17325E; color:#F7F5F1; border:none; border-radius:11px; padding:11px 20px; font-weight:700; font-size:13.5px; cursor:pointer;">{{ expressAllCampaignLabel }}</button>
+          <span style="font-size:12.5px; color:#6B7280; line-height:1.5; flex:1; min-width:220px; text-wrap:pretty;">Adapts all eight. Everything stays editable after — rewriting it makes it yours.</span>
+          <sc-if value="{{ hasCampaignExprSaved }}" hint-placeholder-val="{{ true }}">
+            <span style="font-size:11.5px; font-weight:700; color:{{ campaignExprSavedFg }}; white-space:nowrap;">{{ campaignExprSavedLabel }}</span>
+          </sc-if>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:11px;">
+          <sc-for list="{{ campaignExpressions }}" as="ex" hint-placeholder-count="8">
+            <div style="border:1px solid #DDD9D1; border-radius:14px; background:#FBFAF8; padding:15px 16px; display:flex; flex-direction:column;">
+              <div style="display:flex; align-items:center; gap:9px; margin-bottom:7px; flex-wrap:wrap;">
+                <span style="font-family:'Epilogue',sans-serif; font-weight:700; font-size:15px; color:#17325E;">{{ ex.name }}</span>
+                <span style="font-size:12px; color:#9AA1AC;">{{ ex.job }}</span>
+                <span onClick="{{ ex.rewrite }}" style="cursor:pointer; margin-left:auto; font-size:12px; font-weight:700; color:#17325E; text-decoration:underline; white-space:nowrap;">{{ ex.rewriteLabel }}</span>
+              </div>
+              <textarea data-k="{{ ex.k }}" value="{{ ex.text }}" onChange="{{ onCampaignExpression }}" rows="2" placeholder="{{ ex.ph }}" style="width:100%; border:1px solid #DDD9D1; border-radius:10px; padding:9px 11px; font-size:12.5px; line-height:1.5; color:#17325E; background:#fff; resize:vertical; font-family:inherit; margin-bottom:9px;"></textarea>
+              <sc-if value="{{ ex.hasGo }}" hint-placeholder-val="{{ true }}">
+                <span onClick="{{ ex.go }}" style="cursor:pointer; margin-top:auto; align-self:flex-start; font-size:12.5px; font-weight:700; color:{{ ex.goFg }}; text-decoration:underline;">{{ ex.goLabel }}</span>
+              </sc-if>
+              <sc-if value="{{ ex.goneAway }}" hint-placeholder-val="{{ false }}">
+                <span style="margin-top:auto; align-self:flex-start; font-size:12.5px; color:#8A6410; line-height:1.5;">{{ ex.goneNote }}</span>
+              </sc-if>
+              <sc-if value="{{ ex.noProducer }}" hint-placeholder-val="{{ false }}">
+                <span style="margin-top:auto; align-self:flex-start; font-size:12px; color:#9AA1AC;">No producer for this yet — written here for reference.</span>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- Collapsed behind a campaign once one exists — a producer reads ONE of the two panels, never
+           both (the campaign's when bound, this one otherwise; see `producers.stands_on`'s priority),
+           so showing both open at once invited editing the wrong one. Still reachable: this is the
+           thing the campaign panel above adapts FROM, and the fallback for any execution with no
+           campaign bound, or a second campaign this platform runs later — never removed, only tucked
+           away. `<details>`, not a new modal/toggle pattern, matching how "Prompt guide" already works
+           on the Briefs screen. -->
       <div id="tms-expr-by-medium" style="background:#fff; border:1px solid #DDD9D1; border-radius:16px; padding:22px 24px; margin-top:16px; opacity:{{ ideaOpacity }};">
+      <details open="{{ ideaExprOpen }}">
+        <summary style="cursor:pointer; list-style:revert;">
         <div style="display:flex; align-items:baseline; gap:11px; margin-bottom:5px;">
           <span style="font-size:11px; font-weight:800; letter-spacing:0.07em; color:{{ ideaStepFg }};">STEP 4</span>
           <span style="font-family:'Epilogue',sans-serif; font-weight:700; font-size:18px; color:#17325E;">Expression by medium</span>
+          <sc-if value="{{ ideaExprCollapsedNote }}" hint-placeholder-val="{{ false }}">
+            <span style="font-size:12.5px; color:#8A6410;">— the campaign above now wins; open this only to change the platform's own baseline</span>
+          </sc-if>
         </div>
+        </summary>
         <div style="font-size:13.5px; line-height:1.6; color:#6B7280; margin-bottom:16px; max-width:680px; text-wrap:pretty;">What the platform becomes in each medium’s own terms, and where each expression hands off to the producer who builds it. This sat at step 3, before the campaign that gives it something to express — a person wrote one expression per medium and then named the big idea those expressions were expressing. The dependency is now the order.</div>
         <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-bottom:16px;">
           <button onClick="{{ writeAllExpressions }}" style="background:#17325E; color:#F7F5F1; border:none; border-radius:11px; padding:11px 20px; font-weight:700; font-size:13.5px; cursor:pointer;">{{ expressAllLabel }}</button>
@@ -4520,6 +4628,7 @@
             </div>
           </sc-for>
         </div>
+      </details>
       </div>
     </div>
   </div>
@@ -10778,6 +10887,10 @@ class Component extends DCLogic {
     // Was brand:'Heritage', category:'Indian dairy'. Those two literals were the reason the wrong-brand
     // stamp survived a fix at brandName(): an empty active brand still resolved through imc.brand.
     imc: { prompt:'', brand:'', category:'', preparedFor:'', sourcesNote:'',
+      // Naming-convention gate: `project` is the confirmed name (what actually saves with the brief,
+      // inherited by everything downstream); `projectDraft` is what's being typed before Continue is
+      // pressed, kept separate so the gate doesn't disappear mid-keystroke on the first character.
+      project:'', projectDraft:'',
       files:{ market:[], household:[], wheel:[], cbca:[], research:[] },
       marketData:null, householdData:null,
       status:'idle', message:'', draft:null, tab:'brand', activePin:0,
@@ -11076,6 +11189,14 @@ class Component extends DCLogic {
   setImc(patch){ this.setState(s => ({ imc: { ...s.imc, ...patch } })); }
   onImcText = (e) => { const k = e.target.getAttribute('data-k'); this.setImc({ [k]: e.target.value }); };
   setImcTab = (t) => () => this.setImc({ tab:t });
+  // Naming-convention gate: locks in `projectDraft` as the real, saved `project` only on an explicit
+  // Continue click — typing alone never dismisses the gate, so a half-typed name can't be mistaken for
+  // a confirmed one.
+  confirmImcProjectName = () => {
+    const name = (this.state.imc.projectDraft || '').trim();
+    if (!name) return;
+    this.setImc({ project: name, projectDraft: name });
+  };
 
   onImcFiles = (slot) => (e) => {
     const files = [...e.target.files]; e.target.value = '';
@@ -12302,7 +12423,12 @@ class Component extends DCLogic {
     // version, same as /brief-save's own server-side enforcement of the pairing.
     fd.append('payload', JSON.stringify({ brand: isGeneral ? '' : im.brand, category:im.category, prepared_for:im.preparedFor,
       prompt:im.prompt, market_data:im.marketData||null, household_data:im.householdData||null,
-      brand_mode: this.state.producerBrandMode, research }));
+      brand_mode: this.state.producerBrandMode, research,
+      // Confirmed by the naming-convention gate before this screen was usable — without this, a brief
+      // that only ever gets auto-drafted (never explicitly sent through `saveImcBrief`'s own "Save to
+      // library" button) kept a permanently project-less row, found live: the project name showed as
+      // saved on one brief but was silently missing on a sibling row from the same session.
+      project: im.project || '' }));
     // Research (including any wheel/cbca upload that couldn't be read as a chart) is already ingested
     // above and travels in `research`. Only chart-capable wheel/cbca files still need to go as raw
     // bytes, in their own fields — draft_brief() reads those directly for vision.
@@ -12387,7 +12513,9 @@ class Component extends DCLogic {
     const payload = { ...d, date:this.today(), sources_note:im.sourcesNote||'', research,
       market_data:im.marketData||null, household_data:im.householdData||null,
       needscope:{ ...(d.needscope||{}), reading:(d.needscope&&d.needscope.reading)||'' },
-      cb_ca_db_da:{ ...cc, shift_line:'From '+(cc.shift_from||'')+' to '+(cc.shift_to||'')+'.' } };
+      cb_ca_db_da:{ ...cc, shift_line:'From '+(cc.shift_from||'')+' to '+(cc.shift_to||'')+'.' },
+      // Same reasoning as draftBrief's own project field — this route also keeps a library row.
+      project: im.project || '' };
     // Research already ingested above and travels in payload.research; the export route doesn't read
     // images at all (no vision step here, unlike drafting), so no files need to be re-sent.
     const fd = new FormData(); fd.append('payload', JSON.stringify(payload));
@@ -12767,6 +12895,13 @@ class Component extends DCLogic {
     const k = e.target.dataset.field, v = e.target.value;
     this.setState(s => ({ brief: { ...s.brief, [k]: v } }));
   };
+  // Naming-convention gate for the guided builder — same shape as confirmImcProjectName: only an
+  // explicit Continue click commits `projectDraft` into the real, saved `project` field.
+  confirmBuilderProjectName = () => {
+    const name = (this.state.brief.projectDraft || '').trim();
+    if (!name) return;
+    this.setState(s => ({ brief: { ...s.brief, project: name, projectDraft: name } }));
+  };
   onTitle = (e) => this.setState({ title: e.target.value });
   onAiPrompt = (e) => this.setState({ aiPrompt: e.target.value });
   fillPrompt = (t) => () => this.setState({ aiPrompt: t });
@@ -13123,9 +13258,28 @@ class Component extends DCLogic {
     } else if (target === 'house') {
       // The brief's own words go into the field rather than sitting behind an id. The core message is
       // drafted from what is visible here, so it has to stay readable and editable.
-      this.setStrat({ nh: { ...this.strat().nh, brand: snap.brand || this.strat().nh.brand, brief: this.briefAsText(snap) }, nhFrom: snap.title });
+      // `nhFromProject` rides alongside `nhFrom` (the display title) rather than inside `nh.brief` —
+      // that field is deliberately flattened prose ("has to stay readable and editable", see the
+      // comment above), and `/house-new` synthesizes a brand-new, project-less brief from raw text, so
+      // the source brief's real `project` would otherwise be silently lost. Found live: a house pulled
+      // from "Heritage Maharashtra Push" stayed unnamed and still showed the optional "Name this
+      // project" nudge.
+      // A house already exists for this exact project (matched on project + brand, case/space
+      // insensitive) — found live: pulling the same named brief twice silently created two houses
+      // both called "Heritage Maharashtra Push", recreating the identical ambiguity this whole naming
+      // effort exists to remove, one layer up. Surfaced as a choice rather than blocked outright — a
+      // second house under one project is sometimes deliberate (an alternate take), so this offers to
+      // continue the existing one without forcing it.
+      const proj = (snap.project || '').trim().toLowerCase();
+      const brandKey = (snap.brand || this.strat().nh.brand || '').trim().toLowerCase();
+      const dupe = proj ? (this.strat().houses || []).find(h =>
+        (h.project || '').trim().toLowerCase() === proj &&
+        (h.brand || '').trim().toLowerCase() === brandKey) : null;
+      this.setStrat({ nh: { ...this.strat().nh, brand: snap.brand || this.strat().nh.brand, brief: this.briefAsText(snap) },
+        nhFrom: snap.title, nhFromProject: snap.project || '', nhDupeHouse: dupe || null });
       this.setState({ briefPickerOpen:false });
-      this.showToast('Pulled in — the core message will be drafted from this brief.', 'ok');
+      this.showToast(dupe ? 'A house already exists for "' + snap.project + '" — open it, or start a new one anyway.'
+        : 'Pulled in — the core message will be drafted from this brief.', 'ok');
     } else if (target === 'idea') {
       this.setState({ briefPickerOpen:false, idea: { ...this.idea(), fromBrief:snap } });
       this.showToast('Held as the brief this platform answers.', 'ok');
@@ -13138,7 +13292,10 @@ class Component extends DCLogic {
     }
   };
   clearLinkedBrief = () => this.setState({ linkedBrief: null });
-  clearHouseBrief = () => this.setStrat({ nh: { ...this.strat().nh, brief:'' }, nhFrom:'' });
+  clearHouseBrief = () => this.setStrat({ nh: { ...this.strat().nh, brief:'' }, nhFrom:'', nhFromProject:'', nhDupeHouse:null });
+  // The person's own explicit call: this project really does need a second house (an alternate take,
+  // not a mistake). Clears the banner only — everything already pulled in stays exactly as it was.
+  dismissDupeHouse = () => this.setStrat({ nhDupeHouse:null });
   clearPlanBrief = () => this.setStrat({ np: { ...this.strat().np, brief:'' }, npFrom:'' });
   briefAsText(snap){
     return [snap.objective && ('Objective: ' + snap.objective),
@@ -13173,8 +13330,13 @@ class Component extends DCLogic {
     const format = r.format || f.format || 'Brief';
     const t = this.briefTag(format);
     const when = r.updated || r.created || r.at || '';
+    // `r.project`/`r.label` come straight from `briefstore.snapshot()`, which has computed them all
+    // along \u2014 this just never read them. Without the prefix, every brief for one brand showed the same
+    // "Brand \u2013 IMC brief" title in the picker and the library count, indistinguishable from each other;
+    // found live testing the naming-convention gate (23 Sep).
     return { id: r.id || r.brief_id || null,
-      title: r.title || f.title || 'Untitled brief',
+      title: (r.project ? r.project + ' \u2014 ' : '') + (r.title || f.title || 'Untitled brief'),
+      project: r.project || '', projectSource: r.project_source || '',
       brand: r.brand || f.brand || '',
       brandMode: r.brand_mode || 'grounded',
       format, tag:t.tag, tint:t.tint, fg:t.fg,
@@ -13227,6 +13389,10 @@ class Component extends DCLogic {
     this.setState({ briefSaveBusy:true });
     const r = await this.apiCall('/brief-save', { id: this.state.briefId || null, brief_id: this.state.briefId || null, brand,
       brand_mode: this.state.producerBrandMode,
+      // Confirmed by the naming-convention gate before this screen was even usable — see
+      // `confirmImcProjectName`. Sent top-level since `d` (the skill's own drafted output) carries no
+      // project field of its own to fall back to.
+      project: im.project || '',
       title: (brand || 'Independent') + ' — IMC brief', format:'IMC',
       // WIRING BUG (round-83 audit, confirmed live): this used to nest the whole draft one level
       // deeper than briefstore.canonicalise() unnests (`fields.draft.cb_ca_db_da.shift_from` — two
@@ -13958,12 +14124,20 @@ class Component extends DCLogic {
   // it reaches `/complete` and skips the house's spine grounding server-side (`prompts.system_for`'s own
   // note explains exactly what it does and does not skip) — the plan's audience/channel/measure stay
   // binding regardless, same promise the "cannot override" notice already makes on screen.
-  loadSocialStandsOn = async (typed) => {
+  loadSocialStandsOn = async (typed, campaignId, houseId) => {
     const s = this.state;
     const body = { kind:'social', typed: typed || '', force_typed: !!s.socialForceTyped,
       brand_mode: s.producerBrandMode };
     const e = this.currentExec ? (this.currentExec() || {}) : {};
     if (e.id) body.execution = e.id;
+    // Both only ever arrive from the campaign panel's own cold "Take it to Social" hand-off. `houseId`
+    // matters just as much as `campaignId` here: without it, `_exec_ctx` on the server falls back to
+    // "the newest house for the active brand", which is a real guess and, found live, not necessarily
+    // the house the campaign panel was actually showing — the campaign lookup then silently failed
+    // because it searched the WRONG house's platform set. An already-briefed execution's own bound
+    // campaign (above) always wins over either, same priority `stands_on` itself uses.
+    if (!e.id && houseId) body.house = houseId;
+    if (!e.id && campaignId) body.campaign = campaignId;
     const d = await this.apiCall('/producer-stands-on', body);
     if (d && d.ok && d.data) this.setState({ socialStandsOn: d.data });
   };
@@ -13984,10 +14158,15 @@ class Component extends DCLogic {
   // Round 92: Video gets the same real override Social/POSM have — `kind:'video'` was already supported
   // server-side (`producers.py`'s own medium dict already had `"video":"tv"`), it just had no free-text
   // field or quote box to attach it to. Same shape as `loadSocialStandsOn`/`onToggleSocialForceTyped`.
-  loadVideoStandsOn = async (typed) => {
+  loadVideoStandsOn = async (typed, campaignId, houseId) => {
     const s = this.state;
     const body = { kind:'video', typed: typed || '', force_typed: !!s.videoForceTyped,
       brand_mode: s.producerBrandMode };
+    // Unlike Social, this never bound an execution id here to begin with — left exactly as it was.
+    // Both `campaignId` and `houseId` only ever arrive from the campaign panel's own cold "Take it to
+    // Video" hand-off — see `loadSocialStandsOn`'s own comment on why `houseId` has to ride along too.
+    if (houseId) body.house = houseId;
+    if (campaignId) body.campaign = campaignId;
     const d = await this.apiCall('/producer-stands-on', body);
     if (d && d.ok && d.data) this.setState({ videoStandsOn: d.data });
   };
@@ -17547,13 +17726,28 @@ class Component extends DCLogic {
       goPosmShortcut:this.goPosmShortcut,
       goVideo:this.go('video'), goCampaigns:this.go('campaigns'), goHistory:this.go('history'),
       goMedia:this.go('media'),
-      goNewBrief:this.openFormat('comms'),
+      // Used to jump straight into the 'comms' format — a quick-editor shortcut with no card of its
+      // own anywhere in the Briefs picker, so it could only ever be reached by accident, and its screen
+      // mislabelled itself as "IMC Brief" in the header (fmt('comms') falling back to FORMATS[0] when
+      // 'comms' matches nothing in the registered list). Retired: IMC already covers the same ground,
+      // and this now lands on the Briefs page to pick a real format — the same pattern `goSocial`/
+      // `goPosmShortcut` beside it already use for their own producers. `SECTIONS.comms`/
+      // `formatDefaults.comms` are left in place, unreferenced by any entry point now, so a brief
+      // already saved with format 'comms' still opens correctly rather than rendering blank.
+      goNewBrief:this.go('briefs'),
       greeting: this.greetingText(),
       // home
       queue, queueEmpty: queue.length === 0,
       // briefs
       recentBriefs, recentBriefsEmpty: recentBriefs.length === 0,
       // brief builder
+      // Naming-convention gate — same shape as the IMC screen's own (see its comment for why `project`
+      // rather than `projectDraft` is the gate condition).
+      builderNeedsProjectName: !(s.brief.project || '').trim(),
+      builderHasProjectName: !!(s.brief.project || '').trim(),
+      builderProjectDraft: s.brief.projectDraft || '',
+      confirmBuilderProjectName:this.confirmBuilderProjectName,
+      builderProjectContinueDisabled: !(s.brief.projectDraft || '').trim(),
       builderFormats, builderIsBrand, builderShowBrandPane, builderShowModeSwitch, builderHasImport,
       builderModeGuided: s.builderMode !== 'brand', builderModeBrand: builderBrandMode,
       guidedCardBg: s.builderMode !== 'brand' ? '#FFF7E8' : '#fff', guidedCardBorder: s.builderMode !== 'brand' ? '#E8A93C' : '#DDD9D1',
@@ -17566,6 +17760,14 @@ class Component extends DCLogic {
       builderReviewGo:this.builderReviewGo, builderBackToEdit:this.builderBackToEdit, sendToFormat:this.sendToFormat,
       // ---- IMC brief ----
       briefFormats, imcFormat, otherFormats, openImc:this.openBuilder('imc'),
+      // Naming-convention gate: blocks the rest of this screen until a project name is confirmed.
+      // `project` (not `projectDraft`) is the gate condition — typing alone never dismisses it, only
+      // the Continue click does (see confirmImcProjectName).
+      imcNeedsProjectName: !(im.project || '').trim(),
+      imcHasProjectName: !!(im.project || '').trim(),
+      imcProjectDraft: im.projectDraft || '', onImcProjectDraft:this.onImcText,
+      imcProjectContinueDisabled: !(im.projectDraft || '').trim(),
+      confirmImcProjectName:this.confirmImcProjectName,
       imcPrompt: im.prompt, imcBrand: im.brand, imcCategory: im.category, imcPreparedFor: im.preparedFor,
       imcIndependent,
       imcSourcesNote: im.sourcesNote, onImcText:this.onImcText,
@@ -17930,10 +18132,10 @@ class Component extends DCLogic {
     if (!nh.brand.trim() && !isGeneral) { this.showToast('Give the house a brand first.'); return; }
     this.setStrat({ busy:'house' });
     const r = await this.apiCall('/house-new', { brand: isGeneral ? '' : nh.brand, brief:nh.brief,
-      brand_mode: this.state.producerBrandMode });
+      brand_mode: this.state.producerBrandMode, project: this.strat().nhFromProject || '' });
     this.setStrat({ busy:'' });
     if (!r.ok || !r.data) { this.showToast('Could not start the house \u2014 is the server running?'); return; }
-    this.setStrat({ nh:{ brand:'', brief:'' }, nhFrom:'' });
+    this.setStrat({ nh:{ brand:'', brief:'' }, nhFrom:'', nhFromProject:'', nhDupeHouse:null });
     this.enterHouse(r.data.house, r.data.status, r.data.claim_state);
   };
   // The ONE studio-wide toggle's setter. Started as four separate ones (brief/house/plan/producer) \u2014
@@ -19006,9 +19208,11 @@ class Component extends DCLogic {
   // Where each row hands off once written — the merge of the old Expression-routes step. Influencer and
   // OOH have no entry here on purpose: no producer screen exists for them yet, and that is a different
   // state from a retired hand-off (see `noProducer` vs `goneAway` in ideaExpressions below).
+  // `pr` is real and only ever looked up by the campaign panel below — the platform's own seven-row
+  // list (`EXPRESSIONS` above) has no `pr` row, so adding it here changes nothing for that panel.
   EXPRESSION_GO = { video:['video','Take it to Video'], social:['social','Take it to Social'],
     posm:['posm','Take it to POS material'], activation:['onground','Take it to the activation'],
-    incentive:['sales','Take it to the trade'] };
+    incentive:['sales','Take it to the trade'], pr:['pr','Take it to PR'] };
   // Debounced, and sent as one map — seven separate saves each write a whole copy of the set, so the
   // last response to land would win with a version that predates the other six.
   onIdeaExpression = (e) => {
@@ -19049,6 +19253,62 @@ class Component extends DCLogic {
   };
   writeAllExpressions = () => this.expressPlatformDraft(null);
   rewriteExpression = (k) => () => this.expressPlatformDraft(k);
+
+  // ---------- the campaign's own expression by medium: adapted from the platform's, not a copy ----------
+  // Same eight rows as `EXPRESSIONS` above plus PR — a campaign's PR execution reads its own expression
+  // exactly like social/video/posm/activation/incentive do (see `producers.stands_on`, Social's
+  // `_execution_block`), so leaving it off here would silently under-serve one of the real producers.
+  // `media` stays excluded for the same reason it always has been: a schedule, not a medium.
+  CAMPAIGN_EXPRESSIONS = [
+    ['video', 'TV', 'the film a producer shoots, standing on this campaign specifically', 'e.g. This campaign’s own opening beat — adapted from the platform’s, not the platform’s line repeated.'],
+    ['social', 'Social', 'what a feed does with this campaign’s own tension', 'e.g. The daily unit, narrowed to this campaign’s proof.'],
+    ['influencer', 'Influencer', 'what a creator says in their own words about this campaign', 'e.g. Hand this campaign’s specific moment to a creator who already talks about it.'],
+    ['activation', 'On-ground', 'what happens when someone walks up, for this campaign', 'e.g. The demo this campaign’s tension actually calls for.'],
+    ['ooh', 'OOH', 'the one line this campaign can own at three seconds', 'e.g. One line, this campaign’s own, read at speed.'],
+    ['incentive', 'Trade', 'what makes a retailer say it, for this campaign’s push', 'e.g. The scheme tied to this campaign’s own window.'],
+    ['posm', 'POS material', 'what survives at arm’s length, for this campaign', 'e.g. This campaign’s own instruction, not the platform’s general one.'],
+    ['pr', 'PR', 'what a journalist would run, tied to this campaign specifically', 'e.g. The news this campaign’s window makes newly true.'],
+  ];
+  // Debounced, same reasoning as `onIdeaExpression` — several fields racing to save independently would
+  // let the slowest response overwrite the others with a stale copy of the set.
+  onCampaignExpression = (e) => {
+    const k = e.target.dataset.k, v = e.target.value, c = this.campaign();
+    const expressions = { ...(c.expressions || {}), [k]: v };
+    this.setState({ campaign: { ...c, expressions, campaignExprSaved:'editing' } });
+    clearTimeout(this._campExprTimer);
+    this._campExprTimer = setTimeout(async () => {
+      const cur = this.campaign();
+      if (!cur.id) { this.setState({ campaign: { ...this.campaign(), campaignExprSaved:'held' } }); return; }
+      const r = await this.apiCall('/campaign-express',
+        { house:(this.state.house||{}).id || null, campaign:cur.id, expressions: cur.expressions || {} });
+      this.setState({ campaign: { ...this.campaign(), campaignExprSaved: r.ok ? 'saved' : 'failed' } });
+    }, 400);
+  };
+  // Generating is -draft; storing one written by hand stays on /campaign-express, untouched here.
+  expressCampaignDraft = async (mediaKey) => {
+    const c = this.campaign();
+    if (!c.id || c.expressBusy) return;
+    this.setState({ campaign: { ...c, expressBusy: mediaKey || 'all' } });
+    const body = { house:(this.state.house||{}).id || null, campaign:c.id };
+    // Explicit even for "write all": `campaign.write_expressions` defaults to every key in
+    // `media.EXPRESSIONS` (nine, including `media`) when none are named, and this panel deliberately
+    // shows eight, not nine — the same exclusion `EXPRESSIONS` above already documents ("media... a
+    // schedule, not a medium"). Leaving this unset silently generated and PERSISTED a ninth expression
+    // nobody could see or edit — found live, testing this panel.
+    body.media = mediaKey ? [mediaKey] : this.CAMPAIGN_EXPRESSIONS.map(([k]) => k);
+    const r = await this.apiCall('/campaign-express-draft', body);
+    const d = (r && r.data) || {};
+    const cur = this.campaign();
+    if (d && d.expressions) {
+      this.setState({ campaign: { ...cur, expressBusy:'', expressions: { ...(cur.expressions||{}), ...d.expressions } } });
+      this.showToast(mediaKey ? 'Rewrote that one.' : 'Adapted all eight — each narrowed to this campaign’s own tension.', 'ok');
+      return;
+    }
+    this.setState({ campaign: { ...cur, expressBusy:'' } });
+    this.showToast((d && d.detail) || 'Could not write those.');
+  };
+  writeAllCampaignExpressions = () => this.expressCampaignDraft(null);
+  rewriteCampaignExpression = (k) => () => this.expressCampaignDraft(k);
 
   // ---------- testing the platform against the five: the model's challenge, kept apart from the decision ----------
   judgePlatform = async () => {
@@ -19096,7 +19356,7 @@ class Component extends DCLogic {
     ['posm','POS material','functional truth + emotional recall','Two metres, two seconds. It cannot build emotion, only trigger emotion something else built.'],
   ];
   campaign(){ return this.state.campaign || { name:'', insight:'', resolution:'', shape:'frame', frame:'',
-    slots:[], ladder:'', roles:{}, from:'', to:'', divisionsText:'' }; }
+    slots:[], ladder:'', roles:{}, from:'', to:'', divisionsText:'', expressions:{} }; }
   onCampaignDivisions = (e) => this.setState({ campaign: { ...this.campaign(), divisionsText: e.target.value } });
   loadCampaign = async () => {
     const d = await this.apiGet('/campaign');
@@ -19272,10 +19532,18 @@ class Component extends DCLogic {
     window.scrollTo({ top: Math.max(0, y), behavior:'smooth' });
     el.focus();
   };
-  ideaGoTo = (tab) => () => {
+  // `campaignId` (optional) — only ever sent by the campaign's own expression panel's "Take it to X",
+  // so its line wins the cold quote-box read the same way a bound execution's campaign already would
+  // (see `_exec_ctx`'s own comment on why this is folded in at the server, not decided here).
+  ideaGoTo = (tab, campaignId) => () => {
+    // The house this screen is actually showing — sent alongside `campaignId` so the server resolves
+    // THIS house's platform set, not its own "newest house for the brand" guess (see `loadSocialStandsOn`
+    // for why that guess found the wrong campaign live, in a tenant with more than one house per brand).
+    const houseId = campaignId ? ((this.state.house || {}).id || '') : undefined;
     if (tab === 'sales') { this.setState({ screen:'sales' }); window.scrollTo(0,0); return; }
+    if (tab === 'pr') { this.setState({ screen:'pr' }); window.scrollTo(0,0); return; }
     if (tab === 'video') { this.setState({ screen:'video' }); window.scrollTo(0,0);
-      this.loadGrounding(); this.loadVideoStandsOn(); return; } // round 92: six-entry-point audit
+      this.loadGrounding(); this.loadVideoStandsOn(undefined, campaignId, houseId); return; } // round 92: six-entry-point audit
     // 23 Sep -- this branch (social/posm/onground) set screen+xTab directly, the one shape the six-entry-
     // point audit above never covered: "Take it to Social/POS material/the activation", straight off the
     // Idea Platform's own expression-by-medium panel. Landed with whatever socialStandsOn/loadPosmFormats/
@@ -19287,7 +19555,7 @@ class Component extends DCLogic {
     this.loadGrounding();
     if (tab === 'posm') this.loadPosmFormats();
     if (tab === 'onground') { this.loadOgStandsOn(); this.ensureAssetLib(); }
-    if (tab === 'social') { this.loadSocialStandsOn(); this.loadCarouselAssetLib(); }
+    if (tab === 'social') { this.loadSocialStandsOn(undefined, campaignId, houseId); this.loadCarouselAssetLib(); }
   };
 
   // ---------- what a producer is given: the brief, the platform, or both ----------
@@ -19430,9 +19698,9 @@ class Component extends DCLogic {
     const planId = (s.plan && s.plan.id) || null;
     const changed = planId !== seen.planId || s.xTab !== seen.xTab || seen.screen !== s.screen;
     this._seen = { planId, xTab: s.xTab, screen: s.screen };
-    if (changed && s.screen === 'exec') this.loadExecOptions();
+    if (changed && s.screen === 'exec') { this.loadExecOptions(); this.loadCampaignsForExec(); }
     // Round 92: video's own execution options, same trigger as the xTab producers' `loadExecOptions`.
-    if (changed && s.screen === 'video') this.loadVideoExecOptions();
+    if (changed && s.screen === 'video') { this.loadVideoExecOptions(); this.loadCampaignsForExec(); }
     // Social's (and Video's) reference-library chips read `s.library` — round-92 fix, see REF_LIBRARY's
     // own comment. Video already loads it on screen entry (`go()`); Social has no such entry point of
     // its own (`xTab` flips from several call sites, not one), so it's fetched here instead, on the one
@@ -19463,6 +19731,21 @@ class Component extends DCLogic {
     const m = list.find(o => (o.id || o.value) === id);
     return m ? (m.text || m.label || '') : '';
   }
+  // The campaign picker (wiring fix): the campaigns on this house's adopted platform, for an execution
+  // to optionally bind to at brief time. Reuses `GET /campaign`, the same route the Idea Platform screen
+  // already lists campaigns from — a picker here does not need its own endpoint, only its own load
+  // trigger, since it fires from the Execution/Video screens rather than `goIdeaPlatform`.
+  //
+  // Reads the house id off the bound PLAN (`s.plan.house`), not `s.state.house` — that object is only
+  // populated once the Strategy/House screen itself has loaded, which the Execution screen never
+  // requires. `s.plan` is what this screen already depends on for everything else, so it is the one
+  // reliable source of the house id here too.
+  loadCampaignsForExec = async () => {
+    const hid = (this.state.plan || {}).house;
+    if (!hid) { this.setState({ campaigns: [] }); return; }
+    const d = await this.apiGet('/campaign?house=' + encodeURIComponent(hid));
+    this.setState({ campaigns: (d && d.campaigns) || [] });
+  };
 
   createExecution = async () => {
     const s = this.state, d = s.execDraft || {}, p = s.plan, tab = this.xTab();
@@ -19470,7 +19753,7 @@ class Component extends DCLogic {
     if (!d.audience || !d.channel) { this.showToast('An execution needs an audience and a channel \u2014 both are rows in the plan.'); return; }
     const body = { plan:p.id, kind:this.xKindFor(tab), audience:d.audience, pillar:this.execPillar(),
       channel:d.channel, occasion:d.occasion, measure:d.measure, message:d.message,
-      message_text: this.execMessageText(d.message) };
+      message_text: this.execMessageText(d.message), campaign_id: d.campaign_id || '' };
     const r = await this.apiCall('/execution-new', body);
     const ex = (r.ok && r.data && r.data.execution) ? r.data.execution
       : { id:'local-'+tab, kind:body.kind, brief:body, status:'briefed', artefacts:[], stale:false,
@@ -19595,7 +19878,7 @@ class Component extends DCLogic {
     if (!d.audience || !d.channel) { this.showToast('An execution needs an audience and a channel — both are rows in the plan.'); return; }
     const body = { plan:p.id, kind:'video', audience:d.audience, pillar:this.videoExecPillar(),
       channel:d.channel, occasion:d.occasion, measure:d.measure, message:d.message,
-      message_text: this.videoExecMessageText(d.message) };
+      message_text: this.videoExecMessageText(d.message), campaign_id: d.campaign_id || '' };
     const r = await this.apiCall('/execution-new', body);
     const ex = (r.ok && r.data && r.data.execution) ? r.data.execution
       : { id:'local-video', kind:'video', brief:body, status:'briefed', artefacts:[], stale:false,
@@ -21418,6 +21701,18 @@ class Component extends DCLogic {
           : (loaded ? 'The medium layer of the house has nothing written for this kind. Write it there and it appears here \u2014 nothing is typed into an execution.' : 'Reading the medium layer of the house.'),
         hintFg: rows.length ? '#6B7280' : '#B07A12' });
     }
+    // The campaign picker (wiring fix): optional, so its own empty option is the honest default rather
+    // than forcing a choice. When picked, `producers.stands_on` and Social's `_execution_block` read
+    // this campaign's own adapted line for this medium ahead of the platform's un-adapted one.
+    const campRows = s.campaigns || [];
+    xFields.push({ k:'campaign_id', label:'Which campaign', from:'strategy · campaigns', isSelect:true,
+      v:d.campaign_id || '', line:'#DDD9D1',
+      // `c.project` prefixes the label once campaigns are named projects, not just "IMC 2026" repeated
+      // — see the naming-convention work. Falls back to the bare campaign name for older, unnamed ones.
+      opts: [{ v:'', label: campRows.length ? 'none — the platform’s own expression' : 'no campaigns written yet' }]
+        .concat(campRows.map(c => ({ v:c.id, label:(c.project ? c.project + ' — ' : '') + (c.name || 'unnamed campaign') }))),
+      hint: 'Optional. Picking one makes this execution read that campaign’s own adapted line for this medium ahead of the platform’s.',
+      hintFg:'#6B7280' });
 
     const gaps = [];
     if (role === 'proof' && !isMedia) {
@@ -22184,6 +22479,12 @@ class Component extends DCLogic {
       ideaBuildBusyLabel: ip.draftingOn ? 'Developing \u201c' + ip.draftingOn + '\u201d\u2026' : '',
       ideaSteer: ip.steer || '', onIdeaSteer: this.onIdeaSteer,
       // Expression by medium: seven slots, each written against what that medium can actually do.
+      // Collapsed behind `<details>` once a real campaign exists — see the markup's own comment on why
+      // (one panel wins per producer, never both open at once). `this.campaign()` reflects whichever
+      // campaign this screen currently has loaded, same source `cpg.hasCampaign`/`campaignExpressions`
+      // already read.
+      ideaExprOpen: !this.campaign().id,
+      ideaExprCollapsedNote: !!this.campaign().id,
       ideaExpressions: this.EXPRESSIONS.map(([k, name, job, ph]) => {
         const goEntry = this.EXPRESSION_GO[k];
         const [goTab, goLabel] = goEntry || [null, ''];
@@ -22280,6 +22581,38 @@ class Component extends DCLogic {
       onCampaignDivisions: this.onCampaignDivisions,
       setCampaignLadder: this.setCampaignLadder, saveCampaign: this.saveCampaign, dropCampaign: this.dropCampaign,
       draftCampaign: this.draftCampaign,
+      // Campaign expression by medium: the adaptation of the platform's own line into this campaign's
+      // specific tension — same shape as `ideaExpressions` above, one layer down. Only meaningful once a
+      // real, saved campaign exists (mirrors the grid's own `cpg.hasCampaign` gate).
+      campaignExpressions: (() => {
+        const cx = this.campaign();
+        return this.CAMPAIGN_EXPRESSIONS.map(([k, name, job, ph]) => {
+          // Same three-state hand-off as the platform's own `ideaExpressions` above (hasGo/goneAway/
+          // noProducer) — see that block's comment. `cx.id` rides along so the producer's cold quote
+          // box reads THIS campaign's line, not the platform's — see `ideaGoTo`'s own comment.
+          const goEntry = this.EXPRESSION_GO[k];
+          const [goTab, goLabel] = goEntry || [null, ''];
+          const goneTo = goTab ? xRetiredByTab[goTab] : null;
+          const text = (cx.expressions || {})[k] || '';
+          return { k, name, job, ph, text,
+            rewrite: this.rewriteCampaignExpression(k),
+            rewriteLabel: cx.expressBusy === k ? 'Writing…' : 'Rewrite this one',
+            hasGo: !!goTab && !goneTo, goneAway: !!goneTo, noProducer: !goTab,
+            goneNote: goneTo ? 'This hands to the Media tab, which is being built.' : '',
+            go: (goTab && !goneTo) ? this.ideaGoTo(goTab, cx.id) : (() => {}),
+            goLabel: goLabel + ' →',
+            goFg: text.trim() ? '#17325E' : '#9AA1AC' };
+        });
+      })(),
+      onCampaignExpression: this.onCampaignExpression,
+      writeAllCampaignExpressions: this.writeAllCampaignExpressions,
+      expressAllCampaignLabel: this.campaign().expressBusy === 'all' ? 'Writing…' : 'Adapt these for me',
+      hasCampaignExprSaved: !!this.campaign().campaignExprSaved,
+      campaignExprSavedLabel: ({ editing:'saving…', saved:'saved',
+        held:'held here — save the campaign to save it', failed:'not saved' })[this.campaign().campaignExprSaved] || '',
+      campaignExprSavedFg: this.campaign().campaignExprSaved === 'failed' ? '#C0392B'
+        : (this.campaign().campaignExprSaved === 'saved' ? '#1E7E34'
+           : (this.campaign().campaignExprSaved === 'held' ? '#8A6410' : '#9AA1AC')),
       cpgGrid: (() => {
         const g = this.state.campaignGrid; if (!g) return null;
         // Server sends the raw key ('tv', 'on-ground'); "Roles by medium" above renders the same
@@ -22520,7 +22853,7 @@ class Component extends DCLogic {
       ogStands: !!(ogSo && ogSo.text) && !s.ogHideStands,
       ogStandsHidden: !!(ogSo && ogSo.text) && !!s.ogHideStands,
       ogStandsText: (ogSo && ogSo.text) || '',
-      ogStandsSource: (ogSo && ogSo.source) ? 'the platform this would be built against \u2014 from ' + ogSo.source : 'the platform this would be built against',
+      ogStandsSource: (ogSo && ogSo.source) ? 'what this would be built against \u2014 from ' + ogSo.source : 'what this would be built against',
       // Round 92: Onground had no reassurance copy at all when nothing grounds it \u2014 the box simply
       // showed nothing, unlike Social/POSM which at least said "and that's fine". No override checkbox
       // here by design (the textarea is always what's used, never silently superseded by a platform the
@@ -22655,6 +22988,14 @@ class Component extends DCLogic {
         ? 'By reference to the house, so it moves when the house moves.'
         : (loaded ? 'The medium layer of the house has nothing written for video. Write it there and it appears here — nothing is typed into an execution.' : 'Reading the medium layer of the house.'),
       hintFg: msgRows.length ? '#6B7280' : '#B07A12' });
+    // The campaign picker (wiring fix) — same field as the xTab producers' own; see that block's comment.
+    const vcampRows = s.campaigns || [];
+    vxFields.push({ k:'campaign_id', label:'Which campaign', from:'strategy · campaigns', isSelect:true,
+      v:d.campaign_id || '', line:'#DDD9D1',
+      opts: [{ v:'', label: vcampRows.length ? 'none — the platform’s own expression' : 'no campaigns written yet' }]
+        .concat(vcampRows.map(c => ({ v:c.id, label:(c.project ? c.project + ' — ' : '') + (c.name || 'unnamed campaign') }))),
+      hint: 'Optional. Picking one makes this execution read that campaign’s own adapted line for video ahead of the platform’s.',
+      hintFg:'#6B7280' });
 
     const vgaps = [];
     if (role === 'proof') {
@@ -23287,11 +23628,25 @@ class Component extends DCLogic {
       goStrategy: this.goStrategy,
       nhBrand: st.nh.brand, nhBrief: st.nh.brief, onNewHouse: this.onNewHouse, createHouse: this.createHouse,
       nhFrom: st.nhFrom || '', hasNhFrom: !!st.nhFrom, noNhFrom: !st.nhFrom, clearHouseBrief: this.clearHouseBrief,
+      // The duplicate-project banner — see `pickBrief`'s own comment on why this is offered rather than
+      // silently blocked or silently allowed.
+      hasDupeHouse: !!st.nhDupeHouse,
+      dupeHouseLabel: st.nhDupeHouse
+        ? (st.nhDupeHouse.label || st.nhDupeHouse.brand || 'that house') + ' — '
+          + (st.nhDupeHouse.chosen_layers != null ? st.nhDupeHouse.chosen_layers : 0) + ' of '
+          + (st.nhDupeHouse.total_layers != null ? st.nhDupeHouse.total_layers : 8) + ' layers decided'
+        : '',
+      openDupeHouse: st.nhDupeHouse ? this.openHouse(st.nhDupeHouse.id) : (() => {}),
+      dismissDupeHouse: this.dismissDupeHouse,
       npFrom: st.npFrom || '', hasNpFrom: !!st.npFrom, noNpFrom: !st.npFrom, clearPlanBrief: this.clearPlanBrief,
       newHouseLabel: st.busy === 'house' ? 'Starting…' : 'Start a house',
       npBrand: st.np.brand, npHouse: st.np.house, onNewPlan: this.onNewPlan, createPlan: this.createPlan,
       newPlanLabel: st.busy === 'plan' ? 'Starting…' : 'Start a plan',
-      houseOpts: houses.map(h => ({ id:h.id, label:(h.brand||'Untitled') + ' · ' + ((h.chosen_layers||0) + ' of ' + (h.total_layers != null ? h.total_layers : this.H_LAYERS.length)) })),
+      // `h.label` already carries the project name when one exists (`Heritage Foods · Diwali same-day
+      // push`) — this used to rebuild a brand-only label from scratch, which is why two houses for the
+      // same brand were indistinguishable here even after `houseCards` elsewhere on this screen got it
+      // right from the same data.
+      houseOpts: houses.map(h => ({ id:h.id, label:(h.label || h.brand || 'Untitled') + ' · ' + ((h.chosen_layers||0) + ' of ' + (h.total_layers != null ? h.total_layers : this.H_LAYERS.length)) })),
       npWarn: npBound ? 'The proof gate will run: channels given proof work are checked against that house’s sourced reasons.'
                       : 'Without a house the proof gate cannot run, and any channel could be handed proof work it cannot deliver.',
       npWarnFg: npBound ? '#6B7280' : '#B07A12',

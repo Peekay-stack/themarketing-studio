@@ -315,16 +315,18 @@ def _ask(prompt: str, max_tokens: int = 1500) -> tuple[dict | None, str]:
 # and once as the platform's expression. A producer should never ask for something the spine already
 # holds; asking again is how the two copies end up disagreeing.
 #
-#   1. the idea platform's expression for THIS medium  — the most specific thing anyone has decided
-#   2. the platform's own sentence                     — when it has not been expressed here yet
-#   3. the house's message for this medium             — what the brand says in this channel
-#   4. the house's core message                        — the fallback that is still the brand's
-#   5. whatever was typed                              — last, because it is the least considered
+#   1. the campaign's expression for THIS medium       — the specific season's tension, adapted here
+#   2. the idea platform's expression for THIS medium  — the most specific thing anyone has decided
+#   3. the platform's own sentence                     — when it has not been expressed here yet
+#   4. the house's message for this medium             — what the brand says in this channel
+#   5. the house's core message                        — the fallback that is still the brand's
+#   6. whatever was typed                              — last, because it is the least considered
 #
 # Returns (text, source) so the screen can say where it came from rather than presenting it as neutral.
 def stands_on(kind: str, house: dict | None = None, platform: dict | None = None,
               typed: str = "", *, force_typed: bool = False,
               use_house: bool = True, use_platform: bool = True,
+              campaign: dict | None = None, use_campaign: bool = True,
               brand_mode: str = "") -> tuple[str, str]:
     typed = (typed or "").strip()
     # Phase 1 (brand-grounding): same fix as `_ctx()`'s own `_mode` — `use_house`/`use_platform` say
@@ -352,6 +354,14 @@ def stands_on(kind: str, house: dict | None = None, platform: dict | None = None
     # not go silent. `use_house`/`use_platform` are the ONLY thing that suppresses these two blocks now.
     if force_typed and typed:
         return typed, "typed here — the idea platform and house were set aside for this piece"
+    # The wiring fix: a campaign bound to this execution (see `execution.brief_from`) has its own
+    # adaptation of the platform's expression, written for THIS campaign's specific tension rather than
+    # the platform's durable one. It wins over the platform's own line for the same reason the platform
+    # already wins over the house's — it is the more specific decision, and it was made after the idea.
+    if campaign and use_campaign and _mode != "general":
+        expr = str((campaign.get("expressions") or {}).get(kind, "") or "").strip()
+        if expr:
+            return expr, f"the campaign, adapted for {kind}"
     if platform and use_platform and _mode != "general":
         expr = str((platform.get("expressions") or {}).get(kind, "") or "").strip()
         if expr:
@@ -455,7 +465,8 @@ def key_visual(brief_text: str, house: dict | None = None,
     below, so an Independent piece never stands on a bound house's real core message.
     """
     text, src = stands_on("posm", house, platform, brief_text, force_typed=force_typed,
-                          use_house=use_house, use_platform=use_platform, brand_mode=brand_mode)
+                          use_house=use_house, use_platform=use_platform,
+                          campaign=(exec_brief or {}).get("campaign"), brand_mode=brand_mode)
     fallback = [{"id": f"kv{i+1}", "name": name, "desc": f"{angle} {text}".strip(),
                  "layout": list(KV_LAYOUTS)[min(i, len(KV_LAYOUTS) - 1)]}
                 for i, (name, angle) in enumerate(KV_TREATMENTS[:max(1, n)])]
@@ -792,7 +803,8 @@ def activation_ideas(house: dict | None = None, platform: dict | None = None,
     """
     n = max(2, min(4, int(n or 3)))
     text, src = stands_on("activation", house, platform, steer,
-                          use_house=use_house, use_platform=use_platform, brand_mode=brand_mode)
+                          use_house=use_house, use_platform=use_platform,
+                          campaign=(exec_brief or {}).get("campaign"), brand_mode=brand_mode)
     if not text:
         return [], ("Nothing to build on. Adopt an idea platform or choose a house message first — an "
                     "activation is an expression of an idea, and there is no idea here yet.")

@@ -3180,6 +3180,16 @@ def brief_save(payload: dict):
             return JSONResponse(status_code=400,
                                 content={"detail": "Nothing to save yet — a brief needs at least a "
                                                    "brand, a title or one filled field."})
+        # A brand-new brief needs a project name — the screen-level gate is the real enforcement (see
+        # the builder/IMC screens' own "name this project" step), this is the backend's own guard so a
+        # caller that skips the screen cannot still land an unnamed brief. Everything downstream (house,
+        # plan, platform, campaign) inherits this name once, here — see project.py's own docstring on
+        # why it is asked exactly once rather than re-asked at every layer.
+        if not (str(payload.get("project") or "").strip() or str(fields.get("project") or "").strip()):
+            return JSONResponse(status_code=400,
+                                content={"detail": "Name this project first — everything the brief "
+                                                   "starts (the house, the plan, the platform, every "
+                                                   "campaign) inherits the name from here."})
     # Accept `id` OR `brief_id` as the upsert key. `/brand-brief-draft` hands back `brief_id`, so a client
     # that echoes the name it was given is doing the obvious thing — and if only `id` were honoured the
     # upsert would silently become an insert and every redraft would leave another near-copy in the
@@ -3432,6 +3442,56 @@ def campaign_grid(house: str = "", set: str = "", id: str = ""):
             "path": strategy.path(h, c.get("ladder", "")) if h else None,
             "findings": [f for f in campaign_mod.validate(pl, h)
                          if f.get("campaign") in ("", c["id"])]}
+
+
+@app.post("/campaign-express")
+def campaign_express(payload: dict):
+    """What a campaign becomes in each medium, as a person wrote it. `{house|set, campaign, kind, text}`
+    or `{house|set, campaign, expressions:{k:v, …}}`. Mirrors `/platform-express`, one layer down.
+
+    An execution bound to this campaign reads the result ahead of the platform's own expression for the
+    medium — see `execution.brief_from`, `producers.stands_on`, and Social's `_execution_block`.
+    """
+    pl, _item, why = ideas.resolve(payload, allow_latest=True)
+    if not pl:
+        return JSONResponse(status_code=404, content={"detail": why})
+    c = campaign_mod.get(pl, str(payload.get("campaign") or ""))
+    if not c:
+        return JSONResponse(status_code=404, content={"detail": "No such campaign."})
+    mapping = payload.get("expressions")
+    if isinstance(mapping, dict):
+        out, err = campaign_mod.express_many(pl, c["id"], {str(k): v for k, v in mapping.items()})
+    else:
+        out, err = campaign_mod.express(pl, c["id"], str(payload.get("kind") or ""),
+                                        str(payload.get("text") or ""))
+    if err or out is None:
+        return JSONResponse(status_code=400 if err else 404,
+                            content={"detail": err or "No such campaign."})
+    return {"campaign": out, "saved": True}
+
+
+@app.post("/campaign-express-draft")
+def campaign_express_draft(payload: dict):
+    """DRAFT what a campaign becomes in each medium — ADAPTED from the platform's own expression, not
+    generated fresh. `{house|set, campaign, media?, steer?}`. Mirrors `/platform-express-draft`.
+    """
+    pl, _item, why = ideas.resolve(payload, allow_latest=True)
+    if not pl:
+        return JSONResponse(status_code=404, content={"detail": why})
+    c = campaign_mod.get(pl, str(payload.get("campaign") or ""))
+    if not c:
+        return JSONResponse(status_code=404, content={"detail": "No such campaign."})
+    h = _platform_house(pl)
+    media_list = payload.get("media") if isinstance(payload.get("media"), list) else None
+    out, note = campaign_mod.write_expressions(pl, c["id"], h, media_list, str(payload.get("steer") or ""))
+    if not out:
+        return JSONResponse(status_code=400, content={"detail": note})
+    updated, err = campaign_mod.express_many(pl, c["id"], out)  # one save, not several racing
+    if err:
+        return JSONResponse(status_code=400, content={"detail": err})
+    return {"expressions": out, "campaign": updated, "note": note,
+            "detail": f"Written for {len(out)} medium(s). Every one is editable — rewriting it makes it "
+                      f"yours."}
 
 
 @app.get("/jobs")
@@ -5925,6 +5985,15 @@ def _exec_ctx(payload: dict):
 
     Step 3 is the one that earns its keep. It is a guess, but it is a guess at the only house there is,
     and the alternative is a blank prompt box.
+
+    **`campaign` in the payload, cold — no execution required.** The Idea Platform's own campaign panel
+    can "Take it to X" straight into a producer with no briefed execution yet to carry a `campaign_id`
+    on. Without this, that hand-off would land on the producer showing the PLATFORM's line, silently
+    contradicting the priority `producers.stands_on` promises everywhere else — the campaign would win
+    the moment an execution existed, but not one second before, which is exactly the kind of two-copies
+    drift this whole layer exists to prevent. Folded into `exec_brief["campaign"]` rather than returned
+    as a fifth value, so every one of the ~10 call sites already reading `(brief or {}).get("campaign")`
+    picks this up for free.
     """
     e = execution.load(str(payload.get("execution") or "")) if payload.get("execution") else None
     house = brief = plan = None
@@ -5951,6 +6020,13 @@ def _exec_ctx(payload: dict):
     platform = ideas.from_client(payload.get("platform"))
     if not platform:
         platform = execution.platform_for(house)
+    if not (brief or {}).get("campaign") and payload.get("campaign") and house:
+        pset = ideas.for_house(house.get("id", ""))
+        camp = campaign_mod.get(pset, str(payload["campaign"])) if pset else None
+        if camp:
+            brief = dict(brief or {})
+            brief["campaign"] = {"id": camp.get("id", ""), "name": camp.get("name", ""),
+                                 "expressions": camp.get("expressions") or {}}
     return house, brief, platform, plan
 
 
@@ -5968,10 +6044,14 @@ def producer_stands_on(payload: dict):
     force_typed = bool(payload.get("force_typed"))
     use_house = payload.get("use_house", True) is not False
     use_platform = payload.get("use_platform", True) is not False
+    use_campaign = payload.get("use_campaign", True) is not False
+    campaign = (_brief or {}).get("campaign")
     text, src = producers.stands_on(kind, house, platform, typed, force_typed=force_typed,
                                     use_house=use_house, use_platform=use_platform,
+                                    campaign=campaign, use_campaign=use_campaign,
                                     brand_mode=str(payload.get("brand_mode") or ""))
-    return {"text": text, "source": src, "has_platform": bool(platform), "has_house": bool(house)}
+    return {"text": text, "source": src, "has_platform": bool(platform), "has_house": bool(house),
+            "has_campaign": bool(campaign)}
 
 
 @app.post("/posm-keyvisual")
@@ -6000,7 +6080,7 @@ def posm_keyvisual(payload: dict):
     _brand_mode = str(payload.get("brand_mode") or "")
     text, src = producers.stands_on("posm", house, platform, typed, force_typed=force_typed,
                                     use_house=use_house, use_platform=use_platform,
-                                    brand_mode=_brand_mode)
+                                    campaign=(brief or {}).get("campaign"), brand_mode=_brand_mode)
     try:
         n = max(1, min(6, int(payload.get("n") or 3)))
     except (TypeError, ValueError):
@@ -6117,6 +6197,7 @@ def posm_image(payload: dict):
     if not subject and " " in route_txt and len(route_txt) > 12:
         subject = route_txt
     stood, src = producers.stands_on("posm", house, platform, str(payload.get("brief") or ""),
+                                     campaign=(brief or {}).get("campaign"),
                                      brand_mode=_posm_image_mode)
 
     # **The proposition is not a subject, and falling back to it is not a kindness.** This route used to
@@ -7388,7 +7469,7 @@ def posm_spec(payload: dict):
     # further down — it used to run before this existed and stood on the house's real content anyway.
     _spec_mode = str(payload.get("brand_mode") or "").strip().lower() or (house or {}).get("brand_mode") or "grounded"
     text, src = producers.stands_on("posm", house, platform, str(payload.get("brief") or ""),
-                                    brand_mode=_spec_mode)
+                                    campaign=(brief or {}).get("campaign"), brand_mode=_spec_mode)
     formats = [f for f in (payload.get("formats") or []) if f in posm.FORMATS]
     if not formats:
         formats = posm.KIT_PRESETS.get(str(payload.get("kit") or ""), {}).get("formats", [])
@@ -7565,7 +7646,7 @@ def activation_idea(payload: dict):
     if "idea" in payload and not typed:
         stood, src = producers.stands_on("activation", house, platform, "",
                                          use_house=use_house, use_platform=use_platform,
-                                         brand_mode=_brand_mode)
+                                         campaign=(brief or {}).get("campaign"), brand_mode=_brand_mode)
         return {"stands_on": {"text": stood, "source": src}, "ideas": [], "count": 0,
                 "venues": producers.VENUES,
                 "detail": "Nothing generated — send no `idea` key at all to generate ideas."}
@@ -7587,12 +7668,13 @@ def activation_idea(payload: dict):
         if not ideas:
             stood, src = producers.stands_on("activation", house, platform, "",
                                              use_house=use_house, use_platform=use_platform,
+                                             campaign=(brief or {}).get("campaign"),
                                              brand_mode=_brand_mode)
             return JSONResponse(status_code=400, content={
                 "detail": note, "stands_on": {"text": stood, "source": src}})
         stood, src = producers.stands_on("activation", house, platform, "",
                                          use_house=use_house, use_platform=use_platform,
-                                         brand_mode=_brand_mode)
+                                         campaign=(brief or {}).get("campaign"), brand_mode=_brand_mode)
         return {"ideas": ideas, "count": len(ideas), "note": note,
                 "venues": producers.VENUES,
                 "stands_on": {"text": stood, "source": src}}
@@ -7603,7 +7685,7 @@ def activation_idea(payload: dict):
     if not idea:
         stood, src = producers.stands_on("activation", house, platform, "",
                                          use_house=use_house, use_platform=use_platform,
-                                         brand_mode=_brand_mode)
+                                         campaign=(brief or {}).get("campaign"), brand_mode=_brand_mode)
         return JSONResponse(status_code=400,
                             content={"detail": note, "stands_on": {"text": stood, "source": src}})
     return {"idea": idea, "note": note}
@@ -8272,7 +8354,8 @@ def brand_brief(payload: str = Form(...), research: list[UploadFile] = File(defa
     try:
         briefstore.put(data, brand=str(data.get("brand") or ""),
                        title=str(data.get("title") or ""), fmt="Brand",
-                       source="brand-brief", brief_id=str(data.get("brief_id") or ""))
+                       source="brand-brief", brief_id=str(data.get("brief_id") or ""),
+                       project=str(data.get("project") or ""))
     except Exception:
         pass
     # A caller that already ran /research-ingest (the normal path from the frontend now — see that
@@ -8400,7 +8483,8 @@ def brand_brief_draft(payload: str = Form(...), research: list[UploadFile] = Fil
         saved = briefstore.put(draft, brand=str(draft.get("brand") or base.get("brand") or ""),
                                title=str(draft.get("title") or base.get("title") or ""),
                                fmt="Brand", source="brand-brief-draft",
-                               brief_id=str(base.get("brief_id") or ""))
+                               brief_id=str(base.get("brief_id") or ""),
+                               project=str(base.get("project") or ""))
         if isinstance(draft, dict):
             draft["brief_id"] = saved["id"]
         # Already a real, tracked document via briefstore — reference it rather than creating a second,

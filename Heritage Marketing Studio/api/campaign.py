@@ -32,6 +32,7 @@ import uuid
 import ideas
 import jsonout
 import media
+import project as project_mod
 import strategy
 
 # The shapes a campaign idea can take. Anything that generates the next execution counts; the test is
@@ -53,6 +54,12 @@ SHAPES = {
 # can play. Adding it to the house would churn a screen Design has already shipped.
 # Defined in media.py, the only file that says what a medium is. Identical value — a re-point.
 MEDIA = media.LEGACY_CAMPAIGN_MEDIA
+
+# What a campaign becomes in each medium — the same nine slots `ideas.py`'s platform layer uses, and the
+# same values (an alias, not a copy, for the reason `ideas.EXPRESSIONS` gives). An execution bound to a
+# campaign reads this ahead of the platform's own, unadapted expression for the medium — see
+# `write_expressions` below, which ADAPTS the platform's line rather than generating a fresh one.
+EXPRESSIONS: dict[str, str] = media.EXPRESSIONS
 
 # What each medium is FOR, derived from the rung of the ladder it can carry rather than from convention.
 # This is the retired `elastic` test done properly: not "does this channel have something to do" but
@@ -185,6 +192,15 @@ def save(p: dict, data: dict) -> tuple[dict | None, str]:
         "slots": slots if "slots" in data else ((prior or {}).get("slots") or []),
         "divisions": divisions if "divisions" in data else ((prior or {}).get("divisions") or []),
         "roles": roles,
+        # What this campaign becomes in each medium — written via `express`/`express_many` below, never
+        # through this function. Defaulted here only so the field always exists and an execution reading
+        # it never needs a second guard beyond the ones it already has for `expressions` generally.
+        "expressions": (prior or {}).get("expressions") or {k: "" for k in EXPRESSIONS},
+        # Inherited from the platform SET once, at creation — same one-time copy `ideas.new_set` and
+        # `plan.new_plan` already do. Doesn't disambiguate two campaigns on the SAME platform from each
+        # other (that's `name`'s job, and nothing here enforces it unique) — it disambiguates which
+        # platform's/house's campaigns a picker is looking at, the same gap `new_set` closes one layer up.
+        "project": (prior or {}).get("project") or project_mod.of(p),
         "from": str(data.get("from") or (prior or {}).get("from") or "").strip(),
         "to": str(data.get("to") or (prior or {}).get("to") or "").strip(),
         "source": "model" if str(data.get("source") or "").lower() == "model" else "user",
@@ -215,6 +231,116 @@ def get(p: dict, campaign_id: str = "") -> dict | None:
     if campaign_id:
         return next((c for c in rows if c.get("id") == campaign_id), None)
     return rows[-1] if rows else None
+
+
+def express(p: dict, campaign_id: str, kind: str, text: str) -> tuple[dict | None, str]:
+    """Store what this campaign becomes in ONE medium, as a person wrote it. Mirrors `ideas.express`."""
+    if kind not in EXPRESSIONS:
+        return None, f"Nothing to express for {kind!r}. One of: {', '.join(EXPRESSIONS)}."
+    it = _item(p)
+    if not it:
+        return None, ("No platform adopted in this set — a campaign is an expression of a platform, so "
+                      "there has to be one first.")
+    for c in it.get("campaigns", []):
+        if c.get("id") == campaign_id:
+            c.setdefault("expressions", {k: "" for k in EXPRESSIONS})
+            c["expressions"][kind] = (text or "").strip()
+            c["edited"] = _now()
+            ideas.save(p)
+            return c, ""
+    return None, "No such campaign."
+
+
+def express_many(p: dict, campaign_id: str, mapping: dict) -> tuple[dict | None, str]:
+    """Store several expressions at once. Mirrors `ideas.express_many` — one save, not several racing.
+
+    A key present with an empty value clears that slot — somebody deleting an expression means it.
+    """
+    it = _item(p)
+    if not it:
+        return None, ("No platform adopted in this set — a campaign is an expression of a platform, so "
+                      "there has to be one first.")
+    for c in it.get("campaigns", []):
+        if c.get("id") != campaign_id:
+            continue
+        unknown = [k for k in mapping if k not in EXPRESSIONS]
+        if unknown:
+            return None, (f"Nothing to express for {', '.join(sorted(unknown))}. "
+                          f"One of: {', '.join(EXPRESSIONS)}.")
+        c.setdefault("expressions", {k: "" for k in EXPRESSIONS})
+        for k, v in mapping.items():
+            c["expressions"][k] = str(v or "").strip()
+        c["edited"] = _now()
+        ideas.save(p)
+        return c, ""
+    return None, "No such campaign."
+
+
+def write_expressions(p: dict, campaign_id: str, house: dict | None = None,
+                      media_list: list[str] | None = None, steer: str = "") -> tuple[dict, str]:
+    """Adapt the campaign into what it becomes in each medium. Returns (expressions, note).
+
+    This is ADAPTATION, not `ideas.write_expressions`'s fresh generation. The platform may already have
+    its own expression for a medium; the campaign's version has to narrow that to THIS campaign's own
+    tension and resolution, in the same voice, doing the same medium job — never a contradiction of the
+    platform's line, and not a plain restatement of it either. An execution bound to this campaign reads
+    the result ahead of the platform's own expression (see `execution.brief_from`, `producers.stands_on`),
+    so a fresh, unrelated line here would make the campaign layer invisible rather than sharper.
+    """
+    it = _item(p)
+    if not it:
+        return {}, ("No platform adopted in this set — a campaign is an expression of a platform, so "
+                    "there has to be one first.")
+    c = get(p, campaign_id)
+    if not c:
+        return {}, "No such campaign."
+    if not str(c.get("insight") or "").strip():
+        return {}, "Write the campaign's insight first — there is nothing yet to adapt."
+    if not os.environ.get("ANTHROPIC_API_KEY"):
+        return {}, "No ANTHROPIC_API_KEY — the slots are yours to write."
+
+    import brandprofile
+    want = [m for m in (media_list or list(EXPRESSIONS)) if m in EXPRESSIONS]
+    plat_expr = {k: str(v).strip() for k, v in (it.get("expressions") or {}).items() if str(v or "").strip()}
+    already = {k: v for k, v in (c.get("expressions") or {}).items() if str(v or "").strip()}
+
+    prompt = "\n".join(x for x in [
+        f"You are adapting one campaign for {(house or {}).get('brand') or 'this brand'} into what it "
+        "becomes in each medium. This is ADAPTATION, not fresh generation: the platform below may "
+        "already say something for a medium, and your job is to narrow that to THIS campaign's own "
+        "tension and resolution, in the same voice — never a contradiction of the platform's line, and "
+        "never a plain restatement of it either.",
+        "\n\n---\nTHE BRAND\n" + brandprofile.voice_block(brandprofile.resolve(house, p)),
+        "\n\n---\nTHE PLATFORM (the durable territory this campaign expresses)",
+        f"Line: {it.get('idea') or it.get('name') or ''}",
+        (f"Mechanic: {it['mechanic']}" if str(it.get("mechanic") or "").strip() else ""),
+        (("Already expressed by the platform itself — ADAPT FROM these, do not restate them:\n"
+          + "\n".join(f"  {k}: {v}" for k, v in plat_expr.items())) if plat_expr else ""),
+        "\n\n---\nTHE CAMPAIGN THIS ADAPTS IT INTO",
+        f"Name: {c.get('name') or ''}",
+        f"Insight (the tension this campaign resolves): {c.get('insight') or ''}",
+        (f"Resolution (what the work tells them): {c['resolution']}"
+         if str(c.get("resolution") or "").strip() else ""),
+        f"Shape: {c.get('shape') or 'frame'} — {SHAPES.get(c.get('shape') or 'frame', ('', ''))[0]}",
+        (f"Frame: {c['frame']}" if str(c.get("frame") or "").strip() else ""),
+        (("\n\n---\nALREADY WRITTEN FOR THIS CAMPAIGN, and not to be repeated or contradicted:\n"
+          + "\n".join(f"  {k}: {v}" for k, v in already.items())) if already else ""),
+        (f"\n\n---\nTHE PERSON ADDS\n{steer.strip()}" if str(steer or "").strip() else ""),
+        "\n\n---\nNOW: WHAT THIS CAMPAIGN BECOMES IN EACH MEDIUM",
+        "\n".join(f"  {m} — {EXPRESSIONS[m]}" for m in want),
+        "\nEach is one or two sentences describing the WORK for THIS campaign specifically — its own "
+        "insight and resolution doing the medium's job, not the platform's territory in general.",
+        'Return ONLY JSON: {"expressions":{' + ", ".join(f'"{m}":"..."' for m in want) + '}}',
+    ] if x != "")
+
+    data, err = jsonout.ask_json(prompt, max_tokens=700 + 320 * len(want))
+    if data is None:
+        return {}, f"Generation failed: {err}"
+    out = {k: str(v).strip() for k, v in (data.get("expressions") or {}).items()
+           if k in EXPRESSIONS and str(v or "").strip()}
+    if not out:
+        return {}, "Nothing usable came back — write them yourself."
+    return out, ""
 
 
 def big_idea(p: dict, campaign_id: str = "") -> dict:

@@ -39,6 +39,7 @@ import brandprofile
 import findings as findings_mod
 import jsonout
 import media
+import project as project_mod
 import strategy
 import tenancy
 
@@ -107,6 +108,8 @@ def sets(house_id: str = "") -> list[dict]:
         if not p or (house_id and p.get("house") != house_id):
             continue
         out.append({"id": p["id"], "brand": p.get("brand", ""), "house": p.get("house", ""),
+                    "project": project_mod.of(p), "project_source": p.get("project_source", ""),
+                    "label": project_mod.label(p),
                     "count": len(p.get("platforms", [])), "chosen": p.get("chosen", ""),
                     "created": p.get("created", ""), "updated": p.get("updated", "")})
     return out
@@ -198,7 +201,11 @@ def set_steer(p: dict, steer: str) -> dict:
 
 
 def new_set(brand: str, house_id: str) -> dict:
+    # Named once at the brief, inherited by the house, and now by the platform too — same one-time
+    # copy `plan.new_plan` already does, so a picker showing several platform sets for one brand can
+    # tell them apart the same way houses and plans already can.
     p = {"id": uuid.uuid4().hex[:10], "brand": brand or "Brand", "house": house_id,
+         "project": project_mod.of(strategy.load(house_id) if house_id else None),
          "created": _now(), "updated": _now(), "round": 0,
          "platforms": [], "chosen": ""}
     return save(p)
