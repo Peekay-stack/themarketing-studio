@@ -83,10 +83,33 @@ def derive(doc: dict | None, kind: str = "") -> dict:
             "why": "nothing named it, so this is its brand and the month it was created"}
 
 
+_DERIVED_RE = re.compile(r"^.+ — [a-z]+, (?:[A-Za-z]+ \d{4}|an earlier session)$")
+
+
+def looks_derived(name: str) -> bool:
+    """True for a name that is exactly `derive()`'s own boilerplate, unedited — "Heritage — house,
+    September 2026" rather than something a person actually typed. Somebody who names a real project
+    "Heritage — relaunch, September 2026" on purpose is vanishingly unlikely to hit this exact shape by
+    accident, so this stays narrow rather than flagging anything that merely starts with the brand.
+
+    Exists because accepting the suggestion from `/project-suggest` verbatim marks a document `named`
+    (a person did choose it, even if what they chose was the placeholder) — so `project_source` alone
+    cannot tell a real name from an unedited suggestion, only the shape of the string can.
+    """
+    return bool(_DERIVED_RE.match(clean(name)))
+
+
 def label(doc: dict | None, brand: str = "") -> str:
-    """What a card shows: `Heritage · Diwali same-day push`, or just the brand when unnamed."""
+    """What a card shows: `Heritage · Diwali same-day push`, or just the brand when unnamed.
+
+    A project that is still the unedited `derive()` suggestion doubles the brand back at the reader
+    ("Heritage Foods · Heritage — house, September 2026") without telling them anything a rename
+    wouldn't — shown instead as a plain nudge to go name it.
+    """
     b = clean(brand or (doc or {}).get("brand") or "")
     p = of(doc)
+    if p and looks_derived(p):
+        return f"{b} · Unnamed — name it" if b else "Unnamed — name it"
     return f"{b} · {p}" if b and p else (p or b)
 
 

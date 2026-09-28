@@ -18498,6 +18498,22 @@ class Component extends DCLogic {
     return { opts, chosen, picked: opts.filter(o => chosen.indexOf(o.id) >= 0) };
   }
   esc(v){ return String(v == null ? '' : v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  // Mirrors `project.looks_derived()` in project.py exactly: true only for the unedited `derive()`
+  // suggestion ("Heritage — house, September 2026"), never for a real name a person typed — see that
+  // function's own comment for why the shape check, not `project_source`, is what has to decide this.
+  looksDerivedProject(name){ return /^.+ — [a-z]+, ([A-Za-z]+ \d{4}|an earlier session)$/.test(String(name||'').trim()); }
+  projectLabel(project, brand){
+    const b = String(brand||'').trim(), p = String(project||'').trim();
+    if (p && this.looksDerivedProject(p)) return b ? (b+' · Unnamed — name it') : 'Unnamed — name it';
+    return (b && p) ? (b+' · '+p) : (p || b);
+  }
+  // Same shape, no brand prefix -- for the single-project chips that sit beside a header that already
+  // shows the brand elsewhere on screen.
+  projectChip(project){
+    const p = String(project||'').trim();
+    if (!p) return '';
+    return this.looksDerivedProject(p) ? 'Unnamed — name it' : p;
+  }
 
   buildHouseSummary(){
     const h = this.state.house || {};
@@ -18537,7 +18553,7 @@ class Component extends DCLogic {
     };
 
     return '<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + E(h.brand || 'Messaging house')
-+ (h.project ? ' · ' + E(h.project) : '')
++ (h.project ? ' · ' + E(this.projectChip(h.project)) : '')
 + ' — messaging house</title><style>'
 + '@page{size:A4 landscape;margin:12mm}'
 + '*{box-sizing:border-box}body{margin:0;background:#e9e6e0;font-family:Georgia,"Times New Roman",serif;color:#1b1b1b}'
@@ -18574,7 +18590,7 @@ class Component extends DCLogic {
 + '@media (max-width:620px){.core{font-size:20px}.pmsg{font-size:15px}.codes{grid-template-columns:repeat(3,1fr)}}'
 + '</style></head><body>'
 + '<div class="bar"><button onclick="window.print()">Print / PDF</button><button id="dl">Download a copy</button></div>'
-+ '<div class="sheet"><div class="hd"><span>' + E(h.brand || 'Brand') + (h.project ? ' · ' + E(h.project) : '') + ' · messaging house</span><span>one page</span></div>'
++ '<div class="sheet"><div class="hd"><span>' + E(h.brand || 'Brand') + (h.project ? ' · ' + E(this.projectChip(h.project)) : '') + ' · messaging house</span><span>one page</span></div>'
 + '<div class="roof"><svg width="300" height="52" viewBox="0 0 300 52" aria-hidden="true"><polygon points="150,4 296,50 4,50" fill="none" stroke="#1b1b1b" stroke-width="1.5"></polygon></svg>'
 + '<div class="core">' + un(core && core.text, 'no core message decided') + '</div>'
 + (h.platform ? '<div class="plat">' + E(h.platform) + '</div>' : '')
@@ -21735,7 +21751,7 @@ class Component extends DCLogic {
       // `c.project` prefixes the label once campaigns are named projects, not just "IMC 2026" repeated
       // — see the naming-convention work. Falls back to the bare campaign name for older, unnamed ones.
       opts: [{ v:'', label: campRows.length ? 'none — the platform’s own expression' : 'no campaigns written yet' }]
-        .concat(campRows.map(c => ({ v:c.id, label:(c.project ? c.project + ' — ' : '') + (c.name || 'unnamed campaign') }))),
+        .concat(campRows.map(c => ({ v:c.id, label:(c.project ? this.projectChip(c.project) + ' — ' : '') + (c.name || 'unnamed campaign') }))),
       hint: 'Optional. Picking one makes this execution read that campaign’s own adapted line for this medium ahead of the platform’s.',
       hintFg:'#6B7280' });
 
@@ -22320,7 +22336,7 @@ class Component extends DCLogic {
     return {
       isExec: s.screen === 'exec',
       xHeadline: 'One idea, one brief, ' + nWord + ' producers',
-      xProject: (s.plan && s.plan.project) || '', xHasProject: !!(s.plan && s.plan.project),
+      xProject: this.projectChip(s.plan && s.plan.project), xHasProject: !!(s.plan && s.plan.project),
       xTabs: xLive.map(([t, label]) => ({ label, go:this.xGoTab(t),
         color: t === tab ? '#17325E' : '#6B7280', border: t === tab ? '#F0561E' : 'transparent' })),
       // Someone who used a retired sub-tab last week will look for it, and finding nothing is worse
@@ -22457,7 +22473,7 @@ class Component extends DCLogic {
       // ---- start the platform: the house it argues from, the brief it answers ----
       ideaHouseOpts: ((this.strat().houses) || []).map(h => ({ id:h.id,
         label: h.label || ((h.brand || 'Untitled') + ' \u00b7 ' + ((h.chosen_layers || 0) + ' of ' + (h.total_layers != null ? h.total_layers : this.H_LAYERS.length) + ' decided')) })),
-      ideaProjectName: (((this.strat().houses) || []).find(h => h.id === ip.houseId) || {}).project || '',
+      ideaProjectName: this.projectChip((((this.strat().houses) || []).find(h => h.id === ip.houseId) || {}).project),
       ideaHasProject: !!(((this.strat().houses) || []).find(h => h.id === ip.houseId) || {}).project,
       hasIdeaHouseOpts: !!((this.strat().houses) || []).length,
       noIdeaHouseOpts: !((this.strat().houses) || []).length,
@@ -23021,7 +23037,7 @@ class Component extends DCLogic {
     if (vcampRows.length) vxFields.push({ k:'campaign_id', label:'Which campaign', from:'strategy · campaigns', isSelect:true,
       v:d.campaign_id || '', line:'#DDD9D1',
       opts: [{ v:'', label: vcampRows.length ? 'none — the platform’s own expression' : 'no campaigns written yet' }]
-        .concat(vcampRows.map(c => ({ v:c.id, label:(c.project ? c.project + ' — ' : '') + (c.name || 'unnamed campaign') }))),
+        .concat(vcampRows.map(c => ({ v:c.id, label:(c.project ? this.projectChip(c.project) + ' — ' : '') + (c.name || 'unnamed campaign') }))),
       hint: 'Optional. Picking one makes this execution read that campaign’s own adapted line for video ahead of the platform’s.',
       hintFg:'#6B7280' });
 
@@ -23318,7 +23334,7 @@ class Component extends DCLogic {
     return {
       isPlan: s.screen === 'plan',
       pBrand: (plan && plan.brand) || 'Plan',
-      pProject: (plan && plan.project) || '', pHasProject: !!(plan && plan.project),
+      pProject: this.projectChip(plan && plan.project), pHasProject: !!(plan && plan.project),
       pHasHouse: !!(plan && plan.house), pNoHouse: !!(plan && !plan.house),
       pHouseBrand: (plan && plan.house_brand) || 'the house', pOpenHouse: this.pOpenHouse,
       briefExecution: this.briefExecution,
@@ -23687,10 +23703,14 @@ class Component extends DCLogic {
       hClaimBg: s.houseClaimState === 'settled' ? '#EAF6EC' : '#FFF4DA',
       hClaimFg: s.houseClaimState === 'settled' ? '#1E7E34' : '#B07A12',
       hClaimLine: s.houseClaimState === 'settled' ? '#C9E7CE' : '#F0DFB4',
-      hHasProject: !!(house && house.project), hProject: (house && house.project) || '',
-      hNoProject: !(house && house.project) && !s.hProjectSuggest,
+      // A project that is still the unedited `derive()` suggestion doesn't count as "named" here — this
+      // is the one screen with a real accept affordance, so it should keep nudging rather than look
+      // satisfied by a placeholder nobody actually chose.
+      hHasProject: !!(house && house.project) && !this.looksDerivedProject(house.project),
+      hProject: (house && house.project) || '',
+      hNoProject: !((house && house.project) && !this.looksDerivedProject(house.project)) && !s.hProjectSuggest,
       hProjectAsk: 'Name this project', suggestProjectName: this.suggestProjectName,
-      hHasProjectSuggest: !(house && house.project) && !!s.hProjectSuggest,
+      hHasProjectSuggest: !((house && house.project) && !this.looksDerivedProject(house.project)) && !!s.hProjectSuggest,
       hProjectSuggestion: s.hProjectSuggest || '', acceptProjectName: this.acceptProjectName,
       hLayers, hRailNote: decided + ' of ' + H_LIVE.length + ' decided' + (hNextUp ? ' — next up is ' + hNextUp.name.toLowerCase() + '.' : ' — all decided.') + ' Each choice is what the layer below is written against, which is why they open one at a time.',
       hHasChosen: chosenIds.length > 0, hNotChosen: chosenIds.length === 0,
@@ -24751,7 +24771,7 @@ class Component extends DCLogic {
       medStatusUnread: !!st && !can.length && !cannot.length && Object.keys(st).length > 0,
       medStatusKeys: 'Keys returned: ' + this.medUnread(st),
       medNoPlan: !s.plan,
-      medPlanName: s.plan ? ((s.plan.brand || s.plan.name || s.plan.id) + (s.plan.project ? ' · ' + s.plan.project : '')) : '',
+      medPlanName: s.plan ? ((s.plan.brand || s.plan.name || s.plan.id) + (s.plan.project ? ' · ' + this.projectChip(s.plan.project) : '')) : '',
       medHasStrategy: !!sg,
       medDerived: !!(sg && sg.derived),
       medRows: rows, medHasRows: rows.length > 0,
@@ -25443,7 +25463,7 @@ class Component extends DCLogic {
       prIsCampaignMode: p.mode === 'campaign', prIsStandaloneMode: p.mode !== 'campaign',
       prPlan: p.nw.plan,
       prPlanOpts: [{ v:'', label: plans.length ? 'choose the plan this sits under' : 'no plans written yet' }]
-        .concat(plans.map(x => ({ v:x.id, label:(x.brand || 'unnamed') + (x.project ? ' \u00b7 ' + x.project : '') }))),
+        .concat(plans.map(x => ({ v:x.id, label:(x.brand || 'unnamed') + (x.project ? ' \u00b7 ' + this.projectChip(x.project) : '') }))),
       prHasPlans: plans.length > 0, prNoPlans: plans.length === 0,
       prPhase: curPhase,
       // Placeholder in the plan picker's own voice, so an empty payload says so instead of rendering a
@@ -25462,7 +25482,7 @@ class Component extends DCLogic {
       prHasRefusal: !!p.refusal, prRefusal: p.refusal,
       prSheetRows: sheets.map(x => {
         const crisis = x.kind === 'crisis';
-        return { title: (x.brand || 'unnamed') + (x.project ? ' \u00b7 ' + x.project : '')
+        return { title: (x.brand || 'unnamed') + (x.project ? ' \u00b7 ' + this.projectChip(x.project) : '')
                    + (x.phase ? ' \u00b7 ' + x.phase : (x.kind ? ' \u00b7 ' + x.kind : '')),
           meta: [x.mode === 'campaign' ? 'campaign PR' : 'standalone PR', x.plan ? 'plan ' + x.plan : '',
                  x.created || x.opened || ''].filter(Boolean).join(' \u00b7 '),
@@ -25473,7 +25493,7 @@ class Component extends DCLogic {
       }),
       prHasSheets: sheets.length > 0, prNoSheets: sheets.length === 0,
       prHasSheet: !!sheet, prNoSheet: !sheet,
-      prSheetName: sheet ? ((sheet.brand || 'unnamed') + (sheet.project ? ' \u00b7 ' + sheet.project : '')
+      prSheetName: sheet ? ((sheet.brand || 'unnamed') + (sheet.project ? ' \u00b7 ' + this.projectChip(sheet.project) : '')
                             + ' \u00b7 ' + (sheet.mode === 'campaign' ? 'campaign PR' : 'standalone PR')) : '',
       prSheetMeta: sheet ? [sheet.phase ? 'phase: ' + sheet.phase : '', sheet.kind ? 'kind: ' + sheet.kind : '',
                             sheet.plan ? 'plan: ' + sheet.plan : 'no plan above it'].filter(Boolean).join('  \u00b7  ') : '',
