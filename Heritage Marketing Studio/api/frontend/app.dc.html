@@ -11175,7 +11175,7 @@ class Component extends DCLogic {
     if (screen === 'exec') {
       this.loadGrounding();
       const t = this.xTab();
-      if (t === 'posm') this.loadPosmFormats();
+      if (t === 'posm') { this.loadPosmFormats(); this.loadPosmStandsOn(); }
       if (t === 'onground') { this.loadOgStandsOn(); this.ensureAssetLib(); }
       if (t === 'social') { this.loadSocialStandsOn(); this.loadCarouselAssetLib(); }
     }
@@ -19605,11 +19605,11 @@ class Component extends DCLogic {
     this.setState({ screen:'exec', xTab:tab }); window.scrollTo(0,0);
     this.loadGrounding();
     // POSM/Onground never had a wired cold hand-off at all (unlike Social/Video) -- "Take it to X"
-    // only ever navigated. `campaignId`/`houseId` are stashed here rather than passed as call
-    // arguments, because both producers read them from a later, person-triggered action (POSM's
-    // "Develop key visual", Onground's own stands-on/idea-sharpen calls), not from a single call made
-    // on arrival the way Social's preview is -- so there is nowhere to hand the values TO yet.
-    if (tab === 'posm') { this.setPosm({ campaignId, houseId }); this.loadPosmFormats(); }
+    // only ever navigated. Both now get a real preview on arrival, same shape as Social/Video
+    // (`loadPosmStandsOn`/`loadOgStandsOn`), and both stash `campaignId`/`houseId` on their own state
+    // (`setPosm`/inside `loadOgStandsOn` itself) so the later, person-triggered generate call --
+    // POSM's "Develop key visual", Onground's idea-sharpen -- keeps reading the same campaign.
+    if (tab === 'posm') { this.setPosm({ campaignId, houseId }); this.loadPosmFormats(); this.loadPosmStandsOn(campaignId, houseId); }
     if (tab === 'onground') { this.loadOgStandsOn(campaignId, houseId); this.ensureAssetLib(); }
     if (tab === 'social') { this.loadSocialStandsOn(undefined, campaignId, houseId); this.loadCarouselAssetLib(); }
   };
@@ -19691,7 +19691,7 @@ class Component extends DCLogic {
   xGoTab = (t) => () => {
     this.setState({ xTab:t }); window.scrollTo(0,0);
     this.loadGrounding();
-    if (t === 'posm') this.loadPosmFormats();
+    if (t === 'posm') { this.loadPosmFormats(); this.loadPosmStandsOn(); }
     if (t === 'onground') { this.loadOgStandsOn(); this.ensureAssetLib(); }
     if (t === 'social') { this.loadSocialStandsOn(); this.loadCarouselAssetLib(); }
   };
@@ -19704,7 +19704,7 @@ class Component extends DCLogic {
   // dashboard, no plan/execution id required — `xIsPosm`'s own markup already works with none.
   goPosmShortcut = () => {
     this.setState({ screen:'exec', xTab:'posm' }); window.scrollTo(0,0);
-    this.loadGrounding(); this.loadPosmFormats();
+    this.loadGrounding(); this.loadPosmFormats(); this.loadPosmStandsOn();
   };
   goExecIdea = () => { this.setState({ screen:'exec', xTab:'social' }); window.scrollTo(0,0); this.loadGrounding(); this.loadSocialStandsOn(); this.loadCarouselAssetLib(); };
   // Round 92: Onground had no direct-entry route at all — plan → Execution → click its tab was the
@@ -20072,6 +20072,30 @@ class Component extends DCLogic {
   }
   // The sizes people actually order are a server list, so adding one is a backend change rather than a
   // release here. Held until it answers; the built-in five are named as built-in if it doesn't.
+  // POSM never had a live preview call at all — unlike Social/Video/Onground, whose "what this stands
+  // on" box is a real server answer fetched on arrival, POSM's box only ever showed a client-only
+  // fallback (the platform's own line, unlabelled as anything more) until "Develop key visual" was
+  // actually clicked. Found live: a real campaign's own POSM line existed and was correctly used by
+  // that generate call, but the box shown BEFORE it read the platform's plain line instead, which read
+  // as the campaign hand-off having failed even though the eventual generation was correct. Mirrors
+  // `loadSocialStandsOn`/`loadOgStandsOn` exactly, using the same generic `/producer-stands-on` route.
+  // `campaignId`/`houseId` (optional) only ever arrive from the campaign panel's "Take it to POS
+  // material" hand-off; not gated behind the once-guard for the same reason Onground's isn't.
+  loadPosmStandsOn = async (campaignId, houseId) => {
+    if (this._posmStandsAsked && !campaignId) return;
+    this._posmStandsAsked = true;
+    const body = { kind:'posm', brand_mode: this.state.producerBrandMode };
+    const e = this.currentExec ? (this.currentExec() || {}) : {};
+    if (e.id) body.execution = e.id;
+    const h = this.state.house; if (h && h.id) body.house = h.id;
+    if (houseId) body.house = houseId;
+    if (campaignId) body.campaign = campaignId;
+    const d = await this.apiCall('/producer-stands-on', body);
+    if (d && d.ok && d.data && d.data.text) {
+      this.setPosm({ standsOn: d.data, campaignId: campaignId || this.posm().campaignId,
+        houseId: houseId || this.posm().houseId });
+    } else if (!campaignId) this._posmStandsAsked = false;
+  };
   loadPosmFormats = async () => {
     if (this._posmFormatsAsked) return;
     this._posmFormatsAsked = true;
