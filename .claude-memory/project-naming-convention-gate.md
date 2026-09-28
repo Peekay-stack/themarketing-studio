@@ -125,3 +125,34 @@ ledger (`_record_made`/`_made_brand_project` in main.py already resolves and sto
 exercise the campaign-picker and PR-sheet code paths (positive and negative cases) — none left behind.
 
 Commit: `0d3f08e` ("Naming convention: idea platform, plan/execution/PR headers, cross-house fix").
+
+## UPDATE 28 Sep, later same session — Step 4 SHIPPED as d914506
+`project.looks_derived(name)` — narrow regex, true only for the exact unedited `derive()` suggestion
+("Heritage — house, September 2026"), never a real typed name even one starting with the brand
+("Heritage Maharashtra Push" stays untouched — verified live, both cases). Needed because accepting a
+`/project-suggest` suggestion verbatim legitimately marks a document `project_source: "named"`, so that
+field alone can't distinguish a real name from an unedited placeholder — only the string's shape can.
+
+`label()` now renders a placeholder as "Brand · Unnamed — name it" instead of doubling the brand.
+Single source for `strategy.houses()`/`plan.plans()`/`ideas.sets()`'s `label` field, so the plan-cards
+list and both house dropdowns (fixed in the earlier 0d3f08e push) get this for free.
+
+Frontend mirror `looksDerivedProject()`/`projectChip()` (JS can't import project.py) applied at every
+place still building its own label text client-side: the 3 single-project header chips (idea platform,
+plan, execution), media-plan header, printable house sheet, campaign picker options, PR sheet list row
++ header, PR's "plan it sits under" picker.
+
+Also fixed the one place with a real ACCEPT affordance: the house screen's own breadcrumb
+(`hHasProject`/`hNoProject`/`hHasProjectSuggest`) previously treated an accepted placeholder as "named"
+and hid the "Name this project" prompt permanently. Now treats a derived placeholder the same as no
+project at all, so the nudge (and the Accept-a-suggestion flow) stays reachable.
+
+Deliberately left filenames alone — a derived placeholder is still specific enough to avoid the
+download-collision problem `project.filename()` exists to solve; "Unnamed" for every file would
+reintroduce it.
+
+Verified: checkfe, py_compile, selfcheck.py, smoke.py all clean; live in the local browser (placeholder
+houses/plans → "Unnamed — name it"; "Heritage Maharashtra Push" untouched; house breadcrumb nudges
+again). Pushed, deploy confirmed live via `/selfcheck` matching `d914506`.
+
+**Naming order (all 4 steps) is now fully shipped.** Nothing known open on this thread.
