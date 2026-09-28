@@ -205,3 +205,30 @@ Traced two candidate causes, not yet distinguished:
 existing one) on the same plan, right after — does the new one show the campaign's adapted line? Answer
 tells us whether this is (1) staleness (no fix needed) or (2) a real resolution bug (needs the fix in
 2 above, and possibly more). **PICK UP HERE with whatever the user reports.**
+
+## UPDATE 28 Sep, later same session — the campaign-wiring bug (issue 1) diagnosed, confirmed, fixed as 990d7f3
+User re-tested per the ask (fresh execution, right after clicking "Take it to Social" from the campaign
+panel) and it STILL showed the platform's plain line — ruling out staleness, confirming a real bug, and
+they explicitly approved the fix ("take it to social ... should be the first one to go").
+
+**Root cause, exactly as suspected:** `loadSocialStandsOn` only forwarded the campaign panel's explicit
+`campaignId`/`houseId` to `/producer-stands-on` when `!e.id` (no execution yet briefed for that tab) —
+i.e. only ever worked the FIRST time. `campaignId`/`houseId` only ever arrive from a deliberate "Take it
+to Social" click, so the guard was silently discarding an explicit click in favour of whatever old,
+unrelated execution already sat in that tab's own in-memory state (`state.execs.social`, which persists
+across navigation within a session, populated only by `createExecution`/revise, never auto-refetched).
+`loadVideoStandsOn` never had this guard — only Social needed the fix.
+
+**Fix:** send `campaignId`/`houseId` unconditionally whenever explicitly given. Confirmed safe by reading
+`_exec_ctx`'s own conditional (main.py): `if not (brief or {}).get("campaign") and payload.get("campaign")
+and house:` — the cold-campaign fold-in only fires when the resolved brief DOESN'T already have a real
+bound campaign, so an execution with its own genuine campaign binding is still never overridden; this
+only fills the gap when there isn't one, exactly matching "an explicit click should win over nothing."
+
+**Verified two ways:** (1) confirmed the mechanism directly against `/producer-stands-on` using a
+duplicated-then-deleted real execution with no campaign bound — the exact call the fix now makes went
+from `has_campaign:false` (platform's plain text) to `has_campaign:true, source:"the campaign, adapted
+for social"` (the real campaign text). (2) checkfe/selfcheck.py/smoke.py all clean. Pushed as `990d7f3`.
+
+**All 3 issues from this round of live testing are now fixed and pushed** (naming misleading-affordance,
+Accept-loop, campaign hot-hand-off). Confirm live deploy status before closing this out.
