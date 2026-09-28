@@ -9418,6 +9418,38 @@
         </div>
       </div>
 
+      <!-- The campaign this sheet's house has adopted, quoted for reference only — never written into
+           the release for a person, same restraint the boilerplate/mandatories panel below already
+           keeps. Absent for standalone PR, or a campaign PR sheet whose house has no platform/campaign
+           yet — both real, unremarkable states, not errors. -->
+      <sc-if value="{{ prHasCampaignSource }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#F4F7FC; border:1px solid #D6DEEC; border-radius:14px; padding:16px 20px; margin-bottom:18px;">
+          <div style="font-size:10.5px; font-weight:800; letter-spacing:0.07em; text-transform:uppercase; color:#2E5EA6; margin-bottom:8px;">The campaign this sheet answers to</div>
+          <div style="font-size:14.5px; font-weight:700; color:#17325E; margin-bottom:6px;">{{ prCampaignName }}</div>
+          <sc-if value="{{ prHasCampaignIdea }}" hint-placeholder-val="{{ false }}">
+            <div style="font-size:13.5px; line-height:1.55; color:#17325E; margin-bottom:8px; text-wrap:pretty;">{{ prCampaignIdea }}</div>
+          </sc-if>
+          <div style="font-size:12px; color:#6B7280; margin-bottom:6px;">PR's role here: <b style="color:#17325E;">{{ prCampaignRole }}</b> — {{ prCampaignRoleWhy }}</div>
+          <sc-if value="{{ prHasCampaignExpr }}" hint-placeholder-val="{{ false }}">
+            <div style="font-size:13.5px; line-height:1.5; color:#17325E; font-style:italic; text-wrap:pretty;">“{{ prCampaignExpr }}”</div>
+          </sc-if>
+          <sc-if value="{{ prNoCampaignExpr }}" hint-placeholder-val="{{ true }}">
+            <div style="font-size:12.5px; color:#B07A12;">Nothing written yet for PR in this campaign's own expression by medium — write it on the Idea Platform and it appears here.</div>
+          </sc-if>
+        </div>
+      </sc-if>
+      <sc-if value="{{ prHasPlanContext }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#fff; border:1px solid #DDD9D1; border-radius:14px; padding:16px 20px; margin-bottom:18px;">
+          <div style="font-size:10.5px; font-weight:800; letter-spacing:0.07em; text-transform:uppercase; color:#9AA1AC; margin-bottom:8px;">Who and where — from the plan</div>
+          <sc-for list="{{ prPlanAudiences }}" as="a" hint-placeholder-count="2">
+            <div style="font-size:13px; color:#17325E; margin-bottom:4px;">{{ a.audience }}</div>
+          </sc-for>
+          <sc-for list="{{ prPlanChannels }}" as="c" hint-placeholder-count="2">
+            <div style="font-size:13px; color:#17325E; margin-bottom:4px;">{{ c.channel }} <span style="color:#6B7280;">— {{ c.role }}</span></div>
+          </sc-for>
+        </div>
+      </sc-if>
+
       <div style="display:flex; gap:24px; border-bottom:1px solid #DDD9D1; margin-bottom:22px; flex-wrap:wrap;">
         <sc-for list="{{ prTabs }}" as="t" hint-placeholder-count="5">
           <span onClick="{{ t.go }}" style="cursor:pointer; padding:11px 0 13px; font-weight:700; font-size:14.5px; color:{{ t.fg }}; border-bottom:3px solid {{ t.line }}; white-space:nowrap;">{{ t.label }}</span>
@@ -19405,6 +19437,7 @@ class Component extends DCLogic {
     ['ooh','OOH','one rung, chosen','Three seconds at distance. Pick the functional truth or the code, never both.'],
     ['trade','Trade','off the consumer ladder entirely','The retailer has his own ladder: margin, rate of sale, working capital.'],
     ['posm','POS material','functional truth + emotional recall','Two metres, two seconds. It cannot build emotion, only trigger emotion something else built.'],
+    ['pr','PR','the functional truth, earned','Third-party verification of something the brand cannot say about itself without sounding like it is selling.'],
   ];
   campaign(){ return this.state.campaign || { name:'', insight:'', resolution:'', shape:'frame', frame:'',
     slots:[], ladder:'', roles:{}, from:'', to:'', divisionsText:'', expressions:{} }; }
@@ -24926,7 +24959,8 @@ class Component extends DCLogic {
     this.setPr({ sheet, sheetStatus: d.status || null, funnel: d.funnel || null,
       proofs: d.proof_options || [], tab:'objectives', refusal:'', obj:{},
       msgs: ((sheet.messages || []).map(m => ({ text:m.text || '', proof_id:m.proof_id || '' }))),
-      rel:{}, carries:null, mands:null, report:null, release:null, crisis:null },
+      rel:{}, carries:null, mands:null, report:null, release:null, crisis:null,
+      campaign: d.campaign || null, planContext: d.plan_context || null },
       () => { this.loadPrFunnel(); if (sheet.kind === 'crisis') this.loadPrCrisis(); });
   };
   prCloseSheet = () => this.setPr({ sheet:null, sheetStatus:null, funnel:null, refusal:'' });
@@ -24943,7 +24977,8 @@ class Component extends DCLogic {
     const sheet = d.sheet || p.sheet;
     this.setPr({ sheet, sheetStatus: d.status || null, funnel: d.funnel || p.funnel,
       proofs: d.proof_options || p.proofs,
-      msgs: ((sheet.messages || []).map(m => ({ text:m.text || '', proof_id:m.proof_id || '' }))) });
+      msgs: ((sheet.messages || []).map(m => ({ text:m.text || '', proof_id:m.proof_id || '' }))),
+      campaign: d.campaign || p.campaign, planContext: d.plan_context || p.planContext });
     this.loadPrMsgSuggest();
   };
 
@@ -25562,6 +25597,21 @@ class Component extends DCLogic {
                             + ' \u00b7 ' + (sheet.mode === 'campaign' ? 'campaign PR' : 'standalone PR')) : '',
       prSheetMeta: sheet ? [sheet.phase ? 'phase: ' + sheet.phase : '', sheet.kind ? 'kind: ' + sheet.kind : '',
                             sheet.plan ? 'plan: ' + sheet.plan : 'no plan above it'].filter(Boolean).join('  \u00b7  ') : '',
+      // The campaign this sheet's house has adopted (28 Sep) \u2014 reference only, mirrors the same
+      // restraint `release_suggestions`'s own `source_material` already keeps for everything else.
+      prHasCampaignSource: !!(p.campaign && p.campaign.id),
+      prCampaignName: (p.campaign && p.campaign.name) || 'Unnamed campaign',
+      prCampaignIdea: (p.campaign && ((p.campaign.big_idea || {}).text || p.campaign.resolution || p.campaign.insight)) || '',
+      prHasCampaignIdea: !!(p.campaign && ((p.campaign.big_idea || {}).text || p.campaign.resolution || p.campaign.insight)),
+      prCampaignRole: (p.campaign && p.campaign.role) || '',
+      prCampaignRoleWhy: (p.campaign && p.campaign.role_why) || '',
+      prCampaignExpr: (p.campaign && p.campaign.expression) || '',
+      prHasCampaignExpr: !!(p.campaign && p.campaign.expression),
+      prNoCampaignExpr: !!(p.campaign && !p.campaign.expression),
+      // The plan's own audience and channel rows \u2014 PR has never read either before.
+      prHasPlanContext: !!(p.planContext && ((p.planContext.audiences || []).length || (p.planContext.channels || []).length)),
+      prPlanAudiences: ((p.planContext || {}).audiences || []).map(a => ({ audience: a.audience || '' })),
+      prPlanChannels: ((p.planContext || {}).channels || []).map(c => ({ channel: c.channel || '', role: c.role || '' })),
       prSheetIsCrisis: isCrisis,
       prCloseSheet: this.prCloseSheet,
       prDropThis: sheet ? this.prDropSheet(sheet.id) : this.prCloseSheet,

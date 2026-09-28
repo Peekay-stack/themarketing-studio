@@ -5189,6 +5189,40 @@ def _pr_objective_rows(p: dict | None) -> list[dict]:
     return ((p or {}).get("nodes", {}).get("objectives", {}) or {}).get("rows", []) or []
 
 
+def _pr_campaign_source(house: dict | None) -> dict | None:
+    """The campaign this PR sheet's house has adopted, quoted for reference — never written into the
+    release for a person, the same restraint `release_suggestions` already keeps for the boilerplate
+    and the mandatories. Absent, not guessed, when the house has no platform or no campaign: PR sheets
+    are legitimately opened with neither (`_pr_context`'s own docstring).
+
+    `pr.py` deliberately never imports `campaign`/`ideas` (it "never loads a plan", so its gates can be
+    exercised with no store behind them) — this composition belongs at the route layer, same as
+    `_exec_ctx`'s own cold-campaign fold-in does for the producer screens.
+    """
+    if not house:
+        return None
+    pset = ideas.for_house(house.get("id", ""))
+    camp = campaign_mod.get(pset, "") if pset else None
+    if not camp:
+        return None
+    role, why = media.role_for("pr")
+    return {
+        "id": camp.get("id", ""), "name": camp.get("name", ""),
+        "insight": camp.get("insight", ""), "resolution": camp.get("resolution", ""),
+        "big_idea": campaign_mod.big_idea(pset, camp.get("id", "")),
+        "role": role, "role_why": why,
+        "expression": (camp.get("expressions") or {}).get("pr", ""),
+    }
+
+
+def _pr_plan_context(p: dict | None) -> dict:
+    """The plan's own audience and channel rows, read-only reference for a PR sheet that answers to
+    it — PR has never read either before, despite always inheriting the plan's house."""
+    nodes = (p or {}).get("nodes") or {}
+    return {"audiences": (nodes.get("audiences") or {}).get("rows") or [],
+            "channels": (nodes.get("channels") or {}).get("rows") or []}
+
+
 @app.get("/pr-status")
 def pr_status():
     """The PR vocabulary — modes, standalone kinds, phases, the descent and the five PR jobs.
@@ -5236,7 +5270,10 @@ def pr_sheet_new(payload: dict):
         execution_id=str(payload.get("execution") or ""), project=project_in)
     if err:
         return JSONResponse(status_code=400, content={"detail": err})
-    return {"sheet": s, "status": pr.status(s)}
+    house_obj = strategy.load(house_in) if house_in else None
+    return {"sheet": s, "status": pr.status(s),
+            "campaign": _pr_campaign_source(house_obj),
+            "plan_context": _pr_plan_context(_p)}
 
 
 @app.get("/pr-sheet/{sheet_id}")
@@ -5247,7 +5284,9 @@ def pr_sheet_get(sheet_id: str):
     p, house = _pr_context(s)
     return {"sheet": s, "status": pr.status(s),
             "funnel": pr.funnel(_pr_objective_rows(p)),
-            "proof_options": pr.proof_options(house)}
+            "proof_options": pr.proof_options(house),
+            "campaign": _pr_campaign_source(house),
+            "plan_context": _pr_plan_context(p)}
 
 
 @app.get("/pr-funnel")

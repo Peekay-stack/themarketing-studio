@@ -455,13 +455,20 @@ EXPRESSIONS: dict[str, str] = {
 
 # `influencer` inserted after `social`, where the campaign role table and execution screens put it --
 # not appended at the end, which is what `LEGACY_STRATEGY_MEDIA + ("influencer",)` used to do.
+# `pr` appended at the end (28 Sep): it was never here, despite the campaign's own expression panel and
+# `EXPRESSIONS` above both carrying a PR row — findable in code, not by looking at the screen, since
+# nothing that reads `LEGACY_CAMPAIGN_MEDIA` (the Roles-by-medium table, the grid) ever surfaced the
+# gap on its own. A campaign saved before this exists simply has no `pr` role until someone gives it
+# one, same as any other medium that was left blank.
 LEGACY_CAMPAIGN_MEDIA: tuple[str, ...] = (
-    "tv", "digital", "social", "influencer", "on-ground", "ooh", "trade", "posm",
+    "tv", "digital", "social", "influencer", "on-ground", "ooh", "trade", "posm", "pr",
 )
 
 # The role table as `campaign.py` held it, for the same reason: identical values, one definition. The
-# target `ROLE_BY_RUNG` above differs from this in exactly three ways — `on-ground` is now `activation`,
-# `digital` has become `owned` plus `performance`, and `pr` exists.
+# target `ROLE_BY_RUNG` above now differs from this in exactly two ways — `on-ground` is now
+# `activation`, and `digital` has become `owned` plus `performance`. `pr` no longer differs; both share
+# `ROLE_BY_RUNG["pr"]` directly (see the comment on `LEGACY_CAMPAIGN_MEDIA` above for why it was added
+# here rather than left for the wider migration).
 LEGACY_ROLE_BY_RUNG: dict[str, tuple[str, str]] = {
     "tv":         ROLE_BY_RUNG["tv"],
     "influencer": ROLE_BY_RUNG["influencer"],
@@ -472,4 +479,5 @@ LEGACY_ROLE_BY_RUNG: dict[str, tuple[str, str]] = {
     "posm":       ROLE_BY_RUNG["posm"],
     "ooh":        ROLE_BY_RUNG["ooh"],
     "trade":      ROLE_BY_RUNG["trade"],
+    "pr":         ROLE_BY_RUNG["pr"],
 }
