@@ -232,3 +232,35 @@ for social"` (the real campaign text). (2) checkfe/selfcheck.py/smoke.py all cle
 
 **All 3 issues from this round of live testing are now fixed and pushed** (naming misleading-affordance,
 Accept-loop, campaign hot-hand-off). Confirm live deploy status before closing this out.
+
+## UPDATE 28 Sep, still same session — POSM + Onground campaign wiring built (8f7ab2b), PR scoped separately
+User confirmed Social's fix worked and asked for the same for Activation/POSM/PR ("Video is working
+fine" — confirmed correct, `loadVideoStandsOn` never had the `!e.id` guard to begin with).
+
+Swept all three before touching anything:
+- **POSM and Onground**: same root cause class as Social, but a different starting point — their
+  "Take it to X" links only ever navigated (per the pre-existing "cold Take it to X only navigates"
+  limitation), never threading `campaignId`/`houseId` anywhere at all. Built the wiring fresh, mirroring
+  Social's now-fixed pattern: `ideaGoTo` captures `campaignId`/`houseId` for both; POSM stashes them on
+  `state.posm` and `developKv()` ("Develop key visual") now sends `body.campaign`/`body.house`; Onground's
+  `loadOgStandsOn()` now takes and forwards them (bypassing its own `_ogStandsAsked` once-guard for an
+  explicit click, same reasoning as Social's fix), stashing onto `state.og` so the later `developIdea()`
+  ("sharpen") call keeps reading the same campaign. Both reuse the already-proven-safe `_exec_ctx`
+  cold-campaign fold-in server-side — no backend changes needed.
+- **PR is NOT a wiring-lost bug — it was never built.** `pr.py` never imports `campaign` at all; no PR
+  route reads campaign data. The Idea Platform's campaign panel DOES show a "Take it to PR" link with the
+  campaign's own written PR expression, but it only navigates, same as POSM/Onground did — except there is
+  no existing spine-walk to extend here (PR sheets bind to a PLAN, not an execution; `_pr_context` doesn't
+  touch `_exec_ctx` at all). Real design question before building: should the campaign's PR expression
+  surface through `release_suggestions`'s `source_material` (the same "quoted fact, never written for
+  you" pattern PR already uses for the brand profile/sheet messages) or somewhere else? **Reported to the
+  user, asked before scoping/building — awaiting their answer.**
+
+Verified live (local browser + real API calls, no test data left behind): Onground's preview showed
+"FROM THE CAMPAIGN, ADAPTED FOR ACTIVATION" with the real campaign text; POSM's real `/posm-keyvisual`
+response came back `"source":"the campaign, adapted for posm"` with the campaign's own line. checkfe,
+selfcheck.py, smoke.py all clean. Pushed as `8f7ab2b`, confirmed live (`/selfcheck` + `/selfcheck/deep`,
+commit `8f7ab2b4c4`, 0 problems).
+
+**Campaign→producer hand-off is now consistent across Social/Video/POSM/Onground. PR is the one
+remaining gap, scoped but not built — pick up there next.**
