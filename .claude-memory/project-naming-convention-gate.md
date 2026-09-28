@@ -79,3 +79,49 @@ Everything above is committed, pushed and live (`/selfcheck` matched `2315e0a`).
 - **Proposed order awaiting approval:** (1) push the two Idea Platform fixes + add name to plan header/media header/printable house sheet; (2) executions + PR sheets get a name copied from their plan; (3) name in all download filenames; (4) show placeholders as "unnamed — name it" instead of doubling the brand.
 
 **Also open — carousel cast options (diagnosed, no fix):** `draftCarouselCast` sends the whole script prose (props included) as `characters` to `/cast-reference` (main.py ~1512), no India/market anchoring, variation rule too loose → oversized glasses, three different compositions, foreign-looking cast. Proposed: extract only people, anchor to brand's market, force same composition; prove on the real Nothing Cut script first (large change → approval first).
+
+## UPDATE 28 Sep — Step 1-3 of the naming order SHIPPED live as 0d3f08e
+Built, local-verified (checkfe, py_compile, selfcheck.py, smoke.py) and live-verified in the browser
+(logged in locally as seed user `puneet`/`puneet-dev`), then pushed and confirmed live
+(`/selfcheck` + `/selfcheck/deep` both clean against `0d3f08e6d7`).
+
+**Step 1 (the 3 local fixes from 25 Sep, plus more header coverage):**
+- Idea Platform house dropdown now uses `h.label` (was rebuilding its own brand-only label).
+- Project chip added: Idea Platform title, plan-screen header, execution-screen header, printable
+  house sheet (title + on-page header), media-plan header ("Derived from X · project").
+- "Which campaign" hidden on Social/Video brief forms when the bound house has zero campaigns.
+
+**Real bug found WHILE testing the above, fixed in the same push:** `/campaign?house=X` falls back to
+`ideas.resolve(..., allow_latest=True)` — the newest platform set for the BRAND, across any house —
+when the requested house has none of its own. That fallback is intentional and DISCLOSED elsewhere
+(`resolvedPlatform()` labels it "the newest house for this brand"), but the execution's campaign
+picker didn't disclose it at all: a campaign-less house could still show and let you pick a campaign
+that actually belonged to a different house, with no indication. Fixed narrowly in
+`loadCampaignsForExec` (frontend only, doesn't touch the shared `ideas.resolve()` used legitimately
+elsewhere) — discards the response unless its own `house` matches the plan's house.
+
+**Step 2:** executions and PR sheets now carry `project` (execution.py's `new_execution`, pr.py's
+`new_sheet` + `/pr-sheet` route in main.py), copied from their plan, falling back to the house —
+same pattern `plan.py`/`ideas.py` already used. PR sheet list rows and the sheet header show it.
+Verified live: created a real PR sheet against a named-project plan, both list row and header showed
+the project.
+
+**Step 3:** project added to filenames that were brand-only: guided-builder brief docx
+(`downloadBriefWord`), IMC brief docx (`generateImcDocx`), research synthesis deck
+(`generateSynthesisDeck`), production bible (`downloadProductionBible`), film script
+(`downloadScriptWord`). Verified by logic only (isolated JS string-building, no live AI generation —
+avoided the API cost), same pattern already proven elsewhere in the file (`downloadBriefWord`'s own
+existing `safe` variable). **Also checked and found already correct, no action needed:** the made-work
+ledger (`_record_made`/`_made_brand_project` in main.py already resolves and stores `project`).
+
+**Still open (not done):**
+- Step 4 — placeholder-name cleanup ("unnamed — name it" instead of doubling the brand like
+  "Heritage Foods · Heritage Foods – house, September 2026").
+- Call-sheet filename (Shoot Board / `callSheet()`) — deliberately left alone. Couldn't confirm
+  `state.house`/`state.plan` reliably matches the actual shoot's own house without risking exactly the
+  cross-house mistake just fixed above; needs its own trace before touching.
+
+**Test hygiene:** created and then deleted 2 throwaway plans + 1 PR sheet in the dev tenant purely to
+exercise the campaign-picker and PR-sheet code paths (positive and negative cases) — none left behind.
+
+Commit: `0d3f08e` ("Naming convention: idea platform, plan/execution/PR headers, cross-house fix").
