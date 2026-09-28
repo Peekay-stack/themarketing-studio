@@ -326,3 +326,10 @@ medium" table now lists PR as a 9th row. Test plan/sheets deleted after. checkfe
 clean, pushed as `cc16739` — awaiting live deploy confirmation.
 
 **All of today's campaign-wiring work (Social, POSM, Onground, PR) is now built.** Video needed nothing.
+
+## CLOSED 28 Sep — user confirmed all wiring working live
+User tested live and confirmed: "done... all working - wired now.." — Social, POSM, Onground and PR
+campaign hand-offs all confirmed working on the live site by the user directly (not just my own
+verification). Naming order (all 4 steps) also stands confirmed from earlier in this same session.
+
+**This thread is fully closed.** Nothing known outstanding from today's naming/campaign-wiring work.
