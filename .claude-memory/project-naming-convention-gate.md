@@ -264,3 +264,65 @@ commit `8f7ab2b4c4`, 0 problems).
 
 **Campaign→producer hand-off is now consistent across Social/Video/POSM/Onground. PR is the one
 remaining gap, scoped but not built — pick up there next.**
+
+## UPDATE 28 Sep, still same session — POSM's own arrival preview was ALSO missing, fixed as ce057ef
+User re-tested and reported POSM's preview box (shown before "Develop key visual") still read the
+platform's plain line — but investigation showed this was TWO separate things: (1) my own testing
+mistake first (clicked the platform's Step-4 "Take it to POS material" link, not the campaign panel's —
+their DOM order differs from Onground's, campaign's own link comes FIRST for POSM); (2) a genuine, real
+gap once the correct link was tested: POSM never had ANY arrival preview call at all (only
+`loadPosmFormats()`, unrelated to a stands-on quote), so the box always showed a client-only fallback
+reading of the platform's line, campaign-blind whether hot or cold — unlike Social/Video/Onground, whose
+preview box is a real server answer fetched on arrival.
+
+Fixed: new `loadPosmStandsOn(campaignId, houseId)`, mirroring `loadOgStandsOn` exactly via the same
+generic `/producer-stands-on` route, writing into `posm.standsOn` (the same field `developKv` already
+populates — no template change needed). Wired into all 4 POSM entry points (`ideaGoTo`, `xGoTab`,
+`goPosmShortcut`, the generic `go()` cold-open). Verified live: found the correct campaign link via DOM
+inspection (its container text distinguishes "standing on this campaign specifically" from the platform
+Step-4 panel's own wording), clicked it, and the box now reads "FROM THE CAMPAIGN, ADAPTED FOR POSM"
+with the real campaign line, before any generation click. checkfe/selfcheck.py clean, pushed as `ce057ef`,
+confirmed live (commit `ce057ef544`, 0 problems).
+
+## Now investigating: PR build, per the user's explicit spec
+User confirmed the PR direction and gave 4 requirements: (a) the campaign idea, (b) PR's own role —
+**missing from "Roles by medium"/the grid entirely, confirmed in code**: `campaign.py`'s live `MEDIA`/
+`ROLE_BY_RUNG` are `media.LEGACY_CAMPAIGN_MEDIA`/`LEGACY_ROLE_BY_RUNG`, which deliberately exclude "pr"
+(media.py's own comment: "the target ROLE_BY_RUNG above differs from this in exactly three ways —
+on-ground is now activation, digital has become owned plus performance, and **pr exists**" — a newer,
+not-yet-migrated "target taxonomy" already has `ROLE_BY_RUNG["pr"] = ("the functional truth, earned",
+"...")` fully written, just not wired into the live legacy tables). (c) the campaign's own PR expression
+(already exists in `campaign.EXPRESSIONS`/the campaign panel's PR row — just never reaches the PR
+screen, same "Take it to PR only navigates" gap as POSM/Onground had). (d) the plan's audience/channel
+context on the PR screen (not yet checked — PR's own `_pr_context` resolves plan+house from the sheet,
+never reads audience/channel rows at all currently).
+
+**Scoping in progress, not yet built.** Next: check downstream consumers of `campaign.MEDIA`/
+`ROLE_BY_RUNG` before deciding whether to append "pr" to the LEGACY tables narrowly (not adopt the wider
+target-taxonomy migration, which also renames on-ground→activation and splits digital→owned+performance
+— unrelated, much bigger scope the user did not ask for), then design the PR screen's own hand-off +
+audience/channel display, then write a plan for approval before building (per working agreement, this is
+squarely "large").
+
+## UPDATE 28 Sep, still same session — PR build SHIPPED as cc16739
+Built and verified all 4 parts of the user's spec, pushed. Details:
+- **(b) PR's role**: added "pr" to `media.py`'s `LEGACY_CAMPAIGN_MEDIA`/`LEGACY_ROLE_BY_RUNG` (reusing
+  the already-written, not-yet-migrated `ROLE_BY_RUNG["pr"]` text verbatim) + a matching row in the
+  frontend's `CAMPAIGN_ROLES`. Deliberately NOT the wider target-taxonomy migration (on-ground→activation,
+  digital→owned+performance) — unrelated, bigger scope nobody asked for. Side effect disclosed and
+  accepted: an existing campaign with no PR role picks up a new (non-blocking) "gives no role to: pr"
+  finding, same mechanism every other blank medium already has.
+- **(a)/(c)/(d)**: new `_pr_campaign_source(house)` and `_pr_plan_context(p)` in main.py (composition at
+  the route layer, since `pr.py` deliberately never imports `campaign`/`plan`) resolve the house's
+  adopted campaign (insight/resolution/big_idea/role/PR's own written expression, quoted for reference
+  only — never auto-filled into the release, same restraint `release_suggestions` already keeps) and the
+  plan's audience/channel rows (PR never read either before). Wired into `/pr-sheet` (create) and
+  `/pr-sheet/{id}` (open); frontend renders two new cards above the sheet's tab strip.
+
+Verified live end to end with real data across two houses (no single dev-tenant house had both a real
+campaign AND real audience/channel rows): campaign card matched the campaign panel's own PR row
+verbatim; plan-context card showed 3 real audiences + 7 real channels+roles. Idea Platform's "Roles by
+medium" table now lists PR as a 9th row. Test plan/sheets deleted after. checkfe/selfcheck.py/smoke.py
+clean, pushed as `cc16739` — awaiting live deploy confirmation.
+
+**All of today's campaign-wiring work (Social, POSM, Onground, PR) is now built.** Video needed nothing.
