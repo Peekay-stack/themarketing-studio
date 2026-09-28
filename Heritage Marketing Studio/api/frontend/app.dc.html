@@ -19604,8 +19604,13 @@ class Component extends DCLogic {
     // `screen==='exec'` branch and `xGoTab` already run for every other way into these tabs.
     this.setState({ screen:'exec', xTab:tab }); window.scrollTo(0,0);
     this.loadGrounding();
-    if (tab === 'posm') this.loadPosmFormats();
-    if (tab === 'onground') { this.loadOgStandsOn(); this.ensureAssetLib(); }
+    // POSM/Onground never had a wired cold hand-off at all (unlike Social/Video) -- "Take it to X"
+    // only ever navigated. `campaignId`/`houseId` are stashed here rather than passed as call
+    // arguments, because both producers read them from a later, person-triggered action (POSM's
+    // "Develop key visual", Onground's own stands-on/idea-sharpen calls), not from a single call made
+    // on arrival the way Social's preview is -- so there is nowhere to hand the values TO yet.
+    if (tab === 'posm') { this.setPosm({ campaignId, houseId }); this.loadPosmFormats(); }
+    if (tab === 'onground') { this.loadOgStandsOn(campaignId, houseId); this.ensureAssetLib(); }
     if (tab === 'social') { this.loadSocialStandsOn(undefined, campaignId, houseId); this.loadCarouselAssetLib(); }
   };
 
@@ -20099,6 +20104,12 @@ class Component extends DCLogic {
     const body = { n:3, brand_mode: this.state.producerBrandMode };
     if ((p.brief || '').trim()) body.brief = p.brief.trim();
     const h = this.state.house; if (h && h.id) body.house = h.id;
+    // `campaignId`/`houseId` — stashed by `ideaGoTo`'s "Take it to POS material" hand-off, same
+    // mechanism Social/Onground now both use: sent regardless of whether an execution already exists
+    // (below), since only the execution's OWN bound campaign (if it has one) can ever outrank it —
+    // see `_exec_ctx`'s own comment on why that fold-in is safe.
+    if (p.houseId) body.house = p.houseId;
+    if (p.campaignId) body.campaign = p.campaignId;
     const plat = this.ideaUsable() ? this.idea() : null;
     if (plat) body.platform = { name:plat.name, line:plat.line, mechanic:plat.mechanic || '' };
     if (p.ignore_platform && (p.brief || '').trim()) body.ignore_platform = true;
@@ -21002,18 +21013,28 @@ class Component extends DCLogic {
   // the idea is a person standing in a street doing a thing, and a model that supplies it supplies
   // something nobody in the room believes in. What the 400 also carries is the platform line the
   // activation WOULD be built against \u2014 shown beside the box as context, never as a default value.
-  loadOgStandsOn = async () => {
-    if (this._ogStandsAsked) return;
+  // `campaignId`/`houseId` (optional) — only ever sent by the campaign panel's own "Take it to the
+  // activation" hand-off. Not gated behind `_ogStandsAsked`: that guard exists so switching tabs back
+  // and forth doesn't re-fire the same ambient read, but a deliberate hot click is never ambient, and
+  // suppressing it (as Social's own equivalent guard once did) would just show the platform's plain
+  // line again the moment this tab had ever been visited once before. Stashed onto `og` afterward so
+  // `developIdea`'s own generate call keeps reading the same campaign, not just this one preview.
+  loadOgStandsOn = async (campaignId, houseId) => {
+    if (this._ogStandsAsked && !campaignId) return;
     this._ogStandsAsked = true;
     const body = { idea:'', brand_mode: this.state.producerBrandMode };
     const h = this.state.house; if (h && h.id) body.house = h.id;
+    if (houseId) body.house = houseId;
+    if (campaignId) body.campaign = campaignId;
     const plat = this.ideaUsable() ? this.idea() : null;
     if (plat) body.platform = { name:plat.name, line:plat.line };
     const r = await this.apiCall('/activation-idea', body);
     const d = (r && r.data) || {};
     const so = d.stands_on;
-    if (so && so.text) this.setState({ og: { ...this.og(), standsOn:so } });
-    else this._ogStandsAsked = false;
+    if (so && so.text) {
+      this.setState({ og: { ...this.og(), standsOn:so,
+        campaignId: campaignId || this.og().campaignId, houseId: houseId || this.og().houseId } });
+    } else if (!campaignId) this._ogStandsAsked = false;
   };
   developIdea = async () => {
     const o = this.og();
@@ -21026,6 +21047,10 @@ class Component extends DCLogic {
     const alb = this.state.linkedBrief;
     if (alb) body.brief = { title:alb.title, proposition:alb.proposition, audience:alb.audience, objective:alb.objective, tone:alb.tone };
     const h = this.state.house; if (h && h.id) body.house = h.id;
+    // Same campaign the preview above was just shown against (`loadOgStandsOn`'s own hot hand-off) —
+    // sharpening an idea against a DIFFERENT line than the one on screen would be its own quiet drift.
+    if (o.houseId) body.house = o.houseId;
+    if (o.campaignId) body.campaign = o.campaignId;
     const plat = this.ideaUsable() ? this.idea() : null;
     if (plat) body.platform = { name:plat.name, line:plat.line, mechanic:plat.mechanic || '' };
     const r = await this.apiCall('/activation-idea', body);
