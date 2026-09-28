@@ -4654,8 +4654,12 @@
       </sc-if>
       <sc-if value="{{ hHasProjectSuggest }}" hint-placeholder-val="{{ false }}">
         <span style="display:inline-flex; align-items:center; gap:8px; background:#F4F7FC; border:1px solid #D6E0F0; border-radius:9px; padding:4px 6px 4px 10px; font-size:12.5px;">
-          <span style="color:#2E5EA6; font-weight:600;">{{ hProjectSuggestion }}?</span>
-          <span onClick="{{ acceptProjectName }}" style="cursor:pointer; font-weight:700; color:#17325E; background:#fff; border:1px solid #C9CEDA; border-radius:7px; padding:3px 9px;">Accept</span>
+          <!-- Editable, not just a fixed guess to accept-or-not: a boilerplate suggestion
+               ("Heritage — house, September 2026") is exactly the shape that keeps failing the
+               "is this a real name" check below, so Accept alone could never satisfy it and the
+               prompt would just come back. Typing over it is how somebody actually names the thing. -->
+          <input value="{{ hProjectSuggestion }}" onChange="{{ onProjectSuggestEdit }}" style="border:1px solid #D6E0F0; border-radius:6px; padding:3px 8px; font-size:12.5px; font-weight:600; color:#2E5EA6; background:#fff; min-width:220px;" />
+          <span onClick="{{ acceptProjectName }}" style="cursor:pointer; font-weight:700; color:#17325E; background:#fff; border:1px solid #C9CEDA; border-radius:7px; padding:3px 9px; white-space:nowrap;">Save</span>
         </span>
       </sc-if>
       <span style="font-size:10px; background:#DFF0E3; color:#2F6B3C; border-radius:10px; padding:3px 9px; font-weight:800; letter-spacing:0.04em;">skill</span>
@@ -18307,6 +18311,7 @@ class Component extends DCLogic {
     if (r && r.project) this.setState({ hProjectSuggest: r.project });
     else this.showToast('Nothing to suggest yet.');
   };
+  onProjectSuggestEdit = (e) => this.setState({ hProjectSuggest: e.target.value });
   acceptProjectName = async () => {
     const h = this.state.house, name = this.state.hProjectSuggest; if (!h || !name) return;
     const r = await this.apiCall('/project-name', { house:h.id, name });
@@ -18509,10 +18514,13 @@ class Component extends DCLogic {
   }
   // Same shape, no brand prefix -- for the single-project chips that sit beside a header that already
   // shows the brand elsewhere on screen.
+  // No "— name it" here on purpose: every call site is a label (card, dropdown option, header chip,
+  // list row) with nothing clickable behind it. The one place that IS clickable — the house screen's
+  // own "Name this project" prompt — keeps that wording on its own, separately from this helper.
   projectChip(project){
     const p = String(project||'').trim();
     if (!p) return '';
-    return this.looksDerivedProject(p) ? 'Unnamed — name it' : p;
+    return this.looksDerivedProject(p) ? 'Unnamed' : p;
   }
 
   buildHouseSummary(){
@@ -23712,6 +23720,7 @@ class Component extends DCLogic {
       hProjectAsk: 'Name this project', suggestProjectName: this.suggestProjectName,
       hHasProjectSuggest: !((house && house.project) && !this.looksDerivedProject(house.project)) && !!s.hProjectSuggest,
       hProjectSuggestion: s.hProjectSuggest || '', acceptProjectName: this.acceptProjectName,
+      onProjectSuggestEdit: this.onProjectSuggestEdit,
       hLayers, hRailNote: decided + ' of ' + H_LIVE.length + ' decided' + (hNextUp ? ' — next up is ' + hNextUp.name.toLowerCase() + '.' : ' — all decided.') + ' Each choice is what the layer below is written against, which is why they open one at a time.',
       hHasChosen: chosenIds.length > 0, hNotChosen: chosenIds.length === 0,
       hUndecidedNote: hNextDef

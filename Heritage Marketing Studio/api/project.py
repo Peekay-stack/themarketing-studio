@@ -104,12 +104,15 @@ def label(doc: dict | None, brand: str = "") -> str:
 
     A project that is still the unedited `derive()` suggestion doubles the brand back at the reader
     ("Heritage Foods · Heritage — house, September 2026") without telling them anything a rename
-    wouldn't — shown instead as a plain nudge to go name it.
+    wouldn't — shown instead as plain "Unnamed". Never "— name it" here: this is a label on a card,
+    dropdown option or list row, nothing on the far end of it is clickable, and text that reads like a
+    button where there is none just teaches people to stop trusting the ones that work. The one place
+    that IS clickable (the house screen's own "Name this project" prompt) keeps that wording separately.
     """
     b = clean(brand or (doc or {}).get("brand") or "")
     p = of(doc)
     if p and looks_derived(p):
-        return f"{b} · Unnamed — name it" if b else "Unnamed — name it"
+        return f"{b} · Unnamed" if b else "Unnamed"
     return f"{b} · {p}" if b and p else (p or b)
 
 
