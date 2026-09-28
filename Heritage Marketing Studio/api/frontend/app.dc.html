@@ -14150,14 +14150,21 @@ class Component extends DCLogic {
       brand_mode: s.producerBrandMode };
     const e = this.currentExec ? (this.currentExec() || {}) : {};
     if (e.id) body.execution = e.id;
-    // Both only ever arrive from the campaign panel's own cold "Take it to Social" hand-off. `houseId`
-    // matters just as much as `campaignId` here: without it, `_exec_ctx` on the server falls back to
-    // "the newest house for the active brand", which is a real guess and, found live, not necessarily
-    // the house the campaign panel was actually showing — the campaign lookup then silently failed
-    // because it searched the WRONG house's platform set. An already-briefed execution's own bound
-    // campaign (above) always wins over either, same priority `stands_on` itself uses.
-    if (!e.id && houseId) body.house = houseId;
-    if (!e.id && campaignId) body.campaign = campaignId;
+    // Both only ever arrive from the campaign panel's own "Take it to Social" hand-off — a deliberate,
+    // explicit click, never an ambient re-fetch. `houseId` matters just as much as `campaignId` here:
+    // without it, `_exec_ctx` on the server falls back to "the newest house for the active brand", a
+    // real guess and, found live, not necessarily the house the campaign panel was actually showing.
+    //
+    // Sent regardless of whether an execution already exists for this tab (`e.id`, sent above as
+    // `body.execution` when present) — found live: the FIRST hand-off from a campaign worked, but every
+    // one after the tab had ever been briefed once silently went back to reading the platform's plain
+    // line, because an old, unrelated execution sitting in this tab's own state was letting its stored
+    // (often campaign-less) binding stand in for what was just explicitly clicked. The server's own
+    // `_exec_ctx` still prefers the execution's OWN bound campaign when it actually has one — this only
+    // fills the gap when it doesn't, so a real, already-adapted campaign binding on the execution is
+    // never overridden here.
+    if (houseId) body.house = houseId;
+    if (campaignId) body.campaign = campaignId;
     const d = await this.apiCall('/producer-stands-on', body);
     if (d && d.ok && d.data) this.setState({ socialStandsOn: d.data });
   };
