@@ -156,3 +156,52 @@ houses/plans → "Unnamed — name it"; "Heritage Maharashtra Push" untouched; h
 again). Pushed, deploy confirmed live via `/selfcheck` matching `d914506`.
 
 **Naming order (all 4 steps) is now fully shipped.** Nothing known open on this thread.
+
+## UPDATE 28 Sep, same session — two real bugs found in step-4 live testing, both fixed as cad1abc
+Live-tested d914506 and found two real problems the user caught:
+
+1. **"Unnamed — name it" read as a dead button almost everywhere.** `label()`'s new phrasing was correct
+   in meaning but wrong in every context except the ONE place with an actual click handler (the house
+   screen's own breadcrumb). Plan cards, dropdowns, header chips, PR rows all showed the SAME "— name
+   it" wording with nothing behind it. Fixed: dropped the suffix from `project.label()` and its JS
+   mirror `projectChip()` — both just say "Unnamed" now. The house screen's own prompt keeps its
+   separate, genuinely-clickable "Name this project" wording, untouched.
+2. **The house screen's Accept flow was a dead loop for exactly the case d914506 introduced.**
+   `/project-suggest`'s worst-case answer IS the boilerplate `derive()` string; accepting it verbatim
+   re-saved that same string, which the new `looks_derived()` check immediately re-flagged as still
+   unnamed — "Name this project" just reappeared, no visible feedback, forever. Fixed: the suggestion
+   is now an editable text input (defaults to the guess, but typing over it is how you actually name the
+   thing); "Accept" relabelled "Save". Verified end to end on a real house (renamed, confirmed, then
+   reverted its project field back to empty — it had none before the test).
+
+Both verified locally (checkfe, py_compile, selfcheck.py, smoke.py) and live in the browser, pushed as
+`cad1abc`, confirmed live (`/selfcheck` + `/selfcheck/deep` both clean, commit `cad1abce6d`).
+
+## OPEN — a third issue from the same testing round, NOT fixed, needs the user's test result first
+User reported: the Idea Platform's "campaign expression by medium" panel used to correctly hand off to
+producers via "Take it to X", but an already-briefed Social execution is now reading the platform's
+plain "Expression by medium" instead of the campaign's adapted line, even though a real campaign exists
+with its own written Social expression.
+
+Traced two candidate causes, not yet distinguished:
+1. **Likely benign — staleness, not a bug.** `ideaGoTo`'s hot hand-off (`loadSocialStandsOn`/
+   `loadVideoStandsOn`) only ever updates the READ-ONLY preview box (`socialStandsOn`); it never writes
+   into `execDraft.campaign_id`, the field `createExecution()` actually reads when "Brief it" persists
+   the execution. Separately, `execution.brief_from()`'s own default (empty `campaign_id`) already
+   falls back to `campaign_mod.get(pset, "")` → the platform's most-recently-written campaign — so a
+   FRESH execution briefed while a campaign exists should bind correctly regardless of hot/cold path.
+   `brief_from()` runs once, at creation, and is never recomputed later (`stale_because()` only catches
+   a bound campaign being DROPPED or REWRITTEN, not "no campaign existed yet when this was briefed, one
+   exists now"). If the execution in question predates the campaign, this is expected behavior, not a
+   bug — the fix is just re-briefing it.
+2. **A real, separate latent bug, if the platform ever has >1 campaign.** The empty-`campaign_id`
+   fallback binds the LAST-WRITTEN campaign, not necessarily the one whose panel button was clicked —
+   so on a platform with multiple campaigns, "Take it to Social" from an older campaign's row could
+   silently bind whichever is now newest once actually briefed. Worth a defensive fix (thread the
+   clicked `campaignId` into `execDraft.campaign_id` in `ideaGoTo`) regardless of what the test below
+   shows, but not done yet — asked the user to test first rather than guess.
+
+**Asked the user to test:** click "Take it to Social" again and brief a FRESH execution (not the
+existing one) on the same plan, right after — does the new one show the campaign's adapted line? Answer
+tells us whether this is (1) staleness (no fix needed) or (2) a real resolution bug (needs the fix in
+2 above, and possibly more). **PICK UP HERE with whatever the user reports.**
