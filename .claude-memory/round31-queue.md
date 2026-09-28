@@ -39,3 +39,41 @@ Update the artifact directly as items move (same URL, republish with `url` set) 
 progress only in chat — this is meant to be the actual working board for whatever gets picked up next,
 not a one-off summary. Update the three source documents' own findings first if something here turns out
 to be wrong; this board should always agree with them, not drift from them.
+
+## UPDATE 28 Sep, later same session — item 20 (POSM/Onground brand-voice gap) built + tested locally, NOT shipped
+Traced the full blast radius rigorously before touching anything (per the user's own ask): `producers._ctx()`
+is the SHARED context-builder behind not just POSM/Onground but also **Social's own carousel-concept
+writer** (`producers.carousel_concept()`, behind `/social-carousel-concept`) — a wider, previously
+undisclosed blast radius than first proposed. All 3 never called `brandprofile.voice_block()` at all,
+unlike Social/Video's own single-post path (`prompts.system_for()`).
+
+**Built** (uncommitted, local only): `_ctx()` now includes `voice_block()` — skipped only in
+Independent/General mode (matching the character-reference precedent already in this function), with
+mandatories dropped only when nothing at all is bound (reusing the function's own existing "no strategy
+attached" check, no new parameter threaded through 6 functions/5 routes). Full design reasoning and exact
+diff in the conversation; `py_compile`/`selfcheck.py` clean, no frontend change needed (this function's
+output never reaches the screen).
+
+**Tested locally with real generation, before vs after, 3 real API calls each** (house 063785d77c /
+"Nothing Cut", real Heritage Foods brand profile with real mandatories/competitors/tone): confirmed
+deterministically via a direct `_ctx()` call that the brand block is now present, AND confirmed in real
+LLM output — most clearly on Social's carousel, where every CTA slide across all 3 routes went from a
+bare hashtag to the brand's own mandatory line + FSSAI mark stated almost verbatim, plus market-correct
+delivery-context imagery that wasn't there before. POSM/Onground showed a softer but real shift toward
+more literal, market-grounded claims. No regressions found (no competitor leaks, JSON parsing intact
+across all 6 calls).
+
+**Then: user asked to compare old (live) vs new (local) using their REAL live content** ("Heritage IMC" /
+"The Morning Pour", which they'd just tested live). Confirmed local and live tenants are genuinely
+separate storage (`STUDIO_DATA_DIR` unset locally → falls back to the repo folder; set to `/data` only on
+Render) — grepped the local tenant to be sure rather than just citing the config; the user's real content
+is NOT present locally. Proposed pulling it down via the live site's own read-only routes, which needs the
+user to actually log into live themselves first (no tool here can read Render's disk directly, and I don't
+handle live credentials). **User deferred this to tomorrow morning, and downgraded to the faster option**
+(local dev-tenant data, pattern-level comparison, not an exact-content pull-down) — so tomorrow starts with
+that quicker local test, not the live-data mirror.
+
+**Status: code sits uncommitted in `producers.py`, nothing pushed, nothing live-affected.** Pick up
+tomorrow morning with local-only testing using the existing local dev-tenant content (house `063785d77c`
+"Nothing Cut" already proven to show a clear before/after). The real before/after examples from today are
+in this session's own transcript if a fuller write-up is needed before shipping.
