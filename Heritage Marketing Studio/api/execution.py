@@ -44,6 +44,7 @@ import findings as findings_mod
 import ideas as ideas_mod
 import media
 import plan as plan_mod
+import project as project_mod
 import tenancy
 
 
@@ -689,6 +690,7 @@ def new_execution(p: dict, house: dict | None, kind: str, sel: dict) -> tuple[di
         return None, err
     e = {"id": uuid.uuid4().hex[:10], "plan": p["id"], "house": p.get("house", ""),
          "kind": kind, "brief": brief, "status": "briefed", "artefacts": [],
+         "project": project_mod.of(p) or project_mod.of(house),
          "created": _now(), "updated": _now()}
     return save(e), ""
 

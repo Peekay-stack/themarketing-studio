@@ -5225,14 +5225,15 @@ def pr_sheet_new(payload: dict):
     """
     house_in = str(payload.get("house") or "")
     plan_in = str(payload.get("plan") or "")
+    _p = plan_mod.load(plan_in) if plan_in else None
     if plan_in and not house_in:
-        _p = plan_mod.load(plan_in)
         house_in = str((_p or {}).get("house") or "")
+    project_in = project.of(_p) or project.of(strategy.load(house_in) if house_in else None)
     s, err = pr.new_sheet(
         str(payload.get("brand") or ""), str(payload.get("mode") or "campaign"),
         plan_id=plan_in, house_id=house_in,
         kind=str(payload.get("kind") or ""), phase=str(payload.get("phase") or ""),
-        execution_id=str(payload.get("execution") or ""))
+        execution_id=str(payload.get("execution") or ""), project=project_in)
     if err:
         return JSONResponse(status_code=400, content={"detail": err})
     return {"sheet": s, "status": pr.status(s)}

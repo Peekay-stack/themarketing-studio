@@ -4004,6 +4004,9 @@
     <div style="margin-bottom:8px; font-size:13px; font-weight:700; letter-spacing:0.06em; color:#259821; text-transform:uppercase;">Comm strategy</div>
     <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:20px; flex-wrap:wrap;">
       <h1 style="font-family:'Epilogue',sans-serif; font-size:34px; font-weight:700; letter-spacing:-0.02em; margin:0 0 6px; color:#17325E;">The idea platform</h1>
+      <sc-if value="{{ ideaHasProject }}" hint-placeholder-val="{{ false }}">
+        <span title="The project this platform belongs to — set once at the brief, inherited by the house." style="font-size:13px; font-weight:700; color:#2E5EA6; align-self:center;">{{ ideaProjectName }}</span>
+      </sc-if>
       <sc-if value="{{ ipHasDl }}" hint-placeholder-val="{{ false }}">
         <div style="display:flex; gap:9px; flex-none;">
           <button onClick="{{ ipDlRecord }}" style="background:#fff; color:#17325E; border:1px solid #C9CEDA; border-radius:11px; padding:10px 16px; font-weight:700; font-size:13px; cursor:pointer;">{{ ipDlRecordLabel }}</button>
@@ -5314,6 +5317,10 @@
       <span onClick="{{ goPlans }}" style="cursor:pointer; font-size:14px; font-weight:600; color:#6B7280;">← IMC plans</span>
       <span style="color:#A8AEB8;">/</span>
       <span style="font-size:14px; font-weight:700; color:#17325E;">{{ pBrand }}</span>
+      <sc-if value="{{ pHasProject }}" hint-placeholder-val="{{ false }}">
+        <span style="color:#A8AEB8;">·</span>
+        <span title="This plan's project — inherited from its house." style="font-size:14px; font-weight:700; color:#2E5EA6;">{{ pProject }}</span>
+      </sc-if>
       <span style="font-size:10px; background:#DFF0E3; color:#2F6B3C; border-radius:10px; padding:3px 9px; font-weight:800; letter-spacing:0.04em;">skill</span>
       <div style="margin-left:auto; display:flex; gap:9px;">
         <sc-if value="{{ pHasHouse }}" hint-placeholder-val="{{ false }}">
@@ -5807,7 +5814,12 @@
   <sc-if value="{{ isExec }}" hint-placeholder-val="{{ false }}">
   <div style="max-width:1240px; margin:0 auto; padding:32px 40px 90px; animation:hf-fade 0.4s ease;">
     <div style="margin-bottom:8px; font-size:13px; font-weight:700; letter-spacing:0.06em; color:#259821; text-transform:uppercase;">Execution</div>
-    <h1 style="font-family:'Epilogue',sans-serif; font-size:34px; font-weight:700; letter-spacing:-0.02em; margin:0 0 20px; color:#17325E;">{{ xHeadline }}</h1>
+    <div style="display:flex; align-items:baseline; gap:11px; flex-wrap:wrap; margin-bottom:20px;">
+      <h1 style="font-family:'Epilogue',sans-serif; font-size:34px; font-weight:700; letter-spacing:-0.02em; margin:0; color:#17325E;">{{ xHeadline }}</h1>
+      <sc-if value="{{ xHasProject }}" hint-placeholder-val="{{ false }}">
+        <span title="This plan's project — inherited from its house." style="font-size:14.5px; font-weight:700; color:#2E5EA6;">{{ xProject }}</span>
+      </sc-if>
+    </div>
 
     <div style="display:flex; gap:26px; border-bottom:1px solid #DDD9D1; margin-bottom:22px; flex-wrap:wrap;">
       <sc-for list="{{ xTabs }}" as="t" hint-placeholder-count="4">
@@ -12520,7 +12532,9 @@ class Component extends DCLogic {
     // images at all (no vision step here, unlike drafting), so no files need to be re-sent.
     const fd = new FormData(); fd.append('payload', JSON.stringify(payload));
     const docBrand = (d.brand || this.brandName() || '').trim();
-    const base = (docBrand || 'Unnamed_brand').replace(/[^a-z0-9]+/gi,'_').replace(/^_|_$/g,'');
+    const imcProj = (im.project || '').replace(/[^a-z0-9]+/gi,'_').replace(/^_|_$/g,'');
+    const base = (docBrand || 'Unnamed_brand').replace(/[^a-z0-9]+/gi,'_').replace(/^_|_$/g,'')
+                  + (imcProj ? '_'+imcProj : '');
     try {
       const r = await fetch('/brand-brief', { method:'POST', body: fd });
       if (!r.ok) throw new Error('server returned ' + r.status);
@@ -12548,7 +12562,9 @@ class Component extends DCLogic {
     const fd = new FormData();
     fd.append('payload', JSON.stringify({ brand: im.brand, category: im.category, prompt: im.prompt, research }));
     const docBrand = (im.brand || this.brandName() || '').trim();
-    const base = (docBrand || 'Research').replace(/[^a-z0-9]+/gi,'_').replace(/^_|_$/g,'');
+    const synProj = (im.project || '').replace(/[^a-z0-9]+/gi,'_').replace(/^_|_$/g,'');
+    const base = (docBrand || 'Research').replace(/[^a-z0-9]+/gi,'_').replace(/^_|_$/g,'')
+                  + (synProj ? '_'+synProj : '');
     try {
       const r = await fetch('/research-synthesis-deck', { method:'POST', body: fd });
       if (r.status === 400) {
@@ -14806,7 +14822,8 @@ class Component extends DCLogic {
               Look:this.styleLabel(this.state.videoStyle), Music:this.state.production.music },
     });
     if (!blob) { this.showToast('Couldn’t build the production bible — is the backend running?'); this.setState({ docBusy:'' }); return; }
-    this.triggerDownload(blob, 'Heritage_Production_Bible_'+this.today()+'.docx');
+    const pbProj = ((this.state.linkedBrief || {}).project || '').replace(/[^a-z0-9]+/gi,'_').replace(/^_|_$/g,'');
+    this.triggerDownload(blob, 'Heritage'+(pbProj ? '_'+pbProj : '')+'_Production_Bible_'+this.today()+'.docx');
     this.setState({ docBusy:'' });
   };
 
@@ -14823,7 +14840,8 @@ class Component extends DCLogic {
             { k:'Visual / Action', v:r.visual }, { k:'Camera', v:r.camera },
             { k:'Dialogue / VO', v:r.dialogue }, { k:'Super / Text on screen', v:r.supr } ])
         ]);
-    this.triggerDownload(blob, 'Heritage_Film_Script_'+this.today()+'.docx');
+    const scProj = ((this.state.linkedBrief || {}).project || '').replace(/[^a-z0-9]+/gi,'_').replace(/^_|_$/g,'');
+    this.triggerDownload(blob, 'Heritage'+(scProj ? '_'+scProj : '')+'_Film_Script_'+this.today()+'.docx');
     this.setState({ docBusy:'' });
   };
 
@@ -15053,7 +15071,8 @@ class Component extends DCLogic {
     const blob = await this.apiBlob('/brief-docx', payload) || this.wordBlob(this.state.title||'Heritage Brief', rows);
     if (!blob) { this.showToast('Couldn\u2019t build the document — try again.'); this.setState({ docBusy:'' }); return; }
     const safe = (this.state.title||'Heritage_Brief').replace(/[^a-z0-9]+/gi,'_').replace(/^_|_$/g,'');
-    this.triggerDownload(blob, 'Heritage_Brief_'+safe+'_'+this.today()+'.docx');
+    const brProj = ((this.state.brief || {}).project || '').replace(/[^a-z0-9]+/gi,'_').replace(/^_|_$/g,'');
+    this.triggerDownload(blob, 'Heritage_Brief_'+(brProj ? brProj+'_' : '')+safe+'_'+this.today()+'.docx');
     this.setState({ docBusy:'' });
   };
 
@@ -18518,6 +18537,7 @@ class Component extends DCLogic {
     };
 
     return '<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + E(h.brand || 'Messaging house')
++ (h.project ? ' · ' + E(h.project) : '')
 + ' — messaging house</title><style>'
 + '@page{size:A4 landscape;margin:12mm}'
 + '*{box-sizing:border-box}body{margin:0;background:#e9e6e0;font-family:Georgia,"Times New Roman",serif;color:#1b1b1b}'
@@ -18554,7 +18574,7 @@ class Component extends DCLogic {
 + '@media (max-width:620px){.core{font-size:20px}.pmsg{font-size:15px}.codes{grid-template-columns:repeat(3,1fr)}}'
 + '</style></head><body>'
 + '<div class="bar"><button onclick="window.print()">Print / PDF</button><button id="dl">Download a copy</button></div>'
-+ '<div class="sheet"><div class="hd"><span>' + E(h.brand || 'Brand') + ' · messaging house</span><span>one page</span></div>'
++ '<div class="sheet"><div class="hd"><span>' + E(h.brand || 'Brand') + (h.project ? ' · ' + E(h.project) : '') + ' · messaging house</span><span>one page</span></div>'
 + '<div class="roof"><svg width="300" height="52" viewBox="0 0 300 52" aria-hidden="true"><polygon points="150,4 296,50 4,50" fill="none" stroke="#1b1b1b" stroke-width="1.5"></polygon></svg>'
 + '<div class="core">' + un(core && core.text, 'no core message decided') + '</div>'
 + (h.platform ? '<div class="plat">' + E(h.platform) + '</div>' : '')
@@ -19744,7 +19764,12 @@ class Component extends DCLogic {
     const hid = (this.state.plan || {}).house;
     if (!hid) { this.setState({ campaigns: [] }); return; }
     const d = await this.apiGet('/campaign?house=' + encodeURIComponent(hid));
-    this.setState({ campaigns: (d && d.campaigns) || [] });
+    // `/campaign` falls back to the newest platform set for the BRAND when this house has none of its
+    // own (the same disclosed fallback `resolvedPlatform()` uses elsewhere) — right for a screen that
+    // shows its source, wrong here: this picker binds an execution to a campaign with no visible hint
+    // it belongs to a different house. Discard the fallback rather than show it as if it were this
+    // house's own.
+    this.setState({ campaigns: (d && d.house === hid && d.campaigns) || [] });
   };
 
   createExecution = async () => {
@@ -21705,7 +21730,7 @@ class Component extends DCLogic {
     // than forcing a choice. When picked, `producers.stands_on` and Social's `_execution_block` read
     // this campaign's own adapted line for this medium ahead of the platform's un-adapted one.
     const campRows = s.campaigns || [];
-    xFields.push({ k:'campaign_id', label:'Which campaign', from:'strategy · campaigns', isSelect:true,
+    if (campRows.length) xFields.push({ k:'campaign_id', label:'Which campaign', from:'strategy · campaigns', isSelect:true,
       v:d.campaign_id || '', line:'#DDD9D1',
       // `c.project` prefixes the label once campaigns are named projects, not just "IMC 2026" repeated
       // — see the naming-convention work. Falls back to the bare campaign name for older, unnamed ones.
@@ -22295,6 +22320,7 @@ class Component extends DCLogic {
     return {
       isExec: s.screen === 'exec',
       xHeadline: 'One idea, one brief, ' + nWord + ' producers',
+      xProject: (s.plan && s.plan.project) || '', xHasProject: !!(s.plan && s.plan.project),
       xTabs: xLive.map(([t, label]) => ({ label, go:this.xGoTab(t),
         color: t === tab ? '#17325E' : '#6B7280', border: t === tab ? '#F0561E' : 'transparent' })),
       // Someone who used a retired sub-tab last week will look for it, and finding nothing is worse
@@ -22430,7 +22456,9 @@ class Component extends DCLogic {
       ideaGoHouse: (s.house && s.house.id) ? this.openHouse(s.house.id) : this.goStrategy,
       // ---- start the platform: the house it argues from, the brief it answers ----
       ideaHouseOpts: ((this.strat().houses) || []).map(h => ({ id:h.id,
-        label: (h.brand || 'Untitled') + ' \u00b7 ' + ((h.chosen_layers || 0) + ' of ' + (h.total_layers != null ? h.total_layers : this.H_LAYERS.length) + ' decided') })),
+        label: h.label || ((h.brand || 'Untitled') + ' \u00b7 ' + ((h.chosen_layers || 0) + ' of ' + (h.total_layers != null ? h.total_layers : this.H_LAYERS.length) + ' decided')) })),
+      ideaProjectName: (((this.strat().houses) || []).find(h => h.id === ip.houseId) || {}).project || '',
+      ideaHasProject: !!(((this.strat().houses) || []).find(h => h.id === ip.houseId) || {}).project,
       hasIdeaHouseOpts: !!((this.strat().houses) || []).length,
       noIdeaHouseOpts: !((this.strat().houses) || []).length,
       ideaHouseId: ip.houseId || '', onIdeaHouse: this.onIdeaHouse,
@@ -22990,7 +23018,7 @@ class Component extends DCLogic {
       hintFg: msgRows.length ? '#6B7280' : '#B07A12' });
     // The campaign picker (wiring fix) — same field as the xTab producers' own; see that block's comment.
     const vcampRows = s.campaigns || [];
-    vxFields.push({ k:'campaign_id', label:'Which campaign', from:'strategy · campaigns', isSelect:true,
+    if (vcampRows.length) vxFields.push({ k:'campaign_id', label:'Which campaign', from:'strategy · campaigns', isSelect:true,
       v:d.campaign_id || '', line:'#DDD9D1',
       opts: [{ v:'', label: vcampRows.length ? 'none — the platform’s own expression' : 'no campaigns written yet' }]
         .concat(vcampRows.map(c => ({ v:c.id, label:(c.project ? c.project + ' — ' : '') + (c.name || 'unnamed campaign') }))),
@@ -23290,6 +23318,7 @@ class Component extends DCLogic {
     return {
       isPlan: s.screen === 'plan',
       pBrand: (plan && plan.brand) || 'Plan',
+      pProject: (plan && plan.project) || '', pHasProject: !!(plan && plan.project),
       pHasHouse: !!(plan && plan.house), pNoHouse: !!(plan && !plan.house),
       pHouseBrand: (plan && plan.house_brand) || 'the house', pOpenHouse: this.pOpenHouse,
       briefExecution: this.briefExecution,
@@ -24722,7 +24751,7 @@ class Component extends DCLogic {
       medStatusUnread: !!st && !can.length && !cannot.length && Object.keys(st).length > 0,
       medStatusKeys: 'Keys returned: ' + this.medUnread(st),
       medNoPlan: !s.plan,
-      medPlanName: s.plan ? (s.plan.brand || s.plan.name || s.plan.id) : '',
+      medPlanName: s.plan ? ((s.plan.brand || s.plan.name || s.plan.id) + (s.plan.project ? ' · ' + s.plan.project : '')) : '',
       medHasStrategy: !!sg,
       medDerived: !!(sg && sg.derived),
       medRows: rows, medHasRows: rows.length > 0,
@@ -25433,7 +25462,8 @@ class Component extends DCLogic {
       prHasRefusal: !!p.refusal, prRefusal: p.refusal,
       prSheetRows: sheets.map(x => {
         const crisis = x.kind === 'crisis';
-        return { title: (x.brand || 'unnamed') + (x.phase ? ' \u00b7 ' + x.phase : (x.kind ? ' \u00b7 ' + x.kind : '')),
+        return { title: (x.brand || 'unnamed') + (x.project ? ' \u00b7 ' + x.project : '')
+                   + (x.phase ? ' \u00b7 ' + x.phase : (x.kind ? ' \u00b7 ' + x.kind : '')),
           meta: [x.mode === 'campaign' ? 'campaign PR' : 'standalone PR', x.plan ? 'plan ' + x.plan : '',
                  x.created || x.opened || ''].filter(Boolean).join(' \u00b7 '),
           open: this.prOpenSheet(x.id), drop: this.prDropSheet(x.id),
@@ -25443,7 +25473,8 @@ class Component extends DCLogic {
       }),
       prHasSheets: sheets.length > 0, prNoSheets: sheets.length === 0,
       prHasSheet: !!sheet, prNoSheet: !sheet,
-      prSheetName: sheet ? ((sheet.brand || 'unnamed') + ' \u00b7 ' + (sheet.mode === 'campaign' ? 'campaign PR' : 'standalone PR')) : '',
+      prSheetName: sheet ? ((sheet.brand || 'unnamed') + (sheet.project ? ' \u00b7 ' + sheet.project : '')
+                            + ' \u00b7 ' + (sheet.mode === 'campaign' ? 'campaign PR' : 'standalone PR')) : '',
       prSheetMeta: sheet ? [sheet.phase ? 'phase: ' + sheet.phase : '', sheet.kind ? 'kind: ' + sheet.kind : '',
                             sheet.plan ? 'plan: ' + sheet.plan : 'no plan above it'].filter(Boolean).join('  \u00b7  ') : '',
       prSheetIsCrisis: isCrisis,

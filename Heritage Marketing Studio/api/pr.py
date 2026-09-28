@@ -50,6 +50,7 @@ import uuid
 import brandprofile
 import geo
 import media
+import project as project_mod
 import strategy as strategy_mod
 import tenancy
 
@@ -313,7 +314,8 @@ def drop(sid: str) -> bool:
 
 
 def new_sheet(brand: str, mode: str = "campaign", *, plan_id: str = "", house_id: str = "",
-              kind: str = "", execution_id: str = "", phase: str = "") -> tuple[dict | None, str]:
+              kind: str = "", execution_id: str = "", phase: str = "",
+              project: str = "") -> tuple[dict | None, str]:
     """Start a PR sheet. Returns (sheet, error).
 
     `mode` decides what the sheet is answerable to, and it is the ONLY structural difference between
@@ -342,6 +344,7 @@ def new_sheet(brand: str, mode: str = "campaign", *, plan_id: str = "", house_id
         "id": uuid.uuid4().hex[:10], "brand": brand or "Brand",
         "mode": mode, "kind": kind, "phase": phase if mode == "campaign" else "",
         "plan": plan_id, "house": house_id, "execution": execution_id,
+        "project": project_mod.clean(project),
         "created": _now(), "updated": _now(),
         # The two things this phase builds. Both start empty and are honest about it.
         "objectives": [],       # [{id, level, statement_id, statement, rung, proof, note}]
@@ -366,6 +369,7 @@ def sheets(plan_id: str = "", mode: str = "") -> list[dict]:
         out.append({"id": s["id"], "brand": s.get("brand", ""), "mode": s.get("mode", ""),
                     "kind": s.get("kind", ""), "phase": s.get("phase", ""),
                     "plan": s.get("plan", ""), "house": s.get("house", ""),
+                    "project": s.get("project", ""),
                     "created": s.get("created", ""), "updated": s.get("updated", ""),
                     "objectives": len(s.get("objectives") or []),
                     "messages": len(s.get("messages") or []),
