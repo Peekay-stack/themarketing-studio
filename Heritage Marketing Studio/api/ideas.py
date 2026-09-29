@@ -248,6 +248,28 @@ def house_basis(house: dict | None) -> dict:
             "rtbs": rtbs, "signature": sig}
 
 
+def platform_signature(it: dict | None) -> str:
+    """The adopted platform's own fingerprint — its idea, mechanic and per-medium expressions — for
+    detecting when a campaign built on top of it has fallen behind. One layer down from
+    `house_basis()`'s own `signature`, same reason: `campaign.stale()` compares a campaign's own
+    `expr_generated_under` against this, exactly as `stale()` above compares a platform's
+    `generated_under` against `house_basis(house)["signature"]`.
+
+    30 Sep (upstream-wiring plan, live-testing round): found live — a campaign's adapted expression
+    for one medium kept showing an older device (a delivery-streak counter) after the platform had
+    moved on to a different one (a height-marking ritual), with nothing anywhere saying so. The actual
+    generation was reading current data by the time it ran; the preview box was not, and there was no
+    way for a person to tell the two apart on screen.
+    """
+    if not it:
+        return ""
+    idea = str(it.get("idea") or "").strip()
+    mechanic = str(it.get("mechanic") or "").strip()
+    expr = it.get("expressions") or {}
+    parts = [idea, mechanic] + sorted(f"{k}:{v}" for k, v in expr.items() if str(v or "").strip())
+    return strategy.hashlib.sha256("|".join(parts).encode("utf-8")).hexdigest()[:16]
+
+
 def claim_fact(it: dict | None, house: dict | None) -> dict:
     """The one fact this platform actually stands on, resolved to its real text and sourced-ness.
 

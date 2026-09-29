@@ -4282,6 +4282,16 @@
             </sc-for>
           </div>
         </sc-if>
+        <!-- 30 Sep (upstream-wiring plan): standalone, not routed through cpgFindings above — that list
+             reads houseStatus.findings, which strategy.status() never populates with campaign-layer
+             findings at all (a separate, pre-existing gap, left as found). This reads the one field
+             loadCampaign() already stores correctly. -->
+        <sc-if value="{{ cpgStale }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex; gap:11px; align-items:flex-start; background:#FFF4DA; border:1px solid #F0DFB4; border-radius:12px; padding:12px 15px; margin-bottom:16px;">
+            <span style="font-size:11px; font-weight:800; letter-spacing:0.05em; text-transform:uppercase; color:#B07A12; flex:none; padding-top:2px;">Stale</span>
+            <div style="font-size:13.5px; line-height:1.55; color:#17325E; text-wrap:pretty;">The idea platform has moved since these medium expressions were adapted — its line, mechanic or an expression it drew from has changed. <span onClick="{{ writeAllCampaignExpressions }}" style="color:#8A6410; font-weight:700; text-decoration:underline; cursor:pointer;">Adapt these for me</span> again to catch it up.</div>
+          </div>
+        </sc-if>
 
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px;">
           <div>
@@ -19140,6 +19150,26 @@ class Component extends DCLogic {
     const name = (i.name || '').trim(), dn = (i.draftedName || '').trim();
     return (dn && name !== dn) ? 'user' : 'model';
   }
+  // 30 Sep (upstream-wiring plan): the three producer screens each cache their own "what this stands
+  // on" preview (loadSocialStandsOn/loadPosmStandsOn/loadOgStandsOn), refetched only on a fixed set of
+  // navigation events — never on the moment the platform or campaign content underneath them actually
+  // changes. Found live: a campaign's adapted expression kept showing an older device after the
+  // platform moved to a new one, with the stale preview sitting directly under a correct, current
+  // platform box on the same screen. Called after anything that changes what those previews read from,
+  // so a person already sitting on a producer tab never sees a preview that contradicts what a click
+  // on Generate is actually about to use.
+  refreshProducerStandsOn = () => {
+    const hid = (this.state.house || {}).id;
+    this.loadSocialStandsOn();
+    // POSM/Onground each guard their own fetch with a once-per-tab flag (`_posmStandsAsked`/
+    // `_ogStandsAsked`) that only lifts for an explicit campaignId — a bare re-call after that flag is
+    // already set is a silent no-op, exactly the gap this whole fix is closing. Clear it first so the
+    // call below actually reaches the server instead of returning immediately.
+    this._posmStandsAsked = false;
+    this.loadPosmStandsOn(undefined, hid);
+    this._ogStandsAsked = false;
+    this.loadOgStandsOn(undefined, hid);
+  };
   adoptIdea = async () => {
     const i = this.idea();
     if (!i.line.trim()) { this.showToast('Write the platform in one sentence first \u2014 the tests have nothing to test otherwise.'); return; }
@@ -19168,6 +19198,9 @@ class Component extends DCLogic {
       showReturnTrip: freshAdopt ? true : i.showReturnTrip,
       exprSaved: (r && r.ok && Object.keys(i.expressions || {}).length) ? 'saved' : i.exprSaved } });
     if (r && r.ok) {
+      // 30 Sep (upstream-wiring plan): the toast below has claimed this since before the fix existed \u2014
+      // now it is actually true. See refreshProducerStandsOn's own comment.
+      this.refreshProducerStandsOn();
       this.showToast(source === 'model'
         ? 'Adopted as the model\u2019s line \u2014 edit it and it becomes yours.'
         : 'Platform adopted. Every producer below now carries it.', 'ok');
@@ -19412,7 +19445,16 @@ class Component extends DCLogic {
     const d = (r && r.data) || {};
     const cur = this.campaign();
     if (d && d.expressions) {
-      this.setState({ campaign: { ...cur, expressBusy:'', expressions: { ...(cur.expressions||{}), ...d.expressions } } });
+      // stale:false directly, not read off the response — express_many() on the server just re-stamped
+      // expr_generated_under against the platform's CURRENT signature, so it is stale=false by
+      // construction the instant this returns; `d.campaign` is the raw stored dict, which carries the
+      // stamp itself but not the computed boolean (that's only added in campaign.status()'s own rows).
+      this.setState({ campaign: { ...cur, stale:false,
+        expressBusy:'', expressions: { ...(cur.expressions||{}), ...d.expressions } } });
+      // 30 Sep (upstream-wiring plan): see refreshProducerStandsOn's own comment — this is the other
+      // half of the fix, since adapting expressions is the more common way the campaign moves out of
+      // step with what a producer screen is showing.
+      this.refreshProducerStandsOn();
       this.showToast(mediaKey ? 'Rewrote that one.' : 'Adapted all eight — each narrowed to this campaign’s own tension.', 'ok');
       return;
     }
@@ -19804,6 +19846,14 @@ class Component extends DCLogic {
     return row ? (row.pillar || 'emotional') : '';
   }
   currentExec(){ return (this.state.execs || {})[this.xTab()] || null; }
+  // `execution.status()` computes `stale_because`/`proof_obligation` server-side, but every write
+  // route returns them on a separate `status` object, not on `execution` itself — the saved-to-disk
+  // shape never carries them (see execution.new_execution). Storing the bare `execution` object left
+  // every stale badge permanently unlit no matter what drifted underneath it. This merges the two.
+  execWithStatus(raw, status){
+    return { ...raw, stale_because: (status || {}).stale_because || [],
+      proof_obligation: (status || {}).proof_obligation || null };
+  }
 
   // ---------- what it must say: the house's by-medium lines for this kind ----------
   // The one field in the envelope that had no source. Fetched per plan+kind and cached, because the
@@ -19878,7 +19928,7 @@ class Component extends DCLogic {
       channel:d.channel, occasion:d.occasion, measure:d.measure, message:d.message,
       message_text: this.execMessageText(d.message), campaign_id: d.campaign_id || '' };
     const r = await this.apiCall('/execution-new', body);
-    const ex = (r.ok && r.data && r.data.execution) ? r.data.execution
+    const ex = (r.ok && r.data && r.data.execution) ? this.execWithStatus(r.data.execution, r.data.status)
       : { id:'local-'+tab, kind:body.kind, brief:body, status:'briefed', artefacts:[], stale:false,
           stale_because:[], proof_obligation:this.localProofObligation(d, body.kind) };
     this.setState(st => ({ execs: { ...(st.execs||{}), [tab]: ex }, briefOpen:false }));
@@ -19894,7 +19944,7 @@ class Component extends DCLogic {
   setExecStatus = (st) => async () => {
     const tab = this.xTab(), e = this.currentExec(); if (!e) return;
     const r = await this.apiCall('/execution-status', { id:e.id, status:st });
-    const next = (r.ok && r.data && r.data.execution) ? r.data.execution : { ...e, status:st };
+    const next = (r.ok && r.data && r.data.execution) ? this.execWithStatus(r.data.execution, r.data.status) : { ...e, status:st };
     this.setState(s => ({ execs: { ...(s.execs||{}), [tab]: next } }));
   };
   rebrief = () => { const tab = this.xTab(), e = this.currentExec(); if (!e) return;
@@ -19950,7 +20000,7 @@ class Component extends DCLogic {
     const r = await this.apiCall('/execution-recompose', { id:e.id });
     if (r.status === 409) { this.setConflict('recompose', r); return; }
     if (!r.ok) { this.showToast('No recompose on the server yet \u2014 re-brief it by hand.'); return; }
-    const next = (r.data && r.data.execution) ? r.data.execution : { ...e, stale:false, stale_because:[] };
+    const next = (r.data && r.data.execution) ? this.execWithStatus(r.data.execution, r.data.status) : { ...e, stale:false, stale_because:[] };
     this.clearConflict();
     this.setState(s => ({ execs: { ...(s.execs||{}), [tab]: next } }));
     this.showToast('Recomposed against the plan as it stands now.', 'ok');
@@ -20003,7 +20053,7 @@ class Component extends DCLogic {
       channel:d.channel, occasion:d.occasion, measure:d.measure, message:d.message,
       message_text: this.videoExecMessageText(d.message), campaign_id: d.campaign_id || '' };
     const r = await this.apiCall('/execution-new', body);
-    const ex = (r.ok && r.data && r.data.execution) ? r.data.execution
+    const ex = (r.ok && r.data && r.data.execution) ? this.execWithStatus(r.data.execution, r.data.status)
       : { id:'local-video', kind:'video', brief:body, status:'briefed', artefacts:[], stale:false,
           stale_because:[], proof_obligation:this.localProofObligation(d, 'video') };
     this.setState(st => ({ execs: { ...(st.execs||{}), video: ex }, videoBriefOpen:false }));
@@ -20014,7 +20064,7 @@ class Component extends DCLogic {
   setVideoExecStatus = (st) => async () => {
     const e = this.videoExec(); if (!e) return;
     const r = await this.apiCall('/execution-status', { id:e.id, status:st });
-    const next = (r.ok && r.data && r.data.execution) ? r.data.execution : { ...e, status:st };
+    const next = (r.ok && r.data && r.data.execution) ? this.execWithStatus(r.data.execution, r.data.status) : { ...e, status:st };
     this.setState(s => ({ execs: { ...(s.execs||{}), video: next } }));
   };
   rebriefVideo = () => { const e = this.videoExec(); if (!e) return;
@@ -20024,7 +20074,7 @@ class Component extends DCLogic {
     const e = this.videoExec(); if (!e) return;
     const r = await this.apiCall('/execution-recompose', { id:e.id });
     if (!r.ok) { this.showToast('No recompose on the server yet — re-brief it by hand.'); return; }
-    const next = (r.data && r.data.execution) ? r.data.execution : { ...e, stale:false, stale_because:[] };
+    const next = (r.data && r.data.execution) ? this.execWithStatus(r.data.execution, r.data.status) : { ...e, stale:false, stale_because:[] };
     this.setState(s => ({ execs: { ...(s.execs||{}), video: next } }));
     this.showToast('Recomposed against the plan as it stands now.', 'ok');
   };
@@ -22703,6 +22753,10 @@ class Component extends DCLogic {
           name:c.name||'', insight:c.insight||'', resolution:c.resolution||'',
           frame:c.frame||'', hasId: !!c.id,
           from:c.from||'', to:c.to||'',
+          // 30 Sep (upstream-wiring plan): the platform has moved since these medium expressions were
+          // adapted, and nothing said so before this — see campaign.stale()'s own docstring. Advisory
+          // only; nothing here is dropped or overwritten by showing it.
+          cpgStale: !!c.stale,
           // ---- the big idea, always shown with its parent platform ----
           // A platform is a territory that lasts years; a big idea is what one campaign does with it
           // this season. Rendered alone, an idea gets treated as the strategy — which is how a platform

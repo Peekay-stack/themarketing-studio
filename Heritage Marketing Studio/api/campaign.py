@@ -233,8 +233,24 @@ def get(p: dict, campaign_id: str = "") -> dict | None:
     return rows[-1] if rows else None
 
 
-def express(p: dict, campaign_id: str, kind: str, text: str) -> tuple[dict | None, str]:
-    """Store what this campaign becomes in ONE medium, as a person wrote it. Mirrors `ideas.express`."""
+def stale(c: dict | None, item: dict | None) -> bool:
+    """Only a machine-adapted expression set goes stale — mirrors `ideas.stale()`'s own philosophy
+    exactly, one layer down: a person's own rewrite is current by construction, whatever the platform
+    does afterward. `express()`/`express_many()` are what stamp and clear `expr_generated_under`."""
+    if not c or not c.get("expr_generated_under"):
+        return False
+    return c["expr_generated_under"] != ideas.platform_signature(item)
+
+
+def express(p: dict, campaign_id: str, kind: str, text: str, source: str = "user") -> tuple[dict | None, str]:
+    """Store what this campaign becomes in ONE medium. Mirrors `ideas.express`.
+
+    `source` — 30 Sep (upstream-wiring plan): `"model"` when this is `write_expressions()`'s own
+    output being accepted (stamps `expr_generated_under` against the platform's current signature, so
+    `stale()` can later tell when the platform has moved on); anything else (the default) means a
+    person wrote or rewrote this by hand, which clears the stamp — same discipline as `ideas.py`'s own
+    "rewriting a model suggestion in your own words... clears the unsourced flag."
+    """
     if kind not in EXPRESSIONS:
         return None, f"Nothing to express for {kind!r}. One of: {', '.join(EXPRESSIONS)}."
     it = _item(p)
@@ -245,16 +261,18 @@ def express(p: dict, campaign_id: str, kind: str, text: str) -> tuple[dict | Non
         if c.get("id") == campaign_id:
             c.setdefault("expressions", {k: "" for k in EXPRESSIONS})
             c["expressions"][kind] = (text or "").strip()
+            c["expr_generated_under"] = ideas.platform_signature(it) if source == "model" else ""
             c["edited"] = _now()
             ideas.save(p)
             return c, ""
     return None, "No such campaign."
 
 
-def express_many(p: dict, campaign_id: str, mapping: dict) -> tuple[dict | None, str]:
+def express_many(p: dict, campaign_id: str, mapping: dict, source: str = "user") -> tuple[dict | None, str]:
     """Store several expressions at once. Mirrors `ideas.express_many` — one save, not several racing.
 
     A key present with an empty value clears that slot — somebody deleting an expression means it.
+    `source` — see `express()`'s own note; same stamp, same reason.
     """
     it = _item(p)
     if not it:
@@ -270,6 +288,7 @@ def express_many(p: dict, campaign_id: str, mapping: dict) -> tuple[dict | None,
         c.setdefault("expressions", {k: "" for k in EXPRESSIONS})
         for k, v in mapping.items():
             c["expressions"][k] = str(v or "").strip()
+        c["expr_generated_under"] = ideas.platform_signature(it) if source == "model" else ""
         c["edited"] = _now()
         ideas.save(p)
         return c, ""
@@ -908,6 +927,10 @@ def validate(p: dict | None, house: dict | None = None) -> list[dict]:
         if c.get("from") and c.get("to") and c["from"] > c["to"]:
             add("blocking", f"{nm} ends before it starts.", cid)
 
+        if stale(c, it):
+            add("stale", f"{nm}: the idea platform has moved since these medium expressions were "
+                        f"adapted — its line, mechanic or an expression it drew from has changed.", cid)
+
     # A campaign is time-bound; two running at once off one platform is usually a mistake and always
     # worth naming, because the shopper meets both at the same shelf.
     live = [c for c in rows if c.get("from") and not c.get("to")]
@@ -922,11 +945,15 @@ def status(p: dict | None, house: dict | None = None) -> dict:
     it = _item(p)
     rows = (it or {}).get("campaigns") or []
     findings = validate(p, house)
+    # Enriched copies, not the stored rows themselves — same reason `ideas.status()` builds `{**it, ...}`
+    # per platform rather than mutating the list in place: a computed field has no business ending up
+    # persisted if this dict is ever handed back to a save call.
+    rows_out = [{**c, "stale": stale(c, it)} for c in rows]
     return {
         "platform": (it or {}).get("name", ""),
         "platform_id": (it or {}).get("id", ""),
         "count": len(rows),
-        "campaigns": rows,
+        "campaigns": rows_out,
         "shapes": {k: v for k, v in SHAPES.items()},
         "media": list(MEDIA),
         "role_defaults": {m: {"role": v[0], "why": v[1]} for m, v in ROLE_BY_RUNG.items()},

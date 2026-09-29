@@ -3489,7 +3489,11 @@ def campaign_express_draft(payload: dict):
     out, note = campaign_mod.write_expressions(pl, c["id"], h, media_list, str(payload.get("steer") or ""))
     if not out:
         return JSONResponse(status_code=400, content={"detail": note})
-    updated, err = campaign_mod.express_many(pl, c["id"], out)  # one save, not several racing
+    # source="model" — 30 Sep (upstream-wiring plan): this route's whole content just came from
+    # write_expressions(), never a person's hand — stamps expr_generated_under so campaign.stale()
+    # can later tell when the platform has moved on since. The OTHER route to express_many() below
+    # (POST /campaign-express) carries whatever a person typed, so it keeps the "user" default.
+    updated, err = campaign_mod.express_many(pl, c["id"], out, source="model")  # one save, not racing
     if err:
         return JSONResponse(status_code=400, content={"detail": err})
     return {"expressions": out, "campaign": updated, "note": note,
