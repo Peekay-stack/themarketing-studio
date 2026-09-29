@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: reference
   originSessionId: 60d5a7b2-1e0f-4999-a432-7547cc82bb56
-  modified: 2026-09-24T07:59:51.501Z
+  modified: 2026-09-29T10:04:34.697Z
 ---
 
 **LIVE DOCUMENT**: [Round 31 Queue](https://claude.ai/artifact/UpSArgACG53yWTUCPVwFSV)
@@ -77,3 +77,10 @@ that quicker local test, not the live-data mirror.
 tomorrow morning with local-only testing using the existing local dev-tenant content (house `063785d77c`
 "Nothing Cut" already proven to show a clear before/after). The real before/after examples from today are
 in this session's own transcript if a fuller write-up is needed before shipping.
+
+## UPDATE 29 Sep — item 20 superseded, shipped as part of a much larger rebuild
+What started as the item-20 brand-voice fix grew into the full [[prompt-priority-framework-gate-territory-task-evidence]]
+initiative: a Gate/Territory/Task/Evidence prompt-priority framework built for the producers, then wired the
+same way into Brief/Messaging House/Idea Platform/Campaign/Plan (four phases). **Shipped 29 Sep, pushed to
+`master`, deployed.** See that memory file and its artifact for the full record — this line just marks item
+20 done and points onward rather than duplicating the account here.
