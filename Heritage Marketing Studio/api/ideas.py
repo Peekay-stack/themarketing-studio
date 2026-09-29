@@ -230,7 +230,10 @@ def house_basis(house: dict | None) -> dict:
         for o in chosen(layer):
             rtbs.append({"id": o["id"], "text": o["text"], "pillar": pillar,
                          "source": o.get("source", "model"),
-                         "sourced": str(o.get("source", "")).lower() in ("brief", "library", "user")})
+                         # 29 Sep, Phase 2 (upstream-wiring plan): "research" added — see
+                         # strategy.generate()'s own comment for why. Kept in sync with that whitelist.
+                         "sourced": str(o.get("source", "")).lower()
+                                    in ("brief", "library", "user", "research")})
     core = [o["text"] for o in chosen("core")]
     emo = next((o["text"] for o in chosen("emotional")), "")
     fun = next((o["text"] for o in chosen("functional")), "")

@@ -338,7 +338,9 @@ def house_fingerprint(house: dict | None) -> str:
 # each RTB is listed - and the two disagreed, so a block could say "1 of 1 sourced" two lines above the
 # RTB it had just labelled UNSOURCED. The proof gate reads this, so it has to mean one thing.
 def _sourced(option: dict) -> bool:
-    return str(option.get("source", "")).lower() in ("brief", "library", "user")
+    # 29 Sep, Phase 2 (upstream-wiring plan): "research" added — see strategy.generate()'s own comment
+    # for why. Kept in sync with that whitelist (and ideas.py's, and docs.py's).
+    return str(option.get("source", "")).lower() in ("brief", "library", "user", "research")
 
 
 def pillar_evidence(house: dict | None, pillar: str) -> tuple[int, int]:
@@ -1021,12 +1023,33 @@ def house_block(house: dict, layer_id: str = "") -> str:
         out.append("Culture codes and occasions the brand owns: " + "; ".join(cult))
 
     # The half that was missing entirely, and the reason this function exists.
+    #
+    # 29 Sep upstream-wiring audit: this used to read ONLY the house's `medium` layer — retired in
+    # `strategy.RETIRED_LAYERS` in favour of the Idea Platform's own per-medium `expressions` (see that
+    # module's own note: "the producers resolved platform-first, which meant the seven paragraphs a
+    # person chose here were overridden the moment a platform was adopted"). A house worked on since the
+    # retirement has an empty `medium` node, so this layer silently fell into its own "the house has NO
+    # per-medium messages chosen yet" branch even when the adopted platform's real expressions were
+    # sitting one screen away in the Idea Platform. Read the platform's expressions first now; the
+    # retired node still fills in a medium the platform hasn't spoken for, so a house whose per-medium
+    # lines were chosen before the platform existed loses nothing.
+    by_med: dict[str, list[str]] = {}
+    try:
+        import ideas as ideas_mod
+        plat = ideas_mod.chosen_platform(ideas_mod.for_house(house.get("id", "")))
+    except Exception:
+        plat = None
+    if plat:
+        for m, txt in (plat.get("expressions") or {}).items():
+            if str(txt or "").strip():
+                by_med.setdefault(str(m).lower(), []).append(str(txt).strip())
     node = (house.get("nodes") or {}).get("medium") or {}
     picked = set(node.get("chosen") or [])
-    by_med: dict[str, list[str]] = {}
     for o in node.get("options", []):
         if o["id"] in picked and str(o.get("text") or "").strip():
-            by_med.setdefault(str(o.get("tag") or "general").lower(), []).append(o["text"].strip())
+            tag = str(o.get("tag") or "general").lower()
+            if tag not in by_med:
+                by_med.setdefault(tag, []).append(o["text"].strip())
     if by_med:
         out.append("WHAT THE BRAND ALREADY SAYS IN EACH MEDIUM — decided in the house. Use these; do not "
                    "write new messaging for a medium that already has one:\n"
@@ -1073,6 +1096,15 @@ def prompt_for(p: dict, layer_id: str, house: dict | None = None, extra: str = "
     # core message, RTBs and avoid list for the layer actually being generated. `voice_block` above is
     # already correctly gated; this is the second, separate mechanism that needed the same gate.
     if house and not _plan_general:
+        # 29 Sep upstream-wiring audit: no plan layer has ever read the raw brief directly — every
+        # layer's grounding came second-hand, filtered through whatever the house chose to carry into
+        # `house_block()` below. A brief field that never became a chosen house layer (a business
+        # objective's number and date, a budget, a timeline, the brief's own named audience) was
+        # invisible to every plan layer, including Objectives, whose whole job is exactly that ladder.
+        # Same shape as `strategy.prompt_for()`'s own THE BRAND -> THE BRIEF order, and the same
+        # General-mode gate as `house_block` just below — a General plan must not stand on the bound
+        # house's brief either.
+        out.append("\n\n---\nTHE BRIEF\n" + strategy._brief_text(house))
         out.append("\n\n---\n" + house_block(house, layer_id))
     for par in l["parents"]:
         rws = p["nodes"][par]["rows"]

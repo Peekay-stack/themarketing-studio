@@ -57,7 +57,14 @@ CANON = ("brand", "title", "format", "businessObjective", "marketingObjective", 
          # think, and the specific problem the house exists to solve. `background`/`consumerInsight`
          # already existed as canon fields (see ALIASES below for how they now also catch the
          # backgrounder's content) — `currentSituation` and `problemStatement` did not, so they are new.
-         "currentSituation", "problemStatement")
+         "currentSituation", "problemStatement",
+         # 29 Sep, Phase 3 (upstream-wiring plan): `needscopeAnalysis` above (ROUND-83 AUDIT) captured
+         # the NeedScope territory, but only inside one flattened paragraph ("bridge territory: X ·
+         # bridge label: Y · reading: Z") — readable by a person, not addressable by a prompt that wants
+         # to state the territory as its own constraint. `bridge_territory` sits unflattened, one level
+         # deep, in `canonicalise()`'s own working dict already (same shallow-nesting reach that already
+         # pulls `shift_from`/`shift_to` out of `cb_ca_db_da` below) — it was never given its own alias.
+         "needscopeTerritory")
 
 # How each screen's names map onto the canonical ones. First hit wins, so the more specific source is
 # listed first. A key absent from every alias simply stays in `fields` and is not lost.
@@ -92,6 +99,10 @@ ALIASES: dict[str, tuple[str, ...]] = {
     "smpUnlocks": ("smp_unlocks",),
     "currentSituation": ("currentSituation", "current_situation"),
     "problemStatement": ("problemStatement", "problem_statement"),
+    # 29 Sep, Phase 3: reaches into the one-level-deep `bridge_territory` the brand-brief skill posts
+    # inside `needscope: {...}` — same mechanism `shift_from`/`shift_to` already use to reach inside
+    # `cb_ca_db_da` above, not a new one.
+    "needscopeTerritory": ("bridge_territory",),
 }
 
 

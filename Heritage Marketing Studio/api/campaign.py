@@ -702,17 +702,35 @@ def draft(p: dict | None, house: dict | None, ladder_id: str = "",
     idiom = next((t for tag, t in codes if tag == "idiom"), "")
     avoid = [t for tag, t in codes if tag == "avoid"]
 
+    # Phase 4 (upstream-wiring plan): this used to name the brand only as a string in the opening
+    # line, with no voice_block() call at all — the one real gap left over from the earlier audit of
+    # this same function. write_expressions(), one step later in the same flow, already calls it.
+    import brandprofile
+    voice = brandprofile.voice_block(brandprofile.resolve(house, p))
+    core = strategy._chosen_text(house, "core") if house else []
+
     parts = [
         f"You are writing the campaign layer for {(house or {}).get('brand') or 'this brand'}.",
         "",
         "A CAMPAIGN is the time-bound expression of a durable platform: one route up the ladder, one "
         "tension, one resolution. It is not the platform restated with dates on it.",
         "",
+        "THE BRAND",
+        voice,
+        "",
         "THE PLATFORM (binding — the campaign expresses this, never contradicts it)",
         f"  line: {it.get('idea') or it.get('name') or ''}",
     ]
     if it.get("mechanic"):
         parts.append(f"  mechanic: {it['mechanic']}")
+    # Territory, not binding — same relationship prompts.py's house_block/platform_block already give
+    # Social and Video: the platform is the sharper, more specific expression of the house's core
+    # message, and wins where the two differ. Absent entirely today; the ladder path below is DERIVED
+    # from the house's RTB layers, but never restates the core message that grounds all of them.
+    if core:
+        parts += ["", "THE HOUSE'S CORE MESSAGE (ambient — the platform above is the sharper, more "
+                      "specific expression of this; where they differ, the platform wins)",
+                  "  " + "; ".join(core)]
     parts += [
         "",
         "THE LADDER PATH THIS CAMPAIGN ARGUES",

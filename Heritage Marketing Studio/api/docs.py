@@ -443,7 +443,9 @@ def _house_summary(doc, house: dict, worksheet: bool) -> None:
             continue
         for o in rows:
             src = str(o.get("source") or "").lower()
-            ok = src in ("brief", "library", "user")
+            # 29 Sep, Phase 2 (upstream-wiring plan): "research" added — see strategy.generate()'s own
+            # comment for why. Kept in sync with that whitelist (and ideas.py's, and plan.py's).
+            ok = src in ("brief", "library", "user", "research")
             p = doc.add_paragraph(style="List Bullet")
             r = p.add_run(f"{label}: ") if o is rows[0] else p.add_run("")
             r.bold = True

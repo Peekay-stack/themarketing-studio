@@ -916,6 +916,36 @@ def _brief_text(house: dict) -> str:
     return "\n".join(lines) or "(brief is empty)"
 
 
+def _transition_block(house: dict) -> str:
+    """The CB->DB attitude shift a message has to move the reader through, and the NeedScope territory
+    it has to land in — read once, straight from the brief, and shared verbatim across Core/Emotional/
+    Functional (the only three callers) so three separate generation calls don't each reconstruct the
+    same constraint in slightly different words.
+
+    Phase 3, 29 Sep (upstream-wiring plan). Empty when the brief has neither — a house built from a
+    manually-typed or guided-format brief very often won't — so a layer's ask never carries a dangling
+    reference to a transition or a territory that was never actually given. Deliberately does NOT
+    restate the SMP here: Core's own job is to carry the SMP without repeating it, and re-injecting the
+    raw sentence at Emotional/Functional too would give the model two territory statements that don't
+    word-for-word agree, with nothing said about which wins.
+    """
+    b = house.get("brief") or {}
+    out = []
+    cb, db = str(b.get("currentBelief") or "").strip(), str(b.get("desiredBelief") or "").strip()
+    if cb and db:
+        out.append("THE ATTITUDE SHIFT THIS MESSAGE HAS TO MOVE THE READER THROUGH\n"
+                   f"  She believes now: {cb}\n"
+                   f"  She has to believe instead: {db}\n"
+                   "  This is a constraint on the line, not background reading — it only does its job "
+                   "if it actually closes that gap, not merely sits beside it.")
+    territory = str(b.get("needscopeTerritory") or "").strip()
+    if territory:
+        out.append(f"THE NEEDSCOPE TERRITORY THIS MESSAGE HAS TO LIVE IN: {territory}. Write within "
+                   "that emotional space — a line that would fit any territory equally well isn't "
+                   "doing this job.")
+    return "\n\n".join(out)
+
+
 def prompt_for(house: dict, layer_id: str, extra: str = "",
                anchors: str = "", rules: str = "", locked: list[dict] | None = None) -> str:
     """The full instruction for one node. Kept as its own function so it can be inspected."""
@@ -953,6 +983,21 @@ def prompt_for(house: dict, layer_id: str, extra: str = "",
                             if gaps else
                             "\nEvery kind already has something. Offer genuinely better alternatives to "
                             "what is there, and say in `note` what each would replace and why."))
+    # 29 Sep, Phase 2 (upstream-wiring plan): RTBs are the one layer whose entire job is proof — "why is
+    # this EARNED" — so this is where research synthesis (currentSituation/problemStatement/
+    # consumerInsight, already sitting in THE BRIEF above) is worth checking a candidate against
+    # actively, not just labelling honestly after the fact once written. Gated on the brief actually
+    # having research content: an instruction to validate against research synthesis that doesn't exist
+    # is a dangling reference, the exact failure mode this codebase guards against everywhere else.
+    elif layer_id in ("rtb_emotional", "rtb_functional"):
+        brief = house.get("brief") or {}
+        if any(str(brief.get(k) or "").strip() for k in
+               ("currentSituation", "problemStatement", "consumerInsight")):
+            tag_note = ("\nBefore writing each option, check it against the research synthesis in THE "
+                       "BRIEF above (current situation, problem statement, consumer insight). An RTB a "
+                       "specific finding there actually supports is stronger than one merely consistent "
+                       "with it — tag `source` as \"research\" for one that does. Do not let a "
+                       "research-backed claim read as \"model\" just because it wasn't typed verbatim.")
     # The `medium` branch that used to sit here is gone with its layer. It was already unreachable —
     # every caller guards on `layer not in LAYER_BY_ID` first — so this is dead code removed rather than
     # behaviour changed.
@@ -968,6 +1013,13 @@ def prompt_for(house: dict, layer_id: str, extra: str = "",
         "\n\n---\nTHE BRAND\n" + brandprofile.voice_block(brand_for_prompt),
         "\n\n---\nTHE BRIEF\n" + _brief_text(house),
     ]
+    # Phase 3 (upstream-wiring plan): Core/Emotional/Functional only — the layers where a message gets
+    # written from scratch rather than laddering to an already-chosen parent. See _transition_block()'s
+    # own docstring for why RTBs/bridge/proof/culture don't get this and why SMP is deliberately absent.
+    if layer_id in ("core", "emotional", "functional"):
+        trans = _transition_block(house)
+        if trans:
+            parts.append("\n\n---\n" + trans)
     if above:
         parts.append("\n\n---\nDECIDED ABOVE\n" + "\n\n".join(above))
     if anchors:
@@ -984,9 +1036,10 @@ def prompt_for(house: dict, layer_id: str, extra: str = "",
         f"Give {l['want']} options that differ on the STRATEGIC BET — what is claimed and to whom — "
         f"not on wording.{tag_note}\n\n"
         'Return ONLY JSON: {"options":[{"text":"...","note":"why this bet, in one line",'
-        '"tag":"","source":"brief|library|model"}]}\n'
-        'Set source to "brief" or "library" only when it genuinely traces to something given above. '
-        'Otherwise "model" — that is not a failure, it is how a person knows what to check.'
+        '"tag":"","source":"brief|library|research|model"}]}\n'
+        'Set source to "brief" or "library" only when it genuinely traces to something given above; '
+        '"research" when it traces specifically to the research synthesis in the brief rather than a '
+        'typed assertion. Otherwise "model" — that is not a failure, it is how a person knows what to check.'
     )
     return "\n".join(parts)
 
@@ -1012,11 +1065,19 @@ def generate(house: dict, layer_id: str, extra: str = "", anchors: str = "",
         if not text:
             continue
         src = str(o.get("source") or "model").lower()
+        # 29 Sep, Phase 2 (upstream-wiring plan): "research" added alongside "brief"/"library"/"user" —
+        # an RTB the model validates against the research synthesis in THE BRIEF is real evidence, not a
+        # typed assertion, and deserves its own tag rather than being folded into "brief" (which would
+        # lose the distinction) or silently downgraded to "model" (which would make it read as
+        # unsourced — the opposite of what asking for the validation was for). This whitelist is
+        # duplicated in four other places that all read the same `source` field — see plan.py's
+        # `_sourced()`, ideas.py's `house_basis()`, docs.py's house export, and app.dc.html's `SRC`
+        # table — all four updated together, same reason.
         node["options"].append({
             "id": uuid.uuid4().hex[:8], "text": text,
             "note": str(o.get("note") or "").strip(),
             "tag": str(o.get("tag") or "").strip().lower(),
-            "source": src if src in ("brief", "library", "user") else "model",
+            "source": src if src in ("brief", "library", "user", "research") else "model",
             "added": _now()})
     # Remember what was decided above when this was written — that is what makes staleness visible.
     node["generated_under"] = signature(house, layer_id)
