@@ -9449,6 +9449,18 @@
           </sc-for>
         </div>
       </sc-if>
+      <!-- The house's own chosen "Proof & demo propositions" — what can actually be shown, filmed or
+           measured. 29 Sep, per the user's own call: PR's whole job is a third party verifying
+           something checkable, so this belongs here as reference, same restraint as the campaign card
+           above — never written into a release field for a person. -->
+      <sc-if value="{{ prHasHouseProof }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#fff; border:1px solid #DDD9D1; border-radius:14px; padding:16px 20px; margin-bottom:18px;">
+          <div style="font-size:10.5px; font-weight:800; letter-spacing:0.07em; text-transform:uppercase; color:#9AA1AC; margin-bottom:8px;">What can be shown — from the house</div>
+          <sc-for list="{{ prHouseProof }}" as="pf" hint-placeholder-count="2">
+            <div style="font-size:13px; color:#17325E; margin-bottom:4px;">{{ pf.text }}</div>
+          </sc-for>
+        </div>
+      </sc-if>
 
       <div style="display:flex; gap:24px; border-bottom:1px solid #DDD9D1; margin-bottom:22px; flex-wrap:wrap;">
         <sc-for list="{{ prTabs }}" as="t" hint-placeholder-count="5">
@@ -13685,9 +13697,13 @@ class Component extends DCLogic {
       try {
         const prompt = 'Revise these existing ' + (this.brandRef() || 'brand') + ' social posts per the instruction.' + ' INSTRUCTION: "' + note + '". CURRENT POSTS: ' + JSON.stringify(current) + '. Return ONLY the same JSON shape with the revised posts; keep the platform keys identical.';
         const execId1 = (this.currentExec() || {}).id;
+        const h1 = this.state.house;
         // Round 92: threaded the same force_typed/skip_mandatories generateSocial already sends — this
         // was a real gap (rework didn't honor either), not a new mechanism.
+        // 29 Sep (part 2): house_id, same value POSM's own generate call already sends — see the bridge
+        // script's own comment for why this previously never reached the server at all.
         let raw = await this.complete(prompt, { ...(execId1 ? { execution: execId1 } : {}),
+          ...(h1 && h1.id ? { house_id: h1.id } : {}),
           force_typed: !!this.state.socialForceTyped, skip_mandatories: this.socialNoTrio() });
         raw = String(raw).trim().replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();
         data = JSON.parse(raw.slice(raw.indexOf('{'), raw.lastIndexOf('}')+1));
@@ -13739,8 +13755,11 @@ class Component extends DCLogic {
         // (and then the image) onto a different real SKU than the one actually pinned by reference.
         const prompt = 'Revise this one existing ' + (this.brandRef() || 'brand') + ' social post per the instruction, keeping everything else about it the same otherwise.' + this.socialAssetAnchor() + ' INSTRUCTION: "' + note + '". CURRENT POST: ' + JSON.stringify(current) + '. Return ONLY JSON: {"caption":string,"hashtags":string,"visual":string,"visual_changed":boolean}. Set visual_changed to true ONLY if the instruction actually calls for something different in the image itself (a different scene, subject, composition or style) — if the instruction is about the caption, hook or hashtags only, set visual_changed to false and return "visual" completely unchanged from CURRENT POST.';
         const execId1 = (this.currentExec() || {}).id;
+        const h1 = this.state.house;
         // Round 92: same force_typed/skip_mandatories generateSocial/reworkPosts send.
+        // 29 Sep (part 2): house_id — see reworkPosts's own comment.
         let raw = await this.complete(prompt, { ...(execId1 ? { execution: execId1 } : {}),
+          ...(h1 && h1.id ? { house_id: h1.id } : {}),
           force_typed: !!this.state.socialForceTyped, skip_mandatories: this.socialNoTrio() });
         raw = String(raw).trim().replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();
         data = JSON.parse(raw.slice(raw.indexOf('{'), raw.lastIndexOf('}')+1));
@@ -14307,7 +14326,12 @@ class Component extends DCLogic {
       // platform was never a choice anybody made; it was the shape asking for one.
       const pre = this.brandPreamble('a senior social media writer', this.state.producerBrandMode === 'general');
       if (!pre) { this.showToast(this.BRAND_PREAMBLE_MISSING); this.setState({ socialGenerating:false }); return; }
-      const prompt = `${pre}\n\nCampaign objective: "${obj}".${ctx}${assetAnchor}${kit} Write platform-adapted posts for exactly these platforms: ${plats.join(', ')}. Return ONLY a JSON object (no markdown) whose keys are the platform names, each value an ARRAY of exactly 3 post objects {"job": one of "recruit"|"prove"|"occasion", "caption": string, "hashtags": "#a #b #c", "visual": "one short line describing the key visual", "pack": "side"|"hero"|"in_use"|"none"}. The three must do different jobs, not say the same thing three ways: "recruit" brings a new person in, "prove" makes the claim checkable, "occasion" belongs to a moment in the year or the day. "pack" says how the product pack appears in that post\u2019s image: "side" (the default \u2014 beside the main subject), "hero" (only when the image is about the pack itself), "in_use" (only when the scene truly needs the pack opened or poured), or "none" (only when the post\u2019s job is not the product, such as recruiting people or a festival greeting, where a pack would look forced). Prefer "side". In each "visual", describe the scene only: never ask for the back or side of the pack, its nutrition panel or its ingredients, and never describe opening, pouring from or holding a pouch unless "pack" is "in_use" — the studio places the one real pack itself. Facebook: warm, community, a little longer. Instagram: punchy, sensory, minimal emoji. LinkedIn: professional, purpose-led, no emoji.`;      let raw = await this.complete(prompt, { ...(execId ? { execution: execId } : {}), force_typed: forceTyped, skip_mandatories: noTrio });
+      const prompt = `${pre}\n\nCampaign objective: "${obj}".${ctx}${assetAnchor}${kit} Write platform-adapted posts for exactly these platforms: ${plats.join(', ')}. Return ONLY a JSON object (no markdown) whose keys are the platform names, each value an ARRAY of exactly 3 post objects {"job": one of "recruit"|"prove"|"occasion", "caption": string, "hashtags": "#a #b #c", "visual": "one short line describing the key visual", "pack": "side"|"hero"|"in_use"|"none"}. The three must do different jobs, not say the same thing three ways: "recruit" brings a new person in, "prove" makes the claim checkable, "occasion" belongs to a moment in the year or the day. "pack" says how the product pack appears in that post\u2019s image: "side" (the default \u2014 beside the main subject), "hero" (only when the image is about the pack itself), "in_use" (only when the scene truly needs the pack opened or poured), or "none" (only when the post\u2019s job is not the product, such as recruiting people or a festival greeting, where a pack would look forced). Prefer "side". In each "visual", describe the scene only: never ask for the back or side of the pack, its nutrition panel or its ingredients, and never describe opening, pouring from or holding a pouch unless "pack" is "in_use" — the studio places the one real pack itself. Facebook: warm, community, a little longer. Instagram: punchy, sensory, minimal emoji. LinkedIn: professional, purpose-led, no emoji.`;
+      // 29 Sep (part 2): house_id — see the bridge script's own comment on why this previously never
+      // reached the server at all, and prompts.plan_channels_block's own note on the real bug it closes.
+      const h0 = this.state.house;
+      let raw = await this.complete(prompt, { ...(execId ? { execution: execId } : {}),
+        ...(h0 && h0.id ? { house_id: h0.id } : {}), force_typed: forceTyped, skip_mandatories: noTrio });
       raw = String(raw).trim().replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();
       const data = JSON.parse(raw.slice(raw.indexOf('{'), raw.lastIndexOf('}')+1));
       const posts = [];
@@ -15158,7 +15182,11 @@ class Component extends DCLogic {
       const vexec = this.videoExec();
       const noTrio = !vexec && !brief && !(stands && stands.text && !forceTyped);
       const prompt = `${pre}\n\nCommunication objective: "${obj}".${ctx}${standsCtx}${typedCtx}${kit}${refine} Propose THREE genuinely different creative routes for a ${dur} film — not three phrasings of one idea. Each must take a distinct angle: for example an emotional family story, a craft/provenance route showing where the milk comes from, and a lighter observational route. Give each a short route name and a one-line reason it could work. The voiceover is performed as ONE continuous read across the whole film (it does not restart per shot), so write roughly ${words} words per route — about 2 words per second of ${dur} — as flowing connected sentences, never per-scene fragments. Return ONLY JSON (no markdown): {"routes":[{"name":"short route name","rationale":"one line on why this works","logline": string, "duration": "${dur}", "vo": "the full ~${words}-word voiceover", "scenes": [{"t":"0\u20135s","title":string,"desc":string}, ... 4 concept beats]}, ...exactly 3 routes]}.`;
-      let raw = await this.complete(prompt, { ...(vexec ? { execution: vexec.id } : {}), force_typed: forceTyped, skip_mandatories: noTrio });
+      // 29 Sep (part 2): house_id — same fix as Social's generate/rework/adjust calls; see the bridge
+      // script's own comment.
+      const hv = this.state.house;
+      let raw = await this.complete(prompt, { ...(vexec ? { execution: vexec.id } : {}),
+        ...(hv && hv.id ? { house_id: hv.id } : {}), force_typed: forceTyped, skip_mandatories: noTrio });
       raw = String(raw).trim().replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();
       const parsed = JSON.parse(raw.slice(raw.indexOf('{'), raw.lastIndexOf('}')+1));
       // Three routes come back; the first becomes the working concept and the rest stay available
@@ -17992,6 +18020,7 @@ class Component extends DCLogic {
   SRC = {
     brief:   { label:'from the brief', bg:'#EAF6EC', fg:'#1E7E34', line:'#C9E7CE', hint:'Taken from the brief this house was written against.' },
     library: { label:'from the library', bg:'#EAF0FA', fg:'#2E5EA6', line:'#C9D6EC', hint:'Taken from signed-off material in the reference library.' },
+    research:{ label:'from research', bg:'#F1EAFA', fg:'#6B3FA0', line:'#DCC9EC', hint:'Validated against the research synthesis attached to the brief — a real finding, not a typed assertion.' },
     user:    { label:'written here', bg:'#EAF6EC', fg:'#1E7E34', line:'#C9E7CE', hint:'Written by a person in this portal. A hand-written line counts as sourced \u2014 they are the evidence.' },
     model:   { label:'model suggestion', bg:'#F1F3F7', fg:'#6B7280', line:'#C9CEDA', hint:'Drafted by the model with nothing behind it. Choosing it raises a finding until it is sourced or rewritten.' },
   };
@@ -24960,7 +24989,8 @@ class Component extends DCLogic {
       proofs: d.proof_options || [], tab:'objectives', refusal:'', obj:{},
       msgs: ((sheet.messages || []).map(m => ({ text:m.text || '', proof_id:m.proof_id || '' }))),
       rel:{}, carries:null, mands:null, report:null, release:null, crisis:null,
-      campaign: d.campaign || null, planContext: d.plan_context || null },
+      campaign: d.campaign || null, planContext: d.plan_context || null,
+      houseProof: d.house_proof || [] },
       () => { this.loadPrFunnel(); if (sheet.kind === 'crisis') this.loadPrCrisis(); });
   };
   prCloseSheet = () => this.setPr({ sheet:null, sheetStatus:null, funnel:null, refusal:'' });
@@ -24978,7 +25008,8 @@ class Component extends DCLogic {
     this.setPr({ sheet, sheetStatus: d.status || null, funnel: d.funnel || p.funnel,
       proofs: d.proof_options || p.proofs,
       msgs: ((sheet.messages || []).map(m => ({ text:m.text || '', proof_id:m.proof_id || '' }))),
-      campaign: d.campaign || p.campaign, planContext: d.plan_context || p.planContext });
+      campaign: d.campaign || p.campaign, planContext: d.plan_context || p.planContext,
+      houseProof: d.house_proof || p.houseProof });
     this.loadPrMsgSuggest();
   };
 
@@ -25612,6 +25643,9 @@ class Component extends DCLogic {
       prHasPlanContext: !!(p.planContext && ((p.planContext.audiences || []).length || (p.planContext.channels || []).length)),
       prPlanAudiences: ((p.planContext || {}).audiences || []).map(a => ({ audience: a.audience || '' })),
       prPlanChannels: ((p.planContext || {}).channels || []).map(c => ({ channel: c.channel || '', role: c.role || '' })),
+      // The house's own chosen demo propositions — what can actually be shown/filmed/measured.
+      prHasHouseProof: (p.houseProof || []).length > 0,
+      prHouseProof: (p.houseProof || []).map(t => ({ text: t })),
       prSheetIsCrisis: isCrisis,
       prCloseSheet: this.prCloseSheet,
       prDropThis: sheet ? this.prDropSheet(sheet.id) : this.prCloseSheet,
