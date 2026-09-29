@@ -345,8 +345,11 @@ def complete_endpoint(payload: dict):
     # in the plan with equal weight, and the model picks whichever fits its instinct — which is how a
     # social post briefed for rival-pack buyers came back written for loose-milk buyers. Optional, so a
     # caller that does not have one is unaffected.
+    # `house_id` — 29 Sep (part 2): only reaches here at all once the bridge script `/app` injects
+    # forwards the full payload rather than `messages` alone — see `_HEAD_INJECT`'s own comment.
     out = completion.complete(payload.get("messages", []),
                               execution=str(payload.get("execution") or ""),
+                              house_id=str(payload.get("house_id") or ""),
                               force_typed=bool(payload.get("force_typed")),
                               skip_mandatories=bool(payload.get("skip_mandatories")),
                               use_house=payload.get("use_house", True) is not False,
@@ -5223,6 +5226,17 @@ def _pr_plan_context(p: dict | None) -> dict:
             "channels": (nodes.get("channels") or {}).get("rows") or []}
 
 
+def _pr_house_proof(house: dict | None) -> list[str]:
+    """The house's own chosen "Proof & demo propositions" — what can actually be SHOWN, filmed or
+    measured. 29 Sep, per the user's own call: PR's whole job is a third party verifying something
+    checkable, so a demonstrable fact belongs in its reference material the same way the campaign's own
+    quote already does — read-only, never written into a release field for a person. Chosen options
+    only, same as everywhere else this house is read from."""
+    if not house:
+        return []
+    return strategy._chosen_text(house, "proof")
+
+
 @app.get("/pr-status")
 def pr_status():
     """The PR vocabulary — modes, standalone kinds, phases, the descent and the five PR jobs.
@@ -5273,7 +5287,8 @@ def pr_sheet_new(payload: dict):
     house_obj = strategy.load(house_in) if house_in else None
     return {"sheet": s, "status": pr.status(s),
             "campaign": _pr_campaign_source(house_obj),
-            "plan_context": _pr_plan_context(_p)}
+            "plan_context": _pr_plan_context(_p),
+            "house_proof": _pr_house_proof(house_obj)}
 
 
 @app.get("/pr-sheet/{sheet_id}")
@@ -5286,7 +5301,8 @@ def pr_sheet_get(sheet_id: str):
             "funnel": pr.funnel(_pr_objective_rows(p)),
             "proof_options": pr.proof_options(house),
             "campaign": _pr_campaign_source(house),
-            "plan_context": _pr_plan_context(p)}
+            "plan_context": _pr_plan_context(p),
+            "house_proof": _pr_house_proof(house)}
 
 
 @app.get("/pr-funnel")
@@ -8270,10 +8286,21 @@ _HEAD_INJECT = """
 <script>
 window.claude = window.claude || {};
 window.claude.complete = async function(arg){
-  var messages = (arg && arg.messages) ? arg.messages
-    : [{role:'user', content:(typeof arg==='string'?arg:JSON.stringify(arg||''))}];
+  // 29 Sep (part 2) — real bug, found live: this used to forward ONLY `messages`, silently dropping
+  // every other field the front end already computes and passes in `arg` — `execution`, `house_id`,
+  // `use_house`/`use_platform`/`use_plan`, `force_typed`, `skip_mandatories`, `brand_mode`. `/complete`
+  // has read all of these for a long time; the front end has been sending them for just as long; this
+  // one line is what threw them away before the request ever left the browser. Confirmed impact: the
+  // Grounded/Independent toggle never reached the server for any producer's `/complete` call, and a
+  // bound brief's `execution` id never narrowed Social's single post or Video's script server-side.
+  // Forward the whole object now; a bare string/array `arg` (older callers) still gets the same
+  // messages-only shape it always did.
+  var body = (arg && typeof arg === 'object' && !Array.isArray(arg) && arg.messages)
+    ? arg
+    : { messages: (arg && arg.messages) ? arg.messages
+        : [{role:'user', content:(typeof arg==='string'?arg:JSON.stringify(arg||''))}] };
   var r = await fetch('/complete',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({messages:messages})});
+    body:JSON.stringify(body)});
   if(!r.ok) throw new Error('complete '+r.status);
   var j = await r.json();
   return j.completion || '';

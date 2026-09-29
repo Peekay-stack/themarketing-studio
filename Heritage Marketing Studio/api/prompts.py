@@ -218,8 +218,22 @@ def _execution_block(execution_id: str) -> str:
             + "\n".join(f"  {x}" for x in out))
 
 
-def _resolve_house(brand: dict | None) -> dict | None:
+def _resolve_house(brand: dict | None, house_id: str = "") -> dict | None:
     import strategy
+    # 29 Sep (part 2) — `house_id` is the real scoping signal: the house the person actually has open
+    # (the front end's own `this.state.house.id`, the same value POSM/Onground already send via
+    # `_exec_ctx`), not a guess. Without it, a brand with more than one house — this tenant already has
+    # four under "Heritage Foods" — always resolved to whichever ONE house happened to match the brand
+    # name first below. Trust an explicit id outright and skip the guess entirely; if it fails to load,
+    # return the honest gap rather than silently falling back to a guess that could be a DIFFERENT
+    # house's core message and RTBs.
+    if house_id:
+        try:
+            return strategy.load(house_id)
+        except Exception as e:
+            print(f"[prompts] _resolve_house: could not load house {house_id!r}: {e}",
+                  file=sys.stderr, flush=True)
+            return None
     # Round 5 (brand-grounding, discovered live): `brand=None` reaching this function IS the
     # brand_mode="general" signal from system_for() two frames up — the caller already made the
     # disciplined choice not to invent a brand for this piece. `not want` used to treat that the same
@@ -228,7 +242,17 @@ def _resolve_house(brand: dict | None) -> dict | None:
     # avoid-list. `want` empty (whether from `brand=None` or a brand profile with no name) now means
     # "nothing to match" — no house, not every house — same discipline the rest of this project already
     # applies everywhere else a brand name gates a lookup.
-    want = str((brand or {}).get("brand") or "").strip().lower()
+    #
+    # 29 Sep — real bug, found while auditing what actually reaches Social/Video: `brand` here is a
+    # BRAND PROFILE dict, which carries the brand's name under `name`, never under `brand` (that key
+    # belongs to a HOUSE dict, a different shape). `.get("brand")` on a profile has always been empty,
+    # so `want` was always "", so this function has returned None for every real profile ever passed to
+    # it — meaning `house_block()`/`platform_block()` (both call this) have never actually surfaced a
+    # house's core message, RTBs, avoid-list or the platform's own detail to Social or Video, despite
+    # the code appearing to try. Confirmed live: `house_block(brand)`/`platform_block(brand)` both
+    # return `""` for a real house with real chosen layers, and a full `system_for()` call has no
+    # "THE STRATEGY ALREADY DECIDED" section at all.
+    want = str((brand or {}).get("name") or "").strip().lower()
     if not want:
         return None
     try:
@@ -246,18 +270,22 @@ def _resolve_house(brand: dict | None) -> dict | None:
     return None
 
 
-def house_block(brand: dict | None = None) -> str:
+def house_block(brand: dict | None = None, house_id: str = "") -> str:
     """The messaging house's own words: core/emotional/functional message, sourced RTBs, the avoid-list,
     per-medium message. Split out (round 93) from what used to be one inseparable `spine_block()` so a
     person can switch the house's grounding off independently of the idea platform's — see
     `spine_block()`, which composes this with `platform_block()`/`plan_channels_block()` per three
-    independently switchable flags rather than one."""
+    independently switchable flags rather than one.
+
+    `house_id` — 29 Sep (part 2): the house actually open, passed straight to `_resolve_house()`. See
+    that function's own comment on why a brand-name guess isn't enough once a brand has more than one
+    house on file."""
     try:
         import strategy
     except Exception as e:                                   # pragma: no cover - import guard
         print(f"[prompts] house_block: could not import strategy: {e}", file=sys.stderr, flush=True)
         return ""
-    house = _resolve_house(brand)
+    house = _resolve_house(brand, house_id)
     if not house:
         return ""
 
@@ -270,7 +298,11 @@ def house_block(brand: dict | None = None) -> str:
         v = strategy._chosen_text(house, lid)
         if v:
             out.append(f"{label}: " + "; ".join(v))
-    rtb = [t for lid in ("ertb", "frtb") for t in strategy._chosen_text(house, lid)]
+    # 29 Sep — real bug, found while wiring the same house layers into POSM/Onground: this asked for
+    # layers named "ertb"/"frtb", which have never existed (the real ids are `rtb_emotional`/
+    # `rtb_functional` — see strategy.LAYERS). `_chosen_text` on an unknown id just returns `[]`, no
+    # error, so this line has silently surfaced nothing since round 93 despite looking like it works.
+    rtb = [t for lid in ("rtb_emotional", "rtb_functional") for t in strategy._chosen_text(house, lid)]
     if rtb:
         out.append("Reasons to believe — the ONLY things you may offer as proof: " + "; ".join(rtb))
 
@@ -291,19 +323,21 @@ def house_block(brand: dict | None = None) -> str:
     return "\n".join(out)
 
 
-def platform_block(brand: dict | None = None) -> str:
+def platform_block(brand: dict | None = None, house_id: str = "") -> str:
     """The idea platform's own detail: insight, mechanic, territory, proof, the reason-to-believe it
     dramatises, and how it is already expressed elsewhere. It is the strongest constraint in the spine:
     the point of adopting a platform is that every execution becomes a different expression of the same
     idea. Returns the "no platform adopted" guidance sentence when none is chosen for this house — that
     sentence is about the platform's own absence, so it only appears when a caller actually asks for this
-    block, never when one has switched it off entirely."""
+    block, never when one has switched it off entirely.
+
+    `house_id` — 29 Sep (part 2): see `house_block()`'s own note; same reason, same fix."""
     try:
         import ideas as ideas_mod
     except Exception as e:
         print(f"[prompts] platform_block: could not import ideas: {e}", file=sys.stderr, flush=True)
         return ""
-    house = _resolve_house(brand)
+    house = _resolve_house(brand, house_id)
     if not house:
         return ""
 
@@ -358,27 +392,44 @@ def platform_block(brand: dict | None = None) -> str:
     return "\n".join(out)
 
 
-def plan_channels_block(brand: dict | None = None) -> str:
-    """Channels bought/audiences/phasing/measures from ANY plan matching the brand — the ambient signal,
-    not a specific bound execution (that is `_execution_block()`, gated in `system_for()` by the SAME
-    `use_plan` flag as this function, so "Plan" reads on screen as one switch, not two)."""
+def plan_channels_block(brand: dict | None = None, house_id: str = "") -> str:
+    """Channels bought/audiences/phasing/measures from the plan bound to this house — the ambient
+    signal, not a specific bound execution (that is `_execution_block()`, gated in `system_for()` by the
+    SAME `use_plan` flag as this function, so "Plan" reads on screen as one switch, not two).
+
+    `house_id` — 29 Sep (part 2), real bug found live: this used to match a plan by a blind, exact,
+    case-insensitive string comparison on `plan.brand`, with NO house or campaign scoping at all. This
+    tenant has 15 plans under variously-spelled "Heritage"/"Heritage Foods"/"heritage" brand strings, and
+    exactly ONE spells it precisely "Heritage Foods" — an old, unrelated plan from a different house,
+    dated 5 Sep. That one plan won the match for EVERY Heritage Foods generation regardless of which
+    house/campaign was actually open, because it was the only exact string match in the tenant — silently
+    injecting a stranger's "core South India" audiences into, for example, a "Heritage Maharashtra Push"
+    LinkedIn post. Confirmed live as the cause. A plan's `house` field is a real id, never ambiguous, so
+    when the caller knows the house, match on that instead of guessing by brand spelling."""
     try:
         import plan as plan_mod
     except Exception as e:
         print(f"[prompts] plan_channels_block: could not import plan: {e}", file=sys.stderr, flush=True)
         return ""
-    # Same fix as _resolve_house() above, same reason: `brand=None` (General mode) must mean "no plan
-    # matches", not "any plan matches" — `not want` used to hand the newest plan in the tenant to a
-    # General-mode prompt, real channels/audiences/phasing/measures included.
-    want = str((brand or {}).get("brand") or "").strip().lower()
     out = []
-    if not want:
-        return ""
-    try:
-        pl = next((p for p in plan_mod.plans() if str(p.get("brand", "")).lower() == want), None)
-        p = plan_mod.load(pl["id"]) if pl else None
-    except Exception:
-        p = None
+    p = None
+    if house_id:
+        try:
+            pl = next((p2 for p2 in plan_mod.plans() if p2.get("house") == house_id), None)
+            p = plan_mod.load(pl["id"]) if pl else None
+        except Exception:
+            p = None
+    else:
+        # Fallback only when no house is known at all (e.g. a General-mode call with nothing bound).
+        # Same discipline as _resolve_house()'s own fallback: `brand=None` must mean "no plan matches,"
+        # not "any plan matches."
+        want = str((brand or {}).get("name") or "").strip().lower()
+        if want:
+            try:
+                pl = next((p2 for p2 in plan_mod.plans() if str(p2.get("brand", "")).lower() == want), None)
+                p = plan_mod.load(pl["id"]) if pl else None
+            except Exception:
+                p = None
     if p:
         for lid, label in (("channels", "Channels bought"), ("audiences", "Audiences"),
                            ("phases", "Phasing"), ("measures", "How it is measured")):
@@ -389,10 +440,18 @@ def plan_channels_block(brand: dict | None = None) -> str:
             bits = [b for b in bits if b][:6]
             if bits:
                 out.append(f"{label} (from the IMC plan): " + " | ".join(bits))
+    if out:
+        # 29 Sep — same EVIDENCE framing `producers._ctx()` now states explicitly: this is the WHOLE
+        # plan's ambient shape, not this one piece's actual audience/channel — `_execution_block()`'s
+        # own "THIS PIECE OF WORK, SPECIFICALLY... this wins" (already the narrower, later block in
+        # `system_for()`) is what should win when both are present, same as everywhere else this
+        # ambient-vs-specific relationship already holds.
+        out.insert(0, "The wider plan (ambient — the one bound piece below, when there is one, replaces "
+                     "this with what THIS piece is actually for):")
     return "\n".join(out)
 
 
-def spine_block(brand: dict | None = None, *, use_house: bool = True,
+def spine_block(brand: dict | None = None, *, house_id: str = "", use_house: bool = True,
                 use_platform: bool = True, use_plan: bool = True) -> str:
     """What has been decided upstream, as binding constraint — composed from three independently
     switchable pieces. Empty string when nothing has been decided, or when a caller has switched all
@@ -405,18 +464,22 @@ def spine_block(brand: dict | None = None, *, use_house: bool = True,
     turning the idea platform off silently also dropped the house's core message/RTBs/avoid-list,
     because both lived in one function gated by one flag — a real gap between what the on-screen copy
     promised ("the idea platform is set aside") and what actually left the prompt.
+
+    `house_id` — 29 Sep (part 2): threaded through to all three, so each scopes to the house actually
+    open instead of guessing by brand name/string. See `plan_channels_block()`'s own note for the real
+    bug this closes.
     """
     out = []
     if use_house:
-        h = house_block(brand)
+        h = house_block(brand, house_id)
         if h:
             out.append(h)
     if use_platform:
-        p = platform_block(brand)
+        p = platform_block(brand, house_id)
         if p:
             out.append(p)
     if use_plan:
-        pc = plan_channels_block(brand)
+        pc = plan_channels_block(brand, house_id)
         if pc:
             out.append(pc)
     if not out:
@@ -430,7 +493,8 @@ def spine_block(brand: dict | None = None, *, use_house: bool = True,
 
 
 def system_for(messages: list[dict], brand: dict | None = None, brand_mode: str = "grounded",
-              execution: str = "", force_typed: bool = False, skip_mandatories: bool = False,
+              execution: str = "", house_id: str = "", force_typed: bool = False,
+              skip_mandatories: bool = False,
               use_house: bool = True, use_platform: bool = True, use_plan: bool = True) -> str:
     """Craft + this brand's grounding + what has been decided + the detected surface block.
 
@@ -470,6 +534,13 @@ def system_for(messages: list[dict], brand: dict | None = None, brand_mode: str 
     `skip_mandatories` — separate again: the caller's own read on whether none of the plan/idea/brief
     trio applies to this piece at all. See `brandprofile.voice_block`'s own docstring for exactly what
     this drops and why it's all-or-nothing.
+
+    `house_id` — 29 Sep (part 2): the house actually open, threaded straight through to `spine_block()`.
+    Without it, `house_block()`/`platform_block()`/`plan_channels_block()` each had to guess which house
+    a brand's grounding should come from — see `plan_channels_block()`'s own note for the real, confirmed
+    bug this closes (a stranger plan's "core South India" audiences landing on a Maharashtra-Push post).
+    Optional and additive: every existing caller that doesn't pass it keeps its previous (guessed)
+    behaviour exactly as before.
     """
     text = " ".join(str(m.get("content", "")) for m in messages if m.get("role") != "assistant")
     b = None if brand_mode == "general" else (brand or brandprofile.resolve())
@@ -480,8 +551,8 @@ def system_for(messages: list[dict], brand: dict | None = None, brand_mode: str 
     # The spine binds executions, not briefs. A brief is upstream of the house — it is where the next
     # problem gets stated — so constraining it by the platform the LAST brief produced would quietly
     # make every brief a restatement of the current campaign, and the loop would never open again.
-    spine = "" if surface is BRIEF else spine_block(b, use_house=eff_house, use_platform=eff_platform,
-                                                     use_plan=eff_plan_channels)
+    spine = "" if surface is BRIEF else spine_block(b, house_id=house_id, use_house=eff_house,
+                                                     use_platform=eff_platform, use_plan=eff_plan_channels)
     # The briefed piece goes LAST of the grounding blocks, closest to the instruction, because it is the
     # narrowest thing in the prompt and the one the rest has to yield to. Gated on `use_plan` only — the
     # "Plan" switch a person actually sees on screen ("Briefed from the plan") — independent of

@@ -209,7 +209,8 @@ def _plan_block(plan: dict | None) -> list[str]:
 
 def _ctx(house: dict | None, brief: dict | None, platform: dict | None = None,
          plan: dict | None = None, *, use_house: bool = True, use_platform: bool = True,
-         use_plan: bool = True, brand_mode: str = "") -> str:
+         use_plan: bool = True, brand_mode: str = "",
+         include_bridge: bool = False, include_proof: bool = False) -> str:
     """The strategy this is being made against, or an explicit note that there is none.
 
     The idea platform goes in FIRST and is labelled as binding. It sits between the house and the work,
@@ -230,6 +231,33 @@ def _ctx(house: dict | None, brief: dict | None, platform: dict | None = None,
     left the parameter gating nothing at all for one round. Phase 1 gives it back a real job: skipping
     `house`/`platform` — the actual brand-voice sources — when General, which `use_house`/`use_platform`
     alone never did.
+
+    `include_bridge`/`include_proof` (29 Sep, per-caller, both default off) — the house's own chosen
+    "Bridges (functional → emotional)" and "Proof & demo propositions" layers, read the same way `core`
+    already is (chosen options only, nothing unpicked). Neither was ever wired into any producer before
+    this — not here, not in `system_for()`'s own `house_block()` for Social/Video — so there is no
+    existing behaviour these default OFF to protect; they are opt-in per caller instead of unconditional
+    so each producer only carries what it actually asked for (`carousel_concept` — Social's carousel,
+    which also shares this function — asked for neither and stays exactly as it was).
+
+    **29 Sep — every input below now states its own ROLE, not just its content.** Found live: this
+    function used to hand the model a flat list of lines under one header with no signal of what to do
+    when two of them disagree — the same brand voice, platform, house core, bridge, proof and plan
+    channels sitting at equal weight. Agreed with the user as a shared design across every producer:
+
+      GATE     — a constraint, not material. Never blended in; never overridden by anything below it.
+      TERRITORY — the thing this whole piece is one expression of. Everything else bends to fit it.
+      TASK     — who/where/when this ONE piece is for. Narrower than TERRITORY, and wins over the
+                 ambient, tenant-wide version of the same fact (a bound execution over the plan's full
+                 audience list, for instance).
+      EVIDENCE — real, sourced material offered to draw from. Optional to use; never to contradict;
+                 never "use all of it" — a route built from every RTB and every demo prop is not a
+                 sharper route, it is an unread list.
+
+    `system_for()` (Social's single posts, Video) already carries this same hierarchy in its own words
+    (THE BRAND's own AUTHORITY clause = GATE, "THE STRATEGY ALREADY DECIDED — BINDING" = TERRITORY,
+    "THIS PIECE OF WORK, SPECIFICALLY" = TASK) — this brings `_ctx()` up to the same explicitness rather
+    than inventing a second vocabulary.
     """
     # The brand's approved recurring character (empty when there is none). Resolved from the ORIGINAL
     # house/brief before the switches below can null them — a character is a brand fact, not one of
@@ -244,7 +272,8 @@ def _ctx(house: dict | None, brief: dict | None, platform: dict | None = None,
     # piece's character reference comes from the SAME brand that's active in this session, the same
     # access boundary every other active-brand read in this tenant already respects. Nothing here
     # widens who can see which brand's character; it only stops narrowing it further than that.
-    char = character.for_prompt(brandprofile.resolve(house, brief))
+    profile = brandprofile.resolve(house, brief)
+    char = character.for_prompt(profile)
     # Phase 1 (brand-grounding, discovered live testing POSM): `use_house`/`use_platform` are a
     # SEPARATE, orthogonal pair of switches from `brand_mode` — a person can turn the house off while
     # still Grounded, or leave it on while Independent. Before this fix, brand_mode wasn't checked here
@@ -260,47 +289,113 @@ def _ctx(house: dict | None, brief: dict | None, platform: dict | None = None,
     platform = platform if (use_platform and _mode != "general") else None
     brief = brief if use_plan else None
     plan = plan if use_plan else None
-    if not house and not brief and not platform and not plan:
+    no_trio = not house and not brief and not platform and not plan
+    # 28 Sep — POSM (`key_visual`, `carousel_concept`) and Onground (`activation_ideas`,
+    # `adjust_activation_idea`, `sharpen_idea`, `element_brief`) all reach generation through this one
+    # function, and none of them ever saw the brand profile's own voice — no mandatories, no avoid-list,
+    # no competitors, no Brand Core — unlike Social/Video, which get exactly this via `system_for()`.
+    # Same call shape as `system_for()`'s own `brandprofile.voice_block(b, skip_mandatories=...)`: `None`
+    # for General (matching the character-vs-brand-voice distinction Round 5 already drew above — a
+    # character is a visual asset and stays; brand voice is "invented brand copy" and does not), and
+    # mandatories dropped only when nothing at all is bound, the same condition this function already
+    # used for its own "NO STRATEGY ATTACHED" branch below — not a new flag threaded through 6 functions
+    # and 5 routes for the same thing `no_trio` already answers.
+    voice = "THE BRAND — GATE, NOT MATERIAL\n" + brandprofile.voice_block(
+        None if _mode == "general" else profile, skip_mandatories=no_trio)
+    # The house's own culture avoid-list is the SAME role as the brand's own avoid/banned-words above —
+    # a constraint on what may never appear, not a creative fact to weigh against others — so it sits in
+    # the GATE section now rather than buried after the core message below.
+    gate_avoid = []
+    if house:
+        gate_avoid = [o["text"] for o in (house.get("nodes", {}).get("culture") or {}).get("options", [])
+                      if o["id"] in set((house.get("nodes", {}).get("culture") or {}).get("chosen") or [])
+                      and str(o.get("tag", "")).lower() == "avoid"]
+    if gate_avoid:
+        voice += "\nMUST NOT DO (this house's own additions to the brand's own avoid-list above): " \
+                 + "; ".join(gate_avoid)
+    if no_trio:
         base = ("NO STRATEGY ATTACHED — you have only the text below. Do not invent an audience, an "
                 "occasion or a claim. Work with what is given and say what is missing.")
-        return base + ("\n\n" + char if char else "")
-    out = []
+        parts = [base, voice]
+        if char:
+            parts.append(char)
+        return "\n\n".join(parts)
+
+    # ---- TERRITORY: what this whole piece is one expression of --------------------------------
+    territory = []
     if platform:
         line = str(platform.get("idea") or "").strip()
         if line:
-            out.append(f"THE IDEA PLATFORM (binding — every execution is one expression of this): {line}")
+            territory.append(f"THE IDEA PLATFORM (binding — every execution is one expression of "
+                             f"this): {line}")
         for f in ("name", "mechanic", "truth"):
             v = str(platform.get(f) or "").strip()
             if v:
-                out.append(f"platform {f}: {v}")
+                territory.append(f"platform {f}: {v}")
         expr = {k: str(v).strip() for k, v in (platform.get("expressions") or {}).items()
                 if str(v or "").strip()}
         if expr:
-            out.append("already expressed elsewhere (stay consistent with these, do not repeat them "
-                       "verbatim): " + " | ".join(f"{k}: {v}" for k, v in expr.items()))
+            territory.append("already expressed elsewhere (stay consistent with these, do not repeat "
+                             "them verbatim): " + " | ".join(f"{k}: {v}" for k, v in expr.items()))
+    if house:
+        core = strategy._chosen_text(house, "core")
+        if core:
+            territory.append("the brand's core message" +
+                             (" (the platform above is the sharper, more specific expression of this — "
+                              "where they differ, the platform wins)" if platform else "")
+                             + ": " + "; ".join(core))
+
+    # ---- TASK: who/where/when THIS piece is for, narrower than the ambient plan below ----------
+    task = []
     if brief:
         for f in ("audience", "channel", "occasion", "measure"):
             v = brief.get(f)
             if isinstance(v, dict):
-                out.append(f"{f}: " + ", ".join(f"{k}={x}" for k, x in v.items()
-                                                if k not in ("id", "source", "added", "edited") and x))
+                task.append(f"{f}: " + ", ".join(f"{k}={x}" for k, x in v.items()
+                                                 if k not in ("id", "source", "added", "edited") and x))
         if brief.get("pillar"):
-            out.append(f"pillar: {brief['pillar']}")
+            task.append(f"pillar: {brief['pillar']}")
         if isinstance(brief.get("message"), dict):
-            out.append(f"message (verbatim, do not paraphrase): {brief['message'].get('text','')}")
+            task.append(f"message (verbatim, do not paraphrase): {brief['message'].get('text','')}")
+        # Priority geography (29 Sep) — `system_for()`'s `_execution_block` has always had this; `_ctx()`
+        # never did, despite reading from the same kind of resolved execution brief. Same honesty rule:
+        # a language this audience may not speak first is said out loud, not quietly written around.
+        geo = brief.get("geography") or {}
+        if geo.get("by_state"):
+            states_txt = ", ".join(x["label"] for x in geo["by_state"] if x.get("label"))
+            if states_txt:
+                task.append(f"priority geography for this piece: {states_txt} — write for these "
+                           f"places' own idiom and context, not a generic national one")
+            gaps = geo.get("language_gaps") or []
+            if gaps:
+                gap_txt = "; ".join(f"{g['label']} ({g.get('gap', '')})" for g in gaps if g.get("label"))
+                task.append("LANGUAGE GAP, SAY SO — do not silently write around this: " + gap_txt)
+    if task:
+        task.insert(0, "THIS ONE PIECE, SPECIFICALLY — narrower than anything below, and wins over it "
+                       "where they differ:")
+
+    # ---- EVIDENCE: real, sourced material — draw from what fits, use none of it if none fits ---
+    evidence = []
     if house:
-        core = strategy._chosen_text(house, "core")
-        if core:
-            out.append("core message: " + "; ".join(core))
-        avoid = [o["text"] for o in (house.get("nodes", {}).get("culture") or {}).get("options", [])
-                 if o["id"] in set((house.get("nodes", {}).get("culture") or {}).get("chosen") or [])
-                 and str(o.get("tag", "")).lower() == "avoid"]
-        if avoid:
-            out.append("MUST AVOID: " + "; ".join(avoid))
-    out.extend(_plan_block(plan))
+        if include_bridge:
+            bridge = strategy._chosen_text(house, "bridge")
+            if bridge:
+                evidence.append("the bridge — what the functional fact MEANS for the buyer, the step "
+                               "between a product fact and a feeling: " + "; ".join(bridge))
+        if include_proof:
+            proof = strategy._chosen_text(house, "proof")
+            if proof:
+                evidence.append("proof & demo propositions — what can actually be SHOWN, filmed or "
+                               "measured: " + "; ".join(proof))
+    evidence.extend(_plan_block(plan))
+    if evidence:
+        evidence.insert(0, "EVIDENCE ON FILE — real and sourced, offered to draw from. Use what fits "
+                          "this one piece; do not force all of it in, and never contradict it:")
+
+    out = [voice] + territory + task + evidence
     if char:
         out.append(char)
-    return "\n".join(out) or "NO STRATEGY ATTACHED — work from the text alone."
+    return "\n".join(out)
 
 
 def _ask(prompt: str, max_tokens: int = 1500) -> tuple[dict | None, str]:
@@ -485,7 +580,7 @@ def key_visual(brief_text: str, house: dict | None = None,
         "masked, type set in badges and boxes, a brand block and a base band. It is NOT a photograph "
         "with words on top. A route that describes a scene filling the frame is describing the wrong "
         "object. The pack is always present and never the hero.\n\n"
-        f"THE STRATEGY\n{_ctx(house, exec_brief, platform, plan, use_house=use_house, use_platform=use_platform, use_plan=use_plan, brand_mode=brand_mode)}\n\n"
+        f"THE STRATEGY\n{_ctx(house, exec_brief, platform, plan, use_house=use_house, use_platform=use_platform, use_plan=use_plan, brand_mode=brand_mode, include_bridge=True)}\n\n"
         f"WHAT THIS STANDS ON ({src})\n{text}\n\n"
         f"Give {n} genuinely different treatment routes. They must differ in what the HERO cut-out is "
         "and what the field does — not in adjectives. For each: what is in frame, what is deliberately "
@@ -817,7 +912,7 @@ def activation_ideas(house: dict | None = None, platform: dict | None = None,
     prompt = (
         "You are planning consumer activations in India — real ones, that a field team has to book, "
         "staff and run.\n\n"
-        f"THE STRATEGY\n{_ctx(house, exec_brief, platform, plan, use_house=use_house, use_platform=use_platform, use_plan=use_plan, brand_mode=brand_mode)}\n\n"
+        f"THE STRATEGY\n{_ctx(house, exec_brief, platform, plan, use_house=use_house, use_platform=use_platform, use_plan=use_plan, brand_mode=brand_mode, include_bridge=True, include_proof=True)}\n\n"
         f"WHAT THIS EXPRESSES ({src})\n{text}\n\n"
         + (f"THE PERSON ASKING ADDS\n{steer.strip()}\n\n" if steer.strip() else "")
         + f"VENUES YOU MAY USE — pick the right one per idea, and read its trap:\n{venues}\n\n"
@@ -903,7 +998,7 @@ def adjust_activation_idea(idea: dict, note: str, house: dict | None = None,
     prompt = (
         "You are refining ONE consumer activation idea for India — a field team has to book, staff and "
         "run it.\n\n"
-        f"THE STRATEGY\n{_ctx(house, exec_brief, platform, plan, use_house=use_house, use_platform=use_platform, use_plan=use_plan, brand_mode=brand_mode)}\n\n"
+        f"THE STRATEGY\n{_ctx(house, exec_brief, platform, plan, use_house=use_house, use_platform=use_platform, use_plan=use_plan, brand_mode=brand_mode, include_bridge=True, include_proof=True)}\n\n"
         f"THE IDEA AS IT STANDS\n{json.dumps(current)}\n\n"
         f"THE CHANGE ASKED FOR\n{note}\n\n"
         f"VENUES — pick the right one only if the venue itself has to change:\n{venues}\n\n"
@@ -996,7 +1091,7 @@ def sharpen_idea(idea: str, house: dict | None = None,
         return "", "Write the idea first — this sharpens one, it does not supply one."
     prompt = (
         "You are planning a consumer activation in India — a stall, a van, a promoter, a street.\n\n"
-        f"THE STRATEGY\n{_ctx(house, exec_brief, platform, plan, use_house=use_house, use_platform=use_platform, use_plan=use_plan, brand_mode=brand_mode)}\n\n"
+        f"THE STRATEGY\n{_ctx(house, exec_brief, platform, plan, use_house=use_house, use_platform=use_platform, use_plan=use_plan, brand_mode=brand_mode, include_bridge=True, include_proof=True)}\n\n"
         f"THE IDEA AS WRITTEN\n{idea}\n\n"
         "Tighten it into something buildable in two or three sentences. Name what a person physically "
         "DOES at it — not what they feel or learn. An activation whose central action is 'engages with "
@@ -1028,7 +1123,7 @@ def element_brief(element: str, brief_text: str, idea: str, house: dict | None =
         return "", "Settle the activation idea first — the four elements are briefed against it."
     prompt = (
         "You are writing a production brief for one element of a consumer activation in India.\n\n"
-        f"THE STRATEGY\n{_ctx(house, exec_brief, platform, plan, use_house=use_house, use_platform=use_platform, use_plan=use_plan, brand_mode=brand_mode)}\n\n"
+        f"THE STRATEGY\n{_ctx(house, exec_brief, platform, plan, use_house=use_house, use_platform=use_platform, use_plan=use_plan, brand_mode=brand_mode, include_bridge=True, include_proof=True)}\n\n"
         f"THE ACTIVATION\n{idea.strip()}\n\n"
         f"THE ELEMENT: {element} — {spec}\n"
         f"WHAT THE AUTHOR HAS WRITTEN SO FAR\n{(brief_text or '(nothing yet)').strip()}\n\n"
