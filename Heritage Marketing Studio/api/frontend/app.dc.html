@@ -4177,6 +4177,14 @@
         </div>
       </div>
 
+      <sc-if value="{{ ideaStale }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#FFF4DA; border:1px solid #F0DFB4; border-radius:16px; padding:16px 20px; margin-bottom:16px; display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+          <span style="font-size:11px; font-weight:800; letter-spacing:0.05em; text-transform:uppercase; color:#B07A12; flex:none;">Stale</span>
+          <div style="font-size:13.5px; line-height:1.55; color:#8A6410; flex:1; min-width:260px; text-wrap:pretty;">{{ ideaStaleNote }}</div>
+          <span onClick="{{ draftIdeaFromSources }}" style="cursor:pointer; font-size:12.5px; font-weight:700; color:#17325E; text-decoration:underline; white-space:nowrap;">Redraft from these sources</span>
+        </div>
+      </sc-if>
+
       <sc-if value="{{ ideaShowReturnTrip }}" hint-placeholder-val="{{ false }}">
         <div style="background:#FFF9EC; border:1px solid #F0DFB4; border-radius:16px; padding:16px 20px; margin-bottom:16px; display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
           <div style="font-size:13.5px; line-height:1.55; color:#8A6410; flex:1; min-width:260px; text-wrap:pretty;">An idea now exists. The house was written before it — worth going back and re-arguing the core, the pillars and the bridge against it.</div>
@@ -4282,10 +4290,10 @@
             </sc-for>
           </div>
         </sc-if>
-        <!-- 30 Sep (upstream-wiring plan): standalone, not routed through cpgFindings above — that list
-             reads houseStatus.findings, which strategy.status() never populates with campaign-layer
-             findings at all (a separate, pre-existing gap, left as found). This reads the one field
-             loadCampaign() already stores correctly. -->
+        <!-- 30 Sep: cpgFindings above now also carries this exact finding (campaign.validate()'s own
+             "stale" entry, once cpgFindings read campaignFindings instead of the never-populated
+             houseStatus.findings) — kept as its own banner anyway, because this is the one place with
+             the actionable "Adapt these for me" link; cpgFindings is read-only. -->
         <sc-if value="{{ cpgStale }}" hint-placeholder-val="{{ false }}">
           <div style="display:flex; gap:11px; align-items:flex-start; background:#FFF4DA; border:1px solid #F0DFB4; border-radius:12px; padding:12px 15px; margin-bottom:16px;">
             <span style="font-size:11px; font-weight:800; letter-spacing:0.05em; text-transform:uppercase; color:#B07A12; flex:none; padding-top:2px;">Stale</span>
@@ -19248,7 +19256,15 @@ class Component extends DCLogic {
       exprSaved: Object.keys(got.expressions || {}).length ? 'saved' : cur.exprSaved,
       houseId: got.house || cur.houseId || '',
       draftedLine: got.source === 'model' ? (got.line || '') : '',
-      draftedName: got.source === 'model' ? (got.name || '') : '' } });
+      draftedName: got.source === 'model' ? (got.name || '') : '',
+      // `ideas.status()` has always computed this correctly (`generated_under` vs the house's current
+      // signature) and returned it, with its own finding text, on every `/idea-platform` GET — this
+      // screen just never read either, so a platform that had drifted from the house never said so on
+      // the one screen whose job is that platform. Same class of gap `execWithStatus()` fixed for
+      // executions the same session. The message is read from the server's own finding rather than
+      // duplicated here, so the two can never say different things.
+      stale: !!(got.status && got.status.stale),
+      staleNote: (((got.status && got.status.findings) || []).find(f => f.level === 'stale') || {}).detail || '' } });
     // The dropdown and ideaStands() both read the full house object, not just its id — load it so
     // ‘Try again’ has something to stand on without the house being re-picked by hand.
     if (got.house && (!this.state.house || this.state.house.id !== got.house)) {
@@ -19546,7 +19562,12 @@ class Component extends DCLogic {
       big_idea: (got && got.big_idea && got.big_idea.text) || '',
       big_idea_note: (got && got.big_idea && got.big_idea.note) || '',
       bigIdeaView: (got && got.big_idea) || null,
-      roles: { ...roles, ...((got || {}).roles || {}) } } });
+      roles: { ...roles, ...((got || {}).roles || {}) } },
+      // `d.findings` is `campaign.status()`'s own findings array — was fetched here and discarded every
+      // time; `cpgFindings`/`hasCpgFindings` below read `houseStatus.findings` instead, which
+      // `strategy.status()` never populates with campaign-layer findings at all, so the panel was
+      // permanently empty regardless of what was actually wrong with a campaign.
+      campaignFindings: d.findings || [] });
     if (got && got.id) this.loadCampaignGrid();
   };
   loadCampaignGrid = async () => {
@@ -22902,9 +22923,9 @@ class Component extends DCLogic {
         label: inp.label || '', feeds: inp.feeds || '', what: inp.what || '',
         filled: !!inp.available, hasWhy: !inp.available && !!inp.why, why: inp.why || '',
       })),
-      cpgFindings: (((this.state.houseStatus||{}).findings)||[]).filter(f => f.layer === 'campaign')
-        .map(f => ({ level:(f.level||'note').toUpperCase(), text:f.text, ...(this.FIND_TONE[this.findingLevel(f)]) })),
-      hasCpgFindings: (((this.state.houseStatus||{}).findings)||[]).some(f => f.layer === 'campaign'),
+      cpgFindings: (this.state.campaignFindings || [])
+        .map(f => ({ level:(f.level||'note').toUpperCase(), text:f.detail, ...(this.FIND_TONE[this.findingLevel(f)]) })),
+      hasCpgFindings: (this.state.campaignFindings || []).length > 0,
       ideaNameRef: this.ideaNameRef,
       // Sourcing, shown where the line is: the same discipline every house layer is held to.
       ideaIsModel: ipLive && this.ideaSource() === 'model',
@@ -22920,6 +22941,8 @@ class Component extends DCLogic {
             ? 'Answering ' + ip.fromBrief.title + ' \u2014 no core message chosen, so nothing checks that this ladders to what the brand says.'
             : 'No core message is chosen yet. A platform written before the house is a slogan looking for a reason.'),
       ideaFromFg: ipStands ? '#41505F' : '#B07A12',
+      ideaStale: ipLive && !!ip.stale,
+      ideaStaleNote: ip.staleNote || 'The messaging house has moved since this platform was written.',
       ideaAdoptLabel: ip.adopted ? 'Adopted \u00b7 save changes' : 'Adopt this platform',
       ideaAdoptBg: ipLive ? '#17325E' : '#EEF1F5',
       ideaAdoptFg: ipLive ? '#F7F5F1' : '#9AA1AC',
