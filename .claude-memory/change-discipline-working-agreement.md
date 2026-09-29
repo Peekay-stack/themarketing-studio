@@ -2,7 +2,10 @@
 name: change-discipline-working-agreement
 description: "Standing process for EVERY code change (agreed with the owner 19 Sep 2026, applies to all future work, any project): sweep blast radius first, plan, keep everything else the same, verify local then live, only then hand over. Living doc -- append lessons when we learn them."
 metadata:
+  node_type: memory
   type: feedback
+  originSessionId: 60d5a7b2-1e0f-4999-a432-7547cc82bb56
+  modified: 2026-09-29T15:26:41.893Z
 ---
 
 The owner asked for this after ~8 of 15 grounding-test rounds turned out to be the same rule missing from a
@@ -78,3 +81,12 @@ briefs, LLM calls that cost money) needs the owner's agreement.
   measurement's number -- a prior round's own comment estimated '1600px fits by 0px' for this exact nav, and a
   fresh in-browser measurement with real content found it still clipping at 1700px. Old arithmetic is not a
   substitute for measuring the current real thing.
+- 29 Sep: when driving `app.dc.html`'s live React instance directly from the browser tool (to test a client-side
+  merge/read fix with no backend change to lean on), the component you find by walking the fiber tree
+  (`constructor.name === 'StreamableComponent'`) is NOT the object whose state the templates render from --
+  `sc.state !== sc.logic.state`, two genuinely separate objects. Writing to `sc.setState`/reading `sc.state`
+  silently succeeds and looks plausible (screen navigates, no error) while the actual screen keeps rendering
+  whatever `logic.state` already held -- cost real time chasing a phantom "empty state" render. Always use
+  `sc.logic.setState`/`sc.logic.state`, and call the app's own real handler (e.g. `logic.goIdeaPlatform()`)
+  rather than poking `screen` directly, since screen-change handlers refetch using `logic.state` fields
+  (house id, a stale `idea.id` from prior navigation) that a manual partial `setState` can leave inconsistent.
