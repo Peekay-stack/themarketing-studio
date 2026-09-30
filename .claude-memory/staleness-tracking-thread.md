@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 60d5a7b2-1e0f-4999-a432-7547cc82bb56
-  modified: 2026-09-30T13:53:19.945Z
+  modified: 2026-09-30T13:55:13.237Z
 ---
 
 **29 Sep: two commits shipped and confirmed live** (`/selfcheck` on themarketing-studio.com returned
@@ -169,5 +169,52 @@ most of the needed selection, just scoped to the currently-adopted platform's ow
 `/campaign`'s `_item(p)` resolution -- widening that scope to include historical platforms' campaigns
 was the leading shape discussed, over building a whole new picker UI. The owner also raised whether Idea
 Platform's 4-layer structure needs a genuinely different (5th?) treatment for "browsing an old campaign"
-vs the first 3 generation layers -- unresolved. **This is the agreed pickup point for the next session**;
-nothing here is scheduled, the owner said "let's take it up tomorrow" with no further build requested.
+vs the first 3 generation layers -- unresolved. This is a real, agreed-shape pickup point, but see below -- a bug found in the SAME live-testing round
+now takes priority over it.
+
+---
+
+## 30 Sep, later same evening -- NEW bug found live: Step 3 "The campaign" itself still stale, not just its expressions
+
+**PICK UP HERE FIRST TOMORROW MORNING -- explicit owner instruction.** Found via live screenshots right
+after the `b892783` banner ship, testing a fresh/clean new idea draft: Step 4 "Expression by medium"
+correctly comes back empty (the `b67e355` fix holding, as expected) but **Step 3 "The campaign" still
+shows a full PRIOR campaign's stale values** -- Name ("Pure milk. Real strength. Every single day."),
+Runs dates, Insight, Resolution, Big idea, Shape ("Frame" selected), Frame text, Slots (two rows,
+"Subah ke doodh"/"Dopahar ke dahi") -- none of it cleared for the new draft. The two "OPEN" findings
+block also renders the SAME finding text twice (possibly a separate duplicate-render bug, possibly the
+same finding fetched from two sources -- undiagnosed, check both when investigating).
+
+**Owner's own words, exact requirement:** "while this is clean and empty campaign continues to hold
+values in it... when i click on build a campaign or expression by medium - in either case if its a new
+draft idea - then both should be reset with no stale values - else campaign values will override the
+expression by medium values."  I.e. on adopting a genuinely NEW/different draft idea, BOTH Step 4's
+expressions (already fixed, `b67e355`) AND Step 3's whole campaign object/display must reset to empty --
+otherwise the campaign's stale values win precedence over the platform's own (now-correctly-empty)
+expression-by-medium, defeating the point of the `b67e355`/`6f66835` fixes: `campaign.jobs()` and
+`plan.house_block()` were BOTH fixed this session to make the campaign's own expressions win over the
+platform's -- but that's exactly backwards if the "campaign" being read is actually a leftover from a
+DIFFERENT, older platform.
+
+**Where to start tomorrow (not yet investigated, just scoped from what's already known this session):**
+- Same family of bug as `ideas.adopt()`'s two-door staleness fix (`b67e355`) -- likely the client-side
+  `campaign()` state/getter in `app.dc.html` (whatever populates Step 3's rendered fields) is not reset
+  on `ideaDraft()`'s fresh-adopt path the way `expressions`/`exprSaved`/`routes` now are, and/or the
+  backend's own campaign resolution (`campaign_mod.get(pl, campaign)` / whatever `_item(p)` matching
+  `/campaign`'s GET route uses) is not scoped tightly enough to "this specific platform," so it's
+  returning a campaign object that actually belongs to a prior, different platform/idea.
+- Sweep needed (per the standing [[change-discipline-working-agreement]]): every place that LOADS a
+  campaign for display (`loadCampaign()` in the frontend, `/campaign` GET route in `main.py`,
+  `campaign_mod.get()`/`campaign_mod.for_house()` or whatever the actual lookup call is) -- check
+  whether it's keyed to the CURRENT adopted platform id/set id, or falls back to "whatever campaign
+  exists for this house" regardless of which platform is currently showing.
+- Once root cause is found, this is very likely the SAME shape of fix as `_trust_payload` in
+  `ideas.adopt()`: gate the campaign display/inheritance on "is this the same platform the campaign was
+  built for," and explicitly clear/empty the campaign display when adopting a genuinely different draft.
+- Also verify: does this affect `campaign.jobs()`'s OWN precedence fix from `6f66835`? If `jobs()` reads
+  a stale campaign object server-side (not just frontend display), the precedence fix shipped today
+  could be confidently returning the WRONG campaign's expressions as "the campaign wins" -- this would be
+  a live-data-correctness bug, not just a display bug, and should be checked with real production data
+  (not just the dev tenant) before ruling out.
+- **Not yet built, not yet diagnosed -- pure bug report, captured verbatim from the owner's live
+  screenshots and words.** No code read or changed on this bug yet.
