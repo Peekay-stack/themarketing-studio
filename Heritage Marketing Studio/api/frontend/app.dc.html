@@ -4283,6 +4283,12 @@
         <div style="display:flex; align-items:baseline; gap:11px; margin-bottom:5px;">
           <span style="font-size:11px; font-weight:800; letter-spacing:0.07em; color:#F0561E;">STEP 3</span>
           <span style="font-family:'Epilogue',sans-serif; font-weight:700; font-size:18px; color:#17325E;">The campaign</span>
+          <sc-if value="{{ cpgHasDl }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-left:auto; display:flex; gap:10px;">
+              <button onClick="{{ cpgDlRecord }}" style="background:#fff; color:#17325E; border:1px solid #C9CEDA; border-radius:11px; padding:8px 14px; font-weight:700; font-size:12.5px; cursor:pointer;">{{ cpgDlRecordLabel }}</button>
+              <button onClick="{{ cpgDlWorksheet }}" style="background:#fff; color:#17325E; border:1px solid #C9CEDA; border-radius:11px; padding:8px 14px; font-weight:700; font-size:12.5px; cursor:pointer;">{{ cpgDlWorksheetLabel }}</button>
+            </div>
+          </sc-if>
         </div>
         <div style="font-size:13.5px; line-height:1.6; color:#6B7280; margin-bottom:16px; max-width:680px; text-wrap:pretty;">The time-bound expression of this platform: one route up the ladder, one tension, one resolution, between two dates.</div>
         <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-bottom:14px; padding-bottom:14px; border-bottom:1px solid #E6E3DC;">
@@ -18572,15 +18578,25 @@ class Component extends DCLogic {
   // ---------- Word downloads: record, and worksheet ----------
   downloadDoc = (kind, mode) => async () => {
     const s = this.state;
-    const doc = kind === 'house' ? s.house : (kind === 'plan' ? s.plan : this.idea());
-    if (!doc || (kind === 'platform' && !doc.id)) return;
+    const doc = kind === 'house' ? s.house : (kind === 'plan' ? s.plan
+      : (kind === 'campaign' ? this.campaign() : this.idea()));
+    if (!doc || (kind === 'platform' && !doc.id) || (kind === 'campaign' && !doc.id)) return;
     const q = mode === 'worksheet' ? '?mode=worksheet' : '';
     this.setState({ docBusy: kind + mode });
     try {
-      const r = await fetch('/' + kind + '-docx/' + doc.id + q);
+      // 30 Sep: a campaign has no set id of its own to build a URL from — it is nested inside a
+      // platform item inside the set, and `campaign()`'s own state never carries that set's id back
+      // up. `/campaign-docx` accepts a house id just as tolerantly as it accepts a set id (same
+      // resolution `/platform-docx` already uses), and the house id is the one thing this screen
+      // always has on hand regardless of how the campaign got here.
+      const url = kind === 'campaign'
+        ? '/campaign-docx/' + ((s.house||{}).id || '') + '?campaign=' + encodeURIComponent(doc.id) + (mode === 'worksheet' ? '&mode=worksheet' : '')
+        : '/' + kind + '-docx/' + doc.id + q;
+      const r = await fetch(url);
       if (!r.ok) throw new Error(String(r.status));
       const base = String(doc.brand || (s.studio && s.studio.clientName) || kind).replace(/[^a-z0-9]+/gi,'_').replace(/^_|_$/g,'');
-      const noun = kind === 'house' ? 'messaging_house' : (kind === 'plan' ? 'comm_plan' : 'idea_platform');
+      const noun = kind === 'house' ? 'messaging_house' : (kind === 'plan' ? 'comm_plan'
+        : (kind === 'campaign' ? 'campaign' : 'idea_platform'));
       this.triggerDownload(await r.blob(), base + '_' + noun + '_' + (mode || 'record') + '.docx');
     } catch (e) {
       this.showToast('Could not build that document.');
@@ -22737,6 +22753,12 @@ class Component extends DCLogic {
       ipDlRecord: this.downloadDoc('platform', 'record'), ipDlWorksheet: this.downloadDoc('platform', 'worksheet'),
       ipDlRecordLabel: s.docBusy === 'platformrecord' ? 'Building\u2026' : 'Download the record',
       ipDlWorksheetLabel: s.docBusy === 'platformworksheet' ? 'Building\u2026' : 'Download a worksheet',
+      // 30 Sep: the campaign's own record/worksheet \u2014 see docs.build_campaign_docx's own note on why
+      // this did not exist until now. Same pattern as the platform's own pair just above.
+      cpgHasDl: !!(this.campaign() || {}).id,
+      cpgDlRecord: this.downloadDoc('campaign', 'record'), cpgDlWorksheet: this.downloadDoc('campaign', 'worksheet'),
+      cpgDlRecordLabel: s.docBusy === 'campaignrecord' ? 'Building\u2026' : 'Download the record',
+      cpgDlWorksheetLabel: s.docBusy === 'campaignworksheet' ? 'Building\u2026' : 'Download a worksheet',
       ideaName: ip.name || '', ideaLine: ip.line || '',
       onIdeaField: this.onIdeaField, onTestNote: this.onTestNote,
       ideaTests, adoptIdea: this.adoptIdea,

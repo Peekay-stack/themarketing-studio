@@ -526,17 +526,24 @@ def jobs(house: dict | None, p: dict | None = None, c: dict | None = None,
     carrying a job with nothing written for it shows up as an empty cell rather than as a screen nobody
     built — and an empty cell is a decision somebody has not made yet, which is worth seeing.
 
-    Resolution per row follows the same order of authority as `producers.stands_on`: the platform's
-    expression for this medium first because it is the most specific thing anyone decided, then the
-    house's line for it, then nothing. `source` says which, so a borrowed line is never presented as
-    though it were written here.
+    Resolution per row follows the same order of authority as `producers.stands_on`: the campaign's own
+    adaptation for this medium first (the most specific decision — made after the platform, and after
+    the idea), then the platform's own expression, then the house's line for it, then nothing. `source`
+    says which, so a borrowed line is never presented as though it were written here.
+
+    30 Sep: this docstring already claimed the `stands_on` order before this function actually did it —
+    the campaign's own `expressions` were never read here at all, only its typed roles. A campaign that
+    had adapted a medium differently from the platform still showed the platform's OLD line in this
+    table, the one screen whose whole point is showing the job and the message together. Found during a
+    backend sweep for every place these two fields are read, not live-reported.
     """
     # `p` is the SET, and the adopted platform inside it is resolved here — the same convention as
     # `get()` and `save()`. Taking a platform dict instead would have made this the one function in the
     # module with a different idea of what it is passed.
     slots = _expression_slots_by_leaf()
     house_lines = _house_lines_by_leaf(house)
-    expressions = (_item(p) or {}).get("expressions") or {}
+    plat_expressions = (_item(p) or {}).get("expressions") or {}
+    camp_expressions = (c or {}).get("expressions") or {}
     typed_roles = (c or {}).get("roles") or {}
 
     joined = channels_by_medium(plan)
@@ -559,12 +566,20 @@ def jobs(house: dict | None, p: dict | None = None, c: dict | None = None,
         text, source, review, rationale = "", "", False, ""
 
         for slot in slots.get(leaf, []):
-            got = str(expressions.get(slot) or "").strip()
+            got = str(camp_expressions.get(slot) or "").strip()
             if got:
                 text = got
-                source = ("the platform" if slot == leaf else
-                          f"the platform, expressed as {slot}")
+                source = ("this campaign" if slot == leaf else
+                          f"this campaign, expressed as {slot}")
                 break
+        if not text:
+            for slot in slots.get(leaf, []):
+                got = str(plat_expressions.get(slot) or "").strip()
+                if got:
+                    text = got
+                    source = ("the platform" if slot == leaf else
+                              f"the platform, expressed as {slot}")
+                    break
         if not text and leaf in house_lines:
             text = house_lines[leaf]["text"]
             review = house_lines[leaf]["needs_review"]

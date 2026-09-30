@@ -8147,6 +8147,36 @@ def platform_docx(set_id: str, mode: str = "record"):
     return FileResponse(out, filename=name, media_type=_DOCX)
 
 
+@app.get("/campaign-docx/{set_id}")
+def campaign_docx(set_id: str, campaign: str = "", mode: str = "record"):
+    """A campaign as a .docx — its insight, resolution, roles by medium, and what it becomes in each
+    medium. Mirrors `/platform-docx`, one layer down — see `docs.build_campaign_docx`'s own note on why
+    this did not exist until now."""
+    pl = ideas.load(set_id) or (ideas.for_house(set_id) if set_id else None)
+    if not pl and set_id:
+        pl = next((s for row in ideas.sets()
+                   if (s := ideas.load(row["id"]))
+                   and any(x.get("id") == set_id for x in s.get("platforms", []))), None)
+    if not pl:
+        return JSONResponse(status_code=404, content={
+            "detail": "No such idea platform. Send the set id, the house id, or the adopted "
+                      "platform's id — any of the three works."})
+    c = campaign_mod.get(pl, campaign)
+    if not c:
+        return JSONResponse(status_code=404, content={"detail": "No campaign on this platform yet."})
+    h = _platform_house(pl)
+    findings = [f for f in campaign_mod.validate(pl, h) if f.get("campaign") in ("", c["id"])]
+    mode = "worksheet" if str(mode).lower() == "worksheet" else "record"
+    try:
+        out = docs.build_campaign_docx(pl, c, findings, mode=mode)
+    except Exception as e:
+        raise HTTPException(500, f"Campaign document build failed: {e}")
+    name = project.filename(pl if project.of(pl) else dict(pl, project=project.of(h)),
+                            pl.get("brand") or "brand",
+                            "campaign" + ("-worksheet" if mode == "worksheet" else ""))
+    return FileResponse(out, filename=name, media_type=_DOCX)
+
+
 @app.get("/plan-docx/{plan_id}")
 def plan_docx(plan_id: str, mode: str = "record"):
     """The communication plan as a .docx. Layers are tables, so these are real Word tables.

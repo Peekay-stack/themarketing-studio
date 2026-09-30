@@ -898,6 +898,124 @@ def build_platform_docx(platform: dict, status: dict | None = None, out_path: st
     return out_path
 
 
+def build_campaign_docx(platform_set: dict, campaign_doc: dict | None, findings: list | None = None,
+                        out_path: str | None = None, mode: str = "record") -> str:
+    """A campaign as a document — its insight, resolution, frame, roles by medium, and what it becomes
+    in each medium. Mirrors `build_platform_docx()`, one layer down.
+
+    30 Sep: found during a backend sweep that the platform has always had a downloadable record and
+    worksheet, and a campaign — the thing a producer actually reads ahead of the platform once one
+    exists — never did. Same shape, same reason: the thing most likely to be circulated and argued over
+    had no way to leave the screen.
+    """
+    from docx.shared import Pt
+
+    import ideas as ideas_mod
+    import campaign as campaign_mod
+
+    platform_set = platform_set or {}
+    c = campaign_doc or {}
+    worksheet = str(mode).lower() == "worksheet"
+    brand = platform_set.get("brand") or "Brand"
+    doc = _new_doc(f"{brand} — Campaign" + (" · worksheet" if worksheet else ""))
+
+    p = doc.add_paragraph()
+    p.add_run(f"Last changed {c.get('edited') or c.get('added') or 'unknown'}").italic = True
+
+    it = ideas_mod.chosen_platform(platform_set) or {}
+    if it:
+        s = doc.add_paragraph()
+        sr = s.add_run("Expresses the platform: ")
+        sr.bold = True
+        sr.font.size = Pt(9)
+        s.add_run(str(it.get("name") or it.get("idea") or "")).font.size = Pt(9)
+
+    if not c:
+        doc.add_paragraph("No campaign has been drafted yet. This document is the shape it will take.")
+    else:
+        _heading(doc, c.get("name") or "Unnamed campaign", level=1, colour=INK)
+        dates = " — ".join(x for x in (c.get("from") or "", c.get("to") or "") if x)
+        if dates:
+            dp = doc.add_paragraph()
+            dr = dp.add_run(dates)
+            dr.italic = True
+            dr.font.size = Pt(9)
+        for field, label in (("insight", "Insight — the tension"),
+                             ("resolution", "Resolution — what the work tells them")):
+            v = str(c.get(field) or "").strip()
+            if v:
+                s = doc.add_paragraph()
+                sr = s.add_run(label + ": ")
+                sr.bold = True
+                sr.font.size = Pt(10)
+                s.add_run(v).font.size = Pt(10)
+        shape = str(c.get("shape") or "").strip()
+        frame = str(c.get("frame") or "").strip()
+        if shape:
+            sp = doc.add_paragraph()
+            spr = sp.add_run("Shape: ")
+            spr.bold = True
+            spr.font.size = Pt(10)
+            label = campaign_mod.SHAPES.get(shape) or ""
+            sp.add_run(shape + (f" — {label}" if label else "")).font.size = Pt(10)
+        if frame:
+            fp = doc.add_paragraph()
+            fpr = fp.add_run("Frame: ")
+            fpr.bold = True
+            fpr.font.size = Pt(10)
+            fp.add_run(frame).font.size = Pt(10)
+        slots = [s for s in (c.get("slots") or []) if isinstance(s, dict) and str(s.get("text") or "").strip()]
+        if slots:
+            _heading(doc, "Slots — the conjugations", level=3)
+            for s in slots:
+                b = doc.add_paragraph(style="List Bullet")
+                lang = str(s.get("lang") or "").strip()
+                b.add_run(str(s.get("text") or "") + (f"  [{lang}]" if lang else "")).font.size = Pt(10)
+
+        roles = {k: v for k, v in (c.get("roles") or {}).items() if str(v or "").strip()}
+        if roles or worksheet:
+            _heading(doc, "Roles by medium", level=1, colour=INK)
+            for k in campaign_mod.EXPRESSIONS:
+                v = str(roles.get(k) or "").strip()
+                r = doc.add_paragraph(style="List Bullet")
+                rr = r.add_run(str(k).replace("_", " ").upper() + "  ")
+                rr.bold = True
+                rr.font.size = Pt(9)
+                r.add_run(v or "not set").font.size = Pt(10)
+
+    # What this campaign becomes in each medium — its own adaptation, not the platform's.
+    expr = {k: str(v).strip() for k, v in (c.get("expressions") or {}).items() if str(v or "").strip()}
+    _heading(doc, "This campaign's own expression by medium", level=1, colour=INK)
+    if expr:
+        doc.add_paragraph("Adapted from the platform's expression, narrowed to this campaign's own "
+                          "insight and resolution — not a fresh line and not a restatement.")
+        for k, v in expr.items():
+            e = doc.add_paragraph(style="List Bullet")
+            er = e.add_run(str(k).replace("_", " ").upper() + "  ")
+            er.bold = True
+            er.font.size = Pt(9)
+            e.add_run(v).font.size = Pt(10)
+    else:
+        e = doc.add_paragraph()
+        er = e.add_run("Nothing expressed yet for this campaign. Until one exists, every execution "
+                       "bound to it reads the platform's own expression instead.")
+        er.italic = True
+        er.font.size = Pt(10)
+    if worksheet:
+        for k in campaign_mod.EXPRESSIONS:
+            _heading(doc, str(k).replace("_", " ").title(), level=3)
+            _write_in_space(doc, 2, "What this campaign becomes here:")
+
+    _findings_section(doc, findings, "campaign")
+    doc.add_page_break()
+    import strategy as strategy_mod
+    _caveat_block(doc, strategy_mod.ROUND_TRIP_CAVEAT, worksheet)
+
+    out_path = out_path or os.path.join(tempfile.mkdtemp(prefix="campaign_"), "campaign.docx")
+    doc.save(out_path)
+    return out_path
+
+
 def _plan_serves(doc, plan_doc: dict, house: dict | None) -> None:
     """The house this plan distributes, on the front page, in one block.
 
