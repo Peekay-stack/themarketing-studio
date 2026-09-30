@@ -1034,14 +1034,32 @@ def house_block(house: dict, layer_id: str = "") -> str:
     # retired node still fills in a medium the platform hasn't spoken for, so a house whose per-medium
     # lines were chosen before the platform existed loses nothing.
     by_med: dict[str, list[str]] = {}
+    camp_meds: set[str] = set()
     try:
         import ideas as ideas_mod
-        plat = ideas_mod.chosen_platform(ideas_mod.for_house(house.get("id", "")))
+        pset = ideas_mod.for_house(house.get("id", ""))
+        plat = ideas_mod.chosen_platform(pset)
     except Exception:
-        plat = None
+        pset, plat = None, None
+    # 30 Sep upstream-wiring audit: this read the platform's own expressions but never the campaign's —
+    # the same gap already closed for producer generation (execution._execution_block, campaign.stale())
+    # and for the Idea Platform's own screen, just never carried here. Confirmed live: this layer's
+    # channel descriptions still matched an older platform-level device after a newer campaign had
+    # adapted a different one for this season, because nothing here had ever heard of campaigns.
+    # Campaign wins where the two differ — same precedence as everywhere else this rule already holds.
+    try:
+        import campaign as campaign_mod
+        camp = campaign_mod.get(pset, "") if pset else None
+    except Exception:
+        camp = None
+    if camp:
+        for m, txt in (camp.get("expressions") or {}).items():
+            if str(txt or "").strip():
+                by_med.setdefault(str(m).lower(), []).append(str(txt).strip())
+                camp_meds.add(str(m).lower())
     if plat:
         for m, txt in (plat.get("expressions") or {}).items():
-            if str(txt or "").strip():
+            if str(txt or "").strip() and str(m).lower() not in by_med:
                 by_med.setdefault(str(m).lower(), []).append(str(txt).strip())
     node = (house.get("nodes") or {}).get("medium") or {}
     picked = set(node.get("chosen") or [])
@@ -1054,6 +1072,11 @@ def house_block(house: dict, layer_id: str = "") -> str:
         out.append("WHAT THE BRAND ALREADY SAYS IN EACH MEDIUM — decided in the house. Use these; do not "
                    "write new messaging for a medium that already has one:\n"
                    + "\n".join(f"  {m}: " + " | ".join(v) for m, v in by_med.items()))
+        if camp_meds:
+            out.append("Where a medium above came from the campaign (" + ", ".join(sorted(camp_meds)) +
+                       "), that is the season's own adapted line — sharper and more specific than the "
+                       "platform's durable one. Use it as written; the platform's own text for that "
+                       "medium applies only where the campaign is silent.")
         if layer_id == "channels":
             out.append("This layer maps channels onto those media. For every channel you name, the `job` "
                        "should be the work the medium's message above is doing — not a fresh line. Where "

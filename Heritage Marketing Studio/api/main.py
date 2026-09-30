@@ -5864,8 +5864,10 @@ def execution_options(plan_id: str, kind: str):
     by_role: dict[str, list] = {}
     for r in rows["measure"]:
         by_role.setdefault(str(r.get("role", "")).strip().lower(), []).append(r)
+    channels, channel_unambiguous = execution.channel_options(rows["channel"], kind)
     return {"kind": kind, "producer": execution.MANIFEST[kind],
-            "audiences": rows["audience"], "channels": rows["channel"],
+            "audiences": rows["audience"], "channels": channels,
+            "channel_unambiguous": channel_unambiguous,
             "occasions": rows["occasion"], "measures": rows["measure"],
             "measures_by_role": by_role,
             "messages": execution.message_options(house, kind),

@@ -336,6 +336,31 @@ def _row(p: dict, layer: str, row_id: str) -> dict | None:
     return None
 
 
+def channel_options(rows: list[dict], kind: str) -> tuple[list[dict], bool]:
+    """Which of the plan's channel rows this producer's own medium can legally be briefed from, and
+    whether the match is unambiguous enough to pick for the person rather than ask.
+
+    30 Sep: every producer used to see every channel in the plan regardless of medium — a Social brief
+    could point at a TV or OOH row with nothing to stop it, because nothing here had ever read the
+    `medium` column at all. Filters the same way `message_options()` already does (`media.migrate()`
+    normalization, not a raw string match — the same rename that once broke `campaign.jobs()`'s own
+    medium comparison would have broken a naive one here too).
+
+    Fails CLOSED on a genuine mismatch: a plan whose channel rows never had `medium` filled in returns
+    no rows for any producer, not every row for every producer — a caller must say so rather than let a
+    person brief a channel that only looks relevant. The second return value is `True` only when
+    exactly one row matches, which is the one case safe to pre-select: with two or more, the row's own
+    ROLE (reach/proof/conversion/advocacy) is a real decision this function has no business guessing.
+    """
+    want = (MANIFEST.get(kind) or {}).get("medium") or ""
+    if not want:
+        return rows, False
+    want_leaf, _ = media.migrate(str(want).strip().lower())
+    matched = [r for r in rows
+               if media.migrate(str(r.get("medium") or "").strip().lower())[0] == want_leaf]
+    return matched, len(matched) == 1
+
+
 def message_options(house: dict | None, kind: str) -> list[dict]:
     """The lines available to this kind of execution, in `campaign.jobs()`'s order of authority.
 
@@ -414,6 +439,18 @@ def brief_from(p: dict, house: dict | None, kind: str, sel: dict) -> tuple[dict,
             return {}, f"No {field} row {rid!r} in this plan."
         cols = plan_mod.LAYER_BY_ID[layer]["cols"]
         brief[field] = {"id": rid, **{c: row.get(c, "") for c in cols}}
+        # 30 Sep: the dropdown now filters to this producer's own medium (channel_options()), but a
+        # direct API call can still name any channel id — the same defence `brief_from` already applies
+        # to pillar/measure-role agreement below, extended to the one reference the UI filter alone
+        # cannot guarantee.
+        if field == "channel":
+            want = (man.get("medium") or "")
+            if want:
+                want_leaf, _ = media.migrate(str(want).strip().lower())
+                got_leaf, _ = media.migrate(str(row.get("medium") or "").strip().lower())
+                if got_leaf and got_leaf != want_leaf:
+                    return {}, (f"That channel runs in {row.get('medium')}, not {kind_label(kind)}'s own "
+                               f"medium ({want}) — pick one that actually runs there.")
 
     # The pillar is inherited from the audience rather than chosen again. Letting an execution pick its
     # own pillar is how a brief ends up arguing the emotional case to an audience the plan assigned to

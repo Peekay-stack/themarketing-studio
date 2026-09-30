@@ -19922,6 +19922,19 @@ class Component extends DCLogic {
     const d = await this.apiGet('/execution-options/' + p.id + '/' + kind);
     const list = (d && (d.options || d.messages)) || null;
     this.setState(s => ({ execOptions: { ...(s.execOptions||{}), [key]: list || [] } }));
+    // 30 Sep: execution.channel_options() now filters the plan's channel rows to this producer's own
+    // medium server-side (a Social brief no longer sees TV/OOH rows) — stored separately from
+    // execOptions above, which is a plain array with its own established shape (messages). When the
+    // filter found exactly one row, pre-select it, but only if nothing is chosen yet — a person's own
+    // pick, or a leftover value from switching tabs (execDraft is shared across producers, not
+    // reset per tab — a pre-existing design this does not change), is never overwritten.
+    if (d && Array.isArray(d.channels)) {
+      this.setState(s => ({ execChannelOptions: { ...(s.execChannelOptions||{}), [key]: d.channels } }));
+      const already = (this.state.execDraft || {}).channel;
+      if (d.channel_unambiguous && d.channels.length === 1 && !already) {
+        this.setState(s => ({ execDraft: { ...(s.execDraft||{}), channel: d.channels[0].id } }));
+      }
+    }
   };
   execOptionList(){
     const p = this.state.plan; if (!p) return null;
@@ -20069,6 +20082,14 @@ class Component extends DCLogic {
     const d = await this.apiGet('/execution-options/' + p.id + '/video');
     const list = (d && (d.options || d.messages)) || null;
     this.setState(s => ({ execOptions: { ...(s.execOptions||{}), [key]: list || [] } }));
+    // 30 Sep: same channel_options() filter/auto-select as the xTab producers' own loadExecOptions.
+    if (d && Array.isArray(d.channels)) {
+      this.setState(s => ({ execChannelOptions: { ...(s.execChannelOptions||{}), [key]: d.channels } }));
+      const already = (this.state.videoExecDraft || {}).channel;
+      if (d.channel_unambiguous && d.channels.length === 1 && !already) {
+        this.setState(s => ({ videoExecDraft: { ...(s.videoExecDraft||{}), channel: d.channels[0].id } }));
+      }
+    }
   };
   videoExecOptionList(){
     const p = this.state.plan; if (!p) return null;
@@ -21904,6 +21925,15 @@ class Component extends DCLogic {
     const e = (s.execs || {})[tab] || null;
     const rows = (k) => (this.layerStatus(s.planStatus, k) || {}).rows || [];
     const chRows = rows('channels'), auRows = rows('audiences'), phRows = rows('phases'), meRows = rows('measures');
+    // 30 Sep: `execution.channel_options()` filters these to this producer's own medium server-side —
+    // `loadExecOptions()` stores the result here, keyed the same way as `execOptions`. Undefined means
+    // it hasn't answered yet (fall back to the plan's full list rather than flash an empty dropdown);
+    // an empty ARRAY once loaded is the real, fail-closed "nothing declares this medium" state, and
+    // `chOptRows` carries that through rather than quietly falling back to everything.
+    const chOptKey = (s.plan ? s.plan.id : '') + '/' + kind;
+    const chFiltered = (s.execChannelOptions || {})[chOptKey];
+    const chLoaded = chFiltered !== undefined;
+    const chOptRows = chLoaded ? chFiltered : chRows;
     const pillar = this.execPillar();
     const ch = chRows.find(r => r.id === d.channel);
     const role = ch ? (ch.role || 'reach') : '';
@@ -21923,9 +21953,13 @@ class Component extends DCLogic {
         hint:'Not editable here \u2014 change the audience row in the plan.', hintFg:'#6B7280' },
       { k:'channel', label:'Where', from:'plan \u00b7 channels', isSelect:true, v:d.channel,
         line: d.channel ? '#DDD9D1' : '#E8A93C',
-        opts: opt(chRows.map(r => ({ v:r.id, label:(r.channel || 'unnamed row') + ' \u00b7 ' + (r.role || 'no role') })), 'choose a channel'),
-        hint: role ? ('Role: ' + role + '. That decides which measures are offered.') : 'The channel carries its role into the execution.',
-        hintFg:'#6B7280' },
+        opts: opt(chOptRows.map(r => ({ v:r.id, label:(r.channel || 'unnamed row') + ' \u00b7 ' + (r.role || 'no role') })),
+          chLoaded && !chOptRows.length ? 'no channel in the plan declares this medium' : 'choose a channel'),
+        hint: role ? ('Role: ' + role + '. That decides which measures are offered.')
+          : (chLoaded && !chOptRows.length
+            ? 'No channel row\u2019s medium matches this producer \u2014 set the medium column in the plan first.'
+            : 'The channel carries its role into the execution.'),
+        hintFg: (chLoaded && !chOptRows.length) ? '#B07A12' : '#6B7280' },
       { k:'occasion', label:'When', from:'plan \u00b7 phases', isSelect:true, v:d.occasion, line:'#DDD9D1',
         opts: opt(phRows.map(r => ({ v:r.id, label:(r.phase || 'unnamed') + (r.window ? ' \u00b7 ' + r.window : '') })),
           phRows.length ? 'no phase set' : 'no phases written yet'),
@@ -23209,6 +23243,11 @@ class Component extends DCLogic {
     const d = s.videoExecDraft || {};
     const rows = (k) => (this.layerStatus(s.planStatus, k) || {}).rows || [];
     const chRows = rows('channels'), auRows = rows('audiences'), phRows = rows('phases'), meRows = rows('measures');
+    // 30 Sep: same channel_options() filter as bagExec's own — see that function's own comment.
+    const chOptKey = (s.plan ? s.plan.id : '') + '/video';
+    const chFiltered = (s.execChannelOptions || {})[chOptKey];
+    const chLoaded = chFiltered !== undefined;
+    const chOptRows = chLoaded ? chFiltered : chRows;
     const pillar = this.videoExecPillar();
     const ch = chRows.find(r => r.id === d.channel);
     const role = ch ? (ch.role || 'reach') : '';
@@ -23225,9 +23264,13 @@ class Component extends DCLogic {
         hint:'Not editable here — change the audience row in the plan.', hintFg:'#6B7280' },
       { k:'channel', label:'Where', from:'plan · channels', isSelect:true, v:d.channel,
         line: d.channel ? '#DDD9D1' : '#E8A93C',
-        opts: opt(chRows.map(r => ({ v:r.id, label:(r.channel || 'unnamed row') + ' · ' + (r.role || 'no role') })), 'choose a channel'),
-        hint: role ? ('Role: ' + role + '. That decides which measures are offered.') : 'The channel carries its role into the execution.',
-        hintFg:'#6B7280' },
+        opts: opt(chOptRows.map(r => ({ v:r.id, label:(r.channel || 'unnamed row') + ' · ' + (r.role || 'no role') })),
+          chLoaded && !chOptRows.length ? 'no channel in the plan declares this medium' : 'choose a channel'),
+        hint: role ? ('Role: ' + role + '. That decides which measures are offered.')
+          : (chLoaded && !chOptRows.length
+            ? 'No channel row’s medium matches this producer — set the medium column in the plan first.'
+            : 'The channel carries its role into the execution.'),
+        hintFg: (chLoaded && !chOptRows.length) ? '#B07A12' : '#6B7280' },
       { k:'occasion', label:'When', from:'plan · phases', isSelect:true, v:d.occasion, line:'#DDD9D1',
         opts: opt(phRows.map(r => ({ v:r.id, label:(r.phase || 'unnamed') + (r.window ? ' · ' + r.window : '') })),
           phRows.length ? 'no phase set' : 'no phases written yet'),
