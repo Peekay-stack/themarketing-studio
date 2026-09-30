@@ -4205,6 +4205,15 @@
         </div>
       </sc-if>
 
+      <sc-if value="{{ ideaShowBranchChoice }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#F4F7FC; border:1px solid #D6DEEC; border-radius:16px; padding:16px 20px; margin-bottom:16px; display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+          <div style="font-size:13.5px; line-height:1.55; color:#2E5EA6; flex:1; min-width:260px; text-wrap:pretty;">This platform doesn't yet say anything in any medium. Most work should go through a campaign first — but if this doesn't need one (a one-off, not a seasonal push), write what it becomes per medium directly. Whichever you skip stays reachable below; nothing here is locked in.</div>
+          <span onClick="{{ branchToCampaign }}" style="cursor:pointer; font-size:12.5px; font-weight:700; color:#17325E; text-decoration:underline; white-space:nowrap;">Build a campaign</span>
+          <span onClick="{{ branchToExpressions }}" style="cursor:pointer; font-size:12.5px; font-weight:700; color:#17325E; text-decoration:underline; white-space:nowrap;">Write expressions directly</span>
+          <span onClick="{{ dismissBranchChoice }}" style="cursor:pointer; font-size:12px; color:#9AA1AC; font-weight:700;">Dismiss</span>
+        </div>
+      </sc-if>
+
       <div style="background:#fff; border:1px solid #DDD9D1; border-radius:16px; padding:22px 24px; margin-bottom:16px; opacity:{{ ideaOpacity }};">
         <div style="display:flex; align-items:baseline; gap:11px; margin-bottom:5px;">
           <span style="font-size:11px; font-weight:800; letter-spacing:0.07em; color:{{ ideaStepFg }};">STEP 2</span>
@@ -4270,7 +4279,7 @@
       <!-- The campaign: time-bound, one route up the ladder, and only reachable once a platform is
            adopted — a campaign with no id under it cannot be saved as anyone’s. -->
       <sc-if value="{{ ipAdopted }}" hint-placeholder-val="{{ false }}">
-      <div style="background:#fff; border:1px solid #DDD9D1; border-radius:16px; padding:22px 24px; margin-top:16px;">
+      <div id="tms-campaign" style="background:#fff; border:1px solid #DDD9D1; border-radius:16px; padding:22px 24px; margin-top:16px;">
         <div style="display:flex; align-items:baseline; gap:11px; margin-bottom:5px;">
           <span style="font-size:11px; font-weight:800; letter-spacing:0.07em; color:#F0561E;">STEP 3</span>
           <span style="font-family:'Epilogue',sans-serif; font-weight:700; font-size:18px; color:#17325E;">The campaign</span>
@@ -19215,6 +19224,12 @@ class Component extends DCLogic {
       claimFact: rd.claim_fact || i.claimFact || null,
       ladderConfirmed: rd.ladder_confirmed != null ? !!rd.ladder_confirmed : i.ladderConfirmed,
       showReturnTrip: freshAdopt ? true : i.showReturnTrip,
+      // 30 Sep: a fresh adopt leaves both the campaign (step 3) and the platform's own expression by
+      // medium (step 4) open with nothing said about which to use — and per `ideas.adopt()`'s own
+      // fix the same day, writing step 4 first is real, generatable work that becomes moot the moment
+      // a campaign exists. Asked once, right here, rather than left for the person to discover by
+      // building the wrong one first.
+      showBranchChoice: freshAdopt ? true : i.showBranchChoice,
       exprSaved: (r && r.ok && Object.keys(i.expressions || {}).length) ? 'saved' : i.exprSaved } });
     if (r && r.ok) {
       // 30 Sep (upstream-wiring plan): the toast below has claimed this since before the fix existed \u2014
@@ -19239,6 +19254,9 @@ class Component extends DCLogic {
     }
   };
   dismissReturnTrip = () => this.setState({ idea: { ...this.idea(), showReturnTrip:false } });
+  dismissBranchChoice = () => this.setState({ idea: { ...this.idea(), showBranchChoice:false } });
+  branchToCampaign = () => { this.dismissBranchChoice(); this.goIdeaCampaign(); };
+  branchToExpressions = () => { this.dismissBranchChoice(); this.goIdeaExpressions(); };
   // The platform persists server-side, so the five tests are read back rather than re-answered.
   // A bare GET resolves nothing on the server — it needs ?id= or ?house=, else it answers exists:false
   // and hydration never runs. Sending the id when we have one, the open house's id otherwise, and
@@ -19339,13 +19357,19 @@ class Component extends DCLogic {
     // With one option the two fields are filled as they always were, so a server that still answers
     // flat behaves exactly as before. With three, the cards are the chooser and nothing is assumed.
     const one = options.length === 1;
+    // 30 Sep: `state.idea.expressions` used to ride through a redraft untouched \u2014 the boxes in
+    // "Expression by medium" kept showing whatever was adopted BEFORE this round, next to three new
+    // candidate lines none of them were written for. Server-side, `ideas.adopt()` now refuses to let
+    // stale client state land on a genuinely different platform either way \u2014 but the display itself
+    // was still wrong the moment the new options appeared, before anyone had even adopted one.
     this.setState({ idea: { ...cur, drafting:false, draftingOn:'', started:true, options,
       builtOn: buildOn ? (buildOn.name || '') : '',
       pickedOption: one ? options[0].uid : '',
       name: one ? (got.name || cur.name) : cur.name,
       line: one ? line : cur.line,
       draftedLine: one ? line : cur.draftedLine,
-      draftedName: one ? (got.name || cur.name || '') : cur.draftedName } });
+      draftedName: one ? (got.name || cur.name || '') : cur.draftedName,
+      expressions: {}, exprSaved: '', routes: {} } });
     this.showToast(buildOn
       ? options.length + (one ? ' development' : ' developments') + ' of \u201c' + buildOn.name + '\u201d \u2014 not a fresh idea, a sharper version of that one.'
       : options.length + (one ? ' route' : ' routes') + ', written to differ in kind rather than in wording. Pick one, or develop one.', 'ok');
@@ -19770,11 +19794,11 @@ class Component extends DCLogic {
     this.setState({ xInputs: { ...cur, [k]: !cur[k] } });
   };
   goIdeaPlatform = () => { this.setState({ screen:'idea' }); window.scrollTo(0,0); this.loadIdea(); this.loadCampaign(); };
-  // Expression by medium is on this same screen, below the campaign and above the table — so this moves the scroller to
+  // Expression by medium and the campaign are both on this same screen — so this moves the scroller to
   // the one home rather than navigating anywhere. The app scrolls inside <main>, not the window, so
   // the nearest scrolling ancestor is found rather than assumed.
-  goIdeaExpressions = () => {
-    const el = document.getElementById('tms-expr-by-medium');
+  scrollToId = (id) => {
+    const el = document.getElementById(id);
     if (!el) return;
     let sc = el.parentElement;
     while (sc && sc !== document.body) {
@@ -19785,6 +19809,10 @@ class Component extends DCLogic {
     if (!sc || sc === document.body) { window.scrollTo(0, Math.max(0, el.getBoundingClientRect().top + (window.scrollY || 0) - 90)); return; }
     sc.scrollTop = Math.max(0, sc.scrollTop + el.getBoundingClientRect().top - sc.getBoundingClientRect().top - 24);
   };
+  goIdeaExpressions = () => this.scrollToId('tms-expr-by-medium');
+  // 30 Sep: the fresh-adopt branch choice ("build a campaign, or write expressions directly") — see
+  // `ideaShowBranchChoice`'s own comment for why this exists.
+  goIdeaCampaign = () => this.scrollToId('tms-campaign');
   ideaRouteFor(tab){ return ((this.idea().routes || {})[tab] || '').trim(); }
 
   // Falls back to the first tab the server still offers, not to a hard-coded 'social'. A tab set
@@ -22715,6 +22743,10 @@ class Component extends DCLogic {
       ideaShowReturnTrip: !!ip.showReturnTrip,
       confirmLadderOn: this.confirmLadder(true), dismissReturnTrip: this.dismissReturnTrip,
       ideaGoHouse: (s.house && s.house.id) ? this.openHouse(s.house.id) : this.goStrategy,
+      // 30 Sep: the fresh-adopt branch choice — see `showBranchChoice`'s own comment in adoptIdea().
+      ideaShowBranchChoice: !!ip.showBranchChoice,
+      dismissBranchChoice: this.dismissBranchChoice,
+      branchToCampaign: this.branchToCampaign, branchToExpressions: this.branchToExpressions,
       // ---- start the platform: the house it argues from, the brief it answers ----
       ideaHouseOpts: ((this.strat().houses) || []).map(h => ({ id:h.id,
         label: h.label || ((h.brand || 'Untitled') + ' \u00b7 ' + ((h.chosen_layers || 0) + ' of ' + (h.total_layers != null ? h.total_layers : this.H_LAYERS.length) + ' decided')) })),

@@ -503,18 +503,28 @@ def adopt(p: dict, data: dict) -> dict:
     # "Ee Veedhi, Aa Chethulu" line) because nothing regenerates expressions on adopt and this fallback
     # did not check whether the idea itself had actually changed. Only inherit when it has not.
     _same_platform = bool(prior) and _new_idea == str(prior.get("idea") or "").strip()
+    # 30 Sep — the 23 Sep fix above only closed the `prior` door. Two more paths merge expressions
+    # into this item with no `_same_platform` check at all, and both are fed by the SAME client
+    # state the 23 Sep bug was about: the screen's `state.idea.expressions`/`routes` do not clear
+    # themselves when "Try again"/"Build on this" drafts a genuinely different platform, so adopting
+    # one of the three new options could still carry the OUTGOING platform's per-medium text through
+    # the payload itself rather than through `prior` — the identical bug, reached by the other door.
+    # `not prior` keeps the one legitimate case the payload path exists for: expressions typed before
+    # anything was ever adopted, with nothing to compare against yet.
+    _trust_payload = _same_platform or not prior
     expressions = {k: "" for k in EXPRESSIONS}
     if _same_platform:
         expressions.update({k: str(v or "").strip()
                             for k, v in (prior.get("expressions") or {}).items() if k in EXPRESSIONS})
-    for route, text in routes.items():
-        kind = ROUTE_TO_KIND.get(str(route))
-        if kind and kind in expressions and str(text or "").strip():
-            expressions[kind] = str(text or "").strip()
-    if isinstance(data.get("expressions"), dict):
-        for k, v in data["expressions"].items():
-            if k in EXPRESSIONS and str(v or "").strip():
-                expressions[k] = str(v).strip()
+    if _trust_payload:
+        for route, text in routes.items():
+            kind = ROUTE_TO_KIND.get(str(route))
+            if kind and kind in expressions and str(text or "").strip():
+                expressions[kind] = str(text or "").strip()
+        if isinstance(data.get("expressions"), dict):
+            for k, v in data["expressions"].items():
+                if k in EXPRESSIONS and str(v or "").strip():
+                    expressions[k] = str(v).strip()
 
     item = {
         "name": held("name"),
