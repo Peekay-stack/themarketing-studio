@@ -4205,14 +4205,6 @@
         </div>
       </sc-if>
 
-      <sc-if value="{{ ideaShowBranchChoice }}" hint-placeholder-val="{{ false }}">
-        <div style="background:#F4F7FC; border:1px solid #D6DEEC; border-radius:16px; padding:16px 20px; margin-bottom:16px; display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
-          <div style="font-size:13.5px; line-height:1.55; color:#2E5EA6; flex:1; min-width:260px; text-wrap:pretty;">This platform doesn't yet say anything in any medium. Most work should go through a campaign first — but if this doesn't need one (a one-off, not a seasonal push), write what it becomes per medium directly. Whichever you skip stays reachable below; nothing here is locked in.</div>
-          <span onClick="{{ branchToCampaign }}" style="cursor:pointer; font-size:12.5px; font-weight:700; color:#17325E; text-decoration:underline; white-space:nowrap;">Build a campaign</span>
-          <span onClick="{{ branchToExpressions }}" style="cursor:pointer; font-size:12.5px; font-weight:700; color:#17325E; text-decoration:underline; white-space:nowrap;">Write expressions directly</span>
-          <span onClick="{{ dismissBranchChoice }}" style="cursor:pointer; font-size:12px; color:#9AA1AC; font-weight:700;">Dismiss</span>
-        </div>
-      </sc-if>
 
       <div style="background:#fff; border:1px solid #DDD9D1; border-radius:16px; padding:22px 24px; margin-bottom:16px; opacity:{{ ideaOpacity }};">
         <div style="display:flex; align-items:baseline; gap:11px; margin-bottom:5px;">
@@ -4276,6 +4268,26 @@
            expression SAYS is downstream of that season’s idea. Swapped rather than gated: gating
            leaves a step a person cannot complete, which is what the plan’s blocked-layer copy exists
            to avoid rather than reproduce. -->
+      <!-- 30 Sep: moved below the two tests on request — the tests judge whether the PLATFORM itself
+           holds; the branch choice is about what to do with it once it does, and reads oddly argued
+           before the thing being branched on has been checked. Restyled bolder per the same request:
+           a real decision point, not a dismissible aside — a heavier left border, an eyebrow label, and
+           both paths as solid buttons rather than one styled as an afterthought link. -->
+      <sc-if value="{{ ideaShowBranchChoice }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#F4F7FC; border:1px solid #B9CBEA; border-left:5px solid #2E5EA6; border-radius:14px; padding:20px 22px; margin-bottom:16px;">
+          <div style="display:flex; align-items:center; gap:10px; margin-bottom:9px;">
+            <span style="font-size:11px; font-weight:800; letter-spacing:0.07em; color:#2E5EA6; text-transform:uppercase;">Next</span>
+            <span style="font-family:'Epilogue',sans-serif; font-weight:700; font-size:16px; color:#17325E;">What happens to this platform now?</span>
+          </div>
+          <div style="font-size:13.5px; line-height:1.6; color:#38414F; margin-bottom:16px; max-width:640px; text-wrap:pretty;">It doesn't yet say anything in any medium. Most work should go through a campaign first — but if this doesn't need one (a one-off, not a seasonal push), write what it becomes per medium directly. Whichever you skip stays reachable below; nothing here is locked in.</div>
+          <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+            <button onClick="{{ branchToCampaign }}" style="background:#17325E; color:#F7F5F1; border:none; border-radius:11px; padding:11px 20px; font-weight:700; font-size:13.5px; cursor:pointer; white-space:nowrap;">Build a campaign</button>
+            <button onClick="{{ branchToExpressions }}" style="background:#fff; color:#17325E; border:1.5px solid #17325E; border-radius:11px; padding:10px 19px; font-weight:700; font-size:13.5px; cursor:pointer; white-space:nowrap;">Write expressions directly</button>
+            <span onClick="{{ dismissBranchChoice }}" style="cursor:pointer; margin-left:4px; font-size:12px; color:#6B7280; font-weight:700;">Dismiss</span>
+          </div>
+        </div>
+      </sc-if>
+
       <!-- The campaign: time-bound, one route up the ladder, and only reachable once a platform is
            adopted — a campaign with no id under it cannot be saved as anyone’s. -->
       <sc-if value="{{ ipAdopted }}" hint-placeholder-val="{{ false }}">
