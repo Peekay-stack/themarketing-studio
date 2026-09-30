@@ -291,9 +291,9 @@ _SOURCE_WORDS = {
 _PLAN_COLS = {
     "level": "Level", "statement": "Statement", "measure": "Measure", "by_when": "By when",
     "audience": "Audience", "rank": "Rank", "believes_now": "Believes now", "pillar": "Pillar",
-    "channel": "Channel", "role": "Role", "job": "What it is asked to do", "side": "Brand / activation",
+    "channel": "Media Channel", "role": "Role", "job": "What it is asked to do", "side": "Brand / activation",
     "share": "Share of spend", "owner": "Owner", "lead": "Lead",
-    "phase": "Phase", "window": "Window", "occasion": "Occasion", "channels": "Channels",
+    "phase": "Phase", "window": "Window", "occasion": "Occasion", "channels": "Media Channels",
     "hands_over": "Hands over to",
     "leading": "Leading indicator", "lagging": "Lagging indicator",
     "would_tell_us_it_failed": "What would tell us it failed",

@@ -86,7 +86,7 @@ LAYERS: list[dict] = [
      "cols": ["audience", "rank", "believes_now", "pillar"],
      "asks": ("In priority order, ranked 1..n. Each gets exactly ONE pillar — emotional or "
               "functional. An audience given every pillar has been given none.")},
-    {"id": "channels", "kind": "rows", "label": "Channel roles", "parents": ["audiences"],
+    {"id": "channels", "kind": "rows", "label": "Media Channel roles", "parents": ["audiences"],
      "cols": ["channel", "medium", "role", "job", "measure", "side", "share", "owner", "lead"],
      "asks": (f"One job per channel from: {', '.join(ROLES)}. One lead channel. `medium` is which "
               f"one medium from the served list this channel runs in. `side` is brand or "

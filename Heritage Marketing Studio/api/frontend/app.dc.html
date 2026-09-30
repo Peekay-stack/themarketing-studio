@@ -7931,7 +7931,7 @@
           <div class="hf-scroll" style="overflow-x:auto; border:1px solid #DDD9D1; border-radius:14px; margin-bottom:16px;">
             <div style="min-width:820px;">
               <div style="display:grid; grid-template-columns:1fr 0.7fr 0.7fr 0.5fr 1.4fr; background:#EEF1F5; font-size:11px; font-weight:800; letter-spacing:0.03em; text-transform:uppercase; color:#6B7280;">
-                <div style="padding:11px 12px;">Channel</div><div style="padding:11px 12px;">Role</div><div style="padding:11px 12px;">Side</div><div style="padding:11px 12px;">Share</div><div style="padding:11px 12px;">What it is for</div>
+                <div style="padding:11px 12px;">Media Channel</div><div style="padding:11px 12px;">Role</div><div style="padding:11px 12px;">Side</div><div style="padding:11px 12px;">Share</div><div style="padding:11px 12px;">What it is for</div>
               </div>
               <sc-for list="{{ medRows }}" as="r" hint-placeholder-count="4">
                 <div style="display:grid; grid-template-columns:1fr 0.7fr 0.7fr 0.5fr 1.4fr; border-top:1px solid #E6E3DC; font-size:12.5px; color:#38414F;">
@@ -18843,7 +18843,7 @@ class Component extends DCLogic {
     ['audiences','Audiences','objectives',
      'In priority order, with one pillar each. Two audiences given the same pillar usually means one of them is not really a separate audience.',
      ['audience','rank','believes_now','pillar']],
-    ['channels','Channels','audiences',
+    ['channels','Media Channels','audiences',
      'What each channel is for, not what it is. Exactly one channel leads. A channel given proof work has to have something to prove with, which is what the evidence figures above decide.',
      ['channel','role','job','measure','side','share','owner','lead']],
     ['balance','Brand / activation balance','channels',
@@ -18862,8 +18862,8 @@ class Component extends DCLogic {
 
   COL_LABEL = { level:'Level', statement:'Statement', measure:'Measure', by_when:'By when',
     audience:'Audience', rank:'Rank', believes_now:'Believes now', pillar:'Pillar',
-    channel:'Channel', medium:'Medium', role:'Role', job:'Job', side:'Side', share:'Share', owner:'Owner', lead:'Lead',
-    phase:'Phase', window:'Window', occasion:'Occasion', channels:'Channels', hands_over:'Hands over to',
+    channel:'Media Channel', medium:'Medium', role:'Role', job:'Job', side:'Side', share:'Share', owner:'Owner', lead:'Lead',
+    phase:'Phase', window:'Window', occasion:'Occasion', channels:'Media Channels', hands_over:'Hands over to',
     leading:'Leading', lagging:'Lagging', would_tell_us_it_failed:'Would tell us it failed',
     who:'Who', speaks_on:'Speaks on', boundary:'Boundary', decides_changes:'Decides changes' };
 
