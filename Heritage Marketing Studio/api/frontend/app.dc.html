@@ -4185,6 +4185,17 @@
         </div>
       </sc-if>
 
+      <sc-if value="{{ hasIdeaFindings }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex; flex-direction:column; gap:9px; margin-bottom:16px;">
+          <sc-for list="{{ ideaFindings }}" as="f" hint-placeholder-count="1">
+            <div style="display:flex; gap:11px; align-items:flex-start; background:{{ f.bg }}; border:1px solid {{ f.line }}; border-radius:12px; padding:12px 15px;">
+              <span style="font-size:11px; font-weight:800; letter-spacing:0.05em; text-transform:uppercase; color:{{ f.fg }}; flex:none; padding-top:2px;">{{ f.level }}</span>
+              <div style="font-size:13.5px; line-height:1.55; color:#17325E; text-wrap:pretty;">{{ f.text }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+
       <sc-if value="{{ ideaShowReturnTrip }}" hint-placeholder-val="{{ false }}">
         <div style="background:#FFF9EC; border:1px solid #F0DFB4; border-radius:16px; padding:16px 20px; margin-bottom:16px; display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
           <div style="font-size:13.5px; line-height:1.55; color:#8A6410; flex:1; min-width:260px; text-wrap:pretty;">An idea now exists. The house was written before it — worth going back and re-arguing the core, the pillars and the bridge against it.</div>
@@ -19264,7 +19275,10 @@ class Component extends DCLogic {
       // executions the same session. The message is read from the server's own finding rather than
       // duplicated here, so the two can never say different things.
       stale: !!(got.status && got.status.stale),
-      staleNote: (((got.status && got.status.findings) || []).find(f => f.level === 'stale') || {}).detail || '' } });
+      staleNote: (((got.status && got.status.findings) || []).find(f => f.level === 'stale') || {}).detail || '',
+      // The other findings this platform carries — the rtb_id/ladder disagreement lands here, scoped
+      // to this platform's own id (`layer`), not the set-level ones (empty layer) `stale` already covers.
+      findings: ((got.status && got.status.findings) || []).filter(f => f.layer === got.id && f.level !== 'stale') } });
     // The dropdown and ideaStands() both read the full house object, not just its id — load it so
     // ‘Try again’ has something to stand on without the house being re-picked by hand.
     if (got.house && (!this.state.house || this.state.house.id !== got.house)) {
@@ -22943,6 +22957,9 @@ class Component extends DCLogic {
       ideaFromFg: ipStands ? '#41505F' : '#B07A12',
       ideaStale: ipLive && !!ip.stale,
       ideaStaleNote: ip.staleNote || 'The messaging house has moved since this platform was written.',
+      ideaFindings: (ip.findings || [])
+        .map(f => ({ level:(f.level||'note').toUpperCase(), text:f.detail, ...(this.FIND_TONE[this.findingLevel(f)]) })),
+      hasIdeaFindings: ipLive && (ip.findings || []).length > 0,
       ideaAdoptLabel: ip.adopted ? 'Adopted \u00b7 save changes' : 'Adopt this platform',
       ideaAdoptBg: ipLive ? '#17325E' : '#EEF1F5',
       ideaAdoptFg: ipLive ? '#F7F5F1' : '#9AA1AC',

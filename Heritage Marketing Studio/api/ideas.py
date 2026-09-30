@@ -855,6 +855,26 @@ def validate(p: dict, house: dict | None = None) -> list[dict]:
         t = test_platform(it, basis)
         name = it.get("name") or "an unnamed platform"
 
+        # 30 Sep: a platform can carry TWO independent pointers to "which fact this stands on" —
+        # `rtb_id` (what claim_fact() resolves, shown on this screen) and `ladder` (what
+        # campaign.draft() quotes via strategy.path()). Nothing has ever kept them in sync, and
+        # `claim_fact()`'s own docstring already names this as "a real inconsistency worth a dedicated
+        # look." Found live: a campaign's draft preview quoted a different reason-to-believe than the
+        # one this platform displays, for exactly this reason. Placed before the `adopted` branch's own
+        # `continue` below — an adopted platform is exactly the case that matters, since that's the one
+        # campaigns actually get drafted from. Additive only — this does not resolve which one is
+        # right, only says so when they disagree, the same restraint every other `stale`-style finding
+        # in this codebase already applies.
+        rtb_text = str(claim_fact(it, house).get("text") or "").strip()
+        ladder_id = str(it.get("ladder") or "").strip()
+        path = strategy.path(house, ladder_id) if (house and ladder_id) else None
+        ladder_text = str((path or {}).get("f", {}).get("text") or "").strip()
+        if rtb_text and ladder_text and rtb_text != ladder_text:
+            add_f("open", it["id"], f"{name}: the reason-to-believe shown on this platform "
+                                    f"(“{rtb_text}”) disagrees with its ladder path's functional truth "
+                                    f"(“{ladder_text}”) — a campaign drafted from this platform argues "
+                                    f"from the second one. Pick one and make the other match.")
+
         # A platform adopted from the screen was judged by a person against five questions, with a
         # written reason. Those verdicts are the findings for it — the mechanical tests below would
         # otherwise raise a blocking "no mechanic named" against a platform whose form never asked for

@@ -140,7 +140,6 @@ class FalProvider:
 
     def generate(self, model: CreativeModel, prompt: str, *, seed=None, image_size=None,
                  ratio=None, duration=None, with_audio: bool = False) -> dict:
-        import fal_client  # type: ignore
         os.environ.setdefault("FAL_KEY", self.key)
         if model.kind == "video":
             args = _video_args(model, prompt, ratio, duration, with_audio)
@@ -152,6 +151,11 @@ class FalProvider:
             # storyboard frame came back square and had to be letterboxed.
             args["image_size"] = image_size or _IMAGE_SIZES.get(ratio, "square_hd")
         try:
+            # 30 Sep: was a bare top-of-method import, outside this try — `fal-client` lived only in
+            # requirements-optional.txt, which the Dockerfile never installs, so every call here raised
+            # an uncaught ModuleNotFoundError in production regardless of FAL_KEY being valid. Moved
+            # inside the try it was always meant to be covered by; now in requirements.txt for real too.
+            import fal_client  # type: ignore
             if model.kind == "video":
                 # A film takes minutes; go through the queue instead of a blocking sync call.
                 result = fal_client.subscribe(model.ref, arguments=args, with_logs=False)
@@ -218,9 +222,13 @@ def run_endpoint(ref: str, args: dict) -> str | None:
     key = os.environ.get("FAL_KEY")
     if not key:
         return None
-    import fal_client  # type: ignore
     os.environ.setdefault("FAL_KEY", key)
     try:
+        # 30 Sep: was a bare import above this try, outside its coverage — an uncaught
+        # ModuleNotFoundError here is exactly why /scene-still's reference-image path (the one main.py
+        # calls with no try/except of its own) turned into a raw 500 instead of falling through, every
+        # time the Google provider failed. See FalProvider.generate's own note — same fix, same reason.
+        import fal_client  # type: ignore
         result = fal_client.subscribe(ref, arguments=args, with_logs=False)
     except Exception as e:
         print(f"[creative] fal error on {ref}: {e}", file=sys.stderr, flush=True)
