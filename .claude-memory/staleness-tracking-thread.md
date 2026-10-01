@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 60d5a7b2-1e0f-4999-a432-7547cc82bb56
-  modified: 2026-10-01T06:30:04.378Z
+  modified: 2026-10-01T06:43:32.345Z
 ---
 
 **29 Sep: two commits shipped and confirmed live** (`/selfcheck` on themarketing-studio.com returned
@@ -342,3 +342,35 @@ verifying it) -- down to the one real entry.
 **Nothing known open on this feature.** Not built, not asked for: un-archiving, deleting an archived
 snapshot, a completeness gate on archiving (explicitly declined), or `brief_id`/`brief_title` stamping
 (the `platform_idea` snapshot was judged to cover the same disambiguation need).
+
+## 1 Oct, same evening, immediate follow-up -- the archived view made richer and actionable, shipped as `b01e626`, confirmed live
+
+Owner's very next message, right after the first ship: the read-only archived view should also surface
+the campaign's own "expression by medium" (not just insight/resolution/shape/frame/slots), and "Take it
+to X" should work from there too, so a producer can actually generate against an old, finalised campaign
+-- not just look at it. This is the part that most directly answers the ORIGINAL 30 Sep ask ("still
+generate through a producer belonging to an older campaign").
+
+**No backend change needed at all** -- confirmed by re-reading `_exec_ctx()` (the function behind
+`/producer-stands-on` and every producer's cold "Take it to X" hand-off) before touching anything: its
+own campaign fold-in already calls `campaign_mod.get(pset, payload["campaign"])`, the exact explicit-id
+path gated on the archive a few hours earlier in this same session. The plumbing was already there;
+nothing on the frontend had been pointed at it yet.
+
+**Frontend only:** the archived view's own bag now filters `CAMPAIGN_EXPRESSIONS` (same vocabulary the
+LIVE campaign panel already uses) down to media where the snapshot has real text, each with a working
+"Take it to X" link via `ideaGoTo(tab, archivedCampaignId)` -- literally the same hand-off the live panel
+uses, pointed at the archived id instead.
+
+**Verified properly, not just "it renders":** wrote a real expression through the actual
+`/campaign-express` route (first attempt via a state-only shortcut silently failed to persist --
+`campaign.save()` never reads `expressions` from its payload at all, only `express()`/`express_many()`
+write that field; caught by checking the saved result, not assumed). Archived it, confirmed the read-only
+view showed the real text with a working link. Then the real test of whether it genuinely reads the
+ARCHIVE and not just "whatever happens to be live right now": deliberately changed the LIVE campaign's
+same medium to different text, redrafted and adopted a genuinely different idea (so the live platform's
+own version of that campaign id stops existing at all), and clicked "Take it to Video" from the archived
+view -- Video's own stands-on preview showed the ORIGINAL archived text, correctly, not the live edit and
+not the new platform's empty state.
+
+**Nothing further known open on this feature as of this message.**
