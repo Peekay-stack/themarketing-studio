@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 60d5a7b2-1e0f-4999-a432-7547cc82bb56
-  modified: 2026-09-30T13:55:13.237Z
+  modified: 2026-10-01T05:28:36.250Z
 ---
 
 **29 Sep: two commits shipped and confirmed live** (`/selfcheck` on themarketing-studio.com returned
@@ -216,5 +216,36 @@ DIFFERENT, older platform.
   could be confidently returning the WRONG campaign's expressions as "the campaign wins" -- this would be
   a live-data-correctness bug, not just a display bug, and should be checked with real production data
   (not just the dev tenant) before ruling out.
-- **Not yet built, not yet diagnosed -- pure bug report, captured verbatim from the owner's live
-  screenshots and words.** No code read or changed on this bug yet.
+**1 Oct morning -- FIXED and shipped as `1bc32a7`, confirmed live.** Root cause was exactly as scoped
+above: `ideas.adopt()`'s `"campaigns"` field carried `prior.get("campaigns")` forward with NO
+`_same_platform` gate at all (the one field in that dict missing it, even though `expressions`/`routes`
+right next to it got the gate on 30 Sep). Fixed by gating it the same way. Two frontend doors needed the
+matching fix: `loadCampaign()`'s merge used to spread forward whatever was ALREADY in client state before
+the server's answer (so even a correct empty backend response changed nothing on screen), and
+`ideaDraft()` never reset `state.campaign` at all when new draft options arrived (unlike `expressions`/
+`routes`, which already did). Both fixed. Verified with direct-Python positive/negative controls AND a
+real live-browser round-trip against the dev-tenant Heritage house's actual pre-existing "IMC 2026"
+campaign (confirmed go blank on redraft, confirmed survive a same-platform resave). The duplicate "OPEN"
+findings box turned out to be a pure symptom of the same root cause, not a separate bug -- resolved as a
+byproduct, confirmed via `campaign.status()` returning 0 findings on the fixed path.
+
+**1 Oct, same evening -- a THIRD door on the identical bug, also found via live testing, also FIXED and
+shipped as `e5bb6d4`, confirmed live.** Step 2 ("Two tests") was not resetting either: both the person's
+own HOLDS/WEAK badges (`state.idea.tests`) and the model's own specific challenge text and verdicts
+(`state.idea.judged` plus `judgeQuestions`/`judgeAsk`/`judgeWhy`/`judgeDisagreements`/`judgeStale`) kept
+showing the OUTGOING platform's reading on a fresh draft, with NO stale indicator -- `judged_stale()`
+exists specifically to flag this case but couldn't catch it, because by read time `it["idea"]` is already
+the new line, which only makes a carried-over reading look MORE current, not less. Root cause: `ideas.
+adopt()`'s `"judged"` field fell back to `prior.get("judged")` completely unconditionally -- not even the
+softer "was the key present in the payload" gate `verdicts` already had. Fixed with the same
+`_same_platform` gate. Frontend: `ideaDraft()`'s reset block (which already handles expressions/routes/
+campaign) extended to also reset `tests`/`judged`/`judgeQuestions`/`judgeAsk`/`judgeWhy`/
+`judgeDisagreements`/`judgeStale`/`judgeDetail` the moment new draft options arrive. Verified the same
+way: Python controls, then a live round-trip (asked the model, set a real verdict, redrafted, confirmed
+blank; re-adopted the same platform, confirmed the judged reading survives).
+
+**As of 1 Oct evening, all three doors on this exact bug shape (Step 4/expressions, Step 3/campaign,
+Step 2/tests+judged) are closed, shipped and live-confirmed.** No fourth door is known. If anything else
+on the Idea Platform screen is reported stale, the pattern to check first is always the same:
+`ideas.adopt()`'s per-field fallback-to-`prior` logic, and whether that specific field has the
+`_same_platform` gate or not.
