@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: d3a25b08-5f19-478b-bc7e-ff283771328e
-  modified: 2026-09-10T06:27:52.519Z
+  modified: 2026-10-01T11:03:03.157Z
 ---
 
 Goal: a gated beta at **themarketing-studio.com**. Domain is at **GoDaddy** (registrar), DNS/proxy/SSL
@@ -99,6 +99,15 @@ The user owns `themarketing-studio.{com,online,store,in,xyz}` at GoDaddy — **o
 - Monthly spend cap on the Anthropic/Fal accounts (app has no per-user quota).
 - Cloudflare rate-limit on `/complete`, `/scene-still`, `/posm-image`.
 - If brand-brief/POSM renders OOM on 512MB → bump Render plan to the $25/2GB tier (disk + data survive).
+
+**1 Oct — a live instance of exactly this gap.** The `GOOGLE_API_KEY` env var (same key per Phase 2's
+own `render.yaml`/health-check confirmation above, no evidence of a separate prod key) ran out of
+prepayment credits — a real API call failed with `402 RESOURCE_EXHAUSTED`. Found while trying a Video
+Phase-4 test ([[round31-queue]]), not from a user report, but if the SAME key is live on Render (the
+likely case), **every real image/video generation on the production site was failing the same way at
+that moment.** Owner is topping up at https://ai.studio/projects. This is exactly the "no per-user
+quota / no spend cap" gap this Phase-4 item already named — worth treating as the concrete reason to
+finally build the spend-cap/alerting half, not just the backup half, next time this phase is picked up.
 
 ## Render MCP — SET UP & WORKING (10 Sep)
 

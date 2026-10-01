@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: reference
   originSessionId: 60d5a7b2-1e0f-4999-a432-7547cc82bb56
-  modified: 2026-10-01T10:22:24.169Z
+  modified: 2026-10-01T11:02:49.345Z
 ---
 
 **LIVE DOCUMENT**: [Round 31 Queue](https://claude.ai/artifact/UpSArgACG53yWTUCPVwFSV)
@@ -121,8 +121,24 @@ including phases" ask):
   and shown on screen, never used), and the `from_frame` branch (the one with a real locked face to
   protect, by construction) always appends an identity-protecting qualifier. Verified by calling the
   real `/produce-video` route function with a monkeypatched `gemini.video()` capturing the exact
-  prompt text for two shot types — no API spend. **Still open, unanswered:** whether a literal
-  camera-movement picker UI is wanted for discoverability alongside the strengthened free-text field.
+  prompt text for two shot types — no API spend.
+- **Phase 3b — shipped, live (commit `d79e522`).** The owner answered the open question: build the
+  picker, but as a pure OPT-IN boost, never a default -- unset, behaves byte-identical to Phase 3;
+  chosen, the person's own classification REPLACES the blanket "no rotation" caveat with "stay
+  recognisable through whatever this movement does" instead, which is the actual boost (a genuinely
+  dynamic shot can now be asked for without the default phrase arguing against it in the same
+  breath). New optional per-row `movement_class` field, no backend persistence change needed (Phase 1
+  already saves rows whole). Full backward/forward blast-radius sweep done afterward, per the owner's
+  own request -- nothing upstream depends on this field at all (backward: none); forward, checked
+  every consumer of a script row by hand: `rewriteScene` correctly preserves it across an AI rewrite
+  (merge-order confirmed), a full regenerate correctly resets it (expected), the Word export/import
+  round-trip silently drops it back to default (confirmed this is the SAME pre-existing shape the
+  `audio` field already has, not a new gap), the still-image generation step deliberately does NOT
+  read it (movement has no meaning for a static frame), and no other producer touches `fullScript` at
+  all -- fully contained to Video. Verified (zero API cost) with three direct cases against the real
+  route function: unset identical to Phase 3, a safe class replacing the caveat, the risky class
+  honoured with identity still named. Then live: real dropdown rendering, the risk note showing only
+  on "orbit", a real UI pick persisting through the existing Phase 1 autosave untouched.
 - **Phase 4 — experiment first, not yet run.** Storyboard→video ratio-mismatch check — confirmed no
   dimension check exists; run a real mismatched test before writing any fix.
 - **Phase 5 — trials, lowest commitment, last on purpose, not yet run.** Kling 3.0 vs Veo on cast
@@ -132,3 +148,12 @@ including phases" ask):
 
 The live artifact (same URL) was republished to reflect all of this directly, per this board's own
 standing instruction to update it as items move rather than only recording progress in chat.
+
+**Phase 4 blocked, same day: the Gemini API key is out of money.** Attempting the real ratio-mismatch
+test (owner approved the ~$0.20 spend first) failed immediately on the very first call —
+`402 RESOURCE_EXHAUSTED — "Your prepayment credits are depleted."` This is the SAME `GOOGLE_API_KEY`
+configured in the local `.env`; if Render uses the same key (likely, no evidence of a separate one),
+**every real image/video generation on the live site is failing the same way right now**, not just
+this test. Owner is topping up credits at https://ai.studio/projects and will say when done — Phase 4
+resumes then. See also [[beta-deploy-plan]]'s own open Phase 4 (spend caps) -- this is a live instance
+of exactly the gap that item names.
