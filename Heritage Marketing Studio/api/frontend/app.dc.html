@@ -4669,6 +4669,16 @@
             <sc-if value="{{ va.hasSlots }}" hint-placeholder-val="{{ false }}">
               <div style="font-size:12.5px; color:#41505F; text-wrap:pretty;"><strong>Slots:</strong> {{ va.slotsText }}</div>
             </sc-if>
+            <sc-if value="{{ va.hasExpr }}" hint-placeholder-val="{{ false }}">
+              <div style="font-size:11px; font-weight:700; letter-spacing:0.04em; text-transform:uppercase; color:#9AA1AC; margin-top:14px; margin-bottom:9px;">This campaign's own expression by medium</div>
+              <sc-for list="{{ va.expr }}" as="ve" hint-placeholder-count="1">
+                <div style="margin-bottom:11px;">
+                  <div style="font-weight:700; font-size:12.5px; color:#17325E; margin-bottom:3px;">{{ ve.name }}</div>
+                  <div style="font-size:12.5px; color:#41505F; line-height:1.5; margin-bottom:4px; text-wrap:pretty;">{{ ve.text }}</div>
+                  <span onClick="{{ ve.go }}" style="cursor:pointer; font-size:12px; font-weight:700; color:#17325E; text-decoration:underline;">{{ ve.goLabel }}</span>
+                </div>
+              </sc-for>
+            </sc-if>
           </div>
         </sc-if>
       </div>
@@ -22896,6 +22906,15 @@ class Component extends DCLogic {
         if (!va) return { hasViewingArchived: false };
         const shape = this.CAMPAIGN_SHAPES.find(([k]) => k === (va.shape || 'frame')) || this.CAMPAIGN_SHAPES[0];
         const slots = (va.slots || []).map(sl => (sl.text || '') + (sl.lang ? ' [' + sl.lang + ']' : ''));
+        // 1 Oct \u2014 the archived campaign's OWN expression by medium, read-only, each still real enough to
+        // generate from: `producers.stands_on`/`campaign_mod.get` already resolve an archived campaign by
+        // id (campaign.get()'s explicit-id path checks the archive), so "Take it to X" here is the exact
+        // same hand-off the live campaign panel uses, just pointed at this snapshot's id instead.
+        const vaExpr = this.CAMPAIGN_EXPRESSIONS
+          .map(([k, name]) => ({ k, name, text: (va.expressions || {})[k] || '', goEntry: this.EXPRESSION_GO[k] }))
+          .filter(e => e.text.trim() && e.goEntry && !xRetiredByTab[e.goEntry[0]])
+          .map(e => ({ name: e.name, text: e.text,
+            goLabel: e.goEntry[1] + ' \u2192', go: this.ideaGoTo(e.goEntry[0], va.id) }));
         return {
           hasViewingArchived: true,
           va: {
@@ -22905,6 +22924,7 @@ class Component extends DCLogic {
             hasSlots: slots.length > 0, slotsText: slots.join(', '),
             platformNote: 'From \u201c' + (va.platform_name || 'an earlier platform') + '\u201d \u2014 '
               + (va.platform_idea || '') + (va.archived_at ? ' \u00b7 kept ' + va.archived_at : ''),
+            hasExpr: vaExpr.length > 0, expr: vaExpr,
           },
         };
       })(),
