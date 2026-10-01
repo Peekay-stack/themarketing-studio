@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: reference
   originSessionId: 60d5a7b2-1e0f-4999-a432-7547cc82bb56
-  modified: 2026-10-01T09:53:45.616Z
+  modified: 2026-10-01T10:04:28.528Z
 ---
 
 **LIVE DOCUMENT**: [Round 31 Queue](https://claude.ai/artifact/UpSArgACG53yWTUCPVwFSV)
@@ -110,8 +110,12 @@ including phases" ask):
   realistic complete draft, confirmed autosave landed server-side, did a genuine page reload, confirmed
   everything came back exactly as written; confirmed the hydration itself doesn't wastefully re-save,
   and a real edit after reload still saves correctly.
-- **Phase 2 — ready, not yet built.** Wire Veo's `negative_prompt` (item 4): short fixed list of
-  technical-artifact nouns, capped 4-6, per Gemini's own phrasing rules already on file.
+- **Phase 2 — shipped, live (commit `6eaed99`).** Wire Veo's `negative_prompt` (item 4): new
+  `VIDEO_NEGATIVE_PROMPT` constant ("text, typographic letters, watermark, logo, warped geometry"),
+  fixed and unconditional, added to the one `params` dict `gemini.video()` already builds. Verified
+  without spending real API credits — `httpx.post` monkeypatched to capture the real request body
+  before a forced failure, confirming `negativePrompt` reaches the exact same request shape a live call
+  would send, alongside the existing `aspectRatio`/`durationSeconds`.
 - **Phase 3 — ready, not yet built.** The camera-movement reframe above (item 5) — one open question for
   the owner (still want a literal picker UI too, or is strengthening the existing field enough).
 - **Phase 4 — experiment first, not yet run.** Storyboard→video ratio-mismatch check — confirmed no
