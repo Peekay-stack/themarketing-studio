@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 60d5a7b2-1e0f-4999-a432-7547cc82bb56
-  modified: 2026-10-01T06:43:32.345Z
+  modified: 2026-10-01T07:37:39.426Z
 ---
 
 **29 Sep: two commits shipped and confirmed live** (`/selfcheck` on themarketing-studio.com returned
@@ -374,3 +374,49 @@ view -- Video's own stands-on preview showed the ORIGINAL archived text, correct
 not the new platform's empty state.
 
 **Nothing further known open on this feature as of this message.**
+
+## 1 Oct, same evening, third follow-up -- a real pre-existing bug found via live testing, fixed, shipped as `9967dd3`, confirmed live
+
+Owner live-tested archiving three campaigns in a row and one was lost (screenshot evidence: a dropdown
+showing 1 entry when 3 were expected, then a retry that worked). Investigating surfaced a genuine,
+serious, PRE-EXISTING bug that predates this whole session's work and the Previous Campaigns feature
+entirely: **`saveCampaign()`'s payload never included the campaign's own `id`** -- confirmed directly
+(not assumed) by reading the body it builds, then proving it with a live Python test: saving the same
+campaign twice produced two different ids and two separate rows, not one updated row. `campaign.save()`'s
+own update-in-place path (`cid = data.get("id")`, matches an existing row) was always correct -- it simply
+never had anything to match against, because the client never sent it, despite the button being labelled
+"Update campaign" whenever `c.id` already existed. **This is what produced the 17 duplicate "IMC 2026"
+rows found and quietly cleaned up earlier in the same session** -- misread at the time as accumulated
+test-run clutter; it was actually this defect firing on every single save, including real (non-test) use.
+
+This also plausibly explains the specific "lost campaign" symptom: archiving fires as a separate click
+after saving, so a stale id (from before a prior save's response landed) or a typed-but-unsaved edit
+could be archived instead of the actual new content -- a timing gap, not a one-off fluke.
+
+**Fixed, two parts:**
+1. `saveCampaign()` now sends `id: c.id`, closing the root cause. Returns the saved id (or `false` on
+   failure) instead of nothing, since the second fix needs it.
+2. `archiveCampaign()` now calls `saveCampaign()` itself first, every time, and archives whatever id that
+   save just returned -- the save-then-archive ordering is no longer two separately-clicked actions a
+   person could get wrong or race; it's one atomic action. A campaign that was only ever typed, never
+   explicitly saved, can now be archived directly too.
+
+No backend change needed -- `campaign.save()`'s update path was already correct and complete (preserves
+`added`, stamps `edited`, keeps prior `expressions`), it just needed a caller that actually used it.
+
+**Verified:** a direct Python control with the OLD payload shape (no id) reproduced the bug cleanly (two
+ids, two rows) before fixing anything -- confirmed root cause before writing the fix, not after. Then the
+fixed payload shape, same test, confirmed one row, correctly updated. Live against the real dev-tenant
+Heritage house: edited and resaved the SAME campaign twice -- stayed at one row throughout, with the
+latest content, where it would previously have become two. Then typed a fresh, never-saved edit and
+called `archiveCampaign()` directly with no prior explicit save -- confirmed the archived snapshot
+matched exactly what was on screen, not stale data. Test edits cleaned up, tenants/ restored from a
+pre-test snapshot. **No live data was ever at risk during any of this testing -- only the dev tenant
+was touched throughout this entire multi-day thread's testing.**
+
+**Capacity answered while investigating:** the "Previous Campaigns" archive has no cap today -- every
+explicit archive click adds one more entry forever (deduplicated only when the exact same campaign id is
+re-archived). Not flagged as a problem, just stated plainly since the owner asked; no pruning/limit has
+been requested or built.
+
+Nothing further known open on this thread as of this message.
