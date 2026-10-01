@@ -85,6 +85,16 @@ VIDEO_MODELS = {
 }
 VIDEO_BEATS = (4, 6, 8)   # Veo accepts only these clip lengths
 
+# Veo's negative-prompt channel — 1 Oct, Video Phase 2. A soft probabilistic bias, not a hard rule;
+# it cannot replace a correct positive prompt and was never meant to carry content rules (those stay
+# in `segment_prompt()`'s own text, where "no on-screen text or logos" already lives). Per Gemini's
+# own follow-up on this (captured in the Image and Video Engine Playbook, 24 Sep): short, isolated
+# nouns only, never conversational sentences; capped at 4–6 items; state the stable thing positively
+# in the main prompt rather than only negating the failure here. Fixed and unconditional — every shot
+# this module renders already forbids on-screen text/logos and wants clean, undistorted motion, so
+# there is no call site that would ever want a different list.
+VIDEO_NEGATIVE_PROMPT = "text, typographic letters, watermark, logo, warped geometry"
+
 # A model whose quota is spent stays spent — Veo's preview tiers have a daily allowance, not just a
 # per-minute one. Remember that per model so six shots don't each sit through the full backoff
 # ladder: one film burned eight minutes of waiting and still returned nothing.
@@ -381,7 +391,8 @@ def video(prompt: str, *, image_ref: str = "", seconds: int = 8, ratio: str = "1
     # the soundtrack, which is placed on the planned timecodes. Snap to a beat Veo accepts.
     beat = min(VIDEO_BEATS, key=lambda b: (abs(b - int(seconds or 8)), b))
     params = {"aspectRatio": ratio if ratio in ("16:9", "9:16") else "16:9",
-              "resolution": "720p", "durationSeconds": beat}
+              "resolution": "720p", "durationSeconds": beat,
+              "negativePrompt": VIDEO_NEGATIVE_PROMPT}
     # Two different retries, kept apart on purpose. Conflating them cost us two shots of a film:
     #   * a QUOTA error (429) is transient — Veo's per-minute allowance. Wait and ask again.
     #   * an "isn't supported" error is about the request shape — asking again is pointless, but the
