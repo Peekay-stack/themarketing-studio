@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: reference
   originSessionId: 60d5a7b2-1e0f-4999-a432-7547cc82bb56
-  modified: 2026-09-29T10:04:34.697Z
+  modified: 2026-10-01T09:53:45.616Z
 ---
 
 **LIVE DOCUMENT**: [Round 31 Queue](https://claude.ai/artifact/UpSArgACG53yWTUCPVwFSV)
@@ -84,3 +84,42 @@ initiative: a Gate/Territory/Task/Evidence prompt-priority framework built for t
 same way into Brief/Messaging House/Idea Platform/Campaign/Plan (four phases). **Shipped 29 Sep, pushed to
 `master`, deployed.** See that memory file and its artifact for the full record — this line just marks item
 20 done and points onward rather than duplicating the account here.
+
+## UPDATE 1 Oct — Video grouped and fully scoped (see [[staleness-tracking-thread]]'s sibling Video work,
+same session), two board corrections found, Phase 1 shipped
+
+Asked to revisit the task list and club it by tab; Video was picked up next. Two stale listings corrected
+by checking the live code directly rather than trusting this board's own 25 Sep text:
+- **Item 17 ("Video plan-binding") was already Done** — built end-to-end 6 Sep (`bagVideoExec`, full
+  field-selector form, `createVideoExecution`), confirmed still live in code. This board never got
+  updated after that build landed. Marked Done.
+- **Item 23's Video half was scoped wrong.** The old record said the fix (`cut.py`'s manifest) was
+  "already built, just orphaned" — checked directly: `cut.py` IS now fully wired (all 7 routes called),
+  but it only ever covers the post-production edit pass, not the pre-production script/department-card/
+  character-sheet/scene-frame layer that was actually the gap. Rescoped fresh.
+- **Item 5 (camera-movement gating) reframed** — no dropdown exists to gate (checked); the real,
+  previously-unknown finding is that every script row's own free-text `camera` field is written, shown,
+  and silently discarded at render time. Smaller, more correct fix than building a new control.
+
+**Full Video scope, 5 phases** (negotiated with the owner before building, per the "scope it fully
+including phases" ask):
+- **Phase 1 — shipped, live (commit `011e193`).** New `filmscript.py`: one draft per house (not a new
+  project id — nothing upstream gives a video script one), persists script/department-cards/character-
+  sheet/scene→frame-mapping, all of which were pure React state with zero backend route before this —
+  a real reload mid-scripting lost it outright. Verified live against the real Heritage house: set a
+  realistic complete draft, confirmed autosave landed server-side, did a genuine page reload, confirmed
+  everything came back exactly as written; confirmed the hydration itself doesn't wastefully re-save,
+  and a real edit after reload still saves correctly.
+- **Phase 2 — ready, not yet built.** Wire Veo's `negative_prompt` (item 4): short fixed list of
+  technical-artifact nouns, capped 4-6, per Gemini's own phrasing rules already on file.
+- **Phase 3 — ready, not yet built.** The camera-movement reframe above (item 5) — one open question for
+  the owner (still want a literal picker UI too, or is strengthening the existing field enough).
+- **Phase 4 — experiment first, not yet run.** Storyboard→video ratio-mismatch check — confirmed no
+  dimension check exists; run a real mismatched test before writing any fix.
+- **Phase 5 — trials, lowest commitment, last on purpose, not yet run.** Kling 3.0 vs Veo on cast
+  consistency; Seedance 2.5's region-level editing on a real product label (possible shortcut past the
+  parked Veneer Technique CV pipeline). Confirmed low-effort: `model_id` already flows as a plain string
+  straight through to `creative.video_from_image()`.
+
+The live artifact (same URL) was republished to reflect all of this directly, per this board's own
+standing instruction to update it as items move rather than only recording progress in chat.
