@@ -19732,10 +19732,15 @@ class Component extends DCLogic {
   };
   // ---------- Previous Campaigns: finalised snapshots kept on purpose, independent of the live platform ----------
   archiveCampaign = async () => {
-    const c = this.campaign();
-    if (!c.id) { this.showToast('Save the campaign first — there is nothing yet to keep.'); return; }
     this.setState({ archivingCampaign: true });
-    const r = await this.apiCall('/campaign-archive', { house:(this.state.house||{}).id || null, campaign:c.id });
+    // 1 Oct — save first, always, using whatever is on screen right now. This closes the gap between
+    // "Save campaign" and "Save to Previous Campaigns" being two separately-clicked actions: before,
+    // clicking archive before a prior save's response had landed could archive a stale id, and a typed-
+    // but-not-yet-saved edit could be archived as whatever the LAST save had been instead of what was
+    // actually on screen. Folding the save in removes both — there is no ordering left to get wrong.
+    const savedId = await this.saveCampaign();
+    if (!savedId) { this.setState({ archivingCampaign: false }); return; }
+    const r = await this.apiCall('/campaign-archive', { house:(this.state.house||{}).id || null, campaign:savedId });
     this.setState({ archivingCampaign: false });
     const rd = (r && r.data) || {};
     if (r && r.ok && rd.ok) {
@@ -19804,9 +19809,15 @@ class Component extends DCLogic {
   };
   saveCampaign = async () => {
     const s = this.state, c = this.campaign();
-    if (!c.name.trim() || !c.insight.trim()) { this.showToast('A campaign needs a name and an insight \u2014 the tension, not a demographic.'); return; }
+    if (!c.name.trim() || !c.insight.trim()) { this.showToast('A campaign needs a name and an insight \u2014 the tension, not a demographic.'); return false; }
     this.setState({ campaignBusy:true });
-    const body = { house:(s.house||{}).id || null, name:c.name, insight:c.insight, resolution:c.resolution || '',
+    // 1 Oct \u2014 live bug: `id` was never sent here, so campaign.save() (which only updates in place
+    // when a payload id matches an existing row) never once found a match \u2014 every "Update campaign"
+    // click silently created ANOTHER new campaign instead, the whole time this screen has existed. This
+    // is what produced the duplicate "IMC 2026" rows found and cleaned up earlier today, misread then as
+    // test-run clutter. Sending the id is the entire fix; campaign.save()'s own update path already
+    // existed and already worked, it just never had anything to match against.
+    const body = { house:(s.house||{}).id || null, id:c.id || '', name:c.name, insight:c.insight, resolution:c.resolution || '',
       shape:c.shape || 'frame', frame:c.frame || '', slots:c.slots || [], ladder:c.ladder || '',
       roles:c.roles || {}, from:c.from || '', to:c.to || '',
       big_idea: c.big_idea || '', big_idea_note: c.big_idea_note || '',
@@ -19814,14 +19825,17 @@ class Component extends DCLogic {
         .split(',').map(x => x.trim()).filter(Boolean) };
     const r = await this.apiCall('/campaign', body);
     this.setState({ campaignBusy:false });
-    if (!r.ok) { this.showToast((r.data && r.data.detail) || 'Could not save that campaign.'); return; }
+    if (!r.ok) { this.showToast((r.data && r.data.detail) || 'Could not save that campaign.'); return false; }
     // The big idea comes back on the save response, refusal and all. Read it from there rather than
     // re-asking: a second call could disagree with what was just stored.
     const bi = r.data && ((r.data.campaign || r.data).big_idea);
     if (bi !== undefined) this.setState(st => ({ campaign: { ...(st.campaign || {}), bigIdeaView: bi } }));
-    this.setState({ campaign: { ...c, id: (r.data && (r.data.campaign||r.data).id) || c.id } });
+    const savedId = (r.data && (r.data.campaign||r.data).id) || c.id;
+    this.setState({ campaign: { ...c, id: savedId } });
     this.showToast('Campaign saved.', 'ok');
     this.loadCampaignGrid();
+    // 1 Oct \u2014 returned so archiveCampaign() can save-then-archive as one action; see its own comment.
+    return savedId;
   };
   dropCampaign = async () => {
     const s = this.state, c = this.campaign(); if (!c.id) return;
