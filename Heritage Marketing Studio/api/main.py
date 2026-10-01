@@ -1191,23 +1191,43 @@ def produce_video(payload: dict):
             role_note = " " + role_note
         cont = ("This shot CONTINUES the same beat as the previous shot — carry the action forward "
                 "with a fresh camera angle rather than repeating it. " if seg.get("continues") else "")
+        # Video Phase 3 (1 Oct) — the script's own per-scene `camera` cell ("shot type & movement",
+        # written by the writer and shown on screen) was captured and displayed but never once reached
+        # here; every shot got the same fixed phrase regardless of what the row actually asked for.
+        # `plan_by_scene` always nests exactly one original row per segment (confirmed in filmcut.py),
+        # so this is a direct read, not a merge.
+        camera_note = str((seg["scenes"][0] if seg["scenes"] else {}).get("camera") or "").strip()
         if from_frame:
             # Animating an approved frame: the picture already fixes cast, wardrobe and set, so the
-            # prompt only has to describe the MOVEMENT.
+            # prompt only has to describe the MOVEMENT. This is also, by construction, the one branch
+            # with a real locked face to protect — `from_frame` always means animating a specific
+            # approved image, never a fresh cast each time — so the identity qualifier applies
+            # unconditionally here rather than behind a separate flag; there is no from_frame call
+            # where it would be wrong. Per the Image and Video Engine Playbook's own framing: the
+            # original ask was to gate a camera-movement dropdown, but no such control exists anywhere
+            # in this screen — the script's own free-text field, restored above, is what there is to
+            # qualify instead.
+            camera_direction = (
+                (f"Camera: {camera_note}, but keep it to a pace that leaves the face clearly "
+                 "recognisable throughout the shot — no rapid rotation or orbit around it.")
+                if camera_note else
+                "Natural, restrained camera movement that keeps the face clearly recognisable "
+                "throughout the shot — no rapid rotation or orbit around it.")
             p = (f"Animate this storyboard frame as shot {seg['index'] + 1} of {len(segments)} of a "
                  f"{_brand_line(brand_mode=_vid_brand_mode)} brand film. Keep the people, wardrobe, set and colour grade "
                  f"exactly as they appear in the image — do not redesign anything. {cont}"
                  f"Bring it to life for this beat: {beat}.{role_note} "
-                 f"{look} Natural, restrained camera movement. Mood: {music}. "
+                 f"{look} {camera_direction} Mood: {music}. "
                  "No on-screen text or logos. No dialogue or music in the clip — the soundtrack is "
                  "added in the edit.")
         else:
+            camera_direction = f"Camera: {camera_note}. " if camera_note else ""
             p = (f"Cinematic {aspect} brand film for {_brand_line(brand_mode=_vid_brand_mode)}. This is shot {seg['index'] + 1} of {len(segments)} in one "
                  f"continuous film — keep the characters, wardrobe, location and grade IDENTICAL to "
                  f"the other shots so the parts cut together seamlessly. {cont}"
                  f"Film logline: {script.get('logline','')}. "
                  f"Depict ONLY this beat: {beat}.{role_note} "
-                 f"{look} Mood: {music}. "
+                 f"{look} {camera_direction}Mood: {music}. "
                  "Authentic Indian family setting, warm natural light, premium and wholesome; "
                  "no on-screen text or logos. No spoken dialogue and no music in the clip itself — "
                  "the soundtrack is added in the edit.")
