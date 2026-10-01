@@ -582,8 +582,17 @@ def adopt(p: dict, data: dict) -> dict:
         # would have made every save quietly undo the model's check. Each verdict remembers the sentence
         # it read, so one made against a line since rewritten can be shown as stale rather than deleted —
         # a superseded challenge is still worth reading, and deleting it is the tool taking a side.
-        "judged": normalise_judged(data.get("judged") if isinstance(data.get("judged"), dict)
-                                   else prior.get("judged")),
+        #
+        # 1 Oct — same bug as `campaigns` above, found the same evening: this fallback to `prior.get
+        # ("judged")` had no `_same_platform` gate at all, so Step 2's "Could a competitor sign it?"/
+        # "Does it survive three years?" column kept showing the OUTGOING platform's specific challenge
+        # text (and its own verdicts) on a genuinely different adopted platform — confidently, with no
+        # stale indicator, because `judged_stale()` compares `for_line` against `it["idea"]` and by the
+        # time this read happens `idea` has already become the NEW line, which only makes the carried-over
+        # reading look current rather than flagging it. The `_same_platform` case this comment is actually
+        # protecting (re-adopting the SAME platform must keep its challenge) still works unchanged.
+        "judged": normalise_judged((data.get("judged") if isinstance(data.get("judged"), dict) else None)
+                                   or (prior.get("judged") if _same_platform else None)),
     }
     if not item["rtb"]:
         item["rtb"] = str(prior.get("rtb") or "").strip()

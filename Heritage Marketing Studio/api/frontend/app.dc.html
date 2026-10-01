@@ -19398,6 +19398,12 @@ class Component extends DCLogic {
     // until something called `loadCampaign()` again \u2014 which adopting from here never does. Reset
     // here for the same reason `expressions`/`routes` are: a new draft makes the one on screen
     // provisional, whether or not it gets adopted.
+    //
+    // 1 Oct, same evening: Step 2 ("Two tests") was the third door \u2014 both the person's own badges
+    // (`tests`) and the model's challenge (`judged` and everything `judgePlatform()` fills in beside
+    // it) kept showing the OUTGOING platform's reading, with no stale indicator, because nothing here
+    // ever cleared them between drafts. `ideas.adopt()` gained the same `_same_platform` gate on
+    // `judged` that `campaigns` got; this is its frontend half, same reasoning as the two resets above.
     this.setState({ idea: { ...cur, drafting:false, draftingOn:'', started:true, options,
       builtOn: buildOn ? (buildOn.name || '') : '',
       pickedOption: one ? options[0].uid : '',
@@ -19405,7 +19411,9 @@ class Component extends DCLogic {
       line: one ? line : cur.line,
       draftedLine: one ? line : cur.draftedLine,
       draftedName: one ? (got.name || cur.name || '') : cur.draftedName,
-      expressions: {}, exprSaved: '', routes: {} },
+      expressions: {}, exprSaved: '', routes: {}, tests: {},
+      judged: {}, judgeQuestions: {}, judgeAsk: {}, judgeWhy: {}, judgeDisagreements: [],
+      judgeStale: false, judgeDetail: '' },
       campaign: this._blankCampaign() });
     this.showToast(buildOn
       ? options.length + (one ? ' development' : ' developments') + ' of \u201c' + buildOn.name + '\u201d \u2014 not a fresh idea, a sharper version of that one.'
