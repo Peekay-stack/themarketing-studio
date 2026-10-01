@@ -1,11 +1,11 @@
 ---
 name: staleness-tracking-thread
-description: "Cross-layer 'computed correctly, never displayed' staleness bugs found and fixed 29-30 Sep -- campaign expressions, execution briefs, idea platform, campaign findings panel, plus the 30 Sep idea-platform/campaign wiring saga (6 commits, all live). Nothing known open; 'Previous Campaign' picker discussed-but-unbuilt is the pickup point."
+description: "Idea platform / campaign wiring saga, 29 Sep-1 Oct: cross-layer staleness bugs across campaign/execution/idea-platform/judge fields (10 commits, all live, every ideas.adopt() fallback field now swept), plus the new 'Previous Campaigns' explicit-archive feature built 1 Oct (7156b5c, live). Nothing known open."
 metadata:
   node_type: memory
   type: project
   originSessionId: 60d5a7b2-1e0f-4999-a432-7547cc82bb56
-  modified: 2026-10-01T06:02:33.316Z
+  modified: 2026-10-01T06:30:04.378Z
 ---
 
 **29 Sep: two commits shipped and confirmed live** (`/selfcheck` on themarketing-studio.com returned
@@ -279,3 +279,66 @@ always resends them fresh on pick) -- the same residual risk noted for `ladder` 
 if that frontend behavior ever changes, these two would need the same gate. No further fields are known
 to have this shape. If anything else on the Idea Platform screen is reported stale, check
 `ideas.adopt()`'s per-field fallback logic first, same as every time this thread has been right so far.
+
+---
+
+## 1 Oct, later same evening -- "Previous Campaigns" built and shipped as `7156b5c`, confirmed live
+
+Picked up the [[studio-work-inventory]]/30-Sep "Previous Campaign" discussion that had been left
+agreed-shape-but-unbuilt. Investigating it properly (per the owner's own "plan, execute, test... blast
+radius" instruction) overturned the shape agreed on 30 Sep: campaigns live nested under whichever
+platform is CURRENTLY adopted, and adopting a genuinely different idea overwrites that whole platform
+record -- by original design ("Adopting rewrites the whole item... anything not carried across here is
+destroyed"), and now correctly so after this same day's three earlier fixes. There is no "old,
+un-adopted platform sitting there" to browse -- it's destroyed, not archived. 30 Sep's proposed shape
+("widen `/campaign`'s listing to include historical platforms' own campaigns") assumed data that does
+not exist. Surfaced this to the owner before writing any plan; they chose the real structural fix
+(**"Give campaigns a stable home"** -- move them off the volatile adopted-platform slot) over patching
+reactively, and forward-only (no need to recover anything already lost) over checking old data first.
+
+**Then, mid-plan, the owner's own correction reshaped the design again**: not every campaign a person
+adopts needs to be kept -- only ones explicitly marked "finalised." This actually SHRANK the blast radius
+a lot from the first draft: the live/current campaign stays exactly as it was (zero changes to `save()`,
+`get()`'s no-id path, `validate()`, `status()`, `jobs()`, or any of plan.py/execution.py/`_pr_campaign_
+source()`'s default "current campaign" calls) -- only an explicit new action creates anything permanent.
+
+**Shape shipped:** a new `p["campaign_archive"]` list at the platform-SET level (sibling of `platforms`,
+survives any future adopt). A new **"Save to Previous Campaigns"** button on Step 3 calls
+`campaign.archive(p, campaign_id)` -- a frozen snapshot (never a move; the live campaign is untouched and
+stays editable), stamped `platform_id`/`platform_name`/`platform_idea` so it keeps its own context after
+its platform is later overwritten. Archiving the same campaign again updates its existing snapshot
+(upsert by original id), not a pile of duplicates. No completeness gate, per the owner's explicit call --
+same bar a normal save already has. `campaign.get(p, campaign_id)` now ALSO checks the archive when an
+explicit id isn't found among the current platform's own campaigns -- the ONE path whose meaning changed;
+the no-id "give me the current campaign" path every existing forward-wired caller relies on is completely
+untouched, confirmed by re-reading each of plan.house_block()/execution.brief_from()'s default/
+_pr_campaign_source()/`/jobs`'s default before shipping. `big_idea()` fixed to show an archived
+campaign's OWN platform snapshot rather than whichever platform happens to be adopted now (would have
+been a real, silent bug otherwise -- caught during the sweep, not live-reported).
+
+**Frontend:** the button; a new read-only "Previous campaigns" section on Step 3 (dropdown of finalised
+snapshots labeled by the idea each came from, shows insight/resolution/big idea/shape/frame/slots when
+picked); the EXISTING Social/Video "Which campaign" execution-brief dropdowns widened to also list
+archived entries (labeled "Previous -- <that idea>") alongside the current platform's own -- this is what
+actually satisfies the original 30 Sep ask ("still generate through a producer belonging to an older
+campaign"), with no new picker UI needed for that half at all.
+
+**Self-caught bug before shipping:** `archiveCampaign()`'s own handler read the `apiCall()` wrapper's
+fields directly (`r.ok`, `r.archive`) instead of unwrapping `r.data` first -- the real route succeeded
+every time (confirmed via a raw manual call) but the UI silently never updated. Caught by comparing a
+direct API call's actual response shape against what the handler was reading, not by assuming success.
+
+**Verified:** Python controls (archiving stamps correctly and leaves the live campaign untouched; a
+genuinely different platform still has no current campaign while the archived one stays reachable by id;
+re-archiving upserts; `big_idea()` shows the right platform) plus a full live round-trip against the real
+dev-tenant Heritage house's actual "IMC 2026" campaign -- archived it, adopted a genuinely different idea,
+confirmed the live campaign went blank while the archived one survived a fresh server reload, picked it
+in the new dropdown and confirmed the full read-only snapshot rendered with real text, and confirmed it
+appears in the execution-brief dropdown labeled by its origin. Also cleaned up 17 duplicate "IMC 2026"
+campaign entries this week's own repeated testing had silently accumulated on the real dev-tenant
+Heritage platform (pre-existing test noise, not caused by this change, but found and fixed while
+verifying it) -- down to the one real entry.
+
+**Nothing known open on this feature.** Not built, not asked for: un-archiving, deleting an archived
+snapshot, a completeness gate on archiving (explicitly declined), or `brief_id`/`brief_title` stamping
+(the `platform_idea` snapshot was judged to cover the same disambiguation need).
