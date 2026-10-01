@@ -567,7 +567,16 @@ def adopt(p: dict, data: dict) -> dict:
         # expression of exactly one platform, so nesting makes the inheritance structural instead of a
         # convention nobody enforces, and it cannot orphan itself. Never rebuilt from the payload —
         # `/campaign` owns them, and an Adopt that reset them would delete a quarter's work.
-        "campaigns": (prior.get("campaigns") or []),
+        #
+        # 1 Oct — live bug: that reasoning only holds when `prior` IS this platform, i.e. `_same_platform`
+        # (the exact gate `expressions`/`routes` above already use). An Adopt re-saving the SAME platform
+        # must keep its campaigns — that's the "quarter's work" this comment protects. An Adopt of a
+        # genuinely DIFFERENT idea reuses `prior`'s id/slot (see `existing` below) but is not the same
+        # platform, so unconditionally carrying `prior["campaigns"]` handed the new platform someone
+        # else's campaign — its name, dates, insight, resolution, shape, frame and slots all showed up
+        # under a platform that never had one, and `campaign.jobs()`/`validate()` read it as real, not
+        # just the screen displaying it. Gated the same way the expressions above are.
+        "campaigns": (prior.get("campaigns") or []) if _same_platform else [],
         # The model's reading of the five, kept across an adoption. It is stored under a different key
         # from the person's verdicts precisely so that neither overwrites the other, and dropping it here
         # would have made every save quietly undo the model's check. Each verdict remembers the sentence

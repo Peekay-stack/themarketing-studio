@@ -19390,6 +19390,14 @@ class Component extends DCLogic {
     // candidate lines none of them were written for. Server-side, `ideas.adopt()` now refuses to let
     // stale client state land on a genuinely different platform either way \u2014 but the display itself
     // was still wrong the moment the new options appeared, before anyone had even adopted one.
+    //
+    // 1 Oct: Step 3 (the campaign) had the identical bug, one door over \u2014 `ideas.adopt()` carried
+    // the OUTGOING platform's whole `campaigns` array into a genuinely different one unconditionally
+    // (fixed there too, gated on `_same_platform`), and this screen never reset `state.campaign` at
+    // all, so even a correct empty server answer sat behind whatever campaign was already on screen
+    // until something called `loadCampaign()` again \u2014 which adopting from here never does. Reset
+    // here for the same reason `expressions`/`routes` are: a new draft makes the one on screen
+    // provisional, whether or not it gets adopted.
     this.setState({ idea: { ...cur, drafting:false, draftingOn:'', started:true, options,
       builtOn: buildOn ? (buildOn.name || '') : '',
       pickedOption: one ? options[0].uid : '',
@@ -19397,7 +19405,8 @@ class Component extends DCLogic {
       line: one ? line : cur.line,
       draftedLine: one ? line : cur.draftedLine,
       draftedName: one ? (got.name || cur.name || '') : cur.draftedName,
-      expressions: {}, exprSaved: '', routes: {} } });
+      expressions: {}, exprSaved: '', routes: {} },
+      campaign: this._blankCampaign() });
     this.showToast(buildOn
       ? options.length + (one ? ' development' : ' developments') + ' of \u201c' + buildOn.name + '\u201d \u2014 not a fresh idea, a sharper version of that one.'
       : options.length + (one ? ' route' : ' routes') + ', written to differ in kind rather than in wording. Pick one, or develop one.', 'ok');
@@ -19592,8 +19601,9 @@ class Component extends DCLogic {
     ['posm','POS material','functional truth + emotional recall','Two metres, two seconds. It cannot build emotion, only trigger emotion something else built.'],
     ['pr','PR','the functional truth, earned','Third-party verification of something the brand cannot say about itself without sounding like it is selling.'],
   ];
-  campaign(){ return this.state.campaign || { name:'', insight:'', resolution:'', shape:'frame', frame:'',
+  _blankCampaign(){ return { name:'', insight:'', resolution:'', shape:'frame', frame:'',
     slots:[], ladder:'', roles:{}, from:'', to:'', divisionsText:'', expressions:{} }; }
+  campaign(){ return this.state.campaign || this._blankCampaign(); }
   onCampaignDivisions = (e) => this.setState({ campaign: { ...this.campaign(), divisionsText: e.target.value } });
   loadCampaign = async () => {
     const d = await this.apiGet('/campaign');
@@ -19605,6 +19615,17 @@ class Component extends DCLogic {
     // never got its defaults. Take the list.
     const rows = d.campaigns || [];
     const got = d.campaign || (rows.length ? rows[rows.length - 1] : null);
+    // 1 Oct — this merge used to spread `...this.campaign()` (whatever was ALREADY in client state)
+    // before `got`, which keeps unsaved edits across a plain reload but also means a `got` that is
+    // absent or genuinely different (a freshly adopted platform with no campaign of its own, or a
+    // different campaign) changed nothing — the outgoing campaign's name/insight/resolution/shape/
+    // frame/slots stayed on screen, read as if they belonged to the new platform. Same shape as the
+    // `ideaDraft()`/`ideas.adopt()` staleness fix from 30 Sep, reached through this door instead: only
+    // carry the prior client state forward when it is actually the SAME campaign (a reload, or a draft
+    // never yet saved); otherwise start from blank so a different or missing campaign can't inherit it.
+    const prevId = (this.state.campaign || {}).id;
+    const sameCampaign = got ? (!!prevId && got.id === prevId) : !prevId;
+    const base = sameCampaign ? this.campaign() : this._blankCampaign();
     // Seed the roles whether or not a campaign exists yet — an empty eight-row table is the one thing
     // that makes somebody type 'awareness' into all of them. Server defaults win over the local copy.
     const defs = d.role_defaults || {};
@@ -19620,7 +19641,7 @@ class Component extends DCLogic {
     // picked the stale empty string every time, because `'' != null` is true — indistinguishable
     // from a person having typed nothing. The field looked blank on every load, including the normal
     // one, not only the tab-navigation path above.
-    this.setState({ campaign: { ...this.campaign(), ...(got || {}),
+    this.setState({ campaign: { ...base, ...(got || {}),
       divisionsText: (got && got.divisions || []).join(', '),
       // Keep the served big_idea VIEW apart from the two editable fields. The view carries the refusal
       // and the parent platform; the fields are what the person is typing. Spreading `got` would let a
