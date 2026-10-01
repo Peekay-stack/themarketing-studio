@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: reference
   originSessionId: 60d5a7b2-1e0f-4999-a432-7547cc82bb56
-  modified: 2026-10-01T10:04:28.528Z
+  modified: 2026-10-01T10:22:24.169Z
 ---
 
 **LIVE DOCUMENT**: [Round 31 Queue](https://claude.ai/artifact/UpSArgACG53yWTUCPVwFSV)
@@ -116,8 +116,13 @@ including phases" ask):
   without spending real API credits — `httpx.post` monkeypatched to capture the real request body
   before a forced failure, confirming `negativePrompt` reaches the exact same request shape a live call
   would send, alongside the existing `aspectRatio`/`durationSeconds`.
-- **Phase 3 — ready, not yet built.** The camera-movement reframe above (item 5) — one open question for
-  the owner (still want a literal picker UI too, or is strengthening the existing field enough).
+- **Phase 3 — shipped, live (commit `823cdd5`).** The camera-movement reframe above (item 5): the
+  script's own per-scene `camera` field now actually reaches `segment_prompt()` (previously captured
+  and shown on screen, never used), and the `from_frame` branch (the one with a real locked face to
+  protect, by construction) always appends an identity-protecting qualifier. Verified by calling the
+  real `/produce-video` route function with a monkeypatched `gemini.video()` capturing the exact
+  prompt text for two shot types — no API spend. **Still open, unanswered:** whether a literal
+  camera-movement picker UI is wanted for discoverability alongside the strengthened free-text field.
 - **Phase 4 — experiment first, not yet run.** Storyboard→video ratio-mismatch check — confirmed no
   dimension check exists; run a real mismatched test before writing any fix.
 - **Phase 5 — trials, lowest commitment, last on purpose, not yet run.** Kling 3.0 vs Veo on cast
