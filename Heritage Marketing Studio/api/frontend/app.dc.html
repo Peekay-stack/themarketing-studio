@@ -2618,7 +2618,22 @@
                 <div style="display:grid; grid-template-columns:88px 1.6fr 1.2fr 1.4fr 1.1fr 116px; border-top:1px solid #E6E3DC;">
                   <div style="padding:12px; font-weight:800; color:#17325E; font-size:13px;">{{ r.no }}<div style="font-weight:600; color:#6B7280; font-size:11.5px; margin-top:3px;">{{ r.tc }}</div></div>
                   <textarea data-row="{{ r.rowIdx }}" data-cell="visual" value="{{ r.visual }}" onChange="{{ editScriptCell }}" rows="3" style="border:none; border-left:1px solid #E6E3DC; padding:11px 12px; font-size:12.5px; line-height:1.5; color:#38414F; resize:vertical; background:transparent;"></textarea>
-                  <textarea data-row="{{ r.rowIdx }}" data-cell="camera" value="{{ r.camera }}" onChange="{{ editScriptCell }}" rows="3" style="border:none; border-left:1px solid #E6E3DC; padding:11px 12px; font-size:12.5px; line-height:1.5; color:#38414F; resize:vertical; background:transparent;"></textarea>
+                  <div style="border-left:1px solid #E6E3DC; display:flex; flex-direction:column;">
+                    <select data-row="{{ r.rowIdx }}" data-cell="movement_class" value="{{ r.movementClass }}" onChange="{{ editScriptCell }}" style="border:none; border-bottom:1px dashed #E6E3DC; padding:7px 12px; font-size:11.5px; font-weight:700; color:#17325E; background:#FBFAF8; font-family:inherit;">
+                      <option value="">Let the system decide (default)</option>
+                      <option value="static">Static — no movement</option>
+                      <option value="push-in">Slow push-in</option>
+                      <option value="pull-out">Slow pull-out</option>
+                      <option value="pan">Gentle pan</option>
+                      <option value="tracking">Tracking shot</option>
+                      <option value="handheld">Handheld</option>
+                      <option value="orbit">Orbit / fast rotation</option>
+                    </select>
+                    <sc-if value="{{ r.hasMovementRisk }}" hint-placeholder-val="{{ false }}">
+                      <div style="font-size:10.5px; color:#B07A12; padding:5px 12px 0; line-height:1.4;">May affect face consistency on a locked shot — the system still protects identity, just lets this movement through as asked.</div>
+                    </sc-if>
+                    <textarea data-row="{{ r.rowIdx }}" data-cell="camera" value="{{ r.camera }}" onChange="{{ editScriptCell }}" rows="2" placeholder="Shot type &amp; movement, in your own words" style="border:none; padding:9px 12px; font-size:12.5px; line-height:1.5; color:#38414F; resize:vertical; background:transparent; flex:1;"></textarea>
+                  </div>
                   <textarea data-row="{{ r.rowIdx }}" data-cell="dialogue" value="{{ r.dialogue }}" onChange="{{ editScriptCell }}" rows="3" style="border:none; border-left:1px solid #E6E3DC; padding:11px 12px; font-size:12.5px; line-height:1.5; color:#38414F; resize:vertical; background:transparent;"></textarea>
                   <textarea data-row="{{ r.rowIdx }}" data-cell="supr" value="{{ r.supr }}" onChange="{{ editScriptCell }}" rows="3" style="border:none; border-left:1px solid #E6E3DC; padding:11px 12px; font-size:12.5px; line-height:1.5; color:#17325E; font-weight:600; resize:vertical; background:transparent;"></textarea>
                   <div style="border-left:1px solid #E6E3DC; padding:11px 10px; display:flex; align-items:flex-start;">
@@ -16851,7 +16866,11 @@ class Component extends DCLogic {
         badgeFg: active ? 'rgba(255,255,255,0.72)' : (locked ? '#A8AEB8' : '#259821'),
         numBg: active ? '#E8A93C' : '#EAF6EC', numFg: active ? '#3A2A06' : '#259821' };
     });
-    const scriptRows = (s.fullScript||[]).map((r,i)=>({ ...r, rowIdx:i, rewriting: s.rewritingScene===i, rewriteLabel: s.rewritingScene===i ? 'Rewriting…' : '↻ Rewrite scene' }));
+    // Video Phase 3b (1 Oct) — movement_class is optional and defaults to '' on every row (nothing
+    // written by the drafting step sets it), so a never-touched row shows the plain default select
+    // and segment_prompt() behaves exactly as Phase 3 shipped it.
+    const scriptRows = (s.fullScript||[]).map((r,i)=>({ ...r, rowIdx:i, rewriting: s.rewritingScene===i, rewriteLabel: s.rewritingScene===i ? 'Rewriting…' : '↻ Rewrite scene',
+      movementClass: r.movement_class || '', hasMovementRisk: r.movement_class === 'orbit' }));
     // One row-builder, two homes -- `home` on each DEPTS entry decides scripting vs shoot board, not
     // two copies of this mapping drifting apart the way the medium vocabulary did.
     const deptRow = (d) => { const st = s.shoot[d.id] || { status:'idle', text:'' };

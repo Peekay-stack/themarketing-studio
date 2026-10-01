@@ -1197,22 +1197,48 @@ def produce_video(payload: dict):
         # `plan_by_scene` always nests exactly one original row per segment (confirmed in filmcut.py),
         # so this is a direct read, not a merge.
         camera_note = str((seg["scenes"][0] if seg["scenes"] else {}).get("camera") or "").strip()
+        # Video Phase 3b (1 Oct) — an OPTIONAL, explicit override. Left unset (every row's default,
+        # and every row from before this existed), nothing here changes: Phase 3's own blanket
+        # identity qualifier still applies unconditionally in the from_frame branch below, exactly as
+        # shipped. Chosen deliberately, it REPLACES that blanket qualifier with the person's own
+        # classification — the point being that an automatic, one-size caveat and a person's informed,
+        # specific choice should never both apply at once; the second is strictly more information
+        # than the first. Identity is still named explicitly either way — choosing a class never
+        # silently drops it, it only changes HOW it's asked for (avoid the movement vs. stay
+        # recognisable through it), which is the actual "boost": a genuinely dynamic shot can be
+        # requested without the blanket phrase quietly arguing against it in the same breath.
+        _MOVEMENT_CLASSES = {
+            "static": "A held, static shot with no camera movement.",
+            "push-in": "A slow, steady push-in toward the subject.",
+            "pull-out": "A slow, steady pull-out from the subject.",
+            "pan": "A smooth, gentle pan across the scene.",
+            "tracking": "A smooth tracking shot following the subject's movement.",
+            "handheld": "Handheld, naturalistic camera movement.",
+            "orbit": "A camera move that circles or rotates around the subject.",
+        }
+        movement_class = str((seg["scenes"][0] if seg["scenes"] else {}).get("movement_class") or "").strip()
+        movement_phrase = _MOVEMENT_CLASSES.get(movement_class, "")
         if from_frame:
             # Animating an approved frame: the picture already fixes cast, wardrobe and set, so the
             # prompt only has to describe the MOVEMENT. This is also, by construction, the one branch
             # with a real locked face to protect — `from_frame` always means animating a specific
-            # approved image, never a fresh cast each time — so the identity qualifier applies
-            # unconditionally here rather than behind a separate flag; there is no from_frame call
-            # where it would be wrong. Per the Image and Video Engine Playbook's own framing: the
-            # original ask was to gate a camera-movement dropdown, but no such control exists anywhere
-            # in this screen — the script's own free-text field, restored above, is what there is to
-            # qualify instead.
-            camera_direction = (
-                (f"Camera: {camera_note}, but keep it to a pace that leaves the face clearly "
-                 "recognisable throughout the shot — no rapid rotation or orbit around it.")
-                if camera_note else
-                "Natural, restrained camera movement that keeps the face clearly recognisable "
-                "throughout the shot — no rapid rotation or orbit around it.")
+            # approved image, never a fresh cast each time.
+            if movement_phrase:
+                # The explicit override: state the chosen movement (plus any free-text nuance) and
+                # protect identity by naming what must stay true THROUGH it, rather than restricting
+                # the movement itself — the person already knows what they asked for.
+                camera_direction = (
+                    f"Camera: {movement_phrase}" + (f" {camera_note}." if camera_note else ".") +
+                    " Whatever this movement does, keep the face clearly recognisable and matching "
+                    "the reference image throughout.")
+            else:
+                # Unchanged from Phase 3 — the default, system-decided behaviour.
+                camera_direction = (
+                    (f"Camera: {camera_note}, but keep it to a pace that leaves the face clearly "
+                     "recognisable throughout the shot — no rapid rotation or orbit around it.")
+                    if camera_note else
+                    "Natural, restrained camera movement that keeps the face clearly recognisable "
+                    "throughout the shot — no rapid rotation or orbit around it.")
             p = (f"Animate this storyboard frame as shot {seg['index'] + 1} of {len(segments)} of a "
                  f"{_brand_line(brand_mode=_vid_brand_mode)} brand film. Keep the people, wardrobe, set and colour grade "
                  f"exactly as they appear in the image — do not redesign anything. {cont}"
@@ -1221,7 +1247,10 @@ def produce_video(payload: dict):
                  "No on-screen text or logos. No dialogue or music in the clip — the soundtrack is "
                  "added in the edit.")
         else:
-            camera_direction = f"Camera: {camera_note}. " if camera_note else ""
+            if movement_phrase:
+                camera_direction = f"Camera: {movement_phrase}" + (f" {camera_note}. " if camera_note else ". ")
+            else:
+                camera_direction = f"Camera: {camera_note}. " if camera_note else ""
             p = (f"Cinematic {aspect} brand film for {_brand_line(brand_mode=_vid_brand_mode)}. This is shot {seg['index'] + 1} of {len(segments)} in one "
                  f"continuous film — keep the characters, wardrobe, location and grade IDENTICAL to "
                  f"the other shots so the parts cut together seamlessly. {cont}"
