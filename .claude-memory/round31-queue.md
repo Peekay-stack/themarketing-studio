@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: reference
   originSessionId: 60d5a7b2-1e0f-4999-a432-7547cc82bb56
-  modified: 2026-10-01T11:02:49.345Z
+  modified: 2026-10-01T13:02:12.180Z
 ---
 
 **LIVE DOCUMENT**: [Round 31 Queue](https://claude.ai/artifact/UpSArgACG53yWTUCPVwFSV)
@@ -157,3 +157,13 @@ configured in the local `.env`; if Render uses the same key (likely, no evidence
 this test. Owner is topping up credits at https://ai.studio/projects and will say when done — Phase 4
 resumes then. See also [[beta-deploy-plan]]'s own open Phase 4 (spend caps) -- this is a live instance
 of exactly the gap that item names.
+
+**PICK UP HERE: owner is doing live testing of Phases 1-3b tomorrow, 2 Oct 2026.** Nothing further to
+build until that feedback arrives -- check this file first for anything the owner reports before
+assuming it's a new, unrelated issue. What's live to be tested: Phase 1 (script/department-card/
+character-sheet/scene-frame persistence across a reload), Phase 2 (Veo's negative_prompt), Phase 3
+(the script's own camera field reaching generation + the automatic identity qualifier), Phase 3b (the
+optional movement-class picker per script row, including the "orbit" risk note and that it persists
+through Phase 1's autosave). Phase 4 (ratio-mismatch experiment) and Phase 5 (Kling/Seedance trials)
+remain blocked/unscheduled respectively -- Phase 4 specifically waiting on the owner confirming the
+Gemini billing top-up above before any further real API spend.
