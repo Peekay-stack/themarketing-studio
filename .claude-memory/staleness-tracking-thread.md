@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 60d5a7b2-1e0f-4999-a432-7547cc82bb56
-  modified: 2026-10-01T05:28:36.250Z
+  modified: 2026-10-01T06:02:33.316Z
 ---
 
 **29 Sep: two commits shipped and confirmed live** (`/selfcheck` on themarketing-studio.com returned
@@ -244,8 +244,38 @@ campaign) extended to also reset `tests`/`judged`/`judgeQuestions`/`judgeAsk`/`j
 way: Python controls, then a live round-trip (asked the model, set a real verdict, redrafted, confirmed
 blank; re-adopted the same platform, confirmed the judged reading survives).
 
-**As of 1 Oct evening, all three doors on this exact bug shape (Step 4/expressions, Step 3/campaign,
-Step 2/tests+judged) are closed, shipped and live-confirmed.** No fourth door is known. If anything else
-on the Idea Platform screen is reported stale, the pattern to check first is always the same:
-`ideas.adopt()`'s per-field fallback-to-`prior` logic, and whether that specific field has the
-`_same_platform` gate or not.
+**1 Oct, same evening -- a requested backward/forward wiring AUDIT (not a bug report) found two more
+fields with the identical unguarded shape, both FIXED and shipped as `98e67fc`, confirmed live.** Owner
+asked for a full sweep backward (idea platform -> house/brief) and forward (idea platform -> plan/
+producers) to confirm the three doors above hadn't touched anything else -- they hadn't (every downstream
+reader of "the adopted platform's campaign" -- `plan.house_block()`, `execution.brief_from()`,
+`campaign.jobs()`'s caller, `_pr_campaign_source()` -- already had `if camp:`/`or []`/`or {}` guards and
+in fact now behave MORE correctly, since before today's campaign fix they could silently pull a stale
+cross-platform campaign into a real plan/execution-brief/PR sheet, not just onto the screen). The sweep
+itself surfaced `pillar`/`rtb_id`/`ladder`/`caveat` as four more fields in `ideas.adopt()` with the exact
+same unconditional `prior.get(x)` fallback. `pillar`/`rtb_id` already refresh correctly in practice (the
+screen happens to resend them on every option pick) so left alone. `ladder` and `caveat` did not:
+
+- `ladder` turned out to be DEAD CODE, not a live bug -- confirmed via a direct scan of every real
+  platform in the dev tenant (none has ever had a non-empty `ladder`) and the `/idea-draft` prompt itself
+  (never proposes one; the "Which ladder path this argues" picker the owner had seen belongs to the
+  CAMPAIGN, a wholly separate field). Gated with `_same_platform` anyway, defensively, with zero visible
+  effect today -- so if anything ever starts writing to it, this exact bug can't resurface silently.
+- `caveat` was a genuinely different shape of gap, not staleness: the model writes a real, specific risk
+  note per drafted option (confirmed in a raw response), but picking an option never carried it into
+  state and adopting never sent it to the server -- it was thrown away at pick time, every time, with
+  nowhere on the adopted platform to even show it. Owner chose the fuller fix over the narrow one: now
+  captured on pick (`ideaPickOption()`), reset on redraft (`ideaDraft()`, same point as everything else),
+  sent on adopt, read back on hydration (`loadIdea()`), AND a brand-new small amber display under Step 1
+  that didn't exist before (reusing the judge-stale note's visual language). Verified with Python controls
+  plus a full live round-trip against the real Heritage house (drafted 3 options with real distinct
+  caveat text, picked, redrafted-to-confirm-clear, picked-and-adopted, reloaded fresh, confirmed the
+  server match and the actual rendered note).
+
+**As of 1 Oct evening, every field in `ideas.adopt()` that falls back to `prior` on adoption has been
+swept at least once.** `expressions`/`routes`/`campaigns`/`judged`/`ladder`/`caveat` are all gated on
+`_same_platform`. `pillar`/`rtb_id` are not gated but are confirmed currently safe in practice (frontend
+always resends them fresh on pick) -- the same residual risk noted for `ladder` before it was gated:
+if that frontend behavior ever changes, these two would need the same gate. No further fields are known
+to have this shape. If anything else on the Idea Platform screen is reported stale, check
+`ideas.adopt()`'s per-field fallback logic first, same as every time this thread has been right so far.
