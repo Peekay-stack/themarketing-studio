@@ -98,7 +98,15 @@ KINDS = ("briefs", "brands", "houses", "plans", "platforms", "trade", "execution
          # segmentation study does not itself settle. Scoped from day one — a character is built for
          # one brand's segments and test 6 of its own skill is "never shared across brands"; the
          # approved reference frame also lands in `library` as a `cast` item, which is already scoped.
-         "character")
+         "character",
+         # `filmscripts` — Video's own script, department cards, character sheet and scene→frame
+         # mapping (`filmscript.py`), one draft per house. Found unscoped in the save/location audit's
+         # Finding #3 (1 Oct) — not "hardcoded next to the module" like `library`/`learning` were, but
+         # genuinely never persisted anywhere at all; a reload during scripting lost all of it outright.
+         # `cut.py`'s own manifest looked like it might already cover this and does not: that one is
+         # the post-production edit history, scoped to an execution that exists only once a script is
+         # approved. This is the working draft before that point.
+         "filmscripts")
 
 _SAFE = re.compile(r"[^a-z0-9_-]+")
 

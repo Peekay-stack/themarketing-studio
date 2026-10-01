@@ -20071,6 +20071,35 @@ class Component extends DCLogic {
       proof_obligation: (status || {}).proof_obligation || null };
   }
 
+  // ---------- Video's own document layer: script, department cards, character sheet, scene→frame
+  // mapping (filmscript.py — 1 Oct, the save/location audit's Finding #3). One draft per house; see
+  // that module's own docstring for why a house, not a new project id. ----------
+  loadVideoScript = async () => {
+    const houseId = (this.state.house || {}).id; if (!houseId) return;
+    const d = await this.apiGet('/video-script?house=' + encodeURIComponent(houseId));
+    if (!d) return;
+    // Suppresses exactly the one save-trigger this hydration would otherwise fire on the next
+    // render — loading a draft must never immediately re-save the same thing back, which the
+    // generic "did a tracked field change identity" check below cannot itself tell apart from a
+    // real edit.
+    this._videoScriptSuppressSave = true;
+    this.setState({ videoObjective: d.video_objective, videoConcept: d.video_concept,
+      scriptStatus: d.script_status || 'none', scriptPhase: d.script_phase || 'concept',
+      fullScript: d.full_script, sceneFrames: d.scene_frames || {}, shoot: d.shoot || {},
+      videoCharacters: d.video_characters || '' });
+  };
+  saveVideoScript = async () => {
+    const s = this.state, houseId = (s.house || {}).id; if (!houseId) return;
+    await this.apiCall('/video-script', { house: houseId, video_objective: s.videoObjective,
+      video_concept: s.videoConcept, script_status: s.scriptStatus, script_phase: s.scriptPhase,
+      full_script: s.fullScript, scene_frames: s.sceneFrames, shoot: s.shoot,
+      video_characters: s.videoCharacters });
+  };
+  saveVideoScriptDebounced = () => {
+    clearTimeout(this._videoScriptSaveTimer);
+    this._videoScriptSaveTimer = setTimeout(() => this.saveVideoScript(), 600);
+  };
+
   // ---------- what it must say: the house's by-medium lines for this kind ----------
   // The one field in the envelope that had no source. Fetched per plan+kind and cached, because the
   // house can move under it and the id has to resolve to text the header can print.
@@ -20090,6 +20119,31 @@ class Component extends DCLogic {
     // its own (`xTab` flips from several call sites, not one), so it's fetched here instead, on the one
     // change this producer's tab switch always fires through regardless of which button set it.
     if (changed && s.screen === 'exec' && s.xTab === 'social') this.loadLibrary();
+
+    // 1 Oct (Video document-layer persistence) — tracked separately from `_seen` above, which the
+    // exec/video-options triggers already own and which this must not disturb. The saved draft is
+    // keyed by HOUSE, not by plan/xTab, so this fires on screen-entry OR a house change while already
+    // on the video screen (switching brand mid-session without leaving the tab).
+    const vHouseId = (s.house || {}).id || null;
+    const vSeen = this._videoScriptSeen || {};
+    const vEntered = vSeen.screen !== s.screen || vHouseId !== vSeen.houseId;
+    this._videoScriptSeen = { screen: s.screen, houseId: vHouseId };
+    if (s.screen === 'video' && vHouseId && vEntered) this.loadVideoScript();
+    // Debounced autosave: fires whenever any field this store protects actually changes identity —
+    // every setState that touches one of these already produces a new object/array for anything that
+    // really changed, the same cheap signal `_seen` above relies on. Suppressed once right after
+    // `loadVideoScript()`'s own hydration (see that function's comment) and on the render where the
+    // screen/house itself just changed, so arriving at a fresh house never saves over its own load.
+    const vsig = { fullScript: s.fullScript, videoCharacters: s.videoCharacters, sceneFrames: s.sceneFrames,
+                   shoot: s.shoot, videoConcept: s.videoConcept, scriptStatus: s.scriptStatus,
+                   scriptPhase: s.scriptPhase, videoObjective: s.videoObjective };
+    const vPrev = this._videoScriptSig || {};
+    const vChanged = Object.keys(vsig).some(k => vsig[k] !== vPrev[k]);
+    this._videoScriptSig = vsig;
+    if (s.screen === 'video' && vHouseId && vChanged && !vEntered) {
+      if (this._videoScriptSuppressSave) this._videoScriptSuppressSave = false;
+      else this.saveVideoScriptDebounced();
+    }
   }
   loadExecOptions = async () => {
     const p = this.state.plan; if (!p) return;

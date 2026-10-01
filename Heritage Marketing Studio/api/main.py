@@ -63,6 +63,7 @@ import domain
 import execution
 import filmaudio
 import filmcut
+import filmscript
 import filmvoice
 import findings
 import gemini
@@ -2011,6 +2012,33 @@ def video_script_docx(payload: dict):
         raise HTTPException(500, f"Script document build failed: {e}")
     return FileResponse(out, filename="Film_Script.docx",
                         media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+
+
+# --- Video's own document layer: script, department cards, character sheet, scene->frame mapping --
+# (`filmscript.py` — 1 Oct, the save/location audit's Finding #3, still real 26 days after it was first
+# written down: this was pure React state with no backend route at all.)
+@app.get("/video-script")
+def video_script_get(house: str = ""):
+    """The Video producer's saved draft for this house. Answers with the blank shape when nothing has
+    been saved yet, same convention every other hydration route in this file uses."""
+    return filmscript.load(house)
+
+
+@app.post("/video-script")
+def video_script_save(payload: dict):
+    """Save the Video producer's current draft whole. `{house, video_objective, video_concept,
+    script_status, script_phase, full_script, scene_frames, shoot, video_characters}`.
+
+    `{house, clear:true}` drops the saved draft instead — a fresh "start a new one" should not leave a
+    stale file behind for the next visit to this house's Video screen to accidentally resurrect.
+    """
+    house_id = str(payload.get("house") or "")
+    if not house_id:
+        return JSONResponse(status_code=400, content={"detail": "No house given — a script belongs to one."})
+    if payload.get("clear"):
+        filmscript.clear(house_id)
+        return {"ok": True}
+    return filmscript.save(house_id, payload)
 
 
 # --- /shot-still does two different jobs, and the payload says which ------------------------------
