@@ -558,11 +558,21 @@ def adopt(p: dict, data: dict) -> dict:
         # it comes out of". Taken from the payload when the screen sends it, otherwise held from before.
         "pillar": str(data.get("pillar") or prior.get("pillar") or "").strip(),
         "rtb_id": str(data.get("rtb_id") or prior.get("rtb_id") or "").strip(),
-        "caveat": str(data.get("caveat") or prior.get("caveat") or "").strip(),
+        # 1 Oct — same shape as `campaigns`/`judged` above: this fell back to `prior.get("caveat")`
+        # unconditionally. The screen did not even send `caveat` at all until this round, so in
+        # practice it was never anything but empty — not stale, just thrown away the moment an option
+        # was picked, even though the model writes a real one per drafted option. Now that the screen
+        # sends it, gate the fallback the same way the others are.
+        "caveat": str(data.get("caveat") or (prior.get("caveat") if _same_platform else "") or "").strip(),
         # Which path up the house's ladder this platform stands on. This is the stronger form of the
         # `rtb_id` above — an rtb says which fact, a ladder says which fact, through which meaning, to
         # which feeling. It is what makes the retired `true` test computable.
-        "ladder": str(data.get("ladder") or prior.get("ladder") or "").strip(),
+        #
+        # 1 Oct — no screen has ever set this field (checked: no real platform in the dev tenant has a
+        # non-empty `ladder`, and `/idea-draft` never proposes one — only `rtb_id`). Gated anyway, for
+        # the same reason `campaigns`/`judged`/`caveat` are: if anything starts writing to it later,
+        # this fallback should not reintroduce the exact bug found today.
+        "ladder": str(data.get("ladder") or (prior.get("ladder") if _same_platform else "") or "").strip(),
         # Campaigns are children of the platform, not a separate store: a campaign is a time-bound
         # expression of exactly one platform, so nesting makes the inheritance structural instead of a
         # convention nobody enforces, and it cannot orphan itself. Never rebuilt from the payload —

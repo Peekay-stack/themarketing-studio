@@ -4175,6 +4175,9 @@
           <span style="font-size:13px; font-weight:600; color:{{ ideaFromFg }}; text-wrap:pretty; flex:1; min-width:220px;">{{ ideaFrom }}</span>
           <button onClick="{{ adoptIdea }}" style="background:{{ ideaAdoptBg }}; color:{{ ideaAdoptFg }}; border:none; border-radius:11px; padding:11px 20px; font-weight:700; font-size:13.5px; cursor:pointer;">{{ ideaAdoptLabel }}</button>
         </div>
+        <sc-if value="{{ hasIdeaCaveat }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:13px; font-size:12px; line-height:1.55; color:#B07A12; text-wrap:pretty;"><strong>What&#8217;s thin about this:</strong> {{ ideaCaveat }}</div>
+        </sc-if>
       </div>
 
       <sc-if value="{{ ideaStale }}" hint-placeholder-val="{{ false }}">
@@ -19237,6 +19240,9 @@ class Component extends DCLogic {
       // mechanic is the field that separates a platform from a slogan — it and the ladder fields must
       // survive an adopt, not just a pick.
       pillar: i.pillar || '', rtb: i.rtb || '', rtb_id: i.rtbId || '', mechanic: i.mechanic || '',
+      // 1 Oct — the model's own risk note for the picked option, never sent before today, so it was
+      // always thrown away on adopt regardless of staleness.
+      caveat: i.caveat || '',
       // Expressions typed before there was anything to save them to. The debounce above can only write
       // once a platform exists, so without this the five slots somebody filled in before adopting were
       // held in state and then dropped.
@@ -19306,6 +19312,9 @@ class Component extends DCLogic {
       judged: got.judged || {}, judgeQuestions: got.questions || {}, judgeAsk: got.ask || {}, judgeWhy: got.why || {}, judgeDisagreements: got.disagreements || [],
       judgeStale: !!got.judged_stale, expressions: got.expressions || {}, expressionJobs: got.expression_jobs || {},
       pillar: got.pillar || cur.pillar || '', rtb: got.rtb || cur.rtb || '', rtbId: got.rtb_id || cur.rtbId || '',
+      // 1 Oct — same rule as pillar/rtb above: what's stored wins unless something unsaved is already
+      // on screen.
+      caveat: got.caveat || cur.caveat || '',
       claimFact: got.claim_fact || cur.claimFact || null, ladderConfirmed: !!got.ladder_confirmed,
       // What is being TYPED outranks what was stored. `got.steer || cur.steer` is the wrong way round:
       // hydration lands while somebody is mid-sentence and replaces their words with the saved ones.
@@ -19413,7 +19422,12 @@ class Component extends DCLogic {
       draftedName: one ? (got.name || cur.name || '') : cur.draftedName,
       expressions: {}, exprSaved: '', routes: {}, tests: {},
       judged: {}, judgeQuestions: {}, judgeAsk: {}, judgeWhy: {}, judgeDisagreements: [],
-      judgeStale: false, judgeDetail: '' },
+      judgeStale: false, judgeDetail: '',
+      // 1 Oct: same reset, same reasoning, for the caveat `ideaPickOption()` now carries forward —
+      // a fresh set of options makes the one on screen provisional too. The single-option case takes
+      // that option's own caveat directly, same as `name`/`line` do above, since nothing further is
+      // picked in that case.
+      caveat: one ? (got.caveat || '') : '' },
       campaign: this._blankCampaign() });
     this.showToast(buildOn
       ? options.length + (one ? ' development' : ' developments') + ' of \u201c' + buildOn.name + '\u201d \u2014 not a fresh idea, a sharper version of that one.'
@@ -19429,7 +19443,11 @@ class Component extends DCLogic {
       draftedLine:o.line || '', draftedName:o.name || '',
       // The badges are built out of these — losing them on pick would mean a route chosen for its
       // pillar loses the pillar on being chosen.
-      pillar:o.pillar || '', rtb:o.rtb || '', rtbId:o.rtb_id || '', mechanic:o.mechanic || '' } });
+      pillar:o.pillar || '', rtb:o.rtb || '', rtbId:o.rtb_id || '', mechanic:o.mechanic || '',
+      // 1 Oct — the model writes a real caveat per option (shown on the card itself) but picking one
+      // never carried it any further, so it was always thrown away rather than surviving onto the
+      // adopted platform.
+      caveat:o.caveat || '' } });
     this.showToast('\u201c' + (o.name || 'That route') + '\u201d is in the fields above \u2014 edit it and it becomes yours.', 'ok');
   };
   // ---------- expression by medium: what each producer's job actually is, not the same line five times ----------
@@ -23086,6 +23104,10 @@ class Component extends DCLogic {
       ideaFromFg: ipStands ? '#41505F' : '#B07A12',
       ideaStale: ipLive && !!ip.stale,
       ideaStaleNote: ip.staleNote || 'The messaging house has moved since this platform was written.',
+      // 1 Oct — the model's own caveat on the adopted platform, now that it survives a pick/adopt
+      // instead of being thrown away. Nowhere on this screen showed it before, so there was no reason
+      // to carry it this far until there was somewhere for it to land.
+      ideaCaveat: ip.caveat || '', hasIdeaCaveat: !!(ip.caveat || '').trim(),
       ideaFindings: (ip.findings || [])
         .map(f => ({ level:(f.level||'note').toUpperCase(), text:f.detail, ...(this.FIND_TONE[this.findingLevel(f)]) })),
       hasIdeaFindings: ipLive && (ip.findings || []).length > 0,
