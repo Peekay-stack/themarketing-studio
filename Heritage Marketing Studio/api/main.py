@@ -3420,7 +3420,32 @@ def campaign_read(house: str = "", set: str = "", id: str = "", execution: str =
         st["grid"] = campaign_mod.grid(h, st["campaign"])
     st["set"] = pl.get("id", "")
     st["house"] = pl.get("house", "")
+    # 1 Oct (Previous Campaigns): finalised campaigns kept on purpose, independent of which platform is
+    # currently adopted — see campaign.archive()/archive_list(). Additive: `campaigns` above is unchanged,
+    # still just the current platform's own.
+    st["archive"] = campaign_mod.archive_list(pl)
     return st
+
+
+@app.post("/campaign-archive")
+def campaign_archive(payload: dict):
+    """Save a finalised campaign into the set's permanent archive. `{house|set, campaign}`.
+
+    A frozen snapshot, not a move — the live campaign under the current platform is untouched and stays
+    exactly as editable as it was. Nothing here is automatic; a campaign still lives and dies with its
+    platform exactly as before unless this route is called.
+    """
+    pl, _item, why = ideas.resolve(payload)
+    if not pl:
+        return JSONResponse(status_code=404, content={"detail": why})
+    campaign_id = str(payload.get("campaign") or "")
+    if not campaign_id:
+        return JSONResponse(status_code=400, content={"detail": "No campaign id given."})
+    snap, err = campaign_mod.archive(pl, campaign_id)
+    if not snap:
+        return JSONResponse(status_code=400, content={"detail": err})
+    return {"ok": True, "archived": snap, "archive": campaign_mod.archive_list(pl),
+            "detail": f"Kept “{snap.get('name','')}” in Previous Campaigns."}
 
 
 @app.get("/campaign-grid")

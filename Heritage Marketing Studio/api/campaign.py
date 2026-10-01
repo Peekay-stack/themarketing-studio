@@ -226,11 +226,59 @@ def drop(p: dict, campaign_id: str) -> bool:
 
 
 def get(p: dict, campaign_id: str = "") -> dict | None:
+    """The current campaign, or one found by id.
+
+    With no id: the CURRENT platform's own latest campaign, unchanged — every caller that means "what
+    this platform is saying right now" (plan.house_block, execution.brief_from's default,
+    _pr_campaign_source, /jobs's default) relies on exactly this, and none of them pass an id.
+
+    With an id: searches the current platform's own campaigns first, then the set's archive — 1 Oct, so
+    a producer can still explicitly bind an execution to a campaign that has since been archived (its
+    platform may since have been overwritten by a different idea, same as any un-archived campaign would
+    be, but an archived one is a frozen, finalised record kept on purpose). This is the only path whose
+    meaning changes; the no-id path above is untouched.
+    """
     it = _item(p)
     rows = (it or {}).get("campaigns") or []
     if campaign_id:
-        return next((c for c in rows if c.get("id") == campaign_id), None)
+        found = next((c for c in rows if c.get("id") == campaign_id), None)
+        if found:
+            return found
+        return next((c for c in archive_list(p) if c.get("id") == campaign_id), None)
     return rows[-1] if rows else None
+
+
+def archive_list(p: dict | None) -> list[dict]:
+    """Finalised campaigns kept on purpose, newest first. Never written to except by `archive()` below —
+    nothing here is automatic; a campaign still lives and dies with its platform exactly as before unless
+    somebody explicitly chose to keep it."""
+    return list(reversed((p or {}).get("campaign_archive") or []))
+
+
+def archive(p: dict, campaign_id: str) -> tuple[dict | None, str]:
+    """Snapshot the current platform's campaign `campaign_id` into the set's permanent archive.
+
+    A frozen copy, not a move or a lock — the live campaign under the current platform is untouched and
+    stays exactly as editable as before. Archiving the SAME campaign again replaces its existing snapshot
+    (matched by this original id) rather than piling up duplicates: one record of "this is the finalised
+    version", kept current with whichever save was meant to be the real one.
+
+    Deliberately no completeness gate — the same campaign that could already be saved with blocking
+    findings can be archived with them too; "finalised" is the person's call, not a second validation
+    bar this layer invents.
+    """
+    it = _item(p)
+    rows = (it or {}).get("campaigns") or []
+    c = next((x for x in rows if x.get("id") == campaign_id), None)
+    if not c:
+        return None, "No such campaign on the current platform to archive."
+    snap = {**c, "platform_id": it.get("id", ""), "platform_name": it.get("name", ""),
+            "platform_idea": it.get("idea", ""), "archived_at": _now()}
+    existing = p.setdefault("campaign_archive", [])
+    p["campaign_archive"] = [snap if x.get("id") == campaign_id else x for x in existing] \
+        if any(x.get("id") == campaign_id for x in existing) else existing + [snap]
+    ideas.save(p)
+    return snap, ""
 
 
 def stale(c: dict | None, item: dict | None) -> bool:
@@ -371,12 +419,17 @@ def big_idea(p: dict, campaign_id: str = "") -> dict:
     it = _item(p) or {}
     c = get(p, campaign_id) or {}
     text = str(c.get("big_idea") or "").strip()
+    # 1 Oct — an archived campaign carries its OWN platform_name/platform_idea snapshot, taken at the
+    # moment it was archived; `it` is whichever platform is adopted NOW, which may be a different one
+    # entirely by the time this is read. Prefer the snapshot when the campaign carries one.
+    plat = ({"name": c.get("platform_name", ""), "idea": c.get("platform_idea", "")}
+            if c.get("platform_id") else {"name": str(it.get("name") or ""), "idea": str(it.get("idea") or "")})
     return {
         "text": text,
         "note": str(c.get("big_idea_note") or "").strip(),
         "available": bool(text),
         "campaign": str(c.get("name") or ""),
-        "platform": {"name": str(it.get("name") or ""), "idea": str(it.get("idea") or "")},
+        "platform": plat,
         "why_separate": ("A platform is a territory that lasts years; a big idea is what one campaign "
                          "does with it this season. They are stored apart so next year's campaign can "
                          "get a new idea without the platform being abandoned to make room for it."),
