@@ -254,3 +254,16 @@ re-render, no single-frame correction. All four shipped, confirmed live via `/se
   doesn't clear the previous house's lock/options; mode-switch reset keeps `videoCharacters`/`videoLocationLine` on purpose (typed overrides). Gotcha: the Edit tool
   turns a literal backslash-u sequence into the real character on both sides -> use a Python script with `chr(92)` for those.
   Nothing real-rendered yet; owner's retest of Phases 0-3 needs Gemini credits.
+- **5 Oct (evening): owner's live test of Phases 0-3 on real renders -- FINDINGS, PLAN ONLY (nothing built).** Phase 2 UI worked (Location line, 3 options,
+  lock, Save-to-Memory). Frame defects traced mostly to the SCRIPT, not the renderer: (1) the 30s script has scenes 5-6 duplicating 1-2 (writer is told
+  5-7 scenes via `sceneRange` -- min 5 -- "do not pad", concept has fewer beats) so scene 6's "pack shot" row carries "the boy grows... school uniform, cricket
+  kit, exam books" -> tall son + extra people around the pack; (2) taglines/supers sit in `visual` ("One standard, one source." in rows 2 and 6, title +
+  FSSAI in row 4) -- origin not verifiable locally, likely signed-off locked-copy (`library.locked_copy`, injected by `learningContext('script')` as
+  "place exactly as written") or approved anchors; (3) scene 2 pack shows no milk flowing: Video's `pack_clause` forces FRONT-ON, `packscene` 'in_use' role
+  exists only for Social; (4) scene 3 older mother in green not cream: cast sheet says "(cream-draped when older)" as a parenthetical, lock image holds
+  both ages as two people, scene text silent on wardrobe; (5) Video frames have NO reference-role labels (Social's `_ref_labels` proved to help, Round 20).
+  Also: "Inputs to guide generation" panel is nearly inert on the Video concept step (`inputsContext()` only adds attached ref NAMES + a duplicate
+  guidelines clause; `brandPreamble` already carries the voice; default `guidelines:false`); 12 identical "Carousel cast" chips (Carousel adopt never numbers
+  names; POSM does -- "AI-drafted cast #N"; my Video Save-to-Memory name also repeats); Location line can silently drift from the Location note (no
+  source-note marker). Proposed order: script fixes (S1 scene count, S2 repeat warning, S3 visual = camera only, S4 wardrobe/age continuity) -> frame fixes
+  (F1 role labels, F2 pack-in-use wording) -> panel logic + unique cast names -> Location-line sync marker.
