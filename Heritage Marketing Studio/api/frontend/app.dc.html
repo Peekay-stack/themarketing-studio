@@ -2702,7 +2702,7 @@
                 {{ charBtnLabel }}
               </button>
             </div>
-            <div style="font-size:11.5px; line-height:1.5; color:#9AA1AC; margin-bottom:11px;">More than a cast list — this is everything about the shot itself. Distilled from the Cast note above — Derive from script pulls it in — plus the Look chosen here; the Location note above is read directly when you lock. DoP Note, Prop Master and Wardrobe &amp; Styling, drafted in Shoot Board, fold into every rendered frame too, once written.</div>
+            <div style="font-size:11.5px; line-height:1.5; color:#9AA1AC; margin-bottom:11px;">More than a cast list — this is everything about the shot itself. Distilled from the Cast note above — Derive from script pulls it in — plus the Look chosen here; the Location line below, distilled from the Location note above, is what you lock and every frame uses. DoP Note, Prop Master and Wardrobe &amp; Styling, drafted in Shoot Board, fold into every rendered frame too, once written.</div>
             <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
               <span style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#6B7280;">Look</span>
               <sc-for list="{{ videoStyles }}" as="v" hint-placeholder-count="8">
@@ -2710,6 +2710,11 @@
               </sc-for>
             </div>
             <textarea value="{{ videoCharacters }}" onChange="{{ onVideoCharacters }}" rows="2" placeholder="e.g. Lead: warm Indian mother, late 20s, shoulder-length hair, mustard kurta; daughter ~7 in navy school uniform; grandmother in a white saree." style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:10px; padding:11px 13px; font-size:13.5px; line-height:1.55; background:#FBFAF8; color:#17325E; resize:vertical; font-family:inherit;"></textarea>
+
+            <div style="margin-top:10px;">
+              <div style="font-size:11px; font-weight:700; color:#17325E; margin-bottom:4px;">Location line <span style="font-weight:600; color:#9AA1AC;">· what the camera sees — sent to the lock and to every frame</span></div>
+              <textarea value="{{ videoLocationLine }}" onChange="{{ onVideoLocationLine }}" rows="2" placeholder="Press Derive from script to write this from the Location note — or type it." style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:10px; padding:9px 12px; font-size:13px; line-height:1.5; background:#FBFAF8; color:#17325E; resize:vertical; font-family:inherit;"></textarea>
+            </div>
 
             <!-- Real references, before rendering — a real signed-off photo of the person/place/pack
                  anchors what /cast-reference and every frame otherwise only ever describes in words.
@@ -2729,6 +2734,9 @@
                     </select>
                   </sc-if>
                   <input type="file" onChange="{{ videoCastCard.upload }}" style="font-size:11px; width:100%;" />
+                  <sc-if value="{{ videoCastCard.hasStatus }}" hint-placeholder-val="{{ false }}">
+                    <div style="font-size:10.5px; line-height:1.4; color:#6B7280; margin-top:5px;">{{ videoCastCard.status }}</div>
+                  </sc-if>
                 </div>
                 <div>
                   <div style="font-size:11px; font-weight:700; color:#17325E; margin-bottom:5px;">Location</div>
@@ -2740,10 +2748,10 @@
                       </sc-for>
                     </select>
                   </sc-if>
-                  <sc-if value="{{ videoPlateCard.hasNone }}" hint-placeholder-val="{{ true }}">
-                    <div style="font-size:10.5px; color:#B07A12; margin-bottom:6px;">Nothing signed off yet.</div>
-                  </sc-if>
                   <input type="file" onChange="{{ videoPlateCard.upload }}" style="font-size:11px; width:100%;" />
+                  <sc-if value="{{ videoPlateCard.hasStatus }}" hint-placeholder-val="{{ false }}">
+                    <div style="font-size:10.5px; line-height:1.4; color:#6B7280; margin-top:5px;">{{ videoPlateCard.status }}</div>
+                  </sc-if>
                 </div>
                 <div>
                   <div style="font-size:11px; font-weight:700; color:#17325E; margin-bottom:5px;">Pack shot</div>
@@ -2767,15 +2775,40 @@
             <div style="display:flex; gap:14px; align-items:flex-start; margin-top:12px; flex-wrap:wrap;">
               <div style="flex:1; min-width:220px;">
                 <div style="font-size:12.5px; line-height:1.55; color:#41505F;">{{ castRefNote }}</div>
+                <sc-if value="{{ castRefStale }}" hint-placeholder-val="{{ false }}">
+                  <div style="margin-top:7px; font-size:12px; line-height:1.5; color:#B07A12; font-weight:700;">The locked image is out of date — the cast sheet, location or picks changed after it was made. Re-render location and cast (or pick a new option) so frames match.</div>
+                </sc-if>
                 <span onClick="{{ buildCastReference }}" style="display:inline-block; margin-top:9px; cursor:pointer; border:1px solid #C9E3CD; background:#F1F8F2; color:#1E7E34; border-radius:9px; padding:8px 13px; font-size:12.5px; font-weight:700;">{{ castRefLabel }}</span>
+                <span onClick="{{ generateCastOptions }}" style="display:inline-block; margin:9px 0 0 8px; cursor:pointer; border:1px solid #C9CEDA; background:#fff; color:#17325E; border-radius:9px; padding:8px 13px; font-size:12.5px; font-weight:700;">{{ castOptionsLabel }}</span>
+                <div style="font-size:10.5px; color:#9AA1AC; margin-top:5px; line-height:1.4;">The options button draws 3 images (3 renders) from the same cast sheet and location — pick one and it becomes the lock.</div>
               </div>
               <sc-if value="{{ hasCastRef }}" hint-placeholder-val="{{ false }}">
                 <div style="width:280px;">
                   <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:#6B7280; margin-bottom:6px;">Locked cast</div>
                   {{ castRefImage }}
+                  <sc-if value="{{ canSaveCast }}" hint-placeholder-val="{{ false }}">
+                    <span onClick="{{ saveCastLockToMemory }}" style="display:inline-block; margin-top:7px; cursor:pointer; color:#17325E; font-size:11.5px; font-weight:700; text-decoration:underline;">Save to Memory as cast</span>
+                    <div style="font-size:10.5px; color:#9AA1AC; line-height:1.4;">Optional — it will then appear in the Social and POSM cast lists.</div>
+                  </sc-if>
+                  <sc-if value="{{ castSaved }}" hint-placeholder-val="{{ false }}">
+                    <div style="margin-top:7px; font-size:11.5px; font-weight:700; color:#1E7E34;">✓ Saved to Memory as cast</div>
+                  </sc-if>
                 </div>
               </sc-if>
             </div>
+            <sc-if value="{{ hasCastOptions }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top:12px;">
+                <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:#6B7280; margin-bottom:6px;">Pick the cast and location to lock</div>
+                <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px;">
+                  <sc-for list="{{ castOptionsList }}" as="co" hint-placeholder-count="3">
+                    <div>
+                      {{ co.img }}
+                      <span onClick="{{ co.use }}" style="display:inline-block; margin-top:7px; cursor:pointer; border:1px solid #C9E3CD; background:#F1F8F2; color:#1E7E34; border-radius:9px; padding:7px 12px; font-size:12.5px; font-weight:700;">Lock option {{ co.n }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-if>
           </div>
 
           <!-- storyboard — one frame per script scene -->
@@ -11178,6 +11211,10 @@ class Component extends DCLogic {
     conceptRoutes: [],             // 2-3 creative routes offered from one brief
     conceptRoute: 0,               // which route is currently loaded
     castRefUrl: null,              // cast reference image — every frame is generated FROM this
+    castOptions: [], castOptionsBusy: false, castOptionsSig: '',   // the 3 options drawn for the lock; the person picks one
+    castLockSig: '',               // what the lock was made from (sheet, location, picks) -- to say when it is out of date
+    castSavedUrl: '',              // the locked image last saved to Memory as cast
+    videoLocationLine: '',         // short 'what the camera sees', distilled from the Location note
     castGateHit: false,            // a frame was asked for with no cast locked
     // Real references for the cast lock — picked once here, same pattern as POSM's "Assets for this
     // piece" panel (`posmAssetOptions`/`pickPosmAsset`/`uploadPosmAsset`). Before this, `/cast-reference`
@@ -14678,7 +14715,7 @@ class Component extends DCLogic {
 
   // ---------- video generation ----------
   pickVideoObjective = (name) => () => {
-    this.setState({ videoObjective:name, videoConcept:null, videoRefusal:'', scriptVersions:[], scriptStatus:'none', fullScript:null, sceneFrames:{}, shoot:{}, producedUrl:null, scriptPhase:'concept', videoCharacters:'', videoSeed:null, renderInfo:null, castRefUrl:null, videoCastChoice:'', videoPlateChoice:'', videoPackChoice:'', frameNote:'', scriptRefine:'', production:{ aspect:'16:9', music:'Warm strings', voice:'Warm female (Telugu-accented English)', status:'idle', versions:[] } });
+    this.setState({ videoObjective:name, videoConcept:null, videoRefusal:'', scriptVersions:[], scriptStatus:'none', fullScript:null, sceneFrames:{}, shoot:{}, producedUrl:null, scriptPhase:'concept', videoCharacters:'', videoLocationLine:'', castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null, renderInfo:null, castRefUrl:null, videoCastChoice:'', videoPlateChoice:'', videoPackChoice:'', frameNote:'', scriptRefine:'', production:{ aspect:'16:9', music:'Warm strings', voice:'Warm female (Telugu-accented English)', status:'idle', versions:[] } });
     // Same "surfaced up front" reasoning as POSM's loadPosmAssetLib: a real reference picker with
     // nothing loaded to pick from is just a slower text box.
     if (!this.state.videoAssets.length) this.loadVideoAssetLib();
@@ -14929,8 +14966,53 @@ class Component extends DCLogic {
       } catch (e) {}
     }
     if (!text) text = 'Lead: warm Indian mother, late 20s, shoulder-length hair, mustard kurta; daughter ~7 in a navy school uniform; grandmother in a white cotton saree. Same faces, same wardrobe in every shot.';
-    this.setState({ charBusy:false, videoCharacters:text });
+    // The same button also distils the Location note into the short "what the camera sees" line the lock and every
+    // frame send (the note itself is a production plan -- "Secure a single practical home...", markdown and all).
+    const patch = { charBusy:false, videoCharacters:text };
+    const locLine = await this.deriveLocationLine();
+    if (locLine) patch.videoLocationLine = locLine;
+    this.setState(patch);
   };
+  // Plain text for an image prompt: no markdown marks, bullets or heading hashes.
+  stripMd(t){
+    return String(t || '').replace(/\*\*|__/g, '').replace(/^[ \t]*#{1,6}[ \t]+/gm, '')
+      .replace(/^[ \t]*[-*•][ \t]+/gm, '').replace(/[ \t]+/g, ' ').replace(/\n{2,}/g, '\n').trim();
+  }
+  // Cut at the last sentence end inside `max` characters (or at `max` if there is none).
+  clipText(t, max){
+    const s = String(t || '').trim();
+    if (s.length <= max) return s;
+    const cut = s.slice(0, max);
+    const at = Math.max(cut.lastIndexOf('. '), cut.lastIndexOf('.\n'));
+    return (at > max * 0.4 ? cut.slice(0, at + 1) : cut).trim();
+  }
+  // What the cast lock and every frame are told about the place: the person's own Location line when there is
+  // one, otherwise the Location note cleaned of markdown and clipped -- never the whole plan raw.
+  locationText(st){
+    const s = st || this.state;
+    const line = (s.videoLocationLine || '').trim();
+    if (line) return line;
+    return this.clipText(this.stripMd(this.plainDept(((s.shoot || {}).location || {}).text)), 320);
+  }
+  // What the lock image was made from. When this differs from the one stored at lock time the image is out of date.
+  castSig(st){
+    const s = st || this.state;
+    return JSON.stringify([(s.videoCharacters || '').trim(), this.locationText(s), s.videoCastChoice || '', s.videoPlateChoice || '']);
+  }
+  deriveLocationLine = async () => {
+    const note = this.stripMd(this.plainDept((this.state.shoot.location || {}).text));
+    if (!note) return '';
+    let text = null;
+    if (window.claude && window.claude.complete) {
+      try {
+        const prompt = 'From this location plan, write ONE short description of what the camera sees, for an image model: the place, the time of day, the light, and three or four visible set details. Max 40 words, one paragraph, plain text. No people, no instructions or questions, no preamble. LOCATION PLAN: ' + note;
+        const raw = await this.complete(prompt);
+        text = this.stripMd(String(raw).trim().replace(/^```/, '').replace(/```$/, '').trim());
+      } catch (e) {}
+    }
+    return text || this.clipText(note, 220);
+  };
+  onVideoLocationLine = (e) => this.setState({ videoLocationLine: e.target.value });
 
   editScriptCell = (e) => {
     const idx = +e.target.getAttribute('data-row'); const field = e.target.getAttribute('data-cell'); const val = e.target.value;
@@ -15131,10 +15213,13 @@ class Component extends DCLogic {
     // Scripting's department drafts (Location, DoP Note, Props, Wardrobe) were pure planning text with
     // no path into what actually gets rendered until now — folded in here so the finesse the departments
     // add is in the frame, not just in a document next to it.
-    const deptNote = (id, label) => { const t = this.plainDept((this.state.shoot[id]||{}).text);
+    const deptNote = (id, label) => { const t = this.stripMd(this.plainDept((this.state.shoot[id]||{}).text));
       return t ? label + ': ' + t : ''; };
+    // The place comes from the short Location line (or the cleaned, clipped note) -- the whole location plan is a
+    // production document, not a description of what the camera sees.
+    const locNote = this.locationText();
     const prompt = [row.visual, row.camera ? 'Camera: ' + row.camera + '.' : '',
-      deptNote('location', 'Location'), deptNote('dop', 'Director of photography'),
+      locNote ? 'Location: ' + locNote : '', deptNote('dop', 'Director of photography'),
       deptNote('props', 'Props'), deptNote('wardrobe', 'Wardrobe'), note,
       // This frame's own correction goes last so it has the final word over the film-wide note above.
       (row.frame_note || '').trim()].filter(Boolean).join(' ');
@@ -15270,8 +15355,10 @@ class Component extends DCLogic {
   plainDept(t){
     const s = String(t || '').trim();
     if (!s.includes('?')) return s;
-    const kept = (s.match(/[^.!?\n]+[.!?]+(?:\s+|$)|[^.!?\n]+$/g) || []).filter(x => !/\?\s*$/.test(x.trim()));
-    return kept.join('').trim();
+    // Line by line, so a heading or bullet with no full stop is kept; within a line only the sentences that end in
+    // "?" are dropped.
+    return s.split('\n').map(line => (line.match(/[^.!?]+[.!?]*\s*/g) || [])
+      .filter(x => !/\?\s*$/.test(x)).join('').trim()).filter(Boolean).join('\n');
   }
   draftDept = (id) => async () => {
     if ((this.state.shoot[id]||{}).status==='drafting') return;
@@ -15366,7 +15453,7 @@ class Component extends DCLogic {
       this.setState({ conceptRoutes: routes.length > 1 ? routes : [], conceptRoute:0 });
       if (!isRefine) this.addCreated(this.videoItem(obj, data));
       this.setState(s => ({ videoGenerating:false, videoConcept:data, refinePrompt:'', videoRefusal:'',
-        scriptStatus:'concept', fullScript:null, sceneFrames:{}, scriptPhase:'concept', videoCharacters:'', videoSeed:null,
+        scriptStatus:'concept', fullScript:null, sceneFrames:{}, scriptPhase:'concept', videoCharacters:'', videoLocationLine:'', castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null,
         scriptVersions: [...s.scriptVersions, { v:s.scriptVersions.length+1, logline:data.logline, note: isRefine ? s.refinePrompt.trim() : 'Initial draft', duration:data.duration }],
         videoCheck: this.runCreativeCheck([data.logline, (data.scenes||[]).map(x=>x.title+' '+x.desc).join(' ')]) }));
     } catch (err) {
@@ -15388,7 +15475,7 @@ class Component extends DCLogic {
     if (!r || this.state.conceptRoute === i) return;
     // Switching route invalidates everything downstream — script, frames, cast, cut.
     this.setState({ conceptRoute:i, videoConcept:r, scriptStatus:'concept', fullScript:null,
-                    sceneFrames:{}, castRefUrl:null, videoCharacters:'', videoSeed:null,
+                    sceneFrames:{}, castRefUrl:null, videoCharacters:'', videoLocationLine:'', castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null,
                     producedUrl:null, renderInfo:null, scriptPhase:'concept', voicePlan:null });
     this.showToast('Route ' + (i+1) + ' loaded — ' + (r.name || 'concept') + '.', 'ok');
   };
@@ -15478,19 +15565,56 @@ class Component extends DCLogic {
   // Text cannot hold a face. The cast is rendered ONCE as an image and every frame is generated
   // from that image, so wardrobe and faces stop drifting shot to shot.
   // ===== VIDEO: cast & voice =====
+  // What the lock call sends, shared by "Lock location and cast" (one image) and "Show 3 options".
+  castRefBody(){
+    const chars = (this.state.videoCharacters || '').trim();
+    // Location moved into Scripting alongside the cast for exactly this reason: decide where before
+    // rendering who, and the reference image can actually be set there instead of a plain backdrop.
+    const body = { characters:chars, location:this.locationText(), style:this.state.videoStyle, engines:this.state.engines };
+    // A real signed-off photo, when one is picked below, replaces the guesswork this call otherwise
+    // does from words alone — see /cast-reference's own docstring for why that matters.
+    if (this.state.videoCastChoice) body.cast_id = this.state.videoCastChoice;
+    if (this.state.videoPlateChoice) body.plate_id = this.state.videoPlateChoice;
+    return body;
+  }
+  // Three options for the lock, drawn from the same cast sheet and location. Picking one IS the lock -- it is not
+  // saved to Memory unless asked (a group shot there would show up in Social's and POSM's cast pickers).
+  generateCastOptions = async () => {
+    if (this.state.castOptionsBusy || this.state.castRefBusy) return;
+    if (!(this.state.videoCharacters || '').trim()) { this.showToast('Write the cast sheet first — it describes who to render.'); return; }
+    this.setState({ castOptionsBusy:true, castOptions:[] });
+    const sig = this.castSig();
+    const r = await this.apiCall('/cast-reference', { ...this.castRefBody(), n:3 });
+    const d = (r && r.data) || {};
+    const urls = Array.isArray(d.images) ? d.images.map(x => x && x.image_url).filter(Boolean) : (d.image_url ? [d.image_url] : []);
+    if (!r || !r.ok || !urls.length) {
+      this.setState({ castOptionsBusy:false });
+      this.showToast(d.detail || 'Couldn’t draw the options — check image credits.', 'warn');
+      return;
+    }
+    this.setState({ castOptionsBusy:false, castOptions:urls, castOptionsSig:sig, castProvider:d.provider || '' });
+  };
+  pickCastOption = (url) => () => {
+    this.setState(s => ({ castRefUrl:url, castLockSig:s.castOptionsSig || this.castSig(s), castOptions:[], sceneFrames:{} }));
+    this.showToast('Cast locked — frames will now match these people.', 'ok');
+  };
+  // Optional: keep the locked image in Memory as a signed-off cast, so Social/POSM can pick it too.
+  saveCastLockToMemory = async () => {
+    const url = this.state.castRefUrl; if (!url) return;
+    const r = await this.apiCall('/library-adopt', { url, kind:'cast', name:((this.state.videoObjective || 'Film') + ' cast').slice(0, 80), sign:true });
+    const item = r && r.ok && r.data && r.data.item;
+    if (!item) { this.showToast((r && r.data && r.data.detail) || 'Could not save that to Memory.', 'warn'); return; }
+    this.setState({ castSavedUrl:url });
+    this.loadVideoAssetLib();
+    this.showToast('Saved to Memory as cast — Social and POSM can pick it from their cast lists.', 'ok');
+  };
   buildCastReference = async () => {
     if (this.state.castRefBusy) return;
     const chars = (this.state.videoCharacters || '').trim();
     if (!chars) { this.showToast('Write the cast sheet first — it describes who to render.'); return; }
     this.setState({ castRefBusy:true });
-    // Location moved into Scripting alongside the cast for exactly this reason: decide where before
-    // rendering who, and the reference image can actually be set there instead of a plain backdrop.
-    const location = this.plainDept((this.state.shoot.location || {}).text);
-    const body = { characters:chars, location, style:this.state.videoStyle, engines:this.state.engines };
-    // A real signed-off photo, when one is picked below, replaces the guesswork this call otherwise
-    // does from words alone — see /cast-reference's own docstring for why that matters.
-    if (this.state.videoCastChoice) body.cast_id = this.state.videoCastChoice;
-    if (this.state.videoPlateChoice) body.plate_id = this.state.videoPlateChoice;
+    const body = this.castRefBody();
+    const sig = this.castSig();       // what THIS image is made from, taken before the wait
     const r = await this.apiCall('/cast-reference', body);
     const d = (r && r.data) || {};
     if (!r || !r.ok || !d.image_url) {
@@ -15498,7 +15622,7 @@ class Component extends DCLogic {
       this.showToast(d.detail || 'Couldn’t render the cast reference — see heritage-log.txt.');
       return;
     }
-    this.setState({ castRefBusy:false, castRefUrl:d.image_url, sceneFrames:{},
+    this.setState({ castRefBusy:false, castRefUrl:d.image_url, sceneFrames:{}, castLockSig:sig,
                     castProvider: d.provider || '' });
     this.showToast('Cast locked — frames will now match these people.', 'ok');
   };
@@ -16263,7 +16387,7 @@ class Component extends DCLogic {
       no: r.no || String(i + 1), tc: r.tc || '', visual: r.visual || '', supr: r.supr || '' })) });
     this.showToast(rows.length + ' board row' + (rows.length === 1 ? '' : 's') + ' pulled \u2014 each take can be keyed against the frame it is for.', 'ok');
   };
-  openVideoFromCampaign = () => { const c = this.state.campaign; this.setState({ screen:'video', videoConcept: c ? c.video : null, linkedBrief: c ? c.brief : null, videoObjective:'Campaign film', scriptStatus: (c && c.video) ? 'concept' : 'none', scriptPhase:'concept', videoStep:'scripting', fullScript:null, sceneFrames:{}, videoCharacters:'', videoSeed:null, renderInfo:null, castRefUrl:null });
+  openVideoFromCampaign = () => { const c = this.state.campaign; this.setState({ screen:'video', videoConcept: c ? c.video : null, linkedBrief: c ? c.brief : null, videoObjective:'Campaign film', scriptStatus: (c && c.video) ? 'concept' : 'none', scriptPhase:'concept', videoStep:'scripting', fullScript:null, sceneFrames:{}, videoCharacters:'', videoLocationLine:'', castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null, renderInfo:null, castRefUrl:null });
     this.loadGrounding(); this.loadVideoStandsOn(); }; // round 92: video's own six-entry-point audit
 
   // ---------- campaign analysis ----------
@@ -17850,21 +17974,42 @@ class Component extends DCLogic {
         style:{ width:'100%', borderRadius:10, border:'1px solid #DDD9D1', display:'block' } }) : null,
       castRefNote: s.castRefUrl
         ? 'Every frame is generated from this image, so the setting, faces and clothes stay identical across the film. Re-render if the people or the place aren’t right.'
-        : 'Render this once as a reference image — cast, and the Location note above if written. Frames are then generated from it, which is what stops faces, clothes and setting changing between shots.',
+        : 'Render this once as a reference image — the cast, in the Location line above. Frames are then generated from it, which is what stops faces, clothes and setting changing between shots.',
       // ---- real references for the cast lock — same "picked once, used by every render" panel as
       // POSM's Assets for this piece, so location/character/pack are inputs here, not only ever
       // described in the boxes above and hoped the model draws the right thing. ----
       videoCastCard: (() => {
         const opts = this.videoAssetOptions(['cast','actor']);
+        // Say what is actually used when no photo is picked: "Describe in words instead" alone reads like an
+        // empty field, when the written cast sheet is in fact what the lock is made from.
+        const status = s.videoCastChoice ? ''
+          : ((s.videoCharacters || '').trim() ? 'No photo picked — the written cast sheet above is used.'
+            : 'Nothing yet — write the cast note and press Derive from script, or pick or upload a photo.');
         return { options: opts.map(o => ({ v:o.id, label:o.name || o.id })), hasOptions: opts.length > 0,
           value: s.videoCastChoice || '', pick: this.pickVideoAsset('videoCastChoice'),
-          upload: this.uploadVideoAsset('cast', 'videoCastChoice') };
+          upload: this.uploadVideoAsset('cast', 'videoCastChoice'), status, hasStatus: !!status };
       })(),
+      // The lock, its three-option alternative, and whether the lock is out of date.
+      videoLocationLine: s.videoLocationLine || '', onVideoLocationLine: this.onVideoLocationLine,
+      generateCastOptions: this.generateCastOptions,
+      castOptionsLabel: s.castOptionsBusy ? 'Drawing 3 options…' : '◫ Show me 3 options',
+      hasCastOptions: (s.castOptions || []).length > 0,
+      castOptionsList: (s.castOptions || []).map((u, i) => ({ n: i + 1, use: this.pickCastOption(u),
+        img: React.createElement('img', { src:u, alt:'Option ' + (i + 1), onClick:this.openLightbox(u),
+          style:{ width:'100%', borderRadius:10, border:'1px solid #DDD9D1', display:'block', cursor:'zoom-in' } }) })),
+      castRefStale: !!s.castRefUrl && !!s.castLockSig && s.castLockSig !== this.castSig(s),
+      canSaveCast: !!s.castRefUrl && s.castSavedUrl !== s.castRefUrl,
+      castSaved: !!s.castRefUrl && s.castSavedUrl === s.castRefUrl,
+      saveCastLockToMemory: this.saveCastLockToMemory,
       videoPlateCard: (() => {
         const opts = this.videoAssetOptions(['plate']);
+        const where = this.locationText(s);
+        const status = s.videoPlateChoice ? ''
+          : (where ? 'No location photo — the Location ' + ((s.videoLocationLine || '').trim() ? 'line' : 'note') + ' above is used.'
+            : 'No location yet — draft the Location note above, or upload a photo.');
         return { options: opts.map(o => ({ v:o.id, label:o.name || o.id })), hasOptions: opts.length > 0,
           hasNone: !opts.length, value: s.videoPlateChoice || '', pick: this.pickVideoAsset('videoPlateChoice'),
-          upload: this.uploadVideoAsset('plate', 'videoPlateChoice') };
+          upload: this.uploadVideoAsset('plate', 'videoPlateChoice'), status, hasStatus: !!status };
       })(),
       videoPackCard: (() => {
         const opts = this.videoAssetOptions(['pack','product']);
@@ -20159,7 +20304,7 @@ class Component extends DCLogic {
     this.setState({ videoObjective: d.video_objective, videoConcept: d.video_concept,
       scriptStatus: d.script_status || 'none', scriptPhase: d.script_phase || 'concept',
       fullScript: d.full_script, sceneFrames: d.scene_frames || {}, shoot: cleaned.shoot,
-      videoCharacters: d.video_characters || '' });
+      videoCharacters: d.video_characters || '', videoLocationLine: d.video_location_line || '' });
     if (cleaned.count) this.showToast('Removed questions from ' + cleaned.count + ' department draft' + (cleaned.count === 1 ? '' : 's') + ' — they were written as questions to you, not as direction.');
   };
   cleanShootDrafts(shoot){
@@ -20180,7 +20325,7 @@ class Component extends DCLogic {
     await this.apiCall('/video-script', { house: houseId, video_objective: s.videoObjective,
       video_concept: s.videoConcept, script_status: s.scriptStatus, script_phase: s.scriptPhase,
       full_script: s.fullScript, scene_frames: s.sceneFrames, shoot: s.shoot,
-      video_characters: s.videoCharacters });
+      video_characters: s.videoCharacters, video_location_line: s.videoLocationLine });
   };
   saveVideoScriptDebounced = () => {
     clearTimeout(this._videoScriptSaveTimer);
@@ -20223,7 +20368,7 @@ class Component extends DCLogic {
     // screen/house itself just changed, so arriving at a fresh house never saves over its own load.
     const vsig = { fullScript: s.fullScript, videoCharacters: s.videoCharacters, sceneFrames: s.sceneFrames,
                    shoot: s.shoot, videoConcept: s.videoConcept, scriptStatus: s.scriptStatus,
-                   scriptPhase: s.scriptPhase, videoObjective: s.videoObjective };
+                   scriptPhase: s.scriptPhase, videoObjective: s.videoObjective, videoLocationLine: s.videoLocationLine };
     const vPrev = this._videoScriptSig || {};
     const vChanged = Object.keys(vsig).some(k => vsig[k] !== vPrev[k]);
     this._videoScriptSig = vsig;

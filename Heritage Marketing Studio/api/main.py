@@ -2106,7 +2106,7 @@ def video_script_get(house: str = ""):
 @app.post("/video-script")
 def video_script_save(payload: dict):
     """Save the Video producer's current draft whole. `{house, video_objective, video_concept,
-    script_status, script_phase, full_script, scene_frames, shoot, video_characters}`.
+    script_status, script_phase, full_script, scene_frames, shoot, video_characters, video_location_line}`.
 
     `{house, clear:true}` drops the saved draft instead — a fresh "start a new one" should not leave a
     stale file behind for the next visit to this house's Video screen to accidentally resurrect.

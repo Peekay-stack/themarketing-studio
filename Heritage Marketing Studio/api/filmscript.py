@@ -35,7 +35,7 @@ DIR = tenancy.dir("filmscripts")
 # is Phase 1 of the gap, the part that loses real authored work (a written script, a department note, a
 # rendered frame) rather than a picked option that costs one click to redo.
 FIELDS = ("video_objective", "video_concept", "script_status", "script_phase",
-          "full_script", "scene_frames", "shoot", "video_characters")
+          "full_script", "scene_frames", "shoot", "video_characters", "video_location_line")
 
 
 def _now() -> str:
@@ -49,7 +49,7 @@ def _path(house_id: str) -> str:
 def _blank(house_id: str) -> dict:
     return {"house": house_id, "video_objective": None, "video_concept": None,
             "script_status": "none", "script_phase": "concept", "full_script": None,
-            "scene_frames": {}, "shoot": {}, "video_characters": "", "updated": ""}
+            "scene_frames": {}, "shoot": {}, "video_characters": "", "video_location_line": "", "updated": ""}
 
 
 def load(house_id: str) -> dict:
@@ -88,6 +88,9 @@ def save(house_id: str, data: dict) -> dict:
         "scene_frames": data.get("scene_frames") if isinstance(data.get("scene_frames"), dict) else {},
         "shoot": data.get("shoot") if isinstance(data.get("shoot"), dict) else {},
         "video_characters": str(data.get("video_characters") or ""),
+        # The short "what the camera sees" line distilled from the Location note (5 Oct) -- the text the cast lock
+        # and every frame send, instead of the whole location plan.
+        "video_location_line": str(data.get("video_location_line") or ""),
         "updated": _now(),
     }
     tmp = _path(house_id) + ".tmp"
