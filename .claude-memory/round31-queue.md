@@ -267,3 +267,14 @@ re-render, no single-frame correction. All four shipped, confirmed live via `/se
   names; POSM does -- "AI-drafted cast #N"; my Video Save-to-Memory name also repeats); Location line can silently drift from the Location note (no
   source-note marker). Proposed order: script fixes (S1 scene count, S2 repeat warning, S3 visual = camera only, S4 wardrobe/age continuity) -> frame fixes
   (F1 role labels, F2 pack-in-use wording) -> panel logic + unique cast names -> Location-line sync marker.
+- **5 Oct (evening): script fixes S1-S4 + Look reference (option 1) SHIPPED live (`b236d95`).** S1 `writeFullScript` scene floor = `minScenes` (concept beat count, >= ceil(secs/8),
+  <= range max; falls back to `sceneRange().min` when no beats) + "never repeat/near-duplicate a scene"; S2 `scriptRepeats()` (75% shared words) -> amber banner
+  "Some scenes repeat each other" with one-click `rewriteScene` (rewrite prompt now lists the OTHER scenes' visuals); S3 `VISUAL_RULES` = camera-only visual, no taglines/titles/
+  locked copy/supers in it, time jumps cut between scenes, plus the locked-copy instruction says place only in audio/VO/supr; S4 name age+clothes whenever a character
+  differs, cast-sheet prompt gives each age/outfit its own entry (max 60 words) -- the owner must RE-DERIVE the sheet for existing films. Look reference: `videoLookRef`
+  (filmscript `video_look_ref`, absent-key guard), box + "Write notes from this" (`deriveLookRef`) next to the Look chips, `_with_look_note()` appends "Cinematography and look to follow:"
+  to /cast-reference, /scene-still, /produce-video style sentences (byte-identical when absent); Lighting dept note now feeds frames; look change marks lock + frames (`f.look`)
+  out of date. NOT built (still open from the findings list): F1 reference-role labels in Video frame prompts, F2 pack-in-use ("pouring") wording, inputs-panel removal
+  from Video (owner agreed it is not needed; awaiting yes on auto-including the brand kit Always/Never lines), unique cast names (Carousel adopt + Video Save-to-Memory),
+  Location-line-vs-note drift marker, Locked-copy origin check ("one source" in Memory). Not verified on real renders (needs credits); produce-video's `look_note` line
+  checked by source + frontend body only. Existing scripts keep their repeated scenes until rewritten -- the banner points at them.
