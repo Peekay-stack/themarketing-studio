@@ -285,3 +285,11 @@ re-render, no single-frame correction. All four shipped, confirmed live via `/se
   Prompt-capture + non-video controls + regression tests pass; selfcheck 1252 calls; NOT verified on a real render. Remaining from the findings list: inputs-panel removal from Video
   (owner agreed; awaiting yes on auto-including the brand kit Always/Never lines), unique cast names (Carousel adopt + Video Save-to-Memory), Location-line-vs-note drift marker,
   locked-copy origin check ("one source"). Next real step: the owner's retest on real renders (Gemini credits; ask before any spend).
+- **5 Oct (night): the four remaining findings-list items SHIPPED live (`2ee8464`).** (1) Video's "Inputs to guide generation" panel REMOVED (template block + `generateVideo` no longer calls
+  `inputsContext()`/`${kit}`; Social keeps its panel and `inputs` state; the brand-kit Always/Never auto-include was NOT done -- owner said remove "without affecting any functionality"). (2) `/library-adopt`
+  now numbers duplicate names per kind via `_unique_adopt_name` (first plain, repeats " #N"); existing identical "Carousel cast" items are NOT renamed (rename in Memory by hand). (3) Location line
+  drift: `videoLocationSrc` (filmscript `video_location_src`, absent-key guard) = `locNoteHash()` of the note when the line was derived; amber marker + "Write the line again from the note"
+  (`rewriteLocationLine`); typing in the line acknowledges. (4) "What informed this script?" link above the script table (`toggleScriptInfluence`, on-demand `/learning-context`): lists locked copy,
+  approved examples, house rules and flags locked copy found inside a scene's VISUAL with one-click rewrites -- the owner can now trace "One standard, one source"; I could not read the live
+  Memory myself. Verified on the real page with stubs + unit test + regression suite + selfcheck 1253. Still open: nothing on the findings list; next real step = owner's retest on real renders
+  (Gemini credits; ask before spend), Video Phase 4/5 unscheduled.
