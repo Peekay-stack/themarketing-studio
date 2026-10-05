@@ -332,3 +332,8 @@ re-render, no single-frame correction. All four shipped, confirmed live via `/se
   "Re-derive from script" to get the By-scene line and a product-free Location line. Owner's re-render of frame 3 had already come out right (young mother) so that mix-up is intermittent. My earlier read
   that frame 3's pack was "invented" was WRONG (it was hidden under the button). Deploy note: this push auto-deployed normally (the earlier missed deploy was a one-off). Prompt-capture + page tests + regression suite pass;
   not verified on a real render. Next: owner re-renders frames 1-3 (3 renders, ask first); Shoot Board notes (DoP/Lighting/Props/Wardrobe) still to be drafted to exercise those.
+- **5 Oct (evening): "no pack / no cast+location pickers after a refresh" -- FIXED live (`2183c3c`).** Root cause (pre-existing, exposed by my d252b31 checkbox): `videoAssets` (the /library list behind the Cast/Location/Pack pickers
+  and `packAvailable()`) was loaded ONLY by `pickVideoObjective` (and after a Memory save), so a film restored from `/video-script` (page refresh, return visit) had empty pickers ("Pack shot: Nothing signed off yet")
+  and no pack checkbox, silently falling back to the server's word-matcher. Fix: `loadVideoAssetLib()` runs on every entry to the Video screen (componentDidUpdate `changed && screen==='video'`), and a failed read no
+  longer blanks the lists. LESSON: a control that depends on a lazily-loaded list must be tested from a RESTORED state (reload), not only from the click path that populated it -- my page tests always set state
+  after picking things in-session. Owner action after refresh: Re-derive from script, re-lock (lock isn't persisted; re-locking clears drawn frames), check ticks, re-render.
