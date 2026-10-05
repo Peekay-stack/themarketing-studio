@@ -344,3 +344,8 @@ re-render, no single-frame correction. All four shipped, confirmed live via `/se
   look + Lighting on every frame, no pack words left in any prompt. FINDING (not fixed, needs owner's call): Video's `loadVideoAssetLib` uses unscoped `/library`, while Carousel uses `/library?for_brand=1`; in a multi-brand
   tenant Video's Cast/Location/Pack pickers list OTHER brands' items and `packAvailable()` (so the checkbox + the closing-scene default tick) can be true because another brand has a signed-off pack -- the server's
   default pack is brand-scoped, so a ticked frame then shows the "pack not attached" warning rather than a wrong pack. Fixing = one URL change but could hide items recorded under a differently-spelled brand name.
+- **5 Oct (evening): third real-render test (new film, Hyderabad doorframe) -- GOOD; owner's decision on the pack tick.** Lock lineup + frames held cast/wardrobe/versions (sky-blue young mother, cream-rust older mother, boys 4/6/10 in their sheet
+  clothes), no extra people, product-free Location line, real orange pack with correct colours on the ticked frame (4), single clean frames. Owner UNTICKED scene 1 on purpose as a test: its text says "pours milk from the pack", no real
+  photo attached, so the model drew a generic clear pouch. DECISION (owner): leave it -- "it's shipped from the script directly", the script's wording stays authoritative; NO amber note, NO "unticked = no pack at all" mode.
+  Meaning for the future: unticked = no REAL pack photo, not "no pack in the picture" when the scene text names one. Still untested on a real render: Look reference, Shoot Board notes (DoP/Lighting/Props/Wardrobe).
+  Open finding (owner not yet decided): Video's /library read is unscoped (Carousel uses `?for_brand=1`).
