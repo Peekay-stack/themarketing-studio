@@ -2604,6 +2604,18 @@
               </label>
             </div>
           </div>
+          <!-- A script that repeats a scene is padding, and every repeat becomes a storyboard frame and a paid shot. -->
+          <sc-if value="{{ hasScriptRepeats }}" hint-placeholder-val="{{ false }}">
+            <div style="background:#FFF9EC; border:1px solid #F0DFB4; border-left:4px solid #E8A93C; border-radius:12px; padding:12px 15px; margin-bottom:12px;">
+              <div style="font-weight:700; font-size:13px; color:#8A6410; margin-bottom:7px;">Some scenes repeat each other</div>
+              <sc-for list="{{ scriptRepeatNotes }}" as="rp" hint-placeholder-count="1">
+                <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; font-size:12.5px; line-height:1.5; color:#8A6410; margin-top:4px;">
+                  <span>{{ rp.text }}</span>
+                  <span onClick="{{ rp.fix }}" style="cursor:pointer; border:1px solid #E8A93C; background:#fff; color:#8A6410; border-radius:8px; padding:3px 10px; font-size:12px; font-weight:700;">{{ rp.label }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
           <div class="hf-scroll" style="overflow-x:auto; border:1px solid #DDD9D1; border-radius:14px; background:#fff; margin-bottom:18px;">
             <div style="min-width:920px;">
               <div style="display:grid; grid-template-columns:88px 1.6fr 1.2fr 1.4fr 1.1fr 116px; background:#EEF1F5; font-size:11px; font-weight:800; letter-spacing:0.03em; text-transform:uppercase; color:#6B7280;">
@@ -2709,6 +2721,15 @@
                 <span onClick="{{ v.set }}" style="cursor:pointer; padding:6px 12px; border-radius:8px; font-size:12.5px; font-weight:700; border:1px solid {{ v.border }}; background:{{ v.bg }}; color:{{ v.fg }};">{{ v.label }}</span>
               </sc-for>
             </div>
+            <!-- Look reference: the cinematography the film should resemble, in words. It rides with the Look into the
+                 lock, every frame and the video prompt. Frames fix the look, so set it BEFORE the lock. -->
+            <div style="margin-bottom:12px;">
+              <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:4px;">
+                <div style="font-size:11px; font-weight:700; color:#17325E;">Look reference <span style="font-weight:600; color:#9AA1AC;">· lens, light, grade, texture, camera feel — set before you lock; frames carry it into the film</span></div>
+                <span onClick="{{ deriveLookRef }}" style="cursor:pointer; border:1px solid #C9E3CD; background:#F1F8F2; color:#1E7E34; border-radius:8px; padding:4px 10px; font-size:11.5px; font-weight:700;">{{ lookRefLabel }}</span>
+              </div>
+              <textarea value="{{ videoLookRef }}" onChange="{{ onVideoLookRef }}" rows="2" placeholder="e.g. soft low-contrast window light, 35mm handheld, shallow focus, muted warm grade, fine grain — or name a film or describe the mood and press the button to turn it into notes." style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:10px; padding:9px 12px; font-size:13px; line-height:1.5; background:#FBFAF8; color:#17325E; resize:vertical; font-family:inherit;"></textarea>
+            </div>
             <textarea value="{{ videoCharacters }}" onChange="{{ onVideoCharacters }}" rows="2" placeholder="e.g. Lead: warm Indian mother, late 20s, shoulder-length hair, mustard kurta; daughter ~7 in navy school uniform; grandmother in a white saree." style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:10px; padding:11px 13px; font-size:13.5px; line-height:1.55; background:#FBFAF8; color:#17325E; resize:vertical; font-family:inherit;"></textarea>
 
             <div style="margin-top:10px;">
@@ -2776,7 +2797,7 @@
               <div style="flex:1; min-width:220px;">
                 <div style="font-size:12.5px; line-height:1.55; color:#41505F;">{{ castRefNote }}</div>
                 <sc-if value="{{ castRefStale }}" hint-placeholder-val="{{ false }}">
-                  <div style="margin-top:7px; font-size:12px; line-height:1.5; color:#B07A12; font-weight:700;">The locked image is out of date — the cast sheet, location or picks changed after it was made. Re-render location and cast (or pick a new option) so frames match.</div>
+                  <div style="margin-top:7px; font-size:12px; line-height:1.5; color:#B07A12; font-weight:700;">The locked image is out of date — the cast sheet, location, look reference or picks changed after it was made. Re-render location and cast (or pick a new option) so frames match.</div>
                 </sc-if>
                 <span onClick="{{ buildCastReference }}" style="display:inline-block; margin-top:9px; cursor:pointer; border:1px solid #C9E3CD; background:#F1F8F2; color:#1E7E34; border-radius:9px; padding:8px 13px; font-size:12.5px; font-weight:700;">{{ castRefLabel }}</span>
                 <span onClick="{{ generateCastOptions }}" style="display:inline-block; margin:9px 0 0 8px; cursor:pointer; border:1px solid #C9CEDA; background:#fff; color:#17325E; border-radius:9px; padding:8px 13px; font-size:12.5px; font-weight:700;">{{ castOptionsLabel }}</span>
@@ -11215,6 +11236,7 @@ class Component extends DCLogic {
     castLockSig: '',               // what the lock was made from (sheet, location, picks) -- to say when it is out of date
     castSavedUrl: '',              // the locked image last saved to Memory as cast
     videoLocationLine: '',         // short 'what the camera sees', distilled from the Location note
+    videoLookRef: '', lookRefBusy: false,   // written cinematography reference: the look the film should resemble
     castGateHit: false,            // a frame was asked for with no cast locked
     // Real references for the cast lock — picked once here, same pattern as POSM's "Assets for this
     // piece" panel (`posmAssetOptions`/`pickPosmAsset`/`uploadPosmAsset`). Before this, `/cast-reference`
@@ -14715,7 +14737,7 @@ class Component extends DCLogic {
 
   // ---------- video generation ----------
   pickVideoObjective = (name) => () => {
-    this.setState({ videoObjective:name, videoConcept:null, videoRefusal:'', scriptVersions:[], scriptStatus:'none', fullScript:null, sceneFrames:{}, shoot:{}, producedUrl:null, scriptPhase:'concept', videoCharacters:'', videoLocationLine:'', castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null, renderInfo:null, castRefUrl:null, videoCastChoice:'', videoPlateChoice:'', videoPackChoice:'', frameNote:'', scriptRefine:'', production:{ aspect:'16:9', music:'Warm strings', voice:'Warm female (Telugu-accented English)', status:'idle', versions:[] } });
+    this.setState({ videoObjective:name, videoConcept:null, videoRefusal:'', scriptVersions:[], scriptStatus:'none', fullScript:null, sceneFrames:{}, shoot:{}, producedUrl:null, scriptPhase:'concept', videoCharacters:'', videoLocationLine:'', videoLookRef:'', castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null, renderInfo:null, castRefUrl:null, videoCastChoice:'', videoPlateChoice:'', videoPackChoice:'', frameNote:'', scriptRefine:'', production:{ aspect:'16:9', music:'Warm strings', voice:'Warm female (Telugu-accented English)', status:'idle', versions:[] } });
     // Same "surfaced up front" reasoning as POSM's loadPosmAssetLib: a real reference picker with
     // nothing loaded to pick from is just a slower text box.
     if (!this.state.videoAssets.length) this.loadVideoAssetLib();
@@ -14887,7 +14909,7 @@ class Component extends DCLogic {
   // Rules for every scene's "visual", because each one becomes ONE storyboard image (5 Oct live test: a scene that
   // listed three views came back as a three-panel collage, and a pack described by colour came back in those
   // colours instead of the real pack's). The real pack's look comes from the pack photo, never from the script.
-  VISUAL_RULES = 'One scene = one frame: describe a SINGLE moment seen from a SINGLE camera view, never a split screen, collage, montage or several views in one scene (a scene that needs more than one view must be split into separate scenes). When the product pack appears, call it only "the pack" or "the product pack" and describe how it is held or placed, never its colours, artwork or material — its real look comes from the pack photo.';
+  VISUAL_RULES = 'One scene = one frame: describe a SINGLE moment seen from a SINGLE camera view, never a split screen, collage, montage or several views in one scene (a scene that needs more than one view must be split into separate scenes). The "visual" describes ONLY what the camera sees: never put a tagline, title, locked copy, super line or any on-screen text in it — those belong in "supr" or the voiceover. A scene must not repeat another scene’s moment, and a time jump (the boy grows up) is shown by cutting between scenes, never inside one frame. Whenever a character appears at a different age or in different clothes from their usual look, name that age and those clothes in the scene’s visual (e.g. "the older mother in the cream saree"). When the product pack appears, call it only "the pack" or "the product pack" and describe how it is held or placed (including any pouring), never its colours, artwork or material — its real look comes from the pack photo.';
   writeFullScript = async () => {
     const vc = this.state.videoConcept;
     if (!vc || this.state.scriptWriting) return;
@@ -14899,17 +14921,25 @@ class Component extends DCLogic {
     if (window.claude && window.claude.complete) {
       try {
         const dur = this.state.prodDuration, rng = this.sceneRange(dur), n = rng.ideal;
+        // The range's floor (5 for a 30s film) forced a four-beat story to be padded, and the writer padded it by
+        // repeating scenes 1-2 as 5-6 (5 Oct live test). The floor now follows the concept's own beats -- but never
+        // below what one 8s Veo shot per scene can hold, and never above the range's ceiling.
+        const beats = Array.isArray(vc.scenes) ? vc.scenes.length : 0;
+        const secsTotal = parseInt(dur, 10) || 30;
+        const minScenes = beats ? Math.min(rng.max, Math.max(2, Math.ceil(secsTotal / 8), Math.min(rng.min, beats))) : rng.min;
         const pre = this.brandPreamble('a film director writing a shootable script', this.state.producerBrandMode === 'general');
         if (!pre) { this.showToast(this.BRAND_PREAMBLE_MISSING); this.setState({ scriptWriting:false }); return; }
         const packSuper = this.brandName() + (this.brandIdea() ? ' — ' + this.brandIdea() : '');
-        const prompt = pre + '\n\nConcept logline: "'+vc.logline+'". Concept beats: '+JSON.stringify(vc.scenes)+'. VO: "'+(vc.vo||'')+'". The finished film is '+dur+' long — write between '+rng.min+' and '+rng.max+' scenes — choose the number the story actually needs, and do not pad to reach it. No film may exceed '+rng.ceiling+' scenes: each shot is rendered separately and the shortest a shot can be is 4 seconds. Give timecodes that run continuously from 0s to '+dur+'. Every scene is rendered as its own shot, so each "visual" must be a self-contained, filmable description of what is on screen (who, where, what happens). '+this.VISUAL_RULES+' The final scene MUST end on the pack-shot super "'+(packSuper || 'this brand\u2019s name, written naturally — no other brand\u2019s')+'". Dialogue in English + Hinglish where natural.\n\nCASTING THE SOUND: when a person is on camera and would naturally speak, give them DIALOGUE in their own words — do not describe them with narration instead. Use the voiceover only to bridge between scenes or land the brand thought at the end. A film where every line is "vo" is wrong unless the concept is genuinely wordless observation; prefer a mix, with the recurring characters from the concept actually speaking to each other. EVERY scene needs an "audio" array — this is what actually gets voiced, so it must contain ONLY words to be spoken aloud. One entry per spoken line, in the order heard. Never put speaker names, stage directions, camera notes, SFX or on-screen text inside "text"; the performance note belongs in "emotion" and the character in "speaker". Use type "vo" for narration (the brand voice) and type "dialogue" for a character speaking on camera. A scene with no speech gets "audio": []. '+this.voBudgetNote(dur, n)+'\n\nReturn ONLY JSON: {"rows":[{"no":1,"tc":"0–5s","visual":"...","camera":"shot type & movement","dialogue":"human-readable script cell, e.g. Boy (half-asleep): Ammamma…","supr":"on-screen text","audio":[{"type":"dialogue","speaker":"Boy","age":"child","emotion":"half-asleep, sleepy","language":"en","text":"Ammamma... sky is still sleeping, no?"},{"type":"vo","emotion":"warm, unhurried","language":"en","text":"Pure doodh ki shakti."}]}]}';
+        const prompt = pre + '\n\nConcept logline: "'+vc.logline+'". Concept beats: '+JSON.stringify(vc.scenes)+'. VO: "'+(vc.vo||'')+'". The finished film is '+dur+' long — write between '+minScenes+' and '+rng.max+' scenes — '+(beats ? 'the concept has '+beats+' beats, so one scene per beat is the natural count; ' : '')+'choose the number the story actually needs. NEVER repeat, copy or near-duplicate a scene to reach a count: every scene must show a different moment. No film may exceed '+rng.ceiling+' scenes: each shot is rendered separately and the shortest a shot can be is 4 seconds. Give timecodes that run continuously from 0s to '+dur+'. Every scene is rendered as its own shot, so each "visual" must be a self-contained, filmable description of what is on screen (who, where, what happens). '+this.VISUAL_RULES+' The final scene MUST end on the pack-shot super "'+(packSuper || 'this brand\u2019s name, written naturally — no other brand\u2019s')+'". Dialogue in English + Hinglish where natural.\n\nCASTING THE SOUND: when a person is on camera and would naturally speak, give them DIALOGUE in their own words — do not describe them with narration instead. Use the voiceover only to bridge between scenes or land the brand thought at the end. A film where every line is "vo" is wrong unless the concept is genuinely wordless observation; prefer a mix, with the recurring characters from the concept actually speaking to each other. EVERY scene needs an "audio" array — this is what actually gets voiced, so it must contain ONLY words to be spoken aloud. One entry per spoken line, in the order heard. Never put speaker names, stage directions, camera notes, SFX or on-screen text inside "text"; the performance note belongs in "emotion" and the character in "speaker". Use type "vo" for narration (the brand voice) and type "dialogue" for a character speaking on camera. A scene with no speech gets "audio": []. '+this.voBudgetNote(dur, n)+'\n\nReturn ONLY JSON: {"rows":[{"no":1,"tc":"0–5s","visual":"...","camera":"shot type & movement","dialogue":"human-readable script cell, e.g. Boy (half-asleep): Ammamma…","supr":"on-screen text","audio":[{"type":"dialogue","speaker":"Boy","age":"child","emotion":"half-asleep, sleepy","language":"en","text":"Ammamma... sky is still sleeping, no?"},{"type":"vo","emotion":"warm, unhurried","language":"en","text":"Pure doodh ki shakti."}]}]}';
         // Anchors first, then the house rules, then the brief. Approved work shows the model what
         // "good" means here far better than any adjective, and the rules are corrections already
         // paid for once — repeating a mistake that was already flagged is the worst failure there is.
         const learned = ctx ? [ctx.anchor_text, ctx.rules_text].filter(Boolean).join('\n\n') : '';
         const locked = ctx && ctx.locked_copy && ctx.locked_copy.length
           ? '\n\nCopy that is LOCKED. Place these strings exactly as written — never paraphrase, '
-            + 'reword or re-render them:\n' + ctx.locked_copy.map(c => '- ' + c.text).join('\n')
+            + 'reword or re-render them. Place each one only where it is read or shown: in a spoken line ("audio"/"dialogue"), '
+            + 'the voiceover, or the on-screen "supr" column. NEVER write one into a scene’s "visual", which describes only '
+            + 'what the camera sees:\n' + ctx.locked_copy.map(c => '- ' + c.text).join('\n')
           : '';
         let raw = await this.complete((learned ? learned + '\n\n' : '') + prompt + locked);
         raw = String(raw).trim().replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();
@@ -14960,7 +14990,7 @@ class Component extends DCLogic {
     let text = null;
     if (window.claude && window.claude.complete) {
       try {
-        const prompt = 'From this ' + (this.brandRef() || 'brand') + ' commercial script, write ONE compact character sheet' + ' that will be sent with every generated storyboard frame so the same people appear in each shot. Cover each recurring person: role, age, build, hair, skin tone, wardrobe colour. Max 45 words, one paragraph, no preamble. SCRIPT: ' + JSON.stringify(this.scriptForPrompt(this.state.fullScript)) + (cast ? ' CAST DEPARTMENT NOTES: ' + cast : '');
+        const prompt = 'From this ' + (this.brandRef() || 'brand') + ' commercial script, write ONE compact character sheet' + ' that will be sent with every generated storyboard frame so the same people appear in each shot. Cover each recurring person: role, age, build, hair, skin tone, wardrobe colour. If a person appears at more than one age or in more than one outfit, give each version its own entry with its own wardrobe colour (e.g. "MOTHER (older): cream saree"). Max 60 words, one paragraph, no preamble. SCRIPT: ' + JSON.stringify(this.scriptForPrompt(this.state.fullScript)) + (cast ? ' CAST DEPARTMENT NOTES: ' + cast : '');
         let raw = await this.complete(prompt);
         text = String(raw).trim().replace(/^```/,'').replace(/```$/,'').trim();
       } catch (e) {}
@@ -14997,7 +15027,7 @@ class Component extends DCLogic {
   // What the lock image was made from. When this differs from the one stored at lock time the image is out of date.
   castSig(st){
     const s = st || this.state;
-    return JSON.stringify([(s.videoCharacters || '').trim(), this.locationText(s), s.videoCastChoice || '', s.videoPlateChoice || '']);
+    return JSON.stringify([(s.videoCharacters || '').trim(), this.locationText(s), s.videoCastChoice || '', s.videoPlateChoice || '', (s.videoLookRef || '').trim()]);
   }
   deriveLocationLine = async () => {
     const note = this.stripMd(this.plainDept((this.state.shoot.location || {}).text));
@@ -15013,6 +15043,23 @@ class Component extends DCLogic {
     return text || this.clipText(note, 220);
   };
   onVideoLocationLine = (e) => this.setState({ videoLocationLine: e.target.value });
+  onVideoLookRef = (e) => this.setState({ videoLookRef: e.target.value });
+  // Turns what was typed (a film's name, a mood, or rough notes) into concrete cinematography notes an image and
+  // video model can follow. The model works from memory of the film, so the result is a starting point to edit,
+  // not a fact; it is told to describe the look only (no people, sets, plot or quotes from the film).
+  deriveLookRef = async () => {
+    if (this.state.lookRefBusy) return;
+    const src = (this.state.videoLookRef || '').trim();
+    if (!src) { this.showToast('Type a film, a mood or a few rough notes first — then I can turn it into cinematography notes.'); return; }
+    this.setState({ lookRefBusy:true });
+    let text = null;
+    try {
+      const raw = await this.complete('Turn this look reference into concrete cinematography notes for an image and video model: lens and framing, light direction and quality, colour grade and contrast, texture and grain, and how the camera moves. Describe the LOOK only — no people, no sets, no plot, no quotes from the film, and do not name the film. Max 55 words, one paragraph, plain text, no preamble. LOOK REFERENCE: ' + src);
+      text = this.stripMd(String(raw).trim().replace(/^```/, '').replace(/```$/, '').trim());
+    } catch (e) {}
+    if (!text) { this.setState({ lookRefBusy:false }); this.showToast('Couldn’t write the notes — your text is unchanged.', 'warn'); return; }
+    this.setState({ lookRefBusy:false, videoLookRef:text });
+  };
 
   editScriptCell = (e) => {
     const idx = +e.target.getAttribute('data-row'); const field = e.target.getAttribute('data-cell'); const val = e.target.value;
@@ -15048,7 +15095,7 @@ class Component extends DCLogic {
     if (window.claude && window.claude.complete) {
       try {
         const secs = this.sceneSeconds(row);
-        const prompt = 'Rewrite ONE scene of a ' + (this.brandRef() || 'brand') + ' commercial script for an Indian crew' + ', keeping continuity with the film logline "'+(vc?vc.logline:'')+'". Current scene: '+JSON.stringify(this.scriptForPrompt([row])[0])+'. This scene runs about '+secs+' seconds, and a voice reads ~2 words per second, so all spoken "text" in this scene together must stay under '+Math.max(4, Math.round(secs*2))+' words. '+this.VISUAL_RULES+' The "audio" array holds ONLY spoken words — no speaker names, stage directions, SFX or on-screen text in "text" (those go in "speaker"/"emotion"); type is "vo" for narration or "dialogue" for a character. Return ONLY JSON: {"no":'+row.no+',"tc":"'+row.tc+'","visual":"...","camera":"...","dialogue":"...","supr":"...","audio":[{"type":"vo","emotion":"warm","language":"en","text":"spoken words only"}]}';
+        const prompt = 'Rewrite ONE scene of a ' + (this.brandRef() || 'brand') + ' commercial script for an Indian crew' + ', keeping continuity with the film logline "'+(vc?vc.logline:'')+'". Current scene: '+JSON.stringify(this.scriptForPrompt([row])[0])+'. The other scenes already show: '+JSON.stringify((this.state.fullScript||[]).filter((_r,j)=>j!==idx).map(r2=>r2.visual))+' — the rewritten scene must show a different moment from each of them. This scene runs about '+secs+' seconds, and a voice reads ~2 words per second, so all spoken "text" in this scene together must stay under '+Math.max(4, Math.round(secs*2))+' words. '+this.VISUAL_RULES+' The "audio" array holds ONLY spoken words — no speaker names, stage directions, SFX or on-screen text in "text" (those go in "speaker"/"emotion"); type is "vo" for narration or "dialogue" for a character. Return ONLY JSON: {"no":'+row.no+',"tc":"'+row.tc+'","visual":"...","camera":"...","dialogue":"...","supr":"...","audio":[{"type":"vo","emotion":"warm","language":"en","text":"spoken words only"}]}';
         let raw = await this.complete(prompt);
         raw = String(raw).trim().replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();
         next = JSON.parse(raw.slice(raw.indexOf('{'), raw.lastIndexOf('}')+1));
@@ -15065,6 +15112,23 @@ class Component extends DCLogic {
   };
 
   regenFullScript = () => { this.setState({ fullScript:null }); this.writeFullScript(); };
+  // Pairs of scenes whose visuals say the same thing (identical, or sharing 75%+ of their meaningful words): the
+  // later one repeats the earlier. Deterministic, no model call -- it only points, the person decides.
+  scriptRepeats(rows){
+    const words = (t) => new Set(String(t || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(w => w.length > 3));
+    const sets = (rows || []).map(r => words(r && r.visual));
+    const out = [];
+    for (let j = 1; j < sets.length; j++) {
+      if (sets[j].size < 4) continue;
+      for (let i = 0; i < j; i++) {
+        if (sets[i].size < 4) continue;
+        let both = 0; sets[j].forEach(w => { if (sets[i].has(w)) both++; });
+        const sim = both / (sets[i].size + sets[j].size - both);
+        if (sim >= 0.75) { out.push({ earlier:i, later:j }); break; }
+      }
+    }
+    return out;
+  }
 
   approveScript = () => {
     if (!this.state.fullScript) return;
@@ -15219,12 +15283,15 @@ class Component extends DCLogic {
     // production document, not a description of what the camera sees.
     const locNote = this.locationText();
     const prompt = [row.visual, row.camera ? 'Camera: ' + row.camera + '.' : '',
-      locNote ? 'Location: ' + locNote : '', deptNote('dop', 'Director of photography'),
+      locNote ? 'Location: ' + locNote : '', deptNote('dop', 'Director of photography'), deptNote('lighting', 'Lighting'),
       deptNote('props', 'Props'), deptNote('wardrobe', 'Wardrobe'), note,
       // This frame's own correction goes last so it has the final word over the film-wide note above.
       (row.frame_note || '').trim()].filter(Boolean).join(' ');
     const body = { scene_no: row.no || idx+1, prompt, ratio:'16:9', style:this.state.videoStyle,
                    engines:this.state.engines, video_frame:true };
+    // The written look reference rides with the style, not inside the scene text.
+    const lookRef = (this.state.videoLookRef || '').trim();
+    if (lookRef) body.look_note = lookRef;
     const chars = (this.state.videoCharacters || '').trim();
     if (chars) body.characters = chars;
     // The reference image is what actually holds the characters together.
@@ -15277,7 +15344,7 @@ class Component extends DCLogic {
     // look like a pack frame. `pack_used` is "attached", not "drawn"; the server cannot see the picture.
     const packMissing = !!(body.include_pack && res && res.image_url && (res.from_reference === false || res.pack_used === false));
     if (res && res.image_url) this.setState(s => ({ framesProvider: res.provider || s.framesProvider,
-      sceneFrames:{ ...s.sceneFrames, [idx]:{ status:'done', url:res.image_url, provider:res.provider||'', sig, packMissing } } }));
+      sceneFrames:{ ...s.sceneFrames, [idx]:{ status:'done', url:res.image_url, provider:res.provider||'', sig, packMissing, look:lookRef } } }));
     else this.setState(s => ({ sceneFrames:{ ...s.sceneFrames, [idx]:{ status:'error', url:null } } }));
   };
   generateAllFrames = async () => {
@@ -15453,7 +15520,7 @@ class Component extends DCLogic {
       this.setState({ conceptRoutes: routes.length > 1 ? routes : [], conceptRoute:0 });
       if (!isRefine) this.addCreated(this.videoItem(obj, data));
       this.setState(s => ({ videoGenerating:false, videoConcept:data, refinePrompt:'', videoRefusal:'',
-        scriptStatus:'concept', fullScript:null, sceneFrames:{}, scriptPhase:'concept', videoCharacters:'', videoLocationLine:'', castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null,
+        scriptStatus:'concept', fullScript:null, sceneFrames:{}, scriptPhase:'concept', videoCharacters:'', videoLocationLine:'', videoLookRef:'', castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null,
         scriptVersions: [...s.scriptVersions, { v:s.scriptVersions.length+1, logline:data.logline, note: isRefine ? s.refinePrompt.trim() : 'Initial draft', duration:data.duration }],
         videoCheck: this.runCreativeCheck([data.logline, (data.scenes||[]).map(x=>x.title+' '+x.desc).join(' ')]) }));
     } catch (err) {
@@ -15475,7 +15542,7 @@ class Component extends DCLogic {
     if (!r || this.state.conceptRoute === i) return;
     // Switching route invalidates everything downstream — script, frames, cast, cut.
     this.setState({ conceptRoute:i, videoConcept:r, scriptStatus:'concept', fullScript:null,
-                    sceneFrames:{}, castRefUrl:null, videoCharacters:'', videoLocationLine:'', castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null,
+                    sceneFrames:{}, castRefUrl:null, videoCharacters:'', videoLocationLine:'', videoLookRef:'', castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null,
                     producedUrl:null, renderInfo:null, scriptPhase:'concept', voicePlan:null });
     this.showToast('Route ' + (i+1) + ' loaded — ' + (r.name || 'concept') + '.', 'ok');
   };
@@ -15575,6 +15642,8 @@ class Component extends DCLogic {
     // does from words alone — see /cast-reference's own docstring for why that matters.
     if (this.state.videoCastChoice) body.cast_id = this.state.videoCastChoice;
     if (this.state.videoPlateChoice) body.plate_id = this.state.videoPlateChoice;
+    const lookRef = (this.state.videoLookRef || '').trim();
+    if (lookRef) body.look_note = lookRef;
     return body;
   }
   // Three options for the lock, drawn from the same cast sheet and location. Picking one IS the lock -- it is not
@@ -15855,6 +15924,9 @@ class Component extends DCLogic {
     // RESOLVED tier — the raw state can hold a tier the current engine has no model for.
     body.tier = this.tierNow();
     body.model = body.tier === 'standard' ? 'veo-3.1' : 'veo-3.1-fast';
+    // The look reference also reaches the video prompt (it matters most for shots with no storyboard frame).
+    const lookRef = (this.state.videoLookRef || '').trim();
+    if (lookRef) body.look_note = lookRef;
     const r = await this.apiCall('/produce-video', body);
     const d = (r && r.data) || {};
     const url = (r && r.ok && d.video_url) ? d.video_url : null;
@@ -16387,7 +16459,7 @@ class Component extends DCLogic {
       no: r.no || String(i + 1), tc: r.tc || '', visual: r.visual || '', supr: r.supr || '' })) });
     this.showToast(rows.length + ' board row' + (rows.length === 1 ? '' : 's') + ' pulled \u2014 each take can be keyed against the frame it is for.', 'ok');
   };
-  openVideoFromCampaign = () => { const c = this.state.campaign; this.setState({ screen:'video', videoConcept: c ? c.video : null, linkedBrief: c ? c.brief : null, videoObjective:'Campaign film', scriptStatus: (c && c.video) ? 'concept' : 'none', scriptPhase:'concept', videoStep:'scripting', fullScript:null, sceneFrames:{}, videoCharacters:'', videoLocationLine:'', castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null, renderInfo:null, castRefUrl:null });
+  openVideoFromCampaign = () => { const c = this.state.campaign; this.setState({ screen:'video', videoConcept: c ? c.video : null, linkedBrief: c ? c.brief : null, videoObjective:'Campaign film', scriptStatus: (c && c.video) ? 'concept' : 'none', scriptPhase:'concept', videoStep:'scripting', fullScript:null, sceneFrames:{}, videoCharacters:'', videoLocationLine:'', videoLookRef:'', castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null, renderInfo:null, castRefUrl:null });
     this.loadGrounding(); this.loadVideoStandsOn(); }; // round 92: video's own six-entry-point audit
 
   // ---------- campaign analysis ----------
@@ -16946,7 +17018,9 @@ class Component extends DCLogic {
                  tint: isVo ? '#FDF6E6' : '#F2F7F3', fg: isVo ? '#8A6D1F' : '#1E7E34' };
       });
       // A frame rendered before the words or the timing changed is showing the wrong shot.
-      const stale = f.status === 'done' && !!f.sig && f.sig !== this.sceneSig(r);
+      // Also out of date when the look reference changed after the frame was drawn (a frame from before the look
+      // reference existed has no `look`, which counts as empty -- so only a look set or changed since flags it).
+      const stale = f.status === 'done' && ((!!f.sig && f.sig !== this.sceneSig(r)) || (f.look || '') !== (s.videoLookRef || '').trim());
       // Words typed here but no line in the spoken plan means this scene will render silent — the
       // text reads as a stage direction or a placeholder. Say so on the card rather than letting the
       // VO simply go missing in the mix.
@@ -17989,8 +18063,15 @@ class Component extends DCLogic {
           value: s.videoCastChoice || '', pick: this.pickVideoAsset('videoCastChoice'),
           upload: this.uploadVideoAsset('cast', 'videoCastChoice'), status, hasStatus: !!status };
       })(),
+      // Scenes that repeat an earlier scene, each with a one-click rewrite (which is told what the other scenes show).
+      scriptRepeatNotes: this.scriptRepeats(s.fullScript).map(p => ({
+        text: 'Scene ' + this.sceneNo((s.fullScript || [])[p.later], p.later) + ' repeats Scene ' + this.sceneNo((s.fullScript || [])[p.earlier], p.earlier) + '.',
+        label: '↻ Rewrite scene ' + this.sceneNo((s.fullScript || [])[p.later], p.later), fix: this.rewriteScene(p.later) })),
+      hasScriptRepeats: this.scriptRepeats(s.fullScript).length > 0,
       // The lock, its three-option alternative, and whether the lock is out of date.
       videoLocationLine: s.videoLocationLine || '', onVideoLocationLine: this.onVideoLocationLine,
+      videoLookRef: s.videoLookRef || '', onVideoLookRef: this.onVideoLookRef, deriveLookRef: this.deriveLookRef,
+      lookRefLabel: s.lookRefBusy ? 'Writing notes…' : '✦ Write notes from this',
       generateCastOptions: this.generateCastOptions,
       castOptionsLabel: s.castOptionsBusy ? 'Drawing 3 options…' : '◫ Show me 3 options',
       hasCastOptions: (s.castOptions || []).length > 0,
@@ -20304,7 +20385,8 @@ class Component extends DCLogic {
     this.setState({ videoObjective: d.video_objective, videoConcept: d.video_concept,
       scriptStatus: d.script_status || 'none', scriptPhase: d.script_phase || 'concept',
       fullScript: d.full_script, sceneFrames: d.scene_frames || {}, shoot: cleaned.shoot,
-      videoCharacters: d.video_characters || '', videoLocationLine: d.video_location_line || '' });
+      videoCharacters: d.video_characters || '', videoLocationLine: d.video_location_line || '',
+      videoLookRef: d.video_look_ref || '' });
     if (cleaned.count) this.showToast('Removed questions from ' + cleaned.count + ' department draft' + (cleaned.count === 1 ? '' : 's') + ' — they were written as questions to you, not as direction.');
   };
   cleanShootDrafts(shoot){
@@ -20325,7 +20407,8 @@ class Component extends DCLogic {
     await this.apiCall('/video-script', { house: houseId, video_objective: s.videoObjective,
       video_concept: s.videoConcept, script_status: s.scriptStatus, script_phase: s.scriptPhase,
       full_script: s.fullScript, scene_frames: s.sceneFrames, shoot: s.shoot,
-      video_characters: s.videoCharacters, video_location_line: s.videoLocationLine });
+      video_characters: s.videoCharacters, video_location_line: s.videoLocationLine,
+      video_look_ref: s.videoLookRef });
   };
   saveVideoScriptDebounced = () => {
     clearTimeout(this._videoScriptSaveTimer);
@@ -20368,7 +20451,8 @@ class Component extends DCLogic {
     // screen/house itself just changed, so arriving at a fresh house never saves over its own load.
     const vsig = { fullScript: s.fullScript, videoCharacters: s.videoCharacters, sceneFrames: s.sceneFrames,
                    shoot: s.shoot, videoConcept: s.videoConcept, scriptStatus: s.scriptStatus,
-                   scriptPhase: s.scriptPhase, videoObjective: s.videoObjective, videoLocationLine: s.videoLocationLine };
+                   scriptPhase: s.scriptPhase, videoObjective: s.videoObjective, videoLocationLine: s.videoLocationLine,
+                   videoLookRef: s.videoLookRef };
     const vPrev = this._videoScriptSig || {};
     const vChanged = Object.keys(vsig).some(k => vsig[k] !== vPrev[k]);
     this._videoScriptSig = vsig;

@@ -35,7 +35,7 @@ DIR = tenancy.dir("filmscripts")
 # is Phase 1 of the gap, the part that loses real authored work (a written script, a department note, a
 # rendered frame) rather than a picked option that costs one click to redo.
 FIELDS = ("video_objective", "video_concept", "script_status", "script_phase",
-          "full_script", "scene_frames", "shoot", "video_characters", "video_location_line")
+          "full_script", "scene_frames", "shoot", "video_characters", "video_location_line", "video_look_ref")
 
 
 def _now() -> str:
@@ -49,7 +49,7 @@ def _path(house_id: str) -> str:
 def _blank(house_id: str) -> dict:
     return {"house": house_id, "video_objective": None, "video_concept": None,
             "script_status": "none", "script_phase": "concept", "full_script": None,
-            "scene_frames": {}, "shoot": {}, "video_characters": "", "video_location_line": "", "updated": ""}
+            "scene_frames": {}, "shoot": {}, "video_characters": "", "video_location_line": "", "video_look_ref": "", "updated": ""}
 
 
 def load(house_id: str) -> dict:
@@ -93,6 +93,9 @@ def save(house_id: str, data: dict) -> dict:
         # A page opened before this field existed never sends the key; keep what is saved rather than blanking it.
         "video_location_line": (str(data.get("video_location_line") or "") if "video_location_line" in data
                                 else str(load(house_id).get("video_location_line") or "")),
+        # The written look reference (cinematography notes the film should resemble); same absent-key guard.
+        "video_look_ref": (str(data.get("video_look_ref") or "") if "video_look_ref" in data
+                           else str(load(house_id).get("video_look_ref") or "")),
         "updated": _now(),
     }
     tmp = _path(house_id) + ".tmp"

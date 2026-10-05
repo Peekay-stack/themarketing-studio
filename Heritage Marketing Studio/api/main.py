@@ -1151,6 +1151,7 @@ def produce_video(payload: dict):
 
     style = str(payload.get("style") or "real").lower()
     look = _VID_STYLES.get(style, _VID_STYLES["real"])
+    look = _with_look_note(look, payload)         # Video's written look reference; absent -> unchanged
 
     def frame_for(seg) -> str:
         """The approved storyboard frame for this beat, if one was rendered."""
@@ -1538,6 +1539,16 @@ _VID_STYLES = {
 }
 
 
+def _with_look_note(style_text: str, payload: dict) -> str:
+    """Append Video's written look reference (`look_note`: lens, light, grade, texture, camera behaviour the film
+    should resemble) to a style sentence. Returns `style_text` UNCHANGED when the payload has no note, so every
+    caller that never sends one keeps its prompt byte-for-byte."""
+    note = " ".join(str(payload.get("look_note") or "").split())[:600]
+    if not note:
+        return style_text
+    return f"{style_text} Cinematography and look to follow: {note}"
+
+
 @app.get("/image-styles")
 def image_styles():
     """The looks a frame or film can be rendered in, for the style picker."""
@@ -1588,6 +1599,9 @@ def cast_reference(payload: dict):
         return JSONResponse(status_code=400, content={"detail": "Describe the cast first."})
     style = str(payload.get("style") or "real").lower()
     craft = _IMG_STYLES.get(style, _IMG_STYLES["real"])
+    # Video's written look reference (cinematography notes the person wants the film to resemble). Absent for
+    # every other caller, which keeps their prompts exactly as they were.
+    craft = _with_look_note(craft, payload)
     # The route's own hero type (`posm.HERO_TYPES`), e.g. "person-in-benefit" — carries WHO this is
     # meant to be (the consumer, a known endorser) into the actual words the model reads, which used to
     # stop at `characters`' free text alone. Same fix as `/posm-image`'s `cutout_prompt`.
@@ -1703,6 +1717,7 @@ def scene_still(payload: dict):
     ratio = payload.get("ratio") or "1:1"
     style = str(payload.get("style") or "real").lower()
     craft = _IMG_STYLES.get(style, _IMG_STYLES["real"])
+    craft = _with_look_note(craft, payload)       # Video's written look reference; absent elsewhere
     subject = str(payload.get("prompt", "")).strip() or "brand key visual"
     characters = str(payload.get("characters", "")).strip()
     # A cast reference image pins identity in a way text never can — use it when we have one.
@@ -2106,7 +2121,8 @@ def video_script_get(house: str = ""):
 @app.post("/video-script")
 def video_script_save(payload: dict):
     """Save the Video producer's current draft whole. `{house, video_objective, video_concept,
-    script_status, script_phase, full_script, scene_frames, shoot, video_characters, video_location_line}`.
+    script_status, script_phase, full_script, scene_frames, shoot, video_characters, video_location_line,
+    video_look_ref}`.
 
     `{house, clear:true}` drops the saved draft instead — a fresh "start a new one" should not leave a
     stale file behind for the next visit to this house's Video screen to accidentally resurrect.
