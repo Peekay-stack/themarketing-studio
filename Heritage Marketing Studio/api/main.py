@@ -1947,6 +1947,15 @@ def scene_still(payload: dict):
                 else:
                     _roles.append("")
             _video_ref_note = packscene.video_ref_note([r for r in _roles if r]) if all(_roles) else ""
+            # The cast sheet only ever reached the text-only fallback, never a frame that has a reference image -- so
+            # "MOTHER (older): cream saree" was never told to the model, which then guessed which of the two mothers in
+            # the locked image a scene meant (5 Oct real-render test: the young mother in the older mother's saree and
+            # the reverse). Told here, with the rule for people who appear in more than one version.
+            if characters:
+                _video_ref_note += ("Cast sheet for this film -- who is who: " + characters[:900].rstrip(" .") + ". "
+                                    "A person listed in more than one version (a different age or outfit) must be shown "
+                                    "as the version this shot's description calls for, with that version's own clothes "
+                                    "and apparent age -- never in another version's clothes. ")
             # A scene that pours from or opens the pack needs the pack in ACTION: the default clause (front-on, never
             # redrawn) is for a pack shot and cancels a pour -- frame 2 of the 5 Oct test held the pack over the glass
             # with no milk coming out.

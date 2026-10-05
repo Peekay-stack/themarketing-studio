@@ -15310,8 +15310,11 @@ class Component extends DCLogic {
       // Which specific pack, picked once in the assets panel — /scene-still otherwise falls back to
       // whichever pack is most recently signed off, same gap `pack_id` was added to close for POSM.
       if (this.state.videoPackChoice) body.pack_id = this.state.videoPackChoice;
-    } else if (typeof row.include_pack === 'boolean') {
-      body.include_pack = false;       // explicitly un-ticked on the card: never, whatever the scene says
+    } else if (this.state.videoPackChoice || typeof row.include_pack === 'boolean') {
+      // With a pack picked, the checkbox is the whole truth: unticked means NO pack on this frame. Left unsent, the
+      // server's word-matcher decided -- and it reads the whole prompt, so the Location line's "a tall glass of milk"
+      // put the pack into every frame, ticked or not (5 Oct real-render test).
+      body.include_pack = false;
     }
     // The pick rides on EVERY frame as `pack_pref`: it does not force the pack in, it decides WHICH pack when the
     // scene's own words pull one in (before, that path took the newest signed-off pack, not the picked one).
@@ -21753,10 +21756,15 @@ class Component extends DCLogic {
   // choice made, the CLOSING scene carries the pack once one is picked in the assets panel (an ad ends on its
   // pack shot), and every other scene leaves it to /scene-still's own reading of the scene text.
   packOnFrame = (idx) => {
-    const s = this.state; const chosen = ((s.fullScript || [])[idx] || {}).include_pack;
+    const s = this.state; const row = (s.fullScript || [])[idx] || {}; const chosen = row.include_pack;
     if (typeof chosen === 'boolean') return chosen;
-    return !!s.videoPackChoice && idx === ((s.fullScript || []).length - 1);
+    return !!s.videoPackChoice && (idx === ((s.fullScript || []).length - 1) || this.sceneNamesPack(row.visual));
   };
+  // Whether a scene's OWN visual names the product pack ("the pack", "the pouch", "a sachet"...). "A glass of milk" does
+  // not -- that is the milk, not the pack.
+  sceneNamesPack(visual){
+    return /\b(?:pack(?:et|s|age)?|pouch(?:es)?|sachets?|cartons?|milk\s+bags?|bags?\s+of\s+milk)\b/i.test(String(visual || ''));
+  }
   toggleSceneIncludePack = (idx) => () => {
     const next = !this.packOnFrame(idx);
     this.setState(s => ({ fullScript: (s.fullScript || []).map((r, i) => i === idx ? { ...r, include_pack: next } : r) }));
