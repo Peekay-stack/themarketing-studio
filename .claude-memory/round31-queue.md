@@ -301,3 +301,12 @@ re-render, no single-frame correction. All four shipped, confirmed live via `/se
   (09:48Z: script fixes, look ref), ddf547f (10:01Z: reference labels, pack-in-use) -- those changes are untested on a real render. Known, not fixed (pre-existing or by design): castRefUrl never persisted; switching
   HOUSE inside Video keeps the previous house's lock/options (the new house's sheet/line/look load fresh, so the out-of-date marker will show); Re-derive overwrites a hand-typed Location line like the cast sheet; the
   production-bible Word file does not include the Look reference; the 12 old identical "Carousel cast" items are not renamed.
+- **5 Oct (late): owner's first real-render test of the script fixes (b236d95) + F1/F2 (ddf547f) -- RESULTS, plan only.** WORKED (visible in the screenshots): 5 distinct scenes (no repeats, no banner), ages
+  progress correctly (6 / 11 / 17 / young man), no collage, no tall-son-in-pack-frame, pack colours correct (orange) in frames 2/3/5, cast sheet lists each age/outfit separately (MOTHER young/older, SON x3), Location
+  line matches its note, 3-option lock = clean 5-person lineup, "Inputs to guide generation" gone, "What informed this script?" present. NOT WORKING: (1) pack appears in frames 1-4 although only scene 5 is ticked --
+  PROVEN locally: the server's words-heuristic (`want_pack` regex incl. `\bglass of milk\b`) runs over the WHOLE prompt, and the derived Location line says "a tall glass of milk sits on the table", so every
+  frame matches; with an explicit `include_pack:false` the pack is correctly left out. The checkbox therefore lies (unticked but pack attached) -- 19 Sep lesson. Fix = Video always sends an explicit include_pack
+  (default tick = closing scene or the scene's OWN visual naming the pack/pouch). (2) mother's saree swaps (frame 1 young mother in cream, frame 4 mother green though "older") -- PROVEN: `characters` (the cast
+  sheet) is only used in the no-reference fallback branch of `/scene-still`, so with a lock image attached the model never sees "MOTHER (older): cream saree". Fix = video_frame prompt carries the cast sheet.
+  (3) concept VO ("She never made a speech...") is not in the script -- only 2 spoken lines; owner to decide. Not yet exercised on a real render: Look reference (box empty), Lighting/DoP/Props/Wardrobe notes
+  (Shoot Board still locked, so undrafted), the in-use pour wording (no scene pours from the pack).
