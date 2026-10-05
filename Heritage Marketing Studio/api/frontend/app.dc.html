@@ -12552,8 +12552,10 @@ class Component extends DCLogic {
     if (what === 'script') {
       // Straight into the editable script. Approval is reset on purpose: what came back is a
       // draft from outside this system and has not been through the Shoot Board yet.
-      this.setState({ fullScript: d.rows, scriptStatus:'drafted', sceneFrames:{},
-                      plannedSeconds:0, voicePlan:null, videoStep:'scripting', scriptPhase:'script' });
+      // The per-scene card choices (camera movement, pack tick, matched shot, frame note) are not in the Word file, so
+      // they are carried over from the script being replaced, by scene number, instead of being lost.
+      this.setState(st => ({ fullScript: this.keepSceneExtras(d.rows, st.fullScript), scriptStatus:'drafted', sceneFrames:{},
+                      plannedSeconds:0, voicePlan:null, videoStep:'scripting', scriptPhase:'script' }));
     } else {
       this.setState(st => ({ imc: { ...st.imc, draft: { ...(st.imc.draft || this.blankDraft()), ...d.fields },
                                     status:'ready', message:'Read back from your edited document — review each tab.' } }));
@@ -15417,8 +15419,25 @@ class Component extends DCLogic {
     if (!s.includes('?')) return s;
     // Line by line, so a heading or bullet with no full stop is kept; within a line only the sentences that end in
     // "?" are dropped.
-    return s.split('\n').map(line => (line.match(/[^.!?]+[.!?]*\s*/g) || [])
-      .filter(x => !/\?\s*$/.test(x)).join('').trim()).filter(Boolean).join('\n');
+    // A sentence ends at . ! or ? only when whitespace (or the end of the line) follows, so "3.5 litre" and "a?b" stay
+    // whole.
+    const sentences = (line) => {
+      const out = []; let cur = '';
+      for (let i = 0; i < line.length; i++) {
+        cur += line[i];
+        if ('.!?'.indexOf(line[i]) >= 0 && (i === line.length - 1 || /\s/.test(line[i + 1]))) {
+          let j = i + 1; while (j < line.length && /\s/.test(line[j])) { cur += line[j]; j++; }
+          i = j - 1; out.push(cur); cur = '';
+        }
+      }
+      if (cur) out.push(cur);
+      return out;
+    };
+    let dropped = false;
+    const out = s.split('\n').map(line => sentences(line)
+      .filter(x => { const q = /\?\s*$/.test(x); if (q) dropped = true; return !q; }).join('').trim()).filter(Boolean).join('\n');
+    // Only a text that actually had a question sentence is rewritten; a "?" inside a word or number leaves it exactly as typed.
+    return dropped ? out : s;
   }
   draftDept = (id) => async () => {
     if ((this.state.shoot[id]||{}).status==='drafting') return;
