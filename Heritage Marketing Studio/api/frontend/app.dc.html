@@ -2860,7 +2860,7 @@
                   <!-- Item 2 \u2014 match this scene's blocking/orientation to an earlier approved frame. -->
                   <sc-if value="{{ sc.hasSiblings }}" hint-placeholder-val="{{ false }}">
                     <select value="{{ sc.siblingValue }}" onChange="{{ sc.setSibling }}" style="width:100%; margin-top:7px; border:1px solid #DDD9D1; border-radius:8px; padding:5px 7px; font-size:11.5px; color:#41505F; background:#fff; font-family:inherit;">
-                      <option value="">Match this to another shot\u2026</option>
+                      <option value="">Match this to another shot…</option>
                       <sc-for list="{{ sc.siblingChoices }}" as="sib" hint-placeholder-count="0">
                         <option value="{{ sib.value }}">{{ sib.label }}</option>
                       </sc-for>
