@@ -2839,6 +2839,9 @@
                     <label style="display:flex; align-items:center; gap:6px; margin-top:7px; font-size:11.5px; color:#41505F; cursor:pointer;">
                       <input type="checkbox" checked="{{ sc.includePack }}" onChange="{{ sc.toggleIncludePack }}" style="margin:0;" />Include the locked pack
                     </label>
+                    <sc-if value="{{ sc.packMissing }}" hint-placeholder-val="{{ false }}">
+                      <div style="margin-top:5px; font-size:11px; line-height:1.45; color:#B07A12; font-weight:700;">The pack was not attached to this frame — check it is signed off in Memory, then re-render.</div>
+                    </sc-if>
                   </sc-if>
                   <!-- Per-frame correction: direction for THIS frame only, applied the next time it renders (the
                        ↻ on the frame). The box under "Rework the frames" still applies to every frame. -->
@@ -15161,6 +15164,15 @@ class Component extends DCLogic {
     // scene's own words pull one in (before, that path took the newest signed-off pack, not the picked one).
     // `pack_mode:'auto'` also lets "pouch"/"sachet" count as naming the product, as Social and Carousel already do.
     if (this.state.videoPackChoice) { body.pack_pref = this.state.videoPackChoice; body.pack_mode = 'auto'; }
+    // A frame carries at most 3 reference images: the locked cast+location image (always first), the pack, a
+    // "match another shot" frame, a location photo, a library cast. The Real references picks were only ever sent
+    // to the LOCK call, so every frame also attached the library's NEWEST signed-off cast (and plate) whether or
+    // not you picked it -- a possibly different person, and a slot the pack then lost. Now only an explicit pick
+    // is attached; the lock image was built from that pick already.
+    if (this.state.videoCastChoice) { body.use_cast = true; body.cast_id = this.state.videoCastChoice; }
+    else body.use_cast = false;
+    if (this.state.videoPlateChoice) body.plate_id = this.state.videoPlateChoice;
+    else body.use_plate = false;
     // one fixed seed per film — every frame reuses it so the look stays consistent
     let seed = this.state.videoSeed;
     if (!seed) { seed = Math.floor(Math.random()*900000) + 100000; this.setState({ videoSeed: seed }); }
@@ -15170,8 +15182,11 @@ class Component extends DCLogic {
     // Stamp the frame with the scene it was rendered from, so a later dialogue or timing change can
     // be seen for what it is rather than silently leaving a mismatched still on the board.
     const sig = this.sceneSig((this.state.fullScript || [])[idx] || row);
+    // The pack was asked for (ticked) but not attached -- say so on the card instead of letting a pack-less frame
+    // look like a pack frame. `pack_used` is "attached", not "drawn"; the server cannot see the picture.
+    const packMissing = !!(body.include_pack && res && res.image_url && (res.from_reference === false || res.pack_used === false));
     if (res && res.image_url) this.setState(s => ({ framesProvider: res.provider || s.framesProvider,
-      sceneFrames:{ ...s.sceneFrames, [idx]:{ status:'done', url:res.image_url, provider:res.provider||'', sig } } }));
+      sceneFrames:{ ...s.sceneFrames, [idx]:{ status:'done', url:res.image_url, provider:res.provider||'', sig, packMissing } } }));
     else this.setState(s => ({ sceneFrames:{ ...s.sceneFrames, [idx]:{ status:'error', url:null } } }));
   };
   generateAllFrames = async () => {
@@ -16815,7 +16830,7 @@ class Component extends DCLogic {
         siblingValue: chosenSibling != null ? String(chosenSibling) : '',
         setSibling: this.setSceneSibling(i),
         includePack: this.packOnFrame(i), toggleIncludePack: this.toggleSceneIncludePack(i),
-        hasPackLocked: !!s.videoPackChoice,
+        hasPackLocked: !!s.videoPackChoice, packMissing: !!f.packMissing,
         frameNote: r.frame_note || '', editFrameNote: this.editFrameNote(i),
         lines, hasLines: lines.length > 0, isSilent: lines.length === 0, willBeSilent,
         addVo: this.addSceneLine(i, 'vo'), addLine: this.addSceneLine(i, 'dialogue'),

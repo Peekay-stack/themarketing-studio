@@ -1812,6 +1812,13 @@ def scene_still(payload: dict):
                     "has_pack": _keep_pack, "has_plate": False}
     want = [u for u in lib_refs["refs"]
             if not (u == lib_refs["plate"] and payload.get("use_plate") is False)]
+    if payload.get("video_frame"):
+        # A frame carries at most three references and the loop below fills them in order. The library lists
+        # cast first, so a signed-off cast took the slot the pack needed (5 Oct: the pack was dropped, silently,
+        # whenever a "match another shot" frame was also attached). For Video frames the pack outranks the
+        # location photo, which outranks the library cast -- the locked cast+location image the caller sends
+        # first already carries the cast. Social, Carousel, POSM and /shot-reference keep the library order.
+        want.sort(key=lambda u: 0 if (u and u == lib_refs["pack"]) else (1 if (u and u == lib_refs["plate"]) else 2))
     for u in want:
         if len(refs) >= 3:
             break
