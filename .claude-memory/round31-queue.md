@@ -229,3 +229,11 @@ re-render, no single-frame correction. All four shipped, confirmed live via `/se
   "Save to Memory" (YES); (3) start Phase 0 (DONE). (2) clean old question drafts: not understood -> my default = leave boxes alone, clean Word export,
   small "contains a question" hint (awaiting nod). Remaining: Phase 1 (persist/reset pack ticks+sibling per scene, rework keeps row extras, question
   drafts), Phase 2 (status lines, Location line, 3-option cast+location generator, out-of-date lock marker), Phase 3 (`…`).
+- **5 Oct: Phase 1 of the revised Video plan SHIPPED live (`78d8498`)** -- frontend only. Pack tick + "match another shot" moved from index-keyed state
+  maps (`sceneIncludePack`/`sceneSiblingRef`, now removed) onto the script row (`include_pack`, `match_no` = scene number) so they save with the script and
+  a new script starts clean; `SCENE_EXTRAS` (frame_note, movement_class, include_pack, match_no) stripped from rework/cast-sheet/dept-draft/rewrite prompts
+  (`scriptForPrompt`) and carried onto reworked rows by scene number (`keepSceneExtras`; frame_note only if the scene's visual is unchanged, also dropped on
+  single-scene rewrite when visual changes); question-style dept drafts cleaned on load (`cleanShootDrafts`, toast; all-question draft -> idle/empty) and in
+  the production-bible export. Owner approved cleaning ("go ahead"), so the "hint only" default was NOT used. Tested on the real page with stubs (load,
+  autosave carries the tick, sibling, no leak into a new script, rework, rewrite, export). Remaining: Phase 2 (status lines, Location line, 3-option
+  cast+location generator, out-of-date lock marker), Phase 3 (`…`).
