@@ -293,3 +293,11 @@ re-render, no single-frame correction. All four shipped, confirmed live via `/se
   approved examples, house rules and flags locked copy found inside a scene's VISUAL with one-click rewrites -- the owner can now trace "One standard, one source"; I could not read the live
   Memory myself. Verified on the real page with stubs + unit test + regression suite + selfcheck 1253. Still open: nothing on the findings list; next real step = owner's retest on real renders
   (Gemini credits; ask before spend), Video Phase 4/5 unscheduled.
+- **5 Oct (night): full sweep of rounds 96ab123..2ee8464 -- clean, 2 more small fixes shipped (`22d32dc`).** Method: per-commit file list (only main.py, packscene.py, filmscript.py, app.dc.html; no tenant files),
+  every reset site of the cast sheet checked for all new fields (4/4), `/produce-video` actually run with Veo faked (look_note reaches the real shot prompts, nothing else changes), Render deploys/logs read via the
+  Render MCP (no app errors, no 5xx since 00:00 5 Oct; deploy 2ee8464 live), real page driven with every new UI element visible at once (zero JS exceptions; only the pane's expected 401s), regression suite + selfcheck.
+  Fixed: `plainDept` rewrote any text containing "?" (blank lines stripped, "a?b"/"3.5" split, false "Removed questions" toast) -> sentences end at . ! ? only before whitespace and text is returned as typed unless a
+  question was dropped; "Import edited script" wiped per-scene card choices -> `applyImport` now `keepSceneExtras`. KEY FACT: the owner's reviewed frames (scene-still 08:35-08:36Z) were rendered BEFORE b236d95
+  (09:48Z: script fixes, look ref), ddf547f (10:01Z: reference labels, pack-in-use) -- those changes are untested on a real render. Known, not fixed (pre-existing or by design): castRefUrl never persisted; switching
+  HOUSE inside Video keeps the previous house's lock/options (the new house's sheet/line/look load fresh, so the out-of-date marker will show); Re-derive overwrites a hand-typed Location line like the cast sheet; the
+  production-bible Word file does not include the Look reference; the 12 old identical "Carousel cast" items are not renamed.
