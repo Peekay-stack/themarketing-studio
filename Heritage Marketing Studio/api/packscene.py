@@ -261,6 +261,53 @@ _PACK_COLOUR_AFTER = re.compile(rf"(\b{_PACK_NOUN})\s+(?:in|with|coloured|colore
                                 rf"(?:\s+(?:packaging|label|design|artwork|livery))?", re.IGNORECASE)
 
 
+# Video storyboard frames, 5 Oct live test (frame 2): the scene was about milk being poured, the real pack reference was
+# attached, and the frame showed the pack held above the glass with no milk coming out. The default Video pack clause says
+# "shown FRONT-ON ... never redrawn", which is right for a pack shot and cancels a pour. When the scene's own words pour or
+# open the pack, the in-use wording replaces it. "opening shot" (a film term) must not count, so open/tear/snip only count
+# next to a pack noun.
+_PACK_NOUN_ANY = r"(?:pack(?:et|s|age)?|pouch(?:es)?|sachets?|cartons?|bags?\s+of\s+milk|milk\s+bags?)"
+_POUR_OR_OPEN = re.compile(
+    r"\bpour(?:s|ed|ing)?\b|\bstreams?\s+of\s+milk\b|\bfill(?:s|ed|ing)?\s+(?:the\s+|a\s+|his\s+|her\s+)?(?:glass|tumbler|cup)\b|"
+    r"\b(?:open|opens|opened|opening(?!\s+(?:shot|scene|frame|image|beat|moment|sequence|title))|tear|tears|tearing|tore|snip|snips|snipping|rip|rips|ripping)\b[^.;,]{0,25}\b" + _PACK_NOUN_ANY + r"\b|"
+    r"\b" + _PACK_NOUN_ANY + r"\b[^.;]{0,25}\b(?:open|opens|opened|opening|tear|tears|torn|snip|snipped)\b", re.IGNORECASE)
+
+VIDEO_PACK_IN_USE = (" The pack is in use in this shot: reuse the EXACT pack from the pack reference (same container "
+                     "type, colours and label design, never redrawn), held and angled naturally for the action with "
+                     "its front label toward the camera as far as the action allows. If the scene pours milk, show it "
+                     "clearly: milk visibly streaming from the pack's opened corner or spout into the glass, with a "
+                     "real stream and a liquid surface in the glass. Do not invent new legible text anywhere on the pack.")
+
+
+def video_pack_in_use(scene_text: str) -> bool:
+    """True when the scene's own words pour from, or open, the pack (so the front-on pack-shot wording would
+    cancel the action)."""
+    return bool(_POUR_OR_OPEN.search(str(scene_text or "")))
+
+
+def video_ref_note(roles: list) -> str:
+    """The sentence that tells the image model what each attached reference image IS, in order. `roles` is a list of
+    (kind, ...) in attachment order, kind one of: 'lock', 'earlier', 'pack', 'plate', 'cast'. Social's prompt already
+    labels its references this way (Round 20, a live trial found labelled roles held pack size where unlabelled ones
+    did not); Video frames sent the same images with no labels, so the model guessed which was the cast, which the
+    previous shot and which the pack. Returns '' for fewer than two references (nothing to tell apart)."""
+    if len(roles) < 2:
+        return ""
+    words = {
+        "lock": "the LOCKED CAST AND LOCATION image -- the exact people (faces, hair, skin tone, build, wardrobe) "
+                "and the room and light to reproduce",
+        "earlier": "an earlier shot of this film, shown only to keep the same positions and orientation where "
+                   "this shot continues it -- its people and room are already in image 1",
+        "pack": "the PACK reference -- reproduce this exact pack, unaltered",
+        "plate": "a real LOCATION photo -- reproduce this room and its light",
+        "cast": "a real CAST photo of a person in the film -- hold this face and clothing",
+    }
+    parts = [f"image {i + 1} is {words[k]}" for i, k in enumerate(roles) if k in words]
+    return ("Reference images, in order: " + "; ".join(parts) + ". The new shot's own description below decides the "
+            "action, camera and framing; the references decide who is in it, where it is, and what the pack looks "
+            "like. ")
+
+
 def scrub_pack_colours(text: str) -> tuple[str, bool]:
     """`(text, changed)`. Removes colour words that describe the PACK ("a green and ghee-gold pouch" -> "a pouch",
     "the pack in deep green and gold" -> "the pack") so the scene cannot overrule the pack reference photo's real

@@ -1546,7 +1546,7 @@ def _with_look_note(style_text: str, payload: dict) -> str:
     note = " ".join(str(payload.get("look_note") or "").split())[:600]
     if not note:
         return style_text
-    return f"{style_text} Cinematography and look to follow: {note}"
+    return f"{style_text} Cinematography and look to follow: {note.rstrip('. ')}."
 
 
 @app.get("/image-styles")
@@ -1929,7 +1929,29 @@ def scene_still(payload: dict):
         # script's scene text named -> the pack's colours are stated as coming from the reference ONLY, and the
         # scene's colour words for the pack are removed (narrow: only colours attached to a pack noun);
         # (2) one scene came back as a three-panel collage -> one frame, one moment.
+        _video_ref_note = ""
         if payload.get("video_frame"):
+            # What each attached image IS, in order (Social labels its references the same way). The caller's own
+            # references come first -- the locked cast+location image, then an optional earlier shot -- followed by
+            # whatever the library added, already ordered pack > location photo > cast above.
+            _roles = []
+            for _i, _u in enumerate(refs):
+                if _i < _caller_refs:
+                    _roles.append("lock" if _i == 0 else "earlier")
+                elif pack_used and _u == lib_refs["pack"]:
+                    _roles.append("pack")
+                elif plate_used and _u == lib_refs["plate"]:
+                    _roles.append("plate")
+                elif lib_refs["has_cast"] and _u == lib_refs["cast"]:
+                    _roles.append("cast")
+                else:
+                    _roles.append("")
+            _video_ref_note = packscene.video_ref_note([r for r in _roles if r]) if all(_roles) else ""
+            # A scene that pours from or opens the pack needs the pack in ACTION: the default clause (front-on, never
+            # redrawn) is for a pack shot and cancels a pour -- frame 2 of the 5 Oct test held the pack over the glass
+            # with no milk coming out.
+            if pack_used and packscene.video_pack_in_use(subject):
+                pack_clause = packscene.VIDEO_PACK_IN_USE
             if pack_used:
                 pack_clause += (" The pack's colours, artwork and proportions come ONLY from the pack reference "
                                 "image: ignore any colour or styling the scene text gives the pack, and do not "
@@ -1964,7 +1986,7 @@ def scene_still(payload: dict):
                 f"{_tail}")
         elif plate_used:
             prompt = (
-                "Generate the next shot of the same film. Reuse the EXACT same people from the "
+                f"{_video_ref_note}Generate the next shot of the same film. Reuse the EXACT same people from the "
                 f"reference images: identical faces, hair, skin tone and body type, and {clothing}, "
                 f"and {age}."
                 f"{pack_clause} Reuse the SAME location and the same light from the reference images: "
@@ -1977,7 +1999,7 @@ def scene_still(payload: dict):
                 f"{_tail}")
         else:
             prompt = (
-                "Generate the next shot of the same film, reusing the EXACT same people from the "
+                f"{_video_ref_note}Generate the next shot of the same film, reusing the EXACT same people from the "
                 f"reference image: identical faces, hair, skin tone and body type, and {clothing}, "
                 f"and {age}."
                 f"{pack_clause} Change only the action, setting and camera. "
