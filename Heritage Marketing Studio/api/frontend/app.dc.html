@@ -14898,7 +14898,7 @@ class Component extends DCLogic {
     let rows = null;
     if (window.claude && window.claude.complete) {
       try {
-        const prompt = 'Revise this ' + (this.brandRef() || 'brand') + ' commercial script per the instruction.' + ' INSTRUCTION: "' + note + '". CURRENT SCRIPT ROWS: ' + JSON.stringify(this.state.fullScript) + '. Keep the same row shape and keep whatever pack-shot super is already on the final row — do not invent or substitute a different brand\u2019s line. Timecodes must stay continuous across a ' + this.state.prodDuration + ' film. EVERY row must keep its "audio" array in sync with the revised dialogue — "text" holds ONLY spoken words (no speaker names, stage directions, SFX or on-screen text), "speaker" the character, "emotion" the performance note, and type is "vo" for narration or "dialogue" for a character. ' + this.voBudgetNote(this.state.prodDuration, (this.state.fullScript||[]).length) + ' Return ONLY JSON: {"rows":[{"no":1,"tc":"0–5s","visual":"...","camera":"...","dialogue":"...","supr":"...","audio":[{"type":"vo","emotion":"warm","language":"en","text":"spoken words only"}]}]}';
+        const prompt = 'Revise this ' + (this.brandRef() || 'brand') + ' commercial script per the instruction.' + ' INSTRUCTION: "' + note + '". CURRENT SCRIPT ROWS: ' + JSON.stringify(this.scriptForPrompt(this.state.fullScript)) + '. Keep the same row shape and keep whatever pack-shot super is already on the final row — do not invent or substitute a different brand\u2019s line. Timecodes must stay continuous across a ' + this.state.prodDuration + ' film. EVERY row must keep its "audio" array in sync with the revised dialogue — "text" holds ONLY spoken words (no speaker names, stage directions, SFX or on-screen text), "speaker" the character, "emotion" the performance note, and type is "vo" for narration or "dialogue" for a character. ' + this.voBudgetNote(this.state.prodDuration, (this.state.fullScript||[]).length) + ' Return ONLY JSON: {"rows":[{"no":1,"tc":"0–5s","visual":"...","camera":"...","dialogue":"...","supr":"...","audio":[{"type":"vo","emotion":"warm","language":"en","text":"spoken words only"}]}]}';
         let raw = await this.complete(prompt);
         raw = String(raw).trim().replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();
         const data = JSON.parse(raw.slice(raw.indexOf('{'), raw.lastIndexOf('}')+1));
@@ -14907,7 +14907,7 @@ class Component extends DCLogic {
     }
     if (!rows) { this.setState({ scriptReworking:false }); this.showToast('Couldn\u2019t rework the script — nothing changed.'); return; }
     this.setState(s => ({
-      scriptReworking:false, scriptRefine:'', fullScript:rows, sceneFrames:{},
+      scriptReworking:false, scriptRefine:'', fullScript:this.keepSceneExtras(rows, s.fullScript), sceneFrames:{},
       scriptStatus: s.scriptStatus==='approved' ? 'drafted' : s.scriptStatus,
       videoStep: 'scripting',
       scriptVersions: [...s.scriptVersions, { v:s.scriptVersions.length+1, logline:(s.videoConcept&&s.videoConcept.logline)||'', note, duration:s.prodDuration }],
@@ -14923,7 +14923,7 @@ class Component extends DCLogic {
     let text = null;
     if (window.claude && window.claude.complete) {
       try {
-        const prompt = 'From this ' + (this.brandRef() || 'brand') + ' commercial script, write ONE compact character sheet' + ' that will be sent with every generated storyboard frame so the same people appear in each shot. Cover each recurring person: role, age, build, hair, skin tone, wardrobe colour. Max 45 words, one paragraph, no preamble. SCRIPT: ' + JSON.stringify(this.state.fullScript || []) + (cast ? ' CAST DEPARTMENT NOTES: ' + cast : '');
+        const prompt = 'From this ' + (this.brandRef() || 'brand') + ' commercial script, write ONE compact character sheet' + ' that will be sent with every generated storyboard frame so the same people appear in each shot. Cover each recurring person: role, age, build, hair, skin tone, wardrobe colour. Max 45 words, one paragraph, no preamble. SCRIPT: ' + JSON.stringify(this.scriptForPrompt(this.state.fullScript)) + (cast ? ' CAST DEPARTMENT NOTES: ' + cast : '');
         let raw = await this.complete(prompt);
         text = String(raw).trim().replace(/^```/,'').replace(/```$/,'').trim();
       } catch (e) {}
@@ -14966,14 +14966,20 @@ class Component extends DCLogic {
     if (window.claude && window.claude.complete) {
       try {
         const secs = this.sceneSeconds(row);
-        const prompt = 'Rewrite ONE scene of a ' + (this.brandRef() || 'brand') + ' commercial script for an Indian crew' + ', keeping continuity with the film logline "'+(vc?vc.logline:'')+'". Current scene: '+JSON.stringify(row)+'. This scene runs about '+secs+' seconds, and a voice reads ~2 words per second, so all spoken "text" in this scene together must stay under '+Math.max(4, Math.round(secs*2))+' words. '+this.VISUAL_RULES+' The "audio" array holds ONLY spoken words — no speaker names, stage directions, SFX or on-screen text in "text" (those go in "speaker"/"emotion"); type is "vo" for narration or "dialogue" for a character. Return ONLY JSON: {"no":'+row.no+',"tc":"'+row.tc+'","visual":"...","camera":"...","dialogue":"...","supr":"...","audio":[{"type":"vo","emotion":"warm","language":"en","text":"spoken words only"}]}';
+        const prompt = 'Rewrite ONE scene of a ' + (this.brandRef() || 'brand') + ' commercial script for an Indian crew' + ', keeping continuity with the film logline "'+(vc?vc.logline:'')+'". Current scene: '+JSON.stringify(this.scriptForPrompt([row])[0])+'. This scene runs about '+secs+' seconds, and a voice reads ~2 words per second, so all spoken "text" in this scene together must stay under '+Math.max(4, Math.round(secs*2))+' words. '+this.VISUAL_RULES+' The "audio" array holds ONLY spoken words — no speaker names, stage directions, SFX or on-screen text in "text" (those go in "speaker"/"emotion"); type is "vo" for narration or "dialogue" for a character. Return ONLY JSON: {"no":'+row.no+',"tc":"'+row.tc+'","visual":"...","camera":"...","dialogue":"...","supr":"...","audio":[{"type":"vo","emotion":"warm","language":"en","text":"spoken words only"}]}';
         let raw = await this.complete(prompt);
         raw = String(raw).trim().replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();
         next = JSON.parse(raw.slice(raw.indexOf('{'), raw.lastIndexOf('}')+1));
       } catch (e) {}
     }
     if (!next) next = { ...row, camera: row.camera + ' — alt take', visual: row.visual };
-    this.setState(s => ({ rewritingScene:null, fullScript: s.fullScript.map((r,i)=> i===idx ? { ...r, ...next } : r) }));
+    this.setState(s => ({ rewritingScene:null, fullScript: s.fullScript.map((r,i)=> {
+      if (i !== idx) return r;
+      const merged = { ...r, ...next };
+      // A frame note corrects one picture; a rewritten visual makes it a note about a scene that no longer exists.
+      if (String(merged.visual || '').trim() !== String(r.visual || '').trim()) delete merged.frame_note;
+      return merged;
+    }) }));
   };
 
   regenFullScript = () => { this.setState({ fullScript:null }); this.writeFullScript(); };
@@ -15008,7 +15014,7 @@ class Component extends DCLogic {
       return (f && f.status==='done' && f.url)
         ? { scene:r.no||i+1, tc:r.tc||'', visual:r.visual||'', url:f.url } : null;
     }).filter(Boolean);
-    const departments = this.DEPTS.map(d => ({ label:d.label, text:(this.state.shoot[d.id]||{}).text||'' }))
+    const departments = this.DEPTS.map(d => ({ label:d.label, text:this.plainDept((this.state.shoot[d.id]||{}).text) }))
                                   .filter(d => d.text.trim());
     const blob = await this.apiBlob('/production-bible-docx', {
       title: (this.state.linkedBrief ? this.state.linkedBrief.title.replace(/ brief.*/i,'').trim() : 'Heritage Film') + ' — production bible',
@@ -15142,8 +15148,8 @@ class Component extends DCLogic {
     // `/scene-still` reads the plural `reference_urls` too (the same channel cast/pack/plate auto-refs
     // already travel through) — send BOTH the cast ref and the chosen sibling when one is picked,
     // instead of the singular form, so continuity is asked for explicitly rather than hoped for.
-    const siblingIdx = (this.state.sceneSiblingRef || {})[idx];
-    const siblingUrl = siblingIdx != null ? (((this.state.sceneFrames || {})[siblingIdx] || {}).url) : null;
+    const siblingIdx = this.matchIdx(this.state.fullScript, row);
+    const siblingUrl = siblingIdx >= 0 ? (((this.state.sceneFrames || {})[siblingIdx] || {}).url) : null;
     if (siblingUrl) {
       delete body.reference_url;
       body.reference_urls = [this.state.castRefUrl, siblingUrl].filter(Boolean);
@@ -15157,7 +15163,7 @@ class Component extends DCLogic {
       // Which specific pack, picked once in the assets panel — /scene-still otherwise falls back to
       // whichever pack is most recently signed off, same gap `pack_id` was added to close for POSM.
       if (this.state.videoPackChoice) body.pack_id = this.state.videoPackChoice;
-    } else if (typeof (this.state.sceneIncludePack || {})[idx] === 'boolean') {
+    } else if (typeof row.include_pack === 'boolean') {
       body.include_pack = false;       // explicitly un-ticked on the card: never, whatever the scene says
     }
     // The pick rides on EVERY frame as `pack_pref`: it does not force the pack in, it decides WHICH pack when the
@@ -15277,7 +15283,7 @@ class Component extends DCLogic {
         const pre = this.brandPreamble('the ' + dept.label + ' department head', this.state.producerBrandMode === 'general');
         if (!pre) { this.showToast(this.BRAND_PREAMBLE_MISSING);
           this.setState(st => ({ shoot:{ ...st.shoot, [id]:{ status:'idle', text:'' } } })); return; }
-        const prompt = pre + '\n\nBase your plan strictly on this APPROVED SCRIPT: '+JSON.stringify(this.state.fullScript||[])+'. Give a tight, practical '+dept.label+' plan (3-4 sentences). Write it as a decided plan in plain statements: do not ask the reader any question, do not ask for confirmation, and do not offer alternatives to choose between. Where something is not specified, make a sensible choice and state it.';
+        const prompt = pre + '\n\nBase your plan strictly on this APPROVED SCRIPT: '+JSON.stringify(this.scriptForPrompt(this.state.fullScript))+'. Give a tight, practical '+dept.label+' plan (3-4 sentences). Write it as a decided plan in plain statements: do not ask the reader any question, do not ask for confirmation, and do not offer alternatives to choose between. Where something is not specified, make a sensible choice and state it.';
         let raw = await this.complete(prompt);
         text = this.plainDept(String(raw).trim().replace(/^```/,'').replace(/```$/,'').trim());
       } catch (e) {}
@@ -16802,7 +16808,7 @@ class Component extends DCLogic {
       const siblingChoices = (s.fullScript || []).map((r2,j) => ({ j, r2, sf: s.sceneFrames[j] }))
         .filter(x => x.j !== i && x.sf && x.sf.status === 'done' && x.sf.url)
         .map(x => ({ value:String(x.j), label:'Scene ' + (x.r2.no || x.j+1) }));
-      const chosenSibling = (s.sceneSiblingRef || {})[i];
+      const chosenSibling = this.matchIdx(s.fullScript, r);
       // The spoken lines for THIS scene, editable right here. Keeping the words next to the frame
       // they play over is the only way the two stay honest: the board is where a shot's length is
       // decided, so it has to be where its dialogue is written too.
@@ -16827,7 +16833,7 @@ class Component extends DCLogic {
         dot: stale ? '#C8860F' : (f.status==='done' ? '#259821' : (f.status==='rendering' ? '#E8A93C' : (f.status==='error' ? '#C0392B' : '#A8AEB8'))),
         genFrame: this.generateFrame(i), enlarge: this.openLightbox(f.url),
         siblingChoices, hasSiblings: siblingChoices.length > 0,
-        siblingValue: chosenSibling != null ? String(chosenSibling) : '',
+        siblingValue: chosenSibling >= 0 ? String(chosenSibling) : '',
         setSibling: this.setSceneSibling(i),
         includePack: this.packOnFrame(i), toggleIncludePack: this.toggleSceneIncludePack(i),
         hasPackLocked: !!s.videoPackChoice, packMissing: !!f.packMissing,
@@ -20146,11 +20152,29 @@ class Component extends DCLogic {
     // generic "did a tracked field change identity" check below cannot itself tell apart from a
     // real edit.
     this._videoScriptSuppressSave = true;
+    // Department drafts written as questions to the person ("Could you confirm the region?") are not direction
+    // for anyone, and were being drawn into frames. Drafts saved before the draft prompt was fixed (5 Oct) are
+    // cleaned here as they load; a draft that was nothing but questions goes back to empty, ready to redraft.
+    const cleaned = this.cleanShootDrafts(d.shoot || {});
     this.setState({ videoObjective: d.video_objective, videoConcept: d.video_concept,
       scriptStatus: d.script_status || 'none', scriptPhase: d.script_phase || 'concept',
-      fullScript: d.full_script, sceneFrames: d.scene_frames || {}, shoot: d.shoot || {},
+      fullScript: d.full_script, sceneFrames: d.scene_frames || {}, shoot: cleaned.shoot,
       videoCharacters: d.video_characters || '' });
+    if (cleaned.count) this.showToast('Removed questions from ' + cleaned.count + ' department draft' + (cleaned.count === 1 ? '' : 's') + ' — they were written as questions to you, not as direction.');
   };
+  cleanShootDrafts(shoot){
+    const out = {}; let count = 0;
+    Object.keys(shoot || {}).forEach(id => {
+      const e = shoot[id] || {};
+      const t = String(e.text || '');
+      if (t.indexOf('?') < 0) { out[id] = e; return; }
+      const c = this.plainDept(t);
+      if (c === t.trim()) { out[id] = e; return; }
+      count++;
+      out[id] = c ? { ...e, text: c } : { ...e, status: 'idle', text: '' };
+    });
+    return { shoot: out, count };
+  }
   saveVideoScript = async () => {
     const s = this.state, houseId = (s.house || {}).id; if (!houseId) return;
     await this.apiCall('/video-script', { house: houseId, video_objective: s.videoObjective,
@@ -21419,20 +21443,61 @@ class Component extends DCLogic {
   setOverrideMode = (m) => () => { this.setState({ overrideMode:m }); this.produceAdaptations(); };
   // Item 2 \u2014 which earlier approved frame (if any) this scene should match blocking/orientation
   // against. Stored by index rather than URL so it survives a re-render of the sibling.
+  // The per-scene choices made on a storyboard card (include the pack, match another shot, a frame note, a camera
+  // movement) live ON the script row, not in index-keyed maps beside it: they are saved with the script, and a new
+  // or reworked script starts without the old script's choices (before, a tick on frame 3 followed you into the next
+  // script in the same session and vanished on reload). None of these edits drop an approved script back to
+  // "drafted" -- they change how a still is drawn, not what the script says.
+  SCENE_EXTRAS = ['frame_note', 'movement_class', 'include_pack', 'match_no'];
+  sceneNo(row, i){ return String(row && row.no != null ? row.no : i + 1); }
+  // Index of the scene a row is set to match, or -1. Stored as the scene's own number so it survives a re-order.
+  matchIdx(rows, row){
+    if (!row || row.match_no == null) return -1;
+    return (rows || []).findIndex((r2, j) => this.sceneNo(r2, j) === String(row.match_no));
+  }
+  // The script as the writer/drafting prompts should see it: rows without the card choices above.
+  scriptForPrompt(rows){
+    return (rows || []).map(r => { const o = { ...r }; this.SCENE_EXTRAS.forEach(k => { delete o[k]; }); return o; });
+  }
+  // After a rework: carry each scene's card choices onto the rewritten row with the same scene number. A frame note
+  // corrects one specific picture, so it is kept only when the scene's visual was left alone; the other choices
+  // are deliberate picks (camera, pack, matched shot) and are kept whenever the scene number still exists.
+  keepSceneExtras(newRows, oldRows){
+    const byNo = {};
+    (oldRows || []).forEach((r, i) => { byNo[this.sceneNo(r, i)] = r; });
+    return (newRows || []).map((r, i) => {
+      const old = byNo[this.sceneNo(r, i)];
+      if (!old) return r;
+      const out = { ...r };
+      this.SCENE_EXTRAS.forEach(k => {
+        if (old[k] === undefined || old[k] === '' || out[k] !== undefined) return;
+        if (k === 'frame_note' && String(old.visual || '').trim() !== String(r.visual || '').trim()) return;
+        out[k] = old[k];
+      });
+      return out;
+    });
+  }
   setSceneSibling = (idx) => (e) => {
     const v = e.target.value;
-    this.setState(s => ({ sceneSiblingRef: { ...s.sceneSiblingRef, [idx]: v === '' ? null : parseInt(v, 10) } }));
+    this.setState(s => ({ fullScript: (s.fullScript || []).map((r, i) => {
+      if (i !== idx) return r;
+      const next = { ...r };
+      const target = v === '' ? null : (s.fullScript || [])[parseInt(v, 10)];
+      if (target) next.match_no = target.no != null ? target.no : parseInt(v, 10) + 1; else delete next.match_no;
+      return next;
+    }) }));
   };
   // Whether the locked pack goes on this frame. An explicit tick (or un-tick) on the card always wins; with no
   // choice made, the CLOSING scene carries the pack once one is picked in the assets panel (an ad ends on its
   // pack shot), and every other scene leaves it to /scene-still's own reading of the scene text.
   packOnFrame = (idx) => {
-    const s = this.state; const chosen = (s.sceneIncludePack || {})[idx];
+    const s = this.state; const chosen = ((s.fullScript || [])[idx] || {}).include_pack;
     if (typeof chosen === 'boolean') return chosen;
     return !!s.videoPackChoice && idx === ((s.fullScript || []).length - 1);
   };
   toggleSceneIncludePack = (idx) => () => {
-    this.setState(s => ({ sceneIncludePack: { ...s.sceneIncludePack, [idx]: !this.packOnFrame(idx) } }));
+    const next = !this.packOnFrame(idx);
+    this.setState(s => ({ fullScript: (s.fullScript || []).map((r, i) => i === idx ? { ...r, include_pack: next } : r) }));
   };
   // Direction for one frame only, kept on the script row so it survives a reload with the rest of the script.
   // Deliberately NOT editScriptCell: this changes how a still is drawn, not what the script says, so it must
