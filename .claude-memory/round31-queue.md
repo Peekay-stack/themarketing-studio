@@ -167,3 +167,30 @@ optional movement-class picker per script row, including the "orbit" risk note a
 through Phase 1's autosave). Phase 4 (ratio-mismatch experiment) and Phase 5 (Kling/Seedance trials)
 remain blocked/unscheduled respectively -- Phase 4 specifically waiting on the owner confirming the
 Gemini billing top-up above before any further real API spend.
+
+## UPDATE 5 Oct — owner's live test of Video Phases 1-3b came back; four fixes SHIPPED live (`96ab123`)
+Live test findings: camera-movement dropdown works; cast fidelity good; but (a) the closing frame came back
+with a green/ghee-gold pack, not the real orange "Happy Full Cream Milk" one; (b) one scene rendered as a
+3-panel collage; (c) department drafts contained questions addressed to the owner; (d) only a global
+re-render, no single-frame correction. All four shipped, confirmed live via `/selfcheck`.
+- **Root cause of (a), not what it looked like:** the storyboard card's "Include the locked pack" checkbox was
+  gated on `posm.packChoice` (POSM's pick), not Video's own `videoPackChoice` -- so with a pack picked in Video's
+  assets panel the checkbox never appeared, and `pack_id` was never sent. A scene whose words pulled a pack in
+  attached the tenant's NEWEST signed-off pack instead. Fixed: gated on `videoPackChoice`; the closing scene
+  defaults to carrying the pack (`packOnFrame()`); `pack_pref` (the pick) rides every frame and only decides
+  WHICH pack; `pack_mode:'auto'` lets "pouch"/"sachet" count; explicit un-tick sends `include_pack:false`.
+- **Colours:** model obeys scene text over the reference photo (known lesson). Writer rule `VISUAL_RULES`
+  (full script + scene rewrite: call it "the pack", never its colours; one scene = one view), plus backend
+  `video_frame`-gated sentence + `packscene.scrub_pack_colours()` (narrow: colour words attached to a pack noun).
+- **(c)/(d):** `frame_note` on the script row (doesn't reset approval), input per storyboard card, appended LAST
+  in that frame's prompt; `plainDept()` drops "?" sentences at draft time and at every read site.
+- All new `/scene-still` behaviour sits behind `video_frame`/`pack_pref`, sent only by Video; Social/Carousel/
+  POSM/shot-reference prompts byte-identical (verified by prompt capture, zero API cost).
+- **NOT verified:** a real render. The local tenant has no real pack photo, so whether the pack now comes back
+  orange needs the owner's live re-test (needs Gemini credits -- see Phase 4 note above; don't spend without
+  approval). Local filmscripts store was empty, so the colour-scrub was tested on representative text, not the
+  owner's real scene-6 wording.
+- Noticed, not fixed: literal `…` shows in the storyboard card's "Match this to another shot…" option
+  (HTML template, not a JS string, so the escape isn't decoded) -- pre-existing, one-char fix, ask first.
+- Still open from before: Phase 4 (waiting on owner's Gemini top-up), Phase 5 unscheduled; Word export/import
+  drops `movement_class` (same as `audio`); Shoot Board read-only script ref doesn't show movement class.
