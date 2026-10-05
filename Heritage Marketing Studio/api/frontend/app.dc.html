@@ -2688,6 +2688,9 @@
             <div style="margin-top:10px;">
               <div style="font-size:11px; font-weight:700; color:#17325E; margin-bottom:4px;">Location line <span style="font-weight:600; color:#9AA1AC;">· what the camera sees — sent to the lock and to every frame</span></div>
               <textarea value="{{ videoLocationLine }}" onChange="{{ onVideoLocationLine }}" rows="2" placeholder="Press Derive from script to write this from the Location note — or type it." style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:10px; padding:9px 12px; font-size:13px; line-height:1.5; background:#FBFAF8; color:#17325E; resize:vertical; font-family:inherit;"></textarea>
+              <sc-if value="{{ locationLineHasPack }}" hint-placeholder-val="{{ false }}">
+                <div style="margin-top:6px; font-size:11.5px; line-height:1.45; color:#6B7280;">Mentions of the product pack are left out of the lock and the frames — the pack goes on a frame only through its own tick below.</div>
+              </sc-if>
               <sc-if value="{{ locationLineStale }}" hint-placeholder-val="{{ false }}">
                 <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:6px; font-size:12px; line-height:1.5; color:#B07A12; font-weight:700;">
                   <span>The Location note changed after this line was written, so the line may describe an old version.</span>
@@ -2813,7 +2816,6 @@
                   <span style="position:absolute; left:12px; bottom:10px; z-index:3; width:9px; height:9px; border-radius:50%; background:{{ sc.dot }}; box-shadow:0 0 0 3px rgba(0,0,0,0.15);"></span>
                   <sc-if value="{{ sc.isDone }}" hint-placeholder-val="{{ false }}">
                     {{ sc.frameImg }}
-                    <span onClick="{{ sc.genFrame }}" style="position:absolute; right:10px; bottom:10px; z-index:4; width:26px; height:26px; border-radius:50%; background:rgba(0,0,0,0.5); color:#fff; display:flex; align-items:center; justify-content:center; font-size:13px; cursor:pointer;">↻</span>
                   </sc-if>
                   <sc-if value="{{ sc.isRendering }}" hint-placeholder-val="{{ false }}">
                     <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; background:rgba(23,50,94,0.55);">
@@ -2835,7 +2837,14 @@
                   </sc-if>
                 </div>
                 <div style="padding:11px 13px;">
-                  <div style="font-weight:700; font-size:13px; color:#17325E; margin-bottom:3px;">{{ sc.title }}</div>
+                  <!-- The re-render control lives here, not on the picture: bottom-right of the frame is where a pack or a face
+                       often sits, and the button was covering it (5 Oct live test). -->
+                  <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:3px;">
+                    <span style="font-weight:700; font-size:13px; color:#17325E;">{{ sc.title }}</span>
+                    <sc-if value="{{ sc.isDone }}" hint-placeholder-val="{{ false }}">
+                      <span onClick="{{ sc.genFrame }}" title="Render this frame again" style="cursor:pointer; border:1px solid #C9CEDA; background:#fff; color:#17325E; border-radius:8px; padding:2px 9px; font-size:11.5px; font-weight:700;">↻ Re-render</span>
+                    </sc-if>
+                  </div>
                   <div style="font-size:12px; line-height:1.5; color:#6B7280;">{{ sc.desc }}</div>
                   <!-- Item 2 \u2014 match this scene's blocking/orientation to an earlier approved frame. -->
                   <sc-if value="{{ sc.hasSiblings }}" hint-placeholder-val="{{ false }}">
@@ -2941,7 +2950,6 @@
               <span style="position:absolute; left:11px; bottom:9px; z-index:3; width:9px; height:9px; border-radius:50%; background:{{ sc.dot }}; box-shadow:0 0 0 3px rgba(0,0,0,0.15);"></span>
               <sc-if value="{{ sc.isDone }}" hint-placeholder-val="{{ false }}">
                 {{ sc.frameImg }}
-                <span onClick="{{ sc.genFrame }}" style="position:absolute; right:9px; bottom:9px; z-index:4; width:24px; height:24px; border-radius:50%; background:rgba(0,0,0,0.5); color:#fff; display:flex; align-items:center; justify-content:center; font-size:12px; cursor:pointer;">↻</span>
               </sc-if>
               <sc-if value="{{ sc.isRendering }}" hint-placeholder-val="{{ false }}">
                 <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; background:rgba(23,50,94,0.55);"><span style="width:22px; height:22px; border:3px solid rgba(255,255,255,0.35); border-top-color:#fff; border-radius:50%; animation:hf-spin 0.7s linear infinite;"></span><span style="color:#fff; font-size:11.5px; font-weight:700;">Rendering frame…</span></div>
@@ -2955,9 +2963,14 @@
             </div>
             <div style="padding:9px 11px 4px; font-weight:700; font-size:12px; color:#17325E; display:flex; align-items:center; justify-content:space-between; gap:6px;">
               <span>{{ sc.title }}</span>
+              <span style="display:inline-flex; align-items:center; gap:6px;">
               <sc-if value="{{ sc.isStale }}" hint-placeholder-val="{{ false }}">
                 <span onClick="{{ sc.genFrame }}" title="The words or the length changed after this frame was rendered" style="cursor:pointer; background:#FDEEDA; color:#8A5B0F; border-radius:20px; padding:2px 8px; font-size:10px; font-weight:800;">↻ out of date</span>
               </sc-if>
+                <sc-if value="{{ sc.isDone }}" hint-placeholder-val="{{ false }}">
+                  <span onClick="{{ sc.genFrame }}" title="Render this frame again" style="cursor:pointer; border:1px solid #C9CEDA; background:#fff; color:#17325E; border-radius:8px; padding:1px 8px; font-size:10.5px; font-weight:700;">↻ Re-render</span>
+                </sc-if>
+              </span>
             </div>
             <div style="padding:0 11px 8px; font-size:11.5px; line-height:1.5; color:#6B7280;">{{ sc.desc }}</div>
             <!-- The spoken words live with the frame they play over: edit here and the scene's
@@ -14953,7 +14966,7 @@ class Component extends DCLogic {
     let text = null;
     if (window.claude && window.claude.complete) {
       try {
-        const prompt = 'From this ' + (this.brandRef() || 'brand') + ' commercial script, write ONE compact character sheet' + ' that will be sent with every generated storyboard frame so the same people appear in each shot. Cover each recurring person: role, age, build, hair, skin tone, wardrobe colour. If a person appears at more than one age or in more than one outfit, give each version its own entry with its own wardrobe colour (e.g. "MOTHER (older): cream saree"). Max 60 words, one paragraph, no preamble. SCRIPT: ' + JSON.stringify(this.scriptForPrompt(this.state.fullScript)) + (cast ? ' CAST DEPARTMENT NOTES: ' + cast : '');
+        const prompt = 'From this ' + (this.brandRef() || 'brand') + ' commercial script, write ONE compact character sheet' + ' that will be sent with every generated storyboard frame so the same people appear in each shot. Cover each recurring person: role, age, build, hair, skin tone, wardrobe colour. If a person appears at more than one age or in more than one outfit, give each version its own entry with its own wardrobe colour (e.g. "MOTHER (older): cream saree"). Then END the sheet with one line "By scene:" saying, for each scene number in the script, which version of each person is on screen (e.g. "By scene: 1 MOTHER (young) + BOY (6); 2 MOTHER (young) + BOY (6); 3 MOTHER (young) + BOY (10); 4 MOTHER (older) + BOY (17)") -- judge from the story and the ages each scene names. Max 120 words, one paragraph, no preamble. SCRIPT: ' + JSON.stringify(this.scriptForPrompt(this.state.fullScript)) + (cast ? ' CAST DEPARTMENT NOTES: ' + cast : '');
         let raw = await this.complete(prompt);
         text = String(raw).trim().replace(/^```/,'').replace(/```$/,'').trim();
       } catch (e) {}
@@ -15001,8 +15014,31 @@ class Component extends DCLogic {
   locationText(st){
     const s = st || this.state;
     const line = (s.videoLocationLine || '').trim();
-    if (line) return line;
-    return this.clipText(this.stripMd(this.plainDept(((s.shoot || {}).location || {}).text)), 320);
+    // Pack mentions are left out either way: the place text goes to the lock and EVERY frame, so "a milk pack resting on
+    // the counter" in it made the model draw a pack (a made-up one where no real photo was attached) in frames that
+    // never asked for the pack. Whether a frame carries the pack is the checkbox's job alone.
+    if (line) return this.withoutPackMentions(line);
+    return this.withoutPackMentions(this.clipText(this.stripMd(this.plainDept(((s.shoot || {}).location || {}).text)), 320));
+  }
+  // The text with every phrase that names a pack removed, sentence by sentence: inside a sentence the comma/semicolon
+  // separated phrase that names it goes ("..., a full glass and a milk pack on the counter." loses that last phrase
+  // and keeps its full stop); a sentence that is only about the pack goes entirely. Text with no pack word is returned as is.
+  withoutPackMentions(text){
+    const t = String(text || '');
+    const PACK = /\b(?:pack(?:et|s|age|aging)?|pouch(?:es)?|sachets?|cartons?|milk\s+bags?|bags?\s+of\s+milk)\b/i;
+    if (!PACK.test(t)) return t;
+    const sentences = []; let cur = '';
+    for (let i = 0; i < t.length; i++) {
+      cur += t[i];
+      if ('.!?'.indexOf(t[i]) >= 0 && (i === t.length - 1 || /\s/.test(t[i + 1]))) { sentences.push(cur.trim()); cur = ''; }
+    }
+    if (cur.trim()) sentences.push(cur.trim());
+    return sentences.map(sent => {
+      if (!PACK.test(sent)) return sent;
+      const mark = (sent.match(/[.!?]+$/) || ['.'])[0];
+      const kept = sent.replace(/[.!?]+$/, '').split(/[,;]/).filter(c => !PACK.test(c)).map(c => c.trim()).filter(Boolean);
+      return kept.length ? kept.join(', ') + mark : '';
+    }).filter(Boolean).join(' ');
   }
   // What the lock image was made from. When this differs from the one stored at lock time the image is out of date.
   castSig(st){
@@ -15015,7 +15051,7 @@ class Component extends DCLogic {
     let text = null;
     if (window.claude && window.claude.complete) {
       try {
-        const prompt = 'From this location plan, write ONE short description of what the camera sees, for an image model: the place, the time of day, the light, and three or four visible set details. Max 40 words, one paragraph, plain text. No people, no instructions or questions, no preamble. LOCATION PLAN: ' + note;
+        const prompt = 'From this location plan, write ONE short description of what the camera sees, for an image model: the place, the time of day, the light, and three or four visible set details. Max 40 words, one paragraph, plain text. Describe the EMPTY PLACE only: no people, and do NOT mention the product or any pack, pouch, packet, carton, bottle or branded item (the pack is added to a frame separately, from the real photo). No instructions or questions, no preamble. LOCATION PLAN: ' + note;
         const raw = await this.complete(prompt);
         text = this.stripMd(String(raw).trim().replace(/^```/, '').replace(/```$/, '').trim());
       } catch (e) {}
@@ -15310,8 +15346,8 @@ class Component extends DCLogic {
       // Which specific pack, picked once in the assets panel — /scene-still otherwise falls back to
       // whichever pack is most recently signed off, same gap `pack_id` was added to close for POSM.
       if (this.state.videoPackChoice) body.pack_id = this.state.videoPackChoice;
-    } else if (this.state.videoPackChoice || typeof row.include_pack === 'boolean') {
-      // With a pack picked, the checkbox is the whole truth: unticked means NO pack on this frame. Left unsent, the
+    } else if (this.packAvailable() || typeof row.include_pack === 'boolean') {
+      // With a pack available, the checkbox is the whole truth: unticked means NO pack on this frame. Left unsent, the
       // server's word-matcher decided -- and it reads the whole prompt, so the Location line's "a tall glass of milk"
       // put the pack into every frame, ticked or not (5 Oct real-render test).
       body.include_pack = false;
@@ -17048,7 +17084,7 @@ class Component extends DCLogic {
         siblingValue: chosenSibling >= 0 ? String(chosenSibling) : '',
         setSibling: this.setSceneSibling(i),
         includePack: this.packOnFrame(i), toggleIncludePack: this.toggleSceneIncludePack(i),
-        hasPackLocked: !!s.videoPackChoice, packMissing: !!f.packMissing,
+        hasPackLocked: this.packAvailable(s), packMissing: !!f.packMissing,
         frameNote: r.frame_note || '', editFrameNote: this.editFrameNote(i),
         lines, hasLines: lines.length > 0, isSilent: lines.length === 0, willBeSilent,
         addVo: this.addSceneLine(i, 'vo'), addLine: this.addSceneLine(i, 'dialogue'),
@@ -18106,6 +18142,7 @@ class Component extends DCLogic {
       // The Location note changed after the line was written from it (the line is then describing an old note).
       locationLineStale: !!(s.videoLocationLine || '').trim() && !!s.videoLocationSrc && !!this.locNoteHash(s) && this.locNoteHash(s) !== s.videoLocationSrc,
       rewriteLocationLine: this.rewriteLocationLine,
+      locationLineHasPack: !!(s.videoLocationLine || '').trim() && this.withoutPackMentions(s.videoLocationLine) !== String(s.videoLocationLine || '').trim(),
       videoLookRef: s.videoLookRef || '', onVideoLookRef: this.onVideoLookRef, deriveLookRef: this.deriveLookRef,
       lookRefLabel: s.lookRefBusy ? 'Writing notes…' : '✦ Write notes from this',
       generateCastOptions: this.generateCastOptions,
@@ -21758,8 +21795,16 @@ class Component extends DCLogic {
   packOnFrame = (idx) => {
     const s = this.state; const row = (s.fullScript || [])[idx] || {}; const chosen = row.include_pack;
     if (typeof chosen === 'boolean') return chosen;
-    return !!s.videoPackChoice && (idx === ((s.fullScript || []).length - 1) || this.sceneNamesPack(row.visual));
+    return this.packAvailable() && (idx === ((s.fullScript || []).length - 1) || this.sceneNamesPack(row.visual));
   };
+  // A pack can go on a frame when one is picked OR the library holds any signed-off pack ("Most recently signed off"
+  // is a real choice: the server then uses the newest). Before, only an explicit pick showed the checkbox, so with the
+  // dropdown left on its default there was no control and the server's word-matcher put the pack into every frame
+  // whose text said "pours", "glass of milk" or "pack" (5 Oct real-render test).
+  packAvailable(st){
+    const s = st || this.state;
+    return !!s.videoPackChoice || this.videoAssetOptions(['pack', 'product']).length > 0;
+  }
   // Whether a scene's OWN visual names the product pack ("the pack", "the pouch", "a sachet"...). "A glass of milk" does
   // not -- that is the milk, not the pack.
   sceneNamesPack(visual){

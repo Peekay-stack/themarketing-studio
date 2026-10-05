@@ -1951,11 +1951,19 @@ def scene_still(payload: dict):
             # "MOTHER (older): cream saree" was never told to the model, which then guessed which of the two mothers in
             # the locked image a scene meant (5 Oct real-render test: the young mother in the older mother's saree and
             # the reverse). Told here, with the rule for people who appear in more than one version.
+            # The locked image lines the WHOLE cast up (every age of every person), so a frame tends to add people the
+            # scene never names -- frame 1 of the 5 Oct test showed the older mother in the background of a scene about
+            # the young mother and her small son.
+            _video_ref_note += ("The locked image shows the whole cast lined up: show ONLY the people this shot's "
+                                "description names, and never add anyone else from it. ")
             if characters:
-                _video_ref_note += ("Cast sheet for this film -- who is who: " + characters[:900].rstrip(" .") + ". "
+                _scene_no = str(payload.get("scene_no") or "").strip()
+                _video_ref_note += ((f"This shot is scene {_scene_no}. " if _scene_no else "")
+                                    + "Cast sheet for this film -- who is who: " + characters[:1100].rstrip(" .") + ". "
                                     "A person listed in more than one version (a different age or outfit) must be shown "
                                     "as the version this shot's description calls for, with that version's own clothes "
-                                    "and apparent age -- never in another version's clothes. ")
+                                    "and apparent age -- never in another version's clothes. Where the sheet has a "
+                                    "\"By scene\" line, it says which version to show in this scene. ")
             # A scene that pours from or opens the pack needs the pack in ACTION: the default clause (front-on, never
             # redrawn) is for a pack shot and cancels a pour -- frame 2 of the 5 Oct test held the pack over the glass
             # with no milk coming out.
