@@ -203,3 +203,13 @@ re-render, no single-frame correction. All four shipped, confirmed live via `/se
   still SHOWN in the textareas and exported raw in the production-bible Word doc; only prompt reads are cleaned.
   Also: `frame_note`/`movement_class` ride in whole rows into the script-rework, cast-sheet and dept-draft LLM prompts, and a
   script rework replaces rows wholesale, so both can be dropped by the model (same limit as movement_class).
+- **5 Oct, owner's screenshot -- two more items logged (PLAN only, nothing built):** after the Cast/Location department notes were
+  drafted and "Re-derive from script" pressed, "Real references" still read "Describe in words instead" (Cast/actor) and "Nothing
+  signed off yet." (Location). Traced: NOT a wiring break -- those pickers choose real signed-off library PHOTOS (`videoCastChoice`/
+  `videoPlateChoice`, `videoAssetOptions` filters `signed_off`); Derive only writes the text cast sheet (`videoCharacters`), and the
+  Location note is read raw at "Lock location and cast" (`plainDept(shoot.location)` -> `/cast-reference` `location` -> "in this
+  setting: ..."). The labels read like unresolved/blocking states though the words ARE used. Related real issue: dept notes are
+  production PLANS (markdown `**`, "Secure a single practical home...", "Cast four roles...") yet go raw into the lock call and
+  into EVERY frame prompt (Location+DoP+Props+Wardrobe). Also no staleness signal when the notes/sheet change after the lock.
+  Plan: A+B honest status lines (frontend only), C a derived short visual location line alongside the cast sheet (needs owner's
+  yes), D optional "locked image out of date" marker.
