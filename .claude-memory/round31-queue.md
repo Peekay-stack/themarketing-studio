@@ -213,3 +213,11 @@ re-render, no single-frame correction. All four shipped, confirmed live via `/se
   into EVERY frame prompt (Location+DoP+Props+Wardrobe). Also no staleness signal when the notes/sheet change after the lock.
   Plan: A+B honest status lines (frontend only), C a derived short visual location line alongside the cast sheet (needs owner's
   yes), D optional "locked image out of date" marker.
+- **5 Oct, later: owner asked for an AI cast generator in Video's "Real references" (as in Social/Carousel/POSM) + a revised plan that
+  includes the blast-radius findings. Plan only.** New finding while reading: `generateFrame` never sends `cast_id`/`plate_id` (only
+  `buildCastReference` does), and `/scene-still` defaults `use_cast` to true, so every Video frame ALSO attaches the library's NEWEST
+  signed-off cast (+ plate) regardless of the pickers -- it spends one of the 3 reference slots and can mix in a different person; it is
+  also what crowds out the pack. Candidate fix = a "reference budget" (lock image > pack > sibling > plate; library cast only if picked).
+  Social/Carousel/POSM generator = `/cast-reference` n=3 -> pick -> `/library-adopt` kind cast sign:true; Video's lock makes ONE composite
+  (cast+location) image, 4 roles in the screenshot, not signed in. Signing a group shot into the library would pollute Social/POSM's cast
+  list and, via newest-wins, silently re-cast other pieces -> recommend candidates become the lock image, "save to Memory" optional.
