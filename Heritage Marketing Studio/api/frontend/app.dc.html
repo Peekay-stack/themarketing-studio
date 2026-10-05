@@ -15750,7 +15750,8 @@ class Component extends DCLogic {
   // words. Loaded lazily (Scripting mounting is what actually needs it) rather than on every screen.
   loadVideoAssetLib = async () => {
     const d = await this.apiGet('/library');
-    this.setState({ videoAssets: (d && Array.isArray(d.items)) ? d.items : [] });
+    // A failed read leaves the list as it was (it is now re-read on every entry to Video, and must not blank the pickers).
+    if (d && Array.isArray(d.items)) this.setState({ videoAssets: d.items });
   };
   videoAssetOptions(kinds){
     return (this.state.videoAssets || []).filter(it => kinds.indexOf(it.kind) >= 0 && it.signed_off);
@@ -20501,7 +20502,12 @@ class Component extends DCLogic {
     this._seen = { planId, xTab: s.xTab, screen: s.screen };
     if (changed && s.screen === 'exec') { this.loadExecOptions(); this.loadCampaignsForExec(); }
     // Round 92: video's own execution options, same trigger as the xTab producers' `loadExecOptions`.
-    if (changed && s.screen === 'video') { this.loadVideoExecOptions(); this.loadCampaignsForExec(); }
+    if (changed && s.screen === 'video') { this.loadVideoExecOptions(); this.loadCampaignsForExec();
+      // The Cast / Location / Pack pickers (and the per-frame pack checkbox) read these. They were loaded only when an
+      // objective was picked, so a film restored from its saved script -- a page refresh, a return visit -- had EMPTY
+      // pickers and no pack checkbox (5 Oct). Loaded on every entry to Video, which also picks up anything signed off
+      // in Memory since the last visit.
+      this.loadVideoAssetLib(); }
     // Social's (and Video's) reference-library chips read `s.library` — round-92 fix, see REF_LIBRARY's
     // own comment. Video already loads it on screen entry (`go()`); Social has no such entry point of
     // its own (`xTab` flips from several call sites, not one), so it's fetched here instead, on the one
