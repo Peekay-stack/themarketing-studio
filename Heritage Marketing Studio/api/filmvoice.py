@@ -153,10 +153,12 @@ _FEMALE_WORDS = ("mother", "amma", "amamma", "ammamma", "mom", "mum", "woman", "
                  "nani", "paati", "akka", "bride")
 _MALE_WORDS = ("father", "appa", "dad", "man", "boy", "son", "grandfather", "thatha", "uncle",
                "husband", "brother", "male", "he", "farmer", "shopkeeper", "grandson", "anna")
-_YOUNG_WORDS = ("child", "kid", "boy", "girl", "young", "school", "toddler", "baby", "son",
+# "young" is deliberately NOT a child word: the cast sheet now labels versions of one adult "MOTHER (young)" /
+# "MOTHER (older)", and "young woman" / "young father" are adults. A child is a child / kid / boy / girl / toddler...
+_YOUNG_WORDS = ("child", "kid", "boy", "girl", "school", "toddler", "baby", "son",
                 "daughter", "teen", "little", "grandson", "granddaughter", "kanna")
 _MATURE_WORDS = ("elderly", "old", "grandmother", "grandfather", "granny", "ammamma", "thatha",
-                 "nani", "paati", "senior", "veteran", "aged", "60s", "70s", "80s")
+                 "nani", "paati", "senior", "veteran", "aged", "50s", "60s", "70s", "80s")
 
 # Performance notes -> delivery. Nothing here is ever spoken aloud.
 _DELIVERY = [
@@ -192,6 +194,14 @@ def _has(low: str, words) -> bool:
 
 def _band(hints: str) -> str:
     low = (hints or "").lower()
+    # "a six-year-old boy" / "4 years old" is a child's age, not "old": a bare "old" matched inside it and cast a
+    # little boy with a mature adult voice. A stated age of 16 or under counts as a child; any other stated age is dropped.
+    def _stated_age(m):
+        n = re.search(r"\d+", m.group(0))
+        age = int(n.group(0)) if n else 30
+        return " child " if age <= 16 else (" elderly " if age >= 60 else " ")
+    low = re.sub(r"\b\d{1,2}[- ]?(?:years?|yrs?)[- ]?old\b", _stated_age, low)
+    low = re.sub(r"\b[a-z]+-years?-old\b", " ", low)
     fem = _has(low, _FEMALE_WORDS)
     masc = _has(low, _MALE_WORDS)
     gender = "female" if fem and not masc else ("male" if masc and not fem else
