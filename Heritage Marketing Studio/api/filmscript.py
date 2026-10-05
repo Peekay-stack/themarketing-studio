@@ -90,7 +90,9 @@ def save(house_id: str, data: dict) -> dict:
         "video_characters": str(data.get("video_characters") or ""),
         # The short "what the camera sees" line distilled from the Location note (5 Oct) -- the text the cast lock
         # and every frame send, instead of the whole location plan.
-        "video_location_line": str(data.get("video_location_line") or ""),
+        # A page opened before this field existed never sends the key; keep what is saved rather than blanking it.
+        "video_location_line": (str(data.get("video_location_line") or "") if "video_location_line" in data
+                                else str(load(house_id).get("video_location_line") or "")),
         "updated": _now(),
     }
     tmp = _path(house_id) + ".tmp"

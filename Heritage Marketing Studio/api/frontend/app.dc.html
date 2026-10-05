@@ -15491,7 +15491,7 @@ class Component extends DCLogic {
     // Changing the image engine invalidates the locked cast and rendered frames, since a different
     // model draws different people.
     const patch = { engines:{ ...this.state.engines, [kind]:id } };
-    if (kind === 'image') Object.assign(patch, { castRefUrl:null, sceneFrames:{} });
+    if (kind === 'image') Object.assign(patch, { castRefUrl:null, castOptions:[], sceneFrames:{} });
     if (kind === 'music') Object.assign(patch, { musicOptions:[], musicUrl:null, voiceAudioUrl:null });
     this.setState(patch);
   };
@@ -15663,7 +15663,7 @@ class Component extends DCLogic {
   };
   setVideoStyle = (id) => () => {
     // A new look means the cast reference and any rendered frames no longer match it.
-    this.setState({ videoStyle:id, castRefUrl:null, sceneFrames:{} });
+    this.setState({ videoStyle:id, castRefUrl:null, castOptions:[], sceneFrames:{} });
   };
   onDeptText = (id) => (e) => {
     const text = e.target.value;
@@ -18607,7 +18607,7 @@ class Component extends DCLogic {
       // image are each their own "already generated" state with no idea the mode just changed.
       videoConcept:null, conceptRoutes:[], conceptRoute:0, videoRefusal:'',
       fullScript:null, scriptStatus:'none', scriptPhase:'concept', shoot:{}, sceneFrames:{}, framesBatch:false,
-      castRefUrl:null, castGateHit:false, producedUrl:null,
+      castRefUrl:null, castOptions:[], castLockSig:'', castGateHit:false, producedUrl:null,
       // POSM \u2014 the rendered/drafted pieces (routes, sketches, isolated elements, recompositions) and
       // the brand-fetched mandatories checklist; every typed override (subject, line, location brief,
       // asset picks, checklist ticks) stays exactly as the person left it.
