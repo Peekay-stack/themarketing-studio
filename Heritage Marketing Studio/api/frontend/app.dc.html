@@ -2315,95 +2315,10 @@
       </div>
     </sc-if>
 
-    <!-- inputs panel -->    <!-- inputs panel -->
-    <div style="background:#fff; border:1px solid #DDD9D1; border-radius:14px; padding:16px 18px; margin-bottom:18px;">
-      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; gap:12px; flex-wrap:wrap;">
-        <div style="font-family:'Epilogue',sans-serif; font-weight:700; font-size:15px; color:#17325E;">Inputs to guide generation <span style="color:#6B7280; font-weight:600; font-size:13px;">· {{ inputCount }} attached</span></div>
-        <label style="display:inline-flex; align-items:center; gap:8px; border:1px dashed #C9D9CC; background:#F4FAF5; border-radius:10px; padding:8px 14px; cursor:pointer; color:#1E7E34; font-weight:700; font-size:13px;"><span style="font-size:15px; line-height:1;">↑</span> Upload images / clips<input type="file" multiple onChange="{{ handleStudioUpload }}" style="display:none;" /></label>
-      </div>
-      <div style="display:flex; flex-wrap:wrap; gap:8px;">
-        <span onClick="{{ toggleGuideline }}" style="cursor:pointer; background:{{ glChipBg }}; color:{{ glChipFg }}; border:1px solid {{ glChipBorder }}; border-radius:20px; padding:7px 13px; font-size:12.5px; font-weight:700;">✦ {{ glChipLabel }}</span>
-        <sc-if value="{{ noRefLibrary }}" hint-placeholder-val="{{ true }}">
-          <span style="font-size:12px; line-height:1.5; color:#6B7280; align-self:center; text-wrap:pretty;">No asset library is connected, so there is nothing to draw on for style or continuity — upload what the work should match.</span>
-        </sc-if>
-        <sc-for list="{{ refLibrary }}" as="r" hint-placeholder-count="7">
-          <span onClick="{{ r.toggle }}" style="cursor:pointer; background:{{ r.chipBg }}; color:{{ r.chipFg }}; border:1px solid {{ r.chipBorder }}; border-radius:20px; padding:7px 13px; font-size:12.5px; font-weight:600;"><b style="font-weight:800;">{{ r.kind }}</b> · {{ r.name }}</span>
-        </sc-for>
-      </div>
-      <div style="margin-top:11px; padding-top:11px; border-top:1px solid #E6E3DC;">
-        <div style="font-size:12.5px; line-height:1.55; color:#6B7280; margin-bottom:10px; text-wrap:pretty;">{{ glChipNote }}</div>
-        <sc-if value="{{ kitAnything }}" hint-placeholder-val="{{ false }}">
-          <div style="display:flex; flex-wrap:wrap; gap:18px; align-items:flex-start;">
-            <sc-if value="{{ kitHasColors }}" hint-placeholder-val="{{ false }}">
-              <div>
-                <div style="font-size:10px; font-weight:800; letter-spacing:0.07em; text-transform:uppercase; color:#9AA1AC; margin-bottom:7px;">Palette</div>
-                <div style="display:flex; flex-wrap:wrap; gap:9px;">
-                  <sc-for list="{{ kitColors }}" as="c" hint-placeholder-count="3">
-                    <div style="display:flex; align-items:center; gap:7px;">
-                      <sc-if value="{{ c.hasHex }}" hint-placeholder-val="{{ true }}">
-                        <span style="width:20px; height:20px; border-radius:6px; background:{{ c.swatch }}; border:1px solid #C9CEDA; flex:none;"></span>
-                      </sc-if>
-                      <div>
-                        <div style="font-size:12px; font-weight:700; color:#17325E;">{{ c.name }}</div>
-                        <sc-if value="{{ c.hasHex }}" hint-placeholder-val="{{ false }}"><div style="font-size:10.5px; color:#9AA1AC;">{{ c.swatch }} {{ c.role }}</div></sc-if>
-                      </div>
-                    </div>
-                  </sc-for>
-                </div>
-              </div>
-            </sc-if>
-            <sc-if value="{{ kitHasFonts }}" hint-placeholder-val="{{ false }}">
-              <div style="max-width:260px;">
-                <div style="font-size:10px; font-weight:800; letter-spacing:0.07em; text-transform:uppercase; color:#9AA1AC; margin-bottom:7px;">Typefaces</div>
-                <div style="font-size:12.5px; line-height:1.5; color:#17325E; text-wrap:pretty;">{{ kitFonts }}</div>
-              </div>
-            </sc-if>
-            <sc-if value="{{ kitHasTone }}" hint-placeholder-val="{{ false }}">
-              <div style="max-width:300px;">
-                <div style="font-size:10px; font-weight:800; letter-spacing:0.07em; text-transform:uppercase; color:#9AA1AC; margin-bottom:7px;">Tone</div>
-                <div style="font-size:12.5px; line-height:1.5; color:#17325E; text-wrap:pretty;">{{ kitTone }}</div>
-              </div>
-            </sc-if>
-            <sc-if value="{{ kitHasDos }}" hint-placeholder-val="{{ false }}">
-              <div style="max-width:280px;">
-                <div style="font-size:10px; font-weight:800; letter-spacing:0.07em; text-transform:uppercase; color:#2F6B3C; margin-bottom:7px;">Always</div>
-                <div style="display:flex; flex-direction:column; gap:4px;">
-                  <sc-for list="{{ kitDos }}" as="d" hint-placeholder-count="2">
-                    <div style="font-size:12.5px; line-height:1.5; color:#17325E; text-wrap:pretty;">{{ d.text }}</div>
-                  </sc-for>
-                </div>
-              </div>
-            </sc-if>
-            <sc-if value="{{ kitHasDonts }}" hint-placeholder-val="{{ false }}">
-              <div style="max-width:280px;">
-                <div style="font-size:10px; font-weight:800; letter-spacing:0.07em; text-transform:uppercase; color:#B0463B; margin-bottom:7px;">Never</div>
-                <div style="display:flex; flex-direction:column; gap:4px;">
-                  <sc-for list="{{ kitDonts }}" as="d" hint-placeholder-count="2">
-                    <div style="font-size:12.5px; line-height:1.5; color:#17325E; text-wrap:pretty;">{{ d.text }}</div>
-                  </sc-for>
-                </div>
-              </div>
-            </sc-if>
-          </div>
-          <sc-if value="{{ kitHasMissing }}" hint-placeholder-val="{{ false }}">
-            <div style="margin-top:10px; font-size:12px; line-height:1.55; color:#B07A12; text-wrap:pretty;">{{ kitMissingNote }}</div>
-          </sc-if>
-        </sc-if>
-        <sc-if value="{{ kitNothing }}" hint-placeholder-val="{{ true }}">
-          <div style="font-size:12.5px; line-height:1.6; color:#6B7280; text-wrap:pretty;">{{ kitEmptyNote }}</div>
-        </sc-if>
-        <sc-if value="{{ kitIndependent }}" hint-placeholder-val="{{ false }}">
-          <div style="font-size:12.5px; line-height:1.6; color:#6B7280; text-wrap:pretty;">Hidden while Independent — none of it is used for this piece.</div>
-        </sc-if>
-      </div>
-      <sc-if value="{{ hasUploads }}" hint-placeholder-val="{{ false }}">
-        <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; padding-top:10px; border-top:1px solid #E6E3DC;">
-          <sc-for list="{{ uploads }}" as="u" hint-placeholder-count="0">
-            <span style="display:inline-flex; align-items:center; gap:8px; background:{{ u.tint }}; border-radius:20px; padding:7px 12px; font-size:12.5px; font-weight:600; color:#17325E;"><b style="font-weight:800;">{{ u.kind }}</b> {{ u.name }} <span onClick="{{ u.remove }}" style="cursor:pointer; color:#6B7280; font-weight:800;">✕</span></span>
-          </sc-for>
-        </div>
-      </sc-if>
-    </div>
+    <!-- The "Inputs to guide generation" panel is not shown on the Video screen (5 Oct): attached items only ever added
+         their NAMES to the concept prompt (no image or clip reached the model), the brand voice is already in every Video
+         prompt, the real references live in Scripting ("Real references"), and the shared attachments leaked between Social
+         and Video. Social keeps its own panel. -->
 
     <!-- pipeline stepper -->
     <div style="display:flex; gap:10px; margin-bottom:26px; flex-wrap:wrap;">
@@ -2604,6 +2519,44 @@
               </label>
             </div>
           </div>
+          <!-- What the writer was handed from Memory besides the concept: locked copy (placed word for word) and approved
+               examples. When a strange line turns up in the script, this is where it can be traced. -->
+          <div style="margin-bottom:12px;">
+            <span onClick="{{ toggleScriptInfluence }}" style="cursor:pointer; font-size:12.5px; font-weight:700; color:#17325E; text-decoration:underline;">{{ scriptInfluenceLabel }}</span>
+            <sc-if value="{{ scriptInfluenceOpen }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top:8px; background:#FBFAF8; border:1px solid #DDD9D1; border-radius:12px; padding:13px 15px; font-size:12.5px; line-height:1.55; color:#41505F;">
+                <sc-if value="{{ infBusy }}" hint-placeholder-val="{{ false }}"><div>Reading Memory…</div></sc-if>
+                <sc-if value="{{ infFailed }}" hint-placeholder-val="{{ false }}"><div style="color:#B07A12;">Couldn’t read what informed this script — try again.</div></sc-if>
+                <sc-if value="{{ infReady }}" hint-placeholder-val="{{ false }}">
+                  <div style="font-weight:700; color:#17325E; margin-bottom:4px;">Locked copy (placed word for word in every script)</div>
+                  <sc-if value="{{ infHasLocked }}" hint-placeholder-val="{{ false }}">
+                    <sc-for list="{{ infLocked }}" as="lk" hint-placeholder-count="1">
+                      <div style="margin-bottom:6px;">
+                        <div>“{{ lk.text }}”</div>
+                        <sc-if value="{{ lk.hasWhere }}" hint-placeholder-val="{{ false }}">
+                          <div style="color:#B07A12; font-weight:700;">Found in {{ lk.whereText }}’s visual — it belongs in the voiceover or on-screen text, not in what the camera sees.</div>
+                          <sc-for list="{{ lk.fixes }}" as="fx" hint-placeholder-count="1">
+                            <span onClick="{{ fx.fix }}" style="display:inline-block; margin:3px 8px 0 0; cursor:pointer; border:1px solid #E8A93C; background:#fff; color:#8A6410; border-radius:8px; padding:3px 10px; font-size:12px; font-weight:700;">{{ fx.label }}</span>
+                          </sc-for>
+                        </sc-if>
+                      </div>
+                    </sc-for>
+                  </sc-if>
+                  <sc-if value="{{ infNoLocked }}" hint-placeholder-val="{{ true }}"><div style="color:#6B7280;">None on file for this brand.</div></sc-if>
+                  <div style="font-weight:700; color:#17325E; margin:8px 0 4px;">Approved examples shown to the writer (its judgement, not its words)</div>
+                  <sc-if value="{{ infHasAnchors }}" hint-placeholder-val="{{ false }}">
+                    <sc-for list="{{ infAnchors }}" as="an" hint-placeholder-count="1"><div>· {{ an.name }}</div></sc-for>
+                  </sc-if>
+                  <sc-if value="{{ infNoAnchors }}" hint-placeholder-val="{{ true }}"><div style="color:#6B7280;">None matched this concept.</div></sc-if>
+                  <sc-if value="{{ infHasRules }}" hint-placeholder-val="{{ false }}">
+                    <div style="font-weight:700; color:#17325E; margin:8px 0 4px;">House rules learned from earlier rejections</div>
+                    <sc-for list="{{ infRules }}" as="ru" hint-placeholder-count="1"><div>· {{ ru.text }}</div></sc-for>
+                  </sc-if>
+                  <div style="margin-top:8px; font-size:11.5px; color:#9AA1AC;">This is Memory as it stands now. Manage it in Memory → Ground Truth.</div>
+                </sc-if>
+              </div>
+            </sc-if>
+          </div>
           <!-- A script that repeats a scene is padding, and every repeat becomes a storyboard frame and a paid shot. -->
           <sc-if value="{{ hasScriptRepeats }}" hint-placeholder-val="{{ false }}">
             <div style="background:#FFF9EC; border:1px solid #F0DFB4; border-left:4px solid #E8A93C; border-radius:12px; padding:12px 15px; margin-bottom:12px;">
@@ -2735,6 +2688,12 @@
             <div style="margin-top:10px;">
               <div style="font-size:11px; font-weight:700; color:#17325E; margin-bottom:4px;">Location line <span style="font-weight:600; color:#9AA1AC;">· what the camera sees — sent to the lock and to every frame</span></div>
               <textarea value="{{ videoLocationLine }}" onChange="{{ onVideoLocationLine }}" rows="2" placeholder="Press Derive from script to write this from the Location note — or type it." style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:10px; padding:9px 12px; font-size:13px; line-height:1.5; background:#FBFAF8; color:#17325E; resize:vertical; font-family:inherit;"></textarea>
+              <sc-if value="{{ locationLineStale }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:6px; font-size:12px; line-height:1.5; color:#B07A12; font-weight:700;">
+                  <span>The Location note changed after this line was written, so the line may describe an old version.</span>
+                  <span onClick="{{ rewriteLocationLine }}" style="cursor:pointer; border:1px solid #E8A93C; background:#fff; color:#8A6410; border-radius:8px; padding:3px 10px; font-size:12px; font-weight:700;">↻ Write the line again from the note</span>
+                </div>
+              </sc-if>
             </div>
 
             <!-- Real references, before rendering — a real signed-off photo of the person/place/pack
@@ -11236,6 +11195,8 @@ class Component extends DCLogic {
     castLockSig: '',               // what the lock was made from (sheet, location, picks) -- to say when it is out of date
     castSavedUrl: '',              // the locked image last saved to Memory as cast
     videoLocationLine: '',         // short 'what the camera sees', distilled from the Location note
+    videoLocationSrc: '',          // fingerprint of the Location note that line was written from (drift marker)
+    scriptInfluence: null, scriptInfluenceOpen: false, scriptInfluenceBusy: false,   // 'what informed this script' view
     videoLookRef: '', lookRefBusy: false,   // written cinematography reference: the look the film should resemble
     castGateHit: false,            // a frame was asked for with no cast locked
     // Real references for the cast lock — picked once here, same pattern as POSM's "Assets for this
@@ -14737,7 +14698,7 @@ class Component extends DCLogic {
 
   // ---------- video generation ----------
   pickVideoObjective = (name) => () => {
-    this.setState({ videoObjective:name, videoConcept:null, videoRefusal:'', scriptVersions:[], scriptStatus:'none', fullScript:null, sceneFrames:{}, shoot:{}, producedUrl:null, scriptPhase:'concept', videoCharacters:'', videoLocationLine:'', videoLookRef:'', castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null, renderInfo:null, castRefUrl:null, videoCastChoice:'', videoPlateChoice:'', videoPackChoice:'', frameNote:'', scriptRefine:'', production:{ aspect:'16:9', music:'Warm strings', voice:'Warm female (Telugu-accented English)', status:'idle', versions:[] } });
+    this.setState({ videoObjective:name, videoConcept:null, videoRefusal:'', scriptVersions:[], scriptStatus:'none', fullScript:null, sceneFrames:{}, shoot:{}, producedUrl:null, scriptPhase:'concept', videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null, renderInfo:null, castRefUrl:null, videoCastChoice:'', videoPlateChoice:'', videoPackChoice:'', frameNote:'', scriptRefine:'', production:{ aspect:'16:9', music:'Warm strings', voice:'Warm female (Telugu-accented English)', status:'idle', versions:[] } });
     // Same "surfaced up front" reasoning as POSM's loadPosmAssetLib: a real reference picker with
     // nothing loaded to pick from is just a slower text box.
     if (!this.state.videoAssets.length) this.loadVideoAssetLib();
@@ -15000,8 +14961,25 @@ class Component extends DCLogic {
     // frame send (the note itself is a production plan -- "Secure a single practical home...", markdown and all).
     const patch = { charBusy:false, videoCharacters:text };
     const locLine = await this.deriveLocationLine();
-    if (locLine) patch.videoLocationLine = locLine;
+    if (locLine) { patch.videoLocationLine = locLine; patch.videoLocationSrc = this.locNoteHash(this.state); }
     this.setState(patch);
+  };
+  // A short fingerprint of the Location note as it will be read (markdown and questions removed). Stored when the
+  // Location line is written from it, so the screen can tell when the note has since moved on.
+  locNoteHash(st){
+    const loc = ((((st || this.state).shoot || {}).location) || {}).text;
+    const t = this.stripMd(this.plainDept(loc));
+    if (!t) return '';
+    let h = 5381;
+    for (let i = 0; i < t.length; i++) h = ((h * 33) ^ t.charCodeAt(i)) >>> 0;
+    return h.toString(36) + ':' + t.length;
+  }
+  rewriteLocationLine = async () => {
+    if (this.state.charBusy) return;
+    this.setState({ charBusy:true });
+    const line = await this.deriveLocationLine();
+    if (line) this.setState({ charBusy:false, videoLocationLine:line, videoLocationSrc:this.locNoteHash(this.state) });
+    else { this.setState({ charBusy:false }); this.showToast('There is no Location note to write the line from — draft the Location note first.', 'warn'); }
   };
   // Plain text for an image prompt: no markdown marks, bullets or heading hashes.
   stripMd(t){
@@ -15042,7 +15020,8 @@ class Component extends DCLogic {
     }
     return text || this.clipText(note, 220);
   };
-  onVideoLocationLine = (e) => this.setState({ videoLocationLine: e.target.value });
+  // Typing in the line makes it the person's own: it is now "in step" with the note as it stands (no drift marker).
+  onVideoLocationLine = (e) => { const v = e.target.value; this.setState(s => ({ videoLocationLine: v, videoLocationSrc: this.locNoteHash(s) })); };
   onVideoLookRef = (e) => this.setState({ videoLookRef: e.target.value });
   // Turns what was typed (a film's name, a mood, or rough notes) into concrete cinematography notes an image and
   // video model can follow. The model works from memory of the film, so the result is a starting point to edit,
@@ -15112,6 +15091,20 @@ class Component extends DCLogic {
   };
 
   regenFullScript = () => { this.setState({ fullScript:null }); this.writeFullScript(); };
+  // Opens (and refreshes) the view of what the writer is handed from Memory beyond the concept: locked copy, approved
+  // examples, house rules. Read on demand from the same /learning-context the writer calls, so what is shown is what
+  // the next script would be given.
+  toggleScriptInfluence = async () => {
+    const open = !this.state.scriptInfluenceOpen;
+    this.setState({ scriptInfluenceOpen: open });
+    if (!open || this.state.scriptInfluenceBusy) return;
+    const vc = this.state.videoConcept || {};
+    this.setState({ scriptInfluenceBusy: true });
+    const ctx = await this.learningContext('script', ((vc.logline || '') + ' ' + (vc.vo || '')).trim());
+    this.setState({ scriptInfluenceBusy: false, scriptInfluence: ctx ? {
+      locked: (ctx.locked_copy || []).map(c => String((c && c.text) || '')).filter(Boolean),
+      anchors: (ctx.anchors || []).map(String), rules: (ctx.rules || []).map(String) } : { failed: true } });
+  };
   // Pairs of scenes whose visuals say the same thing (identical, or sharing 75%+ of their meaningful words): the
   // later one repeats the earlier. Deterministic, no model call -- it only points, the person decides.
   scriptRepeats(rows){
@@ -15492,7 +15485,6 @@ class Component extends DCLogic {
         ? (forceTyped ? (' The idea platform above is set aside for this film \u2014 write it from this brief alone instead: "' + typed + '".')
                       : (' Additional direction: "' + typed + '".'))
         : '';
-      const kit = this.inputsContext();
       const refine = isRefine ? ` Here is the current script to revise: ${JSON.stringify({ logline:prev.logline, scenes:prev.scenes, vo:prev.vo })}. Apply this direction: "${this.state.refinePrompt.trim()}". Keep what works, change only what the direction asks.` : '';
       const dur = this.state.prodDuration, words = this.voWords(dur);
       const pre = this.brandPreamble('a film director at an ad agency', this.state.producerBrandMode === 'general');
@@ -15503,7 +15495,7 @@ class Component extends DCLogic {
       // (see `bagVideoExec`/`createVideoExecution`).
       const vexec = this.videoExec();
       const noTrio = !vexec && !brief && !(stands && stands.text && !forceTyped);
-      const prompt = `${pre}\n\nCommunication objective: "${obj}".${ctx}${standsCtx}${typedCtx}${kit}${refine} Propose THREE genuinely different creative routes for a ${dur} film — not three phrasings of one idea. Each must take a distinct angle: for example an emotional family story, a craft/provenance route showing where the milk comes from, and a lighter observational route. Give each a short route name and a one-line reason it could work. The voiceover is performed as ONE continuous read across the whole film (it does not restart per shot), so write roughly ${words} words per route — about 2 words per second of ${dur} — as flowing connected sentences, never per-scene fragments. Return ONLY JSON (no markdown): {"routes":[{"name":"short route name","rationale":"one line on why this works","logline": string, "duration": "${dur}", "vo": "the full ~${words}-word voiceover", "scenes": [{"t":"0\u20135s","title":string,"desc":string}, ... 4 concept beats]}, ...exactly 3 routes]}.`;
+      const prompt = `${pre}\n\nCommunication objective: "${obj}".${ctx}${standsCtx}${typedCtx}${refine} Propose THREE genuinely different creative routes for a ${dur} film — not three phrasings of one idea. Each must take a distinct angle: for example an emotional family story, a craft/provenance route showing where the milk comes from, and a lighter observational route. Give each a short route name and a one-line reason it could work. The voiceover is performed as ONE continuous read across the whole film (it does not restart per shot), so write roughly ${words} words per route — about 2 words per second of ${dur} — as flowing connected sentences, never per-scene fragments. Return ONLY JSON (no markdown): {"routes":[{"name":"short route name","rationale":"one line on why this works","logline": string, "duration": "${dur}", "vo": "the full ~${words}-word voiceover", "scenes": [{"t":"0\u20135s","title":string,"desc":string}, ... 4 concept beats]}, ...exactly 3 routes]}.`;
       // 29 Sep (part 2): house_id — same fix as Social's generate/rework/adjust calls; see the bridge
       // script's own comment.
       const hv = this.state.house;
@@ -15520,7 +15512,7 @@ class Component extends DCLogic {
       this.setState({ conceptRoutes: routes.length > 1 ? routes : [], conceptRoute:0 });
       if (!isRefine) this.addCreated(this.videoItem(obj, data));
       this.setState(s => ({ videoGenerating:false, videoConcept:data, refinePrompt:'', videoRefusal:'',
-        scriptStatus:'concept', fullScript:null, sceneFrames:{}, scriptPhase:'concept', videoCharacters:'', videoLocationLine:'', videoLookRef:'', castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null,
+        scriptStatus:'concept', fullScript:null, sceneFrames:{}, scriptPhase:'concept', videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null,
         scriptVersions: [...s.scriptVersions, { v:s.scriptVersions.length+1, logline:data.logline, note: isRefine ? s.refinePrompt.trim() : 'Initial draft', duration:data.duration }],
         videoCheck: this.runCreativeCheck([data.logline, (data.scenes||[]).map(x=>x.title+' '+x.desc).join(' ')]) }));
     } catch (err) {
@@ -15542,7 +15534,7 @@ class Component extends DCLogic {
     if (!r || this.state.conceptRoute === i) return;
     // Switching route invalidates everything downstream — script, frames, cast, cut.
     this.setState({ conceptRoute:i, videoConcept:r, scriptStatus:'concept', fullScript:null,
-                    sceneFrames:{}, castRefUrl:null, videoCharacters:'', videoLocationLine:'', videoLookRef:'', castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null,
+                    sceneFrames:{}, castRefUrl:null, videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null,
                     producedUrl:null, renderInfo:null, scriptPhase:'concept', voicePlan:null });
     this.showToast('Route ' + (i+1) + ' loaded — ' + (r.name || 'concept') + '.', 'ok');
   };
@@ -16459,7 +16451,7 @@ class Component extends DCLogic {
       no: r.no || String(i + 1), tc: r.tc || '', visual: r.visual || '', supr: r.supr || '' })) });
     this.showToast(rows.length + ' board row' + (rows.length === 1 ? '' : 's') + ' pulled \u2014 each take can be keyed against the frame it is for.', 'ok');
   };
-  openVideoFromCampaign = () => { const c = this.state.campaign; this.setState({ screen:'video', videoConcept: c ? c.video : null, linkedBrief: c ? c.brief : null, videoObjective:'Campaign film', scriptStatus: (c && c.video) ? 'concept' : 'none', scriptPhase:'concept', videoStep:'scripting', fullScript:null, sceneFrames:{}, videoCharacters:'', videoLocationLine:'', videoLookRef:'', castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null, renderInfo:null, castRefUrl:null });
+  openVideoFromCampaign = () => { const c = this.state.campaign; this.setState({ screen:'video', videoConcept: c ? c.video : null, linkedBrief: c ? c.brief : null, videoObjective:'Campaign film', scriptStatus: (c && c.video) ? 'concept' : 'none', scriptPhase:'concept', videoStep:'scripting', fullScript:null, sceneFrames:{}, videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null, renderInfo:null, castRefUrl:null });
     this.loadGrounding(); this.loadVideoStandsOn(); }; // round 92: video's own six-entry-point audit
 
   // ---------- campaign analysis ----------
@@ -18063,6 +18055,25 @@ class Component extends DCLogic {
           value: s.videoCastChoice || '', pick: this.pickVideoAsset('videoCastChoice'),
           upload: this.uploadVideoAsset('cast', 'videoCastChoice'), status, hasStatus: !!status };
       })(),
+      // "What informed this script": locked copy / approved examples / house rules, with a check for locked copy that
+      // ended up inside a scene's visual (where it gets drawn as text instead of being said or overlaid).
+      scriptInfluenceOpen: !!s.scriptInfluenceOpen, toggleScriptInfluence: this.toggleScriptInfluence,
+      scriptInfluenceLabel: s.scriptInfluenceOpen ? 'Hide what informed this script' : 'What informed this script?',
+      ...(() => {
+        const inf = s.scriptInfluence, ok = !!inf && !inf.failed && !s.scriptInfluenceBusy;
+        const norm = (t) => String(t || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+        const rows = s.fullScript || [];
+        const locked = ok ? inf.locked.map(text => {
+          const hits = rows.map((r, i) => ({ r, i })).filter(x => norm(text) && norm(x.r && x.r.visual).indexOf(norm(text)) >= 0);
+          return { text, hasWhere: hits.length > 0,
+            whereText: hits.map(x => 'scene ' + this.sceneNo(x.r, x.i)).join(', '),
+            fixes: hits.map(x => ({ label: '↻ Rewrite scene ' + this.sceneNo(x.r, x.i), fix: this.rewriteScene(x.i) })) };
+        }) : [];
+        return { infBusy: !!s.scriptInfluenceBusy, infFailed: !!inf && !!inf.failed && !s.scriptInfluenceBusy, infReady: ok,
+          infLocked: locked, infHasLocked: locked.length > 0, infNoLocked: ok && !locked.length,
+          infAnchors: ok ? inf.anchors.map(name => ({ name })) : [], infHasAnchors: ok && inf.anchors.length > 0, infNoAnchors: ok && !inf.anchors.length,
+          infRules: ok ? inf.rules.slice(0, 8).map(text => ({ text })) : [], infHasRules: ok && inf.rules.length > 0 };
+      })(),
       // Scenes that repeat an earlier scene, each with a one-click rewrite (which is told what the other scenes show).
       scriptRepeatNotes: this.scriptRepeats(s.fullScript).map(p => ({
         text: 'Scene ' + this.sceneNo((s.fullScript || [])[p.later], p.later) + ' repeats Scene ' + this.sceneNo((s.fullScript || [])[p.earlier], p.earlier) + '.',
@@ -18070,6 +18081,9 @@ class Component extends DCLogic {
       hasScriptRepeats: this.scriptRepeats(s.fullScript).length > 0,
       // The lock, its three-option alternative, and whether the lock is out of date.
       videoLocationLine: s.videoLocationLine || '', onVideoLocationLine: this.onVideoLocationLine,
+      // The Location note changed after the line was written from it (the line is then describing an old note).
+      locationLineStale: !!(s.videoLocationLine || '').trim() && !!s.videoLocationSrc && !!this.locNoteHash(s) && this.locNoteHash(s) !== s.videoLocationSrc,
+      rewriteLocationLine: this.rewriteLocationLine,
       videoLookRef: s.videoLookRef || '', onVideoLookRef: this.onVideoLookRef, deriveLookRef: this.deriveLookRef,
       lookRefLabel: s.lookRefBusy ? 'Writing notes…' : '✦ Write notes from this',
       generateCastOptions: this.generateCastOptions,
@@ -20386,7 +20400,7 @@ class Component extends DCLogic {
       scriptStatus: d.script_status || 'none', scriptPhase: d.script_phase || 'concept',
       fullScript: d.full_script, sceneFrames: d.scene_frames || {}, shoot: cleaned.shoot,
       videoCharacters: d.video_characters || '', videoLocationLine: d.video_location_line || '',
-      videoLookRef: d.video_look_ref || '' });
+      videoLookRef: d.video_look_ref || '', videoLocationSrc: d.video_location_src || '' });
     if (cleaned.count) this.showToast('Removed questions from ' + cleaned.count + ' department draft' + (cleaned.count === 1 ? '' : 's') + ' — they were written as questions to you, not as direction.');
   };
   cleanShootDrafts(shoot){
@@ -20408,7 +20422,7 @@ class Component extends DCLogic {
       video_concept: s.videoConcept, script_status: s.scriptStatus, script_phase: s.scriptPhase,
       full_script: s.fullScript, scene_frames: s.sceneFrames, shoot: s.shoot,
       video_characters: s.videoCharacters, video_location_line: s.videoLocationLine,
-      video_look_ref: s.videoLookRef });
+      video_look_ref: s.videoLookRef, video_location_src: s.videoLocationSrc });
   };
   saveVideoScriptDebounced = () => {
     clearTimeout(this._videoScriptSaveTimer);
@@ -20452,7 +20466,7 @@ class Component extends DCLogic {
     const vsig = { fullScript: s.fullScript, videoCharacters: s.videoCharacters, sceneFrames: s.sceneFrames,
                    shoot: s.shoot, videoConcept: s.videoConcept, scriptStatus: s.scriptStatus,
                    scriptPhase: s.scriptPhase, videoObjective: s.videoObjective, videoLocationLine: s.videoLocationLine,
-                   videoLookRef: s.videoLookRef };
+                   videoLookRef: s.videoLookRef, videoLocationSrc: s.videoLocationSrc };
     const vPrev = this._videoScriptSig || {};
     const vChanged = Object.keys(vsig).some(k => vsig[k] !== vPrev[k]);
     this._videoScriptSig = vsig;

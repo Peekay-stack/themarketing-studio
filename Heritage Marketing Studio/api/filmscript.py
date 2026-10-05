@@ -35,7 +35,7 @@ DIR = tenancy.dir("filmscripts")
 # is Phase 1 of the gap, the part that loses real authored work (a written script, a department note, a
 # rendered frame) rather than a picked option that costs one click to redo.
 FIELDS = ("video_objective", "video_concept", "script_status", "script_phase",
-          "full_script", "scene_frames", "shoot", "video_characters", "video_location_line", "video_look_ref")
+          "full_script", "scene_frames", "shoot", "video_characters", "video_location_line", "video_look_ref", "video_location_src")
 
 
 def _now() -> str:
@@ -49,7 +49,7 @@ def _path(house_id: str) -> str:
 def _blank(house_id: str) -> dict:
     return {"house": house_id, "video_objective": None, "video_concept": None,
             "script_status": "none", "script_phase": "concept", "full_script": None,
-            "scene_frames": {}, "shoot": {}, "video_characters": "", "video_location_line": "", "video_look_ref": "", "updated": ""}
+            "scene_frames": {}, "shoot": {}, "video_characters": "", "video_location_line": "", "video_look_ref": "", "video_location_src": "", "updated": ""}
 
 
 def load(house_id: str) -> dict:
@@ -96,6 +96,10 @@ def save(house_id: str, data: dict) -> dict:
         # The written look reference (cinematography notes the film should resemble); same absent-key guard.
         "video_look_ref": (str(data.get("video_look_ref") or "") if "video_look_ref" in data
                            else str(load(house_id).get("video_look_ref") or "")),
+        # A fingerprint of the Location note the Location line was written from, so the screen can say when the note
+        # has changed since (same absent-key guard as the line itself).
+        "video_location_src": (str(data.get("video_location_src") or "") if "video_location_src" in data
+                               else str(load(house_id).get("video_location_src") or "")),
         "updated": _now(),
     }
     tmp = _path(house_id) + ".tmp"

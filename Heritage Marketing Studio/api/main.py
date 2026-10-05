@@ -2267,6 +2267,23 @@ def library_remove(payload: dict):
     return {"ok": ok, "summary": library.summary()}
 
 
+def _unique_adopt_name(kind: str, descriptor: str) -> str:
+    """A name no existing item of this kind already has. Carousel's cast and Video's "Save to Memory" always adopted under
+    one fixed name, so Memory and every picker showed twelve identical "Carousel cast" chips with no way to tell them
+    apart (5 Oct live test). The first item keeps its plain name; a repeat gets " #N" (N = how many already carry that
+    name or a numbered form of it, plus one). POSM already numbered its own ("AI-drafted cast #N"), so it is unaffected."""
+    base = f"{library.APPROVED_LABEL} — {descriptor}"
+    same = re.compile("^" + re.escape(base) + r"(?: #\d+)?$")
+    names = [str(r.get("name") or "") for r in library.items(kind)]
+    count = sum(1 for n in names if same.match(n))
+    if not count:
+        return descriptor
+    n = count + 1
+    while f"{base} #{n}" in names:
+        n += 1
+    return f"{descriptor} #{n}"
+
+
 @app.post("/library-adopt")
 def library_adopt(payload: dict):
     """Approve a generated candidate into Ground Truth, in one step. `{url, kind, name?, note?,
@@ -2296,7 +2313,7 @@ def library_adopt(payload: dict):
         return JSONResponse(status_code=400, content={
             "detail": "Could not read that image — render it again and retry."})
     ext = os.path.splitext(url.split("?")[0])[1][:10] or ".jpg"
-    descriptor = str(payload.get("name") or kind).strip()
+    descriptor = _unique_adopt_name(kind, str(payload.get("name") or kind).strip())
     who = str(payload.get("who") or "")
     try:
         item = library.add(data, f"{library.APPROVED_LABEL} — {descriptor}", kind,
