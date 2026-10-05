@@ -310,3 +310,9 @@ re-render, no single-frame correction. All four shipped, confirmed live via `/se
   sheet) is only used in the no-reference fallback branch of `/scene-still`, so with a lock image attached the model never sees "MOTHER (older): cream saree". Fix = video_frame prompt carries the cast sheet.
   (3) concept VO ("She never made a speech...") is not in the script -- only 2 spoken lines; owner to decide. Not yet exercised on a real render: Look reference (box empty), Lighting/DoP/Props/Wardrobe notes
   (Shoot Board still locked, so undrafted), the in-use pour wording (no scene pours from the pack).
+- **5 Oct (late): pack-authority + cast-sheet-in-frames fixes SHIPPED live (`950df7e`).** (1) With a pack picked, Video ALWAYS sends an explicit `include_pack` (unticked = no pack); default tick = closing scene or a
+  scene whose OWN visual names pack/pouch/sachet/carton (`sceneNamesPack`); no pack picked = unchanged. (2) `/scene-still` `video_frame` prompts carry the cast sheet + "show the version the shot calls for,
+  in that version's own clothes and age" (cast sheet was only ever used in the no-reference fallback). Prompt-capture + page test + regression suite pass. Owner chose to LEAVE the concept voiceover out of the
+  script. DEPLOY NOTE: Render's push-triggered deploy did NOT fire for this commit (autoDeploy:yes, branch master, but no deploy 15+ min after the push); I triggered it by hand with the Render MCP
+  `trigger_deploy` (same commit) and confirmed via /selfcheck + /health. If a push ever seems not to go live, check `list_deploys` before waiting. Next: owner re-renders frames 1-4 (4 renders, ask first),
+  then draft DoP/Lighting/Props/Wardrobe on the Shoot Board so those get exercised.
