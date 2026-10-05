@@ -316,3 +316,9 @@ re-render, no single-frame correction. All four shipped, confirmed live via `/se
   script. DEPLOY NOTE: Render's push-triggered deploy did NOT fire for this commit (autoDeploy:yes, branch master, but no deploy 15+ min after the push); I triggered it by hand with the Render MCP
   `trigger_deploy` (same commit) and confirmed via /selfcheck + /health. If a push ever seems not to go live, check `list_deploys` before waiting. Next: owner re-renders frames 1-4 (4 renders, ask first),
   then draft DoP/Lighting/Props/Wardrobe on the Shoot Board so those get exercised.
+- **5 Oct (late): wiring sweep of 950df7e + the whole Video chain -- CLEAN, nothing to fix.** HEAD == origin == live (`950df7e`, selfcheck 1253 calls, /health 200); regression suite, selfcheck, smoke pass; memory mirror in sync;
+  Render: no 5xx and no app errors since 10:00Z. Method: the REAL request bodies the page builds (5 frames incl. a matched-shot frame, lock, 3-option draw, produce) were captured and fed through `/scene-still`,
+  `/cast-reference`, `/produce-video` (Veo faked) -- pack only on the two ticked frames, library newest cast never attached, labels only when >=2 images, cast sheet + look + Lighting on every frame, in-use
+  wording on the pouring scene and front-on on the pack shot, look note + movement_class + the frame animation reach every shot prompt; every saved Video field round-trips `/video-script`, an old page's
+  save keeps the three newer fields. Known/left (not defects): toggling the pack tick does not mark a drawn frame out of date (only look/sig changes do); `pack_pref`/`pack_mode:'auto'` are now unused by Video
+  (harmless leftovers); existing films get the new default ticks (closing scene + scenes naming the pack) on their next re-render; `castRefUrl` still not persisted; house switch inside Video keeps the old lock.
