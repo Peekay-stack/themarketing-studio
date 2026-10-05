@@ -221,3 +221,11 @@ re-render, no single-frame correction. All four shipped, confirmed live via `/se
   Social/Carousel/POSM generator = `/cast-reference` n=3 -> pick -> `/library-adopt` kind cast sign:true; Video's lock makes ONE composite
   (cast+location) image, 4 roles in the screenshot, not signed in. Signing a group shot into the library would pollute Social/POSM's cast
   list and, via newest-wins, silently re-cast other pieces -> recommend candidates become the lock image, "save to Memory" optional.
+- **5 Oct: Phase 0 of the revised Video plan SHIPPED live (`d75c791`)** -- reference-slot priority. Frames now send explicit cast_id/plate_id picks and
+  use_cast/use_plate:false when nothing is picked; `/scene-still` (video_frame only) fills slots pack > plate > library cast; a frame ticked for the
+  pack that came back without it shows a card warning. Verified by reference-set capture (8 cases incl. legacy controls) + real page with stubs; NOT
+  verified on a real render. Watch-for on retest: dropping the auto-attached library cast could change face/wardrobe fidelity (cast was "good"
+  before) -- one-line revert in `generateFrame` (`use_cast`). Owner decisions: (1) cast generator = picked option becomes the lock directly, optional
+  "Save to Memory" (YES); (3) start Phase 0 (DONE). (2) clean old question drafts: not understood -> my default = leave boxes alone, clean Word export,
+  small "contains a question" hint (awaiting nod). Remaining: Phase 1 (persist/reset pack ticks+sibling per scene, rework keeps row extras, question
+  drafts), Phase 2 (status lines, Location line, 3-option cast+location generator, out-of-date lock marker), Phase 3 (`…`).
