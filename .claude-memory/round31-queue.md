@@ -237,3 +237,11 @@ re-render, no single-frame correction. All four shipped, confirmed live via `/se
   the production-bible export. Owner approved cleaning ("go ahead"), so the "hint only" default was NOT used. Tested on the real page with stubs (load,
   autosave carries the tick, sibling, no leak into a new script, rework, rewrite, export). Remaining: Phase 2 (status lines, Location line, 3-option
   cast+location generator, out-of-date lock marker), Phase 3 (`…`).
+- **5 Oct: Phase 2 of the revised Video plan SHIPPED live (`6d7eb60`)** -- status lines under Cast/Location pickers (say what is used); `videoLocationLine`
+  (new filmscript field `video_location_line`, derived by the same "Re-derive from script" button via `deriveLocationLine`, editable, used by the lock and every
+  frame via `locationText()` -- falls back to the Location note cleaned by `stripMd`+`clipText(320)`); "Show me 3 options" (`generateCastOptions`, `/cast-reference`
+  n=3, NO backend change) -> "Lock option N" (`pickCastOption`) makes the pick the lock directly; optional "Save to Memory as cast" (`saveCastLockToMemory`,
+  `/library-adopt` sign:true) -- never automatic; out-of-date lock marker (`castLockSig` taken before the render wait vs `castSig()` now); plainDept bug fixed
+  (it dropped unpunctuated lines from texts containing a "?"). Tested on the real page with stubs (zero API spend); NOT tested on a real render -- the 3-option
+  draw costs 3 image renders, needs Gemini credits + owner's go-ahead. Left: Phase 3 (`…` in the sibling dropdown), Video Phase 4/5, and the owner's
+  retest of Phases 0-2 on real renders.
