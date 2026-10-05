@@ -194,3 +194,12 @@ re-render, no single-frame correction. All four shipped, confirmed live via `/se
   (HTML template, not a JS string, so the escape isn't decoded) -- pre-existing, one-char fix, ask first.
 - Still open from before: Phase 4 (waiting on owner's Gemini top-up), Phase 5 unscheduled; Word export/import
   drops `movement_class` (same as `audio`); Shoot Board read-only script ref doesn't show movement class.
+- **5 Oct blast-radius sweep of `96ab123` (clean, nothing broken; three pre-existing gaps now matter more, none fixed):**
+  (1) `/scene-still` caps references at 3 and fills caller refs first (cast ref + chosen "match to another shot" sibling = 2)
+  then library cast -> the pack is silently DROPPED when a sibling is picked and a signed-off cast exists (response says
+  `pack_used:false`, the card ignores it, and the new pack-colour guard only fires when `pack_used`). (2) `sceneIncludePack`
+  is index-keyed, never reset on a new script/house and never persisted -- explicit ticks leak across scripts in a session and
+  vanish on reload (default "closing scene carries the pack" returns). (3) Old department drafts that contain questions are
+  still SHOWN in the textareas and exported raw in the production-bible Word doc; only prompt reads are cleaned.
+  Also: `frame_note`/`movement_class` ride in whole rows into the script-rework, cast-sheet and dept-draft LLM prompts, and a
+  script rework replaces rows wholesale, so both can be dropped by the model (same limit as movement_class).
