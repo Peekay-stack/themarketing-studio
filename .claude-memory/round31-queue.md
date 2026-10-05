@@ -245,3 +245,12 @@ re-render, no single-frame correction. All four shipped, confirmed live via `/se
   (it dropped unpunctuated lines from texts containing a "?"). Tested on the real page with stubs (zero API spend); NOT tested on a real render -- the 3-option
   draw costs 3 image renders, needs Gemini credits + owner's go-ahead. Left: Phase 3 (`…` in the sibling dropdown), Video Phase 4/5, and the owner's
   retest of Phases 0-2 on real renders.
+- **5 Oct: Phase 3 + full wiring sweep SHIPPED live (`97dd462` dropdown `…`, `9a6445e` POSM "Not assembled —" same bug class -- 2 visible instances in the
+  template, 3 more only inside HTML comments; `cddebea` sweep fixes).** Sweep of Phases 0-3 found + fixed: (1) three clears of the lock image (Grounded/Independent
+  switch, image-engine change, Look change) left `castOptions` showing -> now cleared; (2) a stale page (opened before the Location line existed) would blank
+  `video_location_line` on autosave -> `filmscript.save` keeps the saved value when the key is absent (explicit "" still clears). Verified: `tools/test_pack_choice`,
+  `test_identity_lock`, `test_library_naming`, `test_carousel_concept`, `test_tools` (18) all pass, `selfcheck` 1250 calls 0 problems, `smoke`, tenants untouched.
+  Known, NOT fixed (pre-existing): `castRefUrl` is never persisted (lock must be redone after a reload while `scene_frames` persist); switching HOUSE inside Video
+  doesn't clear the previous house's lock/options; mode-switch reset keeps `videoCharacters`/`videoLocationLine` on purpose (typed overrides). Gotcha: the Edit tool
+  turns a literal backslash-u sequence into the real character on both sides -> use a Python script with `chr(92)` for those.
+  Nothing real-rendered yet; owner's retest of Phases 0-3 needs Gemini credits.
