@@ -2840,6 +2840,9 @@
                       <input type="checkbox" checked="{{ sc.includePack }}" onChange="{{ sc.toggleIncludePack }}" style="margin:0;" />Include the locked pack
                     </label>
                   </sc-if>
+                  <!-- Per-frame correction: direction for THIS frame only, applied the next time it renders (the
+                       ↻ on the frame). The box under "Rework the frames" still applies to every frame. -->
+                  <textarea value="{{ sc.frameNote }}" onChange="{{ sc.editFrameNote }}" rows="2" placeholder="Fix this frame only — e.g. 'pack front-on, orange'" style="width:100%; box-sizing:border-box; margin-top:7px; border:1px solid #E6E3DC; border-radius:7px; padding:6px 8px; font-size:11.5px; line-height:1.45; color:#38414F; background:#fff; resize:vertical; font-family:inherit;"></textarea>
                 </div>
               </div>
             </sc-for>
@@ -14841,6 +14844,10 @@ class Component extends DCLogic {
   };
 
   // ===== VIDEO: script writing =====
+  // Rules for every scene's "visual", because each one becomes ONE storyboard image (5 Oct live test: a scene that
+  // listed three views came back as a three-panel collage, and a pack described by colour came back in those
+  // colours instead of the real pack's). The real pack's look comes from the pack photo, never from the script.
+  VISUAL_RULES = 'One scene = one frame: describe a SINGLE moment seen from a SINGLE camera view, never a split screen, collage, montage or several views in one scene (a scene that needs more than one view must be split into separate scenes). When the product pack appears, call it only "the pack" or "the product pack" and describe how it is held or placed, never its colours, artwork or material — its real look comes from the pack photo.';
   writeFullScript = async () => {
     const vc = this.state.videoConcept;
     if (!vc || this.state.scriptWriting) return;
@@ -14855,7 +14862,7 @@ class Component extends DCLogic {
         const pre = this.brandPreamble('a film director writing a shootable script', this.state.producerBrandMode === 'general');
         if (!pre) { this.showToast(this.BRAND_PREAMBLE_MISSING); this.setState({ scriptWriting:false }); return; }
         const packSuper = this.brandName() + (this.brandIdea() ? ' — ' + this.brandIdea() : '');
-        const prompt = pre + '\n\nConcept logline: "'+vc.logline+'". Concept beats: '+JSON.stringify(vc.scenes)+'. VO: "'+(vc.vo||'')+'". The finished film is '+dur+' long — write between '+rng.min+' and '+rng.max+' scenes — choose the number the story actually needs, and do not pad to reach it. No film may exceed '+rng.ceiling+' scenes: each shot is rendered separately and the shortest a shot can be is 4 seconds. Give timecodes that run continuously from 0s to '+dur+'. Every scene is rendered as its own shot, so each "visual" must be a self-contained, filmable description of what is on screen (who, where, what happens). The final scene MUST end on the pack-shot super "'+(packSuper || 'this brand\u2019s name, written naturally — no other brand\u2019s')+'". Dialogue in English + Hinglish where natural.\n\nCASTING THE SOUND: when a person is on camera and would naturally speak, give them DIALOGUE in their own words — do not describe them with narration instead. Use the voiceover only to bridge between scenes or land the brand thought at the end. A film where every line is "vo" is wrong unless the concept is genuinely wordless observation; prefer a mix, with the recurring characters from the concept actually speaking to each other. EVERY scene needs an "audio" array — this is what actually gets voiced, so it must contain ONLY words to be spoken aloud. One entry per spoken line, in the order heard. Never put speaker names, stage directions, camera notes, SFX or on-screen text inside "text"; the performance note belongs in "emotion" and the character in "speaker". Use type "vo" for narration (the brand voice) and type "dialogue" for a character speaking on camera. A scene with no speech gets "audio": []. '+this.voBudgetNote(dur, n)+'\n\nReturn ONLY JSON: {"rows":[{"no":1,"tc":"0–5s","visual":"...","camera":"shot type & movement","dialogue":"human-readable script cell, e.g. Boy (half-asleep): Ammamma…","supr":"on-screen text","audio":[{"type":"dialogue","speaker":"Boy","age":"child","emotion":"half-asleep, sleepy","language":"en","text":"Ammamma... sky is still sleeping, no?"},{"type":"vo","emotion":"warm, unhurried","language":"en","text":"Pure doodh ki shakti."}]}]}';
+        const prompt = pre + '\n\nConcept logline: "'+vc.logline+'". Concept beats: '+JSON.stringify(vc.scenes)+'. VO: "'+(vc.vo||'')+'". The finished film is '+dur+' long — write between '+rng.min+' and '+rng.max+' scenes — choose the number the story actually needs, and do not pad to reach it. No film may exceed '+rng.ceiling+' scenes: each shot is rendered separately and the shortest a shot can be is 4 seconds. Give timecodes that run continuously from 0s to '+dur+'. Every scene is rendered as its own shot, so each "visual" must be a self-contained, filmable description of what is on screen (who, where, what happens). '+this.VISUAL_RULES+' The final scene MUST end on the pack-shot super "'+(packSuper || 'this brand\u2019s name, written naturally — no other brand\u2019s')+'". Dialogue in English + Hinglish where natural.\n\nCASTING THE SOUND: when a person is on camera and would naturally speak, give them DIALOGUE in their own words — do not describe them with narration instead. Use the voiceover only to bridge between scenes or land the brand thought at the end. A film where every line is "vo" is wrong unless the concept is genuinely wordless observation; prefer a mix, with the recurring characters from the concept actually speaking to each other. EVERY scene needs an "audio" array — this is what actually gets voiced, so it must contain ONLY words to be spoken aloud. One entry per spoken line, in the order heard. Never put speaker names, stage directions, camera notes, SFX or on-screen text inside "text"; the performance note belongs in "emotion" and the character in "speaker". Use type "vo" for narration (the brand voice) and type "dialogue" for a character speaking on camera. A scene with no speech gets "audio": []. '+this.voBudgetNote(dur, n)+'\n\nReturn ONLY JSON: {"rows":[{"no":1,"tc":"0–5s","visual":"...","camera":"shot type & movement","dialogue":"human-readable script cell, e.g. Boy (half-asleep): Ammamma…","supr":"on-screen text","audio":[{"type":"dialogue","speaker":"Boy","age":"child","emotion":"half-asleep, sleepy","language":"en","text":"Ammamma... sky is still sleeping, no?"},{"type":"vo","emotion":"warm, unhurried","language":"en","text":"Pure doodh ki shakti."}]}]}';
         // Anchors first, then the house rules, then the brief. Approved work shows the model what
         // "good" means here far better than any adjective, and the rules are corrections already
         // paid for once — repeating a mistake that was already flagged is the worst failure there is.
@@ -14909,7 +14916,7 @@ class Component extends DCLogic {
   deriveCharacters = async () => {
     if (this.state.charBusy) return;
     this.setState({ charBusy:true });
-    const cast = (this.state.shoot.cast || {}).text || '';
+    const cast = this.plainDept((this.state.shoot.cast || {}).text);
     let text = null;
     if (window.claude && window.claude.complete) {
       try {
@@ -14956,7 +14963,7 @@ class Component extends DCLogic {
     if (window.claude && window.claude.complete) {
       try {
         const secs = this.sceneSeconds(row);
-        const prompt = 'Rewrite ONE scene of a ' + (this.brandRef() || 'brand') + ' commercial script for an Indian crew' + ', keeping continuity with the film logline "'+(vc?vc.logline:'')+'". Current scene: '+JSON.stringify(row)+'. This scene runs about '+secs+' seconds, and a voice reads ~2 words per second, so all spoken "text" in this scene together must stay under '+Math.max(4, Math.round(secs*2))+' words. The "audio" array holds ONLY spoken words — no speaker names, stage directions, SFX or on-screen text in "text" (those go in "speaker"/"emotion"); type is "vo" for narration or "dialogue" for a character. Return ONLY JSON: {"no":'+row.no+',"tc":"'+row.tc+'","visual":"...","camera":"...","dialogue":"...","supr":"...","audio":[{"type":"vo","emotion":"warm","language":"en","text":"spoken words only"}]}';
+        const prompt = 'Rewrite ONE scene of a ' + (this.brandRef() || 'brand') + ' commercial script for an Indian crew' + ', keeping continuity with the film logline "'+(vc?vc.logline:'')+'". Current scene: '+JSON.stringify(row)+'. This scene runs about '+secs+' seconds, and a voice reads ~2 words per second, so all spoken "text" in this scene together must stay under '+Math.max(4, Math.round(secs*2))+' words. '+this.VISUAL_RULES+' The "audio" array holds ONLY spoken words — no speaker names, stage directions, SFX or on-screen text in "text" (those go in "speaker"/"emotion"); type is "vo" for narration or "dialogue" for a character. Return ONLY JSON: {"no":'+row.no+',"tc":"'+row.tc+'","visual":"...","camera":"...","dialogue":"...","supr":"...","audio":[{"type":"vo","emotion":"warm","language":"en","text":"spoken words only"}]}';
         let raw = await this.complete(prompt);
         raw = String(raw).trim().replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();
         next = JSON.parse(raw.slice(raw.indexOf('{'), raw.lastIndexOf('}')+1));
@@ -15115,13 +15122,15 @@ class Component extends DCLogic {
     // Scripting's department drafts (Location, DoP Note, Props, Wardrobe) were pure planning text with
     // no path into what actually gets rendered until now — folded in here so the finesse the departments
     // add is in the frame, not just in a document next to it.
-    const deptNote = (id, label) => { const t = ((this.state.shoot[id]||{}).text || '').trim();
+    const deptNote = (id, label) => { const t = this.plainDept((this.state.shoot[id]||{}).text);
       return t ? label + ': ' + t : ''; };
     const prompt = [row.visual, row.camera ? 'Camera: ' + row.camera + '.' : '',
       deptNote('location', 'Location'), deptNote('dop', 'Director of photography'),
-      deptNote('props', 'Props'), deptNote('wardrobe', 'Wardrobe'), note].filter(Boolean).join(' ');
+      deptNote('props', 'Props'), deptNote('wardrobe', 'Wardrobe'), note,
+      // This frame's own correction goes last so it has the final word over the film-wide note above.
+      (row.frame_note || '').trim()].filter(Boolean).join(' ');
     const body = { scene_no: row.no || idx+1, prompt, ratio:'16:9', style:this.state.videoStyle,
-                   engines:this.state.engines };
+                   engines:this.state.engines, video_frame:true };
     const chars = (this.state.videoCharacters || '').trim();
     if (chars) body.characters = chars;
     // The reference image is what actually holds the characters together.
@@ -15139,12 +15148,19 @@ class Component extends DCLogic {
     // ASK_DESIGN_57 item 1 — explicit "include the locked pack" toggle, bypassing the keyword
     // heuristic /scene-still otherwise uses on the scene's own description text. Mirrors the sibling
     // picker: a real choice on the card, not something inferred from wording.
-    if ((this.state.sceneIncludePack || {})[idx]) {
+    const packOn = this.packOnFrame(idx);
+    if (packOn) {
       body.include_pack = true;
       // Which specific pack, picked once in the assets panel — /scene-still otherwise falls back to
       // whichever pack is most recently signed off, same gap `pack_id` was added to close for POSM.
       if (this.state.videoPackChoice) body.pack_id = this.state.videoPackChoice;
+    } else if (typeof (this.state.sceneIncludePack || {})[idx] === 'boolean') {
+      body.include_pack = false;       // explicitly un-ticked on the card: never, whatever the scene says
     }
+    // The pick rides on EVERY frame as `pack_pref`: it does not force the pack in, it decides WHICH pack when the
+    // scene's own words pull one in (before, that path took the newest signed-off pack, not the picked one).
+    // `pack_mode:'auto'` also lets "pouch"/"sachet" count as naming the product, as Social and Carousel already do.
+    if (this.state.videoPackChoice) { body.pack_pref = this.state.videoPackChoice; body.pack_mode = 'auto'; }
     // one fixed seed per film — every frame reuses it so the look stays consistent
     let seed = this.state.videoSeed;
     if (!seed) { seed = Math.floor(Math.random()*900000) + 100000; this.setState({ videoSeed: seed }); }
@@ -15224,6 +15240,18 @@ class Component extends DCLogic {
     };
     return m[id] || '';
   }
+  // Department drafts are read by the frame renderer and the cast-reference call as direction, so a drafted
+  // question ("Could you confirm the region?") would be drawn as if it were part of the shot (5 Oct live test: the
+  // drafts came back asking the owner things). The draft prompt now forbids questions; this drops any sentence
+  // that still ends in "?" -- at draft time, and again wherever a draft is read, so drafts saved before this
+  // change are cleaned too. Empty when nothing statement-like is left (readers then add nothing; the draft step
+  // falls back to the department's stock line).
+  plainDept(t){
+    const s = String(t || '').trim();
+    if (!s.includes('?')) return s;
+    const kept = (s.match(/[^.!?\n]+[.!?]+(?:\s+|$)|[^.!?\n]+$/g) || []).filter(x => !/\?\s*$/.test(x.trim()));
+    return kept.join('').trim();
+  }
   draftDept = (id) => async () => {
     if ((this.state.shoot[id]||{}).status==='drafting') return;
     this.setState(s => ({ shoot:{ ...s.shoot, [id]:{ status:'drafting', text:'' } } }));
@@ -15234,9 +15262,9 @@ class Component extends DCLogic {
         const pre = this.brandPreamble('the ' + dept.label + ' department head', this.state.producerBrandMode === 'general');
         if (!pre) { this.showToast(this.BRAND_PREAMBLE_MISSING);
           this.setState(st => ({ shoot:{ ...st.shoot, [id]:{ status:'idle', text:'' } } })); return; }
-        const prompt = pre + '\n\nBase your plan strictly on this APPROVED SCRIPT: '+JSON.stringify(this.state.fullScript||[])+'. Give a tight, practical '+dept.label+' plan (3-4 sentences).';
+        const prompt = pre + '\n\nBase your plan strictly on this APPROVED SCRIPT: '+JSON.stringify(this.state.fullScript||[])+'. Give a tight, practical '+dept.label+' plan (3-4 sentences). Write it as a decided plan in plain statements: do not ask the reader any question, do not ask for confirmation, and do not offer alternatives to choose between. Where something is not specified, make a sensible choice and state it.';
         let raw = await this.complete(prompt);
-        text = String(raw).trim().replace(/^```/,'').replace(/```$/,'').trim();
+        text = this.plainDept(String(raw).trim().replace(/^```/,'').replace(/```$/,'').trim());
       } catch (e) {}
     }
     if (!text) text = this.deptFallback(id);
@@ -15436,7 +15464,7 @@ class Component extends DCLogic {
     this.setState({ castRefBusy:true });
     // Location moved into Scripting alongside the cast for exactly this reason: decide where before
     // rendering who, and the reference image can actually be set there instead of a plain backdrop.
-    const location = ((this.state.shoot.location || {}).text || '').trim();
+    const location = this.plainDept((this.state.shoot.location || {}).text);
     const body = { characters:chars, location, style:this.state.videoStyle, engines:this.state.engines };
     // A real signed-off photo, when one is picked below, replaces the guesswork this call otherwise
     // does from words alone — see /cast-reference's own docstring for why that matters.
@@ -16786,8 +16814,9 @@ class Component extends DCLogic {
         siblingChoices, hasSiblings: siblingChoices.length > 0,
         siblingValue: chosenSibling != null ? String(chosenSibling) : '',
         setSibling: this.setSceneSibling(i),
-        includePack: !!(s.sceneIncludePack || {})[i], toggleIncludePack: this.toggleSceneIncludePack(i),
-        hasPackLocked: !!((s.posm || {}).packChoice),
+        includePack: this.packOnFrame(i), toggleIncludePack: this.toggleSceneIncludePack(i),
+        hasPackLocked: !!s.videoPackChoice,
+        frameNote: r.frame_note || '', editFrameNote: this.editFrameNote(i),
         lines, hasLines: lines.length > 0, isSilent: lines.length === 0, willBeSilent,
         addVo: this.addSceneLine(i, 'vo'), addLine: this.addSceneLine(i, 'dialogue'),
         isStale: stale,
@@ -21379,8 +21408,23 @@ class Component extends DCLogic {
     const v = e.target.value;
     this.setState(s => ({ sceneSiblingRef: { ...s.sceneSiblingRef, [idx]: v === '' ? null : parseInt(v, 10) } }));
   };
+  // Whether the locked pack goes on this frame. An explicit tick (or un-tick) on the card always wins; with no
+  // choice made, the CLOSING scene carries the pack once one is picked in the assets panel (an ad ends on its
+  // pack shot), and every other scene leaves it to /scene-still's own reading of the scene text.
+  packOnFrame = (idx) => {
+    const s = this.state; const chosen = (s.sceneIncludePack || {})[idx];
+    if (typeof chosen === 'boolean') return chosen;
+    return !!s.videoPackChoice && idx === ((s.fullScript || []).length - 1);
+  };
   toggleSceneIncludePack = (idx) => () => {
-    this.setState(s => ({ sceneIncludePack: { ...s.sceneIncludePack, [idx]: !((s.sceneIncludePack || {})[idx]) } }));
+    this.setState(s => ({ sceneIncludePack: { ...s.sceneIncludePack, [idx]: !this.packOnFrame(idx) } }));
+  };
+  // Direction for one frame only, kept on the script row so it survives a reload with the rest of the script.
+  // Deliberately NOT editScriptCell: this changes how a still is drawn, not what the script says, so it must
+  // not drop an approved script back to "drafted".
+  editFrameNote = (idx) => (e) => {
+    const val = e.target.value;
+    this.setState(s => ({ fullScript: (s.fullScript || []).map((r, i) => i === idx ? { ...r, frame_note: val } : r) }));
   };
 
   // ---------- onground ----------

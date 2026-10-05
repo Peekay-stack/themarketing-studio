@@ -1773,6 +1773,12 @@ def scene_still(payload: dict):
     _scene_mode = "general" if str(payload.get("brand_mode") or "").strip().lower() == "general" else "grounded"
     _scene_brand_prof = brandprofile.resolve() or {}
     _explicit_pack_id = str(payload.get("pack_id") or "").strip()
+    # `pack_pref` (Video storyboard only): the pack the person picked in the assets panel, sent on EVERY frame. It
+    # does not force the pack in (that is `include_pack` / `pack_id`); it only decides WHICH pack, whenever the shot
+    # ends up with one. Before this, a frame whose own words said "pour"/"pack" attached the tenant's newest signed-off
+    # pack instead of the picked one (5 Oct live test: a different pack's colours on the closing frame).
+    if not _explicit_pack_id and want_pack and _pack_role != "none":
+        _explicit_pack_id = str(payload.get("pack_pref") or "").strip()
     if _pack_role == "none":
         # The caller said this image carries no pack: nothing pack-related is attached, even a picked one.
         want_pack, _explicit_pack_id = False, ""
@@ -1895,6 +1901,20 @@ def scene_still(payload: dict):
             _tail = packscene.TAIL.strip()
             _pack_only = bool(not (lib_refs["has_cast"] and lib_refs["cast"] in refs)
                               and _caller_refs == 0 and not plate_used)
+        # Video storyboard frames only (`video_frame`; Social, Carousel, POSM and /shot-reference never send it, so
+        # their prompts are untouched). Two live-test defects of 5 Oct, both the model obeying the scene text:
+        # (1) a real pack reference was attached yet the closing frame came back in the green-and-gold colours the
+        # script's scene text named -> the pack's colours are stated as coming from the reference ONLY, and the
+        # scene's colour words for the pack are removed (narrow: only colours attached to a pack noun);
+        # (2) one scene came back as a three-panel collage -> one frame, one moment.
+        if payload.get("video_frame"):
+            if pack_used:
+                pack_clause += (" The pack's colours, artwork and proportions come ONLY from the pack reference "
+                                "image: ignore any colour or styling the scene text gives the pack, and do not "
+                                "recolour it to match the set, the clothing or the palette.")
+                subject, _ = packscene.scrub_pack_colours(subject)
+            _tail += (" Render ONE single full-frame photograph: one camera view of one moment -- not a collage, "
+                      "split screen, diptych, triptych, grid, montage or multiple panels.")
         if _pack_only:
             prompt = (f"{packscene.PACK_ONLY_OPENING}{pack_clause} Scene: {subject}. {craft} {_tail}")
         elif not plate_used and _scene_wording:
@@ -1978,6 +1998,9 @@ def scene_still(payload: dict):
     parts.append(craft)
     parts.append(f"Framed for a {ratio} composition with tasteful negative space. "
                  "No on-screen text, captions, typography, logos, watermarks or borders.")
+    if payload.get("video_frame"):
+        parts.append("Render ONE single full-frame photograph: one camera view of one moment -- not a collage, "
+                     "split screen, diptych, triptych, grid, montage or multiple panels.")
     prompt = " ".join(parts)
     eng = _engine(payload, "image")
     model, size, tier = _img_tier(payload)

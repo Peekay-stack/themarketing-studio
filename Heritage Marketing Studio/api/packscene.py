@@ -242,3 +242,32 @@ def clean_scene(text: str, role) -> tuple[str, bool]:
     if not re.sub(r"[\s.,;]", "", cleaned):
         cleaned = _FALLBACK_SCENE
     return cleaned, cleaned != text
+
+
+# Video storyboard frames (5 Oct live test): the owner picked the real orange "Happy Full Cream Milk" pack, the cast
+# and location locked fine, and the closing frame still came back with a green-and-ghee-gold pack -- the colours the
+# SCRIPT's own scene text named for the set. Same lesson as the nutrition panel above: the model obeys the scene
+# text over the reference photo, so the scene's colour words for the pack are taken out of the text before it is
+# sent. Deliberately narrow: only a run of colour words directly attached to a pack noun ("a green and ghee-gold
+# pouch", "the pack in deep green and gold"). Colours anywhere else in the scene (walls, saris, light) are left alone.
+_COL = (r"(?:(?:deep|dark|light|pale|bright|rich|warm|soft|muted)[\s-]+)?"
+        r"(?:ghee[\s-]?gold|golden|gold|green|emerald|olive|yellow|saffron|orange|red|maroon|blue|navy|teal|white|"
+        r"cream|beige|brown|pink|purple|silver|black)")
+_COL_RUN = rf"{_COL}(?:(?:\s*,\s*(?:and\s+)?|\s+(?:and|&)\s+|[\s-]+){_COL})*"
+_PACK_NOUN = r"(?:pack(?:et|s|age|aging)?|pouch(?:es)?|sachets?|cartons?|milk\s+bags?|bags?\s+of\s+milk)"
+_PACK_COLOUR_BEFORE = re.compile(rf"\b{_COL_RUN}(?:[\s-]+(?:coloured|colored|printed|branded))?[\s-]+(?={_PACK_NOUN}\b)",
+                                 re.IGNORECASE)
+_PACK_COLOUR_AFTER = re.compile(rf"(\b{_PACK_NOUN})\s+(?:in|with|coloured|colored|printed\s+in)\s+{_COL_RUN}\b"
+                                rf"(?:\s+(?:packaging|label|design|artwork|livery))?", re.IGNORECASE)
+
+
+def scrub_pack_colours(text: str) -> tuple[str, bool]:
+    """`(text, changed)`. Removes colour words that describe the PACK ("a green and ghee-gold pouch" -> "a pouch",
+    "the pack in deep green and gold" -> "the pack") so the scene cannot overrule the pack reference photo's real
+    colours. Everything else in the text is untouched. Meant for a frame that carries a real pack reference."""
+    text = str(text or "")
+    if not text:
+        return text, False
+    out = _PACK_COLOUR_BEFORE.sub("", text)
+    out = _PACK_COLOUR_AFTER.sub(r"\1", out)
+    return out, out != text
