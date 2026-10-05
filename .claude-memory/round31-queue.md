@@ -278,3 +278,10 @@ re-render, no single-frame correction. All four shipped, confirmed live via `/se
   from Video (owner agreed it is not needed; awaiting yes on auto-including the brand kit Always/Never lines), unique cast names (Carousel adopt + Video Save-to-Memory),
   Location-line-vs-note drift marker, Locked-copy origin check ("one source" in Memory). Not verified on real renders (needs credits); produce-video's `look_note` line
   checked by source + frontend body only. Existing scripts keep their repeated scenes until rewritten -- the banner points at them.
+- **5 Oct (night): F1 + F2 SHIPPED live (`ddf547f`)** -- backend only, `/scene-still` `video_frame` frames. F1 `packscene.video_ref_note(roles)`: the prompt opens by naming each
+  attached image in order (lock = locked cast+location, earlier = matched shot for positions only, pack, plate, cast) -- skipped for a single image or when any ref can't be
+  labelled; roles are derived from `_caller_refs` positions + the library's pack/plate/cast. F2 `packscene.video_pack_in_use(scene)` (pour*/fills the glass/stream of milk/open|tear|snip
+  next to a pack noun, 'opening shot' excluded) swaps the FRONT-ON pack clause for `VIDEO_PACK_IN_USE` (milk visibly streaming). `_with_look_note` now ends in a full stop.
+  Prompt-capture + non-video controls + regression tests pass; selfcheck 1252 calls; NOT verified on a real render. Remaining from the findings list: inputs-panel removal from Video
+  (owner agreed; awaiting yes on auto-including the brand kit Always/Never lines), unique cast names (Carousel adopt + Video Save-to-Memory), Location-line-vs-note drift marker,
+  locked-copy origin check ("one source"). Next real step: the owner's retest on real renders (Gemini credits; ask before any spend).
