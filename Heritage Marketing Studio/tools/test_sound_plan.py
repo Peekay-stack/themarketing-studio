@@ -138,6 +138,19 @@ def graphs(module):
     return pv, mx
 
 
+# The editor's own call (ambience bed + foley spots) -- captured from the code as it stood before the mixes shared that code.
+GOLDEN_EXTRAS = '[1:a]adelay=8500:all=1[v0];[2:a]adelay=14400:all=1[v1];[3:a]adelay=22500:all=1[v2];[4:a]volume=0.7,adelay=5000:all=1[s0];[5:a]volume=0.4,adelay=12500:all=1[s1];[6:a]volume=0.18,afade=t=in:st=0:d=1.2[bed];[7:a]volume=0.12,afade=t=in:st=0:d=1.5[amb];[v0][v1][v2][s0][s1][bed][amb]amix=inputs=7:duration=longest:dropout_transition=0:normalize=0,alimiter=limit=0.95[aout]'
+
+
+def graphs_extras(module):
+    module.subprocess.run = _spy
+    _captured.clear()
+    module.mix_timeline(EXE, VIDEO, os.path.join(DIR, "g_ex.mp4"), segments(LINES), music=MUSIC, level="balanced",
+                        ambience=MUSIC, ambience_level_name="present",
+                        spots=[{"url": MUSIC, "at": 5.0}, {"url": MUSIC, "at": 12.5, "gain": 0.4}])
+    return _captured[-1]
+
+
 if __name__ == "__main__":
     pv, mx = graphs(fa)
     if os.environ.get("PRINT_GOLDEN"):
@@ -220,6 +233,58 @@ if __name__ == "__main__":
     ok_a, out_alone = fa.preview_audio(EXE, 30.0, os.path.join(DIR, "alone.mp3"), [], music=MUSIC, level="balanced", plan=plan)
     check("with no voice at all the plan does nothing (the bed is the film, at its own level)",
           ok_a and abs(db(os.path.join(DIR, "alone.mp3"), 3.0, 6.0) - db(os.path.join(DIR, "alone.mp3"), 11.0, 13.0)) <= 0.5, "")
+
+    # ------------------------------------------------------------ 6. ambience and key sounds (library items, never generated)
+    print("ambience and key sounds")
+    check("the editor's own graph (ambience + foley spots) is unchanged by sharing its code",
+          graphs_extras(fa) == GOLDEN_EXTRAS, graphs_extras(fa))
+    BLIP = os.path.join(DIR, "blip.mp3")
+    ff("-f", "lavfi", "-i", "sine=frequency=1000:sample_rate=44100:duration=1", "-ac", "2", "-c:a", "libmp3lame", BLIP)
+    r3 = sp.resolve({"ambience": {"id": "amb1", "level": "bogus"},
+                     "sounds": [{"scene": 2, "when": "start", "id": "a"}, {"scene": 2, "when": "middle", "id": "b"},
+                                {"scene": 2, "when": "end", "id": "c", "gain": 0.4}, {"scene": 2, "when": 3, "id": "d"},
+                                {"scene": 2, "when": 99, "id": "e"}, {"scene": 9, "when": "start", "id": "gone"},
+                                {"scene": 2, "when": "nonsense", "id": "f"}, {"scene": 2, "id": ""}, "junk"]},
+                    [dict(r) for r in ROWS], 30)
+    at = {x["id"]: x["at"] for x in r3["spots"]}
+    check("a sound 'at the start' lands a beat after the cut, 'middle' in the middle, 'end' just before the next cut",
+          (at["a"], at["b"], at["c"]) == (8.3, 11.0, 12.8), str(at))
+    check("a number is seconds into the scene, clamped to the scene", (at["d"], at["e"]) == (11.0, 14.0), str(at))
+    check("an unknown timing means 'start'; a scene that is gone, a blank id and junk are dropped",
+          at["f"] == 8.3 and "gone" not in at and len(r3["spots"]) == 6, str(r3["spots"]))
+    check("a gain travels with its sound", [x.get("gain") for x in r3["spots"] if x["id"] == "c"] == [0.4], "")
+    check("an unknown ambience level falls back to the default", r3["ambience"] == {"id": "amb1", "level": "present"}, str(r3["ambience"]))
+    check("no ambience id means no ambience", sp.normalise({"ambience": {"level": "present"}})["ambience"] is None, "")
+    check("a plan names at most 24 key sounds", len(sp.normalise({"sounds": [{"scene": 1, "id": str(i)} for i in range(60)]})["sounds"]) == 24, "")
+
+    pl = plan_for()
+    silent_spots = lambda *ats: [{"url": BLIP, "at": a} for a in ats]
+    out_spot = os.path.join(DIR, "spot.mp3")
+    ok, _n = fa.preview_audio(EXE, 30.0, out_spot, segments(LINES), music=None, plan=pl, spots=silent_spots(11.0))
+    check("a key sound is placed where the plan says (nothing else is playing)",
+          ok and db(out_spot, 11.1, 11.8) > -32 and db(out_spot, 3.0, 8.0) <= -80 and db(out_spot, 13.0, 20.0) <= -80,
+          f"{db(out_spot, 11.1, 11.8):.1f} / {db(out_spot, 3.0, 8.0):.1f} / {db(out_spot, 13.0, 20.0):.1f}")
+    out_two = os.path.join(DIR, "two.mp3")
+    fa.preview_audio(EXE, 30.0, out_two, segments(LINES), music=None, plan=pl, spots=silent_spots(11.0, 19.0))
+    check("two key sounds, two places", db(out_two, 19.1, 19.8) > -32 and db(out_two, 15.0, 18.0) <= -80, "")
+    out_vspot = os.path.join(DIR, "vspot.mp4")
+    ok, _n = fa.mix_timeline(EXE, VIDEO, out_vspot, segments(LINES), music=None, plan=pl, spots=silent_spots(11.0))
+    check("the render places it at the same moment", ok and db(out_vspot, 11.1, 11.8) > -32 and db(out_vspot, 3.0, 8.0) <= -80, "")
+    amb = {}
+    for lvl in ("barely", "present", "location"):
+        o = os.path.join(DIR, f"amb_{lvl}.mp3")
+        fa.preview_audio(EXE, 30.0, o, segments(LINES), music=None, plan=pl, ambience=MUSIC, ambience_level_name=lvl)
+        amb[lvl] = db(o, 4.0, 7.0)
+    check("an ambience bed runs under the film at its named level (barely < present < location)",
+          amb["barely"] < amb["present"] < amb["location"] and 4.5 <= amb["present"] - amb["barely"] <= 7.5, str(amb))
+    o_both = os.path.join(DIR, "both.mp3")
+    ok, _n = fa.preview_audio(EXE, 30.0, o_both, segments(LINES), music=MUSIC, level="balanced", plan=pl, ambience=MUSIC, ambience_level_name="present", spots=silent_spots(11.0))
+    check("music, ambience and a key sound mix together without failing", ok and os.path.getsize(o_both) > 1000, "")
+    o_plain = os.path.join(DIR, "plain.mp3")
+    fa.preview_audio(EXE, 30.0, o_plain, segments(LINES), music=MUSIC, level="balanced", plan=pl)
+    check("adding extras does not move the music's own envelope (a pause well away from the sound)",
+          abs(db(o_both, 3.0, 6.0) - db(o_plain, 3.0, 6.0)) <= 3.0, f"{db(o_both, 3.0, 6.0) - db(o_plain, 3.0, 6.0):.1f}")
+
 
     print()
     print("All sound-plan cases behave." if not fails else f"{fails} sound-plan case(s) FAILED.")

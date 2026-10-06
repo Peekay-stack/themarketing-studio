@@ -19,7 +19,12 @@ is computed from where they actually fall, which is also why it survives a cutdo
     {"duck": "normal" | "subtle" | "strong" | <dB>,        # how far the music lifts above "under" when open
      "ending": "fade" | "release" | "stop",
      "carve": true,                                        # a small dip in the voice's mid frequencies
-     "scenes": [{"no": 1, "music": "open"}, ...]}          # a scene not listed gets the derived state
+     "scenes": [{"no": 1, "music": "open"}, ...],          # a scene not listed gets the derived state
+     "ambience": {"id": <library ambience>, "level": "barely" | "present" | "location"},
+     "sounds": [{"scene": 2, "when": "start" | "middle" | "end" | <seconds into the scene>, "id": <library sfx>}]}
+
+Ambience and key sounds are LIBRARY items (signed-off uploads); nothing here generates a sound. `resolve` turns each key sound's
+scene-relative timing into seconds on the film; the route turns the library ids into files.
 
 No plan -> `resolve` returns None and the mixer does exactly what it did before. Pure arithmetic, no model, no network.
 """
@@ -43,6 +48,10 @@ MIN_GAP = 0.9           # pauses shorter than this are not worth lifting for: th
 FADE_OUT = {"fade": 2.5, "release": 0.6}
 CARVE_FILTER = "equalizer=f=2000:t=o:w=2:g=-3"
 MAX_KNOTS = 60
+MAX_SOUNDS = 24
+WHENS = ("start", "middle", "end")
+START_LEAD = 0.3        # a key sound "at the start" lands this long after the cut
+END_LEAD = 1.2          # one "at the end" lands this long before the next cut
 
 
 def _gain(db: float) -> float:
@@ -102,7 +111,56 @@ def normalise(plan) -> dict | None:
         if state in STATES:
             scenes[no] = state
     return {"duck_db": duck_db, "ending": ending if ending in ENDINGS else DEFAULT_ENDING,
-            "carve": plan.get("carve") is not False, "scenes": scenes}
+            "carve": plan.get("carve") is not False, "scenes": scenes,
+            "ambience": _ambience(plan.get("ambience")), "sounds": _sounds(plan.get("sounds"))}
+
+
+def _ambience(raw) -> dict | None:
+    if not isinstance(raw, dict) or not str(raw.get("id") or "").strip():
+        return None
+    import filmaudio
+    level = str(raw.get("level") or "").strip().lower()
+    return {"id": str(raw["id"]).strip(), "level": level if level in filmaudio.AMBIENCE_LEVELS else filmaudio.AMBIENCE_DEFAULT}
+
+
+def _sounds(raw) -> list[dict]:
+    out = []
+    for it in (raw if isinstance(raw, list) else [])[:MAX_SOUNDS]:
+        if not isinstance(it, dict) or not str(it.get("id") or "").strip():
+            continue
+        try:
+            scene = int(it.get("scene"))
+        except (TypeError, ValueError):
+            continue
+        when = it.get("when")
+        if isinstance(when, bool) or not (isinstance(when, (int, float)) or str(when or "").strip().lower() in WHENS):
+            when = "start"
+        elif not isinstance(when, (int, float)):
+            when = str(when).strip().lower()
+        else:
+            when = max(0.0, float(when))
+        row = {"scene": scene, "when": when, "id": str(it["id"]).strip()}
+        try:
+            if it.get("gain") not in (None, ""):
+                row["gain"] = max(0.05, min(1.5, float(it["gain"])))
+        except (TypeError, ValueError):
+            pass
+        out.append(row)
+    return out
+
+
+def spot_time(start: float, end: float, when) -> float:
+    """Seconds on the film for a key sound placed `when` in a scene that runs start..end."""
+    dur = max(0.0, end - start)
+    if isinstance(when, (int, float)):
+        at = start + min(float(when), dur)
+    elif when == "middle":
+        at = start + dur / 2
+    elif when == "end":
+        at = max(start, end - END_LEAD)
+    else:                                      # "start": a beat after the cut, not on it
+        at = start + min(START_LEAD, dur)
+    return round(at, 2)
 
 
 def resolve(plan, scenes, total) -> dict | None:
@@ -125,8 +183,17 @@ def resolve(plan, scenes, total) -> dict | None:
             start, end = fallback
         no = _no(row, i)
         spans.append({"no": no, "start": start, "end": end, "state": norm["scenes"].get(no, base.get(no, "open"))})
+    by_no = {sp["no"]: sp for sp in spans}
+    spots = []
+    for snd in norm["sounds"]:
+        span = by_no.get(snd["scene"])
+        if not span:
+            continue                           # a scene that is no longer in the film: nothing to place
+        spots.append({"id": snd["id"], "at": spot_time(span["start"], span["end"], snd["when"]),
+                      **({"gain": snd["gain"]} if "gain" in snd else {})})
+    spots.sort(key=lambda x: x["at"])
     return {"duck_db": norm["duck_db"], "ending": norm["ending"], "carve": norm["carve"], "scenes": spans,
-            "total": total}
+            "total": total, "ambience": norm["ambience"], "spots": spots}
 
 
 def _merged_lines(lines) -> list[tuple[float, float]]:

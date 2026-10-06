@@ -248,6 +248,50 @@ def _measure(exe: str, placed, tmp: str, span: float, notes: list) -> tuple[list
     return takes, tempo
 
 
+def _add_spots(spots, tmp, inputs, filters, labels, idx, picture, notes) -> int:
+    """Foley spots. Placed like a line rather than bedded like music: each one is delayed to its own
+    moment. `at` past the end of the picture is reported rather than silently dropped — a spot that
+    never plays is indistinguishable from one that was never added, which is the kind of silence
+    nobody notices until a review. Returns the next free input index."""
+    for n, sp in enumerate(spots):
+        spath = os.path.join(tmp, f"sfx{n}.mp3")
+        if not _download(str(sp.get("url") or ""), spath):
+            notes.append(f"foley spot {n + 1} could not be fetched")
+            continue
+        try:
+            at = max(0.0, float(sp.get("at") or 0))
+        except (TypeError, ValueError):
+            at = 0.0
+        if picture and at > picture:
+            notes.append(f"foley spot {n + 1} is placed at {at:.1f}s, past the end of a "
+                         f"{picture:.1f}s cut — it will not be heard")
+        try:
+            gain = float(sp.get("gain") or SFX_GAIN)
+        except (TypeError, ValueError):
+            gain = SFX_GAIN
+        inputs += ["-i", spath]
+        filters.append(f"[{idx}:a]volume={gain},adelay={int(at * 1000)}:all=1[s{n}]")
+        labels.append(f"[s{n}]")
+        idx += 1
+    return idx
+
+
+def _add_ambience(ambience, level_name, tmp, inputs, filters, labels, idx, notes) -> int:
+    """The ambience bed, mixed under the music. Returns the next free input index."""
+    if not ambience:
+        return idx
+    apath = os.path.join(tmp, "ambience.mp3")
+    if _download(ambience, apath):
+        inputs += ["-i", apath]
+        avol = ambience_level(level_name)
+        filters.append(f"[{idx}:a]volume={avol},afade=t=in:st=0:d=1.5[amb]")
+        labels.append("[amb]")
+        idx += 1
+    else:
+        notes.append("ambience bed unavailable")
+    return idx
+
+
 def _plan_bed(plan, lines, vol: float, total: float) -> str | None:
     """The music bed's whole filter chain when a sound plan applies, else None (= the old static level).
 
@@ -263,7 +307,8 @@ def _plan_bed(plan, lines, vol: float, total: float) -> str | None:
 
 def preview_audio(exe: str, seconds: float, out_path: str, segments,
                   music: str | None = None, tmp_dir: str | None = None,
-                  level=None, plan=None) -> tuple[bool, list[str]]:
+                  level=None, plan=None, ambience: str | None = None, ambience_level_name=None,
+                  spots=None) -> tuple[bool, list[str]]:
     """The soundtrack alone, as an mp3 — so the mix can be judged without rendering any video.
 
     Same placement rules as the real mix, over silence instead of picture — including the single
@@ -272,7 +317,8 @@ def preview_audio(exe: str, seconds: float, out_path: str, segments,
     import tempfile
     notes: list[str] = []
     placed = [s for s in (segments or []) if getattr(s, "url", None)]
-    if not placed and not music:
+    spots = [s for s in (spots or []) if isinstance(s, dict) and str(s.get("url") or "").strip()]
+    if not placed and not music and not ambience and not spots:
         return False, ["no audio to preview"]
     tmp = tmp_dir or tempfile.mkdtemp(prefix="vo-preview-")
     takes, tempo = _measure(exe, placed, tmp, max(1.0, seconds), notes)
@@ -293,18 +339,22 @@ def preview_audio(exe: str, seconds: float, out_path: str, segments,
         labels.append(f"[p{n}]")
         cursor = start + eff + 0.18
         idx += 1
+    voice_labels = len(labels)
+    idx = _add_spots(spots, tmp, inputs, filters, labels, idx, float(seconds), notes)
     if music:
         mpath = os.path.join(tmp, "bed.mp3")
         if _download(music, mpath):
             inputs += ["-i", mpath]
-            vol = music_level(level, has_voice=len(labels) > 1)
-            bed = _plan_bed(plan, line_windows, vol, float(seconds)) if len(labels) > 1 else None
+            vol = music_level(level, has_voice=voice_labels > 1)
+            bed = _plan_bed(plan, line_windows, vol, float(seconds)) if voice_labels > 1 else None
             if bed:
                 filters.append(f"[{idx}:a]{bed}[bed]")
             else:
                 filters.append(f"[{idx}:a]volume={vol},"
                                "afade=t=in:st=0:d=1.2[bed]")
             labels.append("[bed]")
+            idx += 1
+    idx = _add_ambience(ambience, ambience_level_name, tmp, inputs, filters, labels, idx, notes)
     filters.append(f"{''.join(labels)}amix=inputs={len(labels)}:duration=first:"
                    "dropout_transition=0:normalize=0,alimiter=limit=0.95[aout]")
     cmd = [exe, "-y", *inputs, "-filter_complex", ";".join(filters), "-map", "[aout]",
@@ -368,31 +418,8 @@ def mix_timeline(exe: str, video: str, out_path: str, segments, music: str | Non
         cursor = start + eff + 0.18            # small breath between lines
         idx += 1
 
-    # Foley spots. Placed like a line rather than bedded like music: each one is delayed to its own
-    # moment. `at` past the end of the picture is reported rather than silently dropped — a spot that
-    # never plays is indistinguishable from one that was never added, which is the kind of silence
-    # nobody notices until a review.
     voice_labels = len(labels)
-    for n, sp in enumerate(spots):
-        spath = os.path.join(tmp, f"sfx{n}.mp3")
-        if not _download(str(sp.get("url") or ""), spath):
-            notes.append(f"foley spot {n + 1} could not be fetched")
-            continue
-        try:
-            at = max(0.0, float(sp.get("at") or 0))
-        except (TypeError, ValueError):
-            at = 0.0
-        if picture and at > picture:
-            notes.append(f"foley spot {n + 1} is placed at {at:.1f}s, past the end of a "
-                         f"{picture:.1f}s cut — it will not be heard")
-        try:
-            gain = float(sp.get("gain") or SFX_GAIN)
-        except (TypeError, ValueError):
-            gain = SFX_GAIN
-        inputs += ["-i", spath]
-        filters.append(f"[{idx}:a]volume={gain},adelay={int(at * 1000)}:all=1[s{n}]")
-        labels.append(f"[s{n}]")
-        idx += 1
+    idx = _add_spots(spots, tmp, inputs, filters, labels, idx, picture, notes)
 
     if music:
         mpath = os.path.join(tmp, "bed.mp3")
@@ -413,16 +440,7 @@ def mix_timeline(exe: str, video: str, out_path: str, segments, music: str | Non
         else:
             notes.append("music bed unavailable")
 
-    if ambience:
-        apath = os.path.join(tmp, "ambience.mp3")
-        if _download(ambience, apath):
-            inputs += ["-i", apath]
-            avol = ambience_level(ambience_level_name)
-            filters.append(f"[{idx}:a]volume={avol},afade=t=in:st=0:d=1.5[amb]")
-            labels.append("[amb]")
-            idx += 1
-        else:
-            notes.append("ambience bed unavailable")
+    idx = _add_ambience(ambience, ambience_level_name, tmp, inputs, filters, labels, idx, notes)
 
     if not labels:
         return False, notes or ["no audio survived"]

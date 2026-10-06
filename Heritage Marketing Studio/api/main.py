@@ -585,9 +585,11 @@ def rescore(payload: dict):
     out_name = _next_scored_name(master)
     # An optional sound plan (see soundplan.py); absent -> the bed mixes exactly as before.
     plan = soundplan.resolve(payload.get("sound_plan"), payload.get("scenes"), total)
+    extras, extra_notes = _plan_sound_args(plan)
     ok, mix_notes = filmaudio.mix_timeline(exe, master_path,
                                            os.path.join(filmcut.RENDERS_DIR, out_name), segs,
-                                           music=music_url, level=payload.get("music_level"), plan=plan)
+                                           music=music_url, level=payload.get("music_level"), plan=plan, **extras)
+    mix_notes = list(mix_notes) + extra_notes
     if not ok:
         return JSONResponse(status_code=500, content={
             "detail": "; ".join(dict.fromkeys(notes + mix_notes)) or "Re-score failed."})
@@ -1076,10 +1078,12 @@ def voice_preview(payload: dict):
     os.makedirs(filmcut.RENDERS_DIR, exist_ok=True)
     name = f"voice-preview-{uuid.uuid4().hex[:8]}.mp3"
     plan = soundplan.resolve(payload.get("sound_plan"), payload.get("scenes"), total)
+    extras, extra_notes = _plan_sound_args(plan)
     ok, mix_notes = filmaudio.preview_audio(exe, float(total),
                                             os.path.join(filmcut.RENDERS_DIR, name),
                                             segs, music=music_url,
-                                            level=payload.get("music_level"), plan=plan)
+                                            level=payload.get("music_level"), plan=plan, **extras)
+    mix_notes = list(mix_notes) + extra_notes
     if not ok:
         return JSONResponse(status_code=500, content={
             "detail": "; ".join(dict.fromkeys(notes + mix_notes)) or "Preview mix failed."})
@@ -1471,10 +1475,13 @@ def produce_video(payload: dict):
         silent_master = silent
         scored_name = _next_scored_name(rendered)
         scored = os.path.join(filmcut.RENDERS_DIR, scored_name)
+        plan = soundplan.resolve(payload.get("sound_plan"), scenes, total)
+        extras, extra_notes = _plan_sound_args(plan)
         ok, mix_notes = filmaudio.mix_timeline(exe, silent, scored, voice_segments,
                                                music=music_url,
                                                level=payload.get("music_level"),
-                                               plan=soundplan.resolve(payload.get("sound_plan"), scenes, total))
+                                               plan=plan, **extras)
+        errors.extend(extra_notes)
         errors.extend(mix_notes)
         if ok:
             # Keep the SILENT master: picture and soundtrack are separate layers, so the music
@@ -2190,6 +2197,38 @@ def video_script_save(payload: dict):
         filmscript.clear(house_id)
         return {"ok": True}
     return filmscript.save(house_id, payload)
+
+
+def _plan_sound_args(plan) -> tuple[dict, list[str]]:
+    """The library sounds a resolved sound plan names, as the mixer's own arguments ({} when it names none), plus a note
+    for any it could not use. Only signed-off library items of the right kind are used; a missing one is said, not skipped
+    silently (a sound that never plays is indistinguishable from one that was never added)."""
+    out: dict = {}
+    notes: list[str] = []
+    if not plan:
+        return out, notes
+
+    def path_of(ref, kind, what):
+        item = library.get(str(ref or ""))
+        if not item or item.get("kind") != kind or not item.get("signed_off"):
+            notes.append(f"{what} is no longer in the library (or is not signed off), so it is left out")
+            return ""
+        url = str(item.get("url") or "")
+        return _resolve_media(url) or url
+
+    amb = plan.get("ambience")
+    if amb:
+        pth = path_of(amb.get("id"), "ambience", "the ambience bed")
+        if pth:
+            out["ambience"], out["ambience_level_name"] = pth, amb.get("level")
+    spots = []
+    for sp in plan.get("spots") or []:
+        pth = path_of(sp.get("id"), "sfx", "a key sound")
+        if pth:
+            spots.append({"url": pth, "at": sp["at"], **({"gain": sp["gain"]} if "gain" in sp else {})})
+    if spots:
+        out["spots"] = spots
+    return out, notes
 
 
 @app.post("/sound-plan")

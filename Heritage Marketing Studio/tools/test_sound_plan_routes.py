@@ -143,6 +143,42 @@ check("a house with nothing saved reads an empty plan", client.get("/video-scrip
 client.post("/video-script", json={"house": "hx", "full_script": base_rows, "sound_plan": "garbage"})
 check("a plan that is not an object is stored as empty", client.get("/video-script", params={"house": "hx"}).json().get("sound_plan") == {}, "")
 
+print("ambience and key sounds come from the library, and only signed-off ones")
+BLIP = os.path.join(DIR, "blip.mp3")
+ff("-f", "lavfi", "-i", "sine=frequency=1000:sample_rate=44100:duration=1", "-ac", "2", "-c:a", "libmp3lame", BLIP)
+LIB = {"AMB1": {"id": "AMB1", "kind": "ambience", "signed_off": True, "url": MUSIC},
+       "SFX1": {"id": "SFX1", "kind": "sfx", "signed_off": True, "url": BLIP},
+       "SFX_UNSIGNED": {"id": "SFX_UNSIGNED", "kind": "sfx", "signed_off": False, "url": BLIP},
+       "PACK1": {"id": "PACK1", "kind": "pack", "signed_off": True, "url": BLIP}}
+main.library.get = lambda i: LIB.get(str(i))
+resolved = main.soundplan.resolve({"ambience": {"id": "AMB1", "level": "present"},
+                                   "sounds": [{"scene": 2, "when": "start", "id": "SFX1"}, {"scene": 3, "when": "start", "id": "SFX_UNSIGNED"},
+                                              {"scene": 3, "when": "end", "id": "PACK1"}, {"scene": 4, "when": "start", "id": "NOPE"}]}, rows(), 30)
+args, notes = main._plan_sound_args(resolved)
+check("a signed-off ambience and key sound become the mixer's own arguments",
+      args.get("ambience") == MUSIC and args.get("ambience_level_name") == "present" and [x["url"] for x in args.get("spots", [])] == [BLIP], str(args))
+check("an unsigned item, an item of the wrong kind and a missing one are each said, not skipped silently", len(notes) == 3, str(notes))
+check("a plan that names nothing needs nothing", main._plan_sound_args(main.soundplan.resolve({"duck": "normal"}, rows(), 30)) == ({}, []), "")
+check("no plan, no arguments", main._plan_sound_args(None) == ({}, []), "")
+
+pv_base = {"scenes": rows(), "duration": "30s", "voice": "Warm female", "music_url": MUSIC, "music_level": "balanced"}
+plain = client.post("/voice-preview", json={**pv_base, "scenes": rows(), "sound_plan": PLAN})
+withx = client.post("/voice-preview", json={**pv_base, "scenes": rows(), "sound_plan": {**PLAN, "sounds": [{"scene": 2, "when": "start", "id": "SFX1"}, {"scene": 3, "when": "start", "id": "SFX_UNSIGNED"}]}})
+check("a preview with a key sound answers and says which sound it left out", withx.status_code == 200 and "key sound" in (withx.json().get("detail") or ""), withx.text[:240])
+if plain.status_code == 200 and withx.status_code == 200:
+    a, b = path_of(plain.json()["audio_url"]), path_of(withx.json()["audio_url"])
+    # The route re-times the scenes from their dialogue first, so the sound lands where THAT timing puts scene 2.
+    rr = rows()
+    main.filmvoice.retime(rr, target_total=30)
+    t_spot = main.soundplan.resolve({"sounds": [{"scene": 2, "when": "start", "id": "SFX1"}]}, rr, 30)["spots"][0]["at"]
+    t_gone = main.soundplan.resolve({"sounds": [{"scene": 3, "when": "start", "id": "SFX1"}]}, rr, 30)["spots"][0]["at"]
+    check("the key sound is audible in the preview at its scene", db(b, t_spot + 0.1, t_spot + 0.8) - db(a, t_spot + 0.1, t_spot + 0.8) >= 1.0,
+          f"{db(b, t_spot + 0.1, t_spot + 0.8) - db(a, t_spot + 0.1, t_spot + 0.8):.1f} at {t_spot}")
+    check("and the unsigned one is not (its scene is untouched)", abs(db(b, t_gone + 0.1, t_gone + 0.8) - db(a, t_gone + 0.1, t_gone + 0.8)) <= 0.8,
+          f"{db(b, t_gone + 0.1, t_gone + 0.8) - db(a, t_gone + 0.1, t_gone + 0.8):.1f}")
+amb = client.post("/voice-preview", json={**pv_base, "scenes": rows(), "sound_plan": {**PLAN, "ambience": {"id": "AMB1", "level": "location"}}})
+check("an ambience bed lifts the whole preview", amb.status_code == 200 and db(path_of(amb.json()["audio_url"]), 3.0, 6.0) - db(path_of(plain.json()["audio_url"]), 3.0, 6.0) >= 1.0, "")
+
 print()
 print("All sound-plan route cases behave." if not fails else f"{fails} sound-plan route case(s) FAILED.")
 sys.exit(1 if fails else 0)

@@ -3087,6 +3087,44 @@
                     </sc-for>
                   </div>
                 </sc-if>
+                <div style="margin-top:14px; border-top:1px dashed #E6E3DC; padding-top:12px;">
+                  <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#6B7280; margin-bottom:6px;">Room tone and key sounds <span style="text-transform:none; letter-spacing:0; font-weight:600;">· from your signed-off sounds in Memory; the studio does not make them up</span></div>
+                  <sc-if value="{{ soundLibEmpty }}" hint-placeholder-val="{{ false }}">
+                    <div style="font-size:12px; line-height:1.5; color:#8A5B0F; background:#FDEEDA; border-radius:8px; padding:7px 10px; margin-bottom:8px;">There is no signed-off ambience or sound effect in Memory yet. Upload some there and sign them off, and they appear here. (Making new ones would be a paid step, and nothing will be generated without your say-so.)</div>
+                  </sc-if>
+                  <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:8px;">
+                    <span style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#6B7280; min-width:84px;">Room tone</span>
+                    <select value="{{ soundAmbienceValue }}" onChange="{{ setSoundAmbience }}" style="border:1px solid #E6E3DC; border-radius:8px; padding:5px 9px; font-size:12px; font-weight:700; color:#17325E; background:#fff; font-family:inherit; min-width:190px;">
+                      <sc-for list="{{ soundAmbienceOpts }}" as="o" hint-placeholder-count="1"><option value="{{ o.v }}">{{ o.label }}</option></sc-for>
+                    </select>
+                    <sc-if value="{{ hasAmbience }}" hint-placeholder-val="{{ false }}">
+                      <sc-for list="{{ soundAmbienceLevels }}" as="o" hint-placeholder-count="3">
+                        <span onClick="{{ o.set }}" style="cursor:pointer; padding:5px 11px; border-radius:8px; font-size:12px; font-weight:700; border:1px solid {{ o.border }}; background:{{ o.bg }}; color:{{ o.fg }};">{{ o.label }}</span>
+                      </sc-for>
+                    </sc-if>
+                  </div>
+                  <sc-if value="{{ hasKeySounds }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:8px;">
+                      <sc-for list="{{ soundKeyRows }}" as="k" hint-placeholder-count="1">
+                        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; border:1px solid #ECE9E2; border-radius:9px; padding:6px 10px; background:#FBFAF8;">
+                          <select data-i="{{ k.i }}" data-f="scene" value="{{ k.scene }}" onChange="{{ setKeySound }}" style="border:1px solid #E6E3DC; border-radius:8px; padding:4px 8px; font-size:12px; font-weight:700; color:#17325E; background:#fff; font-family:inherit;">
+                            <sc-for list="{{ k.sceneOpts }}" as="o" hint-placeholder-count="1"><option value="{{ o.v }}">{{ o.label }}</option></sc-for>
+                          </select>
+                          <select data-i="{{ k.i }}" data-f="when" value="{{ k.when }}" onChange="{{ setKeySound }}" style="border:1px solid #E6E3DC; border-radius:8px; padding:4px 8px; font-size:12px; color:#17325E; background:#fff; font-family:inherit;">
+                            <option value="start">Just after the cut</option>
+                            <option value="middle">Middle of the scene</option>
+                            <option value="end">Just before the next cut</option>
+                          </select>
+                          <select data-i="{{ k.i }}" data-f="id" value="{{ k.id }}" onChange="{{ setKeySound }}" style="border:1px solid #E6E3DC; border-radius:8px; padding:4px 8px; font-size:12px; color:#17325E; background:#fff; font-family:inherit; min-width:170px;">
+                            <sc-for list="{{ k.soundOpts }}" as="o" hint-placeholder-count="1"><option value="{{ o.v }}">{{ o.label }}</option></sc-for>
+                          </select>
+                          <span onClick="{{ k.remove }}" style="cursor:pointer; font-size:12px; font-weight:700; color:#6B7280;">Remove</span>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </sc-if>
+                  <span onClick="{{ addKeySound }}" style="cursor:pointer; display:inline-block; font-size:12px; font-weight:700; color:#1E7E34; border:1px solid #C9E7CE; background:#F4FAF5; border-radius:8px; padding:5px 11px;">+ Add a key sound</span>
+                </div>
               </div>
             </sc-if>
             <sc-if value="{{ d.showDraft }}" hint-placeholder-val="{{ true }}">
@@ -15760,8 +15798,13 @@ class Component extends DCLogic {
   soundPlanPayload(){
     const s = this.state, sp = s.soundPlan || {};
     if (sp.off || !(s.fullScript || []).length) return null;
-    return { duck: sp.duck || 'normal', ending: sp.ending || 'fade', carve: sp.carve !== false,
+    const out = { duck: sp.duck || 'normal', ending: sp.ending || 'fade', carve: sp.carve !== false,
       scenes: Object.keys(sp.scenes || {}).map(k => ({ no:Number(k), music:sp.scenes[k] })) };
+    // Library items only: a room tone and key sounds the person picked from Memory (nothing here generates a sound).
+    if (sp.ambience && sp.ambience.id) out.ambience = { id:sp.ambience.id, level:sp.ambience.level || 'present' };
+    const sounds = (sp.sounds || []).filter(x => x && x.id);
+    if (sounds.length) out.sounds = sounds.map(x => ({ scene:Number(x.scene), when:x.when || 'start', id:x.id }));
+    return out;
   }
   setSoundPlan(patch){ this.setState(st => ({ soundPlan:{ ...(st.soundPlan || {}), ...patch } })); }
   toggleSoundOn = () => this.setSoundPlan({ off: !(this.state.soundPlan || {}).off });
@@ -15781,6 +15824,20 @@ class Component extends DCLogic {
     this.setState(st => { const sp = st.soundPlan || {}; const out = {}; if (sp.mood !== undefined) { out.mood = sp.mood; out.moodTouched = sp.moodTouched; } return { soundPlan: out }; });
     this.showToast('Sound design is back to the plan.', 'ok');
   };
+  setSoundAmbience = (e) => {
+    const id = e.target.value;
+    this.setState(st => { const sp = { ...(st.soundPlan || {}) }; if (id) sp.ambience = { id, level:(sp.ambience || {}).level || 'present' }; else delete sp.ambience; return { soundPlan:sp }; });
+  };
+  setSoundAmbienceLevel = (lv) => () => this.setState(st => { const sp = st.soundPlan || {}; return sp.ambience ? { soundPlan:{ ...sp, ambience:{ ...sp.ambience, level:lv } } } : null; });
+  addKeySound = () => this.setState(st => { const sp = st.soundPlan || {}; const first = (st.soundBase || [])[0];
+    return { soundPlan:{ ...sp, sounds:[...(sp.sounds || []), { scene:first ? first.no : 1, when:'start', id:'' }] } }; });
+  setKeySound = (e) => {
+    const i = Number(e.target.getAttribute('data-i')), f = e.target.getAttribute('data-f'), v = e.target.value;
+    if (f !== 'scene' && f !== 'when' && f !== 'id') return;
+    this.setState(st => { const sp = st.soundPlan || {};
+      return { soundPlan:{ ...sp, sounds:(sp.sounds || []).map((x, k) => k === i ? { ...x, [f]: f === 'scene' ? Number(v) : v } : x) } }; });
+  };
+  removeKeySound = (i) => () => this.setState(st => { const sp = st.soundPlan || {}; return { soundPlan:{ ...sp, sounds:(sp.sounds || []).filter((_x, k) => k !== i) } }; });
   goSoundDesign = () => this.setVideoStep('shootboard')();
   SOUND_STATE_LABELS = { under:'Under (stay low)', open:'Open (lift in pauses)', swell:'Swell', out:'Out (drop away)' };
   // Mirrors soundplan.DUCK_DB -- for display only; the mix reads the server's own table.
@@ -15800,7 +15857,11 @@ class Component extends DCLogic {
     if (list('under').length) parts.push('stays low in ' + nums(list('under')));
     if (list('out').length) parts.push('drops away at ' + nums(list('out')));
     parts.push({ fade:'fades out at the end', release:'holds, then releases at the end', stop:'stops with the picture' }[sp.ending || 'fade']);
-    return 'The music ' + parts.slice(0, -1).join(', ') + ', and ' + parts[parts.length - 1] + '.';
+    const extras = [];
+    if (sp.ambience && sp.ambience.id) extras.push('room tone (' + (sp.ambience.level || 'present') + ')');
+    const nk = (sp.sounds || []).filter(x => x && x.id).length;
+    if (nk) extras.push(nk + ' key sound' + (nk > 1 ? 's' : ''));
+    return 'The music ' + parts.slice(0, -1).join(', ') + ', and ' + parts[parts.length - 1] + '.' + (extras.length ? ' Also in the mix: ' + extras.join(' and ') + '.' : '');
   }
   toggleScriptRef = () => this.setState(s => ({ scriptRefOpen: !s.scriptRefOpen }));
   openLightbox = (url) => () => { if (url) this.setState({ lightbox:url }); };
@@ -18395,9 +18456,23 @@ class Component extends DCLogic {
         fg: (s.soundPlan || {}).ending === id || (!(s.soundPlan || {}).ending && id === 'fade') ? '#fff' : '#17325E',
         border: (s.soundPlan || {}).ending === id || (!(s.soundPlan || {}).ending && id === 'fade') ? '#17325E' : '#DDD9D1' })),
       hasSoundScenes: (s.soundBase || []).length > 0,
+      soundLibLoaded: !!s.soundStatus,
+      soundLibEmpty: !!s.soundStatus && !(((s.soundStatus.library || {}).ambience || []).length || ((s.soundStatus.library || {}).sfx || []).length),
+      soundAmbienceOpts: [{ v:'', label:'No room tone' }, ...(((s.soundStatus || {}).library || {}).ambience || []).map(a => ({ v:a.id, label:a.name || a.id }))],
+      soundAmbienceValue: ((s.soundPlan || {}).ambience || {}).id || '', setSoundAmbience: this.setSoundAmbience,
+      hasAmbience: !!((s.soundPlan || {}).ambience || {}).id,
+      soundAmbienceLevels: [['barely', 'Barely there'], ['present', 'Present'], ['location', 'Location']].map(([id, label]) => {
+        const on = (((s.soundPlan || {}).ambience || {}).level || 'present') === id;
+        return { label, set:this.setSoundAmbienceLevel(id), bg: on ? '#17325E' : '#fff', fg: on ? '#fff' : '#17325E', border: on ? '#17325E' : '#DDD9D1' }; }),
+      addKeySound: this.addKeySound, setKeySound: this.setKeySound,
+      hasKeySounds: ((s.soundPlan || {}).sounds || []).length > 0,
+      soundKeyRows: ((s.soundPlan || {}).sounds || []).map((x, i) => ({ i, scene:String(x.scene), when:x.when || 'start', id:x.id || '',
+        remove:this.removeKeySound(i), needs: !x.id,
+        sceneOpts: (s.soundBase || []).map(b => ({ v:String(b.no), label:'Scene ' + b.no })),
+        soundOpts: [{ v:'', label:'Choose a sound\u2026' }, ...(((s.soundStatus || {}).library || {}).sfx || []).map(a => ({ v:a.id, label:a.name || a.id }))] })),
       soundSceneRows: this.soundEffective().map(x => ({ no:x.no, role:this.BEAT_ROLE_LABELS[x.role] || x.role || '', value:x.mine,
         autoText: 'Auto: ' + (this.SOUND_STATE_LABELS[x.auto] || x.auto), yours:!!x.mine })),
-      soundHasYours: Object.keys((s.soundPlan || {}).scenes || {}).length > 0 || !!(s.soundPlan || {}).duck || !!(s.soundPlan || {}).ending || (s.soundPlan || {}).carve === false || !!(s.soundPlan || {}).off,
+      soundHasYours: Object.keys((s.soundPlan || {}).scenes || {}).length > 0 || !!(s.soundPlan || {}).duck || !!(s.soundPlan || {}).ending || (s.soundPlan || {}).carve === false || !!(s.soundPlan || {}).off || !!(s.soundPlan || {}).ambience || ((s.soundPlan || {}).sounds || []).length > 0,
       lockedMusicLabel: '\u2713 Locked bed \u00b7 ' + this.musicStyleLabel() + ' \u00b7 ' + s.musicLevel,
       lockedMusicPlayer: s.musicUrl ? React.createElement('audio', { src:s.musicUrl, controls:true,
         style:{ width:'100%', height:34 } }) : null,
@@ -20838,7 +20913,10 @@ class Component extends DCLogic {
     this._seen = { planId, xTab: s.xTab, screen: s.screen };
     if (changed && s.screen === 'exec') { this.loadExecOptions(); this.loadCampaignsForExec(); }
     // Round 92: video's own execution options, same trigger as the xTab producers' `loadExecOptions`.
-    if (s.screen === 'video' && (s.videoStep === 'shootboard' || s.videoStep === 'production') && s.fullScript) this.refreshSoundBase();
+    if (s.screen === 'video' && (s.videoStep === 'shootboard' || s.videoStep === 'production') && s.fullScript) {
+      this.refreshSoundBase();
+      if (!s.soundStatus && !this._soundStatusAsked) { this._soundStatusAsked = true; this.loadSoundStatus(); }
+    }
     if (changed && s.screen === 'video') { this.loadVideoExecOptions(); this.loadCampaignsForExec();
       // The Cast / Location / Pack pickers (and the per-frame pack checkbox) read these. They were loaded only when an
       // objective was picked, so a film restored from its saved script -- a page refresh, a return visit -- had EMPTY
