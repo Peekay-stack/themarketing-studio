@@ -192,6 +192,9 @@ def _has(low: str, words) -> bool:
     return any(re.search(rf"\b{re.escape(w)}\b", low) for w in words)
 
 
+_ADULT_WORDS = ("grown", "grown-up", "twenties", "thirties", "forties")
+
+
 def _band(hints: str) -> str:
     low = (hints or "").lower()
     # "a six-year-old boy" / "4 years old" is a child's age, not "old": a bare "old" matched inside it and cast a
@@ -206,8 +209,14 @@ def _band(hints: str) -> str:
     masc = _has(low, _MALE_WORDS)
     gender = "female" if fem and not masc else ("male" if masc and not fem else
                                                 ("female" if fem else "male"))
+    # An adult age STATED on the sheet beats a child word that sits in the same entry: "FATHER (grown boy, 30s): same
+    # face as the boy..." is a man in his thirties, and "boy" there only says who he used to be. (6 Oct live test: that
+    # entry cast the Father with "cute young boy".) A decade from 20s to 40s, or "grown", reads as an adult.
+    adult_stated = bool(re.search(r"\b[2-4]0s\b", low)) or _has(low, _ADULT_WORDS)
     if _has(low, _MATURE_WORDS):
         age = "mature"
+    elif adult_stated:
+        age = "adult"
     elif _has(low, _YOUNG_WORDS):
         age = "young"
     else:

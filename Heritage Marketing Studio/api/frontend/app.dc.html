@@ -2855,9 +2855,9 @@
                 <div style="padding:11px 13px;">
                   <!-- The re-render control lives here, not on the picture: bottom-right of the frame is where a pack or a face
                        often sits, and the button was covering it (5 Oct live test). -->
-                  <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:3px;">
-                    <span style="font-weight:700; font-size:13px; color:#17325E;">{{ sc.title }}</span>
-                    <span style="display:inline-flex; align-items:center; gap:6px;">
+                  <div style="display:flex; align-items:center; justify-content:space-between; gap:6px 8px; flex-wrap:wrap; margin-bottom:3px;">
+                    <span style="font-weight:700; font-size:13px; color:#17325E; white-space:nowrap;">{{ sc.title }}</span>
+                    <span style="display:inline-flex; align-items:center; gap:6px; white-space:nowrap;">
                       <sc-if value="{{ sc.isStale }}" hint-placeholder-val="{{ false }}">
                         <span onClick="{{ sc.genFrame }}" title="Something this frame was drawn from has changed since it was rendered: the scene's words, a department note, the look, the Location line, the cast sheet or the pack tick" style="cursor:pointer; background:#FDEEDA; color:#8A5B0F; border-radius:20px; padding:2px 8px; font-size:10px; font-weight:800;">↻ out of date</span>
                       </sc-if>
@@ -2982,9 +2982,9 @@
                 <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center;"><span onClick="{{ sc.genFrame }}" style="cursor:pointer; color:#fff; font-size:12.5px; font-weight:700; text-decoration:underline;">Retry</span></div>
               </sc-if>
             </div>
-            <div style="padding:9px 11px 4px; font-weight:700; font-size:12px; color:#17325E; display:flex; align-items:center; justify-content:space-between; gap:6px;">
-              <span>{{ sc.title }}</span>
-              <span style="display:inline-flex; align-items:center; gap:6px;">
+            <div style="padding:9px 11px 4px; font-weight:700; font-size:12px; color:#17325E; display:flex; align-items:center; justify-content:space-between; gap:4px 6px; flex-wrap:wrap;">
+              <span style="white-space:nowrap;">{{ sc.title }}</span>
+              <span style="display:inline-flex; align-items:center; gap:6px; white-space:nowrap;">
               <sc-if value="{{ sc.isStale }}" hint-placeholder-val="{{ false }}">
                 <span onClick="{{ sc.genFrame }}" title="Something this frame was drawn from has changed since it was rendered: the scene's words, a department note, the look, the Location line, the cast sheet or the pack tick" style="cursor:pointer; background:#FDEEDA; color:#8A5B0F; border-radius:20px; padding:2px 8px; font-size:10px; font-weight:800;">↻ out of date</span>
               </sc-if>
@@ -16092,7 +16092,8 @@ class Component extends DCLogic {
   costFor(dur, tier){
     const rate = (this.RATE[this.costEngine()] || this.RATE.google)[tier] || 0;
     const usd = rate * this.secondsFor(dur);
-    return '~$' + (usd < 10 ? usd.toFixed(2) : usd.toFixed(0));
+    // "about $", not "~$": in this font the tilde reads as a minus sign ("-$1.50" looked like a negative price).
+    return 'about $' + (usd < 10 ? usd.toFixed(2) : usd.toFixed(0));
   }
   tierLabel(tier){
     if (tier === 'standard') return 'Veo 3.1 Standard';

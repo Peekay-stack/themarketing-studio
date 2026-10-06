@@ -51,6 +51,20 @@ check("'a 4 years old boy' is a child", fv._band("Son a 4 years old"), "male_you
 check("a spelled-out adult age is not 'old'", fv._band("Man a forty-year-old man"), "male_adult")
 check("a stated age of 70 is mature", fv._band("Man a 70-year-old man"), "male_mature")
 check("'late-50s' reads as mature", fv._band("Mother late-50s version"), "female_mature")
+print("a grown man described by who he used to be (6 Oct live test: the Father was cast as 'cute young boy')")
+FATHER = ("MOTHER (young, dawn flashback): mother, early 30s, soft slender build, faded floral cotton suit. "
+          "BOY (6): sleepy six-year-old, slight build, white cotton vest. "
+          "FATHER (grown boy, 30s): same face shape and lean build as the boy, short dark hair, casual cream kurta. "
+          "DAUGHTER (4): everyday South Indian girl, small build, pale yellow frock")
+check("Father 'grown boy, 30s' is an adult man", band(FATHER, "Father", "quiet, to himself"), "male_adult")
+check("the Boy in the same sheet is still a young boy", band(FATHER, "Boy", "sleepy"), "male_young")
+check("the Daughter in the same sheet is still a young girl", band(FATHER, "Daughter"), "female_young")
+check("the Mother in the same sheet is still an adult woman", band(FATHER, "Mother"), "female_adult")
+check("'grown' alone makes a boy an adult", fv._band("Son grown boy"), "male_adult")
+check("a stated 30s beats 'son'", fv._band("Son a man in his 30s"), "male_adult")
+check("'mid-30s' beats 'boy'", fv._band("Man mid-30s, still the boy at heart"), "male_adult")
+check("a 50s man is still mature", fv._band("Father late-50s"), "male_mature")
+check("a sheet that says only 'boy' is still a child", fv._band("Boy sleepy boy"), "male_young")
 print("plain words")
 check("'young woman' is an adult", fv._band("Woman a young woman"), "female_adult")
 check("'young father' is an adult", fv._band("Father a young father"), "male_adult")
