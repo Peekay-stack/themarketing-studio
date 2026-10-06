@@ -2604,6 +2604,19 @@
                   <div style="border-left:1px solid #E6E3DC; padding:11px 10px; display:flex; align-items:flex-start;">
                     <button onClick="{{ r.rewriteScene }}" style="background:#F4FAF5; color:#1E7E34; border:1px solid #C9E7CE; border-radius:8px; padding:7px 9px; font-weight:700; font-size:11.5px; cursor:pointer; width:100%;">{{ r.rewriteLabel }}</button>
                   </div>
+                  <div style="grid-column:1 / -1; border-top:1px dashed #E6E3DC; background:#FBFAF8; padding:7px 12px; display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+                    <span style="font-size:10.5px; font-weight:800; letter-spacing:0.05em; text-transform:uppercase; color:#9AA1AC;">Beat</span>
+                    <select data-row="{{ r.rowIdx }}" data-cell="beat_role" value="{{ r.beatRole }}" onChange="{{ editSceneChoice }}" style="border:1px solid #E6E3DC; border-radius:8px; padding:5px 9px; font-size:11.5px; font-weight:700; color:#17325E; background:#fff; font-family:inherit;">
+                      <option value="">Auto (by position)</option>
+                      <option value="hook">Hook — the opening image</option>
+                      <option value="world">World — where and who</option>
+                      <option value="mechanism">Mechanism — the proof</option>
+                      <option value="turn">Turn — what changes</option>
+                      <option value="brand">Sign-off — the pack shot</option>
+                      <option value="button">Button — after the sign-off</option>
+                    </select>
+                    <input data-row="{{ r.rowIdx }}" data-cell="beat_note" value="{{ r.beatNote }}" onChange="{{ editSceneChoice }}" placeholder="Direction for this beat, in your own words (optional)" style="flex:1; min-width:220px; border:1px solid #E6E3DC; border-radius:8px; padding:6px 10px; font-size:12px; color:#38414F; background:#fff; font-family:inherit;" />
+                  </div>
                 </div>
               </sc-for>
             </div>
@@ -3074,17 +3087,17 @@
           <sc-if value="{{ hasBeatPlan }}" hint-placeholder-val="{{ false }}">
             <div style="background:#FBFAF8; border:1px solid #E1E4EA; border-radius:12px; padding:13px 15px; margin-bottom:16px;">
               <div style="display:flex; align-items:center; gap:8px; margin-bottom:9px; flex-wrap:wrap;">
-                <span style="font-size:10.5px; font-weight:800; letter-spacing:0.06em; text-transform:uppercase; color:#9AA1AC;">Beat plan</span>
-                <sc-if value="{{ beatPlanClamped }}" hint-placeholder-val="{{ false }}">
-                  <span style="font-size:11px; color:#B07A12; font-weight:700;">{{ beatPlanClampNote }}</span>
-                </sc-if>
+                <span style="font-size:10.5px; font-weight:800; letter-spacing:0.06em; text-transform:uppercase; color:#9AA1AC;">Roles, not lengths</span>
+                <span style="font-size:11.5px; color:#6B7280;">Each shot is briefed for its job. How long each one runs follows the dialogue.</span>
               </div>
+              <sc-if value="{{ hasBeatChoices }}" hint-placeholder-val="{{ false }}">
+                <div style="font-size:12px; font-weight:700; color:#17325E; margin-bottom:9px;">Set on your script: {{ beatChoicesText }}. The other scenes follow the order below.</div>
+              </sc-if>
               <div style="display:flex; flex-direction:column; gap:7px;">
                 <sc-for list="{{ beatPlanRows }}" as="bp" hint-placeholder-count="4">
                   <div style="border:1px solid #E1E4EA; border-radius:9px; padding:8px 11px; background:#fff;">
                     <div style="display:flex; align-items:baseline; gap:9px; flex-wrap:wrap; margin-bottom:3px;">
                       <span style="font-size:10.5px; font-weight:800; letter-spacing:0.05em; text-transform:uppercase; background:#EEF1F5; color:#41505F; border-radius:7px; padding:2px 8px;">{{ bp.role }}</span>
-                      <span style="font-size:12px; font-weight:700; color:#17325E;">{{ bp.seconds }}s</span>
                     </div>
                     <div style="font-size:12px; line-height:1.45; color:#41505F;">{{ bp.what }}</div>
                     <div style="font-size:11px; line-height:1.4; color:#B07A12; margin-top:3px;">If missing: {{ bp.fails }}</div>
@@ -14917,7 +14930,7 @@ class Component extends DCLogic {
         const pre = this.brandPreamble('a film director writing a shootable script', this.state.producerBrandMode === 'general');
         if (!pre) { this.showToast(this.BRAND_PREAMBLE_MISSING); this.setState({ scriptWriting:false }); return; }
         const packSuper = this.brandName() + (this.brandIdea() ? ' — ' + this.brandIdea() : '');
-        const prompt = pre + '\n\nConcept logline: "'+vc.logline+'". Concept beats: '+JSON.stringify(vc.scenes)+'. VO: "'+(vc.vo||'')+'". The finished film is '+dur+' long — write between '+minScenes+' and '+rng.max+' scenes — '+(beats ? 'the concept has '+beats+' beats, so one scene per beat is the natural count; ' : '')+'choose the number the story actually needs. NEVER repeat, copy or near-duplicate a scene to reach a count: every scene must show a different moment. No film may exceed '+rng.ceiling+' scenes: each shot is rendered separately and the shortest a shot can be is 4 seconds. Give timecodes that run continuously from 0s to '+dur+'. Every scene is rendered as its own shot, so each "visual" must be a self-contained, filmable description of what is on screen (who, where, what happens). '+this.VISUAL_RULES+' The final scene MUST end on the pack-shot super "'+(packSuper || 'this brand\u2019s name, written naturally — no other brand\u2019s')+'". Dialogue in English + Hinglish where natural.\n\nCASTING THE SOUND: when a person is on camera and would naturally speak, give them DIALOGUE in their own words — do not describe them with narration instead. Use the voiceover only to bridge between scenes or land the brand thought at the end. A film where every line is "vo" is wrong unless the concept is genuinely wordless observation; prefer a mix, with the recurring characters from the concept actually speaking to each other. EVERY scene needs an "audio" array — this is what actually gets voiced, so it must contain ONLY words to be spoken aloud. One entry per spoken line, in the order heard. Never put speaker names, stage directions, camera notes, SFX or on-screen text inside "text"; the performance note belongs in "emotion" and the character in "speaker". Use type "vo" for narration (the brand voice) and type "dialogue" for a character speaking on camera. A scene with no speech gets "audio": []. '+this.voBudgetNote(dur, n)+'\n\nReturn ONLY JSON: {"rows":[{"no":1,"tc":"0–5s","visual":"...","camera":"shot type & movement","dialogue":"human-readable script cell, e.g. Boy (half-asleep): Ammamma…","supr":"on-screen text","audio":[{"type":"dialogue","speaker":"Boy","age":"child","emotion":"half-asleep, sleepy","language":"en","text":"Ammamma... sky is still sleeping, no?"},{"type":"vo","emotion":"warm, unhurried","language":"en","text":"Pure doodh ki shakti."}]}]}';
+        const prompt = pre + '\n\nConcept logline: "'+vc.logline+'". Concept beats: '+JSON.stringify(vc.scenes)+'. VO: "'+(vc.vo||'')+'". The finished film is '+dur+' long — write between '+minScenes+' and '+rng.max+' scenes — '+(beats ? 'the concept has '+beats+' beats, so one scene per beat is the natural count; ' : '')+'choose the number the story actually needs. NEVER repeat, copy or near-duplicate a scene to reach a count: every scene must show a different moment. No film may exceed '+rng.ceiling+' scenes: each shot is rendered separately and the shortest a shot can be is 4 seconds. Give timecodes that run continuously from 0s to '+dur+'. Every scene is rendered as its own shot, so each "visual" must be a self-contained, filmable description of what is on screen (who, where, what happens). '+this.VISUAL_RULES+' The film MUST include a pack-shot sign-off — a scene that shows the pack and carries the pack-shot super "'+(packSuper || 'this brand\u2019s name, written naturally — no other brand\u2019s')+'" — and that is normally the final scene. Only when the concept calls for a comeback AFTER the pack shot may a short closing button (a few seconds, no pack-shot super of its own) follow it; if you add one, put "beat_role":"button" on that row and on no other. Dialogue in English + Hinglish where natural.\n\nCASTING THE SOUND: when a person is on camera and would naturally speak, give them DIALOGUE in their own words — do not describe them with narration instead. Use the voiceover only to bridge between scenes or land the brand thought at the end. A film where every line is "vo" is wrong unless the concept is genuinely wordless observation; prefer a mix, with the recurring characters from the concept actually speaking to each other. EVERY scene needs an "audio" array — this is what actually gets voiced, so it must contain ONLY words to be spoken aloud. One entry per spoken line, in the order heard. Never put speaker names, stage directions, camera notes, SFX or on-screen text inside "text"; the performance note belongs in "emotion" and the character in "speaker". Use type "vo" for narration (the brand voice) and type "dialogue" for a character speaking on camera. A scene with no speech gets "audio": []. '+this.voBudgetNote(dur, n)+'\n\nReturn ONLY JSON: {"rows":[{"no":1,"tc":"0–5s","visual":"...","camera":"shot type & movement","dialogue":"human-readable script cell, e.g. Boy (half-asleep): Ammamma…","supr":"on-screen text","audio":[{"type":"dialogue","speaker":"Boy","age":"child","emotion":"half-asleep, sleepy","language":"en","text":"Ammamma... sky is still sleeping, no?"},{"type":"vo","emotion":"warm, unhurried","language":"en","text":"Pure doodh ki shakti."}]}]}';
         // Anchors first, then the house rules, then the brief. Approved work shows the model what
         // "good" means here far better than any adjective, and the rules are corrections already
         // paid for once — repeating a mistake that was already flagged is the worst failure there is.
@@ -14931,7 +14944,7 @@ class Component extends DCLogic {
         let raw = await this.complete((learned ? learned + '\n\n' : '') + prompt + locked);
         raw = String(raw).trim().replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();
         const data = JSON.parse(raw.slice(raw.indexOf('{'), raw.lastIndexOf('}')+1));
-        if (data.rows && data.rows.length) rows = data.rows;
+        if (data.rows && data.rows.length) rows = this.cleanBeatRoles(data.rows);
       } catch (e) {}
     }
     if (!rows) rows = this.fallbackFullScript(vc);
@@ -14952,7 +14965,7 @@ class Component extends DCLogic {
     let rows = null;
     if (window.claude && window.claude.complete) {
       try {
-        const prompt = 'Revise this ' + (this.brandRef() || 'brand') + ' commercial script per the instruction.' + ' INSTRUCTION: "' + note + '". CURRENT SCRIPT ROWS: ' + JSON.stringify(this.scriptForPrompt(this.state.fullScript)) + '. Keep the same row shape and keep whatever pack-shot super is already on the final row — do not invent or substitute a different brand\u2019s line. Timecodes must stay continuous across a ' + this.state.prodDuration + ' film. EVERY row must keep its "audio" array in sync with the revised dialogue — "text" holds ONLY spoken words (no speaker names, stage directions, SFX or on-screen text), "speaker" the character, "emotion" the performance note, and type is "vo" for narration or "dialogue" for a character. ' + this.voBudgetNote(this.state.prodDuration, (this.state.fullScript||[]).length) + ' Return ONLY JSON: {"rows":[{"no":1,"tc":"0–5s","visual":"...","camera":"...","dialogue":"...","supr":"...","audio":[{"type":"vo","emotion":"warm","language":"en","text":"spoken words only"}]}]}';
+        const prompt = 'Revise this ' + (this.brandRef() || 'brand') + ' commercial script per the instruction.' + ' INSTRUCTION: "' + note + '". CURRENT SCRIPT ROWS: ' + JSON.stringify(this.scriptForPrompt(this.state.fullScript)) + '. Keep the same row shape and keep the pack-shot super on the row that already carries it — do not invent or substitute a different brand\u2019s line. Timecodes must stay continuous across a ' + this.state.prodDuration + ' film. EVERY row must keep its "audio" array in sync with the revised dialogue — "text" holds ONLY spoken words (no speaker names, stage directions, SFX or on-screen text), "speaker" the character, "emotion" the performance note, and type is "vo" for narration or "dialogue" for a character. ' + this.voBudgetNote(this.state.prodDuration, (this.state.fullScript||[]).length) + ' Return ONLY JSON: {"rows":[{"no":1,"tc":"0–5s","visual":"...","camera":"...","dialogue":"...","supr":"...","audio":[{"type":"vo","emotion":"warm","language":"en","text":"spoken words only"}]}]}';
         let raw = await this.complete(prompt);
         raw = String(raw).trim().replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();
         const data = JSON.parse(raw.slice(raw.indexOf('{'), raw.lastIndexOf('}')+1));
@@ -15104,6 +15117,25 @@ class Component extends DCLogic {
     }), scriptStatus: s.scriptStatus==='approved' ? 'drafted' : s.scriptStatus }),
       field === 'dialogue' ? this.retimeFromScript : undefined);
   };
+  // Beat role / Beat direction: how this scene's shot is briefed in production. Like the other card choices they do not
+  // change what the script says, so they do not drop an approved script back to "drafted".
+  editSceneChoice = (e) => {
+    const idx = +e.target.getAttribute('data-row'); const field = e.target.getAttribute('data-cell'); const val = e.target.value;
+    if (field !== 'beat_role' && field !== 'beat_note') return;
+    this.setState(s => ({ fullScript: (s.fullScript || []).map((r, i) => {
+      if (i !== idx) return r;
+      const next = { ...r }; if (val) next[field] = val; else delete next[field];
+      return next;
+    }) }));
+  };
+  // The writer may mark one thing only: a short Button after the sign-off. Every other role is left to the person.
+  cleanBeatRoles(rows){
+    return (rows || []).map((r, i) => {
+      const o = { ...r };
+      if (String(o.beat_role || '').trim().toLowerCase() === 'button' && i > 0) o.beat_role = 'button'; else delete o.beat_role;
+      return o;
+    });
+  }
   // The script table and the Word export read the prose column, so keep it in step with the
   // structured lines edited on the board — otherwise the two disagree about what is said.
   proseFor(audio){
@@ -16881,6 +16913,8 @@ class Component extends DCLogic {
       applySound: this.applySound, applySoundLabel: s.cutBusy === 'sound' ? 'Mixing\u2026' : 'Apply this mix',
       // beat plan (Film tab) \u2014 lazy-loaded per duration, guarded the way loadGrounding guards itself
       hasBeatPlan: !!(s.beatPlan && (s.beatPlan.beats || []).length),
+      hasBeatChoices: (s.fullScript || []).some(r => !!this.beatRoleOf(r)),
+      beatChoicesText: (s.fullScript || []).map((r, i) => this.beatRoleOf(r) ? 'scene ' + this.sceneNo(r, i) + ' = ' + this.BEAT_ROLE_LABELS[this.beatRoleOf(r)] : '').filter(Boolean).join(', '),
       beatPlanRows: ((s.beatPlan && s.beatPlan.beats) || []).map(b => ({ role:b.role_label || b.role, seconds:b.seconds, what:b.what || '', fails:b.fails || '' })),
       beatPlanClamped: (() => { const bp = s.beatPlan; if (!bp) return false;
         const total = (bp.beats || []).reduce((a, b) => a + (b.seconds || 0), 0);
@@ -17286,7 +17320,8 @@ class Component extends DCLogic {
     // written by the drafting step sets it), so a never-touched row shows the plain default select
     // and segment_prompt() behaves exactly as Phase 3 shipped it.
     const scriptRows = (s.fullScript||[]).map((r,i)=>({ ...r, rowIdx:i, rewriting: s.rewritingScene===i, rewriteLabel: s.rewritingScene===i ? 'Rewriting…' : '↻ Rewrite scene',
-      movementClass: r.movement_class || '', hasMovementRisk: r.movement_class === 'orbit' }));
+      movementClass: r.movement_class || '', hasMovementRisk: r.movement_class === 'orbit',
+      beatRole: this.beatRoleOf(r), beatNote: r.beat_note || '' }));
     // One row-builder, two homes -- `home` on each DEPTS entry decides scripting vs shoot board, not
     // two copies of this mapping drifting apart the way the medium vocabulary did.
     const deptRow = (d) => { const st = s.shoot[d.id] || { status:'idle', text:'' };
@@ -18085,7 +18120,7 @@ class Component extends DCLogic {
       // full script
       writeFullScript:this.writeFullScript, scriptWriting: s.scriptWriting,
       writeScriptLabel: s.scriptWriting ? 'Writing…' : '✦ Write full script',
-      hasFullScript: !!s.fullScript, scriptRows, editScriptCell:this.editScriptCell,
+      hasFullScript: !!s.fullScript, scriptRows, editScriptCell:this.editScriptCell, editSceneChoice:this.editSceneChoice,
       rewriteScene:this.rewriteScene, regenFullScript:this.regenFullScript,
       approveScript:this.approveScript, scriptApproved: approved,
       notApprovedYet: !!s.fullScript && !approved,
@@ -21875,8 +21910,20 @@ class Component extends DCLogic {
   // or reworked script starts without the old script's choices (before, a tick on frame 3 followed you into the next
   // script in the same session and vanished on reload). None of these edits drop an approved script back to
   // "drafted" -- they change how a still is drawn, not what the script says.
-  SCENE_EXTRAS = ['frame_note', 'movement_class', 'include_pack', 'match_no'];
+  SCENE_EXTRAS = ['frame_note', 'movement_class', 'include_pack', 'match_no', 'beat_role', 'beat_note'];
   sceneNo(row, i){ return String(row && row.no != null ? row.no : i + 1); }
+  // The script's Beat role cell: Auto ('') or one of these. Anything else counts as Auto, as on the server.
+  BEAT_ROLE_IDS = ['hook', 'world', 'mechanism', 'turn', 'brand', 'button'];
+  BEAT_ROLE_LABELS = { hook:'Hook', world:'World', mechanism:'Mechanism', turn:'Turn', brand:'Sign-off', button:'Button' };
+  beatRoleOf(row){ const r = String((row && row.beat_role) || '').trim().toLowerCase(); return this.BEAT_ROLE_IDS.indexOf(r) >= 0 ? r : ''; }
+  // The scene that is the pack-shot sign-off: the one marked Sign-off if any is, otherwise the last scene left on Auto
+  // (a Button after the sign-off does not take its place). The same rule filmcut.assign_roles uses for the shots.
+  isBrandScene(idx){
+    const rows = this.state.fullScript || [];
+    if (rows.some(r => this.beatRoleOf(r) === 'brand')) return this.beatRoleOf(rows[idx]) === 'brand';
+    let last = -1; rows.forEach((r, i) => { if (!this.beatRoleOf(r)) last = i; });
+    return idx === last;
+  }
   // Index of the scene a row is set to match, or -1. Stored as the scene's own number so it survives a re-order.
   matchIdx(rows, row){
     if (!row || row.match_no == null) return -1;
@@ -21915,12 +21962,12 @@ class Component extends DCLogic {
     }) }));
   };
   // Whether the locked pack goes on this frame. An explicit tick (or un-tick) on the card always wins; with no
-  // choice made, the CLOSING scene carries the pack once one is picked in the assets panel (an ad ends on its
+  // choice made, the SIGN-OFF scene (normally the last) carries the pack once one is picked in the assets panel (an ad ends on its
   // pack shot), and every other scene leaves it to /scene-still's own reading of the scene text.
   packOnFrame = (idx) => {
     const s = this.state; const row = (s.fullScript || [])[idx] || {}; const chosen = row.include_pack;
     if (typeof chosen === 'boolean') return chosen;
-    return this.packAvailable() && (idx === ((s.fullScript || []).length - 1) || this.sceneNamesPack(row.visual));
+    return this.packAvailable() && (this.isBrandScene(idx) || this.sceneNamesPack(row.visual));
   };
   // A pack can go on a frame when one is picked OR the library holds any signed-off pack ("Most recently signed off"
   // is a real choice: the server then uses the newest). Before, only an explicit pick showed the checkbox, so with the

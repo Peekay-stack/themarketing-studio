@@ -104,6 +104,11 @@ BEAT_ROLES: dict[str, dict] = {
                   "fails": "Nothing downstream has a feeling to remind anyone of."},
     "brand":     {"what": "The endframe: pack, logo, mnemonic, the line as real type.",
                   "fails": "Somebody watched it and cannot say whose it was."},
+    # Only ever set by a person (or the script writer marking it): the automatic plan never assigns it. A short
+    # last beat AFTER the pack-shot sign-off -- a comeback, a joke, a sting. It is not a second sign-off.
+    "button":    {"what": "A short closing beat after the sign-off: the last human moment, a joke, a sting. "
+                          "Not a second endframe.",
+                  "fails": "Nothing -- the film is complete without it, which is why it leaves first in a cutdown."},
 }
 
 NARRATIVE_ORDER = ("hook", "world", "mechanism", "turn", "brand")
@@ -113,7 +118,10 @@ NARRATIVE_ORDER = ("hook", "world", "mechanism", "turn", "brand")
 # same film as the 30. `world` goes first because context is the most compressible thing in a film;
 # `mechanism` second because a shortened film can assert what a long one demonstrates. Nothing else may
 # go: a cutdown without the turn is not a shorter version of the film, it is a different one.
-DROP_ORDER = ("world", "mechanism")
+DROP_ORDER = ("button", "world", "mechanism")
+# What the automatic plan sheds, in order, when a film has fewer beats than the five jobs. (`button` is not in
+# the automatic plan at all, so it cannot be shed from it.)
+_SHED_ORDER = ("world", "mechanism")
 NEVER_DROPPED = ("hook", "turn", "brand")
 
 # Under three beats there is not room for hook + turn + brand, so there is no three-act film to plan.
@@ -135,7 +143,7 @@ def roles_for(n_beats: int) -> list[str]:
         # a very short piece can actually do.
         return ["brand"] if n_beats == 1 else ["hook", "brand"]
     keep = list(NARRATIVE_ORDER)
-    for role in DROP_ORDER:                      # shed the compressible middle until it fits
+    for role in _SHED_ORDER:                     # shed the compressible middle until it fits
         if len(keep) <= n_beats:
             break
         keep.remove(role)
@@ -264,6 +272,14 @@ def cutdown_plan(beats: list[dict], target_seconds: int) -> dict:
             "kept_roles": [b.get("role") for b in out], "notes": notes}
 
 
+def _explicit_role(seg: dict) -> str:
+    """The role a person (or the writer) put on this segment's scene, or '' to leave it to the automatic plan."""
+    scs = seg.get("scenes") or []
+    first = scs[0] if scs and isinstance(scs[0], dict) else {}
+    r = str(first.get("beat_role") or "").strip().lower()
+    return r if r in BEAT_ROLES else ""
+
+
 def assign_roles(segments: list[dict]) -> list[dict]:
     """Give every segment the narrative job of the MOMENT it belongs to. Mutates and returns.
 
@@ -275,15 +291,33 @@ def assign_roles(segments: list[dict]) -> list[dict]:
 
     So: a new moment begins wherever `continues` is False, roles are assigned across the moments, and
     every beat inherits its moment's role.
+
+    A scene may carry its own `beat_role` (the script's Beat role cell). That one is honoured; the scenes
+    left on Auto are given the positional roles among THEMSELVES, exactly as before. So a film with no
+    explicit roles is planned exactly as it always was, a sign-off that is not the last scene is still
+    the only sign-off (Auto never makes a second `brand` beside an explicit one), and a `button` after
+    the sign-off does not take the sign-off's place.
     """
     segs = [s for s in (segments or []) if isinstance(s, dict)]
     if not segs:
         return segs
     starts = [i for i, s in enumerate(segs) if not s.get("continues")] or [0]
-    roles = roles_for(len(starts))
+    explicit = [_explicit_role(segs[st]) for st in starts]
+    roles = [""] * len(starts)
+    auto = [m for m, r in enumerate(explicit) if not r]
+    if auto:
+        if "brand" in explicit:
+            auto_roles = roles_for(len(auto) + 1)[:-1]       # the sign-off is already taken
+        else:
+            auto_roles = roles_for(len(auto))
+        for k, m in enumerate(auto):
+            roles[m] = auto_roles[k] if k < len(auto_roles) else (auto_roles[-1] if auto_roles else "")
+    for m, r in enumerate(explicit):
+        if r:
+            roles[m] = r
     for m, start in enumerate(starts):
         end = starts[m + 1] if m + 1 < len(starts) else len(segs)
-        role = roles[m] if m < len(roles) else (roles[-1] if roles else "")
+        role = roles[m]
         spec = BEAT_ROLES.get(role, {})
         for i in range(start, end):
             segs[i]["role"] = role

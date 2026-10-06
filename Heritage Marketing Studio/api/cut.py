@@ -52,7 +52,7 @@ BEAT_FIELDS = ("n", "role", "shot_id", "clip_url", "seconds", "super")
 # the drop-out rule below has real words to refer to rather than a bare "n". Not enforced: an older
 # cut with no roles at all still classifies and diffs correctly, it just cannot be asked to cut down
 # by role until they exist.
-BEAT_ROLES = ("hook", "world", "mechanism", "turn", "brand")
+BEAT_ROLES = ("hook", "world", "mechanism", "turn", "brand", "button")
 
 # The two edits nothing here can do cheaply, named so a screen can say so rather than attempting them.
 FULL_REMAKE_TRIGGERS = ("cast", "location", "plate")

@@ -1170,13 +1170,21 @@ def produce_video(payload: dict):
     # prompt forbids is how the plate nearly ended up fighting the "change the setting" instruction.
     _ROLE_DIRECTION = {
         "hook": "This is the HOOK — the opening shot. One arresting image that reads in under two "
-                "seconds and earns the rest of the film. Simple, high contrast, no set-up.",
+                "seconds and earns the rest of the film. Simple, high contrast, no set-up. "
+                "The scene's own description decides what is shown; this sets the emphasis.",
         "world": "This beat ESTABLISHES the place and the person: where we are and whose story this "
-                 "is. Wider, unhurried, legible.",
+                 "is. Wider, unhurried, legible. "
+                 "The scene's own description decides what is shown; this sets the emphasis.",
         "mechanism": "This beat SHOWS the mechanism — the process, the proof, the routine actually "
-                     "happening. The thing being demonstrated has to be visible, not implied.",
+                     "happening. The thing being demonstrated has to be visible, not implied. "
+                     "The scene's own description decides what is shown; this sets the emphasis.",
         "turn": "This is the TURN — the moment something changes. The shot the whole film exists to "
-                "deliver, so it carries the recognition rather than more information.",
+                "deliver, so it carries the recognition rather than more information. "
+                "The scene's own description decides what is shown; this sets the emphasis.",
+        "button": "This is the BUTTON — a short closing beat after the sign-off: the last human moment, "
+                  "a small joke or a sting. Keep it light and brief; it is not a second endframe, so no "
+                  "pack presentation and no space held for type. "
+                  "The scene's own description decides what is shown; this sets the emphasis.",
         "brand": "This is the ENDFRAME beat: the pack, presented clean and front-facing, with calm "
                  "uncluttered space around it for the line and the logo to be set in artwork "
                  "afterwards. Leave that space empty — put no lettering, logo or type in the frame.",
@@ -1188,6 +1196,10 @@ def produce_video(payload: dict):
         # nothing about what the shot is for; the role grammar existed and nothing read it, which is
         # the same shape `plate` was in before it was wired up.
         role_note = _ROLE_DIRECTION.get(str(seg.get("role") or ""), "")
+        # The person's own words for this beat (the script's Beat direction cell). Absent -> nothing added.
+        beat_note = str((seg["scenes"][0] if seg["scenes"] else {}).get("beat_note") or "").strip()
+        if beat_note:
+            role_note = (role_note + " " if role_note else "") + "Direction for this beat: " + beat_note[:300].rstrip(" .") + "."
         if role_note:
             role_note = " " + role_note
         cont = ("This shot CONTINUES the same beat as the previous shot — carry the action forward "
