@@ -250,8 +250,12 @@ def _record_from(data: dict, house: dict | None, platform: dict | None, codes: l
            "expressions": {k: expr.get(k) for k in EXPRESSION_KINDS},
            "source": {"codes_audit": codes, "sparks": [{"text": spark_text, "score": None}] if spark_text else []},
            "platform": (platform or {}).get("id", ""), "house": house_id}
-    if not (rec["core"].get("codes_broken")):
+    # The codes the person chose to break are kept word for word: the screen matches them to the audit by text, and a model's
+    # rewording (it also copied the audit's "(memory)" tag onto the end of them) broke that match.
+    if codes:
         rec["core"]["codes_broken"] = codes
+    else:
+        rec["core"]["codes_broken"] = [re.sub(r"\s*\((?:memory|seen)\)\s*$", "", str(c), flags=re.I) for c in (rec["core"].get("codes_broken") or [])]
     return pv.apply_edit(None, rec, house, platform)
 
 
@@ -301,7 +305,7 @@ def push_further(rec: dict, house: dict | None, pset: dict | None, platform: dic
 
 # ---- 4. the guardrail check (no model; what a machine can honestly check) ---------------------------------------
 
-_HEALTH = [r"\bcure[sd]?\b", r"\btreat(?:s|ed|ment)?\b", r"\bprevent(?:s|ed|ion)?\b", r"\bheal(?:s|ed|ing)?\b", r"\bimmun(?:e|ity)\b",
+_HEALTH = [r"\bcure[sd]?\b", r"\btreat(?:s|ed|ing|ment)?\s+(?:of\s+|for\s+)?(?:\w+\s+){0,2}(?:disease|illness|condition|symptom|infection|ailment)s?\b", r"\bprevent(?:s|ed|ion)?\b", r"\bheal(?:s|ed|ing)?\b", r"\bimmun(?:e|ity)\b",
            r"\bclinically\b", r"\bdoctors?\b", r"\bmedicin\w*\b", r"\bdiabet\w*\b", r"\bcancer\b", r"\bweight loss\b", r"\blose weight\b",
            r"\bstrong bones\b", r"\bbuilds? bones\b", r"\bboosts?\b"]
 _FIGURE = re.compile(r"\d+\s*%|\b\d+\s*x\b|\bclinically proven\b|\bproven\b", re.I)

@@ -160,6 +160,11 @@ check("developing returns an UNSAVED draft stamped with the house, the platform 
 check("the model can never pre-tick the legal acknowledgement", rec["core"]["legal_ack"] is False, "")
 check("expressions are limited to the mediums asked for; the film part is normalised", set(rec["expressions"]) <= set(gen.EXPRESSION_KINDS) and rec["film"]["cast_approach"] == "objects" and rec["film"]["vo_words"] == 12, str(rec["expressions"]))
 check("where it came from travels with it (the codes and the spark)", rec["source"]["codes_audit"] == ["Mother as hero"] and rec["source"]["sparks"][0]["text"] == "A film with no people", "")
+gen._ask = stub({**RAW_REC, "core": {**RAW_REC["core"], "codes_broken": ["Mother as hero (memory)", "A reworded one (seen)"]}})
+rec2, _ = gen.develop(house, pset, platform, EV, {"text": "x", "codes": ["Mother as hero"]}, ["Mother as hero"], "")
+check("the codes the person chose are kept word for word, not the model's rewording or its copied (memory) tag", rec2["core"]["codes_broken"] == ["Mother as hero"], str(rec2["core"]["codes_broken"]))
+rec3, _ = gen.develop(house, pset, platform, EV, {"text": "x"}, [], "")
+check("with no chosen codes, a copied (memory) or (seen) tag is still stripped from the model's own", rec3["core"]["codes_broken"] == ["Mother as hero", "A reworded one"], str(rec3["core"]["codes_broken"]))
 gen._ask = stub({"name": "n", "core": {"line": ""}})
 check("the model not writing the provocation is an honest error", gen.develop(house, pset, platform, EV, {"text": "x"}, [], "")[0] is None, "")
 check("no spark is an error before any model call", gen.develop(house, pset, platform, EV, {}, [], "")[1].startswith("Pick"), "")
@@ -185,6 +190,9 @@ check("a banned word fails (whole words, any case)", ck["banned"]["level"] == "f
 check("a named competitor fails", ck["rivals"]["level"] == "fail" and "Amul" in ck["rivals"]["text"], ck["rivals"]["text"])
 check("health wording and figures warn", ck["health"]["level"] == "warn" and "immun" in ck["health"]["text"] and ck["figures"]["level"] == "warn", str(ck["health"]))
 check("a short never-do phrase found in the text fails", ck["never"]["level"] == "fail", ck["never"]["text"])
+hz = lambda t: [c for c in gen.check_guardrails(pv.normalise({"name": "x", "core": {"line": t}}), prof, names) if c["id"] == "health"][0]["level"]
+check("film language ('treated', 'treatment') is not a health claim, but treating a condition is",
+      hz("A dark, reverent visual treatment, the pour treated as a ritual") == "pass" and hz("It treats a stomach condition") == "warn" and hz("Helps treat diabetes") == "warn", "")
 check("'secure' and 'purely' do not trip 'cure' or 'pure'", all(c["level"] == "pass" for c in gen.check_guardrails(pv.normalise({"name": "x", "core": {"line": "A secure, purely practical glass"}}), prof, names) if c["id"] in ("banned", "health")), "")
 jab = pv.normalise({"name": "x", "core": {"line": "Everyone else whispers", "legal_flag": True}})
 check("a competitor jab asks for the legal tick until it is given", {c["id"]: c for c in gen.check_guardrails(jab, prof, names)}["legal"]["level"] == "warn"
