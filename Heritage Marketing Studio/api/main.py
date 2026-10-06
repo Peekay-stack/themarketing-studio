@@ -65,6 +65,7 @@ import filmaudio
 import filmcut
 import filmscript
 import provocation
+import provocation_gen
 import soundplan
 import filmvoice
 import findings
@@ -2297,7 +2298,16 @@ def provocation_approve(payload: dict):
     rec = provocation.load(str(payload.get("id") or ""))
     if not rec:
         return JSONResponse(status_code=404, content={"detail": "No such provocation."})
-    new, problems = provocation.approve(rec, str(payload.get("who") or ""), payload.get("on", True) is not False)
+    on = payload.get("on", True) is not False
+    if on:
+        # The guardrail check is part of approval: a banned word, a named rival or a never-do item is not a judgement call.
+        house_ = strategy.load(rec["house"])
+        prof = provocation_gen._profile(house_, ideas.for_house(rec["house"]) if house_ else None)
+        names = provocation_gen.competitor_names(prof, provocation.evidence_load(rec["house"]))
+        blocking = provocation_gen.has_failures(provocation_gen.check_guardrails(rec, prof, names))
+        if blocking:
+            return JSONResponse(status_code=400, content={"detail": " ".join(blocking), "problems": blocking})
+    new, problems = provocation.approve(rec, str(payload.get("who") or ""), on)
     if not new:
         return JSONResponse(status_code=400, content={"detail": " ".join(problems), "problems": problems})
     h, plat = _prov_ctx(rec["house"])
@@ -2313,6 +2323,119 @@ def provocation_archive(payload: dict):
         return JSONResponse(status_code=404, content={"detail": "No such provocation."})
     h, plat = _prov_ctx(rec["house"])
     return provocation.as_read(provocation.save(provocation.archive(rec, payload.get("on", True) is not False)), h, plat)
+
+
+# --- Writing a provocation: the evidence it is audited against, the codes, the sparks, developing one (provocation_gen.py) ---
+def _prov_scope(house_id: str):
+    """(house, platform set, chosen platform, error). A provocation is written against one house and one chosen platform."""
+    house = strategy.load(house_id) if str(house_id or "").strip() else None
+    if not house:
+        return None, None, None, "No such house -- a provocation belongs to one."
+    pset = ideas.for_house(house_id)
+    platform = ideas.chosen_platform(pset)
+    if not platform:
+        return house, pset, None, "Choose an idea platform first -- a provocation is written against one."
+    return house, pset, platform, ""
+
+
+def _gen_error(err: str):
+    """No key is a 503 (the same convention /complete uses), anything else a 502 with the reason."""
+    return JSONResponse(status_code=503 if err == provocation_gen.NO_KEY else 502, content={"detail": err})
+
+
+def _evidence_read(house_id: str) -> dict:
+    ev = provocation.evidence_load(house_id)
+    house = strategy.load(house_id) if str(house_id or "").strip() else None
+    prof = provocation_gen._profile(house, ideas.for_house(house_id) if house else None)
+    return {"evidence": ev, "strength": provocation.evidence_strength(ev), "competitors_on_file": list((prof or {}).get("competitors") or []),
+            "channels": [{"id": k, "label": provocation.CHANNEL_LABELS[k]} for k in provocation.CHANNELS], "max_competitors": provocation.MAX_COMPETITORS}
+
+
+@app.get("/category-evidence")
+def category_evidence_get(house: str = ""):
+    """What the person has seen of this house's competitors, plus the competitor names already on file (brand profile)."""
+    return _evidence_read(house)
+
+
+@app.post("/category-evidence")
+def category_evidence_save(payload: dict):
+    """`{house, competitors:[{name, channels:{packaging|instagram|social_video|posm|tvc: {note, link}}}]}` -- saved whole, once per house."""
+    house_id = str(payload.get("house") or "").strip()
+    if not house_id or not strategy.load(house_id):
+        return JSONResponse(status_code=400, content={"detail": "Say which house this evidence is for."})
+    provocation.evidence_save(house_id, payload)
+    return _evidence_read(house_id)
+
+
+@app.post("/provocation-codes")
+def provocation_codes(payload: dict):
+    """The category's codes, each tagged `seen` (rests on evidence the person gave) or `memory`, with a computed caveat."""
+    house, pset, platform, err = _prov_scope(str(payload.get("house") or ""))
+    if err:
+        return JSONResponse(status_code=400, content={"detail": err})
+    ev = provocation.evidence_load(house["id"])
+    out, err = provocation_gen.audit_codes(house, pset, platform, ev, str(payload.get("steer") or ""))
+    return out if out else _gen_error(err)
+
+
+@app.post("/provocation-sparks")
+def provocation_sparks(payload: dict):
+    """`{house, codes:[the codes to break], steer?, n?}` -> scored sparks, best first."""
+    house, pset, platform, err = _prov_scope(str(payload.get("house") or ""))
+    if err:
+        return JSONResponse(status_code=400, content={"detail": err})
+    ev = provocation.evidence_load(house["id"])
+    n = payload.get("n")
+    out, err = provocation_gen.spark(house, pset, platform, ev, payload.get("codes"), str(payload.get("steer") or ""),
+                                     int(n) if isinstance(n, (int, float)) and not isinstance(n, bool) else 8)
+    if out:
+        return out
+    return JSONResponse(status_code=400, content={"detail": err}) if err.startswith("Pick") else _gen_error(err)
+
+
+@app.post("/provocation-develop")
+def provocation_develop(payload: dict):
+    """`{house, spark:{text, codes}, codes?, steer?}` -> an UNSAVED draft record (save it with /provocation once the person has looked)."""
+    house, pset, platform, err = _prov_scope(str(payload.get("house") or ""))
+    if err:
+        return JSONResponse(status_code=400, content={"detail": err})
+    ev = provocation.evidence_load(house["id"])
+    rec, err = provocation_gen.develop(house, pset, platform, ev, payload.get("spark"), payload.get("codes") or [], str(payload.get("steer") or ""))
+    if not rec:
+        return JSONResponse(status_code=400, content={"detail": err}) if err.startswith("Pick") else _gen_error(err)
+    return provocation.as_read(rec, house, platform)
+
+
+@app.post("/provocation-push")
+def provocation_push(payload: dict):
+    """`{id, direction?}` -> the same provocation made bolder (UNSAVED); what was being pushed becomes its safer version."""
+    rec = provocation.load(str(payload.get("id") or ""))
+    if not rec:
+        return JSONResponse(status_code=404, content={"detail": "No such provocation -- save it first."})
+    house, pset, platform, err = _prov_scope(rec["house"])
+    if err:
+        return JSONResponse(status_code=400, content={"detail": err})
+    ev = provocation.evidence_load(house["id"])
+    out, err = provocation_gen.push_further(rec, house, pset, platform, ev, str(payload.get("direction") or ""))
+    if not out:
+        return JSONResponse(status_code=400, content={"detail": err}) if err.startswith("There is nothing") else _gen_error(err)
+    return provocation.as_read(out, house, platform)
+
+
+@app.post("/provocation-check")
+def provocation_check(payload: dict):
+    """The guardrail check, no model: banned words, named rivals, health-claim wording, figures, the never-do list, the legal flag,
+    and what only a person can judge. `{id}` or `{house, record}`."""
+    rec = provocation.load(str(payload.get("id") or "")) if payload.get("id") else payload.get("record")
+    house_id = (rec or {}).get("house") if isinstance(rec, dict) and rec.get("house") else str(payload.get("house") or "")
+    house = strategy.load(house_id) if str(house_id or "").strip() else None
+    if not house or not isinstance(rec, dict):
+        return JSONResponse(status_code=400, content={"detail": "Say which provocation (or which house and record) to check."})
+    pset = ideas.for_house(house["id"])
+    prof = provocation_gen._profile(house, pset)
+    names = provocation_gen.competitor_names(prof, provocation.evidence_load(house["id"]))
+    checks = provocation_gen.check_guardrails(rec, prof, names)
+    return {"checks": checks, "blocking": provocation_gen.has_failures(checks)}
 
 
 # --- /shot-still does two different jobs, and the payload says which ------------------------------

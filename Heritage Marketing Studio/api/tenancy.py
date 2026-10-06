@@ -110,7 +110,10 @@ KINDS = ("briefs", "brands", "houses", "plans", "platforms", "trade", "execution
          # `provocations` -- a Provocation (`provocation.py`): an approved, optional departure from the category's codes, written
          # for one idea platform in one house. Scoped from day one for the same reason `platforms` is: it is built on one brand's
          # house and platform and a producer stands on it, so another tenant's must never be reachable.
-         "provocations")
+         "provocations",
+         # `categoryevidence` -- what a person has SEEN of a house's competitors (packaging, Instagram, social video, POSM, TVC),
+         # kept once per house so every provocation's codes audit reuses it (`provocation.evidence_*`). Scoped for the same reason.
+         "categoryevidence")
 
 _SAFE = re.compile(r"[^a-z0-9_-]+")
 

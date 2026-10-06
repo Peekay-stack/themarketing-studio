@@ -46,6 +46,7 @@ import media
 import tenancy
 
 DIR = tenancy.dir("provocations")
+EVIDENCE_DIR = tenancy.dir("categoryevidence")
 
 STATUSES = ("draft", "approved", "archived")
 RISKS = ("low", "medium", "high")
@@ -300,3 +301,71 @@ def as_read(rec: dict, house: dict | None = None, platform: dict | None = None) 
     """The record as a screen reads it: itself plus why it is stale, what blocks approval, and the hard limits."""
     return {**rec, "stale_because": stale_because(rec, house, platform), "problems": approval_problems(rec),
             "hard_limits": list(HARD_LIMITS)}
+
+
+# ---- competitor evidence: what the person has SEEN, saved once per house ------------------------------------------
+#
+# The codes audit is only as good as what it is shown. Names alone leave the model working from memory of the brands, which is
+# dated and sometimes wrong, so a person may add, per competitor, what they have actually seen in five places. Everything is
+# optional; with none of it the audit still runs and says plainly that its codes are hypotheses. The evidence is text and links
+# only: the studio's AI path cannot open a link or read an image, so what it reads is what the person wrote.
+
+CHANNELS = ("packaging", "instagram", "social_video", "posm", "tvc")
+CHANNEL_LABELS = {"packaging": "Packaging", "instagram": "Instagram page", "social_video": "Social video", "posm": "POSM", "tvc": "TVC"}
+MAX_COMPETITORS = 6
+
+
+def normalise_evidence(data) -> dict:
+    """Any dict -> {competitors: [{name, channels: {<channel>: {note, link}}}]}. Blank names are dropped, repeats merged away,
+    everything capped; a client is never trusted to be well formed."""
+    raw = (data.get("competitors") if isinstance(data, dict) else None)
+    out, seen = [], set()
+    for c in (raw if isinstance(raw, list) else []):
+        if not isinstance(c, dict):
+            continue
+        name = _s(c.get("name"), 80)
+        if not name or name.lower() in seen:
+            continue
+        seen.add(name.lower())
+        ch = c.get("channels") if isinstance(c.get("channels"), dict) else {}
+        out.append({"name": name, "channels": {k: {"note": _s((ch.get(k) or {}).get("note") if isinstance(ch.get(k), dict) else "", 800),
+                                                   "link": _s((ch.get(k) or {}).get("link") if isinstance(ch.get(k), dict) else "", 300)}
+                                               for k in CHANNELS}})
+        if len(out) >= MAX_COMPETITORS:
+            break
+    return {"competitors": out}
+
+
+def _evidence_path(house_id: str) -> str:
+    return os.path.join(EVIDENCE_DIR, "".join(c for c in str(house_id or "") if c.isalnum()) + ".json")
+
+
+def evidence_load(house_id: str) -> dict:
+    """The saved evidence for a house, or an empty one. An empty house id has none (never another house's)."""
+    if not "".join(c for c in str(house_id or "") if c.isalnum()):
+        return {"competitors": [], "updated": ""}
+    try:
+        with open(_evidence_path(house_id), encoding="utf-8") as fh:
+            raw = json.load(fh)
+    except (OSError, ValueError):
+        return {"competitors": [], "updated": ""}
+    return {**normalise_evidence(raw), "updated": _s(raw.get("updated") if isinstance(raw, dict) else "", 20)}
+
+
+def evidence_save(house_id: str, data) -> dict:
+    ev = normalise_evidence(data)
+    ev["updated"] = _now()
+    os.makedirs(EVIDENCE_DIR, exist_ok=True)
+    tmp = _evidence_path(house_id) + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as fh:
+        json.dump(ev, fh, indent=2, ensure_ascii=False)
+    os.replace(tmp, _evidence_path(house_id))
+    return ev
+
+
+def evidence_strength(ev: dict | None) -> dict:
+    """How much the person has actually given: competitors with at least one slot filled, and slots filled out of those possible."""
+    comps = (ev or {}).get("competitors") or []
+    filled = sum(1 for c in comps for k in CHANNELS if (c["channels"][k].get("note") or c["channels"][k].get("link")))
+    with_any = sum(1 for c in comps if any((c["channels"][k].get("note") or c["channels"][k].get("link")) for k in CHANNELS))
+    return {"competitors": with_any, "slots_filled": filled, "slots_total": len(comps) * len(CHANNELS)}
