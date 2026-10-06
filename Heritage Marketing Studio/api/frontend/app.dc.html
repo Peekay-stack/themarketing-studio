@@ -2639,6 +2639,7 @@
                   <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
                     <span style="width:34px; height:34px; flex:none; border-radius:10px; background:{{ d.tint }}; color:{{ d.fg }}; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:12px; overflow:hidden; white-space:nowrap;">{{ d.abbr }}</span>
                     <span style="font-family:'Epilogue',sans-serif; font-weight:700; font-size:14px; color:#17325E;">{{ d.label }}</span>
+                    <span style="font-size:11px; font-weight:600; color:#6B7280; margin-left:auto; text-align:right;">{{ d.feeds }}</span>
                   </div>
                   <sc-if value="{{ d.hasText }}" hint-placeholder-val="{{ false }}">
                     <textarea value="{{ d.text }}" onChange="{{ d.edit }}" rows="7" style="width:100%; box-sizing:border-box; flex:1; font-size:13px; line-height:1.55; color:#38414F; border:1px solid #E6E3DC; border-radius:10px; padding:10px 11px; background:#fff; resize:vertical; font-family:inherit;"></textarea>
@@ -3014,6 +3015,7 @@
             <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
               <span style="width:34px; height:34px; flex:none; border-radius:10px; background:{{ d.tint }}; color:{{ d.fg }}; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:12px; overflow:hidden; white-space:nowrap;">{{ d.abbr }}</span>
               <span style="font-family:'Epilogue',sans-serif; font-weight:700; font-size:14px; color:#17325E;">{{ d.label }}</span>
+              <span style="font-size:11px; font-weight:600; color:#6B7280; margin-left:auto; text-align:right;">{{ d.feeds }}</span>
             </div>
             <sc-if value="{{ d.isKeyshots }}" hint-placeholder-val="{{ false }}">
               <div style="font-size:13px; line-height:1.55; color:#41505F; flex:1;">{{ doneFrames }} of {{ nScenes }} key frames rendered above. Regenerate any frame from the filmstrip.</div>
@@ -3021,6 +3023,9 @@
             <sc-if value="{{ d.hasText }}" hint-placeholder-val="{{ false }}">
               <textarea value="{{ d.text }}" onChange="{{ d.edit }}" rows="7" style="width:100%; box-sizing:border-box; flex:1; font-size:13px; line-height:1.55; color:#38414F; border:1px solid #E6E3DC; border-radius:10px; padding:10px 11px; background:#FBFAF8; resize:vertical; font-family:inherit;"></textarea>
             </sc-if>
+              <sc-if value="{{ d.hasStyleLine }}" hint-placeholder-val="{{ false }}">
+                <div onClick="{{ d.useStyle }}" style="margin-top:8px; font-size:12px; font-weight:700; color:#1E7E34; cursor:pointer;">Use "{{ d.styleLine }}" as the Production music mood</div>
+              </sc-if>
             <sc-if value="{{ d.showEmpty }}" hint-placeholder-val="{{ true }}">
               <div style="font-size:13px; line-height:1.5; color:#6B7280; flex:1;">Draft a {{ d.label }} plan grounded in the approved script.</div>
             </sc-if>
@@ -14977,10 +14982,11 @@ class Component extends DCLogic {
         text = String(raw).trim().replace(/^```/,'').replace(/```$/,'').trim();
       } catch (e) {}
     }
-    if (!text) text = 'Lead: warm Indian mother, late 20s, shoulder-length hair, mustard kurta; daughter ~7 in a navy school uniform; grandmother in a white cotton saree. Same faces, same wardrobe in every shot.';
+    // No stock sheet in its place (it named people the script never has); the existing sheet is left as it is.
+    if (!text) this.showToast('Couldn' + String.fromCharCode(8217) + 't write the cast sheet just now ' + String.fromCharCode(8212) + ' try again, or type it.', 'warn');
     // The same button also distils the Location note into the short "what the camera sees" line the lock and every
     // frame send (the note itself is a production plan -- "Secure a single practical home...", markdown and all).
-    const patch = { charBusy:false, videoCharacters:text };
+    const patch = text ? { charBusy:false, videoCharacters:text } : { charBusy:false };
     const locLine = await this.deriveLocationLine();
     if (locLine) { patch.videoLocationLine = locLine; patch.videoLocationSrc = this.locNoteHash(this.state); }
     this.setState(patch);
@@ -15363,7 +15369,7 @@ class Component extends DCLogic {
       note,
       // This frame's own correction goes last so it has the final word over the film-wide note above.
       (row.frame_note || '').trim()].filter(Boolean).join(' ');
-    const body = { scene_no: row.no || idx + 1, prompt, ratio:'16:9', style:s.videoStyle,
+    const body = { scene_no: row.no || idx + 1, prompt, ratio:this.filmAspect(), style:s.videoStyle,
                    engines:s.engines, video_frame:true };
     // The written look reference rides with the style, not inside the scene text.
     const lookRef = (s.videoLookRef || '').trim();
@@ -15505,30 +15511,16 @@ class Component extends DCLogic {
   // The badge was the only place a card's name appeared at all; now it's a short mark and the card gets
   // a real heading beside it, same pattern as everywhere else labels are actually meant to be read.
   DEPTS = [
-    { id:'cast', label:'Cast', abbr:'Cast', tint:'#EAF6EC', fg:'#1E7E34', home:'scripting' },
-    { id:'location', label:'Location', abbr:'Loc', tint:'#D6DEEC', fg:'#2E5EA6', home:'scripting' },
-    { id:'dop', label:'DoP Note', abbr:'DoP', tint:'#E6EAF0', fg:'#3D5170', home:'shoot' },
-    { id:'props', label:'Prop Master', abbr:'PM', tint:'#FCEFC7', fg:'#A77A00', home:'shoot' },
-    { id:'wardrobe', label:'Wardrobe & Styling', abbr:'W&S', tint:'#F5E6ED', fg:'#A83E6C', home:'shoot' },
-    { id:'lighting', label:'Lighting', abbr:'Lt', tint:'#FDEEDA', fg:'#C8860F', home:'shoot' },
-    { id:'music', label:'Music', abbr:'Mu', tint:'#EFE8FA', fg:'#6B4FB0', home:'shoot' },
-    { id:'dialogue', label:'Dialogue / VO', abbr:'D/V', tint:'#FBE3E1', fg:'#C0392B', home:'shoot' },
+    { id:'cast', label:'Cast', abbr:'Cast', tint:'#EAF6EC', fg:'#1E7E34', home:'scripting', feeds:'feeds the cast sheet' },
+    { id:'location', label:'Location', abbr:'Loc', tint:'#D6DEEC', fg:'#2E5EA6', home:'scripting', feeds:'feeds the Location line' },
+    { id:'dop', label:'DoP Note', abbr:'DoP', tint:'#E6EAF0', fg:'#3D5170', home:'shoot', feeds:'feeds the frames' },
+    { id:'props', label:'Prop Master', abbr:'PM', tint:'#FCEFC7', fg:'#A77A00', home:'shoot', feeds:'feeds the frames' },
+    { id:'wardrobe', label:'Wardrobe & Styling', abbr:'W&S', tint:'#F5E6ED', fg:'#A83E6C', home:'shoot', feeds:'feeds the frames' },
+    { id:'lighting', label:'Lighting', abbr:'Lt', tint:'#FDEEDA', fg:'#C8860F', home:'shoot', feeds:'feeds the frames' },
+    { id:'music', label:'Music', abbr:'Mu', tint:'#EFE8FA', fg:'#6B4FB0', home:'shoot', feeds:'document only' },
+    { id:'dialogue', label:'Dialogue / VO', abbr:'D/V', tint:'#FBE3E1', fg:'#C0392B', home:'shoot', feeds:'document only' },
     { id:'keyshots', label:'Key Shots', abbr:'KS', tint:'#E9F4F2', fg:'#1A8A7A', home:'shoot' },
   ];
-  deptFallback(id){
-    const m = {
-      cast:'Lead: warm, relatable young mother (late 20s). Supporting: two school-age children, grandmother. Casting note — natural, non-glam, authentic urban-Indian household.',
-      location:'Practical urban apartment kitchen at dawn + a real dairy collection point for the farm montage. Warm, lived-in art direction.',
-      dop:'Handheld-adjacent coverage with natural, motivated light — wide establishing shots for context, medium-close for emotional beats, a slow push-in reserved for the turn. Lens choice favours an observational feel over anything stylised.',
-      props:'Practical, in-frame props sourced to match the script’s real-world setting — nothing branded beyond what the script itself calls for, nothing that reads as a prop rather than an object actually in use.',
-      wardrobe:'Everyday, lived-in wardrobe appropriate to the setting and time of day — nothing styled for camera. Kept consistent across every scene featuring the same character.',
-      lighting:'Soft warm morning key from a practical window; golden bounce on the pour. Farm montage in genuine golden-hour daylight.',
-      music:'Warm strings building to an uplifting resolve; light tabla texture under the montage. Ends on a clean brand sting.',
-      dialogue:'VO warm female, one line per beat, in the language and register the brand voice calls for. Closes on the brand line, read verbatim from the house.',
-      keyshots:'Macro pour, farm-to-home montage, family-around-the-table, pack-shot super. See filmstrip for frames.'
-    };
-    return m[id] || '';
-  }
   // Department drafts are read by the frame renderer and the cast-reference call as direction, so a drafted
   // question ("Could you confirm the region?") would be drawn as if it were part of the shot (5 Oct live test: the
   // drafts came back asking the owner things). The draft prompt now forbids questions; this drops any sentence
@@ -15560,6 +15552,35 @@ class Component extends DCLogic {
     // Only a text that actually had a question sentence is rewritten; a "?" inside a word or number leaves it exactly as typed.
     return dropped ? out : s;
   }
+  // The one place that says what shape the film's pictures are. Every frame, and every department told about the picture,
+  // reads it here; the ratio is not chosen per department. (Platform sizes and durations are the editor's job, later.)
+  filmAspect(){ return '16:9'; }
+  // Which already-made decisions each department is told about when it drafts. Only decisions that really exist are sent
+  // (an empty Location line, no cast sheet yet, no pack ticked -> nothing said). Cast and Location are upstream of the
+  // cast sheet and the Location line, so they are not told those -- they are what those are written FROM.
+  DEPT_FACTS = { cast:[], location:['look'], dop:['location','look','pack','aspect'], lighting:['location','look'],
+                 props:['location','cast','pack'], wardrobe:['cast','look'], music:['cast'], dialogue:['cast'] };
+  decidedFacts(id){
+    const s = this.state, want = this.DEPT_FACTS[id] || [], lines = [];
+    if (want.indexOf('cast') >= 0) {
+      const c = this.clipText(this.stripMd(s.videoCharacters || ''), 900);
+      if (c) lines.push('Cast sheet (the people, ages and wardrobe colours are fixed): ' + c);
+    }
+    if (want.indexOf('location') >= 0) {
+      const l = this.locationText();
+      if (l) lines.push('Location: ' + l);
+    }
+    if (want.indexOf('look') >= 0) {
+      const ref = (s.videoLookRef || '').trim();
+      if (ref) lines.push('Look: ' + this.styleLabel(s.videoStyle) + '; ' + this.clipText(ref, 400));
+    }
+    if (want.indexOf('pack') >= 0 && this.packAvailable()) {
+      const nos = (s.fullScript || []).map((r, i) => this.packOnFrame(i) ? Number(r.no != null ? r.no : i + 1) : 0).filter(Boolean);
+      if (nos.length) lines.push('The real pack photo is added to scene' + (nos.length > 1 ? 's ' : ' ') + nos.join(', ') + ' straight from the library: do not describe the pack design, colours or artwork, and do not bring a pack into any other scene.');
+    }
+    if (want.indexOf('aspect') >= 0) lines.push('Every frame is drawn ' + this.filmAspect() + ': do not specify any other aspect ratio, letterbox or anamorphic format.');
+    return lines.length ? ' ALREADY DECIDED for this film -- build on these and never contradict them: ' + lines.map(x => x.replace(/[.\s]+$/, '')).join(' | ') + '.' : '';
+  }
   draftDept = (id) => async () => {
     if ((this.state.shoot[id]||{}).status==='drafting') return;
     this.setState(s => ({ shoot:{ ...s.shoot, [id]:{ status:'drafting', text:'' } } }));
@@ -15570,14 +15591,27 @@ class Component extends DCLogic {
         const pre = this.brandPreamble('the ' + dept.label + ' department head', this.state.producerBrandMode === 'general');
         if (!pre) { this.showToast(this.BRAND_PREAMBLE_MISSING);
           this.setState(st => ({ shoot:{ ...st.shoot, [id]:{ status:'idle', text:'' } } })); return; }
-        const prompt = pre + '\n\nBase your plan strictly on this APPROVED SCRIPT: '+JSON.stringify(this.scriptForPrompt(this.state.fullScript))+'. Give a tight, practical '+dept.label+' plan (3-4 sentences). Write it as a decided plan in plain statements: do not ask the reader any question, do not ask for confirmation, and do not offer alternatives to choose between. Where something is not specified, make a sensible choice and state it.';
+        const prompt = pre + '\n\nBase your plan strictly on this APPROVED SCRIPT: '+JSON.stringify(this.scriptForPrompt(this.state.fullScript))+'.' + this.decidedFacts(id) + ' Give a tight, practical '+dept.label+' plan (3-4 sentences)' + (id === 'music' ? ', then end with one separate line starting "Suggested style:" that names the music in 4-10 words a music generator could use' : '') + '. Write it as a decided plan in plain statements: do not ask the reader any question, do not ask for confirmation, and do not offer alternatives to choose between. Where something is not specified, make a sensible choice and state it.';
         let raw = await this.complete(prompt);
         text = this.plainDept(String(raw).trim().replace(/^```/,'').replace(/```$/,'').trim());
       } catch (e) {}
     }
-    if (!text) text = this.deptFallback(id);
+    // No stock paragraph in its place: a made-up default (a 'young mother, late 20s') read as the department's real
+    // decision and went on to contradict the cast sheet and the frames. Say it failed; the box stays empty.
+    if (!text) {
+      this.setState(st => ({ shoot:{ ...st.shoot, [id]:{ status:'idle', text:'' } } }));
+      this.showToast('Couldn' + String.fromCharCode(8217) + 't draft the ' + dept.label + ' plan just now ' + String.fromCharCode(8212) + ' try again, or write it yourself.', 'warn');
+      return;
+    }
     this.setState(s => ({ shoot:{ ...s.shoot, [id]:{ status:'done', text } } }));
   };
+  // Copies the Music note's "Suggested style" line into Production's Music mood; nothing else reads the note.
+  useMusicStyle(line){
+    const v = String(line || '').trim().replace(/[.]+$/, '');
+    if (!v) return;
+    this.setState(s => ({ production:{ ...s.production, music:v } }));
+    this.showToast('Production music mood set to: ' + v, 'ok');
+  }
   toggleScriptRef = () => this.setState(s => ({ scriptRefOpen: !s.scriptRefOpen }));
   openLightbox = (url) => () => { if (url) this.setState({ lightbox:url }); };
   closeLightbox = () => this.setState({ lightbox:null });
@@ -17256,7 +17290,9 @@ class Component extends DCLogic {
     // One row-builder, two homes -- `home` on each DEPTS entry decides scripting vs shoot board, not
     // two copies of this mapping drifting apart the way the medium vocabulary did.
     const deptRow = (d) => { const st = s.shoot[d.id] || { status:'idle', text:'' };
+      const styleLine = d.id === 'music' ? ((String(st.text || '').match(/^[ \t]*Suggested style:[ \t]*(.+)$/im) || [])[1] || '').trim() : '';
       return { ...d, text:st.text, hasText: st.status==='done', drafting: st.status==='drafting', isKeyshots: d.id==='keyshots',
+        feeds: d.feeds || '', hasStyleLine: !!styleLine, styleLine, useStyle: () => this.useMusicStyle(styleLine),
         showDraft: d.id!=='keyshots', showEmpty: d.id!=='keyshots' && st.status!=='done',
         draft:this.draftDept(d.id), edit:this.onDeptText(d.id),
         draftLabel: st.status==='drafting' ? 'Drafting…' : (st.status==='done' ? '↻ Redraft' : '✦ AI draft') }; };
