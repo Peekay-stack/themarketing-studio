@@ -2215,8 +2215,8 @@
          the platform sat between two halves of the brief. -->
     <div style="background:#fff; border:1px solid #DDD9D1; border-radius:16px; padding:16px 18px; margin-bottom:18px;">
       <div style="font-size:11px; font-weight:800; letter-spacing:0.07em; text-transform:uppercase; color:#6B7280; margin-bottom:12px;">What this film is given</div>
-      <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:14px; align-items:stretch;">
-        <sc-for list="{{ vInputCards }}" as="vc" hint-placeholder-count="3">
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:14px; align-items:stretch;">
+        <sc-for list="{{ vInputCards }}" as="vc" hint-placeholder-count="4">
           <div style="border:1px solid {{ vc.line }}; background:{{ vc.bg }}; border-radius:13px; padding:13px 15px; display:flex; flex-direction:column;">
             <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px; flex-wrap:wrap;">
               <span onClick="{{ vc.toggle }}" style="cursor:{{ vc.cursor }}; width:18px; height:18px; flex:none; border-radius:6px; background:{{ vc.dotBg }}; border:1.5px solid {{ vc.dotLine }}; color:{{ vc.dotFg }}; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800;">✓</span>
@@ -2224,6 +2224,13 @@
               <span style="margin-left:auto; font-size:11.5px; font-weight:700; color:{{ vc.stateFg }};">{{ vc.state }}</span>
             </div>
             <div style="font-size:12.5px; line-height:1.5; color:#6B7280; padding-left:28px; text-wrap:pretty;">{{ vc.sub }}</div>
+            <sc-if value="{{ vc.hasPicker }}" hint-placeholder-val="{{ false }}">
+              <div style="padding-left:28px; margin-top:8px;">
+                <select value="{{ vc.pickerValue }}" onChange="{{ vc.pick }}" style="width:100%; border:1px solid #DDD9D1; border-radius:8px; padding:6px 8px; font-size:12.5px; color:#17325E; background:#fff; font-family:inherit;">
+                  <sc-for list="{{ vc.pickerOpts }}" as="po" hint-placeholder-count="2"><option value="{{ po.v }}">{{ po.label }}</option></sc-for>
+                </select>
+              </div>
+            </sc-if>
             <div style="padding-left:28px; margin-top:auto;">
               <span onClick="{{ vc.onAction }}" style="cursor:pointer; display:inline-block; margin-top:10px; font-size:12.5px; font-weight:700; color:#2E5EA6; text-decoration:underline;">{{ vc.action }}</span>
             </div>
@@ -2438,6 +2445,12 @@
         </div>
       </div>
     </div>
+
+    <sc-if value="{{ vProvChosen }}" hint-placeholder-val="{{ false }}">
+      <div style="background:#17325E; color:#fff; border-radius:12px; padding:11px 16px; margin-bottom:16px; font-size:13px; line-height:1.55;">
+        <b>This film stands on the provocation &ldquo;{{ vProvName }}&rdquo;.</b> {{ vProvLine }} It is saved with this film and the quote above now follows it. The concept writer and the departments do not read it yet &mdash; that is the next build &mdash; so nothing you generate changes today.
+      </div>
+    </sc-if>
 
     <sc-if value="{{ hasConceptRoutes }}" hint-placeholder-val="{{ false }}">
       <div style="margin-bottom:20px;">
@@ -11562,6 +11575,9 @@ class Component extends DCLogic {
     soundPlan: {},
     soundBase: [],
     prov: {},                      // the Provocation tab's workshop (see provDefaults())
+    videoProvId: '',               // the approved provocation this film stands on ('' = none); saved with the film
+    videoProvOn: true,             // false = set aside for this film (the same switch the idea platform card has)
+    videoProvList: [],             // this house's APPROVED provocations, for the card's picker
     loudnessInfo: null,            // what the last preview / render / re-score measured: {integrated, true_peak, target?, ...}
     musicLockMood: null,           // the music mood the locked bed was made under, to say when the mood has moved on
     musicBusy: false,
@@ -14781,6 +14797,8 @@ class Component extends DCLogic {
     // Video" hand-off — see `loadSocialStandsOn`'s own comment on why `houseId` has to ride along too.
     if (houseId) body.house = houseId;
     if (campaignId) body.campaign = campaignId;
+    // A chosen provocation stands in front of the platform and the campaign; the server only honours an approved one of THIS house.
+    if (s.videoProvId && this.videoProv()) { body.provocation_id = s.videoProvId; body.use_provocation = s.videoProvOn !== false; if (!body.house && this.provHouseId()) body.house = this.provHouseId(); }
     const d = await this.apiCall('/producer-stands-on', body);
     if (d && d.ok && d.data) this.setState({ videoStandsOn: d.data });
   };
@@ -18529,9 +18547,9 @@ class Component extends DCLogic {
       // split against here — just has-a-quote vs. doesn't, same as before Social's own plan-bound fix.
       videoBrief: s.videoBrief, onVideoBrief: this.onVideoBrief,
       videoForceTyped: !!s.videoForceTyped, onToggleVideoForceTyped: this.onToggleVideoForceTyped,
-      videoHasStandsOn: !!(s.videoStandsOn && s.videoStandsOn.text && (s.videoStandsOn.has_platform || s.videoStandsOn.has_house)) && !s.videoForceTyped,
-      videoStandsAside: !!(s.videoStandsOn && s.videoStandsOn.text && (s.videoStandsOn.has_platform || s.videoStandsOn.has_house)) && !!s.videoForceTyped,
-      videoNoStandsOn: !(s.videoStandsOn && (s.videoStandsOn.has_platform || s.videoStandsOn.has_house)),
+      videoHasStandsOn: !!(s.videoStandsOn && s.videoStandsOn.text && (s.videoStandsOn.has_platform || s.videoStandsOn.has_house || s.videoStandsOn.has_provocation)) && !s.videoForceTyped,
+      videoStandsAside: !!(s.videoStandsOn && s.videoStandsOn.text && (s.videoStandsOn.has_platform || s.videoStandsOn.has_house || s.videoStandsOn.has_provocation)) && !!s.videoForceTyped,
+      videoNoStandsOn: !(s.videoStandsOn && (s.videoStandsOn.has_platform || s.videoStandsOn.has_house || s.videoStandsOn.has_provocation)),
       videoStandsText: (s.videoStandsOn && s.videoStandsOn.text) || '',
       videoStandsSource: (s.videoStandsOn && s.videoStandsOn.source) || '',
       // shared studio inputs
@@ -18598,6 +18616,22 @@ class Component extends DCLogic {
             toggle: standsAvailable ? this.onToggleVideoForceTyped : (() => {}),
             cursor: standsAvailable ? 'pointer' : 'default' };
         })(),
+        (() => {
+          const list = s.videoProvList || [], sel = this.videoProv(), chosenOn = !!sel && s.videoProvOn !== false;
+          const stale = !!sel && (sel.stale_because || []).length > 0;
+          return { name:'The provocation',
+            state: sel ? (s.videoProvOn === false ? 'set aside' : (sel.name || 'chosen')) : (list.length ? 'not used' : 'none made'),
+            on: chosenOn,
+            sub: sel
+              ? (s.videoProvOn === false ? 'Set aside for this film \u2014 tick it to stand on it again.'
+                  : ((stale ? 'May be stale: ' + sel.stale_because[0] + ' ' : '') + ((sel.core || {}).line || '')))
+              : (list.length ? 'Optional. A deliberate departure from how the category talks and looks. Pick an approved one for the film to stand on.'
+                  : 'Optional. A deliberate departure from how the category talks and looks. Made in Strategy, and only once a person approves it.'),
+            action: list.length ? 'Open the provocation' : 'Make one', onAction: this.goProvocation,
+            toggle: sel ? this.onToggleVideoProv : (() => {}), cursor: sel ? 'pointer' : 'default',
+            hasPicker: list.length > 0, pickerValue: s.videoProvId || '', pick: this.onPickVideoProv,
+            pickerOpts: [{ v:'', label:'No provocation' }, ...list.map(r => ({ v:r.id, label:r.name || '(unnamed)' }))] };
+        })(),
         { name:'The source brief',
           state: s.linkedBrief ? (s.linkedBrief.format || 'linked') : 'none pulled',
           on: !!s.linkedBrief,
@@ -18605,7 +18639,7 @@ class Component extends DCLogic {
             ? 'Proposition, audience and tone — the logline and every beat are written against them.'
             : 'Optional. Without one, the objective you pick below is all the film is written from.',
           action: s.linkedBrief ? 'Change the brief' : 'Pull from a brief', onAction:this.openBriefPicker('video'), toggle:() => {}, cursor:'default' },
-      ].map(c => ({ ...c,
+      ].map(c => ({ ...c, hasPicker: !!c.hasPicker,
         line: c.on ? '#17325E' : '#DDD9D1', bg: c.on ? '#F7F9FC' : '#fff',
         stateFg: c.on ? '#1E7E34' : '#B07A12',
         dotBg: c.on ? '#17325E' : '#fff', dotLine: c.on ? '#17325E' : '#C9CEDA',
@@ -18779,6 +18813,7 @@ class Component extends DCLogic {
       rescoreLabel: s.rescoring ? 'Re-scoring…' : '\u21bb Change music on this cut',
       // ---- creative routes ----
       hasConceptRoutes: (s.conceptRoutes||[]).length > 1,
+      vProvChosen: !!this.videoProv() && s.videoProvOn !== false, vProvName: (this.videoProv() || {}).name || '', vProvLine: ((this.videoProv() || {}).core || {}).line || '',
       conceptRouteCards: (s.conceptRoutes||[]).map((r,i) => ({
         name: r.name || ('Route ' + (i+1)), rationale: r.rationale || r.logline || '',
         pick: this.pickConceptRoute(i),
@@ -21133,6 +21168,19 @@ class Component extends DCLogic {
     if (!sameHouse) Object.assign(patch, { codes:null, caveat:null, sparks:null, rec:null, checks:null, picked:{}, err:'', note:'' });
     this.setProv(patch);
   };
+  // ----- Video stands on a provocation (the card in "What this film is given")
+  loadVideoProvocations = async () => {
+    const hid = this.provHouseId(); if (!hid) { if ((this.state.videoProvList || []).length) this.setState({ videoProvList: [] }); return; }
+    const d = await this.apiGet('/provocations?house=' + encodeURIComponent(hid));
+    if (d && Array.isArray(d.provocations)) {
+      this.setState({ videoProvList: d.provocations.filter(r => r.status === 'approved') });
+      // A film restored before this list arrived could not name its provocation to the server yet.
+      if (this.state.videoProvId) this.loadVideoStandsOn(this.state.videoBrief);
+    }
+  };
+  onPickVideoProv = (e) => { this.setState({ videoProvId: e.target.value, videoProvOn: true }); setTimeout(() => this.loadVideoStandsOn(this.state.videoBrief), 0); };
+  onToggleVideoProv = () => { this.setState({ videoProvOn: this.state.videoProvOn === false }); setTimeout(() => this.loadVideoStandsOn(this.state.videoBrief), 0); };
+  videoProv(){ return (this.state.videoProvList || []).find(r => r.id === this.state.videoProvId) || null; }
   provError(r, fallback){ return (r && r.data && r.data.detail) || fallback; }
 
   // ----- the competitor evidence (saved once per house)
@@ -21393,9 +21441,11 @@ class Component extends DCLogic {
       videoCharacters: d.video_characters || '', videoLocationLine: d.video_location_line || '',
       videoLookRef: d.video_look_ref || '', videoLocationSrc: d.video_location_src || '',
       soundPlan: d.sound_plan || {},
+      videoProvId: d.provocation_id || '', videoProvOn: d.provocation_on !== false,
       // the music mood the person chose travels with the film (Production's own settings are not saved otherwise)
       ...((d.sound_plan && d.sound_plan.mood) ? { production:{ ...this.state.production, music:d.sound_plan.mood },
         musicStyle: ((this.musicChips().find(o => String(o.label).toLowerCase() === String(d.sound_plan.mood).toLowerCase() || o.id === d.sound_plan.mood)) || {}).id || '' } : {}) });
+    if (d.provocation_id) setTimeout(() => this.loadVideoStandsOn(this.state.videoBrief), 0);
     if (cleaned.count) this.showToast('Removed questions from ' + cleaned.count + ' department draft' + (cleaned.count === 1 ? '' : 's') + ' — they were written as questions to you, not as direction.');
   };
   cleanShootDrafts(shoot){
@@ -21417,7 +21467,8 @@ class Component extends DCLogic {
       video_concept: s.videoConcept, script_status: s.scriptStatus, script_phase: s.scriptPhase,
       full_script: s.fullScript, scene_frames: s.sceneFrames, shoot: s.shoot,
       video_characters: s.videoCharacters, video_location_line: s.videoLocationLine,
-      video_look_ref: s.videoLookRef, video_location_src: s.videoLocationSrc, sound_plan: s.soundPlan || {} });
+      video_look_ref: s.videoLookRef, video_location_src: s.videoLocationSrc, sound_plan: s.soundPlan || {},
+      provocation_id: s.videoProvId || '', provocation_on: s.videoProvOn !== false });
   };
   saveVideoScriptDebounced = () => {
     clearTimeout(this._videoScriptSaveTimer);
@@ -21443,7 +21494,7 @@ class Component extends DCLogic {
       this.refreshSoundBase();
       if (!s.soundStatus && !this._soundStatusAsked) { this._soundStatusAsked = true; this.loadSoundStatus(); }
     }
-    if (changed && s.screen === 'video') { this.loadVideoExecOptions(); this.loadCampaignsForExec();
+    if (changed && s.screen === 'video') { this.loadVideoProvocations(); this.loadVideoExecOptions(); this.loadCampaignsForExec();
       // The Cast / Location / Pack pickers (and the per-frame pack checkbox) read these. They were loaded only when an
       // objective was picked, so a film restored from its saved script -- a page refresh, a return visit -- had EMPTY
       // pickers and no pack checkbox (5 Oct). Loaded on every entry to Video, which also picks up anything signed off
@@ -21472,7 +21523,8 @@ class Component extends DCLogic {
     const vsig = { fullScript: s.fullScript, videoCharacters: s.videoCharacters, sceneFrames: s.sceneFrames,
                    shoot: s.shoot, videoConcept: s.videoConcept, scriptStatus: s.scriptStatus,
                    scriptPhase: s.scriptPhase, videoObjective: s.videoObjective, videoLocationLine: s.videoLocationLine,
-                   videoLookRef: s.videoLookRef, videoLocationSrc: s.videoLocationSrc, soundPlan: s.soundPlan };
+                   videoLookRef: s.videoLookRef, videoLocationSrc: s.videoLocationSrc, soundPlan: s.soundPlan,
+                   videoProvId: s.videoProvId, videoProvOn: s.videoProvOn };
     const vPrev = this._videoScriptSig || {};
     const vChanged = Object.keys(vsig).some(k => vsig[k] !== vPrev[k]);
     this._videoScriptSig = vsig;
