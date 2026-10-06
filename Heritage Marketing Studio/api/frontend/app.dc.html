@@ -4290,6 +4290,9 @@
           <div style="font-family:'Epilogue',sans-serif; font-weight:700; font-size:16px; color:#17325E;">3. Sparks <span style="font-weight:600; font-size:13px; color:#6B7280;">{{ provPickedCount }} code(s) chosen to break</span></div>
           <span onClick="{{ genSparks }}" style="cursor:pointer; background:#F4FAF5; color:#1E7E34; border:1px solid #C9E7CE; border-radius:9px; padding:8px 14px; font-weight:700; font-size:13px;">{{ provSparksLabel }}</span>
         </div>
+        <sc-if value="{{ provHasErr }}" hint-placeholder-val="{{ false }}">
+          <div style="background:#FBE3E1; color:#C0392B; border-radius:10px; padding:9px 13px; margin-bottom:10px; font-size:13px; line-height:1.5;">{{ provErr }}</div>
+        </sc-if>
         <sc-if value="{{ provHasSparks }}" hint-placeholder-val="{{ false }}">
           <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:10px;">
             <sc-for list="{{ provSparks }}" as="x" hint-placeholder-count="4">
@@ -4300,7 +4303,7 @@
                 <div style="display:flex; gap:12px; font-size:11.5px; color:#6B7280;"><span>Breaks a code {{ x.b }}/5</span><span>True to the platform {{ x.t }}/5</span><span>Travels {{ x.tr }}/5</span></div>
                 <div style="display:flex; align-items:center; justify-content:space-between; margin-top:4px;">
                   <span style="font-size:11.5px; font-weight:700; border-radius:8px; padding:2px 9px; background:{{ x.riskBg }}; color:{{ x.riskFg }};">{{ x.riskLabel }}</span>
-                  <span onClick="{{ x.develop }}" style="cursor:pointer; font-size:12.5px; font-weight:700; color:#fff; background:#17325E; border-radius:8px; padding:6px 13px;">Develop this</span>
+                  <span onClick="{{ x.develop }}" style="cursor:pointer; font-size:12.5px; font-weight:700; color:#fff; background:{{ x.devBg }}; border-radius:8px; padding:6px 13px;">{{ x.devLabel }}</span>
                 </div>
               </div>
             </sc-for>
@@ -4310,7 +4313,7 @@
       </sc-if>
 
       <!-- 4. the provocation -->
-      <div style="background:#fff; border:1px solid #DDD9D1; border-radius:16px; padding:18px 20px; margin-bottom:16px;">
+      <div id="prov-section-4" style="background:#fff; border:1px solid #DDD9D1; border-radius:16px; padding:18px 20px; margin-bottom:16px;">
         <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:10px;">
           <div style="font-family:'Epilogue',sans-serif; font-weight:700; font-size:16px; color:#17325E;">4. The provocation</div>
           <span onClick="{{ newProvocationBlank }}" style="cursor:pointer; font-size:12.5px; font-weight:700; color:#17325E; border:1px solid #C9CEDA; background:#fff; border-radius:8px; padding:6px 12px;">Write one by hand</span>
@@ -21150,7 +21153,7 @@ class Component extends DCLogic {
   provDefaults(){
     return { house:'', ev:null, onFile:[], strength:null, evBusy:false, evOpen:false, evSaved:true, steer:'',
       codes:null, caveat:null, category:'', codesBusy:false, picked:{}, sparks:null, sparksBusy:false,
-      rec:null, recBusy:false, checks:null, blocking:[], list:[], showArchived:false, err:'', note:'', dirty:false };
+      rec:null, recBusy:false, devIdx:-1, checks:null, blocking:[], list:[], showArchived:false, err:'', note:'', dirty:false };
   }
   P(){ return { ...this.provDefaults(), ...(this.state.prov || {}) }; }
   setProv(patch){ this.setState(st => ({ prov: { ...this.provDefaults(), ...(st.prov || {}), ...patch } })); }
@@ -21235,10 +21238,15 @@ class Component extends DCLogic {
   };
   developSpark = (i) => async () => {
     const hid = this.provHouseId(); const sp = (this.P().sparks || [])[i]; if (!hid || !sp || this.P().recBusy) return;
-    this.setProv({ recBusy:true, err:'' });
+    this.setProv({ recBusy:true, devIdx:i, err:'' });
     const r = await this.apiCall('/provocation-develop', { house:hid, spark:sp, codes:sp.codes && sp.codes.length ? sp.codes : this.pickedCodes(), steer:this.P().steer });
-    if (r && r.ok && r.data) { this.setProv({ recBusy:false, rec:r.data, dirty:true, checks:null, note:'' }); this.checkRec(); }
-    else this.setProv({ recBusy:false, err:this.provError(r, 'Couldn’t develop that spark just now.') });
+    if (r && r.ok && r.data) {
+      this.setProv({ recBusy:false, devIdx:-1, rec:r.data, dirty:true, checks:null, note:'' }); this.checkRec();
+      // The draft opens in section 4, below the sparks: say so and bring it into view (the wait is about half a minute).
+      this.showToast('Developed. Read it below and edit anything.', 'ok');
+      setTimeout(() => { const el = document.getElementById('prov-section-4'); if (el && el.scrollIntoView) el.scrollIntoView({ block:'start' }); }, 200);
+    }
+    else this.setProv({ recBusy:false, devIdx:-1, err:this.provError(r, 'Couldn’t develop that spark just now.') });
   };
 
   // ----- 4. the provocation itself
@@ -21348,6 +21356,7 @@ class Component extends DCLogic {
       // sparks
       genSparks: this.genSparks, provSparksLabel: p.sparksBusy ? 'Generating…' : (p.sparks ? '↻ More sparks' : '✦ Generate sparks'), provHasSparks: !!p.sparks,
       provSparks: (p.sparks || []).map((x, i) => ({ i, text:x.text, codes:(x.codes || []).join(' · '), stays:x.stays_true, b:x.scores.breaks, t:x.scores.true, tr:x.scores.travels,
+        devLabel: p.devIdx === i ? 'Developing… about 30 seconds' : (p.recBusy ? 'Wait…' : 'Develop this'), devBg: p.recBusy ? '#8C97AB' : '#17325E',
         riskLabel:'Risk: ' + x.risk, riskBg:(RISK[x.risk] || RISK.medium)[0], riskFg:(RISK[x.risk] || RISK.medium)[1], develop:this.developSpark(i) })),
       // the provocation
       provHasRec: !!rec, newProvocationBlank: this.newProvocationBlank, provRecBusy: p.recBusy,
