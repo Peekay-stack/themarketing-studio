@@ -248,9 +248,22 @@ def _measure(exe: str, placed, tmp: str, span: float, notes: list) -> tuple[list
     return takes, tempo
 
 
+def _plan_bed(plan, lines, vol: float, total: float) -> str | None:
+    """The music bed's whole filter chain when a sound plan applies, else None (= the old static level).
+
+    ONE place for both the preview and the real mix, so what is approved in the preview is what is rendered.
+    Only when there is a plan AND somebody speaks: with no voice the bed is the film, at its own level.
+    """
+    import soundplan
+    core = soundplan.bed_filter(plan, lines, vol, total)
+    if not core:
+        return None
+    return f"{core},afade=t=in:st=0:d=1.2{soundplan.ending_filter(plan, total)}"
+
+
 def preview_audio(exe: str, seconds: float, out_path: str, segments,
                   music: str | None = None, tmp_dir: str | None = None,
-                  level=None) -> tuple[bool, list[str]]:
+                  level=None, plan=None) -> tuple[bool, list[str]]:
     """The soundtrack alone, as an mp3 — so the mix can be judged without rendering any video.
 
     Same placement rules as the real mix, over silence instead of picture — including the single
@@ -267,9 +280,11 @@ def preview_audio(exe: str, seconds: float, out_path: str, segments,
     filters, labels = [], ["[0:a]"]
     idx = 1
     cursor = 0.0
+    line_windows = []
     for n, (seg, path, dur) in enumerate(takes):
         start = max(seg.start, cursor)
         eff = dur / tempo
+        line_windows.append((start, start + eff))
         inputs += ["-i", path]
         chain = f"[{idx}:a]"
         if tempo > 1.001:
@@ -282,9 +297,13 @@ def preview_audio(exe: str, seconds: float, out_path: str, segments,
         mpath = os.path.join(tmp, "bed.mp3")
         if _download(music, mpath):
             inputs += ["-i", mpath]
-            filters.append(f"[{idx}:a]volume="
-                           f"{music_level(level, has_voice=len(labels) > 1)},"
-                           "afade=t=in:st=0:d=1.2[bed]")
+            vol = music_level(level, has_voice=len(labels) > 1)
+            bed = _plan_bed(plan, line_windows, vol, float(seconds)) if len(labels) > 1 else None
+            if bed:
+                filters.append(f"[{idx}:a]{bed}[bed]")
+            else:
+                filters.append(f"[{idx}:a]volume={vol},"
+                               "afade=t=in:st=0:d=1.2[bed]")
             labels.append("[bed]")
     filters.append(f"{''.join(labels)}amix=inputs={len(labels)}:duration=first:"
                    "dropout_transition=0:normalize=0,alimiter=limit=0.95[aout]")
@@ -304,7 +323,7 @@ def preview_audio(exe: str, seconds: float, out_path: str, segments,
 
 def mix_timeline(exe: str, video: str, out_path: str, segments, music: str | None = None,
                  tmp_dir: str | None = None, level=None, ambience: str | None = None,
-                 ambience_level_name=None, spots=None) -> tuple[bool, list[str]]:
+                 ambience_level_name=None, spots=None, plan=None) -> tuple[bool, list[str]]:
     """Place each voice segment at its scene's timecode and mix with the music bed, an ambience bed
     and any foley spots.
 
@@ -329,9 +348,11 @@ def mix_timeline(exe: str, video: str, out_path: str, segments, music: str | Non
     takes, tempo = _measure(exe, placed, tmp, picture, notes)
     inputs, filters, labels = ["-i", video], [], []
     cursor, idx = 0.0, 1                      # input 0 is the picture
+    line_windows = []                         # where each line really falls, for a sound plan's envelope
     for n, (seg, path, dur) in enumerate(takes):
         start = max(seg.start, cursor)        # never talk over the previous line
         eff = dur / tempo
+        line_windows.append((start, start + eff))
         if picture and start + eff > picture + 0.25:
             notes.append(f"{seg.speaker or 'narration'} line still runs past the end of the cut at "
                          f"{tempo:.2f}x — shorten it or give that scene more seconds")
@@ -381,7 +402,12 @@ def mix_timeline(exe: str, video: str, out_path: str, segments, music: str | Non
             # film with foley and no narration got the quiet under-VO bed level, ducking the score
             # under speech that does not exist.
             vol = music_level(level, has_voice=bool(voice_labels))
-            filters.append(f"[{idx}:a]volume={vol},afade=t=in:st=0:d=1.2[bed]")
+            bed = _plan_bed(plan, line_windows, vol, picture or max((b for _a, b in line_windows), default=0.0)) \
+                if voice_labels else None
+            if bed:
+                filters.append(f"[{idx}:a]{bed}[bed]")
+            else:
+                filters.append(f"[{idx}:a]volume={vol},afade=t=in:st=0:d=1.2[bed]")
             labels.append("[bed]")
             idx += 1
         else:

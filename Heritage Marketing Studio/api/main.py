@@ -64,6 +64,7 @@ import execution
 import filmaudio
 import filmcut
 import filmscript
+import soundplan
 import filmvoice
 import findings
 import gemini
@@ -582,9 +583,11 @@ def rescore(payload: dict):
         if str(payload.get("music_url") or "") \
         else _music_bed(payload.get("music", ""), _secs, _engine(payload, "music"))
     out_name = _next_scored_name(master)
+    # An optional sound plan (see soundplan.py); absent -> the bed mixes exactly as before.
+    plan = soundplan.resolve(payload.get("sound_plan"), payload.get("scenes"), total)
     ok, mix_notes = filmaudio.mix_timeline(exe, master_path,
                                            os.path.join(filmcut.RENDERS_DIR, out_name), segs,
-                                           music=music_url, level=payload.get("music_level"))
+                                           music=music_url, level=payload.get("music_level"), plan=plan)
     if not ok:
         return JSONResponse(status_code=500, content={
             "detail": "; ".join(dict.fromkeys(notes + mix_notes)) or "Re-score failed."})
@@ -1072,10 +1075,11 @@ def voice_preview(payload: dict):
                                               _engine(payload, "music"))
     os.makedirs(filmcut.RENDERS_DIR, exist_ok=True)
     name = f"voice-preview-{uuid.uuid4().hex[:8]}.mp3"
+    plan = soundplan.resolve(payload.get("sound_plan"), payload.get("scenes"), total)
     ok, mix_notes = filmaudio.preview_audio(exe, float(total),
                                             os.path.join(filmcut.RENDERS_DIR, name),
                                             segs, music=music_url,
-                                            level=payload.get("music_level"))
+                                            level=payload.get("music_level"), plan=plan)
     if not ok:
         return JSONResponse(status_code=500, content={
             "detail": "; ".join(dict.fromkeys(notes + mix_notes)) or "Preview mix failed."})
@@ -1469,7 +1473,8 @@ def produce_video(payload: dict):
         scored = os.path.join(filmcut.RENDERS_DIR, scored_name)
         ok, mix_notes = filmaudio.mix_timeline(exe, silent, scored, voice_segments,
                                                music=music_url,
-                                               level=payload.get("music_level"))
+                                               level=payload.get("music_level"),
+                                               plan=soundplan.resolve(payload.get("sound_plan"), scenes, total))
         errors.extend(mix_notes)
         if ok:
             # Keep the SILENT master: picture and soundtrack are separate layers, so the music
