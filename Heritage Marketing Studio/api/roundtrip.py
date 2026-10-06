@@ -26,7 +26,7 @@ import jsonout
 
 # The script table as this app writes it (see docs.py). Matching is loose on case and spacing so a
 # reformatted header still lands.
-_SCRIPT_COLS = ("scene", "visual", "camera", "dialogue", "super")
+_SCRIPT_COLS = ("scene", "visual", "camera", "dialogue", "super", "beat")
 
 
 def read_docx(data: bytes) -> dict:
@@ -60,6 +60,27 @@ def _header_map(row: list[str]) -> dict[str, int]:
     return found
 
 
+# The Beat column of the script table: first line = the role's name, anything after it = the person's direction.
+# "Auto" (an empty cell) sets nothing.
+_BEAT_NAMES = {"hook": "hook", "world": "world", "mechanism": "mechanism", "turn": "turn",
+               "signoff": "brand", "brand": "brand", "button": "button"}
+
+
+def parse_beat_cell(text: str) -> dict:
+    lines = [ln.strip() for ln in str(text or "").splitlines() if ln.strip()]
+    if not lines:
+        return {}
+    head = re.split(r"\s+[—–-]\s+", lines[0])[0]
+    role = _BEAT_NAMES.get(re.sub(r"[^a-z]", "", head.lower()))
+    note = "\n".join(lines[1:] if role else lines).strip()
+    out = {}
+    if role:
+        out["beat_role"] = role
+    if note:
+        out["beat_note"] = note
+    return out
+
+
 def script_from_tables(tables: list[list[list[str]]]) -> list[dict]:
     """Rows of the studio's script table, or [] if no table looks like one."""
     for tb in tables:
@@ -85,6 +106,7 @@ def script_from_tables(tables: list[list[list[str]]]) -> list[dict]:
                 "tc": tc.group().replace(" ", "") if tc else "",
                 "visual": visual, "camera": cell("camera"),
                 "dialogue": dialogue, "supr": cell("super"),
+                **parse_beat_cell(cell("beat")),
             })
         if out:
             return out

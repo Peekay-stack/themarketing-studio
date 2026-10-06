@@ -2651,8 +2651,10 @@
                 <div style="background:#FBFAF8; border:1px solid #DDD9D1; border-radius:16px; padding:18px; display:flex; flex-direction:column;">
                   <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
                     <span style="width:34px; height:34px; flex:none; border-radius:10px; background:{{ d.tint }}; color:{{ d.fg }}; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:12px; overflow:hidden; white-space:nowrap;">{{ d.abbr }}</span>
-                    <span style="font-family:'Epilogue',sans-serif; font-weight:700; font-size:14px; color:#17325E;">{{ d.label }}</span>
-                    <span style="font-size:11px; font-weight:600; color:#6B7280; margin-left:auto; text-align:right;">{{ d.feeds }}</span>
+                    <div style="display:flex; flex-direction:column; min-width:0; line-height:1.25;">
+                      <span style="font-family:'Epilogue',sans-serif; font-weight:700; font-size:14px; color:#17325E;">{{ d.label }}</span>
+                      <span style="font-size:11px; font-weight:600; color:#6B7280;">{{ d.feeds }}</span>
+                    </div>
                   </div>
                   <sc-if value="{{ d.hasText }}" hint-placeholder-val="{{ false }}">
                     <textarea value="{{ d.text }}" onChange="{{ d.edit }}" rows="7" style="width:100%; box-sizing:border-box; flex:1; font-size:13px; line-height:1.55; color:#38414F; border:1px solid #E6E3DC; border-radius:10px; padding:10px 11px; background:#fff; resize:vertical; font-family:inherit;"></textarea>
@@ -3027,8 +3029,10 @@
           <div style="background:#fff; border:1px solid #DDD9D1; border-radius:16px; padding:18px; display:flex; flex-direction:column;">
             <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
               <span style="width:34px; height:34px; flex:none; border-radius:10px; background:{{ d.tint }}; color:{{ d.fg }}; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:12px; overflow:hidden; white-space:nowrap;">{{ d.abbr }}</span>
-              <span style="font-family:'Epilogue',sans-serif; font-weight:700; font-size:14px; color:#17325E;">{{ d.label }}</span>
-              <span style="font-size:11px; font-weight:600; color:#6B7280; margin-left:auto; text-align:right;">{{ d.feeds }}</span>
+              <div style="display:flex; flex-direction:column; min-width:0; line-height:1.25;">
+                <span style="font-family:'Epilogue',sans-serif; font-weight:700; font-size:14px; color:#17325E;">{{ d.label }}</span>
+                <span style="font-size:11px; font-weight:600; color:#6B7280;">{{ d.feeds }}</span>
+              </div>
             </div>
             <sc-if value="{{ d.isKeyshots }}" hint-placeholder-val="{{ false }}">
               <div style="font-size:13px; line-height:1.55; color:#41505F; flex:1;">{{ doneFrames }} of {{ nScenes }} key frames rendered above. Regenerate any frame from the filmstrip.</div>
@@ -15261,7 +15265,8 @@ class Component extends DCLogic {
           ...(this.state.fullScript||[]).flatMap(r => [
             { h:'Scene '+r.no+'  ·  '+r.tc },
             { k:'Visual / Action', v:r.visual }, { k:'Camera', v:r.camera },
-            { k:'Dialogue / VO', v:r.dialogue }, { k:'Super / Text on screen', v:r.supr } ])
+            { k:'Dialogue / VO', v:r.dialogue }, { k:'Super / Text on screen', v:r.supr },
+            ...((r.beat_role || r.beat_note) ? [{ k:'Beat', v:[this.BEAT_ROLE_LABELS[this.beatRoleOf(r)] || '', r.beat_note || ''].filter(Boolean).join(' \u2014 ') }] : []) ])
         ]);
     const scProj = ((this.state.linkedBrief || {}).project || '').replace(/[^a-z0-9]+/gi,'_').replace(/^_|_$/g,'');
     this.triggerDownload(blob, 'Heritage'+(scProj ? '_'+scProj : '')+'_Film_Script_'+this.today()+'.docx');
@@ -21937,19 +21942,46 @@ class Component extends DCLogic {
   // corrects one specific picture, so it is kept only when the scene's visual was left alone; the other choices
   // are deliberate picks (camera, pack, matched shot) and are kept whenever the scene number still exists.
   keepSceneExtras(newRows, oldRows){
-    const byNo = {};
-    (oldRows || []).forEach((r, i) => { byNo[this.sceneNo(r, i)] = r; });
-    return (newRows || []).map((r, i) => {
+    const byNo = {}, byVisual = {};
+    (oldRows || []).forEach((r, i) => {
+      byNo[this.sceneNo(r, i)] = r;
+      const v = String((r && r.visual) || '').trim();
+      if (v && !byVisual[v]) byVisual[v] = r;
+    });
+    // Beat role / direction belong to the SCENE, not to its number. A rework that adds or drops a scene shifts the
+    // numbers, and carrying a Button by number would then put it on a different scene. So they follow the scene whose
+    // visual is unchanged; failing that, the same number only when the scene count is unchanged (a scene reworded in
+    // place). Anything else is dropped, and the person is told.
+    const BEAT = ['beat_role', 'beat_note'];
+    const sameCount = (newRows || []).length === (oldRows || []).length;
+    const handled = new Set();
+    const rows = (newRows || []).map((r, i) => {
       const old = byNo[this.sceneNo(r, i)];
-      if (!old) return r;
-      const out = { ...r };
-      this.SCENE_EXTRAS.forEach(k => {
-        if (old[k] === undefined || old[k] === '' || out[k] !== undefined) return;
-        if (k === 'frame_note' && String(old.visual || '').trim() !== String(r.visual || '').trim()) return;
-        out[k] = old[k];
-      });
+      let out = r;
+      if (old) {
+        out = { ...r };
+        this.SCENE_EXTRAS.forEach(k => {
+          if (BEAT.indexOf(k) >= 0) return;
+          if (old[k] === undefined || old[k] === '' || out[k] !== undefined) return;
+          if (k === 'frame_note' && String(old.visual || '').trim() !== String(r.visual || '').trim()) return;
+          out[k] = old[k];
+        });
+      }
+      const src = byVisual[String((r && r.visual) || '').trim()] || (sameCount ? old : null);
+      if (src) {
+        BEAT.forEach(k => {
+          if (src[k] === undefined || src[k] === '') return;
+          handled.add(src);
+          if (out[k] !== undefined) return;
+          if (out === r) out = { ...r };
+          out[k] = src[k];
+        });
+      }
       return out;
     });
+    const lost = (oldRows || []).filter(r => r && (r.beat_role || r.beat_note) && !handled.has(r)).length;
+    if (lost) this.showToast(lost + ' Beat choice' + (lost > 1 ? 's were' : ' was') + ' cleared because the scene changed ' + String.fromCharCode(8212) + ' set ' + (lost > 1 ? 'them' : 'it') + ' again on the script if you still want ' + (lost > 1 ? 'them' : 'it') + '.', 'warn');
+    return rows;
   }
   setSceneSibling = (idx) => (e) => {
     const v = e.target.value;

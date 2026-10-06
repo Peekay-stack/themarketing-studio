@@ -346,8 +346,12 @@ def drift(clips: list[dict], plate_path: str = "") -> dict:
     # This exclusion is a craft judgement, not a statistical one: the endframe is a different KIND of
     # shot, so it gets measured and reported and kept out of the continuity comparison. With it out,
     # the same coherent film spans 3.4 instead of 15.1.
-    scene = [r for r in measured if r["role"] != "brand"] or measured
+    #
+    # A `button` (a short beat AFTER the sign-off, set by a person) is the same kind of exception: it is a comeback
+    # that may well change set or light, so it is measured and reported and kept out of the comparison too.
+    scene = [r for r in measured if r["role"] not in ("brand", "button")] or measured
     endframe = [r for r in measured if r["role"] == "brand"]
+    button = [r for r in measured if r["role"] == "button"]
     spread, findings = {}, []
     for key, spec in METRICS.items():
         vals = [r[key] for r in scene]
@@ -359,7 +363,8 @@ def drift(clips: list[dict], plate_path: str = "") -> dict:
                        "span": span, "bar": SPREAD_BAR,
                        "plate": plate[key] if plate else None,
                        "compared": [r["n"] for r in scene],
-                       "endframe": [{"n": r["n"], key: r[key]} for r in endframe]}
+                       "endframe": [{"n": r["n"], key: r[key]} for r in endframe],
+                       "button": [{"n": r["n"], key: r[key]} for r in button]}
         if not spec["flags"] or span < SPREAD_BAR:
             continue
         widest = [r["n"] for r in scene if r[key] in (lo, hi)]

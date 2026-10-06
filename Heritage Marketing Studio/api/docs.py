@@ -1322,6 +1322,10 @@ def build_callsheet_docx(shots: list, idea: dict | None = None,
     return out_path
 
 
+_BEAT_LABELS = {"hook": "Hook", "world": "World", "mechanism": "Mechanism", "turn": "Turn", "brand": "Sign-off",
+                "button": "Button"}
+
+
 def build_script_docx(title: str, logline: str, scenes: list, out_path: str | None = None) -> str:
     """A shooting-script document: logline + one table row per scene."""
     doc = _new_doc(title or "Film Script")
@@ -1331,7 +1335,7 @@ def build_script_docx(title: str, logline: str, scenes: list, out_path: str | No
         p.add_run(logline)
     scenes = scenes or []
     if scenes:
-        cols = ["Scene", "Visual / Action", "Camera", "Dialogue / VO", "Super"]
+        cols = ["Scene", "Visual / Action", "Camera", "Dialogue / VO", "Super", "Beat"]
         table = doc.add_table(rows=1, cols=len(cols))
         try:
             table.style = "Table Grid"   # guaranteed present in python-docx's default template
@@ -1354,6 +1358,10 @@ def build_script_docx(title: str, logline: str, scenes: list, out_path: str | No
             row[2].text = str(sc.get("camera", "") or "")
             row[3].text = str(sc.get("dialogue", "") or "")
             row[4].text = str(sc.get("supr", "") or "")
+            # The person's own Beat choices (role, then direction); an Auto scene with no direction leaves the cell empty.
+            beat_role = str(sc.get("beat_role", "") or "").strip().lower()
+            beat_note = str(sc.get("beat_note", "") or "").strip()
+            row[5].text = "\n".join(x for x in ((_BEAT_LABELS.get(beat_role, "") if beat_role else ""), beat_note) if x)
     else:
         doc.add_paragraph("No scenes yet — write the full script first.")
     out_path = out_path or os.path.join(tempfile.mkdtemp(prefix="script_"), "script.docx")
