@@ -35,7 +35,7 @@ DIR = tenancy.dir("filmscripts")
 # is Phase 1 of the gap, the part that loses real authored work (a written script, a department note, a
 # rendered frame) rather than a picked option that costs one click to redo.
 FIELDS = ("video_objective", "video_concept", "script_status", "script_phase",
-          "full_script", "scene_frames", "shoot", "video_characters", "video_location_line", "video_look_ref", "video_location_src", "sound_plan")
+          "full_script", "scene_frames", "shoot", "video_characters", "video_location_line", "video_look_ref", "video_location_src", "sound_plan", "provocation_id", "provocation_on")
 
 
 def _now() -> str:
@@ -49,7 +49,7 @@ def _path(house_id: str) -> str:
 def _blank(house_id: str) -> dict:
     return {"house": house_id, "video_objective": None, "video_concept": None,
             "script_status": "none", "script_phase": "concept", "full_script": None,
-            "scene_frames": {}, "shoot": {}, "video_characters": "", "video_location_line": "", "video_look_ref": "", "video_location_src": "", "sound_plan": {}, "updated": ""}
+            "scene_frames": {}, "shoot": {}, "video_characters": "", "video_location_line": "", "video_look_ref": "", "video_location_src": "", "sound_plan": {}, "provocation_id": "", "provocation_on": True, "updated": ""}
 
 
 def load(house_id: str) -> dict:
@@ -104,6 +104,12 @@ def save(house_id: str, data: dict) -> dict:
         # only what they changed, the rest is derived. Same absent-key guard as the fields above.
         "sound_plan": ((data.get("sound_plan") if isinstance(data.get("sound_plan"), dict) else {}) if "sound_plan" in data
                        else (load(house_id).get("sound_plan") or {})),
+        # The provocation (provocation.py) this film stands on, and whether it is switched on for this film ("set aside" is off).
+        # Same absent-key guard as the fields above: a page from before this existed never sends them.
+        "provocation_id": (str(data.get("provocation_id") or "") if "provocation_id" in data
+                           else str(load(house_id).get("provocation_id") or "")),
+        "provocation_on": ((data.get("provocation_on") is not False) if "provocation_on" in data
+                           else (load(house_id).get("provocation_on") is not False)),
         "updated": _now(),
     }
     tmp = _path(house_id) + ".tmp"

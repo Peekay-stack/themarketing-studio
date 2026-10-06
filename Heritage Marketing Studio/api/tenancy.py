@@ -106,7 +106,11 @@ KINDS = ("briefs", "brands", "houses", "plans", "platforms", "trade", "execution
          # `cut.py`'s own manifest looked like it might already cover this and does not: that one is
          # the post-production edit history, scoped to an execution that exists only once a script is
          # approved. This is the working draft before that point.
-         "filmscripts")
+         "filmscripts",
+         # `provocations` -- a Provocation (`provocation.py`): an approved, optional departure from the category's codes, written
+         # for one idea platform in one house. Scoped from day one for the same reason `platforms` is: it is built on one brand's
+         # house and platform and a producer stands on it, so another tenant's must never be reachable.
+         "provocations")
 
 _SAFE = re.compile(r"[^a-z0-9_-]+")
 

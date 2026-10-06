@@ -64,6 +64,7 @@ import execution
 import filmaudio
 import filmcut
 import filmscript
+import provocation
 import soundplan
 import filmvoice
 import findings
@@ -2243,6 +2244,75 @@ def sound_plan_base(payload: dict):
     `{scenes:[...]}` -> `{scenes:[{no, role, music}]}`. Pure arithmetic over the script rows (no model, no cost); the mix
     derives the very same states from the same function, so what the card shows is what the mix does."""
     return {"scenes": soundplan.describe(payload.get("scenes"))}
+
+
+# --- Provocations (provocation.py): an approved, optional departure from the category's codes ------------------------
+def _prov_ctx(house_id: str):
+    """The house and the chosen platform a provocation is judged against ((None, None) for an unknown house)."""
+    house = strategy.load(house_id) if str(house_id or "").strip() else None
+    return house, (execution.platform_for(house) if house else None)
+
+
+@app.get("/provocations")
+def provocations_list(house: str = "", platform: str = "", archived: bool = False):
+    """A house's provocations, newest first, each with why it may be stale and what blocks approval. An empty house returns
+    nothing (never another house's work)."""
+    h, plat = _prov_ctx(house)
+    return {"provocations": [provocation.as_read(r, h, plat) for r in provocation.for_house(house, platform, include_archived=archived)],
+            "hard_limits": list(provocation.HARD_LIMITS)}
+
+
+@app.get("/provocation")
+def provocation_get(id: str = ""):
+    rec = provocation.load(id)
+    if not rec:
+        return JSONResponse(status_code=404, content={"detail": "No such provocation."})
+    h, plat = _prov_ctx(rec["house"])
+    return provocation.as_read(rec, h, plat)
+
+
+@app.post("/provocation")
+def provocation_save(payload: dict):
+    """Create or edit a DRAFT. `{house, id?, name, platform?, core, expressions, film, source}`. Status and approval can never
+    be set here (only `/provocation-approve` approves); editing an approved record puts it back to a draft; a provocation never
+    changes house."""
+    existing = provocation.load(str(payload.get("id") or "")) if payload.get("id") else None
+    if payload.get("id") and not existing:
+        return JSONResponse(status_code=404, content={"detail": "No such provocation -- it may have been removed. Reload the screen."})
+    house_id = existing["house"] if existing else str(payload.get("house") or "").strip()
+    if not house_id or not strategy.load(house_id):
+        return JSONResponse(status_code=400, content={"detail": "A provocation belongs to a house -- say which one."})
+    h, plat = _prov_ctx(house_id)
+    data = {k: payload[k] for k in ("name", "platform", "core", "expressions", "film", "source") if k in payload}
+    if not existing and not data.get("platform"):
+        data["platform"] = (plat or {}).get("id", "")
+    rec = provocation.save(provocation.apply_edit(existing, {**data, "house": house_id}, h, plat))
+    return provocation.as_read(rec, h, plat)
+
+
+@app.post("/provocation-approve")
+def provocation_approve(payload: dict):
+    """`{id, who, on?}` -- a person approves (or withdraws approval). Needs a name, the line, a risk label and, when it jabs at
+    competitors, the human-legal-review acknowledgement; the reasons come back when it cannot be approved."""
+    rec = provocation.load(str(payload.get("id") or ""))
+    if not rec:
+        return JSONResponse(status_code=404, content={"detail": "No such provocation."})
+    new, problems = provocation.approve(rec, str(payload.get("who") or ""), payload.get("on", True) is not False)
+    if not new:
+        return JSONResponse(status_code=400, content={"detail": " ".join(problems), "problems": problems})
+    h, plat = _prov_ctx(rec["house"])
+    return provocation.as_read(provocation.save(new), h, plat)
+
+
+@app.post("/provocation-archive")
+def provocation_archive(payload: dict):
+    """`{id, on?}` -- put away (or bring back as a draft). Nothing is ever deleted: the discarded one is often where somebody
+    finds what they wanted."""
+    rec = provocation.load(str(payload.get("id") or ""))
+    if not rec:
+        return JSONResponse(status_code=404, content={"detail": "No such provocation."})
+    h, plat = _prov_ctx(rec["house"])
+    return provocation.as_read(provocation.save(provocation.archive(rec, payload.get("on", True) is not False)), h, plat)
 
 
 # --- /shot-still does two different jobs, and the payload says which ------------------------------
@@ -6382,12 +6452,16 @@ def producer_stands_on(payload: dict):
     use_platform = payload.get("use_platform", True) is not False
     use_campaign = payload.get("use_campaign", True) is not False
     campaign = (_brief or {}).get("campaign")
+    # An approved provocation of THIS house, when the piece names one (none -> the chain is exactly what it was).
+    prov = provocation.resolve_for((house or {}).get("id") or str(payload.get("house") or ""),
+                                   str(payload.get("provocation_id") or ""))
     text, src = producers.stands_on(kind, house, platform, typed, force_typed=force_typed,
                                     use_house=use_house, use_platform=use_platform,
                                     campaign=campaign, use_campaign=use_campaign,
+                                    provocation=prov, use_provocation=payload.get("use_provocation", True) is not False,
                                     brand_mode=str(payload.get("brand_mode") or ""))
     return {"text": text, "source": src, "has_platform": bool(platform), "has_house": bool(house),
-            "has_campaign": bool(campaign)}
+            "has_campaign": bool(campaign), "has_provocation": bool(prov)}
 
 
 @app.post("/posm-keyvisual")

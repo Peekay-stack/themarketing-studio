@@ -422,6 +422,7 @@ def stands_on(kind: str, house: dict | None = None, platform: dict | None = None
               typed: str = "", *, force_typed: bool = False,
               use_house: bool = True, use_platform: bool = True,
               campaign: dict | None = None, use_campaign: bool = True,
+              provocation: dict | None = None, use_provocation: bool = True,
               brand_mode: str = "") -> tuple[str, str]:
     typed = (typed or "").strip()
     # Phase 1 (brand-grounding): same fix as `_ctx()`'s own `_mode` — `use_house`/`use_platform` say
@@ -449,6 +450,16 @@ def stands_on(kind: str, house: dict | None = None, platform: dict | None = None
     # not go silent. `use_house`/`use_platform` are the ONLY thing that suppresses these two blocks now.
     if force_typed and typed:
         return typed, "typed here — the idea platform and house were set aside for this piece"
+    # A PROVOCATION (provocation.py) a person has approved and left switched on for this piece comes first after a typed override:
+    # it is the most deliberate decision in the chain, and the one that exists to depart from the line the platform and campaign
+    # would otherwise carry. Only an approved one counts (the caller resolves it with `provocation.resolve_for`, which also
+    # refuses another house's), and an Independent piece never stands on brand decisions at all. None -> exactly as before.
+    if provocation and use_provocation and _mode != "general" and provocation.get("status") == "approved":
+        expr = str((provocation.get("expressions") or {}).get(kind, "") or "").strip() \
+            or str((provocation.get("core") or {}).get("line", "") or "").strip()
+        if expr:
+            name = str(provocation.get("name") or "").strip()
+            return expr, f"the provocation{' “' + name + '”' if name else ''}, expressed for {kind}"
     # The wiring fix: a campaign bound to this execution (see `execution.brief_from`) has its own
     # adaptation of the platform's expression, written for THIS campaign's specific tension rather than
     # the platform's durable one. It wins over the platform's own line for the same reason the platform
