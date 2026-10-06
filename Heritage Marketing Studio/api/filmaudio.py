@@ -400,6 +400,22 @@ def preview_audio(exe: str, seconds: float, out_path: str, segments,
                   music: str | None = None, tmp_dir: str | None = None,
                   level=None, plan=None, ambience: str | None = None, ambience_level_name=None,
                   spots=None) -> tuple[bool, list[str]]:
+    """`_preview_audio_once` with the same safety as `mix_timeline`: a preview made with a sound plan that fails is made again
+    the old way (a steady bed), and says so."""
+    ok, notes = _preview_audio_once(exe, seconds, out_path, segments, music=music, tmp_dir=tmp_dir, level=level, plan=plan,
+                                    ambience=ambience, ambience_level_name=ambience_level_name, spots=spots)
+    if ok or not plan:
+        return ok, notes
+    ok2, notes2 = _preview_audio_once(exe, seconds, out_path, segments, music=music, tmp_dir=tmp_dir, level=level)
+    if ok2:
+        return True, list(dict.fromkeys(list(notes) + list(notes2) + [_PLAN_FALLBACK_NOTE]))
+    return False, notes
+
+
+def _preview_audio_once(exe: str, seconds: float, out_path: str, segments,
+                        music: str | None = None, tmp_dir: str | None = None,
+                        level=None, plan=None, ambience: str | None = None, ambience_level_name=None,
+                        spots=None) -> tuple[bool, list[str]]:
     """The soundtrack alone, as an mp3 — so the mix can be judged without rendering any video.
 
     Same placement rules as the real mix, over silence instead of picture — including the single
@@ -462,9 +478,30 @@ def preview_audio(exe: str, seconds: float, out_path: str, segments,
     return False, notes + ["preview mix failed"]
 
 
+_PLAN_FALLBACK_NOTE = ("The sound plan could not be mixed on this server, so the music stays at one steady level and the "
+                       "plan's room tone and key sounds are left out.")
+
+
 def mix_timeline(exe: str, video: str, out_path: str, segments, music: str | None = None,
                  tmp_dir: str | None = None, level=None, ambience: str | None = None,
                  ambience_level_name=None, spots=None, plan=None) -> tuple[bool, list[str]]:
+    """`_mix_timeline_once`, with one safety: a mix that was asked for with a SOUND PLAN and failed is tried again exactly as
+    it was mixed before sound plans existed (a steady bed, no plan extras), and says so. A plan -- or an ffmpeg build that
+    cannot run its filter -- must never leave a film without its soundtrack. Calls with no plan (the editor's sound pass)
+    behave exactly as before: they fail loudly rather than quietly dropping what was asked for."""
+    ok, notes = _mix_timeline_once(exe, video, out_path, segments, music=music, tmp_dir=tmp_dir, level=level, ambience=ambience,
+                                   ambience_level_name=ambience_level_name, spots=spots, plan=plan)
+    if ok or not plan:
+        return ok, notes
+    ok2, notes2 = _mix_timeline_once(exe, video, out_path, segments, music=music, tmp_dir=tmp_dir, level=level)
+    if ok2:
+        return True, list(dict.fromkeys(list(notes) + list(notes2) + [_PLAN_FALLBACK_NOTE]))
+    return False, notes
+
+
+def _mix_timeline_once(exe: str, video: str, out_path: str, segments, music: str | None = None,
+                       tmp_dir: str | None = None, level=None, ambience: str | None = None,
+                       ambience_level_name=None, spots=None, plan=None) -> tuple[bool, list[str]]:
     """Place each voice segment at its scene's timecode and mix with the music bed, an ambience bed
     and any foley spots.
 

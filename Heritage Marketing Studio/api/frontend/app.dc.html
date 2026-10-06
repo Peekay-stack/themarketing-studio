@@ -12696,8 +12696,10 @@ class Component extends DCLogic {
       // draft from outside this system and has not been through the Shoot Board yet.
       // The per-scene card choices (camera movement, pack tick, matched shot, frame note) are not in the Word file, so
       // they are carried over from the script being replaced, by scene number, instead of being lost.
+      const oldScriptRows = this.state.fullScript;
       this.setState(st => ({ fullScript: this.keepSceneExtras(d.rows, st.fullScript), scriptStatus:'drafted', sceneFrames:{},
                       plannedSeconds:0, voicePlan:null, videoStep:'scripting', scriptPhase:'script' }));
+      this.reconcileSoundPlan(oldScriptRows, d.rows);
     } else {
       this.setState(st => ({ imc: { ...st.imc, draft: { ...(st.imc.draft || this.blankDraft()), ...d.fields },
                                     status:'ready', message:'Read back from your edited document — review each tab.' } }));
@@ -15054,7 +15056,7 @@ class Component extends DCLogic {
     }
     if (!rows) rows = this.fallbackFullScript(vc);
     this.setState({ scriptWriting:false, fullScript:rows, scriptStatus:'drafted', scriptPhase:'script',
-                    sceneFrames:{}, plannedSeconds:0, voicePlan:null });
+                    sceneFrames:{}, plannedSeconds:0, voicePlan:null, soundPlan:this.soundPlanWithoutSceneChoices() });
   };
 
   onScriptRefine = (e) => this.setState({ scriptRefine: e.target.value });
@@ -15078,12 +15080,14 @@ class Component extends DCLogic {
       } catch (e) {}
     }
     if (!rows) { this.setState({ scriptReworking:false }); this.showToast('Couldn\u2019t rework the script — nothing changed.'); return; }
+    const oldScriptRows = this.state.fullScript;
     this.setState(s => ({
       scriptReworking:false, scriptRefine:'', fullScript:this.keepSceneExtras(rows, s.fullScript), sceneFrames:{},
       scriptStatus: s.scriptStatus==='approved' ? 'drafted' : s.scriptStatus,
       videoStep: 'scripting',
       scriptVersions: [...s.scriptVersions, { v:s.scriptVersions.length+1, logline:(s.videoConcept&&s.videoConcept.logline)||'', note, duration:s.prodDuration }],
     }));
+    this.reconcileSoundPlan(oldScriptRows, rows);
     this.showToast('Script reworked — re-approve to unlock Shoot Board & Production.', 'ok');
   };
 
@@ -15849,6 +15853,35 @@ class Component extends DCLogic {
   // Delivery loudness ('' = leave the mix as mixed). Saved with the film, but not part of the plan the card resets.
   setLoudness = (id) => () => this.setSoundPlan({ loudness:id });
   loudnessParam(){ const v = (this.state.soundPlan || {}).loudness; return v ? { loudness:v } : {}; }
+  // The card's per-scene choices (a scene's music state, a key sound's scene) are keyed by scene NUMBER. When the script is
+  // rewritten a number can end up on a different scene, so they follow the scene (an identical visual, else the same number when
+  // the scene count is unchanged) or are dropped and the person is told -- the rule the Beat role follows (see keepSceneExtras).
+  reconcileSoundPlan(oldRows, newRows){
+    const sp = this.state.soundPlan || {};
+    if (!Object.keys(sp.scenes || {}).length && !(sp.sounds || []).length) return;
+    const vis = (r) => String((r && r.visual) || '').trim();
+    const oldBy = {}; (oldRows || []).forEach((r, i) => { oldBy[this.sceneNo(r, i)] = r; });
+    const newByVis = {}; (newRows || []).forEach((r, i) => { const v = vis(r); if (v && !(v in newByVis)) newByVis[v] = this.sceneNo(r, i); });
+    const newNos = new Set((newRows || []).map((r, i) => this.sceneNo(r, i)));
+    const sameCount = (oldRows || []).length === (newRows || []).length;
+    const mapNo = (no) => {
+      const old = oldBy[String(no)];
+      if (old && vis(old) && newByVis[vis(old)] !== undefined) return newByVis[vis(old)];
+      return sameCount && newNos.has(String(no)) ? String(no) : null;
+    };
+    let lost = 0; const scenes = {}; const sounds = [];
+    Object.keys(sp.scenes || {}).forEach(k => { const n = mapNo(k); if (n === null) lost++; else scenes[n] = sp.scenes[k]; });
+    (sp.sounds || []).forEach(x => { const n = mapNo(x.scene); if (n === null) lost++; else sounds.push({ ...x, scene:Number(n) }); });
+    this.setState(st => ({ soundPlan:{ ...(st.soundPlan || {}), scenes, sounds } }));
+    if (lost) this.showToast(lost + ' sound choice' + (lost > 1 ? 's were' : ' was') + ' cleared because the scene changed ' + String.fromCharCode(8212) + ' set ' + (lost > 1 ? 'them' : 'it') + ' again on the Shoot Board if you still want ' + (lost > 1 ? 'them' : 'it') + '.', 'warn');
+  }
+  // A freshly written script has no scenes in common with the last one: the card's per-scene choices go, the rest stays.
+  soundPlanWithoutSceneChoices(){
+    const sp = this.state.soundPlan || {};
+    if (!Object.keys(sp.scenes || {}).length && !(sp.sounds || []).length) return sp;
+    this.showToast('The sound choices tied to particular scenes were cleared because the script was rewritten.', 'warn');
+    const out = { ...sp }; delete out.scenes; delete out.sounds; return out;
+  }
   goSoundDesign = () => this.setVideoStep('shootboard')();
   SOUND_STATE_LABELS = { under:'Under (stay low)', open:'Open (lift in pauses)', swell:'Swell', out:'Out (drop away)' };
   // Mirrors soundplan.DUCK_DB -- for display only; the mix reads the server's own table.
@@ -20934,6 +20967,8 @@ class Component extends DCLogic {
     this._seen = { planId, xTab: s.xTab, screen: s.screen };
     if (changed && s.screen === 'exec') { this.loadExecOptions(); this.loadCampaignsForExec(); }
     // Round 92: video's own execution options, same trigger as the xTab producers' `loadExecOptions`.
+    // A film with no script has nothing to remember: the next one, even with identical scenes and roles, must ask again.
+    if (!s.fullScript) this._soundBaseSig = '';
     if (s.screen === 'video' && (s.videoStep === 'shootboard' || s.videoStep === 'production') && s.fullScript) {
       this.refreshSoundBase();
       if (!s.soundStatus && !this._soundStatusAsked) { this._soundStatusAsked = true; this.loadSoundStatus(); }

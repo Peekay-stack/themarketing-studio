@@ -286,6 +286,52 @@ if __name__ == "__main__":
           abs(db(o_both, 3.0, 6.0) - db(o_plain, 3.0, 6.0)) <= 3.0, f"{db(o_both, 3.0, 6.0) - db(o_plain, 3.0, 6.0):.1f}")
 
 
+    # ------------------------------------------------------------ 7. a plan can never cost the film its soundtrack
+    print("a plan can never cost the film its soundtrack")
+    real_bed = sp.bed_filter
+    sp.bed_filter = lambda resolved, *a, **k: "volume='((((':eval=frame" if resolved else None     # a filter ffmpeg will refuse, but only for a plan
+    fb_pv = os.path.join(DIR, "fb.mp3")
+    ok, notes = fa.preview_audio(EXE, 30.0, fb_pv, segments(LINES), music=MUSIC, level="balanced", plan=plan_for())
+    check("a preview whose plan cannot be mixed is made the old way, and says so",
+          ok and any("could not be mixed" in n for n in notes) and abs(db(fb_pv, 3.0, 6.0) - db(fb_pv, 8.8, 9.8)) <= 0.6, str(notes))
+    fb_mx = os.path.join(DIR, "fb.mp4")
+    ok, notes = fa.mix_timeline(EXE, VIDEO, fb_mx, segments(LINES), music=MUSIC, level="balanced", plan=plan_for())
+    check("so is a render", ok and any("could not be mixed" in n for n in notes) and abs(db(fb_mx, 3.0, 6.0) - db(fb_mx, 8.8, 9.8)) <= 0.6, str(notes))
+    sp.bed_filter = real_bed
+    BAD = os.path.join(DIR, "bad.mp3")
+    open(BAD, "wb").write(b"this is not audio")
+    ok, notes = fa.mix_timeline(EXE, VIDEO, os.path.join(DIR, "fb2.mp4"), segments(LINES), music=MUSIC, level="balanced", plan=plan_for(),
+                                spots=[{"url": BAD, "at": 5.0}])
+    check("a plan's unusable key sound costs the extras, not the soundtrack", ok and any("could not be mixed" in n for n in notes), str(notes))
+    ok, notes = fa.mix_timeline(EXE, VIDEO, os.path.join(DIR, "fb3.mp4"), segments(LINES), music=MUSIC, level="balanced", spots=[{"url": BAD, "at": 5.0}])
+    check("the editor's own call (no plan) still fails loudly instead of quietly dropping what was asked for", not ok, str(notes))
+    ok, notes = fa.preview_audio(EXE, 30.0, os.path.join(DIR, "fb4.mp3"), segments(LINES), music=MUSIC, level="balanced", plan=plan_for())
+    check("with a working plan there is no fallback note", ok and not any("could not be mixed" in n for n in notes), str(notes))
+
+
+    # ------------------------------------------------------------ 8. whatever a client sends, the plan code does not raise
+    print("malformed input")
+    import itertools
+    weird_plans = [None, {}, [], "x", 5, {"duck": []}, {"duck": {"a": 1}}, {"duck": float("nan")}, {"duck": float("inf")}, {"duck": True},
+                   {"ending": None}, {"scenes": {"1": "open"}}, {"scenes": [None, 5, {"no": "x"}, {"no": None, "music": "open"}, {"no": 1e30, "music": "swell"}]},
+                   {"ambience": "amb"}, {"ambience": {"id": None}}, {"ambience": {"id": 5, "level": []}}, {"sounds": {"scene": 1}},
+                   {"sounds": [{"scene": "x", "id": "a"}, {"scene": 1, "id": "a", "when": []}, {"scene": 1, "id": "a", "when": -5}, {"scene": 1, "id": "a", "when": float("nan")}, {"scene": 1, "id": "a", "gain": "loud"}]},
+                   {"carve": "no"}]
+    weird_rows = [None, [], "x", [None], [5], [{}], [{"no": "a"}], [{"no": 1, "tc": None}], [{"no": 1, "tc": "garbage"}], [{"no": 1, "tc": "5-2s"}],
+                  [{"no": 1, "tc": "0-8s", "beat_role": []}], [dict(r) for r in ROWS]]
+    boom = []
+    for plan_x, rows_x, total_x in itertools.product(weird_plans, weird_rows, (None, 0, -3, "x", 30, 1e9)):
+        try:
+            res = sp.resolve(plan_x, rows_x, total_x)
+            if res:
+                sp.bed_filter(res, [(1.0, 2.0), (5.0, 4.0)], 0.18, res["total"] or 30)
+                sp.ending_filter(res, res["total"])
+        except Exception as e:                       # noqa: BLE001
+            boom.append((repr(plan_x)[:60], repr(rows_x)[:40], total_x, type(e).__name__, str(e)[:60]))
+    check("no combination of malformed plan, rows and length raises", not boom, str(boom[:3]))
+    check("describe survives junk rows", isinstance(sp.describe([None, 5, {}, {"no": "a"}]), list), "")
+
+
     print()
     print("All sound-plan cases behave." if not fails else f"{fails} sound-plan case(s) FAILED.")
     sys.exit(1 if fails else 0)

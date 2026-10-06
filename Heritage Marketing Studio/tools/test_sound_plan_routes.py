@@ -206,6 +206,22 @@ if sr.status_code == 200:
     mv = lufs_of(path_of(sr.json()["video_url"]))
     check("the re-scored film is at the target", mv is not None and abs(mv - (-14.0)) <= 1.5, str(mv))
 
+print("downstream: the Production Bible and the other routes that now receive sound fields")
+bible = client.post("/production-bible-docx", json={
+    "title": "Test film — production bible", "logline": "A logline.", "scenes": base_rows,
+    "departments": [{"label": "Music", "text": "Warm.\nSuggested style: Soft sarangi."},
+                    {"label": "Sound design", "text": "AMBIENCE: a quiet kitchen.\nKEY SOUNDS: the pour."}],
+    "frames": [], "characters": "MOTHER: blue saree.", "cast_reference": "", "meta": {"Duration": "30s", "Music": "Soft sarangi"}})
+check("the production bible builds with the Sound design department in it", bible.status_code == 200, bible.text[:200])
+if bible.status_code == 200:
+    import io
+    from docx import Document
+    doc = Document(io.BytesIO(bible.content))
+    text = "\n".join(p.text for p in doc.paragraphs) + "\n".join(c.text for t in doc.tables for r in t.rows for c in r.cells)
+    check("and the note is in the document", "Sound design" in text and "a quiet kitchen" in text, text[:200])
+vp = client.post("/voice-plan", json={**pv_base, "scenes": rows(), "sound_plan": PLAN, "loudness": "online"})
+check("/voice-plan accepts the new fields and ignores them", vp.status_code == 200, vp.text[:200])
+
 print()
 print("All sound-plan route cases behave." if not fails else f"{fails} sound-plan route case(s) FAILED.")
 sys.exit(1 if fails else 0)

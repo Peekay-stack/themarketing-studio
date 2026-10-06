@@ -49,6 +49,7 @@ FADE_OUT = {"fade": 2.5, "release": 0.6}
 CARVE_FILTER = "equalizer=f=2000:t=o:w=2:g=-3"
 MAX_KNOTS = 60
 MAX_SOUNDS = 24
+MAX_SECONDS = 600.0      # no film here is longer; a number far beyond it is a mistake, not a reason to loop for hours
 WHENS = ("start", "middle", "end")
 START_LEAD = 0.3        # a key sound "at the start" lands this long after the cut
 END_LEAD = 1.2          # one "at the end" lands this long before the next cut
@@ -56,6 +57,17 @@ END_LEAD = 1.2          # one "at the end" lands this long before the next cut
 
 def _gain(db: float) -> float:
     return 10 ** (db / 20.0)
+
+
+def _num(x, default: float = 0.0) -> float:
+    """A finite float, or `default` for anything else (text, None, NaN, infinity)."""
+    if isinstance(x, bool):
+        return default
+    try:
+        v = float(x)
+    except (TypeError, ValueError):
+        return default
+    return v if math.isfinite(v) else default
 
 
 def describe(scenes) -> list[dict]:
@@ -95,7 +107,7 @@ def normalise(plan) -> dict | None:
         return None
     duck = plan.get("duck", DEFAULT_DUCK)
     if isinstance(duck, (int, float)) and not isinstance(duck, bool):
-        duck_db = max(0.0, min(24.0, float(duck)))
+        duck_db = max(0.0, min(24.0, _num(duck, DUCK_DB[DEFAULT_DUCK])))
     else:
         duck_db = DUCK_DB.get(str(duck or "").strip().lower(), DUCK_DB[DEFAULT_DUCK])
     ending = str(plan.get("ending") or DEFAULT_ENDING).strip().lower()
@@ -138,13 +150,10 @@ def _sounds(raw) -> list[dict]:
         elif not isinstance(when, (int, float)):
             when = str(when).strip().lower()
         else:
-            when = max(0.0, float(when))
+            when = max(0.0, _num(when, 0.0)) if math.isfinite(float(when)) else "start"
         row = {"scene": scene, "when": when, "id": str(it["id"]).strip()}
-        try:
-            if it.get("gain") not in (None, ""):
-                row["gain"] = max(0.05, min(1.5, float(it["gain"])))
-        except (TypeError, ValueError):
-            pass
+        if it.get("gain") not in (None, "") and math.isfinite(_num(it.get("gain"), float("nan"))):
+            row["gain"] = max(0.05, min(1.5, _num(it["gain"])))
         out.append(row)
     return out
 
@@ -170,8 +179,8 @@ def resolve(plan, scenes, total) -> dict | None:
     norm = normalise(plan)
     if not norm:
         return None
-    rows = [r for r in (scenes or []) if isinstance(r, dict)]
-    total = float(total or 0)
+    rows = [r for r in (scenes if isinstance(scenes, list) else []) if isinstance(r, dict)]
+    total = max(0.0, min(_num(total), MAX_SECONDS))
     base = derive(rows)
     n = max(1, len(rows))
     spans = []
@@ -198,7 +207,7 @@ def resolve(plan, scenes, total) -> dict | None:
 
 def _merged_lines(lines) -> list[tuple[float, float]]:
     """The lines as sorted windows, with the ones closer than MIN_GAP joined (no lift for a breath)."""
-    wins = sorted((float(a), float(b)) for a, b in (lines or []) if b > a)
+    wins = sorted((_num(a), _num(b)) for a, b in (lines or []) if _num(b) > _num(a))
     out: list[list[float]] = []
     for a, b in wins:
         if out and a - out[-1][1] < MIN_GAP:
@@ -211,7 +220,8 @@ def _merged_lines(lines) -> list[tuple[float, float]]:
 def envelope(resolved: dict, lines, under: float, total: float) -> list[tuple[float, float]]:
     """The music gain over time as piecewise-linear knots [(seconds, linear gain)], starting at 0 and ending at
     `total`. `under` is the bed's level beneath a line (the person's Subtle/Balanced/Forward choice)."""
-    total = max(0.5, float(total))
+    total = max(0.5, min(_num(total, 0.5), MAX_SECONDS))
+    under = _num(under, 0.18)
     opened = under * _gain(resolved["duck_db"])
     level = {"under": under, "open": opened, "swell": opened * _gain(SWELL_DB), "out": 0.0}
     # The speeds are measured against the lift between "under" and "open": the attack, release and shift times
