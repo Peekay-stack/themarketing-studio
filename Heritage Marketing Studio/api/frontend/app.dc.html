@@ -2841,9 +2841,14 @@
                        often sits, and the button was covering it (5 Oct live test). -->
                   <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:3px;">
                     <span style="font-weight:700; font-size:13px; color:#17325E;">{{ sc.title }}</span>
-                    <sc-if value="{{ sc.isDone }}" hint-placeholder-val="{{ false }}">
-                      <span onClick="{{ sc.genFrame }}" title="Render this frame again" style="cursor:pointer; border:1px solid #C9CEDA; background:#fff; color:#17325E; border-radius:8px; padding:2px 9px; font-size:11.5px; font-weight:700;">↻ Re-render</span>
-                    </sc-if>
+                    <span style="display:inline-flex; align-items:center; gap:6px;">
+                      <sc-if value="{{ sc.isStale }}" hint-placeholder-val="{{ false }}">
+                        <span onClick="{{ sc.genFrame }}" title="Something this frame was drawn from has changed since it was rendered: the scene's words, a department note, the look, the Location line, the cast sheet or the pack tick" style="cursor:pointer; background:#FDEEDA; color:#8A5B0F; border-radius:20px; padding:2px 8px; font-size:10px; font-weight:800;">↻ out of date</span>
+                      </sc-if>
+                      <sc-if value="{{ sc.isDone }}" hint-placeholder-val="{{ false }}">
+                        <span onClick="{{ sc.genFrame }}" title="Render this frame again" style="cursor:pointer; border:1px solid #C9CEDA; background:#fff; color:#17325E; border-radius:8px; padding:2px 9px; font-size:11.5px; font-weight:700;">↻ Re-render</span>
+                      </sc-if>
+                    </span>
                   </div>
                   <div style="font-size:12px; line-height:1.5; color:#6B7280;">{{ sc.desc }}</div>
                   <!-- Item 2 \u2014 match this scene's blocking/orientation to an earlier approved frame. -->
@@ -2965,7 +2970,7 @@
               <span>{{ sc.title }}</span>
               <span style="display:inline-flex; align-items:center; gap:6px;">
               <sc-if value="{{ sc.isStale }}" hint-placeholder-val="{{ false }}">
-                <span onClick="{{ sc.genFrame }}" title="The words or the length changed after this frame was rendered" style="cursor:pointer; background:#FDEEDA; color:#8A5B0F; border-radius:20px; padding:2px 8px; font-size:10px; font-weight:800;">↻ out of date</span>
+                <span onClick="{{ sc.genFrame }}" title="Something this frame was drawn from has changed since it was rendered: the scene's words, a department note, the look, the Location line, the cast sheet or the pack tick" style="cursor:pointer; background:#FDEEDA; color:#8A5B0F; border-radius:20px; padding:2px 8px; font-size:10px; font-weight:800;">↻ out of date</span>
               </sc-if>
                 <sc-if value="{{ sc.isDone }}" hint-placeholder-val="{{ false }}">
                   <span onClick="{{ sc.genFrame }}" title="Render this frame again" style="cursor:pointer; border:1px solid #C9CEDA; background:#fff; color:#17325E; border-radius:8px; padding:1px 8px; font-size:10.5px; font-weight:700;">↻ Re-render</span>
@@ -11218,6 +11223,7 @@ class Component extends DCLogic {
     // even when a real signed-off photo of exactly that person/pack/place already existed in the library
     // — the same "no input field" gap round 71 found and fixed for POSM, here for video.
     videoAssets: [],                // /library items, loaded once a real reference might be picked
+    videoAssetsLoaded: false,       // true once /library has been read (the frame recipe depends on it)
     videoCastChoice: '',            // library cast/actor id — sent as /cast-reference's cast_id
     videoPlateChoice: '',           // library plate id — sent as /cast-reference's plate_id
     videoPackChoice: '',            // library pack id — sent as /scene-still's pack_id when a scene opts in
@@ -15288,6 +15294,138 @@ class Component extends DCLogic {
     }), this.retimeFromScript);
   };
   // B2 — frames come from the APPROVED SCRIPT: one card per fullScript row.
+  // ---------- what a frame is drawn from (Phase A, 6 Oct) ----------
+  // ONE place builds the request a frame sends: rendering uses it, and so does the "out of date" check (a frame is out of
+  // date when the request it would send NOW differs from the one it was drawn with). Before, the check compared only the
+  // scene's words and timecode -- so approving the script (which re-times scenes) flagged every frame, while a changed
+  // department note, Location line, cast sheet or pack tick flagged none.
+  PACK_RE = /\b(?:pack(?:et|s|age|aging)?|pouch(?:es)?|sachets?|cartons?|milk\s+bags?|bags?\s+of\s+milk)\b/i;
+  // Words that fix the picture's shape. The app draws frames at 16:9 itself; a department note that asks for 2.39:1 or
+  // "anamorphic" only invites letterbox bars into the image.
+  RATIO_RE = /\b(?:anamorphic(?:[- ]leaning)?|letterbox(?:ed)?|cinemascope|ultra[- ]?wide(?:screen)?|widescreen|2\.\d{2}\s*:\s*1|1\.85\s*:\s*1|super[- ]?35)\b/gi;
+  noteSentences(text){
+    const flat = String(text || '').replace(/\s*\n+\s*/g, ' ').trim();
+    if (!flat) return [];
+    const out = []; let cur = '';
+    for (let i = 0; i < flat.length; i++) {
+      cur += flat[i];
+      if ('.!?'.indexOf(flat[i]) >= 0 && (i === flat.length - 1 || /\s/.test(flat[i + 1]))) { out.push(cur.trim()); cur = ''; }
+    }
+    if (cur.trim()) out.push(cur.trim());
+    return out;
+  }
+  // The scene numbers a sentence names: "scene 4", "scenes 1-3", "scenes 1, 2 and 4". Empty when it names none.
+  scenesNamed(sentence){
+    const nums = [];
+    const re = /\bscenes?\s+((?:\d+(?:\s*[-–]\s*\d+)?(?:\s*(?:,|and|&)\s*)?)+)/gi;
+    let m;
+    while ((m = re.exec(String(sentence || ''))) !== null) {
+      (m[1].match(/\d+(?:\s*[-–]\s*\d+)?/g) || []).forEach(part => {
+        const r = part.split(/\s*[-–]\s*/).map(x => parseInt(x, 10));
+        if (r.length === 2 && r[1] >= r[0] && r[1] - r[0] < 50) { for (let k = r[0]; k <= r[1]; k++) nums.push(k); }
+        else nums.push(r[0]);
+      });
+    }
+    return nums;
+  }
+  // A department's note as THIS scene's frame should receive it. The notes are written for the whole film, but a frame
+  // is one scene: keep only the sentences that name no scene or this one, drop sentences about the pack (the pack comes
+  // from its own tick and the scene's own words, never from a crew note), take out ratio words, clip. '' when nothing
+  // is left. (5 Oct real-render test: a Props note naming "the pouch" and "the product pack" put pack words into
+  // frames that had the pack unticked, and the Wardrobe note's cream saree contradicted the cast sheet's blue one.)
+  frameNoteFor(id, no){
+    const raw = this.stripMd(this.plainDept(((this.state.shoot || {})[id] || {}).text));
+    if (!raw) return '';
+    const kept = this.noteSentences(raw)
+      .filter(s => { const n = this.scenesNamed(s); return !n.length || n.indexOf(no) >= 0; })
+      .filter(s => !this.PACK_RE.test(s))
+      .map(s => s.replace(this.RATIO_RE, '')
+        .replace(/\(\s*[-–,;:\s]*\)/g, '').replace(/\s+([,.;:!?])/g, '$1').replace(/([,;])\s*([,;.])/g, '$2')
+        .replace(/\s{2,}/g, ' ').trim())
+      .filter(s => s && /[A-Za-z]/.test(s));
+    return this.clipText(kept.join(' '), 400);
+  }
+  // The request ONE frame sends (no seed -- the film's seed is set when it renders). Pure: reads state, changes nothing.
+  frameBody(idx){
+    const s = this.state;
+    const row = (s.fullScript || [])[idx];
+    if (!row) return null;
+    const no = Number(row.no != null ? row.no : idx + 1);
+    const note = (s.frameNote || '').trim();
+    // The place comes from the short Location line (or the cleaned, clipped note) -- the whole location plan is a
+    // production document, not a description of what the camera sees.
+    const locNote = this.locationText();
+    const crew = [['dop', 'Director of photography'], ['lighting', 'Lighting'], ['props', 'Props'], ['wardrobe', 'Wardrobe']]
+      .map(([id, label]) => { const t = this.frameNoteFor(id, no); return t ? label + ': ' + t : ''; }).filter(Boolean);
+    const prompt = [row.visual, row.camera ? 'Camera: ' + row.camera + '.' : '',
+      locNote ? 'Location: ' + locNote : '',
+      crew.length ? 'Supporting direction from the departments (the cast sheet and the locked image win wherever these disagree): ' + crew.join(' ') : '',
+      note,
+      // This frame's own correction goes last so it has the final word over the film-wide note above.
+      (row.frame_note || '').trim()].filter(Boolean).join(' ');
+    const body = { scene_no: row.no || idx + 1, prompt, ratio:'16:9', style:s.videoStyle,
+                   engines:s.engines, video_frame:true };
+    // The written look reference rides with the style, not inside the scene text.
+    const lookRef = (s.videoLookRef || '').trim();
+    if (lookRef) body.look_note = lookRef;
+    const chars = (s.videoCharacters || '').trim();
+    if (chars) body.characters = chars;
+    // The reference image is what actually holds the characters together.
+    if (s.castRefUrl) body.reference_url = s.castRefUrl;
+    // Match this frame's blocking/orientation to an already-approved sibling frame: send BOTH the cast ref and the chosen
+    // sibling, so continuity is asked for explicitly rather than hoped for.
+    const siblingIdx = this.matchIdx(s.fullScript, row);
+    const siblingUrl = siblingIdx >= 0 ? (((s.sceneFrames || {})[siblingIdx] || {}).url) : null;
+    if (siblingUrl) {
+      delete body.reference_url;
+      body.reference_urls = [s.castRefUrl, siblingUrl].filter(Boolean);
+    }
+    // The checkbox is the whole truth about the pack: ticked = the real pack photo, unticked = none.
+    const packOn = this.packOnFrame(idx);
+    if (packOn) {
+      body.include_pack = true;
+      // Which specific pack, picked once in the assets panel -- otherwise the server uses the newest signed-off.
+      if (s.videoPackChoice) body.pack_id = s.videoPackChoice;
+    } else if (this.packAvailable() || typeof row.include_pack === 'boolean') {
+      body.include_pack = false;
+    }
+    if (s.videoPackChoice) { body.pack_pref = s.videoPackChoice; body.pack_mode = 'auto'; }
+    // A frame carries at most 3 reference images. Only an explicit cast / location-photo pick is attached beyond the
+    // lock image (which was built from those picks already), never the library's newest.
+    if (s.videoCastChoice) { body.use_cast = true; body.cast_id = s.videoCastChoice; }
+    else body.use_cast = false;
+    if (s.videoPlateChoice) body.plate_id = s.videoPlateChoice;
+    else body.use_plate = false;
+    body.brand_mode = s.producerBrandMode;
+    return { body, lookRef, matchNo: row.match_no == null ? null : String(row.match_no) };
+  }
+  // A short fingerprint of everything a frame is drawn from. null while the Memory list has not loaded (the pack decision
+  // depends on it), so a restored film never flashes "out of date" before its pickers are there.
+  frameRecipe(idx){
+    if (!this.state.videoAssetsLoaded) return null;
+    const fb = this.frameBody(idx);
+    if (!fb) return null;
+    const b = fb.body;
+    const t = JSON.stringify([b.prompt, b.characters || '', b.look_note || '', b.style, b.include_pack === undefined ? null : b.include_pack,
+      b.pack_id || '', b.use_cast, b.cast_id || '', b.use_plate, b.plate_id || '', b.brand_mode, b.ratio, fb.matchNo]);
+    let h = 5381;
+    for (let i = 0; i < t.length; i++) h = ((h * 33) ^ t.charCodeAt(i)) >>> 0;
+    return h.toString(36) + ':' + t.length;
+  }
+  // The scene's words and spoken lines without its timecode (approving a script re-times its scenes; the picture is the same).
+  sceneSigNoTc(row){
+    const said = (Array.isArray(row && row.audio) ? row.audio : []).map(a => (a && a.text) || '').join(' | ');
+    return [row && row.visual, said].join(' ~ ');
+  }
+  // Is the frame at `idx` out of date? Frames drawn with a recipe compare recipes; frames from before that compare the scene's
+  // words and the look (the timecode no longer counts).
+  frameIsStale(idx, f){
+    if (!f || f.status !== 'done') return false;
+    if (f.recipe) { const now = this.frameRecipe(idx); return now !== null && now !== f.recipe; }
+    const row = (this.state.fullScript || [])[idx] || {};
+    const wordsMoved = !!f.sig && f.sig.split(' ~ ').slice(1).join(' ~ ') !== this.sceneSigNoTc(row);
+    return wordsMoved || (f.look || '') !== (this.state.videoLookRef || '').trim();
+  }
   generateFrame = (idx) => async () => {
     // A frame without a cast reference is where the drift came from, and the machinery to stop it was
     // already here: the seed is fixed per film and `reference_url` is sent when a cast exists. Nothing
@@ -15304,72 +15442,16 @@ class Component extends DCLogic {
     if (this.state.castGateHit) this.setState({ castGateHit: false });
     const row = (this.state.fullScript || [])[idx];
     if (!row) return;
-    this.setState(s => ({ sceneFrames:{ ...s.sceneFrames, [idx]:{ status:'rendering', url:null } } }));    const note = (this.state.frameNote || '').trim();
-    // Scripting's department drafts (Location, DoP Note, Props, Wardrobe) were pure planning text with
-    // no path into what actually gets rendered until now — folded in here so the finesse the departments
-    // add is in the frame, not just in a document next to it.
-    const deptNote = (id, label) => { const t = this.stripMd(this.plainDept((this.state.shoot[id]||{}).text));
-      return t ? label + ': ' + t : ''; };
-    // The place comes from the short Location line (or the cleaned, clipped note) -- the whole location plan is a
-    // production document, not a description of what the camera sees.
-    const locNote = this.locationText();
-    const prompt = [row.visual, row.camera ? 'Camera: ' + row.camera + '.' : '',
-      locNote ? 'Location: ' + locNote : '', deptNote('dop', 'Director of photography'), deptNote('lighting', 'Lighting'),
-      deptNote('props', 'Props'), deptNote('wardrobe', 'Wardrobe'), note,
-      // This frame's own correction goes last so it has the final word over the film-wide note above.
-      (row.frame_note || '').trim()].filter(Boolean).join(' ');
-    const body = { scene_no: row.no || idx+1, prompt, ratio:'16:9', style:this.state.videoStyle,
-                   engines:this.state.engines, video_frame:true };
-    // The written look reference rides with the style, not inside the scene text.
-    const lookRef = (this.state.videoLookRef || '').trim();
-    if (lookRef) body.look_note = lookRef;
-    const chars = (this.state.videoCharacters || '').trim();
-    if (chars) body.characters = chars;
-    // The reference image is what actually holds the characters together.
-    if (this.state.castRefUrl) body.reference_url = this.state.castRefUrl;
-    // Item 2 — match this frame's blocking/orientation to an already-approved sibling frame.
-    // `/scene-still` reads the plural `reference_urls` too (the same channel cast/pack/plate auto-refs
-    // already travel through) — send BOTH the cast ref and the chosen sibling when one is picked,
-    // instead of the singular form, so continuity is asked for explicitly rather than hoped for.
-    const siblingIdx = this.matchIdx(this.state.fullScript, row);
-    const siblingUrl = siblingIdx >= 0 ? (((this.state.sceneFrames || {})[siblingIdx] || {}).url) : null;
-    if (siblingUrl) {
-      delete body.reference_url;
-      body.reference_urls = [this.state.castRefUrl, siblingUrl].filter(Boolean);
-    }
-    // ASK_DESIGN_57 item 1 — explicit "include the locked pack" toggle, bypassing the keyword
-    // heuristic /scene-still otherwise uses on the scene's own description text. Mirrors the sibling
-    // picker: a real choice on the card, not something inferred from wording.
-    const packOn = this.packOnFrame(idx);
-    if (packOn) {
-      body.include_pack = true;
-      // Which specific pack, picked once in the assets panel — /scene-still otherwise falls back to
-      // whichever pack is most recently signed off, same gap `pack_id` was added to close for POSM.
-      if (this.state.videoPackChoice) body.pack_id = this.state.videoPackChoice;
-    } else if (this.packAvailable() || typeof row.include_pack === 'boolean') {
-      // With a pack available, the checkbox is the whole truth: unticked means NO pack on this frame. Left unsent, the
-      // server's word-matcher decided -- and it reads the whole prompt, so the Location line's "a tall glass of milk"
-      // put the pack into every frame, ticked or not (5 Oct real-render test).
-      body.include_pack = false;
-    }
-    // The pick rides on EVERY frame as `pack_pref`: it does not force the pack in, it decides WHICH pack when the
-    // scene's own words pull one in (before, that path took the newest signed-off pack, not the picked one).
-    // `pack_mode:'auto'` also lets "pouch"/"sachet" count as naming the product, as Social and Carousel already do.
-    if (this.state.videoPackChoice) { body.pack_pref = this.state.videoPackChoice; body.pack_mode = 'auto'; }
-    // A frame carries at most 3 reference images: the locked cast+location image (always first), the pack, a
-    // "match another shot" frame, a location photo, a library cast. The Real references picks were only ever sent
-    // to the LOCK call, so every frame also attached the library's NEWEST signed-off cast (and plate) whether or
-    // not you picked it -- a possibly different person, and a slot the pack then lost. Now only an explicit pick
-    // is attached; the lock image was built from that pick already.
-    if (this.state.videoCastChoice) { body.use_cast = true; body.cast_id = this.state.videoCastChoice; }
-    else body.use_cast = false;
-    if (this.state.videoPlateChoice) body.plate_id = this.state.videoPlateChoice;
-    else body.use_plate = false;
+    this.setState(s => ({ sceneFrames:{ ...s.sceneFrames, [idx]:{ status:'rendering', url:null } } }));
+    // The request comes from the same builder the "out of date" check uses (frameBody), so what a frame is drawn from and
+    // what it is later compared against cannot drift apart.
+    const fb = this.frameBody(idx);
+    const body = fb.body, lookRef = fb.lookRef;
+    const recipe = this.frameRecipe(idx);
     // one fixed seed per film — every frame reuses it so the look stays consistent
     let seed = this.state.videoSeed;
     if (!seed) { seed = Math.floor(Math.random()*900000) + 100000; this.setState({ videoSeed: seed }); }
     body.seed = seed;
-    body.brand_mode = this.state.producerBrandMode;
     const res = await this.apiJson('/scene-still', body);
     // Stamp the frame with the scene it was rendered from, so a later dialogue or timing change can
     // be seen for what it is rather than silently leaving a mismatched still on the board.
@@ -15378,7 +15460,7 @@ class Component extends DCLogic {
     // look like a pack frame. `pack_used` is "attached", not "drawn"; the server cannot see the picture.
     const packMissing = !!(body.include_pack && res && res.image_url && (res.from_reference === false || res.pack_used === false));
     if (res && res.image_url) this.setState(s => ({ framesProvider: res.provider || s.framesProvider,
-      sceneFrames:{ ...s.sceneFrames, [idx]:{ status:'done', url:res.image_url, provider:res.provider||'', sig, packMissing, look:lookRef } } }));
+      sceneFrames:{ ...s.sceneFrames, [idx]:{ status:'done', url:res.image_url, provider:res.provider||'', sig, packMissing, look:lookRef, recipe } } }));
     else this.setState(s => ({ sceneFrames:{ ...s.sceneFrames, [idx]:{ status:'error', url:null } } }));
   };
   generateAllFrames = async () => {
@@ -15751,7 +15833,7 @@ class Component extends DCLogic {
   loadVideoAssetLib = async () => {
     const d = await this.apiGet('/library');
     // A failed read leaves the list as it was (it is now re-read on every entry to Video, and must not blank the pickers).
-    if (d && Array.isArray(d.items)) this.setState({ videoAssets: d.items });
+    if (d && Array.isArray(d.items)) this.setState({ videoAssets: d.items, videoAssetsLoaded: true });
   };
   videoAssetOptions(kinds){
     return (this.state.videoAssets || []).filter(it => kinds.indexOf(it.kind) >= 0 && it.signed_off);
@@ -17069,9 +17151,10 @@ class Component extends DCLogic {
                  tint: isVo ? '#FDF6E6' : '#F2F7F3', fg: isVo ? '#8A6D1F' : '#1E7E34' };
       });
       // A frame rendered before the words or the timing changed is showing the wrong shot.
-      // Also out of date when the look reference changed after the frame was drawn (a frame from before the look
-      // reference existed has no `look`, which counts as empty -- so only a look set or changed since flags it).
-      const stale = f.status === 'done' && ((!!f.sig && f.sig !== this.sceneSig(r)) || (f.look || '') !== (s.videoLookRef || '').trim());
+      // Out of date when what the frame is drawn from has changed: its scene's words, a department note that reaches it, the look,
+      // the Location line, the cast sheet, the pack tick (see `frameIsStale`). The timecode no longer counts: approving a script
+      // re-times its scenes, which flagged every frame although no picture had changed.
+      const stale = this.frameIsStale(i, f);
       // Words typed here but no line in the spoken plan means this scene will render silent — the
       // text reads as a stage direction or a placeholder. Say so on the card rather than letting the
       // VO simply go missing in the mix.
