@@ -4168,6 +4168,249 @@
   <!-- ===================== IDEA PLATFORM ===================== -->
   <!-- A sibling of the messaging house, not a layer inside it: the house is what the brand says,
        the platform is what the work does about it. Optional, and the skip says so out loud. -->
+  <sc-if value="{{ isProvocationScreen }}" hint-placeholder-val="{{ false }}">
+  <div style="max-width:1080px; margin:0 auto; padding:36px 40px 80px; animation:hf-fade 0.4s ease;">
+    <div style="margin-bottom:8px; font-size:13px; font-weight:700; letter-spacing:0.06em; color:#259821; text-transform:uppercase;">Comm strategy</div>
+    <h1 style="font-family:'Epilogue',sans-serif; font-size:34px; font-weight:700; letter-spacing:-0.02em; margin:0 0 6px; color:#17325E;">The provocation</h1>
+    <p style="font-size:15px; color:#6B7280; margin:0 0 26px; max-width:700px; text-wrap:pretty;">Where this work departs from how the whole category talks and looks. On purpose, on demand, and only once a person approves it. It is written against the idea platform: it may break how the platform is expressed, never what it says.</p>
+
+    <div style="display:flex; gap:26px; border-bottom:1px solid #DDD9D1; margin-bottom:24px; flex-wrap:wrap;">
+      <sc-for list="{{ sTabs }}" as="t" hint-placeholder-count="3">
+        <span onClick="{{ t.go }}" style="cursor:pointer; padding:11px 0 13px; font-weight:700; font-size:14.5px; color:{{ t.color }}; border-bottom:3px solid {{ t.border }};">{{ t.label }}</span>
+      </sc-for>
+    </div>
+
+    <div style="background:#FDEEDA; border-radius:12px; padding:11px 16px; margin-bottom:18px; font-size:13px; line-height:1.55; color:#633806;">
+      <b>What no provocation may do:</b>
+      <sc-for list="{{ provLimits }}" as="l" hint-placeholder-count="4"><span> {{ l.t }}</span></sc-for>
+    </div>
+
+    <sc-if value="{{ provNoHouse }}" hint-placeholder-val="{{ false }}">
+      <div style="background:#fff; border:1px solid #DDD9D1; border-radius:16px; padding:22px 24px; font-size:14px; color:#41505F; line-height:1.6;">A provocation belongs to a house. Open a messaging house first (the Messaging house tab), then come back here.</div>
+    </sc-if>
+
+    <sc-if value="{{ provHasHouse }}" hint-placeholder-val="{{ false }}">
+
+      <sc-if value="{{ provHasErr }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#FBE3E1; color:#C0392B; border-radius:12px; padding:11px 16px; margin-bottom:16px; font-size:13.5px; line-height:1.5;">{{ provErr }}</div>
+      </sc-if>
+
+      <!-- 1. what it is written against -->
+      <div style="background:#fff; border:1px solid #DDD9D1; border-radius:16px; padding:18px 20px; margin-bottom:16px;">
+        <div style="font-family:'Epilogue',sans-serif; font-weight:700; font-size:16px; color:#17325E; margin-bottom:12px;">1. What it is written against</div>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:10px; margin-bottom:12px;">
+          <div style="border:1px solid #E6E3DC; border-radius:12px; padding:11px 13px;"><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">The house</div><div style="font-size:14px; font-weight:700; color:#17325E;">{{ provHouseName }}</div><div style="font-size:12px; color:#6B7280; margin-top:2px;">Its guardrails apply in full. Its usual tone is the thing being departed from.</div></div>
+          <div style="border:1px solid #E6E3DC; border-radius:12px; padding:11px 13px;"><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">The idea platform</div>
+            <sc-if value="{{ provPlatformOk }}" hint-placeholder-val="{{ true }}"><div style="font-size:14px; font-weight:700; color:#17325E;">{{ provPlatformName }}</div><div style="font-size:12.5px; color:#41505F; margin-top:2px;">{{ provPlatformLine }}</div></sc-if>
+            <sc-if value="{{ provPlatformMissing }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px; color:#8A5B0F; line-height:1.5;">None adopted yet. A provocation is written against one. <span onClick="{{ goIdeaPlatform2 }}" style="cursor:pointer; font-weight:700; text-decoration:underline;">Open the idea platform</span></div></sc-if>
+          </div>
+          <div style="border:1px solid #E6E3DC; border-radius:12px; padding:11px 13px;"><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">Competitors on file</div><div style="font-size:14px; font-weight:700; color:#17325E;">{{ provCompOnFile }} on the brand profile</div><div style="font-size:12px; color:#6B7280; margin-top:2px;">Used to find the codes. Never named in the work.</div></div>
+        </div>
+
+        <div style="background:#F7F5F1; border-radius:12px; padding:12px 14px; margin-bottom:12px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+            <div style="font-size:13.5px; font-weight:700; color:#17325E;">Competitor evidence <span style="font-weight:600; color:#6B7280;">· optional, saved once for this house</span></div>
+            <span onClick="{{ toggleEvOpen }}" style="cursor:pointer; font-size:12.5px; font-weight:700; color:#1E7E34;">{{ provEvToggleLabel }}</span>
+          </div>
+          <div style="font-size:12.5px; line-height:1.55; color:#41505F; margin-top:6px;">Names are enough to start. What you have actually seen makes the codes real: the more you add for 3 or 4 competitors, the less the audit has to guess. {{ provEvSummary }}</div>
+          <sc-if value="{{ provEvOpen }}" hint-placeholder-val="{{ false }}">
+            <div style="font-size:12px; line-height:1.5; color:#8A5B0F; background:#FDEEDA; border-radius:8px; padding:7px 10px; margin-top:10px;">The studio reads what you write, not what you link. It cannot open an Instagram page or watch a video, and it does not read photos yet, so one line on what you see (how a TVC opens and ends, what the pack looks like, what a page keeps posting) is what counts. Links are kept as a reference for you.</div>
+            <div style="display:flex; flex-direction:column; gap:10px; margin-top:10px;">
+              <sc-for list="{{ provEvRows }}" as="c" hint-placeholder-count="2">
+                <div style="background:#fff; border:1px solid #E6E3DC; border-radius:12px; padding:11px 13px;">
+                  <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+                    <input data-i="{{ c.i }}" value="{{ c.name }}" onChange="{{ evName }}" placeholder="Competitor name" style="flex:1; border:1px solid #DDD9D1; border-radius:8px; padding:7px 10px; font-size:13.5px; font-weight:700; color:#17325E; background:#fff;" />
+                    <span onClick="{{ c.remove }}" style="cursor:pointer; font-size:12px; font-weight:700; color:#6B7280;">Remove</span>
+                  </div>
+                  <sc-for list="{{ c.slots }}" as="sl" hint-placeholder-count="5">
+                    <div style="display:grid; grid-template-columns:110px 1fr 1fr; gap:8px; align-items:start; margin-bottom:6px;">
+                      <div style="font-size:12px; font-weight:700; color:#41505F; padding-top:7px;">{{ sl.label }}</div>
+                      <textarea data-i="{{ sl.i }}" data-ch="{{ sl.ch }}" data-f="note" value="{{ sl.note }}" onChange="{{ evSlot }}" rows="2" placeholder="What you see, in a line or two" style="border:1px solid #DDD9D1; border-radius:8px; padding:6px 9px; font-size:12.5px; line-height:1.45; color:#38414F; background:#FBFAF8; resize:vertical; font-family:inherit;"></textarea>
+                      <input data-i="{{ sl.i }}" data-ch="{{ sl.ch }}" data-f="link" value="{{ sl.link }}" onChange="{{ evSlot }}" placeholder="Link (optional)" style="border:1px solid #DDD9D1; border-radius:8px; padding:7px 9px; font-size:12.5px; color:#38414F; background:#FBFAF8;" />
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-for>
+            </div>
+            <div style="display:flex; gap:9px; flex-wrap:wrap; margin-top:10px;">
+              <sc-if value="{{ provCanAdd }}" hint-placeholder-val="{{ true }}"><span onClick="{{ evAdd }}" style="cursor:pointer; font-size:12.5px; font-weight:700; color:#1E7E34; border:1px solid #C9E7CE; background:#F4FAF5; border-radius:8px; padding:6px 12px;">+ Add a competitor</span></sc-if>
+              <sc-if value="{{ provCanAddFile }}" hint-placeholder-val="{{ false }}"><span onClick="{{ evAddFile }}" style="cursor:pointer; font-size:12.5px; font-weight:700; color:#17325E; border:1px solid #C9CEDA; background:#fff; border-radius:8px; padding:6px 12px;">{{ provAddFileLabel }}</span></sc-if>
+              <span onClick="{{ saveEvidence }}" style="cursor:pointer; font-size:12.5px; font-weight:700; color:#fff; background:#17325E; border-radius:8px; padding:6px 14px;">{{ provEvSaveLabel }}</span>
+            </div>
+          </sc-if>
+        </div>
+
+        <input value="{{ provSteer }}" onChange="{{ onProvSteer }}" placeholder="Anything you want to push against? (optional)" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:10px; padding:10px 12px; font-size:13.5px; color:#17325E; background:#fff;" />
+      </div>
+
+      <!-- 2. the category's codes -->
+      <div style="background:#fff; border:1px solid #DDD9D1; border-radius:16px; padding:18px 20px; margin-bottom:16px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:10px;">
+          <div style="font-family:'Epilogue',sans-serif; font-weight:700; font-size:16px; color:#17325E;">2. The category's codes <span style="font-weight:600; font-size:13px; color:#6B7280;">{{ provCategory }}</span></div>
+          <span onClick="{{ auditCodes }}" style="cursor:pointer; background:#F4FAF5; color:#1E7E34; border:1px solid #C9E7CE; border-radius:9px; padding:8px 14px; font-weight:700; font-size:13px;">{{ provCodesLabel }}</span>
+        </div>
+        <sc-if value="{{ provHasCaveat }}" hint-placeholder-val="{{ false }}">
+          <div style="background:{{ provCaveatBg }}; border-radius:10px; padding:9px 13px; margin-bottom:10px; font-size:12.5px; line-height:1.55; color:#41505F;"><b>How far to trust this.</b> {{ provCaveat }} {{ provCaveatInvite }}</div>
+        </sc-if>
+        <sc-if value="{{ provHasCodes }}" hint-placeholder-val="{{ false }}">
+          <div style="font-size:12.5px; color:#6B7280; margin-bottom:8px;">Choose the codes to break. Keep the ones that are true to the brand.</div>
+          <div style="display:flex; flex-direction:column; gap:7px;">
+            <sc-for list="{{ provCodes }}" as="c" hint-placeholder-count="6">
+              <div style="display:flex; align-items:flex-start; gap:12px; border:1px solid #ECE9E2; border-radius:10px; padding:9px 12px; background:#FBFAF8;">
+                <span style="min-width:74px; font-size:11px; font-weight:800; color:#6B7280; padding-top:3px;">{{ c.kind }}</span>
+                <div style="flex:1;">
+                  <div style="font-size:13.5px; color:#17325E; line-height:1.45;">{{ c.code }}</div>
+                  <div style="font-size:12px; color:#6B7280; margin-top:2px;">{{ c.how }}</div>
+                  <span style="display:inline-block; margin-top:5px; font-size:11px; font-weight:700; border-radius:20px; padding:1px 9px; background:{{ c.basisBg }}; color:{{ c.basisFg }};">{{ c.basisLabel }}</span>
+                </div>
+                <span onClick="{{ c.pick }}" style="cursor:pointer; font-size:12px; font-weight:700; border-radius:8px; padding:5px 12px; border:1px solid #C9CEDA; background:{{ c.pickBg }}; color:{{ c.pickFg }};">{{ c.pickLabel }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+      </div>
+
+      <!-- 3. sparks -->
+      <sc-if value="{{ provHasCodes }}" hint-placeholder-val="{{ false }}">
+      <div style="background:#fff; border:1px solid #DDD9D1; border-radius:16px; padding:18px 20px; margin-bottom:16px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:10px;">
+          <div style="font-family:'Epilogue',sans-serif; font-weight:700; font-size:16px; color:#17325E;">3. Sparks <span style="font-weight:600; font-size:13px; color:#6B7280;">{{ provPickedCount }} code(s) chosen to break</span></div>
+          <span onClick="{{ genSparks }}" style="cursor:pointer; background:#F4FAF5; color:#1E7E34; border:1px solid #C9E7CE; border-radius:9px; padding:8px 14px; font-weight:700; font-size:13px;">{{ provSparksLabel }}</span>
+        </div>
+        <sc-if value="{{ provHasSparks }}" hint-placeholder-val="{{ false }}">
+          <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:10px;">
+            <sc-for list="{{ provSparks }}" as="x" hint-placeholder-count="4">
+              <div style="border:1px solid #DDD9D1; border-radius:12px; padding:12px 14px; display:flex; flex-direction:column; gap:6px;">
+                <div style="font-size:13.5px; font-weight:700; color:#17325E; line-height:1.45;">{{ x.text }}</div>
+                <div style="font-size:12px; color:#6B7280;">Breaks: {{ x.codes }}</div>
+                <div style="font-size:12px; color:#41505F;">Stays true: {{ x.stays }}</div>
+                <div style="display:flex; gap:12px; font-size:11.5px; color:#6B7280;"><span>Breaks a code {{ x.b }}/5</span><span>True to the platform {{ x.t }}/5</span><span>Travels {{ x.tr }}/5</span></div>
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-top:4px;">
+                  <span style="font-size:11.5px; font-weight:700; border-radius:8px; padding:2px 9px; background:{{ x.riskBg }}; color:{{ x.riskFg }};">{{ x.riskLabel }}</span>
+                  <span onClick="{{ x.develop }}" style="cursor:pointer; font-size:12.5px; font-weight:700; color:#fff; background:#17325E; border-radius:8px; padding:6px 13px;">Develop this</span>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+      </div>
+      </sc-if>
+
+      <!-- 4. the provocation -->
+      <div style="background:#fff; border:1px solid #DDD9D1; border-radius:16px; padding:18px 20px; margin-bottom:16px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:10px;">
+          <div style="font-family:'Epilogue',sans-serif; font-weight:700; font-size:16px; color:#17325E;">4. The provocation</div>
+          <span onClick="{{ newProvocationBlank }}" style="cursor:pointer; font-size:12.5px; font-weight:700; color:#17325E; border:1px solid #C9CEDA; background:#fff; border-radius:8px; padding:6px 12px;">Write one by hand</span>
+        </div>
+        <sc-if value="{{ provHasRec }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:12px;">
+            <span style="font-size:12px; font-weight:700; border-radius:8px; padding:2px 10px; background:{{ provStatusBg }}; color:{{ provStatusFg }};">{{ provStatusLabel }}</span>
+            <sc-for list="{{ provStale }}" as="s" hint-placeholder-count="1"><span style="font-size:12px; font-weight:700; border-radius:8px; padding:2px 10px; background:#FDEEDA; color:#8A5B0F;">{{ s.t }}</span></sc-for>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px 14px; margin-bottom:10px;">
+            <div><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">Name</div><input data-p="name" value="{{ provName }}" onChange="{{ onRecField }}" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13.5px; color:#17325E;" /></div>
+            <div><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">Risk</div><div style="display:flex; gap:7px;"><sc-for list="{{ provRiskOpts }}" as="o" hint-placeholder-count="3"><span onClick="{{ o.set }}" style="cursor:pointer; padding:6px 14px; border-radius:8px; font-size:12.5px; font-weight:700; border:1px solid {{ o.border }}; background:{{ o.bg }}; color:{{ o.fg }};">{{ o.label }}</span></sc-for></div></div>
+          </div>
+          <div style="margin-bottom:10px;"><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">The provocation, in one line</div><textarea data-p="core.line" value="{{ provLine }}" onChange="{{ onRecField }}" rows="2" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:14px; line-height:1.5; color:#17325E; resize:vertical; font-family:inherit;"></textarea></div>
+
+          <sc-if value="{{ provShowCompare }}" hint-placeholder-val="{{ false }}">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
+              <div style="background:#F1EFE8; border-radius:10px; padding:11px 13px;"><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">The category says</div><div style="font-size:13px; color:#6B7280; text-decoration:line-through; line-height:1.5;">{{ provCategorySays }}</div></div>
+              <div style="background:#17325E; border-radius:10px; padding:11px 13px;"><div style="font-size:11px; font-weight:700; color:#B5D4F4; margin-bottom:3px;">This says</div><div style="font-size:13.5px; color:#fff; line-height:1.5;">{{ provLine }}</div></div>
+            </div>
+          </sc-if>
+
+          <div style="margin-bottom:10px;"><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">Codes it breaks (one per line)</div><textarea data-p="core.codes_broken" data-list="1" value="{{ provCodesBroken }}" onChange="{{ onRecField }}" rows="2" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; line-height:1.5; color:#38414F; resize:vertical; font-family:inherit;"></textarea></div>
+          <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:10px 14px; margin-bottom:10px;">
+            <div><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">Tone</div><input data-p="core.stance.tone" value="{{ provTone }}" onChange="{{ onRecField }}" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; color:#38414F;" /></div>
+            <div><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">Humour</div><input data-p="core.stance.humour" value="{{ provHumour }}" onChange="{{ onRecField }}" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; color:#38414F;" /></div>
+            <div><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">Structure</div><input data-p="core.stance.structure" value="{{ provStructure }}" onChange="{{ onRecField }}" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; color:#38414F;" /></div>
+          </div>
+          <div style="margin-bottom:10px;"><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">Why this risk</div><textarea data-p="core.risk_note" value="{{ provRiskNote }}" onChange="{{ onRecField }}" rows="2" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; line-height:1.5; color:#38414F; resize:vertical; font-family:inherit;"></textarea></div>
+          <div style="margin-bottom:10px;">
+            <div style="display:flex; align-items:center; justify-content:space-between;"><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">Safer version (the same idea, keeping more of the category's comfort)</div>
+              <sc-if value="{{ provHasSafer }}" hint-placeholder-val="{{ false }}"><span onClick="{{ useSaferVersion }}" style="cursor:pointer; font-size:12px; font-weight:700; color:#1E7E34;">Use the safer version</span></sc-if></div>
+            <textarea data-p="core.safer_version" value="{{ provSafer }}" onChange="{{ onRecField }}" rows="2" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; line-height:1.5; color:#38414F; resize:vertical; font-family:inherit;"></textarea>
+          </div>
+          <div style="background:#F7F5F1; border-radius:10px; padding:10px 13px; margin-bottom:12px;">
+            <label style="font-size:13px; font-weight:700; color:#17325E; display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" checked="{{ provLegalFlag }}" onChange="{{ toggleLegalFlag }}" /> It jabs at competitors (as an archetype, never a named rival)</label>
+            <sc-if value="{{ provLegalFlag }}" hint-placeholder-val="{{ false }}">
+              <label style="font-size:12.5px; color:#41505F; display:flex; align-items:center; gap:8px; cursor:pointer; margin-top:7px;"><input type="checkbox" checked="{{ provLegalAck }}" onChange="{{ toggleLegalAck }}" /> This is going to a human legal review before it is used</label>
+              <input data-p="core.legal_note" value="{{ provLegalNote }}" onChange="{{ onRecField }}" placeholder="What the legal review should look at" style="width:100%; box-sizing:border-box; margin-top:7px; border:1px solid #DDD9D1; border-radius:8px; padding:7px 10px; font-size:12.5px; color:#38414F; background:#fff;" />
+            </sc-if>
+          </div>
+
+          <div style="font-family:'Epilogue',sans-serif; font-weight:700; font-size:14.5px; color:#17325E; margin:14px 0 8px;">What it becomes</div>
+          <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:10px 14px; margin-bottom:10px;">
+            <div><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">Video (the film)</div><textarea data-p="expressions.video" value="{{ provExprVideo }}" onChange="{{ onRecField }}" rows="2" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; line-height:1.5; color:#38414F; resize:vertical; font-family:inherit;"></textarea></div>
+            <div><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">Social</div><textarea data-p="expressions.social" value="{{ provExprSocial }}" onChange="{{ onRecField }}" rows="2" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; line-height:1.5; color:#38414F; resize:vertical; font-family:inherit;"></textarea></div>
+            <div><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">POSM</div><textarea data-p="expressions.posm" value="{{ provExprPosm }}" onChange="{{ onRecField }}" rows="2" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; line-height:1.5; color:#38414F; resize:vertical; font-family:inherit;"></textarea></div>
+            <div><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">On-ground</div><textarea data-p="expressions.activation" value="{{ provExprActivation }}" onChange="{{ onRecField }}" rows="2" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; line-height:1.5; color:#38414F; resize:vertical; font-family:inherit;"></textarea></div>
+            <div><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">PR</div><textarea data-p="expressions.pr" value="{{ provExprPr }}" onChange="{{ onRecField }}" rows="2" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; line-height:1.5; color:#38414F; resize:vertical; font-family:inherit;"></textarea></div>
+          </div>
+
+          <div style="font-family:'Epilogue',sans-serif; font-weight:700; font-size:14.5px; color:#17325E; margin:14px 0 8px;">The film (what Video reads)</div>
+          <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:10px 14px; margin-bottom:10px;">
+            <div><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">Structure</div><input data-p="film.structure" value="{{ provFilmStructure }}" onChange="{{ onRecField }}" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; color:#38414F;" /></div>
+            <div><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">Humour</div><input data-p="film.humour" value="{{ provFilmHumour }}" onChange="{{ onRecField }}" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; color:#38414F;" /></div>
+            <div><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">Visual language</div><input data-p="film.visual_language" value="{{ provFilmVisual }}" onChange="{{ onRecField }}" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; color:#38414F;" /></div>
+            <div><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">Sound language</div><input data-p="film.sound_language" value="{{ provFilmSound }}" onChange="{{ onRecField }}" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; color:#38414F;" /></div>
+            <div><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">How the brand arrives</div><input data-p="film.brand_beat" value="{{ provFilmBeat }}" onChange="{{ onRecField }}" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; color:#38414F;" /></div>
+            <div><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">Voiceover length (words, 0 for none)</div><input data-p="film.vo_words" data-num="1" value="{{ provFilmVo }}" onChange="{{ onRecField }}" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; color:#38414F;" /></div>
+          </div>
+          <div style="margin-bottom:10px;"><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">Cast approach</div><div style="display:flex; gap:7px; flex-wrap:wrap;"><sc-for list="{{ provCastOpts }}" as="o" hint-placeholder-count="4"><span onClick="{{ o.set }}" style="cursor:pointer; padding:6px 14px; border-radius:8px; font-size:12.5px; font-weight:700; border:1px solid {{ o.border }}; background:{{ o.bg }}; color:{{ o.fg }};">{{ o.label }}</span></sc-for></div></div>
+
+          <div style="font-family:'Epilogue',sans-serif; font-weight:700; font-size:14.5px; color:#17325E; margin:14px 0 8px;">Guardrail check</div>
+          <sc-if value="{{ provHasChecks }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex; flex-direction:column; gap:4px; margin-bottom:8px;">
+              <sc-for list="{{ provChecks }}" as="k" hint-placeholder-count="5"><div style="font-size:12.5px; color:#41505F; line-height:1.5;"><b style="color:{{ k.fg }}; display:inline-block; width:16px;">{{ k.icon }}</b>{{ k.text }}</div></sc-for>
+            </div>
+          </sc-if>
+          <span onClick="{{ checkRec }}" style="cursor:pointer; font-size:12.5px; font-weight:700; color:#17325E; border:1px solid #C9CEDA; background:#fff; border-radius:8px; padding:5px 12px;">Run the check</span>
+
+          <sc-if value="{{ provHasProblems }}" hint-placeholder-val="{{ false }}">
+            <div style="background:#FDEEDA; border-radius:10px; padding:10px 13px; margin-top:14px;">
+              <div style="font-size:12.5px; font-weight:700; color:#633806; margin-bottom:4px;">Before it can be approved</div>
+              <sc-for list="{{ provProblems }}" as="pb" hint-placeholder-count="2"><div style="font-size:12.5px; line-height:1.5; color:#633806;">&bull; {{ pb.t }}</div></sc-for>
+            </div>
+          </sc-if>
+
+          <div style="display:flex; align-items:center; gap:9px; flex-wrap:wrap; margin-top:16px; border-top:1px solid #ECE9E2; padding-top:14px;">
+            <input value="{{ provPush }}" onChange="{{ onPushDirection }}" placeholder="Push it further: which way? (optional)" style="flex:1; min-width:200px; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:12.5px; color:#38414F;" />
+            <span onClick="{{ pushRecFurther }}" style="cursor:pointer; font-size:13px; font-weight:700; color:#17325E; border:1px solid #C9CEDA; background:#fff; border-radius:9px; padding:8px 14px;">Push it further</span>
+            <span onClick="{{ saveRec }}" style="cursor:pointer; font-size:13px; font-weight:700; color:#17325E; border:1px solid #C9CEDA; background:#fff; border-radius:9px; padding:8px 14px;">{{ provSaveLabel }}</span>
+            <sc-if value="{{ provApproved }}" hint-placeholder-val="{{ false }}"><span onClick="{{ withdrawRec }}" style="cursor:pointer; font-size:13px; font-weight:700; color:#8A5B0F; border:1px solid #EF9F27; background:#FDEEDA; border-radius:9px; padding:8px 14px;">Withdraw approval</span></sc-if>
+            <span onClick="{{ approveRec }}" style="cursor:pointer; font-size:13px; font-weight:700; color:#fff; background:#17325E; border-radius:9px; padding:8px 18px;">Approve</span>
+          </div>
+        </sc-if>
+      </div>
+
+      <!-- 5. what is saved -->
+      <div style="background:#fff; border:1px solid #DDD9D1; border-radius:16px; padding:18px 20px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:10px;">
+          <div style="font-family:'Epilogue',sans-serif; font-weight:700; font-size:16px; color:#17325E;">Your provocations for this house</div>
+          <span onClick="{{ toggleShowArchived }}" style="cursor:pointer; font-size:12.5px; font-weight:700; color:#6B7280;">{{ provArchLabel }}</span>
+        </div>
+        <sc-if value="{{ provHasList }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex; flex-direction:column; gap:7px;">
+            <sc-for list="{{ provList }}" as="r" hint-placeholder-count="2">
+              <div style="display:flex; align-items:center; gap:12px; border:1px solid #ECE9E2; border-radius:10px; padding:9px 12px; background:#FBFAF8;">
+                <div style="flex:1;"><div style="font-size:13.5px; font-weight:700; color:#17325E;">{{ r.name }}</div><div style="font-size:12px; color:#6B7280;">{{ r.line }}</div></div>
+                <span style="font-size:11.5px; font-weight:700; border-radius:8px; padding:2px 9px; background:{{ r.sBg }}; color:{{ r.sFg }};">{{ r.status }}</span>
+                <sc-if value="{{ r.stale }}" hint-placeholder-val="{{ false }}"><span style="font-size:11.5px; font-weight:700; border-radius:8px; padding:2px 9px; background:#FDEEDA; color:#8A5B0F;">May be stale</span></sc-if>
+                <span onClick="{{ r.open }}" style="cursor:pointer; font-size:12.5px; font-weight:700; color:#1E7E34;">Open</span>
+                <sc-if value="{{ r.archived }}" hint-placeholder-val="{{ false }}"><span onClick="{{ r.restore }}" style="cursor:pointer; font-size:12.5px; font-weight:700; color:#6B7280;">Bring back</span></sc-if>
+                <span onClick="{{ r.archive }}" style="cursor:pointer; font-size:12.5px; font-weight:700; color:#6B7280;">Put away</span>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+      </div>
+
+    </sc-if>
+  </div>
+  </sc-if>
+
   <sc-if value="{{ isIdeaScreen }}" hint-placeholder-val="{{ false }}">
   <div style="max-width:1080px; margin:0 auto; padding:36px 40px 80px; animation:hf-fade 0.4s ease;">
     <div style="margin-bottom:8px; font-size:13px; font-weight:700; letter-spacing:0.06em; color:#259821; text-transform:uppercase;">Comm strategy</div>
@@ -11318,6 +11561,7 @@ class Component extends DCLogic {
     // mood, moodTouched}; everything else is derived. soundBase is the plan the film starts from (POST /sound-plan).
     soundPlan: {},
     soundBase: [],
+    prov: {},                      // the Provocation tab's workshop (see provDefaults())
     loudnessInfo: null,            // what the last preview / render / re-score measured: {integrated, true_peak, target?, ...}
     musicLockMood: null,           // the music mood the locked bed was made under, to say when the mood has moved on
     musicBusy: false,
@@ -11494,6 +11738,7 @@ class Component extends DCLogic {
     if (screen === 'library') this.loadMade();
     if (screen === 'library') this.loadCharacters();
     if (screen === 'strategy' || screen === 'plans') this.loadStrategy();
+    if (screen === 'provocation') { this.loadStrategy(); this.loadIdea(); this.loadProvocation(); }
     if (screen === 'briefs' || screen === 'strategy' || screen === 'plans') this.loadBriefs();
     if (screen === 'pr') this.loadPr();
     if (screen === 'media') this.loadMedia();
@@ -17287,7 +17532,7 @@ class Component extends DCLogic {
     navDefs.splice(2, 0, ['strategy','Strategy'], ['plans','Plan'], ['exec','Execution'],
       ['video','Video'], ['media','Media'], ['sales','Sales enabler'], ['pr','PR']);
     const screenForNav = (k)=> k==='briefs' ? (s.screen==='briefs'||s.screen==='editor'||s.screen==='builder'||s.screen==='imc')
-      : (k==='strategy' ? (s.screen==='strategy'||s.screen==='house'||s.screen==='housesheet')
+      : (k==='strategy' ? (s.screen==='strategy'||s.screen==='house'||s.screen==='housesheet'||s.screen==='idea'||s.screen==='provocation')
       : (k==='plans' ? (s.screen==='plans'||s.screen==='plan')
       : (k==='memory' ? (s.screen==='library'||s.screen==='learning'||s.screen==='history') : s.screen===k)));
     const navItems = navDefs.map(([k,label]) => {
@@ -20865,8 +21110,231 @@ class Component extends DCLogic {
     this.setState({ screen:'exec', xTab:'onground' }); window.scrollTo(0,0);
     this.loadGrounding(); this.loadOgStandsOn(); this.ensureAssetLib();
   };
-  sTab(){ return this.state.screen === 'idea' ? 'idea' : 'houses'; }
-  sGoTab = (k) => () => { this.setState({ screen: k === 'idea' ? 'idea' : 'strategy' }); window.scrollTo(0,0);
+  // ---------- The Provocation tab (Strategy): provocation.py + provocation_gen.py ----------
+  // One object in state holds the whole workshop so it can be reset in one go; nothing here is saved except through the routes.
+  provDefaults(){
+    return { house:'', ev:null, onFile:[], strength:null, evBusy:false, evOpen:false, evSaved:true, steer:'',
+      codes:null, caveat:null, category:'', codesBusy:false, picked:{}, sparks:null, sparksBusy:false,
+      rec:null, recBusy:false, checks:null, blocking:[], list:[], showArchived:false, err:'', note:'', dirty:false };
+  }
+  P(){ return { ...this.provDefaults(), ...(this.state.prov || {}) }; }
+  setProv(patch){ this.setState(st => ({ prov: { ...this.provDefaults(), ...(st.prov || {}), ...patch } })); }
+  provHouseId(){ return (this.state.house || {}).id || ''; }
+  goProvocation = () => this.sGoTab('provocation')();
+  loadProvocation = async () => {
+    const hid = this.provHouseId();
+    if (!hid) { this.setProv({ house:'', ev:null, list:[], err:'' }); return; }
+    const sameHouse = this.P().house === hid;
+    const [evd, lst] = await Promise.all([this.apiGet('/category-evidence?house=' + encodeURIComponent(hid)),
+      this.apiGet('/provocations?house=' + encodeURIComponent(hid) + '&archived=' + (this.P().showArchived ? 'true' : 'false'))]);
+    const patch = { house:hid, list:(lst && lst.provocations) || [], limits:(lst && lst.hard_limits) || [] };
+    if (evd) { patch.onFile = evd.competitors_on_file || []; patch.strength = evd.strength || null; patch.channels = evd.channels || []; patch.maxComp = evd.max_competitors || 6;
+      if (!sameHouse || this.P().evSaved) patch.ev = evd.evidence || { competitors:[] }; }
+    if (!sameHouse) Object.assign(patch, { codes:null, caveat:null, sparks:null, rec:null, checks:null, picked:{}, err:'', note:'' });
+    this.setProv(patch);
+  };
+  provError(r, fallback){ return (r && r.data && r.data.detail) || fallback; }
+
+  // ----- the competitor evidence (saved once per house)
+  evComps(){ return ((this.P().ev || {}).competitors || []); }
+  evMutate(fn){ const comps = JSON.parse(JSON.stringify(this.evComps())); fn(comps); this.setProv({ ev:{ ...(this.P().ev || {}), competitors:comps }, evSaved:false }); }
+  evAdd = (name) => () => this.evMutate(c => {
+    if (c.length >= (this.P().maxComp || 6)) return;
+    const blank = {}; (this.P().channels || []).forEach(ch => { blank[ch.id] = { note:'', link:'' }; });
+    c.push({ name: typeof name === 'string' ? name : '', channels: blank }); });
+  evAddFile = () => this.evMutate(c => {
+    const have = new Set(c.map(x => String(x.name).toLowerCase()));
+    (this.P().onFile || []).forEach(n => { if (c.length < (this.P().maxComp || 6) && !have.has(String(n).toLowerCase())) {
+      const blank = {}; (this.P().channels || []).forEach(ch => { blank[ch.id] = { note:'', link:'' }; }); c.push({ name:n, channels:blank }); } }); });
+  evRemove = (i) => () => this.evMutate(c => { c.splice(i, 1); });
+  evName = (e) => { const i = Number(e.target.getAttribute('data-i')), v = e.target.value; this.evMutate(c => { if (c[i]) c[i].name = v; }); };
+  evSlot = (e) => { const i = Number(e.target.getAttribute('data-i')), ch = e.target.getAttribute('data-ch'), f = e.target.getAttribute('data-f'), v = e.target.value;
+    if (f !== 'note' && f !== 'link') return;
+    this.evMutate(c => { if (c[i] && c[i].channels[ch]) c[i].channels[ch][f] = v; }); };
+  toggleEvOpen = () => this.setProv({ evOpen: !this.P().evOpen });
+  saveEvidence = async () => {
+    const hid = this.provHouseId(); if (!hid || this.P().evBusy) return;
+    this.setProv({ evBusy:true });
+    const r = await this.apiCall('/category-evidence', { house:hid, competitors:this.evComps() });
+    if (r && r.ok && r.data) { this.setProv({ evBusy:false, evSaved:true, ev:r.data.evidence, strength:r.data.strength }); this.showToast('Competitor evidence saved for this house.', 'ok'); }
+    else { this.setProv({ evBusy:false }); this.showToast(this.provError(r, 'Couldn’t save the evidence.'), 'warn'); }
+  };
+
+  // ----- 2. the codes
+  auditCodes = async () => {
+    const hid = this.provHouseId(); if (!hid || this.P().codesBusy) return;
+    if (!this.P().evSaved) await this.saveEvidence();
+    this.setProv({ codesBusy:true, err:'' });
+    const r = await this.apiCall('/provocation-codes', { house:hid, steer:this.P().steer });
+    if (r && r.ok && r.data && r.data.codes) {
+      const picked = {}; r.data.codes.forEach((c, i) => { picked[i] = c.kind === 'visual' || c.kind === 'structural'; });
+      this.setProv({ codesBusy:false, codes:r.data.codes, caveat:r.data.caveat, category:r.data.category || '', picked, sparks:null });
+    } else this.setProv({ codesBusy:false, err:this.provError(r, 'Couldn’t audit the codes just now.') });
+  };
+  toggleCode = (i) => () => this.setProv({ picked:{ ...this.P().picked, [i]: !this.P().picked[i] } });
+  onSteer = (e) => this.setProv({ steer:e.target.value });
+  pickedCodes(){ const p = this.P(); return (p.codes || []).filter((c, i) => p.picked[i]).map(c => c.code); }
+
+  // ----- 3. sparks
+  genSparks = async () => {
+    const hid = this.provHouseId(); if (!hid || this.P().sparksBusy) return;
+    const codes = this.pickedCodes();
+    if (!codes.length) { this.showToast('Choose at least one code to break first.', 'warn'); return; }
+    this.setProv({ sparksBusy:true, err:'' });
+    const r = await this.apiCall('/provocation-sparks', { house:hid, codes, steer:this.P().steer, n:8 });
+    if (r && r.ok && r.data && r.data.sparks) this.setProv({ sparksBusy:false, sparks:r.data.sparks });
+    else this.setProv({ sparksBusy:false, err:this.provError(r, 'Couldn’t generate sparks just now.') });
+  };
+  developSpark = (i) => async () => {
+    const hid = this.provHouseId(); const sp = (this.P().sparks || [])[i]; if (!hid || !sp || this.P().recBusy) return;
+    this.setProv({ recBusy:true, err:'' });
+    const r = await this.apiCall('/provocation-develop', { house:hid, spark:sp, codes:sp.codes && sp.codes.length ? sp.codes : this.pickedCodes(), steer:this.P().steer });
+    if (r && r.ok && r.data) { this.setProv({ recBusy:false, rec:r.data, dirty:true, checks:null, note:'' }); this.checkRec(); }
+    else this.setProv({ recBusy:false, err:this.provError(r, 'Couldn’t develop that spark just now.') });
+  };
+
+  // ----- 4. the provocation itself
+  setRecPath(path, value){
+    const rec = JSON.parse(JSON.stringify(this.P().rec || {})); const keys = path.split('.'); let o = rec;
+    keys.slice(0, -1).forEach(k => { if (typeof o[k] !== 'object' || o[k] === null) o[k] = {}; o = o[k]; });
+    o[keys[keys.length - 1]] = value;
+    this.setProv({ rec, dirty:true });
+  }
+  onRecField = (e) => {
+    const p = e.target.getAttribute('data-p'); let v = e.target.value;
+    if (e.target.getAttribute('data-list')) v = String(v).split('\n').map(x => x.trim()).filter(Boolean);
+    else if (e.target.getAttribute('data-num')) { const n = parseInt(v, 10); v = isNaN(n) ? null : n; }
+    this.setRecPath(p, v);
+  };
+  setRecRisk = (id) => () => this.setRecPath('core.risk', id);
+  setRecCast = (id) => () => this.setRecPath('film.cast_approach', id);
+  toggleLegalFlag = () => this.setRecPath('core.legal_flag', !((this.P().rec || {}).core || {}).legal_flag);
+  toggleLegalAck = () => this.setRecPath('core.legal_ack', !((this.P().rec || {}).core || {}).legal_ack);
+  useSaferVersion = () => { const c = (this.P().rec || {}).core || {}; if (!c.safer_version) return;
+    const rec = JSON.parse(JSON.stringify(this.P().rec)); const swap = rec.core.line; rec.core.line = rec.core.safer_version; rec.core.safer_version = swap; this.setProv({ rec, dirty:true }); this.showToast('Swapped: the safer version is now the provocation, and the bolder one is kept as the safer version.', 'ok'); };
+  checkRec = async () => {
+    const rec = this.P().rec; if (!rec) return;
+    const body = rec.id && !this.P().dirty ? { id:rec.id } : { house:this.provHouseId(), record:rec };
+    const r = await this.apiCall('/provocation-check', body);
+    if (r && r.ok && r.data) this.setProv({ checks:r.data.checks, blocking:r.data.blocking });
+  };
+  saveRec = async () => {
+    const hid = this.provHouseId(); const rec = this.P().rec; if (!hid || !rec || this.P().recBusy) return false;
+    this.setProv({ recBusy:true, err:'' });
+    const r = await this.apiCall('/provocation', { id:rec.id || undefined, house:hid, name:rec.name, platform:rec.platform, core:rec.core, expressions:rec.expressions, film:rec.film, source:rec.source });
+    if (r && r.ok && r.data) { this.setProv({ recBusy:false, rec:r.data, dirty:false }); await this.loadProvocation(); this.checkRec(); this.showToast('Saved as a draft.', 'ok'); return true; }
+    this.setProv({ recBusy:false, err:this.provError(r, 'Couldn’t save it.') }); return false;
+  };
+  approveRec = async () => {
+    const rec = this.P().rec; if (!rec) return;
+    if (this.P().dirty || !rec.id) { const ok = await this.saveRec(); if (!ok) return; }
+    const id = this.P().rec.id;
+    const who = (this.state.authUser && (this.state.authUser.name || this.state.authUser.username)) || 'someone';
+    const r = await this.apiCall('/provocation-approve', { id, who });
+    if (r && r.ok && r.data) { this.setProv({ rec:r.data, err:'' }); await this.loadProvocation(); this.showToast('Approved. Producers can now stand on it.', 'ok'); }
+    else this.setProv({ err:this.provError(r, 'Couldn’t approve it.') });
+  };
+  withdrawRec = async () => {
+    const rec = this.P().rec; if (!rec || !rec.id) return;
+    const r = await this.apiCall('/provocation-approve', { id:rec.id, on:false });
+    if (r && r.ok && r.data) { this.setProv({ rec:r.data }); await this.loadProvocation(); this.showToast('Back to a draft. Nothing stands on it now.', 'ok'); }
+  };
+  pushRecFurther = async () => {
+    const rec = this.P().rec; if (!rec || this.P().recBusy) return;
+    if (!rec.id || this.P().dirty) { const ok = await this.saveRec(); if (!ok) return; }
+    this.setProv({ recBusy:true, err:'' });
+    const r = await this.apiCall('/provocation-push', { id:this.P().rec.id, direction:this.P().push || '' });
+    if (r && r.ok && r.data) { this.setProv({ recBusy:false, rec:r.data, dirty:true }); this.checkRec(); this.showToast('Bolder version ready. The one you had is kept as the safer version. Save it to keep it.', 'ok'); }
+    else this.setProv({ recBusy:false, err:this.provError(r, 'Couldn’t push it further just now.') });
+  };
+  onPushDirection = (e) => this.setProv({ push:e.target.value });
+  openProvocationRec = (id) => async () => {
+    const r = await this.apiGet('/provocation?id=' + encodeURIComponent(id));
+    if (r) { this.setProv({ rec:r, dirty:false, err:'' }); this.checkRec(); window.scrollTo(0, 0); }
+  };
+  archiveProvocation = (id) => async () => {
+    const r = await this.apiCall('/provocation-archive', { id, on:true });
+    if (r && r.ok) { if ((this.P().rec || {}).id === id) this.setProv({ rec:null, checks:null }); await this.loadProvocation(); this.showToast('Put away. Nothing is deleted.', 'ok'); }
+  };
+  restoreProvocation = (id) => async () => {
+    const r = await this.apiCall('/provocation-archive', { id, on:false });
+    if (r && r.ok) { await this.loadProvocation(); this.showToast('Brought back as a draft.', 'ok'); }
+  };
+  toggleShowArchived = () => { this.setProv({ showArchived: !this.P().showArchived }); setTimeout(() => this.loadProvocation(), 0); };
+  newProvocationBlank = () => { this.setProv({ rec:{ id:'', name:'', status:'draft', house:this.provHouseId(), platform:'', core:{ line:'', codes_broken:[], stance:{ tone:'', humour:'', structure:'' }, risk:'', risk_note:'', safer_version:'', legal_flag:false, legal_ack:false, legal_note:'' },
+      expressions:{}, film:{ structure:'', humour:'', visual_language:'', sound_language:'', cast_approach:'', vo_words:null, brand_beat:'', notes:'' }, source:{ codes_audit:[], sparks:[] }, stale_because:[], problems:[] }, dirty:true, checks:null, err:'' }); };
+
+  provBag(s){
+    const p = this.P(); const rec = p.rec; const core = (rec || {}).core || {}; const film = (rec || {}).film || {}; const stance = core.stance || {};
+    const idea = this.idea(); const platformOk = this.ideaUsable() && !!idea.adopted;
+    const chip = (on, onBg, onFg) => ({ bg: on ? onBg : '#fff', fg: on ? onFg : '#17325E', border: on ? onFg : '#DDD9D1' });
+    const RISK = { low:['#EAF6EC', '#1E7E34'], medium:['#FDEEDA', '#8A5B0F'], high:['#FBE3E1', '#C0392B'] };
+    const status = (rec || {}).status || 'draft';
+    const evComps = this.evComps();
+    const st = p.strength || { competitors:0, slots_filled:0, slots_total:0 };
+    const KIND_LABEL = { verbal:'Verbal', visual:'Visual', tonal:'Tonal', structural:'Structure', sonic:'Sound' };
+    return {
+      isProvocationScreen: s.screen === 'provocation',
+      provHasHouse: !!this.provHouseId(), provNoHouse: !this.provHouseId(), provHouseName: (s.house || {}).brand || (s.house || {}).name || 'This house',
+      provPlatformOk: platformOk, provPlatformMissing: !platformOk,
+      provPlatformName: idea.name || '', provPlatformLine: idea.line || '', provPlatformMechanic: idea.mechanic || '',
+      provCompOnFile: (p.onFile || []).length, provLimits: (p.limits && p.limits.length ? p.limits : ['No celebrity or real person\'s likeness.', 'No health claims.', 'Nothing that offends on food, children or religion.', 'Competitors only as an archetype, never a named rival, with a human legal review.']).map(t => ({ t })),
+      provErr: p.err, provHasErr: !!p.err, provSteer: p.steer, onProvSteer: this.onSteer,
+      // evidence
+      provEvOpen: p.evOpen, toggleEvOpen: this.toggleEvOpen,
+      provEvToggleLabel: (p.evOpen ? 'Hide' : (st.slots_filled ? 'Edit' : 'Add')) + ' competitor evidence',
+      provEvSummary: st.slots_total ? (st.slots_filled + ' of ' + st.slots_total + ' slots filled across ' + evComps.length + ' competitor' + (evComps.length === 1 ? '' : 's')) : 'None added yet. The codes will come from the competitor names and the model’s general knowledge, and will be marked as unverified.',
+      provEvRows: evComps.map((c, i) => ({ i, name:c.name, remove:this.evRemove(i),
+        slots:(p.channels || []).map(ch => ({ i, ch:ch.id, label:ch.label, note:(c.channels[ch.id] || {}).note || '', link:(c.channels[ch.id] || {}).link || '' })) })),
+      provHasEvRows: evComps.length > 0, evName: this.evName, evSlot: this.evSlot, evAdd: this.evAdd(''), evAddFile: this.evAddFile, provCanAddFile: (p.onFile || []).length > 0,
+      provAddFileLabel: 'Add the ' + (p.onFile || []).length + ' on file', provCanAdd: evComps.length < (p.maxComp || 6),
+      saveEvidence: this.saveEvidence, provEvSaveLabel: p.evBusy ? 'Saving…' : (p.evSaved ? 'Saved' : 'Save evidence'),
+      // codes
+      auditCodes: this.auditCodes, provCodesLabel: p.codesBusy ? 'Auditing…' : (p.codes ? '↻ Audit again' : '✦ Audit the category’s codes'),
+      provHasCodes: !!p.codes, provCategory: p.category,
+      provCaveat: (p.caveat || {}).text || '', provCaveatInvite: (p.caveat || {}).invite || '', provHasCaveat: !!((p.caveat || {}).text), provCaveatBg: (p.caveat || {}).memory ? '#FDEEDA' : '#EAF6EC',
+      provCodes: (p.codes || []).map((c, i) => ({ i, kind:KIND_LABEL[c.kind] || c.kind, code:c.code, how:c.how, seen:c.basis === 'seen', basisLabel: c.basis === 'seen' ? ('Seen: ' + (c.seen_in || []).join('; ')) : 'From memory, unverified',
+        basisBg: c.basis === 'seen' ? '#EAF6EC' : '#F1EFE8', basisFg: c.basis === 'seen' ? '#1E7E34' : '#6B7280',
+        on:!!p.picked[i], pick:this.toggleCode(i), pickLabel: p.picked[i] ? 'Break this' : 'Keep', pickBg: p.picked[i] ? '#17325E' : '#fff', pickFg: p.picked[i] ? '#fff' : '#6B7280' })),
+      provPickedCount: this.pickedCodes().length,
+      // sparks
+      genSparks: this.genSparks, provSparksLabel: p.sparksBusy ? 'Generating…' : (p.sparks ? '↻ More sparks' : '✦ Generate sparks'), provHasSparks: !!p.sparks,
+      provSparks: (p.sparks || []).map((x, i) => ({ i, text:x.text, codes:(x.codes || []).join(' · '), stays:x.stays_true, b:x.scores.breaks, t:x.scores.true, tr:x.scores.travels,
+        riskLabel:'Risk: ' + x.risk, riskBg:(RISK[x.risk] || RISK.medium)[0], riskFg:(RISK[x.risk] || RISK.medium)[1], develop:this.developSpark(i) })),
+      // the provocation
+      provHasRec: !!rec, newProvocationBlank: this.newProvocationBlank, provRecBusy: p.recBusy,
+      onRecField: this.onRecField, provName: (rec || {}).name || '', provLine: core.line || '',
+      provCodesBroken: (core.codes_broken || []).join('\n'), provTone: stance.tone || '', provHumour: stance.humour || '', provStructure: stance.structure || '',
+      provRiskNote: core.risk_note || '', provSafer: core.safer_version || '', provHasSafer: !!core.safer_version, useSaferVersion: this.useSaferVersion,
+      provRiskOpts: [['low', 'Low'], ['medium', 'Medium'], ['high', 'High']].map(([id, label]) => ({ label, set:this.setRecRisk(id), ...chip(core.risk === id, (RISK[id] || [])[0], (RISK[id] || [])[1]) })),
+      provLegalFlag: !!core.legal_flag, toggleLegalFlag: this.toggleLegalFlag, provLegalAck: !!core.legal_ack, toggleLegalAck: this.toggleLegalAck, provLegalNote: core.legal_note || '',
+      provShowCompare: !!core.line, provCategorySays: (p.codes || []).filter(c => (core.codes_broken || []).some(b => String(b).toLowerCase() === String(c.code).toLowerCase())).map(c => c.code).join(' · ') || ((core.codes_broken || []).join(' · ')),
+      provExprVideo: ((rec || {}).expressions || {}).video || '', provExprSocial: ((rec || {}).expressions || {}).social || '', provExprPosm: ((rec || {}).expressions || {}).posm || '',
+      provExprActivation: ((rec || {}).expressions || {}).activation || '', provExprPr: ((rec || {}).expressions || {}).pr || '',
+      provFilmStructure: film.structure || '', provFilmHumour: film.humour || '', provFilmVisual: film.visual_language || '', provFilmSound: film.sound_language || '',
+      provFilmBeat: film.brand_beat || '', provFilmNotes: film.notes || '', provFilmVo: film.vo_words === null || film.vo_words === undefined ? '' : String(film.vo_words),
+      provCastOpts: [['people', 'People'], ['objects', 'Objects'], ['animated', 'Animated'], ['none', 'None']].map(([id, label]) => ({ label, set:this.setRecCast(id), ...chip(film.cast_approach === id, '#17325E', '#fff') })),
+      // guardrails, status, actions
+      provChecks: (p.checks || []).map(c => ({ text:c.text, icon: c.level === 'pass' ? '✓' : (c.level === 'fail' ? '✗' : (c.level === 'warn' ? '!' : '•')),
+        fg: c.level === 'pass' ? '#1E7E34' : (c.level === 'fail' ? '#C0392B' : (c.level === 'warn' ? '#8A5B0F' : '#6B7280')) })), provHasChecks: (p.checks || []).length > 0,
+      checkRec: this.checkRec,
+      provStatusLabel: status === 'approved' ? ('Approved' + ((rec || {}).approved_by ? ' by ' + rec.approved_by : '')) : (status === 'archived' ? 'Archived' : 'Draft'),
+      provStatusBg: status === 'approved' ? '#EAF6EC' : '#F1EFE8', provStatusFg: status === 'approved' ? '#1E7E34' : '#444441',
+      provStale: ((rec || {}).stale_because || []).map(t => ({ t })), provHasStale: ((rec || {}).stale_because || []).length > 0,
+      provProblems: [...((rec || {}).problems || []), ...(p.blocking || [])].map(t => ({ t })), provHasProblems: ((rec || {}).problems || []).length + (p.blocking || []).length > 0,
+      provApproved: status === 'approved', provDirty: p.dirty,
+      saveRec: this.saveRec, approveRec: this.approveRec, withdrawRec: this.withdrawRec, pushRecFurther: this.pushRecFurther, onPushDirection: this.onPushDirection, provPush: p.push || '',
+      provSaveLabel: p.recBusy ? 'Working…' : (p.dirty ? 'Save draft' : 'Saved'),
+      // the saved list
+      provList: (p.list || []).map(r => ({ id:r.id, name:r.name || '(unnamed)', line:(r.core || {}).line || '', status:r.status === 'approved' ? 'Approved' : (r.status === 'archived' ? 'Archived' : 'Draft'),
+        sBg:r.status === 'approved' ? '#EAF6EC' : '#F1EFE8', sFg:r.status === 'approved' ? '#1E7E34' : '#444441', stale:(r.stale_because || []).length > 0,
+        open:this.openProvocationRec(r.id), archived:r.status === 'archived', archive:this.archiveProvocation(r.id), restore:this.restoreProvocation(r.id) })),
+      provHasList: (p.list || []).length > 0, toggleShowArchived: this.toggleShowArchived, provArchLabel: p.showArchived ? 'Hide put-away ones' : 'Show put-away ones',
+      goIdeaPlatform2: this.goIdeaPlatform,
+    };
+  }
+  sTab(){ return this.state.screen === 'idea' ? 'idea' : (this.state.screen === 'provocation' ? 'provocation' : 'houses'); }
+  sGoTab = (k) => () => { this.setState({ screen: k === 'idea' ? 'idea' : (k === 'provocation' ? 'provocation' : 'strategy') }); window.scrollTo(0,0);
     // Both sources of a platform are read from the server, so the tab arrives with houses and briefs
     // already in hand rather than with two empty pickers.
     this.loadStrategy(); this.loadBriefs();
@@ -20876,7 +21344,9 @@ class Component extends DCLogic {
     // reload, the campaign step's own fields (name, insight, slots, and now divisions) never hydrated through this
     // path: the platform's own data loaded and looked fine, so the gap was easy to miss reading the
     // screen rather than testing the actual nav route into it.
-    if (k === 'idea') { this.loadIdea(); this.loadCampaign(); } };
+    if (k === 'idea') { this.loadIdea(); this.loadCampaign(); }
+    // The provocation is written against the adopted idea platform, so that is read too.
+    if (k === 'provocation') { this.loadIdea(); this.loadProvocation(); } };
   toggleIdeaSkip = () => { const i = this.idea(); this.setState({ idea: { ...i, skipped: !i.skipped } }); };
   goSalesHome = () => { this.setState({ screen:'sales' }); window.scrollTo(0,0); };
 
@@ -23810,7 +24280,7 @@ class Component extends DCLogic {
       goExecIdea: this.goExecIdea, goSalesHome: this.goSalesHome,
       goOngroundShortcut: this.goOngroundShortcut,
       goIdeaPlatform: this.goIdeaPlatform,
-      sTabs: [['houses','Messaging house'],['idea','Idea platform']].map(([k, label]) => ({ label,
+      sTabs: [['houses','Messaging house'],['idea','Idea platform'],['provocation','Provocation']].map(([k, label]) => ({ label,
         go:this.sGoTab(k), color: this.sTab() === k ? '#17325E' : '#6B7280',
         border: this.sTab() === k ? '#F0561E' : 'transparent' })),
       ideaActive: !ip.skipped, toggleIdeaSkip: this.toggleIdeaSkip,
@@ -25205,6 +25675,7 @@ class Component extends DCLogic {
     
     return {
       isStrategy: s.screen === 'strategy', isHouse: s.screen === 'house', isPlans: s.screen === 'plans',
+      ...this.provBag(s),
       goStrategy: this.goStrategy,
       nhBrand: st.nh.brand, nhBrief: st.nh.brief, onNewHouse: this.onNewHouse, createHouse: this.createHouse,
       nhFrom: st.nhFrom || '', hasNhFrom: !!st.nhFrom, noNhFrom: !st.nhFrom, clearHouseBrief: this.clearHouseBrief,
