@@ -117,6 +117,32 @@ check("garbage in the plan falls back to defaults", r2.status_code == 200, r2.te
 r3 = client.post("/voice-preview", json={**base, "scenes": rows(), "sound_plan": "nonsense"})
 check("a plan that is not an object is ignored", r3.status_code == 200, r3.text[:200])
 
+
+print("/sound-plan (the card's starting plan)")
+base_rows = [{"no": n, "tc": f"{(n - 1) * 7}-{n * 7}s", "visual": f"Scene {n}.", "audio": []} for n in range(1, 5)]
+sb = client.post("/sound-plan", json={"scenes": base_rows})
+check("the route answers", sb.status_code == 200, sb.text[:200])
+if sb.status_code == 200:
+    got = sb.json()["scenes"]
+    check("every scene comes back with its role and music state", [(g["no"], g["music"]) for g in got] == [(1, "open"), (2, "open"), (3, "swell"), (4, "swell")], str(got))
+    check("roles are the ones the shots are briefed with", [g["role"] for g in got] == ["hook", "mechanism", "turn", "brand"], str([g["role"] for g in got]))
+    sb2 = client.post("/sound-plan", json={"scenes": base_rows + [{"no": 5, "tc": "28-32s", "visual": "x", "audio": [], "beat_role": "button"}]})
+    check("a Button drops out and the sign-off is still the last Auto scene", [(g["no"], g["music"]) for g in sb2.json()["scenes"]][-2:] == [(4, "swell"), (5, "out")], "")
+check("no scenes is fine", client.post("/sound-plan", json={}).json() == {"scenes": []}, "")
+
+print("saved with the film")
+SAVED = {"house": "hx", "full_script": base_rows, "sound_plan": {"duck": "strong", "scenes": {"3": "out"}, "mood": "Soft sarangi", "moodTouched": True}}
+check("the plan saves", client.post("/video-script", json=SAVED).status_code == 200, "")
+back = client.get("/video-script", params={"house": "hx"}).json()
+check("and comes back whole", back.get("sound_plan") == SAVED["sound_plan"], str(back.get("sound_plan")))
+client.post("/video-script", json={"house": "hx", "full_script": base_rows})        # a page from before the field existed
+check("an older page that never sends it does not blank it", client.get("/video-script", params={"house": "hx"}).json().get("sound_plan") == SAVED["sound_plan"], "")
+client.post("/video-script", json={"house": "hx", "full_script": base_rows, "sound_plan": {}})
+check("sending an empty plan clears it", client.get("/video-script", params={"house": "hx"}).json().get("sound_plan") == {}, "")
+check("a house with nothing saved reads an empty plan", client.get("/video-script", params={"house": "nobody"}).json().get("sound_plan") == {}, "")
+client.post("/video-script", json={"house": "hx", "full_script": base_rows, "sound_plan": "garbage"})
+check("a plan that is not an object is stored as empty", client.get("/video-script", params={"house": "hx"}).json().get("sound_plan") == {}, "")
+
 print()
 print("All sound-plan route cases behave." if not fails else f"{fails} sound-plan route case(s) FAILED.")
 sys.exit(1 if fails else 0)

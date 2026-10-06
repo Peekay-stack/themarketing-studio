@@ -49,21 +49,27 @@ def _gain(db: float) -> float:
     return 10 ** (db / 20.0)
 
 
-def derive(scenes) -> dict[int, str]:
-    """The starting state for every scene, from the beat roles alone (no model).
+def describe(scenes) -> list[dict]:
+    """Every scene with its beat role and the music state the plan starts from -- what the Sound design card shows.
 
-    A Turn or the Sign-off swells, a Button drops to ambience, everything else opens. Roles come from the same
-    function the shots are briefed with, so the sound and the picture agree about what each scene is for.
+    Roles come from the same function the shots are briefed with, so the sound and the picture agree about what each
+    scene is for. A Turn or the Sign-off swells, a Button drops to ambience, everything else opens.
     """
     import filmcut
     rows = [r for r in (scenes or []) if isinstance(r, dict)]
     segs = filmcut.assign_roles([{"index": i, "seconds": 6, "continues": False, "scenes": [r]}
                                  for i, r in enumerate(rows)])
-    out: dict[int, str] = {}
+    out = []
     for i, (row, seg) in enumerate(zip(rows, segs)):
         role = str(seg.get("role") or "")
-        out[_no(row, i)] = "swell" if role in ("turn", "brand") else ("out" if role == "button" else "open")
+        out.append({"no": _no(row, i), "role": role,
+                    "music": "swell" if role in ("turn", "brand") else ("out" if role == "button" else "open")})
     return out
+
+
+def derive(scenes) -> dict[int, str]:
+    """The starting state for every scene, from the beat roles alone (no model)."""
+    return {d["no"]: d["music"] for d in describe(scenes)}
 
 
 def _no(row: dict, i: int) -> int:

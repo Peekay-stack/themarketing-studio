@@ -35,7 +35,7 @@ DIR = tenancy.dir("filmscripts")
 # is Phase 1 of the gap, the part that loses real authored work (a written script, a department note, a
 # rendered frame) rather than a picked option that costs one click to redo.
 FIELDS = ("video_objective", "video_concept", "script_status", "script_phase",
-          "full_script", "scene_frames", "shoot", "video_characters", "video_location_line", "video_look_ref", "video_location_src")
+          "full_script", "scene_frames", "shoot", "video_characters", "video_location_line", "video_look_ref", "video_location_src", "sound_plan")
 
 
 def _now() -> str:
@@ -49,7 +49,7 @@ def _path(house_id: str) -> str:
 def _blank(house_id: str) -> dict:
     return {"house": house_id, "video_objective": None, "video_concept": None,
             "script_status": "none", "script_phase": "concept", "full_script": None,
-            "scene_frames": {}, "shoot": {}, "video_characters": "", "video_location_line": "", "video_look_ref": "", "video_location_src": "", "updated": ""}
+            "scene_frames": {}, "shoot": {}, "video_characters": "", "video_location_line": "", "video_look_ref": "", "video_location_src": "", "sound_plan": {}, "updated": ""}
 
 
 def load(house_id: str) -> dict:
@@ -100,6 +100,10 @@ def save(house_id: str, data: dict) -> dict:
         # has changed since (same absent-key guard as the line itself).
         "video_location_src": (str(data.get("video_location_src") or "") if "video_location_src" in data
                                else str(load(house_id).get("video_location_src") or "")),
+        # The person's own sound-design choices (soundplan.py: duck depth, ending, per-scene music states, the music mood);
+        # only what they changed, the rest is derived. Same absent-key guard as the fields above.
+        "sound_plan": ((data.get("sound_plan") if isinstance(data.get("sound_plan"), dict) else {}) if "sound_plan" in data
+                       else (load(house_id).get("sound_plan") or {})),
         "updated": _now(),
     }
     tmp = _path(house_id) + ".tmp"

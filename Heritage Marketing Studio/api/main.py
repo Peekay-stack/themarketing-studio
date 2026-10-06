@@ -2192,6 +2192,14 @@ def video_script_save(payload: dict):
     return filmscript.save(house_id, payload)
 
 
+@app.post("/sound-plan")
+def sound_plan_base(payload: dict):
+    """The plan a film starts from, before the person changes anything: each scene's beat role and music state.
+    `{scenes:[...]}` -> `{scenes:[{no, role, music}]}`. Pure arithmetic over the script rows (no model, no cost); the mix
+    derives the very same states from the same function, so what the card shows is what the mix does."""
+    return {"scenes": soundplan.describe(payload.get("scenes"))}
+
+
 # --- /shot-still does two different jobs, and the payload says which ------------------------------
 #
 # This path had one meaning and now has two, so it branches here rather than being registered twice.

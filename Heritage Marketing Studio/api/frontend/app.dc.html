@@ -3026,7 +3026,7 @@
       <h2 style="font-family:'Epilogue',sans-serif; font-size:19px; font-weight:700; color:#17325E; margin:0 0 14px;">Departments</h2>
       <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:16px;">
         <sc-for list="{{ shootDepts }}" as="d" hint-placeholder-count="7">
-          <div style="background:#fff; border:1px solid #DDD9D1; border-radius:16px; padding:18px; display:flex; flex-direction:column;">
+          <div style="background:#fff; border:1px solid #DDD9D1; border-radius:16px; padding:18px; display:flex; flex-direction:column; grid-column:{{ d.span }};">
             <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
               <span style="width:34px; height:34px; flex:none; border-radius:10px; background:{{ d.tint }}; color:{{ d.fg }}; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:12px; overflow:hidden; white-space:nowrap;">{{ d.abbr }}</span>
               <div style="display:flex; flex-direction:column; min-width:0; line-height:1.25;">
@@ -3045,6 +3045,49 @@
               </sc-if>
             <sc-if value="{{ d.showEmpty }}" hint-placeholder-val="{{ true }}">
               <div style="font-size:13px; line-height:1.5; color:#6B7280; flex:1;">Draft a {{ d.label }} plan grounded in the approved script.</div>
+            </sc-if>
+            <sc-if value="{{ d.isSound }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top:14px; border-top:1px dashed #E6E3DC; padding-top:14px;">
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:6px;">
+                  <label style="font-size:12.5px; font-weight:700; color:#17325E; display:flex; align-items:center; gap:7px; cursor:pointer;"><input type="checkbox" checked="{{ soundOn }}" onChange="{{ toggleSoundOn }}" /> Use this plan in the mix</label>
+                  <span onClick="{{ resetSoundPlan }}" style="cursor:pointer; font-size:12px; font-weight:700; color:#1E7E34;">Reset to plan</span>
+                </div>
+                <div style="font-size:12px; line-height:1.5; color:#6B7280; margin-bottom:10px;">The voice always leads: the music sits under every spoken line and moves in the pauses. {{ soundSummary }} Anything you change here is marked <b>yours</b>; everything else follows the beat roles.</div>
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:8px;">
+                  <span style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#6B7280; min-width:84px;">Lift in pauses</span>
+                  <sc-for list="{{ soundDuckOpts }}" as="o" hint-placeholder-count="3">
+                    <span onClick="{{ o.set }}" style="cursor:pointer; padding:5px 11px; border-radius:8px; font-size:12px; font-weight:700; border:1px solid {{ o.border }}; background:{{ o.bg }}; color:{{ o.fg }};">{{ o.label }}</span>
+                  </sc-for>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:8px;">
+                  <span style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#6B7280; min-width:84px;">Ending</span>
+                  <sc-for list="{{ soundEndingOpts }}" as="o" hint-placeholder-count="3">
+                    <span onClick="{{ o.set }}" style="cursor:pointer; padding:5px 11px; border-radius:8px; font-size:12px; font-weight:700; border:1px solid {{ o.border }}; background:{{ o.bg }}; color:{{ o.fg }};">{{ o.label }}</span>
+                  </sc-for>
+                </div>
+                <label style="font-size:12px; color:#41505F; display:flex; align-items:center; gap:7px; cursor:pointer; margin-bottom:10px;"><input type="checkbox" checked="{{ soundCarve }}" onChange="{{ toggleSoundCarve }}" /> Keep the voice clear (a small dip in the music where the voice sits)</label>
+                <sc-if value="{{ hasSoundScenes }}" hint-placeholder-val="{{ false }}">
+                  <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#6B7280; margin-bottom:6px;">Music in each scene, when nobody is speaking</div>
+                  <div style="display:flex; flex-direction:column; gap:6px;">
+                    <sc-for list="{{ soundSceneRows }}" as="r" hint-placeholder-count="4">
+                      <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; border:1px solid #ECE9E2; border-radius:9px; padding:6px 10px; background:#FBFAF8;">
+                        <span style="font-size:12.5px; font-weight:800; color:#17325E; min-width:62px;">Scene {{ r.no }}</span>
+                        <span style="font-size:11px; font-weight:700; color:#6B7280; min-width:78px;">{{ r.role }}</span>
+                        <select data-no="{{ r.no }}" value="{{ r.value }}" onChange="{{ setSoundScene }}" style="border:1px solid #E6E3DC; border-radius:8px; padding:4px 8px; font-size:12px; font-weight:700; color:#17325E; background:#fff; font-family:inherit;">
+                          <option value="">{{ r.autoText }}</option>
+                          <option value="under">Under (stay low)</option>
+                          <option value="open">Open (lift in pauses)</option>
+                          <option value="swell">Swell</option>
+                          <option value="out">Out (drop away)</option>
+                        </select>
+                        <sc-if value="{{ r.yours }}" hint-placeholder-val="{{ false }}">
+                          <span style="font-size:10.5px; font-weight:800; color:#8A5B0F; background:#FDEEDA; border-radius:20px; padding:1px 8px;">yours</span>
+                        </sc-if>
+                      </div>
+                    </sc-for>
+                  </div>
+                </sc-if>
+              </div>
             </sc-if>
             <sc-if value="{{ d.showDraft }}" hint-placeholder-val="{{ true }}">
               <button onClick="{{ d.draft }}" style="margin-top:14px; background:#F4FAF5; color:#1E7E34; border:1px solid #C9E7CE; border-radius:10px; padding:9px 14px; font-weight:700; font-size:13px; cursor:pointer; display:flex; align-items:center; gap:8px; justify-content:center;">
@@ -3110,6 +3153,10 @@
               </div>
             </div>
           </sc-if>
+          <div style="background:#F1F6FA; border:1px solid #D8E5EE; border-radius:10px; padding:9px 12px; margin-bottom:12px;">
+            <div style="font-size:11px; font-weight:800; letter-spacing:0.05em; text-transform:uppercase; color:#2B6A8F; margin-bottom:3px;">Sound design</div>
+            <div style="font-size:12px; line-height:1.5; color:#41505F;">{{ soundSummary }} <span onClick="{{ goSoundDesign }}" style="cursor:pointer; font-weight:700; color:#17325E; text-decoration:underline;">Edit on the Shoot Board</span></div>
+          </div>
           <label style="display:block; font-size:11.5px; font-weight:700; color:#17325E; margin:0 0 7px; text-transform:uppercase; letter-spacing:0.02em;">Music mood</label>
           <input value="{{ prodMusic }}" onChange="{{ onProdMusic }}" style="width:100%; border:1px solid #DDD9D1; border-radius:10px; padding:10px 12px; font-size:14px; background:#fff; color:#17325E; margin-bottom:14px;" />
           <label style="display:block; font-size:11.5px; font-weight:700; color:#17325E; margin:0 0 7px; text-transform:uppercase; letter-spacing:0.02em;">Voiceover</label>
@@ -3179,6 +3226,9 @@
                 <span style="font-size:12.5px; font-weight:700; color:#1E7E34;">{{ lockedMusicLabel }}</span>
                 <span onClick="{{ clearMusic }}" style="cursor:pointer; font-size:11px; font-weight:700; color:#6B7280;">Clear</span>
               </div>
+              <sc-if value="{{ musicMoodChanged }}" hint-placeholder-val="{{ false }}">
+                <div style="font-size:11.5px; line-height:1.45; color:#8A5B0F; background:#FDEEDA; border-radius:8px; padding:6px 10px; margin-bottom:8px;">The music mood has changed since this bed was made, so the film's shots and this bed no longer tell the same story. Clear it and get a new option.</div>
+              </sc-if>
               {{ lockedMusicPlayer }}
             </div>
           </sc-if>
@@ -11219,6 +11269,11 @@ class Component extends DCLogic {
     musicOptions: [],              // auditioned candidate beds
     musicUrl: null,                // the LOCKED bed — preview and render both use this one
     musicLevel: 'balanced',        // subtle | balanced | forward
+    // Sound design (soundplan.py). soundPlan holds ONLY what the person chose -- {off, duck, ending, carve, scenes:{no:state},
+    // mood, moodTouched}; everything else is derived. soundBase is the plan the film starts from (POST /sound-plan).
+    soundPlan: {},
+    soundBase: [],
+    musicLockMood: null,           // the music mood the locked bed was made under, to say when the mood has moved on
     musicBusy: false,
     silentMaster: null,            // silent cut kept so music can change with no video spend
     providers: {},                 // which engine served video / music / voice on the last run
@@ -14741,7 +14796,7 @@ class Component extends DCLogic {
 
   // ---------- video generation ----------
   pickVideoObjective = (name) => () => {
-    this.setState({ videoObjective:name, videoConcept:null, videoRefusal:'', scriptVersions:[], scriptStatus:'none', fullScript:null, sceneFrames:{}, shoot:{}, producedUrl:null, scriptPhase:'concept', videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null, renderInfo:null, castRefUrl:null, videoCastChoice:'', videoPlateChoice:'', videoPackChoice:'', frameNote:'', scriptRefine:'', production:{ aspect:'16:9', music:'Warm strings', voice:'Warm female (Telugu-accented English)', status:'idle', versions:[] } });
+    this.setState({ videoObjective:name, videoConcept:null, videoRefusal:'', scriptVersions:[], scriptStatus:'none', fullScript:null, sceneFrames:{}, shoot:{}, producedUrl:null, scriptPhase:'concept', videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null, renderInfo:null, castRefUrl:null, videoCastChoice:'', videoPlateChoice:'', videoPackChoice:'', frameNote:'', scriptRefine:'', soundPlan:{}, soundBase:[], musicStyle:'warm-strings', musicLockMood:null, production:{ aspect:'16:9', music:'Warm strings', voice:'Warm female (Telugu-accented English)', status:'idle', versions:[] } });
     // Same "surfaced up front" reasoning as POSM's loadPosmAssetLib: a real reference picker with
     // nothing loaded to pick from is just a slower text box.
     if (!this.state.videoAssets.length) this.loadVideoAssetLib();
@@ -14783,7 +14838,7 @@ class Component extends DCLogic {
     const d = await this.apiGet('/beat-plan?seconds=' + secs);
     if (d && Array.isArray(d.beats)) this.setState({ beatPlan:d });
   };
-  setMusic = (e) => this.setState(s => ({ production:{ ...s.production, music:e.target.value } }));
+  setMusic = (e) => this.setMood(e.target.value, true);
   setVoice = (e) => this.setState(s => ({ production:{ ...s.production, voice:e.target.value } }));
 
   showToast(text, tone){ this.setState({ toast:{ text, tone: tone||'info' } }); clearTimeout(this._toastT); this._toastT = setTimeout(()=>this.setState({ toast:null }), 4200); }
@@ -15556,6 +15611,7 @@ class Component extends DCLogic {
     { id:'lighting', label:'Lighting', abbr:'Lt', tint:'#FDEEDA', fg:'#C8860F', home:'shoot', feeds:'feeds the frames' },
     { id:'music', label:'Music', abbr:'Mu', tint:'#EFE8FA', fg:'#6B4FB0', home:'shoot', feeds:'document only' },
     { id:'dialogue', label:'Dialogue / VO', abbr:'D/V', tint:'#FBE3E1', fg:'#C0392B', home:'shoot', feeds:'document only' },
+    { id:'sound', label:'Sound design', abbr:'SD', tint:'#E3EFF6', fg:'#2B6A8F', home:'shoot', feeds:'feeds the mix' },
     { id:'keyshots', label:'Key Shots', abbr:'KS', tint:'#E9F4F2', fg:'#1A8A7A', home:'shoot' },
   ];
   // Department drafts are read by the frame renderer and the cast-reference call as direction, so a drafted
@@ -15596,7 +15652,8 @@ class Component extends DCLogic {
   // (an empty Location line, no cast sheet yet, no pack ticked -> nothing said). Cast and Location are upstream of the
   // cast sheet and the Location line, so they are not told those -- they are what those are written FROM.
   DEPT_FACTS = { cast:[], location:['look'], dop:['location','look','pack','aspect'], lighting:['location','look'],
-                 props:['location','cast','pack'], wardrobe:['cast','look'], music:['cast'], dialogue:['cast'] };
+                 props:['location','cast','pack'], wardrobe:['cast','look'], music:['cast'], dialogue:['cast'],
+                 sound:['location','cast','musicnote','roles'] };
   decidedFacts(id){
     const s = this.state, want = this.DEPT_FACTS[id] || [], lines = [];
     if (want.indexOf('cast') >= 0) {
@@ -15615,6 +15672,14 @@ class Component extends DCLogic {
       const nos = (s.fullScript || []).map((r, i) => this.packOnFrame(i) ? Number(r.no != null ? r.no : i + 1) : 0).filter(Boolean);
       if (nos.length) lines.push('The real pack photo is added to scene' + (nos.length > 1 ? 's ' : ' ') + nos.join(', ') + ' straight from the library: do not describe the pack design, colours or artwork, and do not bring a pack into any other scene.');
     }
+    if (want.indexOf('musicnote') >= 0) {
+      const mn = this.clipText(this.stripMd(this.plainDept(((s.shoot || {}).music || {}).text)), 500);
+      if (mn) lines.push('Music note (the music direction already written): ' + mn);
+    }
+    if (want.indexOf('roles') >= 0) {
+      const base = s.soundBase || [];
+      if (base.length) lines.push('What each scene is for: ' + base.map(x => 'scene ' + x.no + ' ' + (this.BEAT_ROLE_LABELS[x.role] || x.role || 'scene').toLowerCase()).join(', '));
+    }
     if (want.indexOf('aspect') >= 0) lines.push('Every frame is drawn ' + this.filmAspect() + ': do not specify any other aspect ratio, letterbox or anamorphic format.');
     return lines.length ? ' ALREADY DECIDED for this film -- build on these and never contradict them: ' + lines.map(x => x.replace(/[.\s]+$/, '')).join(' | ') + '.' : '';
   }
@@ -15628,7 +15693,7 @@ class Component extends DCLogic {
         const pre = this.brandPreamble('the ' + dept.label + ' department head', this.state.producerBrandMode === 'general');
         if (!pre) { this.showToast(this.BRAND_PREAMBLE_MISSING);
           this.setState(st => ({ shoot:{ ...st.shoot, [id]:{ status:'idle', text:'' } } })); return; }
-        const prompt = pre + '\n\nBase your plan strictly on this APPROVED SCRIPT: '+JSON.stringify(this.scriptForPrompt(this.state.fullScript))+'.' + this.decidedFacts(id) + ' Give a tight, practical '+dept.label+' plan (3-4 sentences)' + (id === 'music' ? ', then end with one separate line starting "Suggested style:" that names the music in 4-10 words a music generator could use' : '') + '. Write it as a decided plan in plain statements: do not ask the reader any question, do not ask for confirmation, and do not offer alternatives to choose between. Where something is not specified, make a sensible choice and state it.';
+        const prompt = pre + '\n\nBase your plan strictly on this APPROVED SCRIPT: '+JSON.stringify(this.scriptForPrompt(this.state.fullScript))+'.' + this.decidedFacts(id) + ' Give a tight, practical '+dept.label+' plan (3-4 sentences)' + (id === 'sound' ? ', covering the room tone of the place, the specific sounds that mark what happens in the scenes, and how the music behaves around the voice (the voiceover leads: music always sits under a spoken line, lifts in the pauses, swells at the turn and resolves at the end). Do not repeat the spoken lines' : '') + (id === 'music' ? ', then end with one separate line starting "Suggested style:" that names the music in 4-10 words a music generator could use' : '') + '. Write it as a decided plan in plain statements: do not ask the reader any question, do not ask for confirmation, and do not offer alternatives to choose between. Where something is not specified, make a sensible choice and state it.';
         let raw = await this.complete(prompt);
         text = this.plainDept(String(raw).trim().replace(/^```/,'').replace(/```$/,'').trim());
       } catch (e) {}
@@ -15641,13 +15706,101 @@ class Component extends DCLogic {
       return;
     }
     this.setState(s => ({ shoot:{ ...s.shoot, [id]:{ status:'done', text } } }));
+    // The Music note's suggested style becomes Production's music mood while the person has not set one themselves.
+    if (id === 'music') this.applyMusicNoteStyle(text);
   };
   // Copies the Music note's "Suggested style" line into Production's Music mood; nothing else reads the note.
   useMusicStyle(line){
     const v = String(line || '').trim().replace(/[.]+$/, '');
     if (!v) return;
-    this.setState(s => ({ production:{ ...s.production, music:v } }));
+    this.setMood(v, true);
     this.showToast('Production music mood set to: ' + v, 'ok');
+  }
+  // ---------- Sound design (soundplan.py) ----------
+  // The music styles on offer: the server's list once loaded, else the same eight by name.
+  musicChips(){
+    return this.state.musicStyleList.length ? this.state.musicStyleList
+      : [{id:'warm-strings',label:'Warm strings'},{id:'indian-flute',label:'Gentle Indian flute'},
+         {id:'tabla-light',label:'Tabla & light percussion'},{id:'festive-dhol',label:'Festive dhol'},
+         {id:'devotional',label:'Devotional / temple'},{id:'piano-ambient',label:'Ambient piano'},
+         {id:'cinematic',label:'Cinematic orchestral'},{id:'upbeat-modern',label:'Modern upbeat'}];
+  }
+  // The ONE place the music mood changes: the Production field, the style chips, the Music note's suggested style and the
+  // saved film all go through here, so they cannot disagree. A chip's name is a style (highlighted); anything else is free
+  // text, which the music generator accepts just the same. `touched` = the person chose it (the Music note then stops
+  // filling it in for them).
+  setMood(text, touched){
+    const v = String(text || '').trim();
+    const hit = this.musicChips().find(o => String(o.label).toLowerCase() === v.toLowerCase() || o.id === v);
+    this.setState(st => {
+      const sp = st.soundPlan || {};
+      return { production:{ ...st.production, music:v }, musicStyle: hit ? hit.id : '',
+        soundPlan:{ ...sp, mood:v, moodTouched: !!touched || !!sp.moodTouched } };
+    });
+  }
+  applyMusicNoteStyle(text){
+    const line = ((String(text || '').match(/^[ \t]*Suggested style:[ \t]*(.+)$/im) || [])[1] || '').trim().replace(/[.]+$/, '');
+    if (!line || (this.state.soundPlan || {}).moodTouched) return;
+    this.setMood(line, false);
+    this.showToast('Production music mood set from the Music note: ' + line, 'ok');
+  }
+  // What the card starts from: each scene's beat role and music state, from the server (the mix derives the same ones).
+  // Re-asked only when the scenes or their Beat roles change.
+  refreshSoundBase = async () => {
+    const rows = this.state.fullScript || [];
+    if (!rows.length) { if ((this.state.soundBase || []).length) this.setState({ soundBase: [] }); this._soundBaseSig = ''; return; }
+    const sig = JSON.stringify(rows.map((r, i) => [this.sceneNo(r, i), this.beatRoleOf(r)]));
+    if (sig === this._soundBaseSig) return;
+    this._soundBaseSig = sig;
+    const r = await this.apiCall('/sound-plan', { scenes: rows.map((x, i) => ({ no:this.sceneNo(x, i), tc:x.tc, beat_role:x.beat_role })) });
+    const d = (r && r.data) || {};
+    if (r && r.ok && Array.isArray(d.scenes)) this.setState({ soundBase: d.scenes });
+  };
+  // What the mix is told: the person's choices only (the server derives the rest), or nothing when it is switched off.
+  soundPlanPayload(){
+    const s = this.state, sp = s.soundPlan || {};
+    if (sp.off || !(s.fullScript || []).length) return null;
+    return { duck: sp.duck || 'normal', ending: sp.ending || 'fade', carve: sp.carve !== false,
+      scenes: Object.keys(sp.scenes || {}).map(k => ({ no:Number(k), music:sp.scenes[k] })) };
+  }
+  setSoundPlan(patch){ this.setState(st => ({ soundPlan:{ ...(st.soundPlan || {}), ...patch } })); }
+  toggleSoundOn = () => this.setSoundPlan({ off: !(this.state.soundPlan || {}).off });
+  setSoundDuck = (id) => () => this.setSoundPlan({ duck:id });
+  setSoundEnding = (id) => () => this.setSoundPlan({ ending:id });
+  toggleSoundCarve = () => this.setSoundPlan({ carve: (this.state.soundPlan || {}).carve === false });
+  setSoundScene = (e) => {
+    const no = String(e.target.getAttribute('data-no')), val = e.target.value;
+    this.setState(st => {
+      const sp = st.soundPlan || {}; const scenes = { ...(sp.scenes || {}) };
+      if (val) scenes[no] = val; else delete scenes[no];
+      return { soundPlan:{ ...sp, scenes } };
+    });
+  };
+  // Back to what the film's beat roles say: every choice made on the card is dropped (the music mood is not part of it).
+  resetSoundPlan = () => {
+    this.setState(st => { const sp = st.soundPlan || {}; const out = {}; if (sp.mood !== undefined) { out.mood = sp.mood; out.moodTouched = sp.moodTouched; } return { soundPlan: out }; });
+    this.showToast('Sound design is back to the plan.', 'ok');
+  };
+  goSoundDesign = () => this.setVideoStep('shootboard')();
+  SOUND_STATE_LABELS = { under:'Under (stay low)', open:'Open (lift in pauses)', swell:'Swell', out:'Out (drop away)' };
+  // Mirrors soundplan.DUCK_DB -- for display only; the mix reads the server's own table.
+  SOUND_DUCK_DB = { subtle:5, normal:8, strong:12 };
+  soundEffective(){
+    const sp = this.state.soundPlan || {};
+    return (this.state.soundBase || []).map(b => ({ no:b.no, role:b.role, auto:b.music, mine:(sp.scenes || {})[String(b.no)] || '', state:(sp.scenes || {})[String(b.no)] || b.music }));
+  }
+  soundSummary(){
+    const sp = this.state.soundPlan || {};
+    if (sp.off) return 'Off ' + String.fromCharCode(8212) + ' the music stays at one level under the voice.';
+    const eff = this.soundEffective();
+    const list = (st) => eff.filter(x => x.state === st).map(x => x.no);
+    const nums = (a) => (a.length > 1 ? 'scenes ' : 'scene ') + (a.length > 1 ? a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1] : a[0]);
+    const parts = ['lifts ' + (this.SOUND_DUCK_DB[sp.duck || 'normal'] || 8) + ' dB in the pauses'];
+    if (list('swell').length) parts.push('swells at ' + nums(list('swell')));
+    if (list('under').length) parts.push('stays low in ' + nums(list('under')));
+    if (list('out').length) parts.push('drops away at ' + nums(list('out')));
+    parts.push({ fade:'fades out at the end', release:'holds, then releases at the end', stop:'stops with the picture' }[sp.ending || 'fade']);
+    return 'The music ' + parts.slice(0, -1).join(', ') + ', and ' + parts[parts.length - 1] + '.';
   }
   toggleScriptRef = () => this.setState(s => ({ scriptRefOpen: !s.scriptRefOpen }));
   openLightbox = (url) => () => { if (url) this.setState({ lightbox:url }); };
@@ -15772,14 +15925,16 @@ class Component extends DCLogic {
   };
   // Keep previous takes when the style changes — each card is labelled with its own style,
   // so you can compare a flute bed against a strings bed side by side.
-  setMusicStyle = (id) => () => this.setState({ musicStyle:id });
+  setMusicStyle = (id) => () => { const hit = this.musicChips().find(o => o.id === id); this.setMood(hit ? hit.label : id, true); };
   setMusicLevel = (id) => () => this.setState({ musicLevel:id, voiceAudioUrl:null });
   auditionMusic = async () => {
     if (this.state.musicBusy) return;
     this.setState({ musicBusy:true });
     // ONE short take per request. Music generation runs about a minute, so asking for three at
     // once just meant a long wait before anything could be heard.
-    const r = await this.apiCall('/music-options', { style:this.state.musicStyle, count:1, seconds:15,
+    // The take is made from the music MOOD (the one field the chips, the Music note and Production all write), so what is
+    // auditioned is what the film is told.
+    const r = await this.apiCall('/music-options', { style:this.state.musicStyle || this.state.production.music, count:1, seconds:15,
                                                     engines:this.state.engines });
     const d = (r && r.data) || {};
     const got = (d.options || []).filter(o => o.audio_url);
@@ -15794,10 +15949,10 @@ class Component extends DCLogic {
   };
   chooseMusic = (url) => () => {
     // Lock the bed so the preview and the final render use the identical track.
-    this.setState({ musicUrl:url, voiceAudioUrl:null });
+    this.setState({ musicUrl:url, voiceAudioUrl:null, musicLockMood:this.state.production.music });
     this.showToast('Music locked \u2014 preview and render will both use this bed.', 'ok');
   };
-  clearMusic = () => this.setState({ musicUrl:null, musicOptions:[], voiceAudioUrl:null });
+  clearMusic = () => this.setState({ musicUrl:null, musicOptions:[], voiceAudioUrl:null, musicLockMood:null });
   rescoreCut = async () => {
     if (this.state.rescoring) return;
     if (!this.state.silentMaster) {
@@ -15811,7 +15966,8 @@ class Component extends DCLogic {
       duration:this.state.prodDuration, voice:p0.voice, music:p0.music,
       music_url:this.state.musicUrl || '', music_level:this.state.musicLevel,
       voices:this.state.voiceChoices, accent:this.state.voiceAccent,
-      characters:this.state.videoCharacters, engines:this.state.engines });
+      characters:this.state.videoCharacters, engines:this.state.engines,
+      ...(this.soundPlanPayload() ? { sound_plan:this.soundPlanPayload() } : {}) });
     const d = (r && r.data) || {};
     if (!r || !r.ok || !d.video_url) {
       this.setState({ rescoring:false });
@@ -15828,7 +15984,7 @@ class Component extends DCLogic {
   };
   musicStyleLabel(){
     const hit = (this.state.musicStyleList||[]).find(o => o.id===this.state.musicStyle);
-    return hit ? hit.label : this.state.musicStyle;
+    return hit ? hit.label : (this.state.musicStyle || this.state.production.music);
   }
 
   // ---------- cast reference: the anchor that keeps characters identical ----------
@@ -15958,7 +16114,7 @@ class Component extends DCLogic {
              music:p.music, characters:this.state.videoCharacters, voices:this.state.voiceChoices,
              accent:this.state.voiceAccent,
              music_url:this.state.musicUrl || '', music_level:this.state.musicLevel,
-             engines:this.state.engines };
+             engines:this.state.engines, ...(this.soundPlanPayload() ? { sound_plan:this.soundPlanPayload() } : {}) };
   }
   // Rows written before structured audio existed have no `audio` array. The plan knows what the
   // backend parsed out of them, so write it back — then editing a line actually changes the render.
@@ -16132,6 +16288,9 @@ class Component extends DCLogic {
     // The look reference also reaches the video prompt (it matters most for shots with no storyboard frame).
     const lookRef = (this.state.videoLookRef || '').trim();
     if (lookRef) body.look_note = lookRef;
+    // The Sound design card's plan shapes the music bed around the voice (nothing is sent when it is switched off).
+    const soundPlan = this.soundPlanPayload();
+    if (soundPlan) body.sound_plan = soundPlan;
     const r = await this.apiCall('/produce-video', body);
     const d = (r && r.data) || {};
     const url = (r && r.ok && d.video_url) ? d.video_url : null;
@@ -17334,6 +17493,7 @@ class Component extends DCLogic {
       const styleLine = d.id === 'music' ? ((String(st.text || '').match(/^[ \t]*Suggested style:[ \t]*(.+)$/im) || [])[1] || '').trim() : '';
       return { ...d, text:st.text, hasText: st.status==='done', drafting: st.status==='drafting', isKeyshots: d.id==='keyshots',
         feeds: d.feeds || '', hasStyleLine: !!styleLine, styleLine, useStyle: () => this.useMusicStyle(styleLine),
+        isSound: d.id === 'sound', span: d.id === 'sound' ? '1 / -1' : 'auto',
         showDraft: d.id!=='keyshots', showEmpty: d.id!=='keyshots' && st.status!=='done',
         draft:this.draftDept(d.id), edit:this.onDeptText(d.id),
         draftLabel: st.status==='drafting' ? 'Drafting…' : (st.status==='done' ? '↻ Redraft' : '✦ AI draft') }; };
@@ -18200,12 +18360,8 @@ class Component extends DCLogic {
         : ((s.musicOptions||[]).length ? '\u21bb Another option' : '\u266a Get a music option'),
       musicNote: s.musicUrl
         ? 'This bed is locked \u2014 the soundtrack preview and the final render both use it, so you hear exactly what you get.'
-        : 'Pick a style and get a short take (about a minute to compose). Ask for another until one fits, then lock it. Changing music on a film you have already rendered costs only the audio \u2014 no new video.',
-      musicStyles: (s.musicStyleList.length ? s.musicStyleList
-                    : [{id:'warm-strings',label:'Warm strings'},{id:'indian-flute',label:'Gentle Indian flute'},
-                       {id:'tabla-light',label:'Tabla & light percussion'},{id:'festive-dhol',label:'Festive dhol'},
-                       {id:'devotional',label:'Devotional / temple'},{id:'piano-ambient',label:'Ambient piano'},
-                       {id:'cinematic',label:'Cinematic orchestral'},{id:'upbeat-modern',label:'Modern upbeat'}])
+        : 'The style chips and the Music mood box above are one setting: a chip fills the box, and the take is made from what it says. Get a short take (about a minute to compose), ask for another until one fits, then lock it. Changing music on a film you have already rendered costs only the audio \u2014 no new video.',
+      musicStyles: this.musicChips()
                     .map(o => ({ label:o.label, set:this.setMusicStyle(o.id),
                       bg: s.musicStyle===o.id ? '#17325E' : '#fff', fg: s.musicStyle===o.id ? '#fff' : '#17325E',
                       border: s.musicStyle===o.id ? '#17325E' : '#DDD9D1' })),
@@ -18226,6 +18382,22 @@ class Component extends DCLogic {
             style:{ width:'100%', height:34 } }) };
       }),
       hasLockedMusic: !!s.musicUrl,
+      musicMoodChanged: !!s.musicUrl && s.musicLockMood != null && s.musicLockMood !== s.production.music,
+      soundOn: !(s.soundPlan || {}).off, toggleSoundOn: this.toggleSoundOn, resetSoundPlan: this.resetSoundPlan,
+      soundCarve: (s.soundPlan || {}).carve !== false, toggleSoundCarve: this.toggleSoundCarve, setSoundScene: this.setSoundScene,
+      soundSummary: this.soundSummary(), goSoundDesign: this.goSoundDesign,
+      soundDuckOpts: [['subtle', 'Subtle'], ['normal', 'Normal'], ['strong', 'Strong']].map(([id, label]) => ({ label, set:this.setSoundDuck(id),
+        bg: (s.soundPlan || {}).duck === id || (!(s.soundPlan || {}).duck && id === 'normal') ? '#17325E' : '#fff',
+        fg: (s.soundPlan || {}).duck === id || (!(s.soundPlan || {}).duck && id === 'normal') ? '#fff' : '#17325E',
+        border: (s.soundPlan || {}).duck === id || (!(s.soundPlan || {}).duck && id === 'normal') ? '#17325E' : '#DDD9D1' })),
+      soundEndingOpts: [['fade', 'Fade out'], ['release', 'Hold, then release'], ['stop', 'Hard stop']].map(([id, label]) => ({ label, set:this.setSoundEnding(id),
+        bg: (s.soundPlan || {}).ending === id || (!(s.soundPlan || {}).ending && id === 'fade') ? '#17325E' : '#fff',
+        fg: (s.soundPlan || {}).ending === id || (!(s.soundPlan || {}).ending && id === 'fade') ? '#fff' : '#17325E',
+        border: (s.soundPlan || {}).ending === id || (!(s.soundPlan || {}).ending && id === 'fade') ? '#17325E' : '#DDD9D1' })),
+      hasSoundScenes: (s.soundBase || []).length > 0,
+      soundSceneRows: this.soundEffective().map(x => ({ no:x.no, role:this.BEAT_ROLE_LABELS[x.role] || x.role || '', value:x.mine,
+        autoText: 'Auto: ' + (this.SOUND_STATE_LABELS[x.auto] || x.auto), yours:!!x.mine })),
+      soundHasYours: Object.keys((s.soundPlan || {}).scenes || {}).length > 0 || !!(s.soundPlan || {}).duck || !!(s.soundPlan || {}).ending || (s.soundPlan || {}).carve === false || !!(s.soundPlan || {}).off,
       lockedMusicLabel: '\u2713 Locked bed \u00b7 ' + this.musicStyleLabel() + ' \u00b7 ' + s.musicLevel,
       lockedMusicPlayer: s.musicUrl ? React.createElement('audio', { src:s.musicUrl, controls:true,
         style:{ width:'100%', height:34 } }) : null,
@@ -18921,7 +19093,7 @@ class Component extends DCLogic {
       // Video \u2014 concept, script, every department's drafted card, key frames and the cast reference
       // image are each their own "already generated" state with no idea the mode just changed.
       videoConcept:null, conceptRoutes:[], conceptRoute:0, videoRefusal:'',
-      fullScript:null, scriptStatus:'none', scriptPhase:'concept', shoot:{}, sceneFrames:{}, framesBatch:false,
+      fullScript:null, scriptStatus:'none', scriptPhase:'concept', shoot:{}, sceneFrames:{}, framesBatch:false, soundPlan:{}, soundBase:[],
       castRefUrl:null, castOptions:[], castLockSig:'', castGateHit:false, producedUrl:null,
       // POSM \u2014 the rendered/drafted pieces (routes, sketches, isolated elements, recompositions) and
       // the brand-fetched mandatories checklist; every typed override (subject, line, location brief,
@@ -20620,7 +20792,11 @@ class Component extends DCLogic {
       scriptStatus: d.script_status || 'none', scriptPhase: d.script_phase || 'concept',
       fullScript: d.full_script, sceneFrames: d.scene_frames || {}, shoot: cleaned.shoot,
       videoCharacters: d.video_characters || '', videoLocationLine: d.video_location_line || '',
-      videoLookRef: d.video_look_ref || '', videoLocationSrc: d.video_location_src || '' });
+      videoLookRef: d.video_look_ref || '', videoLocationSrc: d.video_location_src || '',
+      soundPlan: d.sound_plan || {},
+      // the music mood the person chose travels with the film (Production's own settings are not saved otherwise)
+      ...((d.sound_plan && d.sound_plan.mood) ? { production:{ ...this.state.production, music:d.sound_plan.mood },
+        musicStyle: ((this.musicChips().find(o => String(o.label).toLowerCase() === String(d.sound_plan.mood).toLowerCase() || o.id === d.sound_plan.mood)) || {}).id || '' } : {}) });
     if (cleaned.count) this.showToast('Removed questions from ' + cleaned.count + ' department draft' + (cleaned.count === 1 ? '' : 's') + ' — they were written as questions to you, not as direction.');
   };
   cleanShootDrafts(shoot){
@@ -20642,7 +20818,7 @@ class Component extends DCLogic {
       video_concept: s.videoConcept, script_status: s.scriptStatus, script_phase: s.scriptPhase,
       full_script: s.fullScript, scene_frames: s.sceneFrames, shoot: s.shoot,
       video_characters: s.videoCharacters, video_location_line: s.videoLocationLine,
-      video_look_ref: s.videoLookRef, video_location_src: s.videoLocationSrc });
+      video_look_ref: s.videoLookRef, video_location_src: s.videoLocationSrc, sound_plan: s.soundPlan || {} });
   };
   saveVideoScriptDebounced = () => {
     clearTimeout(this._videoScriptSaveTimer);
@@ -20662,6 +20838,7 @@ class Component extends DCLogic {
     this._seen = { planId, xTab: s.xTab, screen: s.screen };
     if (changed && s.screen === 'exec') { this.loadExecOptions(); this.loadCampaignsForExec(); }
     // Round 92: video's own execution options, same trigger as the xTab producers' `loadExecOptions`.
+    if (s.screen === 'video' && (s.videoStep === 'shootboard' || s.videoStep === 'production') && s.fullScript) this.refreshSoundBase();
     if (changed && s.screen === 'video') { this.loadVideoExecOptions(); this.loadCampaignsForExec();
       // The Cast / Location / Pack pickers (and the per-frame pack checkbox) read these. They were loaded only when an
       // objective was picked, so a film restored from its saved script -- a page refresh, a return visit -- had EMPTY
@@ -20691,7 +20868,7 @@ class Component extends DCLogic {
     const vsig = { fullScript: s.fullScript, videoCharacters: s.videoCharacters, sceneFrames: s.sceneFrames,
                    shoot: s.shoot, videoConcept: s.videoConcept, scriptStatus: s.scriptStatus,
                    scriptPhase: s.scriptPhase, videoObjective: s.videoObjective, videoLocationLine: s.videoLocationLine,
-                   videoLookRef: s.videoLookRef, videoLocationSrc: s.videoLocationSrc };
+                   videoLookRef: s.videoLookRef, videoLocationSrc: s.videoLocationSrc, soundPlan: s.soundPlan };
     const vPrev = this._videoScriptSig || {};
     const vChanged = Object.keys(vsig).some(k => vsig[k] !== vPrev[k]);
     this._videoScriptSig = vsig;
