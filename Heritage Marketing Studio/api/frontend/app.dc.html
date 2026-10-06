@@ -11757,7 +11757,7 @@ class Component extends DCLogic {
     if (screen === 'library') this.loadMade();
     if (screen === 'library') this.loadCharacters();
     if (screen === 'strategy' || screen === 'plans') this.loadStrategy();
-    if (screen === 'provocation') { this.loadStrategy(); this.loadIdea(); this.loadProvocation(); }
+    if (screen === 'provocation') { this.loadStrategy(); this.loadIdea().then(() => this.loadProvocation()); }
     if (screen === 'briefs' || screen === 'strategy' || screen === 'plans') this.loadBriefs();
     if (screen === 'pr') this.loadPr();
     if (screen === 'media') this.loadMedia();
@@ -21173,6 +21173,8 @@ class Component extends DCLogic {
   };
   // ----- Video stands on a provocation (the card in "What this film is given")
   loadVideoProvocations = async () => {
+    // After a page reload no house is open yet; the platform's own load is what resolves it.
+    if (!this.provHouseId()) await this.loadIdea();
     const hid = this.provHouseId(); if (!hid) { if ((this.state.videoProvList || []).length) this.setState({ videoProvList: [] }); return; }
     const d = await this.apiGet('/provocations?house=' + encodeURIComponent(hid));
     if (d && Array.isArray(d.provocations)) {
@@ -21298,8 +21300,9 @@ class Component extends DCLogic {
   pushRecFurther = async () => {
     const rec = this.P().rec; if (!rec || this.P().recBusy) return;
     if (!rec.id || this.P().dirty) { const ok = await this.saveRec(); if (!ok) return; }
+    const saved = this.P().rec; if (!saved || !saved.id) return;
     this.setProv({ recBusy:true, err:'' });
-    const r = await this.apiCall('/provocation-push', { id:this.P().rec.id, direction:this.P().push || '' });
+    const r = await this.apiCall('/provocation-push', { id:saved.id, direction:this.P().push || '' });
     if (r && r.ok && r.data) { this.setProv({ recBusy:false, rec:r.data, dirty:true }); this.checkRec(); this.showToast('Bolder version ready. The one you had is kept as the safer version. Save it to keep it.', 'ok'); }
     else this.setProv({ recBusy:false, err:this.provError(r, 'Couldn’t push it further just now.') });
   };
@@ -21403,7 +21406,7 @@ class Component extends DCLogic {
     // screen rather than testing the actual nav route into it.
     if (k === 'idea') { this.loadIdea(); this.loadCampaign(); }
     // The provocation is written against the adopted idea platform, so that is read too.
-    if (k === 'provocation') { this.loadIdea(); this.loadProvocation(); } };
+    if (k === 'provocation') { this.loadIdea().then(() => this.loadProvocation()); } };
   toggleIdeaSkip = () => { const i = this.idea(); this.setState({ idea: { ...i, skipped: !i.skipped } }); };
   goSalesHome = () => { this.setState({ screen:'sales' }); window.scrollTo(0,0); };
 
