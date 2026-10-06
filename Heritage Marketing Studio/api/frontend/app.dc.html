@@ -3197,6 +3197,13 @@
           </div>
           <label style="display:block; font-size:11.5px; font-weight:700; color:#17325E; margin:0 0 7px; text-transform:uppercase; letter-spacing:0.02em;">Music mood</label>
           <input value="{{ prodMusic }}" onChange="{{ onProdMusic }}" style="width:100%; border:1px solid #DDD9D1; border-radius:10px; padding:10px 12px; font-size:14px; background:#fff; color:#17325E; margin-bottom:14px;" />
+          <label style="display:block; font-size:11.5px; font-weight:700; color:#17325E; margin:0 0 7px; text-transform:uppercase; letter-spacing:0.02em;">Loudness</label>
+          <div style="display:flex; align-items:center; gap:7px; flex-wrap:wrap; margin-bottom:6px;">
+            <sc-for list="{{ loudnessOpts }}" as="o" hint-placeholder-count="4">
+              <span onClick="{{ o.set }}" style="cursor:pointer; padding:5px 10px; border-radius:8px; font-size:12px; font-weight:700; border:1px solid {{ o.border }}; background:{{ o.bg }}; color:{{ o.fg }};">{{ o.label }}</span>
+            </sc-for>
+          </div>
+          <div style="font-size:11.5px; line-height:1.5; color:#6B7280; margin-bottom:14px;">Brings the finished mix to a delivery level when it is made (a preview, a render or a re-score). The TV numbers are the published broadcast standards, not any one channel's own spec, so confirm with whoever receives the film; online platforms turn loud audio down towards about −14 LUFS. <sc-if value="{{ hasLoudnessNote }}" hint-placeholder-val="{{ false }}"><b>{{ loudnessNote }}</b></sc-if></div>
           <label style="display:block; font-size:11.5px; font-weight:700; color:#17325E; margin:0 0 7px; text-transform:uppercase; letter-spacing:0.02em;">Voiceover</label>
           <input value="{{ prodVoice }}" onChange="{{ onProdVoice }}" style="width:100%; border:1px solid #DDD9D1; border-radius:10px; padding:10px 12px; font-size:14px; background:#fff; color:#17325E; margin-bottom:14px;" />
           <label style="display:block; font-size:11.5px; font-weight:700; color:#17325E; margin:0 0 7px; text-transform:uppercase; letter-spacing:0.02em;">Engines</label>
@@ -11311,6 +11318,7 @@ class Component extends DCLogic {
     // mood, moodTouched}; everything else is derived. soundBase is the plan the film starts from (POST /sound-plan).
     soundPlan: {},
     soundBase: [],
+    loudnessInfo: null,            // what the last preview / render / re-score measured: {integrated, true_peak, target?, ...}
     musicLockMood: null,           // the music mood the locked bed was made under, to say when the mood has moved on
     musicBusy: false,
     silentMaster: null,            // silent cut kept so music can change with no video spend
@@ -15821,7 +15829,7 @@ class Component extends DCLogic {
   };
   // Back to what the film's beat roles say: every choice made on the card is dropped (the music mood is not part of it).
   resetSoundPlan = () => {
-    this.setState(st => { const sp = st.soundPlan || {}; const out = {}; if (sp.mood !== undefined) { out.mood = sp.mood; out.moodTouched = sp.moodTouched; } return { soundPlan: out }; });
+    this.setState(st => { const sp = st.soundPlan || {}; const out = {}; if (sp.mood !== undefined) { out.mood = sp.mood; out.moodTouched = sp.moodTouched; } if (sp.loudness) out.loudness = sp.loudness; return { soundPlan: out }; });
     this.showToast('Sound design is back to the plan.', 'ok');
   };
   setSoundAmbience = (e) => {
@@ -15838,6 +15846,9 @@ class Component extends DCLogic {
       return { soundPlan:{ ...sp, sounds:(sp.sounds || []).map((x, k) => k === i ? { ...x, [f]: f === 'scene' ? Number(v) : v } : x) } }; });
   };
   removeKeySound = (i) => () => this.setState(st => { const sp = st.soundPlan || {}; return { soundPlan:{ ...sp, sounds:(sp.sounds || []).filter((_x, k) => k !== i) } }; });
+  // Delivery loudness ('' = leave the mix as mixed). Saved with the film, but not part of the plan the card resets.
+  setLoudness = (id) => () => this.setSoundPlan({ loudness:id });
+  loudnessParam(){ const v = (this.state.soundPlan || {}).loudness; return v ? { loudness:v } : {}; }
   goSoundDesign = () => this.setVideoStep('shootboard')();
   SOUND_STATE_LABELS = { under:'Under (stay low)', open:'Open (lift in pauses)', swell:'Swell', out:'Out (drop away)' };
   // Mirrors soundplan.DUCK_DB -- for display only; the mix reads the server's own table.
@@ -16028,14 +16039,14 @@ class Component extends DCLogic {
       music_url:this.state.musicUrl || '', music_level:this.state.musicLevel,
       voices:this.state.voiceChoices, accent:this.state.voiceAccent,
       characters:this.state.videoCharacters, engines:this.state.engines,
-      ...(this.soundPlanPayload() ? { sound_plan:this.soundPlanPayload() } : {}) });
+      ...(this.soundPlanPayload() ? { sound_plan:this.soundPlanPayload() } : {}), ...this.loudnessParam() });
     const d = (r && r.data) || {};
     if (!r || !r.ok || !d.video_url) {
       this.setState({ rescoring:false });
       this.showToast(d.detail || 'Re-score failed \u2014 see heritage-log.txt.');
       return;
     }
-    this.setState(s => ({ rescoring:false, producedUrl:d.video_url,
+    this.setState(s => ({ rescoring:false, producedUrl:d.video_url, loudnessInfo:d.loudness || null,
       production:{ ...s.production, status:'ready',
         versions:[...s.production.versions, { v:s.production.versions.length+1,
           note:'New music \u00b7 ' + this.musicStyleLabel(), aspect:s.production.aspect,
@@ -16175,7 +16186,7 @@ class Component extends DCLogic {
              music:p.music, characters:this.state.videoCharacters, voices:this.state.voiceChoices,
              accent:this.state.voiceAccent,
              music_url:this.state.musicUrl || '', music_level:this.state.musicLevel,
-             engines:this.state.engines, ...(this.soundPlanPayload() ? { sound_plan:this.soundPlanPayload() } : {}) };
+             engines:this.state.engines, ...(this.soundPlanPayload() ? { sound_plan:this.soundPlanPayload() } : {}), ...this.loudnessParam() };
   }
   // Rows written before structured audio existed have no `audio` array. The plan knows what the
   // backend parsed out of them, so write it back — then editing a line actually changes the render.
@@ -16275,7 +16286,7 @@ class Component extends DCLogic {
       return;
     }
     this.materialiseAudio(d);
-    this.setState({ voiceBusy:'', voiceAudioUrl:d.audio_url, providers:d.providers || {},
+    this.setState({ voiceBusy:'', voiceAudioUrl:d.audio_url, providers:d.providers || {}, loudnessInfo:d.loudness || null,
                     voicePlan:{ ...(this.state.voicePlan||{}), ...d } });
     this.showToast(d.detail || 'Soundtrack ready — no video was rendered.', d.detail ? 'info' : 'ok');
   };
@@ -16352,6 +16363,7 @@ class Component extends DCLogic {
     // The Sound design card's plan shapes the music bed around the voice (nothing is sent when it is switched off).
     const soundPlan = this.soundPlanPayload();
     if (soundPlan) body.sound_plan = soundPlan;
+    Object.assign(body, this.loudnessParam());
     const r = await this.apiCall('/produce-video', body);
     const d = (r && r.data) || {};
     const url = (r && r.ok && d.video_url) ? d.video_url : null;
@@ -16366,7 +16378,7 @@ class Component extends DCLogic {
         providers: d.providers || s.providers,
         // the silent cut stays on the server, so music can be swapped with no video spend
         silentMaster: d.master || s.silentMaster,
-        musicUrl: d.music_url || s.musicUrl };
+        musicUrl: d.music_url || s.musicUrl, loudnessInfo: d.loudness || s.loudnessInfo };
     });
     if (!isRevise) this.addCreated({ type:'Video', title:(this.state.linkedBrief ? this.state.linkedBrief.title.replace(/ brief.*/i,'').trim()+' — produced film' : 'Produced film'), format:this.state.production.aspect+' · '+this.state.prodDuration, status:'Draft' });
     // B4 — surface the server's `detail` on failure AND on a 200 that carries a warning.
@@ -18447,6 +18459,15 @@ class Component extends DCLogic {
       soundOn: !(s.soundPlan || {}).off, toggleSoundOn: this.toggleSoundOn, resetSoundPlan: this.resetSoundPlan,
       soundCarve: (s.soundPlan || {}).carve !== false, toggleSoundCarve: this.toggleSoundCarve, setSoundScene: this.setSoundScene,
       soundSummary: this.soundSummary(), goSoundDesign: this.goSoundDesign,
+      loudnessOpts: [['', 'As mixed'], ['tv-us', 'TV \u00b7 US (\u221224 LKFS)'], ['tv-eu', 'TV \u00b7 Europe (\u221223 LUFS)'], ['online', 'Online (\u221214 LUFS)']].map(([id, label]) => {
+        const on = ((s.soundPlan || {}).loudness || '') === id;
+        return { label, set:this.setLoudness(id), bg: on ? '#17325E' : '#fff', fg: on ? '#fff' : '#17325E', border: on ? '#17325E' : '#DDD9D1' }; }),
+      hasLoudnessNote: !!s.loudnessInfo,
+      loudnessNote: (() => { const i = s.loudnessInfo; if (!i) return '';
+        if (i.note && i.integrated === undefined) return i.note;
+        const lvl = i.integrated + ' LUFS (true peak ' + i.true_peak + ' dBTP)';
+        if (i.target !== undefined) return 'Last mix: ' + (i.before !== undefined && i.before !== i.integrated ? 'was ' + i.before + ' LUFS, now ' : 'is ') + lvl + ' \u2014 target ' + i.target + ' LUFS (' + i.label + ').' + (i.note ? ' ' + i.note : '');
+        return 'Last mix measured ' + lvl + '.' + (i.note ? ' ' + i.note : ''); })(),
       soundDuckOpts: [['subtle', 'Subtle'], ['normal', 'Normal'], ['strong', 'Strong']].map(([id, label]) => ({ label, set:this.setSoundDuck(id),
         bg: (s.soundPlan || {}).duck === id || (!(s.soundPlan || {}).duck && id === 'normal') ? '#17325E' : '#fff',
         fg: (s.soundPlan || {}).duck === id || (!(s.soundPlan || {}).duck && id === 'normal') ? '#fff' : '#17325E',

@@ -20,6 +20,8 @@ Providers (all on fal, verified against the account):
 """
 from __future__ import annotations
 
+import json
+import math
 import os
 import re
 import subprocess
@@ -193,6 +195,95 @@ def probe_duration(exe: str, path: str) -> float | None:
         return None
     h, mnt, s = m.groups()
     return int(h) * 3600 + int(mnt) * 60 + float(s)
+
+
+# ---------------------------------------------------------------------------------------------------
+# Loudness. A finished mix has a level nobody chose: the voice, the bed and the extras add up to whatever they add up to,
+# and each destination then judges it against its own number -- broadcast against a fixed target (ATSC A/85 -24 LKFS in the
+# US, EBU R128 -23 LUFS in Europe, both measured with ITU-R BS.1770), online platforms by turning loud audio DOWN towards
+# about -14 LUFS (YouTube; it does not turn quiet audio up). `loudness_pass` always MEASURES the finished mix and, when a
+# preset is named, brings it to that target in place. The presets are the published standards, not a delivery spec for any
+# particular channel: confirm the number with whoever receives the film.
+LOUDNESS = {
+    "tv-us":  {"label": "TV (US)",      "lufs": -24.0, "tp": -2.0},
+    "tv-eu":  {"label": "TV (Europe)",  "lufs": -23.0, "tp": -1.0},
+    "online": {"label": "Online video", "lufs": -14.0, "tp": -1.0},
+}
+MIN_LOUDNESS_SECONDS = 3.0      # loudness is an average over time; under this a measurement means little
+
+
+def _loudnorm_json(exe: str, path: str, lufs: float, tp: float, extra: str = "") -> dict | None:
+    """ffmpeg's loudnorm in measuring mode over the audio of `path`; its JSON report, or None."""
+    cmd = [exe, "-hide_banner", "-nostats", "-i", path, "-vn", "-af",
+           f"loudnorm=I={lufs}:TP={tp}:LRA=11{extra}:print_format=json", "-f", "null", "-"]
+    try:
+        res = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+    except subprocess.TimeoutExpired:
+        return None
+    m = re.search(r"\{[^{}]*\"input_i\"[^{}]*\}", res.stderr or "", re.S)
+    if not m:
+        return None
+    try:
+        return json.loads(m.group(0))
+    except ValueError:
+        return None
+
+
+def loudness_pass(exe: str, path: str, preset=None) -> dict:
+    """Measure the finished mix at `path` and, if `preset` names a target in LOUDNESS, bring it there (the file is replaced).
+
+    Always returns something a screen can print: `integrated` (LUFS) and `true_peak` (dBTP) of the file as it now is; with a
+    target also `target`, `label`, `before` and `after`. A mix too short or too silent to judge says so in `note` and is left
+    untouched. Never raises: a render must not fail over its loudness.
+    """
+    spec = LOUDNESS.get(str(preset or "").strip().lower())
+    lufs, tp = (spec["lufs"], spec["tp"]) if spec else (-24.0, -2.0)
+    m = _loudnorm_json(exe, path, lufs, tp)
+    try:
+        before, peak = float(m["input_i"]), float(m["input_tp"])
+    except (TypeError, KeyError, ValueError):
+        return {"note": "The loudness of this mix could not be measured."}
+    if math.isinf(before) or before < -69:
+        return {"note": "This mix is silent, so its loudness was not measured."}
+    info: dict = {"integrated": round(before, 1), "true_peak": round(peak, 1)}
+    if not spec:
+        return info
+    info.update(target=spec["lufs"], label=spec["label"], before=round(before, 1))
+    dur = probe_duration(exe, path) or 0.0
+    if dur and dur < MIN_LOUDNESS_SECONDS:
+        info["note"] = f"Under {MIN_LOUDNESS_SECONDS:.0f} seconds is too short to set a loudness target reliably, so it was left as mixed."
+        return info
+    if abs(before - lufs) < 0.3 and peak <= tp + 0.1:
+        info["after"] = info["integrated"]
+        return info
+    is_video = path.lower().endswith((".mp4", ".mov", ".m4v"))
+    tmp = path + ".loud" + os.path.splitext(path)[1]
+    flt = (f"loudnorm=I={lufs}:TP={tp}:LRA=11:measured_I={m['input_i']}:measured_TP={m['input_tp']}:"
+           f"measured_LRA={m['input_lra']}:measured_thresh={m['input_thresh']}:offset={m['target_offset']}:linear=true")
+    cmd = [exe, "-y", "-hide_banner", "-loglevel", "error", "-i", path]
+    if is_video:
+        cmd += ["-map", "0:v?", "-map", "0:a:0", "-c:v", "copy", "-af", flt, "-c:a", "aac", "-b:a", "192k", "-ar", "44100",
+                "-ac", CHANNELS, "-movflags", "+faststart"]
+    else:
+        cmd += ["-af", flt, "-c:a", "libmp3lame", "-b:a", "192k", "-ar", "44100", "-ac", CHANNELS]
+    cmd += [tmp]
+    try:
+        res = subprocess.run(cmd, capture_output=True, text=True, timeout=900)
+    except subprocess.TimeoutExpired:
+        res = None
+    if not res or res.returncode != 0 or not os.path.exists(tmp) or os.path.getsize(tmp) == 0:
+        if os.path.exists(tmp):
+            os.remove(tmp)
+        info["note"] = "The loudness target could not be applied, so the mix was left as it was."
+        return info
+    os.replace(tmp, path)
+    after = _loudnorm_json(exe, path, lufs, tp)
+    try:
+        info["integrated"], info["true_peak"] = round(float(after["input_i"]), 1), round(float(after["input_tp"]), 1)
+    except (TypeError, KeyError, ValueError):
+        pass
+    info["after"] = info["integrated"]
+    return info
 
 
 def _download(url: str, dest: str) -> bool:

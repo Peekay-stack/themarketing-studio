@@ -179,6 +179,33 @@ if plain.status_code == 200 and withx.status_code == 200:
 amb = client.post("/voice-preview", json={**pv_base, "scenes": rows(), "sound_plan": {**PLAN, "ambience": {"id": "AMB1", "level": "location"}}})
 check("an ambience bed lifts the whole preview", amb.status_code == 200 and db(path_of(amb.json()["audio_url"]), 3.0, 6.0) - db(path_of(plain.json()["audio_url"]), 3.0, 6.0) >= 1.0, "")
 
+print("loudness")
+
+
+def lufs_of(path):
+    r = subprocess.run([EXE, "-hide_banner", "-nostats", "-i", path, "-vn", "-af", "ebur128", "-f", "null", "-"], capture_output=True, text=True)
+    m = re.search(r"Integrated loudness:\s*\n\s*I:\s*(-?[\d.]+) LUFS", r.stderr)
+    return float(m.group(1)) if m else None
+
+
+lb = {"scenes": rows(), "duration": "30s", "voice": "Warm female", "music_url": MUSIC, "music_level": "forward", "sound_plan": PLAN}
+l0 = client.post("/voice-preview", json={**lb, "scenes": rows()})
+l1 = client.post("/voice-preview", json={**lb, "scenes": rows(), "loudness": "online"})
+l2 = client.post("/voice-preview", json={**lb, "scenes": rows(), "loudness": "tv-us"})
+check("a preview always reports how loud it is", l0.status_code == 200 and "integrated" in l0.json().get("loudness", {}) and "target" not in l0.json()["loudness"], l0.text[:200])
+check("with a target it reports the target and what it did", l1.status_code == 200 and l1.json()["loudness"].get("target") == -14.0 and "after" in l1.json()["loudness"], l1.text[:200])
+if l0.status_code == 200 and l1.status_code == 200 and l2.status_code == 200:
+    m1, m2 = lufs_of(path_of(l1.json()["audio_url"])), lufs_of(path_of(l2.json()["audio_url"]))
+    check("the preview file itself is at the online target", m1 is not None and abs(m1 - (-14.0)) <= 1.2, str(m1))
+    check("and a different target gives a different loudness (TV US is 10 LU quieter)", m2 is not None and m1 is not None and 8.0 <= m1 - m2 <= 12.0, f"{m1} vs {m2}")
+l3 = client.post("/voice-preview", json={**lb, "scenes": rows(), "loudness": "nonsense"})
+check("an unknown target never fails a preview, it only measures", l3.status_code == 200 and "target" not in l3.json()["loudness"], l3.text[:200])
+sr = client.post("/rescore", json={**rb, "scenes": rows(), "sound_plan": PLAN, "loudness": "online"})
+check("a re-score reports and applies it too", sr.status_code == 200 and sr.json().get("loudness", {}).get("target") == -14.0, sr.text[:200])
+if sr.status_code == 200:
+    mv = lufs_of(path_of(sr.json()["video_url"]))
+    check("the re-scored film is at the target", mv is not None and abs(mv - (-14.0)) <= 1.5, str(mv))
+
 print()
 print("All sound-plan route cases behave." if not fails else f"{fails} sound-plan route case(s) FAILED.")
 sys.exit(1 if fails else 0)

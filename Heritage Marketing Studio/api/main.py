@@ -595,6 +595,7 @@ def rescore(payload: dict):
             "detail": "; ".join(dict.fromkeys(notes + mix_notes)) or "Re-score failed."})
     out = {"video_url": f"/renders/{out_name}", "url": f"/renders/{out_name}",
            "master": master, "seconds": total,
+           "loudness": filmaudio.loudness_pass(exe, os.path.join(filmcut.RENDERS_DIR, out_name), payload.get("loudness")),
            "audio": "voices+music" if segs else "music",
            "providers": {"music": music_provider, "voice": "fal" if segs else "", "video": "reused"},
            "cast": [{"speaker": "Narration", "voice": filmvoice.voice_label(narrator)}]}
@@ -1090,7 +1091,9 @@ def voice_preview(payload: dict):
     out = filmvoice.plan(segs, narrator)
     out.update({"audio_url": f"/renders/{name}", "seconds": total,
                 "music": bool(music_url), "music_url": music_url or "",
-                "providers": {"voice": "fal" if made else "", "music": music_provider}})
+                "providers": {"voice": "fal" if made else "", "music": music_provider},
+                # measured (and, when a target was chosen, brought to it): the preview's own level
+                "loudness": filmaudio.loudness_pass(exe, os.path.join(filmcut.RENDERS_DIR, name), payload.get("loudness"))})
     if notes + mix_notes:
         out["detail"] = "; ".join(dict.fromkeys(notes + mix_notes))
     return out
@@ -1470,6 +1473,7 @@ def produce_video(payload: dict):
         errors.append("music generation failed — see render-log.txt")
 
     silent_master = ""
+    loudness = None
     if exe and (any(s.url for s in voice_segments) or music_url):
         silent = os.path.join(filmcut.RENDERS_DIR, rendered)
         silent_master = silent
@@ -1484,6 +1488,7 @@ def produce_video(payload: dict):
         errors.extend(extra_notes)
         errors.extend(mix_notes)
         if ok:
+            loudness = filmaudio.loudness_pass(exe, scored, payload.get("loudness"))
             # Keep the SILENT master: picture and soundtrack are separate layers, so the music
             # can be changed later for the price of the audio alone — no new video render.
             rendered = scored_name
@@ -1499,6 +1504,7 @@ def produce_video(payload: dict):
            "audio": "+".join(audio_kinds) if audio_kinds else "none",
            # who spoke, and in which voice — so the UI can show the casting
            "master": os.path.basename(silent_master) if silent_master else "",
+           "loudness": loudness,
            "music_url": music_url or "",
            # which engine produced each layer — the fallback used to be invisible
            "providers": {"video": video_provider or "", "music": music_provider,
