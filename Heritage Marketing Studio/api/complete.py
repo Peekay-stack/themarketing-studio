@@ -27,7 +27,7 @@ def has_key() -> bool:
 
 def complete(messages: list[dict], execution: str = "", house_id: str = "", force_typed: bool = False,
              skip_mandatories: bool = False, use_house: bool = True, use_platform: bool = True,
-             use_plan: bool = True, brand_mode: str = "grounded") -> str:
+             use_plan: bool = True, brand_mode: str = "grounded", provocation: dict | None = None) -> str:
     if not has_key():
         return ""  # front end falls back to its own placeholder content
     import anthropic
@@ -50,7 +50,7 @@ def complete(messages: list[dict], execution: str = "", house_id: str = "", forc
     # name. See `prompts.plan_channels_block`'s own note for the real bug this closes.
     system = system_for(norm, brand_mode=brand_mode, execution=execution, house_id=house_id,
                          force_typed=force_typed, skip_mandatories=skip_mandatories,
-                         use_house=use_house, use_platform=use_platform, use_plan=use_plan)
+                         use_house=use_house, use_platform=use_platform, use_plan=use_plan, provocation=provocation)
     # 2000 was too tight once a surface asks for several posts or several scenes: the reply is JSON, so a
     # truncation is not a short answer, it is an unparseable one — which reaches the person as the
     # feature silently doing nothing.

@@ -105,6 +105,19 @@ You are a film director scripting a short brand film. Make it filmable and emoti
 - If revising an existing script, change ONLY what the direction asks and preserve what already works.
 """
 
+# What the film instructions become when the film stands on an approved provocation (see `provocation_block`). The JSON contract is
+# the caller's own prompt; this only replaces the conventional-arc craft rules that a provocation exists to depart from.
+VIDEO_PROVOCATION = """
+TASK CONTEXT — VIDEO STUDIO (PROVOCATION MODE)
+You are a film director scripting a short brand film that dramatises an approved PROVOCATION (given above). Make it filmable and felt, not a voiceover essay.
+- Follow the provocation's own structure, device, humour, visual language, sound language, cast approach and voice-over length. Do NOT impose the usual arc (everyday setup -> small tension -> brand truth -> resolution), a warm family tableau, a tagline dump, or dialogue where the provocation says there is none.
+- logline: one sentence that carries the provocation's idea, a scene or an act, not a slogan.
+- Each scene: keep the time code, give it a short title and a vivid, shootable description (who, where, what we see), grounded in real life in the market you were given.
+- vo: exactly as long as the provocation says. Zero words is allowed and means an empty string.
+- duration: realistic for the beats (e.g. 30s / 45s).
+- If revising an existing script, change ONLY what the direction asks and preserve what already works.
+"""
+
 # ---------------------------------------------------------------- insights
 INSIGHTS = """
 TASK CONTEXT — INSIGHTS
@@ -492,10 +505,59 @@ def spine_block(brand: dict | None = None, *, house_id: str = "", use_house: boo
             + "\n\n".join(out))
 
 
+def provocation_block(rec: dict | None) -> str:
+    """The approved provocation a piece stands on, as the model reads it: the spine, what it breaks (so the piece does not use those
+    codes as its own), the film notes, and the hard limits. Empty with no provocation."""
+    if not rec:
+        return ""
+    import provocation as pv                      # lazy: provocation imports ideas, which must not import prompts back
+    c = rec.get("core") or {}
+    f = rec.get("film") or {}
+    st = c.get("stance") or {}
+    ten = c.get("tension") or {}
+    dev = c.get("device") or ""
+    dev_label = next((label for i, label, _h in pv.DEVICES if i == dev), dev)
+    L = ["THE PROVOCATION THIS PIECE STANDS ON (approved by a person: a deliberate departure from how the category thinks, behaves and looks. "
+         "Write FROM it. It may sharpen how the platform's message is said and break how it is expressed; it never changes what the platform says.)"]
+
+    def add(label, value):
+        if str(value or "").strip():
+            L.append(f"{label}: {str(value).strip()}")
+    add("Name", rec.get("name"))
+    add("The provocation, in one line", c.get("line"))
+    add("The message it stands on", c.get("message"))
+    if dev:
+        add("The device that makes the message felt", dev_label + ((" -- " + c["device_note"]) if c.get("device_note") else ""))
+    if ten.get("category_says") or ten.get("we_say"):
+        L.append(f"The category says: {ten.get('category_says', '')} / We say instead: {ten.get('we_say', '')}")
+    add("The line a stranger could repeat", c.get("repeatable"))
+    if c.get("codes_broken"):
+        L.append("What it breaks (do NOT use any of these as this piece's own habits):\n" + "\n".join(f"  - {x}" for x in c["codes_broken"]))
+    if c.get("act"):
+        add("What the brand would do (the idea's proof; show it only as the brand's stated promise in this piece, never as a claim beyond it)",
+            c["act"] + ((" -- " + c["act_note"]) if c.get("act_note") else ""))
+    stance = "; ".join(f"{k}: {st[k]}" for k in ("tone", "humour", "structure") if st.get(k))
+    add("Stance (replaces the brand's usual tone)", stance)
+    notes = []
+    for label, key in (("structure", "structure"), ("humour", "humour"), ("visual language", "visual_language"), ("sound language", "sound_language"),
+                       ("how the brand arrives", "brand_beat"), ("notes", "notes")):
+        if f.get(key):
+            notes.append(f"  - {label}: {f[key]}")
+    if f.get("cast_approach"):
+        notes.append(f"  - cast approach: {f['cast_approach']} (people, objects, animated or none)")
+    if f.get("vo_words") is not None:
+        notes.append(f"  - voice-over length: {f['vo_words']} words" + (" (none: no voice-over at all)" if f["vo_words"] == 0 else ""))
+    if notes:
+        L.append("FILM NOTES (follow them):\n" + "\n".join(notes))
+    L.append("What no provocation may do: " + " ".join(pv.HARD_LIMITS))
+    return "\n".join(L)
+
+
 def system_for(messages: list[dict], brand: dict | None = None, brand_mode: str = "grounded",
               execution: str = "", house_id: str = "", force_typed: bool = False,
               skip_mandatories: bool = False,
-              use_house: bool = True, use_platform: bool = True, use_plan: bool = True) -> str:
+              use_house: bool = True, use_platform: bool = True, use_plan: bool = True,
+              provocation: dict | None = None) -> str:
     """Craft + this brand's grounding + what has been decided + the detected surface block.
 
     `brand` is resolved by the caller when it knows which brand is in play; otherwise the single profile
@@ -562,6 +624,15 @@ def system_for(messages: list[dict], brand: dict | None = None, brand_mode: str 
     # decision, so it sits with the voice block — but suppressed on a BRIEF, which is upstream of any
     # casting. Social posts, carousels and video scripts all reach this function through /complete.
     character_block = "" if surface is BRIEF else character.for_prompt(b)
-    parts = (GLOBAL_MASTER, "THE BRAND\n" + brandprofile.voice_block(b, skip_mandatories=skip_mandatories),
-             character_block, spine, this_one, surface)
+    # A piece that stands on an approved provocation (the caller has already checked it is approved and this house's) is written FROM it:
+    # the brand's guardrails stay in full, its usual TONE does not (the provocation's stance replaces it), the film instructions are the
+    # provocation-aware ones, and the recurring character is dropped when the provocation casts objects, animation or nobody.
+    # Not on a brief (upstream of any execution) and never on an Independent piece. With none named every line below is as it was.
+    prov = provocation if (provocation and brand_mode != "general" and surface is not BRIEF) else None
+    voice_b = {**b, "tone": ""} if (prov and isinstance(b, dict)) else b
+    if prov and (prov.get("film") or {}).get("cast_approach") in ("objects", "animated", "none"):
+        character_block = ""
+    surface_text = VIDEO_PROVOCATION if (prov and surface is VIDEO) else surface
+    parts = (GLOBAL_MASTER, "THE BRAND\n" + brandprofile.voice_block(voice_b, skip_mandatories=skip_mandatories),
+             character_block, spine, provocation_block(prov), this_one, surface_text)
     return "\n\n".join(x for x in parts if x).strip()

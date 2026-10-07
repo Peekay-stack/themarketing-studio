@@ -2448,13 +2448,13 @@
 
     <sc-if value="{{ vProvChosen }}" hint-placeholder-val="{{ false }}">
       <div style="background:#17325E; color:#fff; border-radius:12px; padding:11px 16px; margin-bottom:16px; font-size:13px; line-height:1.55;">
-        <b>This film stands on the provocation &ldquo;{{ vProvName }}&rdquo;.</b> {{ vProvLine }} It is saved with this film and the quote above now follows it. The concept writer and the departments do not read it yet &mdash; that is the next build &mdash; so nothing you generate changes today.
+        <b>This film can stand on the provocation &ldquo;{{ vProvName }}&rdquo;.</b> {{ vProvLine }} Use the provocation route below to write the film from it; the other routes are written without it. {{ vProvBannerTail }}
       </div>
     </sc-if>
 
-    <sc-if value="{{ hasConceptRoutes }}" hint-placeholder-val="{{ false }}">
+    <sc-if value="{{ vRoutesRow }}" hint-placeholder-val="{{ false }}">
       <div style="margin-bottom:20px;">
-        <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#6B7280; margin-bottom:9px;">Creative routes · pick one to develop</div>
+        <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#6B7280; margin-bottom:9px;">{{ vRoutesTitle }}</div>
         <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:11px;">
           <sc-for list="{{ conceptRouteCards }}" as="r" hint-placeholder-count="3">
             <div onClick="{{ r.pick }}" style="cursor:pointer; border:2px solid {{ r.border }}; background:{{ r.bg }}; border-radius:13px; padding:13px 14px;">
@@ -2465,6 +2465,22 @@
               <div style="font-size:12.5px; line-height:1.5; color:#41505F;">{{ r.rationale }}</div>
             </div>
           </sc-for>
+          <sc-if value="{{ vProvCardOn }}" hint-placeholder-val="{{ false }}">
+            <div onClick="{{ vProvCardClick }}" style="cursor:pointer; border:2px solid {{ vProvCardBorder }}; background:{{ vProvCardBg }}; border-radius:13px; padding:13px 14px;">
+              <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px;">
+                <span style="font-family:'Epilogue',sans-serif; font-weight:700; font-size:13.5px; color:#17325E;">Use my provocation</span>
+                <span style="font-size:10.5px; font-weight:800; color:#fff; background:{{ vProvCardBadgeBg }}; border-radius:5px; padding:2px 7px;">{{ vProvCardBadge }}</span>
+              </div>
+              <div style="font-size:13px; font-weight:700; color:#17325E; line-height:1.4; margin-bottom:3px;">{{ vProvName }}</div>
+              <div style="font-size:12.5px; line-height:1.5; color:#41505F;">{{ vProvLine }}</div>
+              <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:7px;">
+                <sc-if value="{{ vProvHasDevice }}" hint-placeholder-val="{{ false }}"><span style="font-size:11px; font-weight:700; color:#17325E; background:#fff; border:1px solid #C9CEDA; border-radius:20px; padding:1px 9px;">{{ vProvDevice }}</span></sc-if>
+                <sc-if value="{{ vProvHasRisk }}" hint-placeholder-val="{{ false }}"><span style="font-size:11px; font-weight:700; color:#6B7280; background:#fff; border:1px solid #DDD9D1; border-radius:20px; padding:1px 9px;">{{ vProvRisk }}</span></sc-if>
+              </div>
+              <div style="font-size:12px; line-height:1.5; color:#6B7280; margin-top:7px;">{{ vProvCardHint }}</div>
+              <sc-if value="{{ vProvCardTake }}" hint-placeholder-val="{{ false }}"><span onClick="{{ anotherProvTake }}" style="display:inline-block; margin-top:7px; cursor:pointer; font-size:12px; font-weight:700; color:#1E7E34;">Write another take (replaces this concept and clears the script)</span></sc-if>
+            </div>
+          </sc-if>
         </div>
       </div>
     </sc-if>
@@ -2473,6 +2489,19 @@
       <div style="background:#FDF3F2; border:1px solid #F1C9C4; border-left:3px solid #C0392B; border-radius:14px; padding:15px 18px; margin-bottom:24px; font-size:13.5px; line-height:1.6; color:#41505F; text-wrap:pretty;">{{ videoRefusal }}</div>
     </sc-if>
     <sc-if value="{{ hasVideoConcept }}" hint-placeholder-val="{{ false }}">
+      <sc-if value="{{ vConceptFromProv }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#F4F7FC; border:1px solid #D6DEEC; border-radius:14px; padding:13px 16px; margin-bottom:16px;">
+          <div style="font-size:12.5px; line-height:1.55; color:#17325E;"><b>Written from the provocation &ldquo;{{ videoConcept.provocation_name }}&rdquo;.</b> The usual film structure and the brand&rsquo;s tone are set aside; its guardrails stay. The script, a rework and the department drafts follow it. Frames, the cast lock and Production are still set the usual way, so match them to the notes below by hand.</div>
+          <sc-if value="{{ vProvHasNotes }}" hint-placeholder-val="{{ false }}">
+            <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:6px 16px; margin-top:9px;">
+              <sc-for list="{{ vProvNotes }}" as="n" hint-placeholder-count="4"><div style="font-size:12px; line-height:1.5; color:#41505F;"><b style="color:#6B7280;">{{ n.k }}:</b> {{ n.v }}</div></sc-for>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+      <sc-if value="{{ vConceptProvAside }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#FDF6E6; border:1px solid #F0DDB5; border-radius:14px; padding:11px 16px; margin-bottom:16px; font-size:12.5px; line-height:1.55; color:#8A5B0F;">This concept was written from a provocation that is now set aside or no longer approved, so the script and the departments will be written the usual way.</div>
+      </sc-if>
       <!-- logline + meta -->
       <div style="background:linear-gradient(135deg,#17325E,#2E5EA6); border-radius:20px; padding:28px; color:#fff; margin-bottom:24px; position:relative; overflow:hidden;">
         <div style="position:absolute; right:-40px; top:-40px; width:180px; height:180px; border-radius:50%; background:rgba(240,86,30,0.18);"></div>
@@ -11642,6 +11671,8 @@ class Component extends DCLogic {
     videoProvId: '',               // the approved provocation this film stands on ('' = none); saved with the film
     videoProvOn: true,             // false = set aside for this film (the same switch the idea platform card has)
     videoProvList: [],             // this house's APPROVED provocations, for the card's picker
+    provConcept: null,             // the concept last written from the provocation (so switching back to it is free)
+    provRouteBusy: false,          // the fourth route card is writing
     loudnessInfo: null,            // what the last preview / render / re-score measured: {integrated, true_peak, target?, ...}
     musicLockMood: null,           // the music mood the locked bed was made under, to say when the mood has moved on
     musicBusy: false,
@@ -12439,14 +12470,16 @@ class Component extends DCLogic {
   // whole point of Independent was "this piece gets no brand facts even though one is active
   // globally," which is exactly the case the old check skipped. `allowGeneral` now wins outright,
   // checked before anything about the active brand is even read.
-  brandPreamble(role, allowGeneral){
+  brandPreamble(role, allowGeneral, dropTone){
     if (allowGeneral) {
       return 'You are ' + (role || 'a senior marketer') + '. No brand profile is attached to this piece '
         + '— do NOT invent a brand, category or product. Write from the brief alone, keep claims '
         + 'general, and say what the work needs in order to be specific.';
     }
     const b = this.activeBrand();
-    const voice = this.brandVoiceText(b);
+    let voice = this.brandVoiceText(b);
+    // A film written from a provocation departs from the brand's usual tone (the provocation's stance replaces it); the guardrails stay.
+    if (dropTone) voice = String(voice || '').split(String.fromCharCode(10)).filter(l => !/^\s*TONE\s*:/i.test(l)).join(String.fromCharCode(10));
     if (!b || !(b.name || '').trim() || !String(voice || '').trim()) return null;
     return 'You are ' + (role || 'a senior marketer') + ' for ' + b.name + '.' + String.fromCharCode(10)
       + String.fromCharCode(10) + voice;
@@ -14861,8 +14894,6 @@ class Component extends DCLogic {
     // Video" hand-off — see `loadSocialStandsOn`'s own comment on why `houseId` has to ride along too.
     if (houseId) body.house = houseId;
     if (campaignId) body.campaign = campaignId;
-    // A chosen provocation stands in front of the platform and the campaign; the server only honours an approved one of THIS house.
-    if (s.videoProvId && this.videoProv()) { body.provocation_id = s.videoProvId; body.use_provocation = s.videoProvOn !== false; if (!body.house && this.provHouseId()) body.house = this.provHouseId(); }
     const d = await this.apiCall('/producer-stands-on', body);
     if (d && d.ok && d.data) this.setState({ videoStandsOn: d.data });
   };
@@ -15348,6 +15379,7 @@ class Component extends DCLogic {
     const vc = this.state.videoConcept;
     if (!vc || this.state.scriptWriting) return;
     this.setState({ scriptWriting:true });
+    const provRec = this.provMode() ? this.videoProv() : null;
     let rows = null;
     // Approved work, the corrections you've given, and any copy that must be placed verbatim. This
     // is the whole of "learning" — retrieval into the prompt, not a changed model.
@@ -15361,25 +15393,51 @@ class Component extends DCLogic {
         const beats = Array.isArray(vc.scenes) ? vc.scenes.length : 0;
         const secsTotal = parseInt(dur, 10) || 30;
         const minScenes = beats ? Math.min(rng.max, Math.max(2, Math.ceil(secsTotal / 8), Math.min(rng.min, beats))) : rng.min;
-        const pre = this.brandPreamble('a film director writing a shootable script', this.state.producerBrandMode === 'general');
+        const pre = this.brandPreamble('a film director writing a shootable script', this.state.producerBrandMode === 'general', !!provRec);
         if (!pre) { this.showToast(this.BRAND_PREAMBLE_MISSING); this.setState({ scriptWriting:false }); return; }
         const packSuper = this.brandName() + (this.brandIdea() ? ' — ' + this.brandIdea() : '');
         const prompt = pre + '\n\nConcept logline: "'+vc.logline+'". Concept beats: '+JSON.stringify(vc.scenes)+'. VO: "'+(vc.vo||'')+'". The finished film is '+dur+' long — write between '+minScenes+' and '+rng.max+' scenes — '+(beats ? 'the concept has '+beats+' beats, so one scene per beat is the natural count; ' : '')+'choose the number the story actually needs. NEVER repeat, copy or near-duplicate a scene to reach a count: every scene must show a different moment. No film may exceed '+rng.ceiling+' scenes: each shot is rendered separately and the shortest a shot can be is 4 seconds. Give timecodes that run continuously from 0s to '+dur+'. Every scene is rendered as its own shot, so each "visual" must be a self-contained, filmable description of what is on screen (who, where, what happens). '+this.VISUAL_RULES+' The film MUST include a pack-shot sign-off — a scene that shows the pack and carries the pack-shot super "'+(packSuper || 'this brand\u2019s name, written naturally — no other brand\u2019s')+'" — and that is normally the final scene. Only when the concept calls for a comeback AFTER the pack shot may a short closing button (a few seconds, no pack-shot super of its own) follow it; if you add one, put "beat_role":"button" on that row and on no other. Dialogue in English + Hinglish where natural.\n\nCASTING THE SOUND: when a person is on camera and would naturally speak, give them DIALOGUE in their own words — do not describe them with narration instead. Use the voiceover only to bridge between scenes or land the brand thought at the end. A film where every line is "vo" is wrong unless the concept is genuinely wordless observation; prefer a mix, with the recurring characters from the concept actually speaking to each other. EVERY scene needs an "audio" array — this is what actually gets voiced, so it must contain ONLY words to be spoken aloud. One entry per spoken line, in the order heard. Never put speaker names, stage directions, camera notes, SFX or on-screen text inside "text"; the performance note belongs in "emotion" and the character in "speaker". Use type "vo" for narration (the brand voice) and type "dialogue" for a character speaking on camera. A scene with no speech gets "audio": []. '+this.voBudgetNote(dur, n)+'\n\nReturn ONLY JSON: {"rows":[{"no":1,"tc":"0–5s","visual":"...","camera":"shot type & movement","dialogue":"human-readable script cell, e.g. Boy (half-asleep): Ammamma…","supr":"on-screen text","audio":[{"type":"dialogue","speaker":"Boy","age":"child","emotion":"half-asleep, sleepy","language":"en","text":"Ammamma... sky is still sleeping, no?"},{"type":"vo","emotion":"warm, unhurried","language":"en","text":"Pure doodh ki shakti."}]}]}';
         // Anchors first, then the house rules, then the brief. Approved work shows the model what
         // "good" means here far better than any adjective, and the rules are corrections already
         // paid for once — repeating a mistake that was already flagged is the worst failure there is.
-        const learned = ctx ? [ctx.anchor_text, ctx.rules_text].filter(Boolean).join('\n\n') : '';
+        // Approved past work (the anchors) pulls toward the category's usual film, so a film written from a provocation does not get it;
+        // the house's corrections (rules) and any locked copy still apply.
+        const learned = ctx ? (provRec ? [ctx.rules_text] : [ctx.anchor_text, ctx.rules_text]).filter(Boolean).join('\n\n') : '';
         const locked = ctx && ctx.locked_copy && ctx.locked_copy.length
           ? '\n\nCopy that is LOCKED. Place these strings exactly as written — never paraphrase, '
             + 'reword or re-render them. Place each one only where it is read or shown: in a spoken line ("audio"/"dialogue"), '
             + 'the voiceover, or the on-screen "supr" column. NEVER write one into a scene’s "visual", which describes only '
             + 'what the camera sees:\n' + ctx.locked_copy.map(c => '- ' + c.text).join('\n')
           : '';
-        let raw = await this.complete((learned ? learned + '\n\n' : '') + prompt + locked);
+        // From a provocation the three conventions that would fight it are replaced: the pack-shot sign-off becomes the brand arriving as the
+        // provocation says, "give people dialogue" becomes its sound language and cast approach, and the speech budget is its own.
+        let finalPrompt = prompt;
+        if (provRec) {
+          const f = provRec.film || {};
+          const arrives = f.brand_beat || 'as the provocation says';
+          const superTxt = packSuper || 'this brand\u2019s name, written naturally \u2014 no other brand\u2019s';
+          const vw = (f.vo_words === null || f.vo_words === undefined) ? null : f.vo_words;
+          finalPrompt = finalPrompt
+            .replace(/The film MUST include a pack-shot sign-off[\s\S]*?Dialogue in English \+ Hinglish where natural\./, () =>
+              'The film MUST include a brand sign-off scene: the brand arrives exactly as the provocation says ("' + arrives + '"), and that scene carries the super "' + superTxt + '" and is normally the final scene. Only when the concept calls for a comeback AFTER the sign-off may a short closing button (a few seconds, no super of its own) follow it; if you add one, put "beat_role":"button" on that row and on no other. Any spoken words follow the provocation\u2019s sound language, in English + Hinglish where natural.')
+            .replace(/CASTING THE SOUND:[\s\S]*?(?=EVERY scene needs an)/, () =>
+              'SOUND (provocation mode): follow the provocation\u2019s sound language, cast approach and voice-over length exactly. Speech only where the provocation has it; a wordless film has "audio": [] on every scene. ')
+            .replace(/STRICT SPEECH BUDGET[\s\S]*?Cut every word that is not doing work\./, () =>
+              (vw === 0 ? 'NO SPEECH: the provocation says there is no voice-over and no dialogue, so every scene has "audio": [].'
+                : (vw ? 'SPEECH BUDGET: the provocation sets the voice-over at about ' + vw + ' words across the ENTIRE film (all "text" values combined). Leave space; never narrate what the viewer can already see.'
+                  : 'Keep speech to what the provocation asks for and leave space.')));
+        }
+        let raw = await this.complete((learned ? learned + '\n\n' : '') + finalPrompt + locked, this.provExtra());
         raw = String(raw).trim().replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();
         const data = JSON.parse(raw.slice(raw.indexOf('{'), raw.lastIndexOf('}')+1));
         if (data.rows && data.rows.length) rows = this.cleanBeatRoles(data.rows);
       } catch (e) {}
+    }
+    if (!rows && provRec) {
+      // Nothing is invented in the provocation's place: a stock script would be the conventional film it exists to depart from.
+      this.setState({ scriptWriting:false });
+      this.showToast('Couldn\u2019t write the script from the provocation just now \u2014 nothing was invented in its place. Try again.', 'warn');
+      return;
     }
     if (!rows) rows = this.fallbackFullScript(vc);
     this.setState({ scriptWriting:false, fullScript:rows, scriptStatus:'drafted', scriptPhase:'script',
@@ -15400,7 +15458,7 @@ class Component extends DCLogic {
     if (window.claude && window.claude.complete) {
       try {
         const prompt = 'Revise this ' + (this.brandRef() || 'brand') + ' commercial script per the instruction.' + ' INSTRUCTION: "' + note + '". CURRENT SCRIPT ROWS: ' + JSON.stringify(this.scriptForPrompt(this.state.fullScript)) + '. Keep the same row shape and keep the pack-shot super on the row that already carries it — do not invent or substitute a different brand\u2019s line. Timecodes must stay continuous across a ' + this.state.prodDuration + ' film. EVERY row must keep its "audio" array in sync with the revised dialogue — "text" holds ONLY spoken words (no speaker names, stage directions, SFX or on-screen text), "speaker" the character, "emotion" the performance note, and type is "vo" for narration or "dialogue" for a character. ' + this.voBudgetNote(this.state.prodDuration, (this.state.fullScript||[]).length) + ' Return ONLY JSON: {"rows":[{"no":1,"tc":"0–5s","visual":"...","camera":"...","dialogue":"...","supr":"...","audio":[{"type":"vo","emotion":"warm","language":"en","text":"spoken words only"}]}]}';
-        let raw = await this.complete(prompt);
+        let raw = await this.complete(prompt, this.provExtra());
         raw = String(raw).trim().replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();
         const data = JSON.parse(raw.slice(raw.indexOf('{'), raw.lastIndexOf('}')+1));
         if (data.rows && data.rows.length) rows = data.rows;
@@ -16067,11 +16125,11 @@ class Component extends DCLogic {
     let text = null;
     if (window.claude && window.claude.complete) {
       try {
-        const pre = this.brandPreamble('the ' + dept.label + ' department head', this.state.producerBrandMode === 'general');
+        const pre = this.brandPreamble('the ' + dept.label + ' department head', this.state.producerBrandMode === 'general', this.provMode());
         if (!pre) { this.showToast(this.BRAND_PREAMBLE_MISSING);
           this.setState(st => ({ shoot:{ ...st.shoot, [id]:{ status:'idle', text:'' } } })); return; }
         const prompt = pre + '\n\nBase your plan strictly on this APPROVED SCRIPT: '+JSON.stringify(this.scriptForPrompt(this.state.fullScript))+'.' + this.decidedFacts(id) + ' Give a tight, practical '+dept.label+' plan (3-4 sentences)' + (id === 'sound' ? ', covering the room tone of the place, the specific sounds that mark what happens in the scenes, and how the music behaves around the voice (the voiceover leads: music always sits under a spoken line, lifts in the pauses, swells at the turn and resolves at the end). Do not repeat the spoken lines' : '') + (id === 'music' ? ', then end with one separate line starting "Suggested style:" that names the music in 4-10 words a music generator could use' : '') + '. Write it as a decided plan in plain statements: do not ask the reader any question, do not ask for confirmation, and do not offer alternatives to choose between. Where something is not specified, make a sensible choice and state it.';
-        let raw = await this.complete(prompt);
+        let raw = await this.complete(prompt + (this.provMode() ? ' This film stands on an approved provocation (in your instructions): serve its film notes, not the category\u2019s usual look.' : ''), this.provExtra());
         text = this.plainDept(String(raw).trim().replace(/^```/,'').replace(/```$/,'').trim());
       } catch (e) {}
     }
@@ -16260,6 +16318,7 @@ class Component extends DCLogic {
     // the preamble check, and by then it was already spinning.
     if (!this.needBrand(this.state.producerBrandMode === 'general')) return;
     const isRefine = this.state.scriptVersions.length > 0 && this.state.refinePrompt.trim();
+    if (isRefine && this.provMode()) { this.setState({ videoGenerating:false }); return this.writeProvocationRoute(this.state.refinePrompt); }
     // Round 92: the real free-text field + override, matching Social/POSM. Refuses the same way
     // generateSocial does when the platform is set aside with nothing typed to replace it.
     const forceTyped = !!this.state.videoForceTyped;
@@ -18611,9 +18670,9 @@ class Component extends DCLogic {
       // split against here — just has-a-quote vs. doesn't, same as before Social's own plan-bound fix.
       videoBrief: s.videoBrief, onVideoBrief: this.onVideoBrief,
       videoForceTyped: !!s.videoForceTyped, onToggleVideoForceTyped: this.onToggleVideoForceTyped,
-      videoHasStandsOn: !!(s.videoStandsOn && s.videoStandsOn.text && (s.videoStandsOn.has_platform || s.videoStandsOn.has_house || s.videoStandsOn.has_provocation)) && !s.videoForceTyped,
-      videoStandsAside: !!(s.videoStandsOn && s.videoStandsOn.text && (s.videoStandsOn.has_platform || s.videoStandsOn.has_house || s.videoStandsOn.has_provocation)) && !!s.videoForceTyped,
-      videoNoStandsOn: !(s.videoStandsOn && (s.videoStandsOn.has_platform || s.videoStandsOn.has_house || s.videoStandsOn.has_provocation)),
+      videoHasStandsOn: !!(s.videoStandsOn && s.videoStandsOn.text && (s.videoStandsOn.has_platform || s.videoStandsOn.has_house)) && !s.videoForceTyped,
+      videoStandsAside: !!(s.videoStandsOn && s.videoStandsOn.text && (s.videoStandsOn.has_platform || s.videoStandsOn.has_house)) && !!s.videoForceTyped,
+      videoNoStandsOn: !(s.videoStandsOn && (s.videoStandsOn.has_platform || s.videoStandsOn.has_house)),
       videoStandsText: (s.videoStandsOn && s.videoStandsOn.text) || '',
       videoStandsSource: (s.videoStandsOn && s.videoStandsOn.source) || '',
       // shared studio inputs
@@ -18877,6 +18936,7 @@ class Component extends DCLogic {
       rescoreLabel: s.rescoring ? 'Re-scoring…' : '\u21bb Change music on this cut',
       // ---- creative routes ----
       hasConceptRoutes: (s.conceptRoutes||[]).length > 1,
+      ...this.provCardView(),
       vProvChosen: !!this.videoProv() && s.videoProvOn !== false, vProvName: (this.videoProv() || {}).name || '', vProvLine: ((this.videoProv() || {}).core || {}).line || '',
       conceptRouteCards: (s.conceptRoutes||[]).map((r,i) => ({
         name: r.name || ('Route ' + (i+1)), rationale: r.rationale || r.logline || '',
@@ -21240,13 +21300,118 @@ class Component extends DCLogic {
     const d = await this.apiGet('/provocations?house=' + encodeURIComponent(hid));
     if (d && Array.isArray(d.provocations)) {
       this.setState({ videoProvList: d.provocations.filter(r => r.status === 'approved') });
-      // A film restored before this list arrived could not name its provocation to the server yet.
-      if (this.state.videoProvId) this.loadVideoStandsOn(this.state.videoBrief);
     }
   };
-  onPickVideoProv = (e) => { this.setState({ videoProvId: e.target.value, videoProvOn: true }); setTimeout(() => this.loadVideoStandsOn(this.state.videoBrief), 0); };
-  onToggleVideoProv = () => { this.setState({ videoProvOn: this.state.videoProvOn === false }); setTimeout(() => this.loadVideoStandsOn(this.state.videoBrief), 0); };
+  onPickVideoProv = (e) => { this.setState({ videoProvId: e.target.value, videoProvOn: true }); };
+  onToggleVideoProv = () => { this.setState({ videoProvOn: this.state.videoProvOn === false }); };
   videoProv(){ return (this.state.videoProvList || []).find(r => r.id === this.state.videoProvId) || null; }
+  // The film is written FROM the provocation only when its working concept came from it, the provocation is still the one picked,
+  // approved and ticked on, and the piece is Grounded. Anything else and every later step is ordinary.
+  provMode(){
+    const st = this.state, c = st.videoConcept, p = this.videoProv();
+    return !!(c && c.from_provocation && p && c.from_provocation === p.id && st.videoProvOn !== false && st.producerBrandMode !== 'general');
+  }
+  // What a call sends so the server writes it from the provocation (empty when the film is not standing on one).
+  provExtra(){
+    if (!this.provMode()) return {};
+    const hid = this.provHouseId();
+    return hid ? { house_id: hid, provocation_id: this.state.videoProvId, use_provocation: true } : {};
+  }
+  // The fourth route: ONE model call writes the film as a concept (the shape the three routes have) from the provocation. The three
+  // normal routes are never written from it. `note` revises the working provocation concept instead of writing a new take.
+  writeProvocationRoute = async (note) => {
+    const st = this.state, prov = this.videoProv();
+    if (!prov || st.provRouteBusy || st.videoGenerating) return;
+    if (st.videoProvOn === false) { this.showToast('The provocation is set aside for this film. Tick it first.', 'warn'); return; }
+    if (st.producerBrandMode === 'general') { this.showToast('An Independent piece does not stand on a provocation.', 'warn'); return; }
+    if (!this.needBrand(false)) return;
+    const refine = (typeof note === 'string' && note.trim() && st.videoConcept && st.videoConcept.from_provocation === prov.id) ? note.trim() : '';
+    this.setState({ provRouteBusy:true, videoRefusal:'' });
+    try {
+      if (!(window.claude && window.claude.complete)) throw new Error('no-api');
+      const obj = st.videoObjective || 'Brand awareness', brief = st.linkedBrief, dur = st.prodDuration;
+      const f = prov.film || {}, c = prov.core || {};
+      const words = (f.vo_words === null || f.vo_words === undefined) ? this.voWords(dur) : f.vo_words;
+      const ctx = brief ? ' Ground it in this brief \u2014 proposition: "' + brief.proposition + '"; audience: "' + brief.audience + '"; tone: "' + brief.tone + '".' : '';
+      const typed = (st.videoBrief || '').trim();
+      const typedCtx = typed ? ' Additional direction: "' + typed + '".' : '';
+      const cur = st.videoConcept;
+      const prevCtx = refine ? ' Here is the current concept to revise: ' + JSON.stringify({ logline:cur.logline, scenes:cur.scenes, vo:cur.vo }) + '. Apply this direction: "' + refine + '". Keep what works, change only what the direction asks.' : '';
+      const pre = this.brandPreamble('a film director at an ad agency', false, true);
+      if (!pre) { this.showToast(this.BRAND_PREAMBLE_MISSING); this.setState({ provRouteBusy:false }); return; }
+      const voLine = words ? ('about ' + words + ' words, one continuous read across the whole film') : 'EMPTY: the provocation says there is none, so "vo" is an empty string';
+      const prompt = pre + '\n\nCommunication objective: "' + obj + '".' + ctx + typedCtx + prevCtx
+        + ' Write ONE film concept of ' + dur + ' that dramatises the approved provocation in your instructions: ' + (prov.name ? '"' + prov.name + '" \u2014 ' : '') + '"' + (c.line || '') + '".'
+        + ' Follow its message, its device, its film structure, humour, visual language, sound language and cast approach; do not fall back on the category\u2019s usual film. The voiceover is ' + voLine + '.'
+        + ' Give a short route name and a one-line reason it works. Return ONLY JSON (no markdown): {"name":"short route name","rationale":"one line on why this works","logline": string, "duration": "' + dur + '", "vo": string, "scenes": [{"t":"0\u20135s","title":string,"desc":string}, ... 4 concept beats]}.';
+      const vexec = this.videoExec(), hid = this.provHouseId();
+      let raw = await this.complete(prompt, { ...(vexec ? { execution: vexec.id } : {}),
+        ...(hid ? { house_id: hid } : {}), provocation_id: prov.id, use_provocation: true });
+      raw = String(raw).trim().replace(/^```json/i, '').replace(/^```/, '').replace(/```$/, '').trim();
+      const parsed = JSON.parse(raw.slice(raw.indexOf('{'), raw.lastIndexOf('}') + 1));
+      const data0 = (parsed.routes && parsed.routes.length) ? parsed.routes[0] : parsed;
+      if (!data0 || !data0.scenes || !data0.scenes.length) throw new Error('bad');
+      const data = { ...data0, from_provocation: prov.id, provocation_name: prov.name || '' };
+      this.setState(s2 => ({ provRouteBusy:false, provConcept:data, conceptRoute:-1, videoConcept:data, refinePrompt:'', videoRefusal:'',
+        scriptStatus:'concept', fullScript:null, sceneFrames:{}, castRefUrl:null, videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null,
+        producedUrl:null, renderInfo:null, scriptPhase:'concept', voicePlan:null,
+        scriptVersions: [...s2.scriptVersions, { v:s2.scriptVersions.length + 1, logline:data.logline, note: refine || ('From the provocation: ' + (prov.name || '')), duration:data.duration }],
+        videoCheck: this.runCreativeCheck([data.logline, (data.scenes || []).map(x => x.title + ' ' + x.desc).join(' ')]) }));
+      if (!refine) this.addCreated(this.videoItem(obj, data));
+    } catch (err) {
+      // Nothing is invented in its place and the working concept stays as it was.
+      this.setState({ provRouteBusy:false });
+      this.showToast(err && err.message === 'timeout'
+        ? 'Nothing came back within ' + Math.round(this.MODEL_TIMEOUT_MS / 1000) + ' seconds, so no film was written from the provocation. Try again.'
+        : 'Couldn\u2019t write the film from the provocation just now \u2014 nothing was invented in its place. Try again.', 'warn');
+    }
+  };
+  // The fourth route card: switch back to the concept already written from this provocation (free), or write one.
+  useProvocationRoute = () => {
+    const st = this.state, p = this.videoProv();
+    if (!p || st.provRouteBusy) return;
+    if (st.videoConcept && st.videoConcept.from_provocation === p.id) return;
+    if (st.provConcept && st.provConcept.from_provocation === p.id) {
+      this.setState({ conceptRoute:-1, videoConcept:st.provConcept, scriptStatus:'concept', fullScript:null,
+        sceneFrames:{}, castRefUrl:null, videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null,
+        producedUrl:null, renderInfo:null, scriptPhase:'concept', voicePlan:null });
+      this.showToast('The provocation route loaded \u2014 ' + (st.provConcept.name || 'concept') + '.', 'ok');
+      return;
+    }
+    this.writeProvocationRoute();
+  };
+  // Another take replaces the working concept (and clears the script, as picking any route does).
+  anotherProvTake = (e) => { if (e && e.stopPropagation) e.stopPropagation(); this.writeProvocationRoute(); };
+  // What the Video tab shows about the provocation: the fourth card, the ribbon on a provocation concept and its read-only film notes.
+  provCardView(){
+    const st = this.state, p = this.videoProv(), on = !!p && st.videoProvOn !== false;
+    const fromProv = !!(st.videoConcept && p && st.videoConcept.from_provocation === p.id);
+    const stored = !!(st.provConcept && p && st.provConcept.from_provocation === p.id);
+    const c = (p || {}).core || {}, f = (p || {}).film || {};
+    const dev = String(c.device || '').replace(/_/g, ' ');
+    const notes = [['Structure', f.structure], ['Humour', f.humour], ['Visual language', f.visual_language], ['Sound language', f.sound_language],
+      ['Cast approach', f.cast_approach], ['Voice-over', (f.vo_words === null || f.vo_words === undefined) ? '' : (f.vo_words === 0 ? 'none' : f.vo_words + ' words')],
+      ['How the brand arrives', f.brand_beat]].map(([k, v]) => ({ k, v })).filter(n => n.v);
+    const hasRoutes = (st.conceptRoutes || []).length > 1;
+    return {
+      vRoutesRow: hasRoutes || on,
+      vRoutesTitle: hasRoutes ? 'Creative routes \u00b7 pick one to develop' : 'Write it from your provocation',
+      vProvCardOn: on, vProvCardClick: this.useProvocationRoute, anotherProvTake: this.anotherProvTake,
+      vProvDevice: dev ? dev.charAt(0).toUpperCase() + dev.slice(1) : '', vProvHasDevice: !!dev,
+      vProvRisk: c.risk ? ('Risk: ' + c.risk) : '', vProvHasRisk: !!c.risk,
+      vProvCardBadge: st.provRouteBusy ? 'Writing\u2026' : (fromProv ? 'Selected' : 'Fourth route'),
+      vProvCardBg: fromProv ? '#F4FBF5' : '#F4F7FC', vProvCardBorder: fromProv ? '#259821' : '#2E5EA6',
+      vProvCardBadgeBg: fromProv ? '#1E7E34' : '#17325E',
+      vProvCardHint: st.provRouteBusy ? 'About 30 seconds. One model call.'
+        : (fromProv ? 'The film below is written from it.'
+          : (stored ? 'Written earlier: click to switch back (no new call).' : 'Click to write the film from it: one model call.')),
+      vProvCardTake: fromProv && !st.provRouteBusy,
+      vConceptFromProv: this.provMode(),
+      vConceptProvAside: !!(st.videoConcept && st.videoConcept.from_provocation && !this.provMode()),
+      vProvNotes: notes, vProvHasNotes: notes.length > 0,
+      vProvBannerTail: this.provMode() ? 'The script and the department drafts are now written from it.' : '',
+    };
+  }
   provError(r, fallback){ return (r && r.data && r.data.detail) || fallback; }
 
   // ----- the competitor evidence (saved once per house)
@@ -21553,7 +21718,6 @@ class Component extends DCLogic {
       // the music mood the person chose travels with the film (Production's own settings are not saved otherwise)
       ...((d.sound_plan && d.sound_plan.mood) ? { production:{ ...this.state.production, music:d.sound_plan.mood },
         musicStyle: ((this.musicChips().find(o => String(o.label).toLowerCase() === String(d.sound_plan.mood).toLowerCase() || o.id === d.sound_plan.mood)) || {}).id || '' } : {}) });
-    if (d.provocation_id) setTimeout(() => this.loadVideoStandsOn(this.state.videoBrief), 0);
     if (cleaned.count) this.showToast('Removed questions from ' + cleaned.count + ' department draft' + (cleaned.count === 1 ? '' : 's') + ' — they were written as questions to you, not as direction.');
   };
   cleanShootDrafts(shoot){

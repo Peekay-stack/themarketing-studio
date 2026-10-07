@@ -351,6 +351,11 @@ def complete_endpoint(payload: dict):
     # caller that does not have one is unaffected.
     # `house_id` — 29 Sep (part 2): only reaches here at all once the bridge script `/app` injects
     # forwards the full payload rather than `messages` alone — see `_HEAD_INJECT`'s own comment.
+    # A piece that stands on an approved provocation names it (`provocation_id`, with the open house): only an APPROVED one of THIS house is
+    # honoured, and `use_provocation: false` sets it aside. Anything else is None, and the system prompt is exactly what it was.
+    prov_rec = None
+    if payload.get("use_provocation", True) is not False and str(payload.get("provocation_id") or "").strip():
+        prov_rec = provocation.resolve_for(str(payload.get("house_id") or ""), str(payload.get("provocation_id") or ""))
     out = completion.complete(payload.get("messages", []),
                               execution=str(payload.get("execution") or ""),
                               house_id=str(payload.get("house_id") or ""),
@@ -360,7 +365,8 @@ def complete_endpoint(payload: dict):
                               use_platform=payload.get("use_platform", True) is not False,
                               use_plan=payload.get("use_plan", True) is not False,
                               brand_mode="general" if str(payload.get("brand_mode") or "").strip().lower()
-                              == "general" else "grounded")
+                              == "general" else "grounded",
+                              provocation=prov_rec)
     if not str(out or "").strip():
         # A live key that returns nothing is a failure too, and an empty string dressed as success is the
         # version of it nobody can debug.
