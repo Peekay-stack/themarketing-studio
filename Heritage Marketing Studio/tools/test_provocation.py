@@ -63,6 +63,9 @@ print("shape")
 junk = pv.normalise({"id": "x" * 100, "name": "n" * 500, "status": "weird", "core": {"risk": "extreme", "legal_flag": "yes", "line": ["a"], "codes_broken": ["a", 5, None, "b" * 900]},
                      "film": {"cast_approach": "robots", "vo_words": 999, "structure": 7}, "expressions": {"video": "v", "nonsense": "z", "posm": 4}, "evil": 1})
 check("unknown keys are dropped and bad enums become empty", "evil" not in junk and junk["status"] == "draft" and junk["core"]["risk"] == "" and junk["film"]["cast_approach"] == "", str(junk)[:200])
+tagged = pv.normalise({"core": {"codes_broken": ["Mother as hero (memory)", "Golden light (SEEN)", "Keeps (a) middle", "(memory)"]}})
+check("the audit's (memory)/(seen) basis tag is stripped from a code, a lone tag leaves nothing, other brackets stay",
+      tagged["core"]["codes_broken"] == ["Mother as hero", "Golden light", "Keeps (a) middle"], str(tagged["core"]["codes_broken"]))
 check("overlong text is cut, wrong types become empty", len(junk["name"]) == 120 and junk["core"]["line"] == "" and junk["core"]["legal_flag"] is False and junk["film"]["vo_words"] is None and len(junk["core"]["codes_broken"][-1]) == 200, "")
 check("only real media keep an expression", set(junk["expressions"]) == {"video"}, str(junk["expressions"]))
 boom = []

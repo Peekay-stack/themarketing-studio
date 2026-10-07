@@ -38,6 +38,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import time
 import uuid
 
@@ -109,7 +110,9 @@ def normalise(rec) -> dict:
         "status": status if status in STATUSES else "draft",
         "core": {
             "line": _s(core.get("line"), 400),
-            "codes_broken": _strs(core.get("codes_broken"), 8, 200),
+            # A code is the audit's wording; the audit's "(memory)" / "(seen)" basis tag is not part of it (drafts made
+            # before 6 Oct carry it, and the screen matches codes to the audit by text).
+            "codes_broken": [t for t in (re.sub(r"\s*\((?:memory|seen)\)\s*$", "", c, flags=re.I) for c in _strs(core.get("codes_broken"), 8, 200)) if t],
             "stance": {k: _s(stance.get(k), 300) for k in ("tone", "humour", "structure")},
             "risk": risk if risk in RISKS else "",
             "risk_note": _s(core.get("risk_note"), 600),
