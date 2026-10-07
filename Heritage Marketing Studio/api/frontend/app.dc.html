@@ -4225,7 +4225,7 @@
             <div style="font-size:13.5px; font-weight:700; color:#17325E;">Competitor evidence <span style="font-weight:600; color:#6B7280;">· optional, saved once for this house</span></div>
             <span onClick="{{ toggleEvOpen }}" style="cursor:pointer; font-size:12.5px; font-weight:700; color:#1E7E34;">{{ provEvToggleLabel }}</span>
           </div>
-          <div style="font-size:12.5px; line-height:1.55; color:#41505F; margin-top:6px;">Names are enough to start. What you have actually seen makes the codes real: the more you add for 3 or 4 competitors, the less the audit has to guess. {{ provEvSummary }}</div>
+          <div style="font-size:12.5px; line-height:1.55; color:#41505F; margin-top:6px;">Names are enough to start. What you have actually seen makes the picture real: packaging, pages, films, what they claim and what they do. The more you add for 3 or 4 competitors, the less the audit has to guess. {{ provEvSummary }}</div>
           <sc-if value="{{ provEvOpen }}" hint-placeholder-val="{{ false }}">
             <div style="font-size:12px; line-height:1.5; color:#8A5B0F; background:#FDEEDA; border-radius:8px; padding:7px 10px; margin-top:10px;">The studio reads what you write, not what you link. It cannot open an Instagram page or watch a video, and it does not read photos yet, so one line on what you see (how a TVC opens and ends, what the pack looks like, what a page keeps posting) is what counts. Links are kept as a reference for you.</div>
             <div style="display:flex; flex-direction:column; gap:10px; margin-top:10px;">
@@ -4259,24 +4259,32 @@
       <!-- 2. the category's codes -->
       <div style="background:#fff; border:1px solid #DDD9D1; border-radius:16px; padding:18px 20px; margin-bottom:16px;">
         <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:10px;">
-          <div style="font-family:'Epilogue',sans-serif; font-weight:700; font-size:16px; color:#17325E;">2. The category's codes <span style="font-weight:600; font-size:13px; color:#6B7280;">{{ provCategory }}</span></div>
+          <div style="font-family:'Epilogue',sans-serif; font-weight:700; font-size:16px; color:#17325E;">2. What the category takes for granted and does <span style="font-weight:600; font-size:13px; color:#6B7280;">{{ provCategory }}</span></div>
           <span onClick="{{ auditCodes }}" style="cursor:pointer; background:#F4FAF5; color:#1E7E34; border:1px solid #C9E7CE; border-radius:9px; padding:8px 14px; font-weight:700; font-size:13px;">{{ provCodesLabel }}</span>
         </div>
         <sc-if value="{{ provHasCaveat }}" hint-placeholder-val="{{ false }}">
           <div style="background:{{ provCaveatBg }}; border-radius:10px; padding:9px 13px; margin-bottom:10px; font-size:12.5px; line-height:1.55; color:#41505F;"><b>How far to trust this.</b> {{ provCaveat }} {{ provCaveatInvite }}</div>
         </sc-if>
         <sc-if value="{{ provHasCodes }}" hint-placeholder-val="{{ false }}">
-          <div style="font-size:12.5px; color:#6B7280; margin-bottom:8px;">Choose the codes to break. Keep the ones that are true to the brand.</div>
-          <div style="display:flex; flex-direction:column; gap:7px;">
-            <sc-for list="{{ provCodes }}" as="c" hint-placeholder-count="6">
-              <div style="display:flex; align-items:flex-start; gap:12px; border:1px solid #ECE9E2; border-radius:10px; padding:9px 12px; background:#FBFAF8;">
-                <span style="min-width:74px; font-size:11px; font-weight:800; color:#6B7280; padding-top:3px;">{{ c.kind }}</span>
-                <div style="flex:1;">
-                  <div style="font-size:13.5px; color:#17325E; line-height:1.45;">{{ c.code }}</div>
-                  <div style="font-size:12px; color:#6B7280; margin-top:2px;">{{ c.how }}</div>
-                  <span style="display:inline-block; margin-top:5px; font-size:11px; font-weight:700; border-radius:20px; padding:1px 9px; background:{{ c.basisBg }}; color:{{ c.basisFg }};">{{ c.basisLabel }}</span>
+          <div style="font-size:12.5px; color:#6B7280; margin-bottom:10px;">Choose what to break. The strongest belief and the strongest behaviour are ticked to start: the best work breaks what the category believes or does, not only how it looks. Keep the ones that are true to the brand.</div>
+          <div style="display:flex; flex-direction:column; gap:16px;">
+            <sc-for list="{{ provGroups }}" as="g" hint-placeholder-count="3">
+              <div>
+                <div style="font-size:13px; font-weight:800; color:#17325E;">{{ g.label }}</div>
+                <div style="font-size:12px; color:#6B7280; margin:2px 0 7px;">{{ g.hint }}</div>
+                <div style="display:flex; flex-direction:column; gap:7px;">
+                  <sc-for list="{{ g.items }}" as="c" hint-placeholder-count="4">
+                    <div style="display:flex; align-items:flex-start; gap:12px; border:1px solid #ECE9E2; border-radius:10px; padding:9px 12px; background:#FBFAF8;">
+                      <span style="min-width:74px; font-size:11px; font-weight:800; color:#6B7280; padding-top:3px;">{{ c.kind }}</span>
+                      <div style="flex:1;">
+                        <div style="font-size:13.5px; color:#17325E; line-height:1.45;">{{ c.code }}</div>
+                        <div style="font-size:12px; color:#6B7280; margin-top:2px;">{{ c.how }}</div>
+                        <span style="display:inline-block; margin-top:5px; font-size:11px; font-weight:700; border-radius:20px; padding:1px 9px; background:{{ c.basisBg }}; color:{{ c.basisFg }};">{{ c.basisLabel }}</span>
+                      </div>
+                      <span onClick="{{ c.pick }}" style="cursor:pointer; font-size:12px; font-weight:700; border-radius:8px; padding:5px 12px; border:1px solid #C9CEDA; background:{{ c.pickBg }}; color:{{ c.pickFg }};">{{ c.pickLabel }}</span>
+                    </div>
+                  </sc-for>
                 </div>
-                <span onClick="{{ c.pick }}" style="cursor:pointer; font-size:12px; font-weight:700; border-radius:8px; padding:5px 12px; border:1px solid #C9CEDA; background:{{ c.pickBg }}; color:{{ c.pickFg }};">{{ c.pickLabel }}</span>
               </div>
             </sc-for>
           </div>
@@ -4287,7 +4295,7 @@
       <sc-if value="{{ provHasCodes }}" hint-placeholder-val="{{ false }}">
       <div style="background:#fff; border:1px solid #DDD9D1; border-radius:16px; padding:18px 20px; margin-bottom:16px;">
         <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:10px;">
-          <div style="font-family:'Epilogue',sans-serif; font-weight:700; font-size:16px; color:#17325E;">3. Sparks <span style="font-weight:600; font-size:13px; color:#6B7280;">{{ provPickedCount }} code(s) chosen to break</span></div>
+          <div style="font-family:'Epilogue',sans-serif; font-weight:700; font-size:16px; color:#17325E;">3. Sparks <span style="font-weight:600; font-size:13px; color:#6B7280;">{{ provPickedCount }} chosen to break</span></div>
           <span onClick="{{ genSparks }}" style="cursor:pointer; background:#F4FAF5; color:#1E7E34; border:1px solid #C9E7CE; border-radius:9px; padding:8px 14px; font-weight:700; font-size:13px;">{{ provSparksLabel }}</span>
         </div>
         <sc-if value="{{ provHasErr }}" hint-placeholder-val="{{ false }}">
@@ -4300,7 +4308,8 @@
                 <div style="font-size:13.5px; font-weight:700; color:#17325E; line-height:1.45;">{{ x.text }}</div>
                 <div style="font-size:12px; color:#6B7280;">Breaks: {{ x.codes }}</div>
                 <div style="font-size:12px; color:#41505F;">Stays true: {{ x.stays }}</div>
-                <div style="display:flex; gap:12px; font-size:11.5px; color:#6B7280;"><span>Breaks a code {{ x.b }}/5</span><span>True to the platform {{ x.t }}/5</span><span>Travels {{ x.tr }}/5</span></div>
+                <sc-if value="{{ x.hasDevice }}" hint-placeholder-val="{{ false }}"><div style="font-size:11.5px; color:#17325E; font-weight:700;">Device: {{ x.deviceLabel }}</div></sc-if>
+                <div style="display:flex; flex-wrap:wrap; gap:4px 10px; font-size:11.5px; color:#6B7280;"><sc-for list="{{ x.chips }}" as="ch" hint-placeholder-count="6"><span>{{ ch.label }} {{ ch.v }}/5</span></sc-for></div>
                 <div style="display:flex; align-items:center; justify-content:space-between; margin-top:4px;">
                   <span style="font-size:11.5px; font-weight:700; border-radius:8px; padding:2px 9px; background:{{ x.riskBg }}; color:{{ x.riskFg }};">{{ x.riskLabel }}</span>
                   <span onClick="{{ x.develop }}" style="cursor:pointer; font-size:12.5px; font-weight:700; color:#fff; background:{{ x.devBg }}; border-radius:8px; padding:6px 13px;">{{ x.devLabel }}</span>
@@ -4332,6 +4341,28 @@
           </div>
           <div style="margin-bottom:10px;"><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">The provocation, in one line</div><textarea data-p="core.line" value="{{ provLine }}" onChange="{{ onRecField }}" rows="2" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:14px; line-height:1.5; color:#17325E; resize:vertical; font-family:inherit;"></textarea></div>
 
+          <div style="background:#F4F7FC; border:1px solid #D6DEEC; border-radius:12px; padding:12px 14px; margin-bottom:12px;">
+            <div style="font-size:11px; font-weight:800; letter-spacing:0.06em; text-transform:uppercase; color:#2E5EA6; margin-bottom:8px;">The idea behind it</div>
+            <div style="margin-bottom:10px;">
+              <div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">The message it stands on <span style="font-weight:600;">(the platform says: {{ provPlatformMessage }})</span></div>
+              <textarea data-p="core.message" value="{{ provMessage }}" onChange="{{ onRecField }}" rows="2" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; line-height:1.5; color:#38414F; resize:vertical; font-family:inherit; background:#fff;"></textarea>
+            </div>
+            <div style="margin-bottom:10px;">
+              <div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:5px;">The device that makes it felt</div>
+              <div style="display:flex; gap:7px; flex-wrap:wrap;"><sc-for list="{{ provDevices }}" as="d" hint-placeholder-count="9"><span onClick="{{ d.set }}" style="cursor:pointer; padding:5px 12px; border-radius:8px; font-size:12.5px; font-weight:700; border:1px solid {{ d.border }}; background:{{ d.bg }}; color:{{ d.fg }};">{{ d.label }}</span></sc-for></div>
+              <div style="font-size:12px; color:#6B7280; margin:5px 0;">{{ provDeviceHint }}</div>
+              <input data-p="core.device_note" value="{{ provDeviceNote }}" onChange="{{ onRecField }}" placeholder="How the device works in this film" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; color:#38414F; background:#fff;" />
+            </div>
+            <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:10px 14px; margin-bottom:10px;">
+              <div><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">The category says</div><textarea data-p="core.tension.category_says" value="{{ provTensionSays }}" onChange="{{ onRecField }}" rows="2" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; line-height:1.5; color:#38414F; resize:vertical; font-family:inherit; background:#fff;"></textarea></div>
+              <div><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">We say instead</div><textarea data-p="core.tension.we_say" value="{{ provTensionWe }}" onChange="{{ onRecField }}" rows="2" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; line-height:1.5; color:#38414F; resize:vertical; font-family:inherit; background:#fff;"></textarea></div>
+            </div>
+            <div>
+              <div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">The line a stranger could repeat (12 words at most)</div>
+              <input data-p="core.repeatable" value="{{ provRepeatable }}" onChange="{{ onRecField }}" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13.5px; font-weight:700; color:#17325E; background:#fff;" />
+            </div>
+          </div>
+
           <sc-if value="{{ provShowCompare }}" hint-placeholder-val="{{ false }}">
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
               <div style="background:#F1EFE8; border-radius:10px; padding:11px 13px;"><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">The category says</div><div style="font-size:13px; color:#6B7280; text-decoration:line-through; line-height:1.5;">{{ provCategorySays }}</div></div>
@@ -4339,17 +4370,25 @@
             </div>
           </sc-if>
 
-          <div style="margin-bottom:10px;"><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">Codes it breaks (one per line)</div><textarea data-p="core.codes_broken" data-list="1" value="{{ provCodesBroken }}" onChange="{{ onRecField }}" rows="2" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; line-height:1.5; color:#38414F; resize:vertical; font-family:inherit;"></textarea></div>
-          <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:10px 14px; margin-bottom:10px;">
-            <div><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">Tone</div><input data-p="core.stance.tone" value="{{ provTone }}" onChange="{{ onRecField }}" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; color:#38414F;" /></div>
-            <div><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">Humour</div><input data-p="core.stance.humour" value="{{ provHumour }}" onChange="{{ onRecField }}" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; color:#38414F;" /></div>
-            <div><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">Structure</div><input data-p="core.stance.structure" value="{{ provStructure }}" onChange="{{ onRecField }}" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; color:#38414F;" /></div>
+          <div style="margin-bottom:10px;"><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">What it breaks (one per line)</div><textarea data-p="core.codes_broken" data-list="1" value="{{ provCodesBroken }}" onChange="{{ onRecField }}" rows="3" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; line-height:1.5; color:#38414F; resize:vertical; font-family:inherit;"></textarea></div>
+          <div style="background:#FFF8EA; border:1px solid #F0DDB5; border-radius:12px; padding:11px 14px; margin-bottom:12px;">
+            <div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">What the brand would DO <span style="font-weight:600;">(optional: leave it empty if the idea does not need the brand to do anything)</span></div>
+            <input data-p="core.act" value="{{ provAct }}" onChange="{{ onRecField }}" placeholder="A change to the pack, how it buys, what it gives..." style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; color:#38414F; background:#fff;" />
+            <sc-if value="{{ provHasAct }}" hint-placeholder-val="{{ false }}">
+              <textarea data-p="core.act_note" value="{{ provActNote }}" onChange="{{ onRecField }}" rows="2" placeholder="What it would take, and who would have to agree" style="width:100%; box-sizing:border-box; margin-top:7px; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; line-height:1.5; color:#38414F; resize:vertical; font-family:inherit; background:#fff;"></textarea>
+              <div style="font-size:12px; line-height:1.5; color:#8A5B0F; margin-top:6px;">This is a proposal, not something the brand does today. It needs the business to agree, and it has to fit the approved claims list.</div>
+            </sc-if>
           </div>
-          <div style="margin-bottom:10px;"><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">Why this risk</div><textarea data-p="core.risk_note" value="{{ provRiskNote }}" onChange="{{ onRecField }}" rows="2" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; line-height:1.5; color:#38414F; resize:vertical; font-family:inherit;"></textarea></div>
+          <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:10px 14px; margin-bottom:10px;">
+            <div><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">Tone</div><textarea data-p="core.stance.tone" value="{{ provTone }}" onChange="{{ onRecField }}" rows="2" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; color:#38414F; line-height:1.45; resize:vertical; font-family:inherit;"></textarea></div>
+            <div><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">Humour</div><textarea data-p="core.stance.humour" value="{{ provHumour }}" onChange="{{ onRecField }}" rows="2" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; color:#38414F; line-height:1.45; resize:vertical; font-family:inherit;"></textarea></div>
+            <div><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">Structure</div><textarea data-p="core.stance.structure" value="{{ provStructure }}" onChange="{{ onRecField }}" rows="2" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; color:#38414F; line-height:1.45; resize:vertical; font-family:inherit;"></textarea></div>
+          </div>
+          <div style="margin-bottom:10px;"><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">Why this risk</div><textarea data-p="core.risk_note" value="{{ provRiskNote }}" onChange="{{ onRecField }}" rows="3" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; line-height:1.5; color:#38414F; resize:vertical; font-family:inherit;"></textarea></div>
           <div style="margin-bottom:10px;">
             <div style="display:flex; align-items:center; justify-content:space-between;"><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">Safer version (the same idea, keeping more of the category's comfort)</div>
               <sc-if value="{{ provHasSafer }}" hint-placeholder-val="{{ false }}"><span onClick="{{ useSaferVersion }}" style="cursor:pointer; font-size:12px; font-weight:700; color:#1E7E34;">Use the safer version</span></sc-if></div>
-            <textarea data-p="core.safer_version" value="{{ provSafer }}" onChange="{{ onRecField }}" rows="2" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; line-height:1.5; color:#38414F; resize:vertical; font-family:inherit;"></textarea>
+            <textarea data-p="core.safer_version" value="{{ provSafer }}" onChange="{{ onRecField }}" rows="3" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; line-height:1.5; color:#38414F; resize:vertical; font-family:inherit;"></textarea>
           </div>
           <div style="background:#F7F5F1; border-radius:10px; padding:10px 13px; margin-bottom:12px;">
             <label style="font-size:13px; font-weight:700; color:#17325E; display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" checked="{{ provLegalFlag }}" onChange="{{ toggleLegalFlag }}" /> It jabs at competitors (as an archetype, never a named rival)</label>
@@ -4361,20 +4400,20 @@
 
           <div style="font-family:'Epilogue',sans-serif; font-weight:700; font-size:14.5px; color:#17325E; margin:14px 0 8px;">What it becomes</div>
           <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:10px 14px; margin-bottom:10px;">
-            <div><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">Video (the film)</div><textarea data-p="expressions.video" value="{{ provExprVideo }}" onChange="{{ onRecField }}" rows="2" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; line-height:1.5; color:#38414F; resize:vertical; font-family:inherit;"></textarea></div>
-            <div><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">Social</div><textarea data-p="expressions.social" value="{{ provExprSocial }}" onChange="{{ onRecField }}" rows="2" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; line-height:1.5; color:#38414F; resize:vertical; font-family:inherit;"></textarea></div>
-            <div><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">POSM</div><textarea data-p="expressions.posm" value="{{ provExprPosm }}" onChange="{{ onRecField }}" rows="2" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; line-height:1.5; color:#38414F; resize:vertical; font-family:inherit;"></textarea></div>
-            <div><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">On-ground</div><textarea data-p="expressions.activation" value="{{ provExprActivation }}" onChange="{{ onRecField }}" rows="2" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; line-height:1.5; color:#38414F; resize:vertical; font-family:inherit;"></textarea></div>
-            <div><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">PR</div><textarea data-p="expressions.pr" value="{{ provExprPr }}" onChange="{{ onRecField }}" rows="2" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; line-height:1.5; color:#38414F; resize:vertical; font-family:inherit;"></textarea></div>
+            <div><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">Video (the film)</div><textarea data-p="expressions.video" value="{{ provExprVideo }}" onChange="{{ onRecField }}" rows="4" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; line-height:1.5; color:#38414F; resize:vertical; font-family:inherit;"></textarea></div>
+            <div><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">Social</div><textarea data-p="expressions.social" value="{{ provExprSocial }}" onChange="{{ onRecField }}" rows="4" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; line-height:1.5; color:#38414F; resize:vertical; font-family:inherit;"></textarea></div>
+            <div><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">POSM</div><textarea data-p="expressions.posm" value="{{ provExprPosm }}" onChange="{{ onRecField }}" rows="4" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; line-height:1.5; color:#38414F; resize:vertical; font-family:inherit;"></textarea></div>
+            <div><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">On-ground</div><textarea data-p="expressions.activation" value="{{ provExprActivation }}" onChange="{{ onRecField }}" rows="4" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; line-height:1.5; color:#38414F; resize:vertical; font-family:inherit;"></textarea></div>
+            <div><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">PR</div><textarea data-p="expressions.pr" value="{{ provExprPr }}" onChange="{{ onRecField }}" rows="4" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; line-height:1.5; color:#38414F; resize:vertical; font-family:inherit;"></textarea></div>
           </div>
 
           <div style="font-family:'Epilogue',sans-serif; font-weight:700; font-size:14.5px; color:#17325E; margin:14px 0 8px;">The film (what Video reads)</div>
           <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:10px 14px; margin-bottom:10px;">
-            <div><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">Structure</div><input data-p="film.structure" value="{{ provFilmStructure }}" onChange="{{ onRecField }}" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; color:#38414F;" /></div>
-            <div><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">Humour</div><input data-p="film.humour" value="{{ provFilmHumour }}" onChange="{{ onRecField }}" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; color:#38414F;" /></div>
-            <div><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">Visual language</div><input data-p="film.visual_language" value="{{ provFilmVisual }}" onChange="{{ onRecField }}" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; color:#38414F;" /></div>
-            <div><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">Sound language</div><input data-p="film.sound_language" value="{{ provFilmSound }}" onChange="{{ onRecField }}" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; color:#38414F;" /></div>
-            <div><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">How the brand arrives</div><input data-p="film.brand_beat" value="{{ provFilmBeat }}" onChange="{{ onRecField }}" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; color:#38414F;" /></div>
+            <div><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">Structure</div><textarea data-p="film.structure" value="{{ provFilmStructure }}" onChange="{{ onRecField }}" rows="2" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; color:#38414F; line-height:1.45; resize:vertical; font-family:inherit;"></textarea></div>
+            <div><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">Humour</div><textarea data-p="film.humour" value="{{ provFilmHumour }}" onChange="{{ onRecField }}" rows="2" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; color:#38414F; line-height:1.45; resize:vertical; font-family:inherit;"></textarea></div>
+            <div><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">Visual language</div><textarea data-p="film.visual_language" value="{{ provFilmVisual }}" onChange="{{ onRecField }}" rows="2" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; color:#38414F; line-height:1.45; resize:vertical; font-family:inherit;"></textarea></div>
+            <div><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">Sound language</div><textarea data-p="film.sound_language" value="{{ provFilmSound }}" onChange="{{ onRecField }}" rows="2" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; color:#38414F; line-height:1.45; resize:vertical; font-family:inherit;"></textarea></div>
+            <div><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">How the brand arrives</div><textarea data-p="film.brand_beat" value="{{ provFilmBeat }}" onChange="{{ onRecField }}" rows="2" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; color:#38414F; line-height:1.45; resize:vertical; font-family:inherit;"></textarea></div>
             <div><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">Voiceover length (words, 0 for none)</div><input data-p="film.vo_words" data-num="1" value="{{ provFilmVo }}" onChange="{{ onRecField }}" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:13px; color:#38414F;" /></div>
           </div>
           <div style="margin-bottom:10px;"><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">Cast approach</div><div style="display:flex; gap:7px; flex-wrap:wrap;"><sc-for list="{{ provCastOpts }}" as="o" hint-placeholder-count="4"><span onClick="{{ o.set }}" style="cursor:pointer; padding:6px 14px; border-radius:8px; font-size:12.5px; font-weight:700; border:1px solid {{ o.border }}; background:{{ o.bg }}; color:{{ o.fg }};">{{ o.label }}</span></sc-for></div></div>
@@ -4386,6 +4425,25 @@
             </div>
           </sc-if>
           <span onClick="{{ checkRec }}" style="cursor:pointer; font-size:12.5px; font-weight:700; color:#17325E; border:1px solid #C9CEDA; background:#fff; border-radius:8px; padding:5px 12px;">Run the check</span>
+
+          <div style="font-family:'Epilogue',sans-serif; font-weight:700; font-size:14.5px; color:#17325E; margin:16px 0 6px;">Test the message</div>
+          <div style="font-size:12.5px; line-height:1.55; color:#41505F; margin-bottom:8px;">Reads the work cold, as a stranger would, without being told the message or the platform. One model call. Compare what it says with what you meant: a mismatch is the finding.</div>
+          <span onClick="{{ runTest }}" style="cursor:pointer; font-size:12.5px; font-weight:700; color:#17325E; border:1px solid #C9CEDA; background:#fff; border-radius:8px; padding:5px 12px;">{{ provTestLabel }}</span>
+          <sc-if value="{{ provHasTest }}" hint-placeholder-val="{{ false }}">
+            <div style="background:#fff; border:1px solid #D6DEEC; border-radius:12px; padding:12px 14px; margin-top:10px;">
+              <sc-if value="{{ provTestStale }}" hint-placeholder-val="{{ false }}"><div style="font-size:12px; color:#8A5B0F; background:#FDEEDA; border-radius:8px; padding:6px 10px; margin-bottom:8px;">You have edited it since this reading. Run it again.</div></sc-if>
+              <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:10px; margin-bottom:10px;">
+                <div style="background:#F1EFE8; border-radius:10px; padding:10px 13px;"><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">What you meant</div><div style="font-size:13px; color:#38414F; line-height:1.5;">{{ provTestIntended }}</div></div>
+                <div style="background:#17325E; border-radius:10px; padding:10px 13px;"><div style="font-size:11px; font-weight:700; color:#B5D4F4; margin-bottom:3px;">What a stranger took away</div><div style="font-size:13.5px; color:#fff; line-height:1.5;">{{ provTestTakeaway }}</div></div>
+              </div>
+              <div style="font-size:12.5px; color:#41505F; line-height:1.55; margin-bottom:5px;"><b>They would tell a friend:</b> {{ provTestRepeat }}</div>
+              <div style="font-size:12.5px; color:#41505F; line-height:1.55; margin-bottom:5px;"><b>Could another brand sign it?</b> {{ provTestOwn }}. {{ provTestOwnWhy }}</div>
+              <sc-if value="{{ provHasCuts }}" hint-placeholder-val="{{ false }}">
+                <div style="font-size:12.5px; font-weight:700; color:#41505F; margin-top:6px;">A sceptical creative director would cut or sharpen</div>
+                <sc-for list="{{ provTestCuts }}" as="k" hint-placeholder-count="2"><div style="font-size:12.5px; color:#41505F; line-height:1.5; padding-left:10px;">- {{ k.t }}</div></sc-for>
+              </sc-if>
+            </div>
+          </sc-if>
 
           <sc-if value="{{ provHasProblems }}" hint-placeholder-val="{{ false }}">
             <div style="background:#FDEEDA; border-radius:10px; padding:10px 13px; margin-top:14px;">
@@ -21156,7 +21214,7 @@ class Component extends DCLogic {
   provDefaults(){
     return { house:'', ev:null, onFile:[], strength:null, evBusy:false, evOpen:false, evSaved:true, steer:'',
       codes:null, caveat:null, category:'', codesBusy:false, picked:{}, sparks:null, sparksBusy:false,
-      rec:null, recBusy:false, pushing:false, devIdx:-1, checks:null, blocking:[], list:[], showArchived:false, err:'', note:'', dirty:false };
+      rec:null, recBusy:false, pushing:false, devIdx:-1, devices:[], test:null, testSig:'', testBusy:false, checks:null, blocking:[], list:[], showArchived:false, err:'', note:'', dirty:false };
   }
   P(){ return { ...this.provDefaults(), ...(this.state.prov || {}) }; }
   setProv(patch){ this.setState(st => ({ prov: { ...this.provDefaults(), ...(st.prov || {}), ...patch } })); }
@@ -21168,7 +21226,7 @@ class Component extends DCLogic {
     const sameHouse = this.P().house === hid;
     const [evd, lst] = await Promise.all([this.apiGet('/category-evidence?house=' + encodeURIComponent(hid)),
       this.apiGet('/provocations?house=' + encodeURIComponent(hid) + '&archived=' + (this.P().showArchived ? 'true' : 'false'))]);
-    const patch = { house:hid, list:(lst && lst.provocations) || [], limits:(lst && lst.hard_limits) || [] };
+    const patch = { house:hid, list:(lst && lst.provocations) || [], limits:(lst && lst.hard_limits) || [], devices:(lst && lst.devices) || [] };
     if (evd) { patch.onFile = evd.competitors_on_file || []; patch.strength = evd.strength || null; patch.channels = evd.channels || []; patch.maxComp = evd.max_competitors || 6;
       if (!sameHouse || this.P().evSaved) patch.ev = evd.evidence || { competitors:[] }; }
     if (!sameHouse) Object.assign(patch, { codes:null, caveat:null, sparks:null, rec:null, checks:null, picked:{}, err:'', note:'' });
@@ -21223,19 +21281,21 @@ class Component extends DCLogic {
     this.setProv({ codesBusy:true, err:'' });
     const r = await this.apiCall('/provocation-codes', { house:hid, steer:this.P().steer });
     if (r && r.ok && r.data && r.data.codes) {
-      const picked = {}; r.data.codes.forEach((c, i) => { picked[i] = c.kind === 'visual' || c.kind === 'structural'; });
+      const picked = {}; r.data.codes.forEach((c, i) => { picked[i] = !!c.suggested; });
       this.setProv({ codesBusy:false, codes:r.data.codes, caveat:r.data.caveat, category:r.data.category || '', picked, sparks:null });
     } else this.setProv({ codesBusy:false, err:this.provError(r, 'Couldn’t audit the codes just now.') });
   };
   toggleCode = (i) => () => this.setProv({ picked:{ ...this.P().picked, [i]: !this.P().picked[i] } });
   onSteer = (e) => this.setProv({ steer:e.target.value });
   pickedCodes(){ const p = this.P(); return (p.codes || []).filter((c, i) => p.picked[i]).map(c => c.code); }
+  // The same choices with the layer each belongs to (belief, behaviour or code), which is what the sparks are asked against.
+  pickedItems(){ const p = this.P(); return (p.codes || []).filter((c, i) => p.picked[i]).map(c => ({ code:c.code, layer:c.layer || '' })); }
 
   // ----- 3. sparks
   genSparks = async () => {
     const hid = this.provHouseId(); if (!hid || this.P().sparksBusy) return;
-    const codes = this.pickedCodes();
-    if (!codes.length) { this.showToast('Choose at least one code to break first.', 'warn'); return; }
+    const codes = this.pickedItems();
+    if (!codes.length) { this.showToast('Choose at least one thing to break first.', 'warn'); return; }
     this.setProv({ sparksBusy:true, err:'' });
     const r = await this.apiCall('/provocation-sparks', { house:hid, codes, steer:this.P().steer, n:8 });
     if (r && r.ok && r.data && r.data.sparks) this.setProv({ sparksBusy:false, sparks:r.data.sparks });
@@ -21246,7 +21306,7 @@ class Component extends DCLogic {
     this.setProv({ recBusy:true, devIdx:i, err:'' });
     const r = await this.apiCall('/provocation-develop', { house:hid, spark:sp, codes:sp.codes && sp.codes.length ? sp.codes : this.pickedCodes(), steer:this.P().steer });
     if (r && r.ok && r.data) {
-      this.setProv({ recBusy:false, devIdx:-1, rec:r.data, dirty:true, checks:null, note:'' }); this.checkRec();
+      this.setProv({ recBusy:false, devIdx:-1, rec:r.data, dirty:true, checks:null, note:'', test:null }); this.checkRec();
       // The draft opens in section 4, below the sparks: say so and bring it into view (the wait is about half a minute).
       this.showToast('Developed. Read it below and edit anything.', 'ok');
       setTimeout(() => { const el = document.getElementById('prov-section-4'); if (el && el.scrollIntoView) el.scrollIntoView({ block:'start' }); }, 200);
@@ -21269,6 +21329,19 @@ class Component extends DCLogic {
   };
   setRecRisk = (id) => () => this.setRecPath('core.risk', id);
   setRecCast = (id) => () => this.setRecPath('film.cast_approach', id);
+  setRecDevice = (id) => () => this.setRecPath('core.device', id);
+  recSig(rec){ const r = rec || {}; return JSON.stringify([(r.core || {}).line, r.expressions, r.film]); }
+  deviceLabel(id){ const d = (this.P().devices || []).find(x => x.id === id); return d ? d.label : String(id || '').replace(/_/g, ' '); }
+  // The stranger's reading: the work alone, no message, no platform. One model call; nothing is saved.
+  testMessage = async () => {
+    const hid = this.provHouseId(); const rec = this.P().rec; if (!hid || !rec || this.P().testBusy) return;
+    if (!(((rec.core || {}).line) || '').trim()) { this.showToast('Write the provocation first.', 'warn'); return; }
+    this.setProv({ testBusy:true, err:'' });
+    const body = rec.id && !this.P().dirty ? { id:rec.id } : { house:hid, record:rec };
+    const r = await this.apiCall('/provocation-test', body);
+    if (r && r.ok && r.data) this.setProv({ testBusy:false, test:r.data, testSig:this.recSig(rec) });
+    else { const msg = this.provError(r, 'Could not read it just now.'); this.setProv({ testBusy:false, err:msg }); this.showToast(msg, 'warn'); }
+  };
   toggleLegalFlag = () => this.setRecPath('core.legal_flag', !((this.P().rec || {}).core || {}).legal_flag);
   toggleLegalAck = () => this.setRecPath('core.legal_ack', !((this.P().rec || {}).core || {}).legal_ack);
   useSaferVersion = () => { const c = (this.P().rec || {}).core || {}; if (!c.safer_version) return;
@@ -21306,13 +21379,13 @@ class Component extends DCLogic {
     const saved = this.P().rec; if (!saved || !saved.id) return;
     this.setProv({ recBusy:true, pushing:true, err:'' });
     const r = await this.apiCall('/provocation-push', { id:saved.id, direction:this.P().push || '' });
-    if (r && r.ok && r.data) { this.setProv({ recBusy:false, pushing:false, rec:r.data, dirty:true }); this.checkRec(); this.showToast('Bolder version ready. The one you had is kept as the safer version. Save it to keep it.', 'ok'); }
+    if (r && r.ok && r.data) { this.setProv({ recBusy:false, pushing:false, rec:r.data, dirty:true, test:null }); this.checkRec(); this.showToast('Bolder version ready. The one you had is kept as the safer version. Save it to keep it.', 'ok'); }
     else { const msg = this.provError(r, 'Couldn’t push it further just now.'); this.setProv({ recBusy:false, pushing:false, err:msg }); this.showToast(msg, 'warn'); }
   };
   onPushDirection = (e) => this.setProv({ push:e.target.value });
   openProvocationRec = (id) => async () => {
     const r = await this.apiGet('/provocation?id=' + encodeURIComponent(id));
-    if (r) { this.setProv({ rec:r, dirty:false, err:'' }); this.checkRec(); window.scrollTo(0, 0); }
+    if (r) { this.setProv({ rec:r, dirty:false, err:'', test:null }); this.checkRec(); window.scrollTo(0, 0); }
   };
   archiveProvocation = (id) => async () => {
     const r = await this.apiCall('/provocation-archive', { id, on:true });
@@ -21323,18 +21396,29 @@ class Component extends DCLogic {
     if (r && r.ok) { await this.loadProvocation(); this.showToast('Brought back as a draft.', 'ok'); }
   };
   toggleShowArchived = () => { this.setProv({ showArchived: !this.P().showArchived }); setTimeout(() => this.loadProvocation(), 0); };
-  newProvocationBlank = () => { this.setProv({ rec:{ id:'', name:'', status:'draft', house:this.provHouseId(), platform:'', core:{ line:'', codes_broken:[], stance:{ tone:'', humour:'', structure:'' }, risk:'', risk_note:'', safer_version:'', legal_flag:false, legal_ack:false, legal_note:'' },
-      expressions:{}, film:{ structure:'', humour:'', visual_language:'', sound_language:'', cast_approach:'', vo_words:null, brand_beat:'', notes:'' }, source:{ codes_audit:[], sparks:[] }, stale_because:[], problems:[] }, dirty:true, checks:null, err:'' }); };
+  newProvocationBlank = () => { this.setProv({ rec:{ id:'', name:'', status:'draft', house:this.provHouseId(), platform:'', core:{ line:'', codes_broken:[], message:(this.idea().line || ''), device:'', device_note:'', tension:{ category_says:'', we_say:'' }, repeatable:'', act:'', act_note:'', stance:{ tone:'', humour:'', structure:'' }, risk:'', risk_note:'', safer_version:'', legal_flag:false, legal_ack:false, legal_note:'' },
+      expressions:{}, film:{ structure:'', humour:'', visual_language:'', sound_language:'', cast_approach:'', vo_words:null, brand_beat:'', notes:'' }, source:{ codes_audit:[], sparks:[] }, stale_because:[], problems:[] }, dirty:true, checks:null, err:'', test:null }); };
 
+  // The audit's items grouped by layer: what the category takes for granted, what every brand does, how it shows up.
+  provGroups(p, kindLabel){
+    const META = { belief:['What the category takes for granted', 'Every brand makes the buyer believe this. Break it and you are arguing with the category, not decorating against it.'],
+      behaviour:['What every brand does', 'Not what it says: what it does. This is where the best work breaks.'],
+      code:['How it shows up', 'Look, sound, tone, shape. Breaking only these gives a treatment: use them to carry a break above.'] };
+    const rows = (p.codes || []).map((c, i) => ({ i, layer:c.layer || 'code', kind:kindLabel[c.kind] || c.kind, code:c.code, how:c.how, seen:c.basis === 'seen',
+      basisLabel: c.basis === 'seen' ? ('Seen: ' + (c.seen_in || []).join('; ')) : 'From memory, unverified',
+      basisBg: c.basis === 'seen' ? '#EAF6EC' : '#F1EFE8', basisFg: c.basis === 'seen' ? '#1E7E34' : '#6B7280',
+      on:!!p.picked[i], pick:this.toggleCode(i), pickLabel: p.picked[i] ? 'Break this' : 'Keep', pickBg: p.picked[i] ? '#17325E' : '#fff', pickFg: p.picked[i] ? '#fff' : '#6B7280' }));
+    return ['belief', 'behaviour', 'code'].map(layer => ({ layer, label:META[layer][0], hint:META[layer][1], items:rows.filter(r => r.layer === layer) })).filter(g => g.items.length);
+  }
   provBag(s){
-    const p = this.P(); const rec = p.rec; const core = (rec || {}).core || {}; const film = (rec || {}).film || {}; const stance = core.stance || {};
+    const p = this.P(); const rec = p.rec; const core = (rec || {}).core || {}; const film = (rec || {}).film || {}; const stance = core.stance || {}; const tension = core.tension || {}; const devs = p.devices || [];
     const idea = this.idea(); const platformOk = this.ideaUsable() && !!idea.adopted;
     const chip = (on, onBg, onFg) => ({ bg: on ? onBg : '#fff', fg: on ? onFg : '#17325E', border: on ? onFg : '#DDD9D1' });
     const RISK = { low:['#EAF6EC', '#1E7E34'], medium:['#FDEEDA', '#8A5B0F'], high:['#FBE3E1', '#C0392B'] };
     const status = (rec || {}).status || 'draft';
     const evComps = this.evComps();
     const st = p.strength || { competitors:0, slots_filled:0, slots_total:0 };
-    const KIND_LABEL = { verbal:'Verbal', visual:'Visual', tonal:'Tonal', structural:'Structure', sonic:'Sound' };
+    const KIND_LABEL = { belief:'Belief', behaviour:'Behaviour', verbal:'Verbal', visual:'Visual', tonal:'Tonal', structural:'Structure', sonic:'Sound' };
     return {
       isProvocationScreen: s.screen === 'provocation',
       provHasHouse: !!this.provHouseId(), provNoHouse: !this.provHouseId(), provHouseName: (s.house || {}).brand || (s.house || {}).name || 'This house',
@@ -21355,23 +21439,32 @@ class Component extends DCLogic {
       auditCodes: this.auditCodes, provCodesLabel: p.codesBusy ? 'Auditing…' : (p.codes ? '↻ Audit again' : '✦ Audit the category’s codes'),
       provHasCodes: !!p.codes, provCategory: p.category,
       provCaveat: (p.caveat || {}).text || '', provCaveatInvite: (p.caveat || {}).invite || '', provHasCaveat: !!((p.caveat || {}).text), provCaveatBg: (p.caveat || {}).memory ? '#FDEEDA' : '#EAF6EC',
-      provCodes: (p.codes || []).map((c, i) => ({ i, kind:KIND_LABEL[c.kind] || c.kind, code:c.code, how:c.how, seen:c.basis === 'seen', basisLabel: c.basis === 'seen' ? ('Seen: ' + (c.seen_in || []).join('; ')) : 'From memory, unverified',
-        basisBg: c.basis === 'seen' ? '#EAF6EC' : '#F1EFE8', basisFg: c.basis === 'seen' ? '#1E7E34' : '#6B7280',
-        on:!!p.picked[i], pick:this.toggleCode(i), pickLabel: p.picked[i] ? 'Break this' : 'Keep', pickBg: p.picked[i] ? '#17325E' : '#fff', pickFg: p.picked[i] ? '#fff' : '#6B7280' })),
+      provGroups: this.provGroups(p, KIND_LABEL),
       provPickedCount: this.pickedCodes().length,
       // sparks
       genSparks: this.genSparks, provSparksLabel: p.sparksBusy ? 'Generating…' : (p.sparks ? '↻ More sparks' : '✦ Generate sparks'), provHasSparks: !!p.sparks,
-      provSparks: (p.sparks || []).map((x, i) => ({ i, text:x.text, codes:(x.codes || []).join(' · '), stays:x.stays_true, b:x.scores.breaks, t:x.scores.true, tr:x.scores.travels,
+      provSparks: (p.sparks || []).map((x, i) => ({ i, text:x.text, codes:(x.codes || []).join(' · '), stays:x.stays_true, chips:[['breaks', 'Break'], ['message', 'Message'], ['ownable', 'Ownable'], ['talkable', 'Talkable'], ['true', 'True'], ['travels', 'Travels']].filter(([k]) => (x.scores || {})[k] !== undefined).map(([k, label]) => ({ label, v:x.scores[k] })),
+        hasDevice:!!x.device, deviceLabel:this.deviceLabel(x.device),
         devLabel: p.devIdx === i ? 'Developing… about 30 seconds' : (p.recBusy ? 'Wait…' : 'Develop this'), devBg: p.recBusy ? '#8C97AB' : '#17325E',
         riskLabel:'Risk: ' + x.risk, riskBg:(RISK[x.risk] || RISK.medium)[0], riskFg:(RISK[x.risk] || RISK.medium)[1], develop:this.developSpark(i) })),
       // the provocation
+      provMessage: core.message || '', provPlatformMessage: idea.line || '', provDeviceNote: core.device_note || '',
+      provDevices: devs.map(d => ({ id:d.id, label:d.label, set:this.setRecDevice(d.id), ...chip(core.device === d.id, '#17325E', '#fff') })),
+      provDeviceHint: (devs.find(d => d.id === core.device) || {}).hint || 'Pick one. It is how the message becomes something the viewer feels.',
+      provTensionSays: tension.category_says || '', provTensionWe: tension.we_say || '', provRepeatable: core.repeatable || '',
+      provAct: core.act || '', provActNote: core.act_note || '', provHasAct: !!core.act,
+      runTest: this.testMessage, provTestLabel: p.testBusy ? 'Reading it cold... about 15 seconds' : 'Test the message', provHasTest: !!p.test,
+      provTestStale: !!p.test && p.testSig !== this.recSig(rec),
+      provTestIntended: (p.test || {}).intended || 'No message written yet', provTestTakeaway: (p.test || {}).takeaway || '', provTestRepeat: (p.test || {}).repeat || '',
+      provTestOwn: ((p.test || {}).ownable || {}).answer || '', provTestOwnWhy: ((p.test || {}).ownable || {}).why || '',
+      provTestCuts: ((p.test || {}).cuts || []).map(t => ({ t })), provHasCuts: ((p.test || {}).cuts || []).length > 0,
       provHasRec: !!rec, newProvocationBlank: this.newProvocationBlank, provRecBusy: p.recBusy,
       onRecField: this.onRecField, provName: (rec || {}).name || '', provLine: core.line || '',
       provCodesBroken: (core.codes_broken || []).join('\n'), provTone: stance.tone || '', provHumour: stance.humour || '', provStructure: stance.structure || '',
       provRiskNote: core.risk_note || '', provSafer: core.safer_version || '', provHasSafer: !!core.safer_version, useSaferVersion: this.useSaferVersion,
       provRiskOpts: [['low', 'Low'], ['medium', 'Medium'], ['high', 'High']].map(([id, label]) => ({ label, set:this.setRecRisk(id), ...chip(core.risk === id, (RISK[id] || [])[0], (RISK[id] || [])[1]) })),
       provLegalFlag: !!core.legal_flag, toggleLegalFlag: this.toggleLegalFlag, provLegalAck: !!core.legal_ack, toggleLegalAck: this.toggleLegalAck, provLegalNote: core.legal_note || '',
-      provShowCompare: !!core.line, provCategorySays: (p.codes || []).filter(c => (core.codes_broken || []).some(b => String(b).toLowerCase() === String(c.code).toLowerCase())).map(c => c.code).join(' · ') || ((core.codes_broken || []).join(' · ')),
+      provShowCompare: !!core.line && !(tension.category_says || tension.we_say), provCategorySays: (p.codes || []).filter(c => (core.codes_broken || []).some(b => String(b).toLowerCase() === String(c.code).toLowerCase())).map(c => c.code).join(' · ') || ((core.codes_broken || []).join(' · ')),
       provExprVideo: ((rec || {}).expressions || {}).video || '', provExprSocial: ((rec || {}).expressions || {}).social || '', provExprPosm: ((rec || {}).expressions || {}).posm || '',
       provExprActivation: ((rec || {}).expressions || {}).activation || '', provExprPr: ((rec || {}).expressions || {}).pr || '',
       provFilmStructure: film.structure || '', provFilmHumour: film.humour || '', provFilmVisual: film.visual_language || '', provFilmSound: film.sound_language || '',
