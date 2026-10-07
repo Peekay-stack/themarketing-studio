@@ -336,7 +336,7 @@ def house_block(brand: dict | None = None, house_id: str = "") -> str:
     return "\n".join(out)
 
 
-def platform_block(brand: dict | None = None, house_id: str = "") -> str:
+def platform_block(brand: dict | None = None, house_id: str = "", show_expressions: bool = True) -> str:
     """The idea platform's own detail: insight, mechanic, territory, proof, the reason-to-believe it
     dramatises, and how it is already expressed elsewhere. It is the strongest constraint in the spine:
     the point of adopting a platform is that every execution becomes a different expression of the same
@@ -393,7 +393,7 @@ def platform_block(brand: dict | None = None, house_id: str = "") -> str:
             out.append(f"The reason-to-believe it dramatises: {rtb_text}")
         expr = {k: str(v).strip() for k, v in (plat.get("expressions") or {}).items()
                 if str(v or "").strip()}
-        if expr:
+        if expr and show_expressions:
             out.append("How it is already expressed elsewhere — be consistent with these and do not "
                        "repeat them verbatim:\n"
                        + "\n".join(f"  - {k}: {v}" for k, v in expr.items()))
@@ -465,7 +465,7 @@ def plan_channels_block(brand: dict | None = None, house_id: str = "") -> str:
 
 
 def spine_block(brand: dict | None = None, *, house_id: str = "", use_house: bool = True,
-                use_platform: bool = True, use_plan: bool = True) -> str:
+                use_platform: bool = True, use_plan: bool = True, provocation: bool = False) -> str:
     """What has been decided upstream, as binding constraint — composed from three independently
     switchable pieces. Empty string when nothing has been decided, or when a caller has switched all
     three off.
@@ -488,7 +488,9 @@ def spine_block(brand: dict | None = None, *, house_id: str = "", use_house: boo
         if h:
             out.append(h)
     if use_platform:
-        p = platform_block(brand, house_id)
+        # With a provocation the platform's own earlier expressions are left out: the provocation may depart from how the platform is
+        # expressed, and a list of "be consistent with these" would pull the film straight back to them.
+        p = platform_block(brand, house_id, show_expressions=not provocation)
         if p:
             out.append(p)
     if use_plan:
@@ -501,7 +503,11 @@ def spine_block(brand: dict | None = None, *, house_id: str = "", use_house: boo
             "These are decisions a person made in the messaging house, the idea platform and the IMC "
             "plan. They are not suggestions and they are not background. Where your instruction below "
             "and this section disagree, this section wins; where your instruction asks for something "
-            "these do not cover, say what is missing rather than inventing it.\n\n"
+            "these do not cover, say what is missing rather than inventing it."
+            + (" The one exception is the PROVOCATION section further down: it may depart from how the platform is expressed "
+               "(so the platform's earlier expressions are left out), never from what the platform says and never from the guardrails above."
+               if provocation else "")
+            + "\n\n"
             + "\n\n".join(out))
 
 
@@ -607,6 +613,7 @@ def system_for(messages: list[dict], brand: dict | None = None, brand_mode: str 
     text = " ".join(str(m.get("content", "")) for m in messages if m.get("role") != "assistant")
     b = None if brand_mode == "general" else (brand or brandprofile.resolve())
     surface = _detect(text)
+    prov = provocation if (provocation and brand_mode != "general" and surface is not BRIEF) else None
     eff_house = use_house and not force_typed
     eff_platform = use_platform and not force_typed
     eff_plan_channels = use_plan and not force_typed
@@ -614,7 +621,7 @@ def system_for(messages: list[dict], brand: dict | None = None, brand_mode: str 
     # problem gets stated — so constraining it by the platform the LAST brief produced would quietly
     # make every brief a restatement of the current campaign, and the loop would never open again.
     spine = "" if surface is BRIEF else spine_block(b, house_id=house_id, use_house=eff_house,
-                                                     use_platform=eff_platform, use_plan=eff_plan_channels)
+                                                     use_platform=eff_platform, use_plan=eff_plan_channels, provocation=bool(prov))
     # The briefed piece goes LAST of the grounding blocks, closest to the instruction, because it is the
     # narrowest thing in the prompt and the one the rest has to yield to. Gated on `use_plan` only — the
     # "Plan" switch a person actually sees on screen ("Briefed from the plan") — independent of
@@ -628,7 +635,6 @@ def system_for(messages: list[dict], brand: dict | None = None, brand_mode: str 
     # the brand's guardrails stay in full, its usual TONE does not (the provocation's stance replaces it), the film instructions are the
     # provocation-aware ones, and the recurring character is dropped when the provocation casts objects, animation or nobody.
     # Not on a brief (upstream of any execution) and never on an Independent piece. With none named every line below is as it was.
-    prov = provocation if (provocation and brand_mode != "general" and surface is not BRIEF) else None
     voice_b = {**b, "tone": ""} if (prov and isinstance(b, dict)) else b
     if prov and (prov.get("film") or {}).get("cast_approach") in ("objects", "animated", "none"):
         character_block = ""

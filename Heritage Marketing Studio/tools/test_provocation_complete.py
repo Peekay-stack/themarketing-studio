@@ -47,7 +47,8 @@ prof = brandprofile.resolve(None, None)
 house = strategy.new_house("TestBrand")
 HID = house["id"]
 other = strategy.new_house("OtherBrand")
-pset = ideas.add(ideas.new_set("TestBrand", HID), {"name": "The small promise", "idea": "Every glass is a small promise", "mechanic": "A mark on the doorframe"})
+pset = ideas.add(ideas.new_set("TestBrand", HID), {"name": "The small promise", "idea": "Every glass is a small promise", "mechanic": "A mark on the doorframe",
+                                                   "expressions": {"video": "A milk truck idles at 2am outside the plant"}})
 ideas.choose(pset, pset["platforms"][0]["id"])
 
 REC = pv.normalise({"id": "p1", "house": HID, "name": "The Plain Glass", "status": "approved", "approved_by": "Asha",
@@ -85,6 +86,11 @@ check("the film notes and the voice-over length reach the model", "FILM NOTES" i
 check("the act is given as the idea's proof and a stated promise, never a claim beyond it", "Pour plain at the shelf" in p and "never as a claim beyond it" in p, "")
 check("the hard limits ride along", "No health claims" in p and "never a named rival" in p, "")
 check("the house and the platform are still there (the provocation never changes what they say)", "Every glass is a small promise" in p, "")
+check("the platform's EARLIER expressions are left out in provocation mode (a provocation may depart from them) but kept in the ordinary prompt",
+      "already expressed elsewhere" in a and "A milk truck idles at 2am" in a and "already expressed elsewhere" not in p and "A milk truck idles at 2am" not in p, "")
+check("the binding section names the provocation as its one exception, only when there is one",
+      "The one exception is the PROVOCATION section" in p and "The one exception" not in a and "this section wins" in p, "")
+check("the platform's own mechanic is still given", "A mark on the doorframe" in p, "")
 
 print("surfaces and modes")
 d = prompts.system_for(DEPT_MSG, brand=prof, house_id=HID, provocation=REC)

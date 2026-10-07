@@ -15427,7 +15427,13 @@ class Component extends DCLogic {
             .replace(/STRICT SPEECH BUDGET[\s\S]*?Cut every word that is not doing work\./, () =>
               (vw === 0 ? 'NO SPEECH: the provocation says there is no voice-over and no dialogue, so every scene has "audio": [].'
                 : (vw ? 'SPEECH BUDGET: the provocation sets the voice-over at about ' + vw + ' words across the ENTIRE film (all "text" values combined). Leave space; never narrate what the viewer can already see.'
-                  : 'Keep speech to what the provocation asks for and leave space.')));
+                  : 'Keep speech to what the provocation asks for and leave space.')))
+            // The ordinary prompt's own examples carry the conventional film: "the boy grows up", a half-asleep boy saying "Ammamma", and the tagline
+            // as a voice-over line. A model copies an example, so a wordless or differently cast provocation film gets neutral ones.
+            .replace(/\(the boy grows up\)/, () => '(a character is older)')
+            .replace(/Return ONLY JSON: \{"rows":[\s\S]*$/, () =>
+              'Return ONLY JSON: {"rows":[{"no":1,"tc":"0\u20135s","visual":"...","camera":"shot type & movement","dialogue":"human-readable script cell (empty when nothing is said)","supr":"on-screen text","audio":[]}]}. '
+              + 'Where something is spoken, "audio" holds one entry per spoken line: {"type":"vo" or "dialogue","speaker":"who (dialogue only)","emotion":"how it is said","language":"en","text":"spoken words only"}. Where nothing is spoken it stays [].');
         }
         let raw = await this.complete((learned ? learned + '\n\n' : '') + finalPrompt + locked, this.provExtra());
         raw = String(raw).trim().replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();
