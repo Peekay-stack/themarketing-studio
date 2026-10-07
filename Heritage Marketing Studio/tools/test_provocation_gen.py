@@ -201,6 +201,14 @@ check("a spark breaks only what the person chose: the brand's OWN cultural codes
       bc["Boil it"] == ["Purity is handed down"], str(bc))
 check("a spark that names none of the chosen things carries all of them (it was written against them)",
       bc["Other"] == ["Purity is handed down", "Brands show the farm"], str(bc))
+gen._ask = stub({"sparks": [{"text": "Timed", "codes": ["Sampling at the shop"], "also_breaks": "Milk is delivered sometime in the morning, and the family works around the pouch", "device": "proof_by_doing", "scores": {}, "risk": "high"},
+                            {"text": "Only elsewhere", "codes": [], "also_breaks": "Delivery has no deadline", "device": "contrast", "scores": {}, "risk": "low"}]})
+out, _e = gen.spark(house, pset, platform, EV, ["Sampling at the shop", "The hero shot is the pack"], "", n=3)
+bc2 = {x_["text"]: x_["codes"] for x_ in out["sparks"]}
+check("an idea that also breaks something NOT ticked says so: that is added to what it breaks, not hidden behind what happened to be ticked",
+      bc2["Timed"] == ["Sampling at the shop", "Milk is delivered sometime in the morning, and the family works around the pouch"], str(bc2))
+check("one that breaks only something else carries only that", bc2["Only elsewhere"] == ["Delivery has no deadline"], str(bc2))
+check("the prompt allows the extra break, once, in one sentence", "also_breaks" in seen_prompts[-1] and "NOT in that list" in seen_prompts[-1], "")
 _orig_basis = ideas.house_basis
 ideas.house_basis = lambda h: {**_orig_basis(h), "codes": [{"text": "The boil-and-watch", "tag": "ritual"}]}
 _ctx_text, _p, _n = gen._context(house, pset, platform, EV_EMPTY, "")
