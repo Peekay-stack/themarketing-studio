@@ -106,7 +106,8 @@ def _context(house: dict | None, pset: dict | None, platform: dict | None, ev: d
            f"Emotional pillar: {basis['emotional'] or '(none chosen)'}",
            f"Functional pillar: {basis['functional'] or '(none chosen)'}"]
     if basis["codes"]:
-        out.append("The brand's own cultural codes: " + "; ".join(f"{c['text']} ({c['tag']})" for c in basis["codes"]))
+        out.append("The brand's own cultural codes (the brand's OWN, to be kept and drawn on, never listed as something a provocation breaks): "
+                   + "; ".join(f"{c['text']} ({c['tag']})" for c in basis["codes"]))
     if basis["avoid"]:
         out.append("MUST NOT DO:\n" + "\n".join(f"  - {a}" for a in basis["avoid"]))
     out += ["", "THE IDEA PLATFORM THIS IS BUILT ON (the provocation may break how it is expressed, never what it says)"]
@@ -242,6 +243,22 @@ def _picked(codes) -> list[tuple[str, str]]:
     return out
 
 
+def _only_chosen(returned: list[str], chosen: list[str]) -> list[str]:
+    """What a spark says it breaks, held to what the person chose to break. A model also copies the brand's OWN cultural codes (from the
+    context) into it, and those are the brand's to keep. Matching is loose on case and punctuation; the chosen wording is what is kept.
+    If none of what came back matches, the spark was written against all of the chosen things, so that is what it carries."""
+    norm = lambda t: re.sub(r"[^a-z0-9]+", " ", str(t).lower()).strip()
+    keep = []
+    for r in returned:
+        n = norm(r)
+        for c in chosen:
+            cn = norm(c)
+            if n and cn and (n == cn or n in cn or cn in n) and c not in keep:
+                keep.append(c)
+                break
+    return keep or list(chosen)
+
+
 def _device_menu() -> str:
     return "; ".join(f"{d['id']} ({d['hint']})" for d in pv.devices())
 
@@ -261,7 +278,7 @@ def spark(house: dict | None, pset: dict | None, platform: dict | None, ev: dict
               "thing gently, some break several, at least one changes who or what is on screen, and at least two are about something "
               "the brand would DO (not only show). Never name a competitor.\n"
               "The devices (pick exactly one id per spark): " + _device_menu() + ".\n"
-              "For each give: text, codes (what it breaks, copied from the list above), device (one id), stays_true (one short line), "
+              "For each give: text, codes (what it breaks, copied word for word from the list above and ONLY from it: the brand's own cultural codes are kept, never broken), device (one id), stays_true (one short line), "
               "scores (integers 1 to 5: breaks = how clearly it breaks a belief, behaviour or code; message = how clearly it makes the "
               "platform's message felt; ownable = how hard it would be for another brand to sign it; talkable = how likely a viewer is to "
               "repeat it; true = how true to the platform; travels = how well it works across other mediums), risk (low, medium or high).\n"
@@ -280,7 +297,7 @@ def spark(house: dict | None, pset: dict | None, platform: dict | None, ev: dict
         risk = _s(it.get("risk"), 10).lower()
         device = _s(it.get("device"), 30).lower().replace(" ", "_").replace("-", "_")
         scores = {k: _score(sc.get(k)) for k in SCORE_KEYS}
-        out.append({"text": _s(it.get("text"), 600), "codes": [c for c in (_s(_untag(c), 240) for c in (it.get("codes") if isinstance(it.get("codes"), list) else [])[:6]) if c],
+        out.append({"text": _s(it.get("text"), 600), "codes": _only_chosen([c for c in (_s(_untag(c), 240) for c in (it.get("codes") if isinstance(it.get("codes"), list) else [])[:6]) if c], [t for t, _l in picked]),
                     "device": device if device in pv.DEVICE_IDS else "",
                     "stays_true": _s(it.get("stays_true"), 240), "scores": scores, "total": sum(scores.values()),
                     "risk": risk if risk in pv.RISKS else "medium"})

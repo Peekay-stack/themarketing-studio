@@ -190,9 +190,25 @@ spark_prompt = seen_prompts[-1]
 check("a device is read tolerantly and an unknown one is empty, never invented", sp[0]["device"] == "proof_by_doing" and sp[1]["device"] == "", str(sp))
 check("sparks are scored on six things, summed", sp[0]["total"] == 30 and set(sp[0]["scores"]) == set(gen.SCORE_KEYS) and len(gen.SCORE_KEYS) == 6, str(sp[0]))
 gen._ask = stub({"sparks": [{"text": "Mother signs it off", "codes": ["[belief] Purity is handed down", "[behaviour] Brands show the farm", "[code] Golden light", "Plain one"], "device": "reversal", "scores": {}, "risk": "low"}]})
-out, _e = gen.spark(house, pset, platform, EV, [{"code": "[belief] Purity is handed down", "layer": "belief"}], "", n=3)
+out, _e = gen.spark(house, pset, platform, EV, [{"code": "[belief] Purity is handed down", "layer": "belief"}, "Brands show the farm", "Golden light", "Plain one"], "", n=3)
 check("the [belief]/[behaviour]/[code] tag the prompt lists things with is taken off a spark's codes, which the model copies onto them",
       out["sparks"][0]["codes"] == ["Purity is handed down", "Brands show the farm", "Golden light", "Plain one"], str(out["sparks"][0]["codes"]))
+gen._ask = stub({"sparks": [{"text": "Boil it", "codes": ["Purity is handed down", "The boil-and-watch (ritual)", "'Rojoo, taaza, asli' (idiom)"], "device": "demonstration", "scores": {}, "risk": "low"},
+                            {"text": "Other", "codes": ["The morning glass before school (occasion)"], "device": "absence", "scores": {}, "risk": "low"}]})
+out, _e = gen.spark(house, pset, platform, EV, ["Purity is handed down", "Brands show the farm"], "", n=3)
+bc = {x["text"]: x["codes"] for x in out["sparks"]}
+check("a spark breaks only what the person chose: the brand's OWN cultural codes the model copies in are dropped",
+      bc["Boil it"] == ["Purity is handed down"], str(bc))
+check("a spark that names none of the chosen things carries all of them (it was written against them)",
+      bc["Other"] == ["Purity is handed down", "Brands show the farm"], str(bc))
+_orig_basis = ideas.house_basis
+ideas.house_basis = lambda h: {**_orig_basis(h), "codes": [{"text": "The boil-and-watch", "tag": "ritual"}]}
+_ctx_text, _p, _n = gen._context(house, pset, platform, EV_EMPTY, "")
+ideas.house_basis = _orig_basis
+check("the brand's own cultural codes are labelled as the brand's to keep, and the spark prompt says to copy only from the chosen list",
+      "to be kept and drawn on" in _ctx_text and "The boil-and-watch (ritual)" in _ctx_text and "ONLY from it" in seen_prompts[-1], _ctx_text[-400:])
+check("matching is loose on case and punctuation, and the chosen wording is what is kept",
+      gen._only_chosen(["PURITY is handed down!"], ["Purity is handed down", "x"]) == ["Purity is handed down"], "")
 check("and off what is picked", gen._picked(["[belief] A thing", {"code": "[Code] Another", "layer": "code"}]) == [("A thing", ""), ("Another", "code")], str(gen._picked(["[belief] A thing", {"code": "[Code] Another", "layer": "code"}])))
 gen._ask = stub({"codes": [{"layer": "belief", "code": "x", "basis": "memory"}]})
 gen.audit_codes(house, pset, platform, EV_EMPTY, "")
