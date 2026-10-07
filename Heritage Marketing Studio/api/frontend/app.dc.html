@@ -21429,7 +21429,7 @@ class Component extends DCLogic {
       // evidence
       provEvOpen: p.evOpen, toggleEvOpen: this.toggleEvOpen,
       provEvToggleLabel: (p.evOpen ? 'Hide' : (st.slots_filled ? 'Edit' : 'Add')) + ' competitor evidence',
-      provEvSummary: st.slots_total ? (st.slots_filled + ' of ' + st.slots_total + ' slots filled across ' + evComps.length + ' competitor' + (evComps.length === 1 ? '' : 's')) : 'None added yet. The codes will come from the competitor names and the model’s general knowledge, and will be marked as unverified.',
+      provEvSummary: st.slots_total ? (st.slots_filled + ' of ' + st.slots_total + ' slots filled across ' + evComps.length + ' competitor' + (evComps.length === 1 ? '' : 's')) : 'None added yet. The map will come from the competitor names and the model’s general knowledge, and will be marked as unverified.',
       provEvRows: evComps.map((c, i) => ({ i, name:c.name, remove:this.evRemove(i),
         slots:(p.channels || []).map(ch => ({ i, ch:ch.id, label:ch.label, note:(c.channels[ch.id] || {}).note || '', link:(c.channels[ch.id] || {}).link || '' })) })),
       provHasEvRows: evComps.length > 0, evName: this.evName, evSlot: this.evSlot, evAdd: this.evAdd(''), evAddFile: this.evAddFile, provCanAddFile: (p.onFile || []).length > 0,

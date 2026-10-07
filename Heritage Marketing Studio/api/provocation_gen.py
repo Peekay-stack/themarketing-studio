@@ -188,13 +188,15 @@ def _clean_codes(raw, ev: dict) -> list[dict]:
 def audit_codes(house: dict | None, pset: dict | None, platform: dict | None, ev: dict, steer: str = "") -> tuple[dict | None, str]:
     ctx, prof, names = _context(house, pset, platform, ev, steer)
     prompt = (_skill_text() + "\n\n---\n" + ctx + "\n\n---\nTASK: WHAT THE CATEGORY TAKES FOR GRANTED AND DOES\n"
-              "Map this category in three layers, most shared and most breakable first within each.\n"
+              "Map this category in three layers. Within each, put first what is really shared AND what the idea platform above gives a "
+              "true counter to (a belief or behaviour this brand's own message can answer), then the rest.\n"
               "  1. layer \"belief\" (4 to 6): what every brand makes the buyer take for granted. A belief is a claim about the world "
               "that the whole category leans on and nobody argues with (what makes the product good, what the buyer is, what the benefit "
               "is, who the hero is). Not how an ad looks: what it assumes.\n"
               "  2. layer \"behaviour\" (4 to 6): what every brand DOES, as opposed to says: how it prices and promotes, who it shows "
               "and what it does for them, where it turns up, what it offers or gives, how it proves things, what its programmes and "
-              "partnerships are.\n"
+              "partnerships are. At least three of them must be things a business does (pricing and offers, the pack, distribution and "
+              "delivery, sampling, how it buys and what it pays, programmes), not how its ads portray people: a portrayal is a code.\n"
               "  3. layer \"code\" (8 to 12): how it shows up, five kinds (verbal, visual, tonal, structural, sonic), at least one of each "
               "where it exists.\n"
               "Each item must be really shared by several brands and breakable without losing anything true to the brand. For each give: "
@@ -222,13 +224,19 @@ def _score(x) -> int:
 SCORE_KEYS = ("breaks", "message", "ownable", "talkable", "true", "travels")
 
 
+def _untag(text) -> str:
+    """The prompt lists what to break as "[belief] ...", and a model copies that bracket onto the end of its answer. It is not part of
+    the thing's wording (the screen matches by text), so it is taken off."""
+    return re.sub(r"^\s*\[(?:belief|behaviour|code)\]\s*", "", str(text or ""), flags=re.I)
+
+
 def _picked(codes) -> list[tuple[str, str]]:
     """The things the person chose to break, as (text, layer). A plain string is accepted (an older screen sent only those) and has
     no layer; a dict is {code, layer}."""
     out = []
     for c in (codes if isinstance(codes, list) else [])[:12]:
         text, layer = (c.get("code"), c.get("layer")) if isinstance(c, dict) else (c, "")
-        text = _s(text, 240)
+        text = _s(_untag(text), 240)
         if text:
             out.append((text, layer if layer in pv.LAYERS else ""))
     return out
@@ -272,7 +280,7 @@ def spark(house: dict | None, pset: dict | None, platform: dict | None, ev: dict
         risk = _s(it.get("risk"), 10).lower()
         device = _s(it.get("device"), 30).lower().replace(" ", "_").replace("-", "_")
         scores = {k: _score(sc.get(k)) for k in SCORE_KEYS}
-        out.append({"text": _s(it.get("text"), 600), "codes": [c for c in (_s(c, 240) for c in (it.get("codes") if isinstance(it.get("codes"), list) else [])[:6]) if c],
+        out.append({"text": _s(it.get("text"), 600), "codes": [c for c in (_s(_untag(c), 240) for c in (it.get("codes") if isinstance(it.get("codes"), list) else [])[:6]) if c],
                     "device": device if device in pv.DEVICE_IDS else "",
                     "stays_true": _s(it.get("stays_true"), 240), "scores": scores, "total": sum(scores.values()),
                     "risk": risk if risk in pv.RISKS else "medium"})

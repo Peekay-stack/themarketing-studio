@@ -186,11 +186,21 @@ gen._ask = stub({"sparks": [
     {"text": "Another", "codes": ["x"], "device": "magic", "scores": {}, "risk": "low"}]})
 out, err = gen.spark(house, pset, platform, EV, [{"code": "Goodness is proven by origin", "layer": "belief"}, {"code": "Golden light", "layer": "code"}, "A plain string"], "", n=3)
 sp = out["sparks"]
+spark_prompt = seen_prompts[-1]
 check("a device is read tolerantly and an unknown one is empty, never invented", sp[0]["device"] == "proof_by_doing" and sp[1]["device"] == "", str(sp))
 check("sparks are scored on six things, summed", sp[0]["total"] == 30 and set(sp[0]["scores"]) == set(gen.SCORE_KEYS) and len(gen.SCORE_KEYS) == 6, str(sp[0]))
+gen._ask = stub({"sparks": [{"text": "Mother signs it off", "codes": ["[belief] Purity is handed down", "[behaviour] Brands show the farm", "[code] Golden light", "Plain one"], "device": "reversal", "scores": {}, "risk": "low"}]})
+out, _e = gen.spark(house, pset, platform, EV, [{"code": "[belief] Purity is handed down", "layer": "belief"}], "", n=3)
+check("the [belief]/[behaviour]/[code] tag the prompt lists things with is taken off a spark's codes, which the model copies onto them",
+      out["sparks"][0]["codes"] == ["Purity is handed down", "Brands show the farm", "Golden light", "Plain one"], str(out["sparks"][0]["codes"]))
+check("and off what is picked", gen._picked(["[belief] A thing", {"code": "[Code] Another", "layer": "code"}]) == [("A thing", ""), ("Another", "code")], str(gen._picked(["[belief] A thing", {"code": "[Code] Another", "layer": "code"}])))
+gen._ask = stub({"codes": [{"layer": "belief", "code": "x", "basis": "memory"}]})
+gen.audit_codes(house, pset, platform, EV_EMPTY, "")
+check("the audit asks for what the platform gives a true counter to first, and at least three things a business DOES (a portrayal is a code)",
+      "true counter" in seen_prompts[-1] and "At least three" in seen_prompts[-1] and "a portrayal is a code" in seen_prompts[-1], seen_prompts[-1][-1100:])
 check("what is to be broken reaches the model with its layer, a plain string still works, and the device menu is given",
-      "[belief] Goodness is proven by origin" in seen_prompts[-1] and "[code] Golden light" in seen_prompts[-1] and "A plain string" in seen_prompts[-1]
-      and "proof_by_doing" in seen_prompts[-1] and "DO" in seen_prompts[-1], seen_prompts[-1][-700:])
+      "[belief] Goodness is proven by origin" in spark_prompt and "[code] Golden light" in spark_prompt and "A plain string" in spark_prompt
+      and "proof_by_doing" in spark_prompt and "DO" in spark_prompt, spark_prompt[-700:])
 gen._ask = stub({"sparks": []})
 check("no usable sparks is an honest error", gen.spark(house, pset, platform, EV, ["x"], "")[0] is None, "")
 
