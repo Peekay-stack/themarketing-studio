@@ -2260,7 +2260,7 @@ def provocations_list(house: str = "", platform: str = "", archived: bool = Fals
     nothing (never another house's work)."""
     h, plat = _prov_ctx(house)
     return {"provocations": [provocation.as_read(r, h, plat) for r in provocation.for_house(house, platform, include_archived=archived)],
-            "hard_limits": list(provocation.HARD_LIMITS)}
+            "hard_limits": list(provocation.HARD_LIMITS), "devices": provocation.devices()}
 
 
 @app.get("/provocation")
@@ -2404,6 +2404,22 @@ def provocation_develop(payload: dict):
     if not rec:
         return JSONResponse(status_code=400, content={"detail": err}) if err.startswith("Pick") else _gen_error(err)
     return provocation.as_read(rec, house, platform)
+
+
+@app.post("/provocation-test")
+def provocation_test(payload: dict):
+    """`{id}` or `{house, record}` -> a stranger's reading of the work: what a viewer takes away, what they would repeat, whether another
+    brand could sign it, what a sceptic would cut. The reader is never told the intended message; the screen sets the two side by side.
+    One model call; nothing is saved."""
+    rec = provocation.load(str(payload.get("id") or "")) if payload.get("id") else payload.get("record")
+    house_id = (rec or {}).get("house") if isinstance(rec, dict) and rec.get("house") else str(payload.get("house") or "")
+    house = strategy.load(house_id) if str(house_id or "").strip() else None
+    if not house or not isinstance(rec, dict):
+        return JSONResponse(status_code=400, content={"detail": "Say which provocation (or which house and record) to test."})
+    out, err = provocation_gen.message_test(rec, house)
+    if not out:
+        return JSONResponse(status_code=400, content={"detail": err}) if err.startswith("There is nothing") else _gen_error(err)
+    return out
 
 
 @app.post("/provocation-push")

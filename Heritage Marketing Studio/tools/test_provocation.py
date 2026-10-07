@@ -54,7 +54,8 @@ def current_platform():
 
 
 def good(**kw):
-    rec = {"name": "The Quiet Pour", "core": {"line": "Say nothing; show the glass.", "risk": "medium"}, "expressions": {"video": "A film with no people.", "posm": ""}}
+    rec = {"name": "The Quiet Pour", "core": {"line": "Say nothing; show the glass.", "risk": "medium", "message": "Every glass is a small promise", "device": "absence"},
+           "expressions": {"video": "A film with no people.", "posm": ""}}
     rec.update(kw)
     return rec
 
@@ -68,6 +69,16 @@ check("the audit's (memory)/(seen) basis tag is stripped from a code, a lone tag
       tagged["core"]["codes_broken"] == ["Mother as hero", "Golden light", "Keeps (a) middle"], str(tagged["core"]["codes_broken"]))
 check("overlong text is cut, wrong types become empty", len(junk["name"]) == 120 and junk["core"]["line"] == "" and junk["core"]["legal_flag"] is False and junk["film"]["vo_words"] is None and len(junk["core"]["codes_broken"][-1]) == 200, "")
 check("only real media keep an expression", set(junk["expressions"]) == {"video"}, str(junk["expressions"]))
+spine = pv.normalise({"core": {"message": "m" * 900, "device": "Proof by Doing", "device_note": "n", "tension": {"category_says": "a", "we_say": 5}, "repeatable": "r" * 400,
+                            "act": "Pay the farmer first", "act_note": "Needs procurement to agree"}})
+check("the spine is kept, device ids tolerate spaces and capitals, text is cut, wrong types become empty",
+      spine["core"]["device"] == "proof_by_doing" and len(spine["core"]["message"]) == 400 and len(spine["core"]["repeatable"]) == 140
+      and spine["core"]["tension"] == {"category_says": "a", "we_say": ""} and spine["core"]["act"] == "Pay the farmer first", str(spine["core"]))
+check("an unknown device is empty, never invented", pv.normalise({"core": {"device": "magic"}})["core"]["device"] == "", "")
+old_style = pv.normalise({"name": "Old", "core": {"line": "L", "codes_broken": ["a"], "risk": "low"}})
+check("a draft made before the spine is still a valid record with an empty spine",
+      old_style["core"]["message"] == "" and old_style["core"]["device"] == "" and old_style["core"]["tension"] == {"category_says": "", "we_say": ""} and old_style["core"]["act"] == "", "")
+check("seven evidence slots exist (five channels, claims, what they do)", pv.CHANNELS[-2:] == ("claims", "actions") and len(pv.CHANNELS) == 7 and len(pv.devices()) == 9, "")
 boom = []
 for x in (None, [], "x", 5, {"core": []}, {"core": {"stance": 3}}, {"film": "f"}, {"expressions": []}, {"source": {"sparks": [1, None, {"score": "x"}]}}, {"generated_under": 4}):
     try:
@@ -92,11 +103,14 @@ print("approval is a person's, with conditions")
 check("a draft is not usable", not pv.usable(rec, HID) and pv.resolve_for(HID, rec["id"]) is None, "")
 bare = pv.save(pv.apply_edit(None, {"house": HID, "name": "", "core": {"line": ""}}, house, current_platform()))
 new_, problems = pv.approve(bare, "Asha")
-check("an empty one cannot be approved, and says what is missing (name, line, risk)", new_ is None and len(problems) == 3, str(problems))
-jab = pv.save(pv.apply_edit(None, {**good(), "house": HID, "core": {"line": "x", "risk": "high", "legal_flag": True}}, house, current_platform()))
+check("an empty one cannot be approved, and says what is missing (name, line, message, device, risk)", new_ is None and len(problems) == 5, str(problems))
+nospine = pv.apply_edit(None, {**good(), "house": HID, "core": {"line": "x", "risk": "low"}}, house, current_platform())
+new_, problems = pv.approve(nospine, "Asha")
+check("without the message and the device it cannot be approved (it is a look, not an idea)", new_ is None and len(problems) == 2 and any("message" in p for p in problems) and any("device" in p for p in problems), str(problems))
+jab = pv.save(pv.apply_edit(None, {**good(), "house": HID, "core": {"line": "x", "risk": "high", "legal_flag": True, "message": "m", "device": "reversal"}}, house, current_platform()))
 new_, problems = pv.approve(jab, "Asha")
 check("a competitor jab needs the legal-review acknowledgement", new_ is None and any("legal" in p for p in problems), str(problems))
-jab2 = pv.apply_edit(jab, {"core": {"line": "x", "risk": "high", "legal_flag": True, "legal_ack": True}}, house, current_platform())
+jab2 = pv.apply_edit(jab, {"core": {"line": "x", "risk": "high", "legal_flag": True, "legal_ack": True, "message": "m", "device": "reversal"}}, house, current_platform())
 new_, problems = pv.approve(jab2, "Asha")
 check("with the acknowledgement it can be", new_ is not None and new_["status"] == "approved" and new_["approved_by"] == "Asha" and new_["approved_at"], str(problems))
 ok_rec, problems = pv.approve(rec, "Asha")
@@ -185,7 +199,7 @@ r = client.post("/provocation", json={"name": "No house"})
 check("a provocation needs a house", r.status_code == 400, r.text[:160])
 r = client.post("/provocation", json={"house": "nosuchhouse", "name": "x"})
 check("an unknown house is refused", r.status_code == 400, r.text[:160])
-r = client.post("/provocation", json={"house": RH, "name": "Route one", "core": {"line": "A line.", "risk": "low"}, "expressions": {"video": "ROUTE VIDEO"},
+r = client.post("/provocation", json={"house": RH, "name": "Route one", "core": {"line": "A line.", "risk": "low", "message": "Route line", "device": "demonstration"}, "expressions": {"video": "ROUTE VIDEO"},
                                       "status": "approved", "approved_by": "Me"})
 check("creating answers with a draft, the chosen platform filled in, and the hard limits", r.status_code == 200 and r.json()["status"] == "draft" and r.json()["platform"] == RPLAT and len(r.json()["hard_limits"]) == 4, r.text[:200])
 check("status and approval cannot be sent in", r.json()["approved_by"] == "", "")
@@ -200,7 +214,7 @@ bad = client.post("/provocation-approve", json={"id": r.json()["id"], "who": "As
 check("approving an incomplete one is refused with the reasons", bad.status_code == 400 and len(bad.json()["problems"]) >= 2, bad.text[:200])
 r = client.post("/provocation-approve", json={"id": PID, "who": "Asha"})
 check("approving a complete one works and records who", r.status_code == 200 and r.json()["status"] == "approved" and r.json()["approved_by"] == "Asha", r.text[:200])
-r = client.post("/provocation", json={"id": PID, "core": {"line": "A changed line.", "risk": "low"}})
+r = client.post("/provocation", json={"id": PID, "core": {"line": "A changed line.", "risk": "low", "message": "Route line", "device": "demonstration"}})
 check("editing it puts it back to a draft", r.status_code == 200 and r.json()["status"] == "draft", r.text[:200])
 r = client.post("/provocation", json={"id": PID, "house": other["id"], "name": "Route one"})
 check("sending another house with an id does not move it", r.status_code == 200 and r.json()["house"] == RH, r.text[:200])

@@ -25,7 +25,10 @@ sparks, the scoring) is the tab's job.
 A record:
 
     {id, house, platform, name, status: draft|approved|archived,
-     core: {line, codes_broken[], stance{tone, humour, structure}, risk: low|medium|high, risk_note, safer_version,
+     core: {line, codes_broken[],                     # "what it breaks": a belief, a behaviour or a code of the category
+            message, device, device_note,              # the spine: the message it stands on and the device that makes it felt
+            tension{category_says, we_say}, repeatable, act, act_note,
+            stance{tone, humour, structure}, risk: low|medium|high, risk_note, safer_version,
             legal_flag, legal_ack, legal_note},
      expressions: {<medium>: text},                  # media.EXPRESSIONS keys, like a campaign
      film: {structure, humour, visual_language, sound_language, cast_approach: people|objects|animated|none,
@@ -63,6 +66,29 @@ HARD_LIMITS = (
 
 _FILM_TEXT = ("structure", "humour", "visual_language", "sound_language", "brand_beat", "notes")
 
+# What a provocation breaks, in three layers: what the category takes for granted (belief), what every brand DOES (behaviour), and
+# how it looks, sounds and runs (code). The first two are where award-winning work breaks; the third is where a treatment stops.
+LAYERS = ("belief", "behaviour", "code")
+LAYER_LABELS = {"belief": "What the category takes for granted", "behaviour": "What every brand does", "code": "How it shows up"}
+
+# The device that makes the message FELT. One per provocation. `hint` is for the screen and the prompt.
+DEVICES = (
+    ("demonstration", "Demonstration", "show the message working in front of the viewer"),
+    ("absence", "Absence", "what is missing carries the message"),
+    ("reversal", "Reversal", "flip the usual roles, order or point of view"),
+    ("exaggeration", "Exaggeration", "push the category's own habit until it is absurd"),
+    ("proof_by_doing", "Proof by doing", "the brand does something real, and the film is the proof"),
+    ("point_of_view", "Point of view", "told by the unexpected witness"),
+    ("true_story", "True story", "real people, a real event"),
+    ("contrast", "Contrast", "set it against its opposite"),
+    ("ritual_made_visible", "Ritual made visible", "a habit seen as if for the first time"),
+)
+DEVICE_IDS = tuple(d[0] for d in DEVICES)
+
+
+def devices() -> list[dict]:
+    return [{"id": i, "label": label, "hint": hint} for i, label, hint in DEVICES]
+
 
 def _now() -> str:
     return time.strftime("%Y-%m-%d %H:%M", time.localtime())
@@ -95,6 +121,8 @@ def normalise(rec) -> dict:
     risk = _s(core.get("risk"), 20).lower()
     cast = _s(film.get("cast_approach"), 20).lower()
     vo = film.get("vo_words")
+    tension = core.get("tension") if isinstance(core.get("tension"), dict) else {}
+    device = _s(core.get("device"), 30).lower().replace(" ", "_").replace("-", "_")
     out_film = {k: _s(film.get(k), 800) for k in _FILM_TEXT}
     out_film["cast_approach"] = cast if cast in CAST_APPROACHES else ""
     out_film["vo_words"] = int(vo) if isinstance(vo, (int, float)) and not isinstance(vo, bool) and 0 <= vo <= 120 else None
@@ -114,6 +142,15 @@ def normalise(rec) -> dict:
             # before 6 Oct carry it, and the screen matches codes to the audit by text).
             "codes_broken": [t for t in (re.sub(r"\s*\((?:memory|seen)\)\s*$", "", c, flags=re.I) for c in _strs(core.get("codes_broken"), 8, 200)) if t],
             "stance": {k: _s(stance.get(k), 300) for k in ("tone", "humour", "structure")},
+            # The spine (all optional, so a draft made before it is still a valid record): the message it stands on, the device
+            # that makes it felt, the two-sentence test, the line a stranger could repeat, and what the brand would DO.
+            "message": _s(core.get("message"), 400),
+            "device": device if device in DEVICE_IDS else "",
+            "device_note": _s(core.get("device_note"), 500),
+            "tension": {"category_says": _s(tension.get("category_says"), 300), "we_say": _s(tension.get("we_say"), 300)},
+            "repeatable": _s(core.get("repeatable"), 140),
+            "act": _s(core.get("act"), 300),
+            "act_note": _s(core.get("act_note"), 600),
             "risk": risk if risk in RISKS else "",
             "risk_note": _s(core.get("risk_note"), 600),
             "safer_version": _s(core.get("safer_version"), 800),
@@ -218,6 +255,10 @@ def approval_problems(rec: dict) -> list[str]:
         out.append("Give it a name -- it is how a producer will pick it.")
     if not rec["core"]["line"]:
         out.append("Write the provocation itself: the line that says where this departs from the category.")
+    if not rec["core"]["message"]:
+        out.append("Say the message it stands on, in plain words -- a provocation that does not carry the platform's message is a treatment.")
+    if not rec["core"]["device"]:
+        out.append("Pick the device that makes the message felt (absence, reversal, proof by doing...) -- without one it is a look, not an idea.")
     if not rec["core"]["risk"]:
         out.append("Say how risky it is (low, medium or high) -- an approval without a risk label hides the one thing a reviewer needs.")
     if rec["core"]["legal_flag"] and not rec["core"]["legal_ack"]:
@@ -309,12 +350,14 @@ def as_read(rec: dict, house: dict | None = None, platform: dict | None = None) 
 # ---- competitor evidence: what the person has SEEN, saved once per house ------------------------------------------
 #
 # The codes audit is only as good as what it is shown. Names alone leave the model working from memory of the brands, which is
-# dated and sometimes wrong, so a person may add, per competitor, what they have actually seen in five places. Everything is
+# dated and sometimes wrong, so a person may add, per competitor, what they have actually seen in seven places (five channels, plus
+# what they claim and what they DO: beliefs and behaviours are read from those two). Everything is
 # optional; with none of it the audit still runs and says plainly that its codes are hypotheses. The evidence is text and links
 # only: the studio's AI path cannot open a link or read an image, so what it reads is what the person wrote.
 
-CHANNELS = ("packaging", "instagram", "social_video", "posm", "tvc")
-CHANNEL_LABELS = {"packaging": "Packaging", "instagram": "Instagram page", "social_video": "Social video", "posm": "POSM", "tvc": "TVC"}
+CHANNELS = ("packaging", "instagram", "social_video", "posm", "tvc", "claims", "actions")
+CHANNEL_LABELS = {"packaging": "Packaging", "instagram": "Instagram page", "social_video": "Social video", "posm": "POSM", "tvc": "TVC",
+                  "claims": "Claims and promises", "actions": "What they do"}
 MAX_COMPETITORS = 6
 
 

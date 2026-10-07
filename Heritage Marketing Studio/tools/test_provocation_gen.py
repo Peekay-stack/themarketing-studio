@@ -65,13 +65,13 @@ print("competitor evidence")
 junk = pv.normalise_evidence({"competitors": [None, 5, {"name": ""}, {"name": "A", "channels": {"tvc": {"note": "n" * 2000, "link": "l" * 900}, "nonsense": {"note": "x"}}},
                                               {"name": "a"}, {"name": "B", "channels": "x"}] + [{"name": f"C{i}"} for i in range(20)]})
 check("blank names, repeats (any case) and junk are dropped; at most six competitors", len(junk["competitors"]) == 6 and junk["competitors"][0]["name"] == "A", str([c["name"] for c in junk["competitors"]]))
-check("notes and links are capped; only the five channels exist", len(junk["competitors"][0]["channels"]["tvc"]["note"]) == 800 and len(junk["competitors"][0]["channels"]["tvc"]["link"]) == 300 and set(junk["competitors"][0]["channels"]) == set(pv.CHANNELS), "")
+check("notes and links are capped; only the seven channels exist", len(junk["competitors"][0]["channels"]["tvc"]["note"]) == 800 and len(junk["competitors"][0]["channels"]["tvc"]["link"]) == 300 and set(junk["competitors"][0]["channels"]) == set(pv.CHANNELS), "")
 check("a non-dict is an empty set of evidence", pv.normalise_evidence(None) == {"competitors": []} and pv.normalise_evidence("x") == {"competitors": []}, "")
 pv.evidence_save(HID, {"competitors": EV["competitors"]})
 check("evidence saves and comes back once per house", [c["name"] for c in pv.evidence_load(HID)["competitors"]] == ["BrandA", "BrandB", "BrandC"], "")
 check("an empty or unknown house has none, and an id is a file name", pv.evidence_load("")["competitors"] == [] and pv.evidence_load("../x")["competitors"] == [] and pv.evidence_load("nope")["competitors"] == [], "")
 st = pv.evidence_strength(EV)
-check("strength counts competitors with something given, and slots filled of those possible", st == {"competitors": 2, "slots_filled": 3, "slots_total": 15}, str(st))
+check("strength counts competitors with something given, and slots filled of those possible", st == {"competitors": 2, "slots_filled": 3, "slots_total": 21}, str(st))
 
 print("what the model is given")
 ORIG_ASK = gen._ask
@@ -93,7 +93,7 @@ check("the brand's TONE does not (a provocation departs from it)", "TONE:" not i
 check("the house, the platform and the steer go in", "Honest milk" in p and "Every glass is a small promise" in p and "A mark on the doorframe" in p and "push against the mother" in p, "")
 check("the evidence goes in word for word, with its link", "Opens on a mother at dawn" in p and "https://example.com/a-tvc" in p and "Green pouch" in p, "")
 check("competitors with no evidence are listed as memory-only", "BrandC" in p and "memory only" in p, "")
-check("the skill and the hard limits are in the prompt", "No celebrity" in p and "category code" in p.lower(), "")
+check("the skill and the hard limits are in the prompt", "No celebrity" in p and "belief" in p.lower() and "device" in p.lower(), "")
 gen._ask = stub({"codes": [{"kind": "visual", "code": "x", "basis": "memory", "seen_in": []}]})
 gen.audit_codes(house, pset, platform, EV_EMPTY, "")
 check("with no evidence the model is told to tag everything as memory", "none provided" in seen_prompts[-1] and "Amul" in seen_prompts[-1], seen_prompts[-1][-400:])
@@ -117,7 +117,7 @@ check("a downgraded code carries no invented reference", all(c["seen_in"] == [] 
 check("an unknown kind becomes visual; blanks and junk are dropped", by["Mother as hero"]["kind"] == "visual" and len(out["codes"]) == 6, str(len(out["codes"])))
 cv = out["caveat"]
 check("the caveat is computed from the tags (2 of 6 grounded) and invites more", cv["seen"] == 2 and cv["memory"] == 4 and "2 of 6" in cv["text"] and cv["invite"], str(cv))
-check("it reports how much evidence stood behind it", cv["evidence"] == {"competitors": 2, "slots_filled": 3, "slots_total": 15}, str(cv["evidence"]))
+check("it reports how much evidence stood behind it", cv["evidence"] == {"competitors": 2, "slots_filled": 3, "slots_total": 21}, str(cv["evidence"]))
 gen._ask = stub({"codes": [{"kind": "visual", "code": "Golden light", "basis": "seen", "seen_in": ["BrandB Instagram page"]}]})
 out, _e = gen.audit_codes(house, pset, platform, EV_EMPTY, "")
 check("with no evidence nothing can be 'seen', even if the model says so, and the caveat says they are hypotheses",
@@ -134,6 +134,42 @@ check("with no key it says so and makes nothing up", out is None and err == gen.
 gen._ask = lambda prompt, max_tokens: (None, "the reply was cut off")
 check("a failed model call is passed on as the reason", gen.audit_codes(house, pset, platform, EV, "")[1] == "the reply was cut off", "")
 
+print("the three layers: beliefs, behaviours, codes")
+gen._ask = stub({"category": "packaged milk", "codes": [
+    {"layer": "code", "kind": "visual", "code": "Golden dawn light", "basis": "memory"},
+    {"layer": "behaviour", "kind": "behaviour", "code": "Brands show the farmer and never pay him", "basis": "memory"},
+    {"layer": "belief", "kind": "belief", "code": "Goodness is proven by where the milk came from", "basis": "memory"},
+    {"layer": "belief", "kind": "belief", "code": "Love is what the mother serves", "basis": "memory"},
+    {"kind": "behaviour", "code": "Brands compete on price offers", "basis": "memory"},          # layer left out, kind says it
+    {"kind": "tonal", "code": "Hushed reassurance", "basis": "memory"},                             # an audit from before layers
+    {"layer": "nonsense", "kind": "belief", "code": "Strength is the benefit", "basis": "memory"}]})
+out, err = gen.audit_codes(house, pset, platform, EV_EMPTY, "")
+lay = [(c["layer"], c["code"]) for c in out["codes"]]
+check("beliefs come first, then behaviours, then codes, in the model's own order within each",
+      [l for l, _c in lay] == ["belief"] * 3 + ["behaviour"] * 2 + ["code"] * 2
+      and [c for l, c in lay if l == "belief"] == ["Goodness is proven by where the milk came from", "Love is what the mother serves", "Strength is the benefit"], str(lay))
+check("a missing or unknown layer is read from the kind (belief/behaviour), else it is a code",
+      dict((c, l) for l, c in lay)["Brands compete on price offers"] == "behaviour" and dict((c, l) for l, c in lay)["Hushed reassurance"] == "code"
+      and dict((c, l) for l, c in lay)["Strength is the benefit"] == "belief", str(lay))
+check("only the strongest belief and the strongest behaviour are suggested (ticked) to start",
+      [c["code"] for c in out["codes"] if c.get("suggested")] == ["Goodness is proven by where the milk came from", "Brands show the farmer and never pay him"], str([c["code"] for c in out["codes"] if c.get("suggested")]))
+check("a belief or behaviour carries its layer as its kind; a code keeps one of the five kinds",
+      all(c["kind"] == c["layer"] for c in out["codes"] if c["layer"] != "code") and all(c["kind"] in gen.CODE_KINDS for c in out["codes"] if c["layer"] == "code"), "")
+gen._ask = stub({"codes": [{"kind": "visual", "code": "Golden light", "basis": "memory"}]})
+out, _e = gen.audit_codes(house, pset, platform, EV, "")
+pl = seen_prompts[-1]
+check("the prompt asks for the three layers and what brands DO, not only how they look", "belief" in pl and "behaviour" in pl and "DOES" in pl and "take for granted" in pl.lower(), pl[-900:])
+check("the evidence it is given now has claims and what they do as slots", "Claims and promises" in pv.CHANNEL_LABELS.values() and "What they do" in pv.CHANNEL_LABELS.values(), "")
+ev7 = pv.normalise_evidence({"competitors": [{"name": "BrandA", "channels": {"actions": {"note": "Pays farmers a monthly premium"}, "claims": {"note": "Fresh in 6 hours"}}}]})
+gen._ask = stub({"codes": [{"layer": "behaviour", "code": "Pays a premium", "basis": "seen", "seen_in": ["BrandA What they do"]},
+                            {"layer": "belief", "code": "Freshness is speed", "basis": "seen", "seen_in": ["BrandA Claims and promises"]},
+                            {"layer": "belief", "code": "Not given", "basis": "seen", "seen_in": ["BrandA TVC"]}]})
+out, _e = gen.audit_codes(house, pset, platform, ev7, "")
+bb = {c["code"]: c["basis"] for c in out["codes"]}
+check("what a competitor claims or does can ground an item as seen; a channel it gave nothing for cannot",
+      bb == {"Pays a premium": "seen", "Freshness is speed": "seen", "Not given": "memory"}, str(bb))
+check("what they claim and do reaches the model word for word", "Pays farmers a monthly premium" in seen_prompts[-1] and "Fresh in 6 hours" in seen_prompts[-1], "")
+
 print("sparks")
 check("a spark needs at least one code to break", gen.spark(house, pset, platform, EV, [], "")[0] is None and gen.spark(house, pset, platform, EV, "x", "")[1].startswith("Pick"), "")
 gen._ask = stub({"sparks": [
@@ -142,9 +178,19 @@ gen._ask = stub({"sparks": [
     {"text": "", "codes": []}, "junk", {"text": "Third", "scores": {"breaks": 2, "true": 2, "travels": 2}, "risk": "low"}]})
 out, err = gen.spark(house, pset, platform, EV, ["Mother as hero", "Golden light"], "keep it dry", n=3)
 sp = out["sparks"]
-check("sparks are cleaned and sorted best first", [s["text"] for s in sp] == ["A film with no people", "The glass that refuses", "Third"] and sp[0]["total"] == 13, str([(s['text'], s['total']) for s in sp]))
-check("out-of-range scores become 3 and an unknown risk becomes medium", sp[1]["scores"] == {"breaks": 3, "true": 3, "travels": 3} and sp[1]["risk"] == "medium" and sp[2]["risk"] == "low", str(sp[1]))
+check("sparks are cleaned and sorted best first", [s["text"] for s in sp] == ["A film with no people", "The glass that refuses", "Third"] and sp[0]["total"] == 22, str([(s['text'], s['total']) for s in sp]))
+check("out-of-range scores become 3 and an unknown risk becomes medium", sp[1]["scores"] == {k: 3 for k in gen.SCORE_KEYS} and sp[1]["risk"] == "medium" and sp[2]["risk"] == "low", str(sp[1]))
 check("the chosen codes and the steer reach the model", "Mother as hero" in seen_prompts[-1] and "Golden light" in seen_prompts[-1] and "keep it dry" in seen_prompts[-1], "")
+gen._ask = stub({"sparks": [
+    {"text": "The brand pays the farmer first", "codes": ["x"], "device": "Proof by Doing", "scores": {k: 5 for k in gen.SCORE_KEYS}, "risk": "low"},
+    {"text": "Another", "codes": ["x"], "device": "magic", "scores": {}, "risk": "low"}]})
+out, err = gen.spark(house, pset, platform, EV, [{"code": "Goodness is proven by origin", "layer": "belief"}, {"code": "Golden light", "layer": "code"}, "A plain string"], "", n=3)
+sp = out["sparks"]
+check("a device is read tolerantly and an unknown one is empty, never invented", sp[0]["device"] == "proof_by_doing" and sp[1]["device"] == "", str(sp))
+check("sparks are scored on six things, summed", sp[0]["total"] == 30 and set(sp[0]["scores"]) == set(gen.SCORE_KEYS) and len(gen.SCORE_KEYS) == 6, str(sp[0]))
+check("what is to be broken reaches the model with its layer, a plain string still works, and the device menu is given",
+      "[belief] Goodness is proven by origin" in seen_prompts[-1] and "[code] Golden light" in seen_prompts[-1] and "A plain string" in seen_prompts[-1]
+      and "proof_by_doing" in seen_prompts[-1] and "DO" in seen_prompts[-1], seen_prompts[-1][-700:])
 gen._ask = stub({"sparks": []})
 check("no usable sparks is an honest error", gen.spark(house, pset, platform, EV, ["x"], "")[0] is None, "")
 
@@ -168,6 +214,29 @@ check("with no chosen codes, a copied (memory) or (seen) tag is still stripped f
 gen._ask = stub({"name": "n", "core": {"line": ""}})
 check("the model not writing the provocation is an honest error", gen.develop(house, pset, platform, EV, {"text": "x"}, [], "")[0] is None, "")
 check("no spark is an error before any model call", gen.develop(house, pset, platform, EV, {}, [], "")[1].startswith("Pick"), "")
+RAW_SPINE = {**RAW_REC, "core": {**RAW_REC["core"], "message": "", "device": "proof by doing", "device_note": "The brand really pays first",
+             "tension": {"category_says": "Brands show the farmer", "we_say": "We pay him first"}, "repeatable": "We pay the farmer first",
+             "act": "Pay the farmer before the shop", "act_note": "Procurement must agree"}}
+gen._ask = stub(RAW_SPINE)
+rec4, _e = gen.develop(house, pset, platform, EV, {"text": "x", "device": "absence", "codes": ["Mother as hero"]}, ["Mother as hero"], "")
+c4 = rec4["core"]
+check("the message is the platform's own words when the model leaves it out, never blank", c4["message"] == "Every glass is a small promise", c4["message"])
+check("the device, the tension, the repeatable line and the act come through, the device read tolerantly",
+      c4["device"] == "proof_by_doing" and c4["tension"]["we_say"] == "We pay him first" and c4["repeatable"] == "We pay the farmer first" and c4["act"] == "Pay the farmer before the shop", str(c4))
+check("the spine rules reach the model (one device from the list, an act is a proposal, every medium dramatises the same message)",
+      "device = exactly one id" in seen_prompts[-1] and "proof_by_doing" in seen_prompts[-1] and "never say the brand already does it" in seen_prompts[-1] and "SAME message" in seen_prompts[-1], "")
+check("the spark's device and its chosen codes reach the model", "Its device: absence" in seen_prompts[-1], "")
+gen._ask = stub({**RAW_REC})
+rec5, _e = gen.develop(house, pset, platform, EV, {"text": "x", "device": "absence"}, ["Mother as hero"], "")
+check("when the model names no device the spark's stands", rec5["core"]["device"] == "absence", str(rec5["core"]["device"]))
+rec6, _e = gen.develop(house, pset, platform, EV, {"text": "x"}, ["Mother as hero"], "")
+check("with neither, the device is empty (and the screen will ask for one)", rec6["core"]["device"] == "", "")
+saved4 = pv.save(rec4)
+gen._ask = stub({**RAW_SPINE, "core": {**RAW_SPINE["core"], "line": "A bolder line.", "message": "DRIFTED TO SOMETHING ELSE", "device": "reversal"}})
+pushed4, _e = gen.push_further(saved4, house, pset, platform, EV, "braver")
+check("pushing keeps the message it stood on, even if the model drifts, and may change the device", pushed4["core"]["message"] == "Every glass is a small promise" and pushed4["core"]["device"] == "reversal", str(pushed4["core"]["message"]))
+check("pushing is given the spine, not just the line", "Message: Every glass is a small promise" in seen_prompts[-1] and "Device: proof_by_doing" in seen_prompts[-1] and "What it breaks:" in seen_prompts[-1] and "sharper tension" in seen_prompts[-1], "")
+
 saved = pv.save(rec)
 gen._ask = stub({**RAW_REC, "core": {**RAW_REC["core"], "line": "Say nothing. Then take the glass away."}})
 pushed, err = gen.push_further(saved, house, pset, platform, EV, "more absurd")
@@ -197,8 +266,42 @@ check("'secure' and 'purely' do not trip 'cure' or 'pure'", all(c["level"] == "p
 jab = pv.normalise({"name": "x", "core": {"line": "Everyone else whispers", "legal_flag": True}})
 check("a competitor jab asks for the legal tick until it is given", {c["id"]: c for c in gen.check_guardrails(jab, prof, names)}["legal"]["level"] == "warn"
       and {c["id"]: c for c in gen.check_guardrails({**jab, "core": {**jab["core"], "legal_ack": True}}, prof, names)}["legal"]["level"] == "pass", "")
+ck_spine = {c["id"]: c for c in gen.check_guardrails(clean, prof, names)}
+check("a draft with no message or device is warned: it is a look, not an idea", ck_spine["spine"]["level"] == "warn" and "message" in ck_spine["spine"]["text"] and "device" in ck_spine["spine"]["text"], str(ck_spine["spine"]))
+whole = pv.normalise({**clean, "core": {**clean["core"], "message": "m", "device": "absence"}})
+ck_whole = {c["id"]: c for c in gen.check_guardrails(whole, prof, names)}
+check("with a message and a device the spine check passes, and no act means no act line", ck_whole["spine"]["level"] == "pass" and "act" not in ck_whole, "")
+withact = pv.normalise({**whole, "core": {**whole["core"], "act": "Pay the farmer first", "act_note": "Needs procurement"}})
+ck_act = {c["id"]: c for c in gen.check_guardrails(withact, prof, names)}
+check("an act asks the business to agree and to fit the approved claims", ck_act["act"]["level"] == "manual" and "business" in ck_act["act"]["text"] and "claims" in ck_act["act"]["text"], "")
+claimy = pv.normalise({**whole, "core": {**whole["core"], "act": "Add a promise that it boosts immunity", "message": "m", "device": "absence"}})
+check("the claims checks read the act and the message too (an act that promises is a claim)", {c["id"]: c for c in gen.check_guardrails(claimy, prof, names)}["health"]["level"] == "warn", "")
+rival_in_tension = pv.normalise({**whole, "core": {**whole["core"], "tension": {"category_says": "Amul says it is pure", "we_say": "x"}}})
+check("a named rival in the two-sentence test fails like anywhere else", {c["id"]: c for c in gen.check_guardrails(rival_in_tension, prof, names)}["rivals"]["level"] == "fail", "")
 check("blocking reasons are only the hard failures", len(gen.has_failures(gen.check_guardrails(dirty, prof, names))) == 3 and gen.has_failures(gen.check_guardrails(clean, prof, names)) == [], "")
 check("with no brand profile the check still runs", gen.check_guardrails(clean, None, [])[0]["level"] == "pass", "")
+
+print("the stranger's reading")
+secret = pv.normalise({"name": "The ritual", "core": {"line": "No faces, only the pour, repeated.", "message": "SECRET INTENDED MESSAGE", "device": "absence", "repeatable": "SECRET REPEATABLE"},
+                       "expressions": {"video": "A dark kitchen, a packet, a glass.", "social": "One pour held."},
+                       "film": {"structure": "One take", "visual_language": "Deep forest", "notes": "SECRET NOTES"}})
+gen._ask = stub({"takeaway": "A dairy brand that likes quiet mornings", "repeat": "nothing much", "ownable": {"answer": "no", "why": "any dairy could"},
+                 "cuts": ["the closing line", "the slow open", "the dark palette", "a fourth"]})
+out, err = gen.message_test(secret, house)
+tp = seen_prompts[-1]
+check("the reader is given the line, what it becomes and the film, and the brand's name", "No faces, only the pour" in tp and "A dark kitchen" in tp and "One take" in tp and "TestBrand" in tp, tp[:500])
+check("the reader is NEVER told the intended message, the device, the repeatable line, the platform or the notes",
+      "SECRET INTENDED MESSAGE" not in tp and "SECRET REPEATABLE" not in tp and "SECRET NOTES" not in tp and "absence" not in tp and "Every glass is a small promise" not in tp and "The small promise" not in tp, tp)
+check("it answers with the takeaway, what they would repeat, ownable yes/no, at most three cuts, and the intended message beside it",
+      out["takeaway"].startswith("A dairy brand") and out["repeat"] == "nothing much" and out["ownable"]["answer"] == "no" and len(out["cuts"]) == 3 and out["intended"] == "SECRET INTENDED MESSAGE", str(out))
+gen._ask = stub({"takeaway": "x", "ownable": {"answer": "maybe"}, "cuts": "none"})
+out, _e = gen.message_test(secret, house)
+check("an odd ownable answer is 'unclear' and a non-list of cuts is empty", out["ownable"]["answer"] == "unclear" and out["cuts"] == [], str(out))
+gen._ask = stub({"takeaway": ""})
+check("no takeaway is an honest error", gen.message_test(secret, house)[0] is None, "")
+check("nothing to test without a line", gen.message_test(pv.normalise({}), house)[1].startswith("There is nothing"), "")
+gen._ask = ORIG_ASK
+check("with no key it says so", gen.message_test(secret, house)[1] == gen.NO_KEY, "")
 
 print("routes")
 from starlette.testclient import TestClient  # noqa: E402
@@ -218,7 +321,7 @@ gen.jsonout.ask_json = _no_real_calls
 
 client = TestClient(main.app, raise_server_exceptions=True, headers={selfcheck.INTERNAL_HEADER: selfcheck._INTERNAL_KEY})
 r = client.get("/category-evidence", params={"house": HID})
-check("the evidence reads with the competitor names already on file and the five channels", r.status_code == 200 and r.json()["competitors_on_file"] == ["Amul", "Nandini"] and len(r.json()["channels"]) == 5 and r.json()["strength"]["slots_filled"] == 3, r.text[:200])
+check("the evidence reads with the competitor names already on file and the seven channels", r.status_code == 200 and r.json()["competitors_on_file"] == ["Amul", "Nandini"] and len(r.json()["channels"]) == 7 and r.json()["strength"]["slots_filled"] == 3, r.text[:200])
 r = client.post("/category-evidence", json={"house": HID, "competitors": [{"name": "BrandD", "channels": {"posm": {"note": "Shelf strip with a cow"}}}]})
 check("saving replaces it whole", r.status_code == 200 and [c["name"] for c in r.json()["evidence"]["competitors"]] == ["BrandD"] and r.json()["strength"]["slots_filled"] == 1, r.text[:200])
 check("evidence needs a house", client.post("/category-evidence", json={"competitors": []}).status_code == 400 and client.post("/category-evidence", json={"house": "nope"}).status_code == 400, "")
@@ -259,12 +362,24 @@ check("the check route answers with the checks and what blocks approval", r.stat
 r = client.post("/provocation-check", json={"house": HID, "record": {"name": "Miracle", "core": {"line": "Pure and better than Amul"}}})
 check("a draft that has not been saved can be checked too", r.status_code == 200 and len(r.json()["blocking"]) == 2, r.text[:200])
 check("the check needs a house or an id", client.post("/provocation-check", json={}).status_code == 400, "")
+check("the list carries the nine devices for the screen", len(client.get("/provocations", params={"house": HID}).json()["devices"]) == 9, "")
+gen._ask = stub({"takeaway": "A dairy brand that likes quiet", "repeat": "nothing", "ownable": {"answer": "yes", "why": "w"}, "cuts": ["c"]})
+n_before = len(pv.for_house(HID, include_archived=True))
+r = client.post("/provocation-test", json={"id": PID})
+check("the message test answers for a saved provocation, and saves nothing", r.status_code == 200 and r.json()["takeaway"].startswith("A dairy") and "intended" in r.json() and len(pv.for_house(HID, include_archived=True)) == n_before, r.text[:200])
+r = client.post("/provocation-test", json={"house": HID, "record": {"name": "x", "core": {"line": "A line"}}})
+check("an unsaved draft can be tested too", r.status_code == 200, r.text[:200])
+check("the test needs a house or an id", client.post("/provocation-test", json={}).status_code == 400, "")
+gen._ask = lambda prompt, max_tokens: (None, "the model returned nothing")
+check("a failed reading is a 502 with the reason", client.post("/provocation-test", json={"id": PID}).status_code == 502, "")
+gen._ask = ORIG_ASK
+check("with no key the test answers 503", client.post("/provocation-test", json={"id": PID}).status_code == 503, "")
 
 print("approval is blocked by a hard failure")
 bad = client.post("/provocation", json={"house": HID, "name": "Bad one", "core": {"line": "Pure magic, unlike Amul", "risk": "low"}}).json()["id"]
 r = client.post("/provocation-approve", json={"id": bad, "who": "Asha"})
 check("a banned word or a named rival stops approval, with the reasons", r.status_code == 400 and "Amul" in r.json()["detail"], r.text[:240])
-ok_id = client.post("/provocation", json={"house": HID, "name": "Fine one", "core": {"line": "Say nothing; show the glass.", "risk": "low"}}).json()["id"]
+ok_id = client.post("/provocation", json={"house": HID, "name": "Fine one", "core": {"line": "Say nothing; show the glass.", "risk": "low", "message": "Every glass is a small promise", "device": "absence"}}).json()["id"]
 check("a clean one still approves", client.post("/provocation-approve", json={"id": ok_id, "who": "Asha"}).json()["status"] == "approved", "")
 check("withdrawing approval is never blocked by the check", client.post("/provocation-approve", json={"id": bad, "who": "Asha", "on": False}).status_code == 200, "")
 
