@@ -366,7 +366,8 @@ def complete_endpoint(payload: dict):
                               use_plan=payload.get("use_plan", True) is not False,
                               brand_mode="general" if str(payload.get("brand_mode") or "").strip().lower()
                               == "general" else "grounded",
-                              provocation=prov_rec)
+                              provocation=prov_rec,
+                              film=payload.get("film") is True)
     if not str(out or "").strip():
         # A live key that returns nothing is a failure too, and an empty string dressed as success is the
         # version of it nobody can debug.

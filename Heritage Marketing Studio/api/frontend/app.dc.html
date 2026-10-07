@@ -12472,7 +12472,7 @@ class Component extends DCLogic {
   // whole point of Independent was "this piece gets no brand facts even though one is active
   // globally," which is exactly the case the old check skipped. `allowGeneral` now wins outright,
   // checked before anything about the active brand is even read.
-  brandPreamble(role, allowGeneral, dropTone){
+  brandPreamble(role, allowGeneral, dropTone, film){
     if (allowGeneral) {
       return 'You are ' + (role || 'a senior marketer') + '. No brand profile is attached to this piece '
         + '— do NOT invent a brand, category or product. Write from the brief alone, keep claims '
@@ -12482,9 +12482,25 @@ class Component extends DCLogic {
     let voice = this.brandVoiceText(b);
     // A film written from a provocation departs from the brand's usual tone (the provocation's stance replaces it); the guardrails stay.
     if (dropTone) voice = String(voice || '').split(String.fromCharCode(10)).filter(l => !/^\s*TONE\s*:/i.test(l)).join(String.fromCharCode(10));
+    if (film) voice = this.filmVoice(voice);
     if (!b || !(b.name || '').trim() || !String(voice || '').trim()) return null;
     return 'You are ' + (role || 'a senior marketer') + ' for ' + b.name + '.' + String.fromCharCode(10)
       + String.fromCharCode(10) + voice;
+  }
+  // In a film the brand's marks and declarations stay mandatory (FSSAI, BIS, INCI...), but its tagline / sign-off line does not: each film carries
+  // its own payoff line, written from that film's message. The same pattern is `brandprofile.SIGNOFF_LINE_RE` on the server.
+  filmVoice(text){
+    const re = /^\s*(?:the\s+|our\s+)?(?:brand\s+|master\s+|standing\s+)?(?:tag[\s-]?line|sign[\s-]?off(?:\s+line)?|pay[\s-]?off(?:\s+line)?|slogan|end[\s-]?line|line)\b/i;
+    const NL = String.fromCharCode(10), tag = 'MANDATORY ON EVERY PIECE:';
+    return String(text || '').split(NL).map(l => {
+      if (l.indexOf(tag) !== 0) return l;
+      const items = l.slice(tag.length).split(';').map(x => x.trim()).filter(Boolean);
+      const req = items.filter(x => !re.test(x)), sig = items.filter(x => re.test(x));
+      const out = [];
+      if (req.length) out.push(tag + ' ' + req.join('; '));
+      if (sig.length) out.push('SIGN-OFF LINE ON FILE (NOT mandatory in a film: each film carries its own payoff line, a benefit or a thought written from that film\u2019s message; use this one only when it truly fits): ' + sig.join('; '));
+      return out.join(NL);
+    }).filter(l => l !== '').join(NL);
   }
   toggleBrandMenu = () => this.setState(s => ({ brandMenuOpen: !s.brandMenuOpen }));
   closeBrandMenu = () => this.setState({ brandMenuOpen:false, brandVoiceOpen:null });
@@ -15336,8 +15352,8 @@ class Component extends DCLogic {
   fallbackFullScript(concept){
     // Endframe super reads the active brand, never a fixed name — empty when the brand has
     // no name and no idea on file, rather than stamping another tenant's line on the film.
-    const bn = this.brandName(), bi = this.brandIdea();
-    const packSuper = bn ? (bn + (bi ? ' — ' + bi : '')) : '';
+    const bn = this.brandName();
+    const packSuper = bn || '';
     const dur = this.state.prodDuration;
     const n = this.sceneTarget(dur);
     const total = parseInt(dur, 10) || 30;
@@ -15376,7 +15392,7 @@ class Component extends DCLogic {
   // Rules for every scene's "visual", because each one becomes ONE storyboard image (5 Oct live test: a scene that
   // listed three views came back as a three-panel collage, and a pack described by colour came back in those
   // colours instead of the real pack's). The real pack's look comes from the pack photo, never from the script.
-  VISUAL_RULES = 'One scene = one frame: describe a SINGLE moment seen from a SINGLE camera view, never a split screen, collage, montage or several views in one scene (a scene that needs more than one view must be split into separate scenes). The "visual" describes ONLY what the camera sees: never put a tagline, title, locked copy, super line or any on-screen text in it — those belong in "supr" or the voiceover. A scene must not repeat another scene’s moment, and a time jump (the boy grows up) is shown by cutting between scenes, never inside one frame. Whenever a character appears at a different age or in different clothes from their usual look, name that age and those clothes in the scene’s visual (e.g. "the older mother in the cream saree"). When the product pack appears, call it only "the pack" or "the product pack" and describe how it is held or placed (including any pouring), never its colours, artwork or material — its real look comes from the pack photo.';
+  VISUAL_RULES = 'One scene = one frame: describe a SINGLE moment seen from a SINGLE camera view, never a split screen, collage, montage or several views in one scene (a scene that needs more than one view must be split into separate scenes). The "visual" describes ONLY what the camera sees: never put a tagline, title, locked copy, super line or any on-screen text in it — those belong in "supr" or the voiceover. A scene must not repeat another scene’s moment, and a time jump (a character grows up) is shown by cutting between scenes, never inside one frame. Whenever a character appears at a different age or in different clothes from their usual look, name that age and those clothes in the scene’s visual (e.g. "the older lead in the grey cardigan"). When the product pack appears, call it only "the pack" or "the product pack" and describe how it is held or placed (including any pouring), never its colours, artwork or material — its real look comes from the pack photo.';
   writeFullScript = async () => {
     const vc = this.state.videoConcept;
     if (!vc || this.state.scriptWriting) return;
@@ -15395,10 +15411,10 @@ class Component extends DCLogic {
         const beats = Array.isArray(vc.scenes) ? vc.scenes.length : 0;
         const secsTotal = parseInt(dur, 10) || 30;
         const minScenes = beats ? Math.min(rng.max, Math.max(2, Math.ceil(secsTotal / 8), Math.min(rng.min, beats))) : rng.min;
-        const pre = this.brandPreamble('a film director writing a shootable script', this.state.producerBrandMode === 'general', !!provRec);
+        const pre = this.brandPreamble('a film director writing a shootable script', this.state.producerBrandMode === 'general', !!provRec, true);
         if (!pre) { this.showToast(this.BRAND_PREAMBLE_MISSING); this.setState({ scriptWriting:false }); return; }
-        const packSuper = this.brandName() + (this.brandIdea() ? ' — ' + this.brandIdea() : '');
-        const prompt = pre + '\n\nConcept logline: "'+vc.logline+'". Concept beats: '+JSON.stringify(vc.scenes)+'. VO: "'+(vc.vo||'')+'". The finished film is '+dur+' long — write between '+minScenes+' and '+rng.max+' scenes — '+(beats ? 'the concept has '+beats+' beats, so one scene per beat is the natural count; ' : '')+'choose the number the story actually needs. NEVER repeat, copy or near-duplicate a scene to reach a count: every scene must show a different moment. No film may exceed '+rng.ceiling+' scenes: each shot is rendered separately and the shortest a shot can be is 4 seconds. Give timecodes that run continuously from 0s to '+dur+'. Every scene is rendered as its own shot, so each "visual" must be a self-contained, filmable description of what is on screen (who, where, what happens). '+this.VISUAL_RULES+' The film MUST include a pack-shot sign-off — a scene that shows the pack and carries the pack-shot super "'+(packSuper || 'this brand\u2019s name, written naturally — no other brand\u2019s')+'" — and that is normally the final scene. Only when the concept calls for a comeback AFTER the pack shot may a short closing button (a few seconds, no pack-shot super of its own) follow it; if you add one, put "beat_role":"button" on that row and on no other. Dialogue in English + Hinglish where natural.\n\nCASTING THE SOUND: when a person is on camera and would naturally speak, give them DIALOGUE in their own words — do not describe them with narration instead. Use the voiceover only to bridge between scenes or land the brand thought at the end. A film where every line is "vo" is wrong unless the concept is genuinely wordless observation; prefer a mix, with the recurring characters from the concept actually speaking to each other. EVERY scene needs an "audio" array — this is what actually gets voiced, so it must contain ONLY words to be spoken aloud. One entry per spoken line, in the order heard. Never put speaker names, stage directions, camera notes, SFX or on-screen text inside "text"; the performance note belongs in "emotion" and the character in "speaker". Use type "vo" for narration (the brand voice) and type "dialogue" for a character speaking on camera. A scene with no speech gets "audio": []. '+this.voBudgetNote(dur, n)+'\n\nReturn ONLY JSON: {"rows":[{"no":1,"tc":"0–5s","visual":"...","camera":"shot type & movement","dialogue":"human-readable script cell, e.g. Boy (half-asleep): Ammamma…","supr":"on-screen text","audio":[{"type":"dialogue","speaker":"Boy","age":"child","emotion":"half-asleep, sleepy","language":"en","text":"Ammamma... sky is still sleeping, no?"},{"type":"vo","emotion":"warm, unhurried","language":"en","text":"Pure doodh ki shakti."}]}]}';
+        const packSuper = this.brandName();
+        const prompt = pre + '\n\nConcept logline: "'+vc.logline+'". Concept beats: '+JSON.stringify(vc.scenes)+'. VO: "'+(vc.vo||'')+'". The finished film is '+dur+' long — write between '+minScenes+' and '+rng.max+' scenes — '+(beats ? 'the concept has '+beats+' beats, so one scene per beat is the natural count; ' : '')+'choose the number the story actually needs. NEVER repeat, copy or near-duplicate a scene to reach a count: every scene must show a different moment. No film may exceed '+rng.ceiling+' scenes: each shot is rendered separately and the shortest a shot can be is 4 seconds. Give timecodes that run continuously from 0s to '+dur+'. Every scene is rendered as its own shot, so each "visual" must be a self-contained, filmable description of what is on screen (who, where, what happens). '+this.VISUAL_RULES+' The film MUST include a pack-shot sign-off — a scene that shows the pack and carries the pack-shot super "'+(packSuper || 'this brand\u2019s name, written naturally — no other brand\u2019s')+'" followed by a short payoff line written for THIS film from its message (a benefit or a thought of the film\u2019s own; the brand\u2019s standing tagline only if it truly fits) — and that is normally the final scene. Only when the concept calls for a comeback AFTER the pack shot may a short closing button (a few seconds, no pack-shot super of its own) follow it; if you add one, put "beat_role":"button" on that row and on no other. Dialogue in English + Hinglish where natural.\n\nCASTING THE SOUND: when a person is on camera and would naturally speak, give them DIALOGUE in their own words — do not describe them with narration instead. Use the voiceover only to bridge between scenes or land the brand thought at the end. A film where every line is "vo" is wrong unless the concept is genuinely wordless observation; prefer a mix, with the recurring characters from the concept actually speaking to each other. EVERY scene needs an "audio" array — this is what actually gets voiced, so it must contain ONLY words to be spoken aloud. One entry per spoken line, in the order heard. Never put speaker names, stage directions, camera notes, SFX or on-screen text inside "text"; the performance note belongs in "emotion" and the character in "speaker". Use type "vo" for narration (the brand voice) and type "dialogue" for a character speaking on camera. A scene with no speech gets "audio": []. '+this.voBudgetNote(dur, n)+'\n\nReturn ONLY JSON: {"rows":[{"no":1,"tc":"0–5s","visual":"...","camera":"shot type & movement","dialogue":"human-readable script cell, e.g. Speaker (how it is said): the words","supr":"on-screen text","audio":[{"type":"dialogue","speaker":"Speaker","age":"adult","emotion":"how it is said","language":"en","text":"spoken words only"},{"type":"vo","emotion":"how it is said","language":"en","text":"spoken words only"}]}]}';
         // Anchors first, then the house rules, then the brief. Approved work shows the model what
         // "good" means here far better than any adjective, and the rules are corrections already
         // paid for once — repeating a mistake that was already flagged is the worst failure there is.
@@ -15421,21 +15437,19 @@ class Component extends DCLogic {
           const vw = (f.vo_words === null || f.vo_words === undefined) ? null : f.vo_words;
           finalPrompt = finalPrompt
             .replace(/The film MUST include a pack-shot sign-off[\s\S]*?Dialogue in English \+ Hinglish where natural\./, () =>
-              'The film MUST include a brand sign-off scene: the brand arrives exactly as the provocation says ("' + arrives + '"), and that scene carries the super "' + superTxt + '" and is normally the final scene. Only when the concept calls for a comeback AFTER the sign-off may a short closing button (a few seconds, no super of its own) follow it; if you add one, put "beat_role":"button" on that row and on no other. Any spoken words follow the provocation\u2019s sound language, in English + Hinglish where natural.')
+              'The film MUST include a brand sign-off scene: the brand arrives exactly as the provocation says ("' + arrives + '"), and that scene carries the super "' + superTxt + '" followed by a payoff line from this film\u2019s own message, and is normally the final scene. Only when the concept calls for a comeback AFTER the sign-off may a short closing button (a few seconds, no super of its own) follow it; if you add one, put "beat_role":"button" on that row and on no other. Any spoken words follow the provocation\u2019s sound language, in English + Hinglish where natural.')
             .replace(/CASTING THE SOUND:[\s\S]*?(?=EVERY scene needs an)/, () =>
               'SOUND (provocation mode): follow the provocation\u2019s sound language, cast approach and voice-over length exactly. Speech only where the provocation has it; a wordless film has "audio": [] on every scene. ')
             .replace(/STRICT SPEECH BUDGET[\s\S]*?Cut every word that is not doing work\./, () =>
               (vw === 0 ? 'NO SPEECH: the provocation says there is no voice-over and no dialogue, so every scene has "audio": [].'
                 : (vw ? 'SPEECH BUDGET: the provocation sets the voice-over at about ' + vw + ' words across the ENTIRE film (all "text" values combined). Leave space; never narrate what the viewer can already see.'
                   : 'Keep speech to what the provocation asks for and leave space.')))
-            // The ordinary prompt's own examples carry the conventional film: "the boy grows up", a half-asleep boy saying "Ammamma", and the tagline
-            // as a voice-over line. A model copies an example, so a wordless or differently cast provocation film gets neutral ones.
-            .replace(/\(the boy grows up\)/, () => '(a character is older)')
+            // A wordless provocation film's JSON example has no spoken line at all (a model copies an example).
             .replace(/Return ONLY JSON: \{"rows":[\s\S]*$/, () =>
               'Return ONLY JSON: {"rows":[{"no":1,"tc":"0\u20135s","visual":"...","camera":"shot type & movement","dialogue":"human-readable script cell (empty when nothing is said)","supr":"on-screen text","audio":[]}]}. '
               + 'Where something is spoken, "audio" holds one entry per spoken line: {"type":"vo" or "dialogue","speaker":"who (dialogue only)","emotion":"how it is said","language":"en","text":"spoken words only"}. Where nothing is spoken it stays [].');
         }
-        let raw = await this.complete((learned ? learned + '\n\n' : '') + finalPrompt + locked, this.provExtra());
+        let raw = await this.complete((learned ? learned + '\n\n' : '') + finalPrompt + locked, this.videoExtra());
         raw = String(raw).trim().replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();
         const data = JSON.parse(raw.slice(raw.indexOf('{'), raw.lastIndexOf('}')+1));
         if (data.rows && data.rows.length) rows = this.cleanBeatRoles(data.rows);
@@ -15466,7 +15480,7 @@ class Component extends DCLogic {
     if (window.claude && window.claude.complete) {
       try {
         const prompt = 'Revise this ' + (this.brandRef() || 'brand') + ' commercial script per the instruction.' + ' INSTRUCTION: "' + note + '". CURRENT SCRIPT ROWS: ' + JSON.stringify(this.scriptForPrompt(this.state.fullScript)) + '. Keep the same row shape and keep the pack-shot super on the row that already carries it — do not invent or substitute a different brand\u2019s line. Timecodes must stay continuous across a ' + this.state.prodDuration + ' film. EVERY row must keep its "audio" array in sync with the revised dialogue — "text" holds ONLY spoken words (no speaker names, stage directions, SFX or on-screen text), "speaker" the character, "emotion" the performance note, and type is "vo" for narration or "dialogue" for a character. ' + this.voBudgetNote(this.state.prodDuration, (this.state.fullScript||[]).length) + ' Return ONLY JSON: {"rows":[{"no":1,"tc":"0–5s","visual":"...","camera":"...","dialogue":"...","supr":"...","audio":[{"type":"vo","emotion":"warm","language":"en","text":"spoken words only"}]}]}';
-        let raw = await this.complete(prompt, this.provExtra());
+        let raw = await this.complete(prompt, this.videoExtra());
         raw = String(raw).trim().replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();
         const data = JSON.parse(raw.slice(raw.indexOf('{'), raw.lastIndexOf('}')+1));
         if (data.rows && data.rows.length) rows = data.rows;
@@ -15492,8 +15506,8 @@ class Component extends DCLogic {
     let text = null;
     if (window.claude && window.claude.complete) {
       try {
-        const prompt = 'From this ' + (this.brandRef() || 'brand') + ' commercial script, write ONE compact character sheet' + ' that will be sent with every generated storyboard frame so the same people appear in each shot. Cover each recurring person: role, age, build, hair, skin tone, wardrobe colour. If a person appears at more than one age or in more than one outfit, give each version its own entry with its own wardrobe colour (e.g. "MOTHER (older): cream saree"). Then END the sheet with one line "By scene:" saying, for each scene number in the script, which version of each person is on screen (e.g. "By scene: 1 MOTHER (young) + BOY (6); 2 MOTHER (young) + BOY (6); 3 MOTHER (young) + BOY (10); 4 MOTHER (older) + BOY (17)") -- judge from the story and the ages each scene names. Max 120 words, one paragraph, no preamble. SCRIPT: ' + JSON.stringify(this.scriptForPrompt(this.state.fullScript)) + (cast ? ' CAST DEPARTMENT NOTES: ' + cast : '');
-        let raw = await this.complete(prompt);
+        const prompt = 'From this ' + (this.brandRef() || 'brand') + ' commercial script, write ONE compact character sheet' + ' that will be sent with every generated storyboard frame so the same people appear in each shot. Cover each recurring person: role, age, build, hair, skin tone, wardrobe colour. If a person appears at more than one age or in more than one outfit, give each version its own entry with its own wardrobe colour (e.g. "LEAD (older): grey cardigan"). Then END the sheet with one line "By scene:" saying, for each scene number in the script, which version of each person is on screen (e.g. "By scene: 1 LEAD (young) + SECOND (child); 2 LEAD (young) + SECOND (child); 3 LEAD (young) + SECOND (teen); 4 LEAD (older) + SECOND (adult)") -- judge from the story and the ages each scene names. Max 120 words, one paragraph, no preamble. SCRIPT: ' + JSON.stringify(this.scriptForPrompt(this.state.fullScript)) + (cast ? ' CAST DEPARTMENT NOTES: ' + cast : '');
+        let raw = await this.complete(prompt, this.videoExtra());
         text = String(raw).trim().replace(/^```/,'').replace(/```$/,'').trim();
       } catch (e) {}
     }
@@ -15579,7 +15593,7 @@ class Component extends DCLogic {
     if (window.claude && window.claude.complete) {
       try {
         const prompt = 'From this location plan, write ONE short description of what the camera sees, for an image model: the place, the time of day, the light, and three or four visible set details. Max 40 words, one paragraph, plain text. Describe the EMPTY PLACE only: no people, and do NOT mention the product or any pack, pouch, packet, carton, bottle or branded item (the pack is added to a frame separately, from the real photo). No instructions or questions, no preamble. LOCATION PLAN: ' + note;
-        const raw = await this.complete(prompt);
+        const raw = await this.complete(prompt, this.videoExtra());
         text = this.stripMd(String(raw).trim().replace(/^```/, '').replace(/```$/, '').trim());
       } catch (e) {}
     }
@@ -15598,7 +15612,7 @@ class Component extends DCLogic {
     this.setState({ lookRefBusy:true });
     let text = null;
     try {
-      const raw = await this.complete('Turn this look reference into concrete cinematography notes for an image and video model: lens and framing, light direction and quality, colour grade and contrast, texture and grain, and how the camera moves. Describe the LOOK only — no people, no sets, no plot, no quotes from the film, and do not name the film. Max 55 words, one paragraph, plain text, no preamble. LOOK REFERENCE: ' + src);
+      const raw = await this.complete('Turn this look reference into concrete cinematography notes for an image and video model: lens and framing, light direction and quality, colour grade and contrast, texture and grain, and how the camera moves. Describe the LOOK only — no people, no sets, no plot, no quotes from the film, and do not name the film. Max 55 words, one paragraph, plain text, no preamble. LOOK REFERENCE: ' + src, this.videoExtra());
       text = this.stripMd(String(raw).trim().replace(/^```/, '').replace(/```$/, '').trim());
     } catch (e) {}
     if (!text) { this.setState({ lookRefBusy:false }); this.showToast('Couldn’t write the notes — your text is unchanged.', 'warn'); return; }
@@ -15661,8 +15675,8 @@ class Component extends DCLogic {
         // A film written from a provocation keeps its film notes when one scene is rewritten (a wordless film must not grow speech).
         const provRec = this.provMode() ? this.videoProv() : null;
         const provSentence = provRec ? (' This film stands on an approved provocation (in your instructions): keep its film notes and sound language' + (((provRec.film || {}).vo_words === 0) ? '; there is NO speech in this film, so "audio" must be []' : '') + '.') : '';
-        const prompt = 'Rewrite ONE scene of a ' + (this.brandRef() || 'brand') + ' commercial script for an Indian crew' + ', keeping continuity with the film logline "'+(vc?vc.logline:'')+'". Current scene: '+JSON.stringify(this.scriptForPrompt([row])[0])+'. The other scenes already show: '+JSON.stringify((this.state.fullScript||[]).filter((_r,j)=>j!==idx).map(r2=>r2.visual))+' — the rewritten scene must show a different moment from each of them. This scene runs about '+secs+' seconds, and a voice reads ~2 words per second, so all spoken "text" in this scene together must stay under '+Math.max(4, Math.round(secs*2))+' words. '+this.VISUAL_RULES+' The "audio" array holds ONLY spoken words — no speaker names, stage directions, SFX or on-screen text in "text" (those go in "speaker"/"emotion"); type is "vo" for narration or "dialogue" for a character.' + provSentence + ' Return ONLY JSON: {"no":'+row.no+',"tc":"'+row.tc+'","visual":"...","camera":"...","dialogue":"...","supr":"...","audio":[{"type":"vo","emotion":"warm","language":"en","text":"spoken words only"}]}';
-        let raw = await this.complete(prompt, this.provExtra());
+        const prompt = 'Rewrite ONE scene of a ' + (this.brandRef() || 'brand') + ' commercial script for a crew shooting in the market the brand sells in' + ', keeping continuity with the film logline "'+(vc?vc.logline:'')+'". Current scene: '+JSON.stringify(this.scriptForPrompt([row])[0])+'. The other scenes already show: '+JSON.stringify((this.state.fullScript||[]).filter((_r,j)=>j!==idx).map(r2=>r2.visual))+' — the rewritten scene must show a different moment from each of them. This scene runs about '+secs+' seconds, and a voice reads ~2 words per second, so all spoken "text" in this scene together must stay under '+Math.max(4, Math.round(secs*2))+' words. '+this.VISUAL_RULES+' The "audio" array holds ONLY spoken words — no speaker names, stage directions, SFX or on-screen text in "text" (those go in "speaker"/"emotion"); type is "vo" for narration or "dialogue" for a character.' + provSentence + ' Return ONLY JSON: {"no":'+row.no+',"tc":"'+row.tc+'","visual":"...","camera":"...","dialogue":"...","supr":"...","audio":[{"type":"vo","emotion":"warm","language":"en","text":"spoken words only"}]}';
+        let raw = await this.complete(prompt, this.videoExtra());
         raw = String(raw).trim().replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();
         next = JSON.parse(raw.slice(raw.indexOf('{'), raw.lastIndexOf('}')+1));
       } catch (e) {}
@@ -16136,11 +16150,11 @@ class Component extends DCLogic {
     let text = null;
     if (window.claude && window.claude.complete) {
       try {
-        const pre = this.brandPreamble('the ' + dept.label + ' department head', this.state.producerBrandMode === 'general', this.provMode());
+        const pre = this.brandPreamble('the ' + dept.label + ' department head', this.state.producerBrandMode === 'general', this.provMode(), true);
         if (!pre) { this.showToast(this.BRAND_PREAMBLE_MISSING);
           this.setState(st => ({ shoot:{ ...st.shoot, [id]:{ status:'idle', text:'' } } })); return; }
         const prompt = pre + '\n\nBase your plan strictly on this APPROVED SCRIPT: '+JSON.stringify(this.scriptForPrompt(this.state.fullScript))+'.' + this.decidedFacts(id) + ' Give a tight, practical '+dept.label+' plan (3-4 sentences)' + (id === 'sound' ? ', covering the room tone of the place, the specific sounds that mark what happens in the scenes, and how the music behaves around the voice (the voiceover leads: music always sits under a spoken line, lifts in the pauses, swells at the turn and resolves at the end). Do not repeat the spoken lines' : '') + (id === 'music' ? ', then end with one separate line starting "Suggested style:" that names the music in 4-10 words a music generator could use' : '') + '. Write it as a decided plan in plain statements: do not ask the reader any question, do not ask for confirmation, and do not offer alternatives to choose between. Where something is not specified, make a sensible choice and state it.';
-        let raw = await this.complete(prompt + (this.provMode() ? ' This film stands on an approved provocation (in your instructions): serve its film notes, not the category\u2019s usual look.' : ''), this.provExtra());
+        let raw = await this.complete(prompt + (this.provMode() ? ' This film stands on an approved provocation (in your instructions): serve its film notes, not the category\u2019s usual look.' : ''), this.videoExtra());
         text = this.plainDept(String(raw).trim().replace(/^```/,'').replace(/```$/,'').trim());
       } catch (e) {}
     }
@@ -16353,7 +16367,7 @@ class Component extends DCLogic {
         : '';
       const refine = isRefine ? ` Here is the current script to revise: ${JSON.stringify({ logline:prev.logline, scenes:prev.scenes, vo:prev.vo })}. Apply this direction: "${this.state.refinePrompt.trim()}". Keep what works, change only what the direction asks.` : '';
       const dur = this.state.prodDuration, words = this.voWords(dur);
-      const pre = this.brandPreamble('a film director at an ad agency', this.state.producerBrandMode === 'general');
+      const pre = this.brandPreamble('a film director at an ad agency', this.state.producerBrandMode === 'general', false, true);
       if (!pre) { this.showToast(this.BRAND_PREAMBLE_MISSING); this.setState({ videoGenerating:false, videoRefusal:'' }); return; }
       // Round 92: same "no plan/idea/brief trio" mandatories override as Social - see that function's
       // own comment. "Plan" leg is now a real bound execution (`this.videoExec()`), not just `s.plan`
@@ -16361,12 +16375,12 @@ class Component extends DCLogic {
       // (see `bagVideoExec`/`createVideoExecution`).
       const vexec = this.videoExec();
       const noTrio = !vexec && !brief && !(stands && stands.text && !forceTyped);
-      const prompt = `${pre}\n\nCommunication objective: "${obj}".${ctx}${standsCtx}${typedCtx}${refine} Propose THREE genuinely different creative routes for a ${dur} film — not three phrasings of one idea. Each must take a distinct angle: for example an emotional family story, a craft/provenance route showing where the milk comes from, and a lighter observational route. Give each a short route name and a one-line reason it could work. The voiceover is performed as ONE continuous read across the whole film (it does not restart per shot), so write roughly ${words} words per route — about 2 words per second of ${dur} — as flowing connected sentences, never per-scene fragments. Return ONLY JSON (no markdown): {"routes":[{"name":"short route name","rationale":"one line on why this works","logline": string, "duration": "${dur}", "vo": "the full ~${words}-word voiceover", "scenes": [{"t":"0\u20135s","title":string,"desc":string}, ... 4 concept beats]}, ...exactly 3 routes]}.`;
+      const prompt = `${pre}\n\nCommunication objective: "${obj}".${ctx}${standsCtx}${typedCtx}${refine} Propose THREE genuinely different creative routes for a ${dur} film — not three phrasings of one idea. Each must take a distinct angle: for example a human story, a craft-or-proof route showing what makes this product what it is, and a lighter observational route; draw each from THIS brand’s own category, market and platform. Give each a short route name and a one-line reason it could work. The voiceover is performed as ONE continuous read across the whole film (it does not restart per shot), so write roughly ${words} words per route — about 2 words per second of ${dur} — as flowing connected sentences, never per-scene fragments. Return ONLY JSON (no markdown): {"routes":[{"name":"short route name","rationale":"one line on why this works","logline": string, "duration": "${dur}", "vo": "the full ~${words}-word voiceover", "scenes": [{"t":"0\u20135s","title":string,"desc":string}, ... 4 concept beats]}, ...exactly 3 routes]}.`;
       // 29 Sep (part 2): house_id — same fix as Social's generate/rework/adjust calls; see the bridge
       // script's own comment.
       const hv = this.state.house;
       let raw = await this.complete(prompt, { ...(vexec ? { execution: vexec.id } : {}),
-        ...(hv && hv.id ? { house_id: hv.id } : {}), force_typed: forceTyped, skip_mandatories: noTrio });
+        ...(hv && hv.id ? { house_id: hv.id } : {}), force_typed: forceTyped, skip_mandatories: noTrio, film: true });
       raw = String(raw).trim().replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();
       const parsed = JSON.parse(raw.slice(raw.indexOf('{'), raw.lastIndexOf('}')+1));
       // Three routes come back; the first becomes the working concept and the rest stay available
@@ -21328,6 +21342,11 @@ class Component extends DCLogic {
     const hid = this.provHouseId();
     return hid ? { house_id: hid, provocation_id: this.state.videoProvId, use_provocation: true } : {};
   }
+  // Every Video model call says it is a film, and names the open house (the server otherwise guesses it by brand name).
+  videoExtra(){
+    const hid = this.provHouseId();
+    return { film: true, ...(hid ? { house_id: hid } : {}), ...this.provExtra() };
+  }
   // The fourth route: ONE model call writes the film as a concept (the shape the three routes have) from the provocation. The three
   // normal routes are never written from it. `note` revises the working provocation concept instead of writing a new take.
   writeProvocationRoute = async (note) => {
@@ -21348,7 +21367,7 @@ class Component extends DCLogic {
       const typedCtx = typed ? ' Additional direction: "' + typed + '".' : '';
       const cur = st.videoConcept;
       const prevCtx = refine ? ' Here is the current concept to revise: ' + JSON.stringify({ logline:cur.logline, scenes:cur.scenes, vo:cur.vo }) + '. Apply this direction: "' + refine + '". Keep what works, change only what the direction asks.' : '';
-      const pre = this.brandPreamble('a film director at an ad agency', false, true);
+      const pre = this.brandPreamble('a film director at an ad agency', false, true, true);
       if (!pre) { this.showToast(this.BRAND_PREAMBLE_MISSING); this.setState({ provRouteBusy:false }); return; }
       const voLine = words ? ('about ' + words + ' words, one continuous read across the whole film') : 'EMPTY: the provocation says there is none, so "vo" is an empty string';
       const prompt = pre + '\n\nCommunication objective: "' + obj + '".' + ctx + typedCtx + prevCtx
@@ -21357,7 +21376,7 @@ class Component extends DCLogic {
         + ' Give a short route name and a one-line reason it works. Return ONLY JSON (no markdown): {"name":"short route name","rationale":"one line on why this works","logline": string, "duration": "' + dur + '", "vo": string, "scenes": [{"t":"0\u20135s","title":string,"desc":string}, ... 4 concept beats]}.';
       const vexec = this.videoExec(), hid = this.provHouseId();
       let raw = await this.complete(prompt, { ...(vexec ? { execution: vexec.id } : {}),
-        ...(hid ? { house_id: hid } : {}), provocation_id: prov.id, use_provocation: true });
+        ...(hid ? { house_id: hid } : {}), provocation_id: prov.id, use_provocation: true, film: true });
       raw = String(raw).trim().replace(/^```json/i, '').replace(/^```/, '').replace(/```$/, '').trim();
       const parsed = JSON.parse(raw.slice(raw.indexOf('{'), raw.lastIndexOf('}') + 1));
       const data0 = (parsed.routes && parsed.routes.length) ? parsed.routes[0] : parsed;

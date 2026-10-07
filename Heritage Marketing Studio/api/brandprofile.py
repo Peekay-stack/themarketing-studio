@@ -870,7 +870,12 @@ def market_share_of(name_or_doc) -> dict:
             "brand": (b or {}).get("name", ""), "why": ""}
 
 
-def voice_block(b: dict | None, *, brief_brand: str = "", skip_mandatories: bool = False) -> str:
+# A mandatory that is a LINE (the brand's tagline, sign-off or slogan) rather than a mark or a declaration. In a film it is optional: each
+# film carries its own payoff line, written from that film's message. (The same pattern is in the page, `filmVoice`.)
+SIGNOFF_LINE_RE = re.compile(r"^\s*(?:the\s+|our\s+)?(?:brand\s+|master\s+|standing\s+)?(?:tag[\s-]?line|sign[\s-]?off(?:\s+line)?|pay[\s-]?off(?:\s+line)?|slogan|end[\s-]?line|line)\b", re.I)
+
+
+def voice_block(b: dict | None, *, brief_brand: str = "", skip_mandatories: bool = False, film: bool = False) -> str:
     """The grounding paragraph, built from a profile instead of hardcoded.
 
     Returns an explicit *absence* rather than nothing when there is no profile. A generator told
@@ -914,7 +919,17 @@ def voice_block(b: dict | None, *, brief_brand: str = "", skip_mandatories: bool
     if b.get("hashtags"):
         lines.append("BRAND CODES / HASHTAGS: " + ", ".join(b["hashtags"]))
     if b.get("mandatories") and not skip_mandatories:
-        lines.append("MANDATORY ON EVERY PIECE: " + "; ".join(b["mandatories"]))
+        if film:
+            # In a film the marks and declarations stay mandatory; a tagline/sign-off line does not (each film has its own payoff line).
+            req = [m for m in b["mandatories"] if not SIGNOFF_LINE_RE.match(str(m))]
+            sig = [m for m in b["mandatories"] if SIGNOFF_LINE_RE.match(str(m))]
+            if req:
+                lines.append("MANDATORY ON EVERY PIECE: " + "; ".join(req))
+            if sig:
+                lines.append("SIGN-OFF LINE ON FILE (NOT mandatory in a film: each film carries its own payoff line, a benefit or a thought written from "
+                             "that film's message; use this one only when it truly fits): " + "; ".join(sig))
+        else:
+            lines.append("MANDATORY ON EVERY PIECE: " + "; ".join(b["mandatories"]))
     if b.get("competitors"):
         lines.append("COMPETITORS: " + ", ".join(b["competitors"]))
     if b.get("avoid"):
