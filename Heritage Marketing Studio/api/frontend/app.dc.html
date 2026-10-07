@@ -4185,7 +4185,7 @@
   <div style="max-width:1080px; margin:0 auto; padding:36px 40px 80px; animation:hf-fade 0.4s ease;">
     <div style="margin-bottom:8px; font-size:13px; font-weight:700; letter-spacing:0.06em; color:#259821; text-transform:uppercase;">Comm strategy</div>
     <h1 style="font-family:'Epilogue',sans-serif; font-size:34px; font-weight:700; letter-spacing:-0.02em; margin:0 0 6px; color:#17325E;">The provocation</h1>
-    <p style="font-size:15px; color:#6B7280; margin:0 0 26px; max-width:700px; text-wrap:pretty;">Where this work departs from how the whole category talks and looks. On purpose, on demand, and only once a person approves it. It is written against the idea platform: it may break how the platform is expressed, never what it says.</p>
+    <p style="font-size:15px; color:#6B7280; margin:0 0 26px; max-width:700px; text-wrap:pretty;">Where this work departs from what the whole category believes, does and looks like, so the platform's message is felt harder than the usual work could. On purpose, on demand, and only once a person approves it. It is written against the idea platform: it may sharpen how the message is said and break how it is expressed, never change what it says.</p>
 
     <div style="display:flex; gap:26px; border-bottom:1px solid #DDD9D1; margin-bottom:24px; flex-wrap:wrap;">
       <sc-for list="{{ sTabs }}" as="t" hint-placeholder-count="3">
@@ -4217,7 +4217,7 @@
             <sc-if value="{{ provPlatformOk }}" hint-placeholder-val="{{ true }}"><div style="font-size:14px; font-weight:700; color:#17325E;">{{ provPlatformName }}</div><div style="font-size:12.5px; color:#41505F; margin-top:2px;">{{ provPlatformLine }}</div></sc-if>
             <sc-if value="{{ provPlatformMissing }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px; color:#8A5B0F; line-height:1.5;">None adopted yet. A provocation is written against one. <span onClick="{{ goIdeaPlatform2 }}" style="cursor:pointer; font-weight:700; text-decoration:underline;">Open the idea platform</span></div></sc-if>
           </div>
-          <div style="border:1px solid #E6E3DC; border-radius:12px; padding:11px 13px;"><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">Competitors on file</div><div style="font-size:14px; font-weight:700; color:#17325E;">{{ provCompOnFile }} on the brand profile</div><div style="font-size:12px; color:#6B7280; margin-top:2px;">Used to find the codes. Never named in the work.</div></div>
+          <div style="border:1px solid #E6E3DC; border-radius:12px; padding:11px 13px;"><div style="font-size:11px; font-weight:700; color:#6B7280; margin-bottom:3px;">Competitors on file</div><div style="font-size:14px; font-weight:700; color:#17325E;">{{ provCompOnFile }} on the brand profile</div><div style="font-size:12px; color:#6B7280; margin-top:2px;">Used to map the category. Never named in the work.</div></div>
         </div>
 
         <div style="background:#F7F5F1; border-radius:12px; padding:12px 14px; margin-bottom:12px;">
@@ -21436,7 +21436,7 @@ class Component extends DCLogic {
       provAddFileLabel: 'Add the ' + (p.onFile || []).length + ' on file', provCanAdd: evComps.length < (p.maxComp || 6),
       saveEvidence: this.saveEvidence, provEvSaveLabel: p.evBusy ? 'Saving…' : (p.evSaved ? 'Saved' : 'Save evidence'),
       // codes
-      auditCodes: this.auditCodes, provCodesLabel: p.codesBusy ? 'Auditing…' : (p.codes ? '↻ Audit again' : '✦ Audit the category’s codes'),
+      auditCodes: this.auditCodes, provCodesLabel: p.codesBusy ? 'Mapping…' : (p.codes ? '↻ Map it again' : '✦ Map what the category believes and does'),
       provHasCodes: !!p.codes, provCategory: p.category,
       provCaveat: (p.caveat || {}).text || '', provCaveatInvite: (p.caveat || {}).invite || '', provHasCaveat: !!((p.caveat || {}).text), provCaveatBg: (p.caveat || {}).memory ? '#FDEEDA' : '#EAF6EC',
       provGroups: this.provGroups(p, KIND_LABEL),

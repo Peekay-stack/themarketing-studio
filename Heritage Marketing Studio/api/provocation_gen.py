@@ -131,12 +131,12 @@ def caveat_for(codes: list[dict], strength: dict) -> dict:
     if not total:
         text = ""
     elif seen == 0:
-        text = ("These codes come from the model's general knowledge of the category and the competitor names on file, not from "
+        text = ("These come from the model's general knowledge of the category and the competitor names on file, not from "
                 "anything you have shown it. Treat them as hypotheses.")
     elif memory:
-        text = f"{seen} of {total} codes rest on what you gave it; the other {memory} are from the model's memory and unverified."
+        text = f"{seen} of {total} items rest on what you gave it; the other {memory} are from the model's memory and unverified."
     else:
-        text = "Every code rests on what you gave it. Check them against what you know."
+        text = "Every item rests on what you gave it. Check them against what you know."
     invite = ("Add what you have seen -- a pack, an Instagram page, a social video, POSM or a TVC, and what they claim and what they "
               "do -- for 3 or 4 competitors to ground these and sharpen the break." if seen < total else "")
     return {"text": text, "invite": invite, "seen": seen, "memory": memory, "total": total,
