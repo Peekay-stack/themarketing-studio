@@ -2477,6 +2477,7 @@
                 <sc-if value="{{ vProvHasDevice }}" hint-placeholder-val="{{ false }}"><span style="font-size:11px; font-weight:700; color:#17325E; background:#fff; border:1px solid #C9CEDA; border-radius:20px; padding:1px 9px;">{{ vProvDevice }}</span></sc-if>
                 <sc-if value="{{ vProvHasRisk }}" hint-placeholder-val="{{ false }}"><span style="font-size:11px; font-weight:700; color:#6B7280; background:#fff; border:1px solid #DDD9D1; border-radius:20px; padding:1px 9px;">{{ vProvRisk }}</span></sc-if>
               </div>
+              <sc-if value="{{ vProvHasStale }}" hint-placeholder-val="{{ false }}"><div style="font-size:12px; line-height:1.5; color:#8A5B0F; background:#FDEEDA; border-radius:8px; padding:4px 9px; margin-top:7px;">May be out of step: {{ vProvStale }}</div></sc-if>
               <div style="font-size:12px; line-height:1.5; color:#6B7280; margin-top:7px;">{{ vProvCardHint }}</div>
               <sc-if value="{{ vProvCardTake }}" hint-placeholder-val="{{ false }}"><span onClick="{{ anotherProvTake }}" style="display:inline-block; margin-top:7px; cursor:pointer; font-size:12px; font-weight:700; color:#1E7E34;">Write another take (replaces this concept and clears the script)</span></sc-if>
             </div>
@@ -2590,6 +2591,7 @@
                     <sc-for list="{{ infAnchors }}" as="an" hint-placeholder-count="1"><div>· {{ an.name }}</div></sc-for>
                   </sc-if>
                   <sc-if value="{{ infNoAnchors }}" hint-placeholder-val="{{ true }}"><div style="color:#6B7280;">None matched this concept.</div></sc-if>
+                  <sc-if value="{{ infAnchorsOff }}" hint-placeholder-val="{{ false }}"><div style="color:#6B7280;">Not given: this film is written from a provocation, which departs from the category, so approved past examples are left out. Locked copy and the house rules still apply.</div></sc-if>
                   <sc-if value="{{ infHasRules }}" hint-placeholder-val="{{ false }}">
                     <div style="font-weight:700; color:#17325E; margin:8px 0 4px;">House rules learned from earlier rejections</div>
                     <sc-for list="{{ infRules }}" as="ru" hint-placeholder-count="1"><div>· {{ ru.text }}</div></sc-for>
@@ -14823,7 +14825,7 @@ class Component extends DCLogic {
       // `goExecIdea`/`xGoTab`'s own social branch.
       this.loadGrounding(); this.loadSocialStandsOn(); this.loadCarouselAssetLib();
     } else if (mode === 'video') {
-      this.setState({ launcherOpen:false, linkedBrief:snap, screen:'video', videoConcept:null, videoObjective:null });
+      this.setState({ launcherOpen:false, linkedBrief:snap, screen:'video', videoConcept:null, provConcept:null, videoObjective:null });
       // Round 92: same audit as Social's own — this is one of Video's six direct `screen:'video'` sites
       // that bypass `go()`'s dispatch table (the only place `loadGrounding`/`loadVideoStandsOn` were
       // wired), so the quote box and grounding stayed on "nothing loaded" reached this way. Fixed here
@@ -15202,7 +15204,7 @@ class Component extends DCLogic {
 
   // ---------- video generation ----------
   pickVideoObjective = (name) => () => {
-    this.setState({ videoObjective:name, videoConcept:null, videoRefusal:'', scriptVersions:[], scriptStatus:'none', fullScript:null, sceneFrames:{}, shoot:{}, producedUrl:null, scriptPhase:'concept', videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null, renderInfo:null, castRefUrl:null, videoCastChoice:'', videoPlateChoice:'', videoPackChoice:'', frameNote:'', scriptRefine:'', soundPlan:{}, soundBase:[], musicStyle:'warm-strings', musicLockMood:null, production:{ aspect:'16:9', music:'Warm strings', voice:'Warm female (Telugu-accented English)', status:'idle', versions:[] } });
+    this.setState({ videoObjective:name, videoConcept:null, provConcept:null, videoRefusal:'', scriptVersions:[], scriptStatus:'none', fullScript:null, sceneFrames:{}, shoot:{}, producedUrl:null, scriptPhase:'concept', videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null, renderInfo:null, castRefUrl:null, videoCastChoice:'', videoPlateChoice:'', videoPackChoice:'', frameNote:'', scriptRefine:'', soundPlan:{}, soundBase:[], musicStyle:'warm-strings', musicLockMood:null, production:{ aspect:'16:9', music:'Warm strings', voice:'Warm female (Telugu-accented English)', status:'idle', versions:[] } });
     // Same "surfaced up front" reasoning as POSM's loadPosmAssetLib: a real reference picker with
     // nothing loaded to pick from is just a slower text box.
     if (!this.state.videoAssets.length) this.loadVideoAssetLib();
@@ -15650,8 +15652,11 @@ class Component extends DCLogic {
     if (window.claude && window.claude.complete) {
       try {
         const secs = this.sceneSeconds(row);
-        const prompt = 'Rewrite ONE scene of a ' + (this.brandRef() || 'brand') + ' commercial script for an Indian crew' + ', keeping continuity with the film logline "'+(vc?vc.logline:'')+'". Current scene: '+JSON.stringify(this.scriptForPrompt([row])[0])+'. The other scenes already show: '+JSON.stringify((this.state.fullScript||[]).filter((_r,j)=>j!==idx).map(r2=>r2.visual))+' — the rewritten scene must show a different moment from each of them. This scene runs about '+secs+' seconds, and a voice reads ~2 words per second, so all spoken "text" in this scene together must stay under '+Math.max(4, Math.round(secs*2))+' words. '+this.VISUAL_RULES+' The "audio" array holds ONLY spoken words — no speaker names, stage directions, SFX or on-screen text in "text" (those go in "speaker"/"emotion"); type is "vo" for narration or "dialogue" for a character. Return ONLY JSON: {"no":'+row.no+',"tc":"'+row.tc+'","visual":"...","camera":"...","dialogue":"...","supr":"...","audio":[{"type":"vo","emotion":"warm","language":"en","text":"spoken words only"}]}';
-        let raw = await this.complete(prompt);
+        // A film written from a provocation keeps its film notes when one scene is rewritten (a wordless film must not grow speech).
+        const provRec = this.provMode() ? this.videoProv() : null;
+        const provSentence = provRec ? (' This film stands on an approved provocation (in your instructions): keep its film notes and sound language' + (((provRec.film || {}).vo_words === 0) ? '; there is NO speech in this film, so "audio" must be []' : '') + '.') : '';
+        const prompt = 'Rewrite ONE scene of a ' + (this.brandRef() || 'brand') + ' commercial script for an Indian crew' + ', keeping continuity with the film logline "'+(vc?vc.logline:'')+'". Current scene: '+JSON.stringify(this.scriptForPrompt([row])[0])+'. The other scenes already show: '+JSON.stringify((this.state.fullScript||[]).filter((_r,j)=>j!==idx).map(r2=>r2.visual))+' — the rewritten scene must show a different moment from each of them. This scene runs about '+secs+' seconds, and a voice reads ~2 words per second, so all spoken "text" in this scene together must stay under '+Math.max(4, Math.round(secs*2))+' words. '+this.VISUAL_RULES+' The "audio" array holds ONLY spoken words — no speaker names, stage directions, SFX or on-screen text in "text" (those go in "speaker"/"emotion"); type is "vo" for narration or "dialogue" for a character.' + provSentence + ' Return ONLY JSON: {"no":'+row.no+',"tc":"'+row.tc+'","visual":"...","camera":"...","dialogue":"...","supr":"...","audio":[{"type":"vo","emotion":"warm","language":"en","text":"spoken words only"}]}';
+        let raw = await this.complete(prompt, this.provExtra());
         raw = String(raw).trim().replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();
         next = JSON.parse(raw.slice(raw.indexOf('{'), raw.lastIndexOf('}')+1));
       } catch (e) {}
@@ -18995,7 +19000,7 @@ class Component extends DCLogic {
         }) : [];
         return { infBusy: !!s.scriptInfluenceBusy, infFailed: !!inf && !!inf.failed && !s.scriptInfluenceBusy, infReady: ok,
           infLocked: locked, infHasLocked: locked.length > 0, infNoLocked: ok && !locked.length,
-          infAnchors: ok ? inf.anchors.map(name => ({ name })) : [], infHasAnchors: ok && inf.anchors.length > 0, infNoAnchors: ok && !inf.anchors.length,
+          infAnchors: (ok && !this.provMode()) ? inf.anchors.map(name => ({ name })) : [], infHasAnchors: ok && !this.provMode() && inf.anchors.length > 0, infNoAnchors: ok && !this.provMode() && !inf.anchors.length, infAnchorsOff: ok && this.provMode(),
           infRules: ok ? inf.rules.slice(0, 8).map(text => ({ text })) : [], infHasRules: ok && inf.rules.length > 0 };
       })(),
       // Scenes that repeat an earlier scene, each with a one-click rewrite (which is told what the other scenes show).
@@ -19625,7 +19630,7 @@ class Component extends DCLogic {
       carousel: { ...s.carousel, routesBusy:false, routes:[], chosenRoute:-1, concept:null, slides:[], slideNotes:{}, producing:false },
       // Video \u2014 concept, script, every department's drafted card, key frames and the cast reference
       // image are each their own "already generated" state with no idea the mode just changed.
-      videoConcept:null, conceptRoutes:[], conceptRoute:0, videoRefusal:'',
+      videoConcept:null, provConcept:null, conceptRoutes:[], conceptRoute:0, videoRefusal:'',
       fullScript:null, scriptStatus:'none', scriptPhase:'concept', shoot:{}, sceneFrames:{}, framesBatch:false, soundPlan:{}, soundBase:[],
       castRefUrl:null, castOptions:[], castLockSig:'', castGateHit:false, producedUrl:null,
       // POSM \u2014 the rendered/drafted pieces (routes, sketches, isolated elements, recompositions) and
@@ -21402,8 +21407,10 @@ class Component extends DCLogic {
       vProvCardBadge: st.provRouteBusy ? 'Writing\u2026' : (fromProv ? 'Selected' : 'Fourth route'),
       vProvCardBg: fromProv ? '#F4FBF5' : '#F4F7FC', vProvCardBorder: fromProv ? '#259821' : '#2E5EA6',
       vProvCardBadgeBg: fromProv ? '#1E7E34' : '#17325E',
+      vProvStale: ((p || {}).stale_because || [])[0] || '', vProvHasStale: ((p || {}).stale_because || []).length > 0,
       vProvCardHint: st.provRouteBusy ? 'About 30 seconds. One model call.'
-        : (fromProv ? 'The film below is written from it.'
+        : (st.producerBrandMode === 'general' ? 'Not available on an Independent piece: it stands on the brand’s own platform.'
+        : fromProv ? 'The film below is written from it.'
           : (stored ? 'Written earlier: click to switch back (no new call).' : 'Click to write the film from it: one model call.')),
       vProvCardTake: fromProv && !st.provRouteBusy,
       vConceptFromProv: this.provMode(),

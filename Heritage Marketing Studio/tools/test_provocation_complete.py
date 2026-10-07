@@ -148,6 +148,18 @@ check("on an Independent piece the route may resolve it, but the prompt builder 
 
 main.completion.complete, main.completion.has_key = real_complete, real_has_key
 
+print("the concept written from a provocation saves and comes back with the film")
+rows = [{"no": 1, "tc": "0-8s", "visual": "x", "audio": []}]
+concept = {"name": "The Plain Glass", "logline": "L", "scenes": [{"t": "0-5s", "title": "a", "desc": "b"}], "vo": "", "duration": "30s",
+           "from_provocation": PID, "provocation_name": "The Plain Glass"}
+client.post("/video-script", json={"house": HID, "video_concept": concept, "full_script": rows, "provocation_id": PID, "provocation_on": True})
+back = client.get("/video-script", params={"house": HID}).json()
+check("the concept keeps which provocation it came from, and the film keeps the pick", (back.get("video_concept") or {}).get("from_provocation") == PID
+      and (back.get("video_concept") or {}).get("provocation_name") == "The Plain Glass" and back.get("provocation_id") == PID, str(back)[:200])
+client.post("/video-script", json={"house": HID, "video_concept": {k: v for k, v in concept.items() if k not in ("from_provocation", "provocation_name")}, "full_script": rows})
+back = client.get("/video-script", params={"house": HID}).json()
+check("an ordinary concept (a normal route) has no provocation on it, so a later step is ordinary", "from_provocation" not in (back.get("video_concept") or {}), "")
+
 print()
 print("All provocation-in-/complete cases behave." if not fails else f"{fails} provocation-in-/complete case(s) FAILED.")
 sys.exit(1 if fails else 0)
