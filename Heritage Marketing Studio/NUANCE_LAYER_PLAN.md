@@ -61,8 +61,55 @@ Because the new design is model-drafted, "byte-identical" no longer applies. The
 - Reads live in tenant files: test fixtures must not write real tenant data (snapshot `tenants/` first).
 - Not verified yet: whether the model derives the individual-versus-family distinction reliably. Phase 1 exists to find out.
 
-## Decisions needed
+## Blast-radius sweep (8 Oct): what it found, and what it changes in this plan
+Method: every caller and sibling found by grep across backend and page, plus the code read where it mattered. Nothing was run against a model and nothing was changed. Not checked: live data (the live tenant cannot be read without a login).
+
+### 1. A correction to the plan above: the audience does not live on the house
+- The messaging house has no audience layer (`strategy.LAYERS`: core, emotional, functional, two RTBs, bridge, proof, culture).
+- The audience is a **Plan row** (`plan.LAYERS["audiences"]`: audience, rank, believes_now, pillar) and the occasion is a Plan **phase** row. An execution binds one audience, one occasion, one channel and one measure (`execution.REFS`).
+- There is also no "product line" anywhere: the profile has one `category` and one `hero_product`. "Ice cream versus milk" has no home today (separate brand profile? a house?). **So the middle scope moves from house to the Plan's audience row, and the product-line question becomes an open decision.**
+
+### 2. Forwards: everything that reads the profile
+- `brandprofile.voice_block` is the chokepoint and has **about 15 prompt call sites in 11 modules**: `prompts.system_for` (Social, Video through `/complete`), `producers._ctx` (Carousel, POSM, Onground), `ideas` (4), `campaign` (2), `plan`, `sales`, `strategy`, `character`, `generation`, `provocation_gen`. Nine more routes in `main.py` return it to the page.
+- **Brand-level content added inside `voice_block` reaches all of them with no per-module edit**, which is the cheap path. Overlays (audience row, per-piece) cannot go there, because `voice_block(b)` knows nothing about the plan or the piece. They go where `house_block`, `platform_block` and `_execution_block` already sit, and every other module that holds a house or plan would need its own line. That means touching about seven modules.
+- **Paths that do not go through `voice_block`:** `pr.py` (reads `brand_core` directly, line 1415, so it needs its own wiring), `brief_ai.py` (imports `brandprofile` nowhere), `brandbrief.py` and `socialplan`/`mediaplan` (read states and languages only).
+- **The page splices the same text into client-built prompts** (`brandPreamble`, about 10 call sites: Brief writer, Social, Video script and departments, IMC lead, analytics). So a brand-level read in `voice_block` reaches those too. Two consequences: (a) it would also reach prompts it does not suit (analytics, brief writer), and (b) `brandPreamble`/`filmVoice` do line-by-line string surgery on the voice text (drop lines starting `TONE:`, rewrite the `MANDATORY ON EVERY PIECE:` line). **New lines must never start with those prefixes, and each section must be a single line or a clearly separated block.**
+- **Provocation conflict:** in provocation mode the page and the server drop TONE and the film flag demotes the tagline. A read that states category conventions as Territory would contradict a provocation that is meant to break them. The read needs the same demotion rule, and `provocation_gen.audit_codes` (which already asks the model for category codes) overlaps with the read's conventions. Link them, do not copy.
+- **Grounding toggle:** Independent/General mode passes `brand=None` and gets no profile. The read must attach only through a resolved profile, so a General piece carries nothing. Needs a test.
+
+### 3. Backwards: what feeds the read, and where it can go wrong
+- **`brandprofile.resolve()` falls back** to the only profile, or the active one, when a document's brand name does not match exactly (`by_name` is exact). The code already records this as the source of cross-brand leaks ("Heritage" versus "Heritage Foods"). **A read keyed through `resolve()` inherits the fallback and could attach the wrong brand's read.** Fix to build in: attach a read only when the document carries a `brand_id` that matches, or add a resolver that reports whether it matched or fell back.
+- `derivable()` pre-fills `category`, `market`, `hero_product` and `competitors` from the brief, and the profile's `put()` merges only whitelisted fields. So the profile can change under a read. **The read must store a hash of the profile values it was drafted from**, and show "profile changed since this read" (cheap, because the profile has no staleness today).
+- **Geo inputs are mostly empty:** in the dev tenant only Heritage has `states` and `languages`; Kumkum, Loomwell and Sthir are unset and Parle G is empty. The seed has none. **The live Heritage profile is unverified**; the owner should check "Where it actually sells" on the live profile screen. If it is empty, the geography layer does nothing there today.
+
+### 4. Storage
+- Embed only the **approved current read** in the profile record, as `brand_core` does (`put()` already tolerates an extra nested key, and `profiles()` and `/brands` return the whole record to the page on every call). **Keep drafts and edit history out of it**: they would bloat every `/brands` response.
+- Drafts and history need a separate store: a new kind in `tenancy.KINDS` (added deliberately; `tenancy.dir` creates the folder, including on the live disk) and a cleanup in `brandprofile.remove`, which today deletes only the profile file.
+- The audience-row overlay would live on the Plan record; the per-piece overlay on the execution record. Both are existing stores.
+
+### 5. Staleness
+- No staleness signature includes the brand profile today (`strategy.signature`, `ideas.platform_signature`, `plan.house_fingerprint`, `execution.stale_because` read only house, plan and platform choices). A changed or newly approved read will therefore not flag anything stale. That matches how the profile behaves. Recommended: stamp the read version on newly generated content for display, and do not add stale-nagging in the first release.
+
+### 6. Frontend (page) changes
+- **Brand profile screen** (`app.dc.html` about lines 9500 to 9650 and 23540 to 23810): a Nuance section follows the `brand_core` pattern, which means parallel `bfNuance*` state in **five places**: the reset (`switchBrand` and the form-open reset, about 12539), the load (about 23543 and 23580), the save body (about 23649) and the post-save echo (about 23681). `bfVoice` was once missing from a reset, so that is where it will break first.
+- **Plan screen:** audience rows gain a per-audience read (new column or panel).
+- **Server-rendered form spec:** `/brand-fields` already renders from data, so a new group costs little.
+- **Other page strings the audit did not list:** export filenames and titles hardcode "Heritage" (`downloadScriptWord`, `downloadProductionBible`, `downloadBriefWord`), the Video defaults hardcode a Telugu-accented voice and an Indian accent for every brand (`state.production.voice`, `voiceAccent`), `socialGrounding` says "could be any dairy brand", and the music chips include "Gentle Indian flute". These are page edits in Phase 3.
+- `app.dc.html` is edited by Design in alternating rounds. Every page change here needs the merge-never-replace discipline, `checkfe.py`, `partials.py verify`, a reload and a real-page check; the file stays LF-only.
+
+### 7. Other risks found
+- **Live deploy ordering:** the hardcoded dairy text can only come out after Heritage's read is approved **on live**. The code deploy and the live data are separate steps. Do it as an owner-run step: a one-time seed route or script that writes Heritage's read from today's text on live, then the code removal. Do NOT seed it from code at startup, which would reintroduce a brand in code.
+- **Model-call length:** a full multi-audience read in one call can approach the Cloudflare timeout that already produced a 524 on a 5-deck brief (`/research-ingest` was split out for it). Draft per dimension or per audience, or use the same split-route pattern, and detect `max_tokens` truncation (a past lesson).
+- **Tests:** the existing tests that pin the text we would remove are `tools/test_pack_choice.py`, `test_video_agnostic.py`, `test_provocation_gen.py`, `test_provocation_complete.py` and `api/tests/test_made.py`. Each phase 3 commit updates its own.
+- **New routes are protected by default** (`RequireLoginMiddleware` exempts only the listed public paths), so no change is needed there.
+- **Exports** (`docs.py`) carry the brand name and logo, not the voice text, so Word exports are unaffected unless we choose to include the read.
+- **Costs:** one extra model call per read; the read itself adds prompt length to every producer (keep it short).
+- **Not verified:** the model's real output for any of this; live data; how Design's current copy of the brand screen differs.
+
+## Decisions needed (revised after the sweep)
 1. Unapproved read: never injected (my recommendation) or injected as "tentative"?
-2. Overlay level: at the house (messaging house) level, confirmed?
-3. Evidence: only the profile and uploaded research, or may the read also draw on web research?
-4. Screen: where the read is edited (brand profile screen, a new "Nuance" section) or elsewhere?
+2. **Audience level (changed):** attach the audience overlay to the **Plan's audience rows** (my recommendation, since that is where the audience actually lives) instead of the house.
+3. **Product line (new):** how is "ice cream versus milk" represented? Options: a separate brand profile per line, a field on the audience row, or a new "line" concept.
+4. Evidence: only the profile and uploaded research, or may the read also draw on web research?
+5. Screen: where the read is edited (brand profile screen, a new "Nuance" section) or elsewhere?
+6. Live seed: the owner runs a one-time step on live to create Heritage's read before the dairy text is removed.
