@@ -85,7 +85,7 @@ New from the audience step (Phase 4):
 - Plan audience columns are iterated by `execution.stale_because`, so adding columns changes what counts as drifted (good, but must be tested), and they also touch `docs.py`'s plan export, the Plan screen table and the audiences prompt in `plan.py`. Also `briefstore.CANON` and the Brief screen for the questions at the point the audience is named.
 
 ## Open items for the owner
-1. **Product line representation** (needed before Phase 0): a rows question on the profile that the audience row can point at (recommended), a separate profile per line, or no concept at all.
+1. **Product line representation: DECIDED (8 Oct), option a.** A "Product lines" rows question on the profile; a Plan audience row names the line it is for.
 2. Confirm the question list above, or strike or add questions, before it is built.
 3. Verify the live Heritage `states` and `languages`.
 4. Go-ahead for the Phase 1 real-model test.
