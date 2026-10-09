@@ -1,0 +1,653 @@
+---
+name: brand-brief
+description: Produces a paginated Word brand strategy brief integrating competitor landscape, NeedScope emotional positioning, Current to Desired (CB/CA to DB/DA) framework, and Single Minded Proposition. Use when the user asks to build a brand brief, create a comprehensive brand brief, build a brand strategy doc, generate a brand positioning brief, do a NeedScope analysis, create a competitive brief with SMP, or uploads NeedScope chart images, market-share spreadsheets, household consumption data, brand strategy decks, competitor PowerPoint files, or qualitative research notes for brand analysis.
+---
+
+# Brand Brief
+
+Generate a six-to-seven-page Word brand strategy brief that integrates four frameworks: competitive landscape, NeedScope emotional positioning, CB/CA → DB/DA shift, and Single Minded Proposition.
+
+## What this skill does
+
+Take whatever inputs the user has supplied — uploaded files, prior conversation context, or just a brand name — and produce a paginated `.docx` brief in the workspace folder with:
+
+1. Executive summary.
+2. Backgrounder — category perspective, current situation, consumer insights, problem statement. Orients a reader in evidence before any strategy appears; see `references/backgrounder-guidance.md`.
+3. Competitor snapshot table.
+4. Messaging comparison matrix.
+5. NeedScope brand positioning section with an embedded wheel as `Figure 1` (built either from the user's uploaded NeedScope chart or constructed from communications cues).
+6. CB/CA → DB/DA section with the embedded shift diagram as `Figure 2`.
+7. Single Minded Proposition section with a green-bordered callout and a "why only this brand can say it" defence.
+8. Pricing, distribution, and content snapshot.
+9. Opportunities and threats table.
+10. Recommended actions, every one of which ladders to the SMP and respects the NeedScope discipline.
+11. Caveats that name exactly what to validate before externalising.
+
+## When to invoke this skill
+
+Invoke when the user wants any of the following:
+
+- A full brand brief integrating NeedScope + CB/CA → DB/DA + SMP.
+- A standalone NeedScope brand positioning analysis (still run the full skill, but lead with §4).
+- A standalone SMP development exercise (still run the full skill — the SMP only earns its right to exist when the NeedScope and CB/CA → DB/DA reads support it).
+- A competitive brief that ingests uploaded NeedScope research, market-share, or HH data.
+
+Do not invoke when the user wants a plain content audit, a brand voice guideline doc, or a generic marketing performance report — those are different skills.
+
+## High-level flow
+
+Follow this order. Do not skip steps even if some inputs are missing — for missing inputs, run the fallback and flag the assumption in the brief's caveats.
+
+1. **Triage what the user has provided.** Look at uploaded files, prior turns in the conversation, and the user's instruction. Use AskUserQuestion (or an elicitation form) only when a hard ambiguity remains after triage — for example, the brand is unnamed, or the user has uploaded two competing NeedScope charts and you don't know which is current.
+2. **Parse inputs.** Extract data from every uploaded file the user provided. See `references/input-parsing.md` for the parsing patterns for each file type.
+3. **Build the analytic core.** In this order: (a) the backgrounder — category perspective, current situation, consumer insights, problem statement, (b) competitor snapshot, (c) messaging matrix, (d) NeedScope positions for every relevant brand, (e) CB/CA → DB/DA for the focal brand, (f) SMP triangulation. The backgrounder goes first because CB/CA and the SMP should answer the problem statement it names, not the other way round. The SMP is the last analytic step because it must reconcile NeedScope + CB/CA → DB/DA + competitive whitespace.
+4. **Generate the two figures.** NeedScope wheel and CB/CA → DB/DA diagram, as PNG files in the workspace. Use the SVG templates in `assets/` and convert with `cairosvg`. See `references/needscope-framework.md` for the wheel construction logic and `references/cb-ca-db-da-framework.md` for the shift diagram.
+5. **Assemble the .docx.** Use the parameterised `assets/build_brief_docx.js` Node script with `docx-js`. The script handles page size (US Letter), styles (Arial body, sentence-case headings), tables (DXA widths), embedded figures, footers with page numbers, and the SMP callout block. See `references/docx-assembly.md` for the exact contract between the JSON brief object and the script.
+6. **Validate and deliver.** Convert the docx to PDF (`soffice --convert-to pdf`) and inspect at least the first and last page as images to confirm the figures render and pagination is reasonable. Surface a `computer://` link to the `.docx` (and optionally the `.pdf`) in the chat.
+
+## Input triage rules
+
+Apply these in order:
+
+- If the user uploaded a NeedScope chart image (PNG/JPG/PDF/PPTX), treat its brand positions as ground truth and build the brief's wheel to match them. Read the chart with vision tools where supported, or ask the user to confirm positions if the image is ambiguous.
+- If the user uploaded market-share data (XLSX/CSV), use the numbers verbatim in the competitor snapshot, pricing, and distribution sections. Never override user-supplied numbers with web-research estimates.
+- If the user uploaded HH (household) consumption / penetration data, use it in the distribution and opportunities sections to flag occasion-level patterns (e.g. heavy chai-time skew, low Gen-Z penetration).
+- If the user uploaded brand strategy docs (PDF/DOCX), treat them as the authoritative source for the brand's current positioning, taglines, and tone — feed those into the messaging matrix and the CB/CA / DA cells.
+- If the user uploaded competitor PPTX decks, parse them for taglines, audience claims, and feature emphasis to populate the messaging matrix.
+- If the user uploaded qualitative research notes, mine them for verbatim consumer language to use in the CB/CA quote and DA aspirational quote.
+- If multiple files conflict, default to: NeedScope chart > market-share data > brand docs > competitor decks > qualitative notes > web research. Note the conflict in caveats.
+- Build the backgrounder from whatever of the above was supplied before touching any other section — its category perspective and current situation read the same market-share/HH data as the snapshot section; its consumer insights read the same qualitative notes as the CB/CA quotes. It is the one section that is allowed to say plainly that a part is not assessed when the matching input never arrived.
+
+## Output contract
+
+The brief must:
+
+- Be exactly one `.docx` file delivered to the workspace folder.
+- Be 6 to 8 pages on US Letter at default body 11pt (the backgrounder adds roughly a page).
+- Embed both figures (NeedScope wheel + CB/CA → DB/DA) at high resolution.
+- Have a footer carrying "Brief title · Page X of Y".
+- Have a green-bordered SMP callout containing one sentence ending in a full stop.
+- Have a "Caveats" section enumerating every assumption made because of missing inputs.
+
+Do not produce: a PDF without the docx, a markdown-only output, or a deck. Those are different deliverables — refuse to substitute them silently.
+
+## Framework discipline
+
+These are non-negotiable.
+
+### Backgrounder
+
+- Four parts, in this order: **category perspective**, **current situation**, **consumer insights**,
+  **problem statement**. Sits right after the Executive Summary — a third-party agency or non-marketing
+  stakeholder needs to be oriented in the evidence before any framework mechanics start.
+- Category perspective and current situation are read from structured data (market-share/HH files), not
+  from the model's category memory, whenever that data was supplied — use the real figures verbatim, the
+  same discipline as the pricing/distribution snapshot. Where no such data was supplied, say so rather
+  than estimating.
+- Consumer insights are synthesized from qualitative research where it was supplied — specific, citable
+  findings, not a restatement of the whole deck. Where none was supplied, say so.
+- The problem statement is the one paragraph the rest of the brief exists to answer: it names the actual
+  business/marketing problem (not a symptom, not a metric target) in plain language. It must set up — not
+  duplicate — the CB/CA → DB/DA section that follows several sections later: CB/CA works out what has to
+  shift; the problem statement is why a shift is needed at all.
+
+See `references/backgrounder-guidance.md` for how to write each part and a worked example.
+
+### NeedScope wheel
+
+- Six territories arranged clockwise from twelve o'clock: Power (Red), Freedom (Orange), Vitality (Yellow), Belonging (Green), Security (Blue), Discernment (Purple). This rotation is fixed across the plugin so the chart reads the same way every time.
+- Each focal brand is positioned by reading the brand's communications cues (taglines, films, packaging) and assigning emotional territory plus pull direction. See `references/needscope-framework.md` for the assignment rules.
+- The focal brand always gets a slightly larger pin and the word "(anchor)" below the label.
+- A dashed strategic-bridge arrow connects the focal brand to its proposed adjacent territory — this visualises the brand's strategic move and must match the SMP narrative.
+
+### CB/CA → DB/DA
+
+- Two cards side-by-side. Left card grey-bordered, labelled "CURRENT". Right card green-bordered with a tinted background, labelled "DESIRED".
+- Each card contains two sub-cards stacked: Behaviour above, Attitude below.
+- Behaviour bullets describe observable purchase, usage, and occasion patterns. Attitude includes one verbatim consumer-voice quote and two declarative lines about how the brand is held.
+- A green arrow runs between the cards labelled "THE SHIFT" with the one-line shift named below ("passive trust → active pride", or equivalent).
+- A caption underneath the diagram restates the shift in one sentence — the message communication must layer the desired attitude on top of the current one, never replace it.
+
+### Single Minded Proposition
+
+- One sentence ending in a full stop, max 14 words. Tension-resolving, brand-true, competitor-defeating, and future-facing.
+- Always followed by a "Why only [brand] can say it" defence that names each direct competitor and the word in the SMP they fail to earn.
+- Always followed by a short "what this unlocks" list: brand line, mass line, activation idea, product idea — each tagged "illustrative — not final copy" so the brand team owns the final wording.
+
+See `references/smp-guidance.md` for the SMP construction rules.
+
+## Style discipline
+
+- Sentence case everywhere — headings, table headers, figure captions. Never Title Case.
+- Use the rupee sign `₹` (U+20B9) directly for Indian prices; the build script renders fonts that support it.
+- Footer reads `{Brand} Brand Brief · Page X of Y`.
+- Headings use a green H2 colour `#3F814C` to match the NeedScope green and the SMP callout border — visual continuity is intentional.
+- Body 11pt Arial. Tables 10pt. Headings 12–14pt, weight 500.
+- Never use emoji. Never use mid-sentence bold.
+
+## When inputs are sparse
+
+If the user has provided only a brand name and no files:
+
+1. State up front that the brief will be built from web research and category memory.
+2. Run targeted web research on the brand, top three competitors, recent campaigns, pricing, and any publicly disclosed market-share figures.
+3. Build every section, but in the Caveats section explicitly list which numbers and which NeedScope positions are estimates that should be replaced with real data before externalising.
+
+The brief still ships; the user knows what to validate. Never refuse to produce the brief.
+
+## Implementation handoff
+
+See `references/` for the operational details:
+
+- `references/backgrounder-guidance.md` — how to write the category perspective, current situation, consumer insights, and problem statement, and how the problem statement sets up CB/CA.
+- `references/needscope-framework.md` — how to assign brands to NeedScope territories from their communications, and how to construct the wheel.
+- `references/cb-ca-db-da-framework.md` — how to populate the four quadrants and write the shift line.
+- `references/smp-guidance.md` — how to triangulate the SMP and pass the four tests.
+- `references/input-parsing.md` — how to read each uploaded file type and what data to extract.
+- `references/docx-assembly.md` — the JSON contract for the build script and how to invoke it.
+
+See `assets/` for templates and the runnable build script:
+
+- `assets/needscope_template.svg` — the wheel template; the skill clones it and overwrites brand pin positions.
+- `assets/cbca_dbda_template.svg` — the shift diagram template.
+- `assets/build_brief_docx.js` — the parameterised Node script that ingests `brief.json` and writes the `.docx`.
+
+## Final check before delivery
+
+Before linking the user to the output file, confirm:
+
+- The `.docx` exists and is non-trivial in size (> 100 KB once figures embed).
+- Both figures render (open at least page 2 and page 3 of the rendered PDF as images and look at them).
+- The backgrounder's problem statement is one paragraph and sets up the CB/CA shift, not a copy of it.
+- The SMP is one sentence.
+- Every competitor named in the brief has at least one row in the messaging matrix.
+- The Caveats section lists every assumption made due to missing input.
+
+Only then surface the file.
+
+
+
+===== reference: backgrounder-guidance.md =====
+# Backgrounder
+
+The backgrounder orients a reader in the evidence before any framework mechanics start. A third-party
+agency or a non-marketing stakeholder opening this brief should be able to read section 2 alone and
+understand what's actually going on in the category and for the brand, before section 5 ever mentions
+NeedScope. It sits directly after the Executive Summary.
+
+## Definition
+
+> The backgrounder is the brief's evidence base, written up front: what the category is doing, where the
+> brand stands today, what consumers actually think, and the one problem the rest of the brief exists to
+> solve.
+
+It is not a second executive summary. The executive summary previews the brief's conclusions; the
+backgrounder is the evidence a reader would need to check those conclusions.
+
+## The four parts
+
+| Part | What it captures | Sources |
+|---|---|---|
+| Category perspective | Category size, growth or decline, structural trends (fragmentation, private-label pressure, channel shift) | Market-share / category spreadsheets, category-level deck content |
+| Current situation | The focal brand's own share, penetration, and distribution trend — where it stands today, not the category | Market-share / HH consumption spreadsheets, read verbatim |
+| Consumer insights | What consumers actually think, need, and are blocked by — specific and citable, not a restatement of a whole deck | Qualitative research, brand trackers |
+| Problem statement | The one paragraph naming the real business/marketing problem | Synthesized from the three parts above, filtered through the brief ask |
+
+## Writing each part
+
+### Category perspective
+
+Two to four sentences. What is the category doing as a whole — growing, flat, fragmenting, consolidating
+around a few players? Read from spreadsheet aggregates when supplied (real numbers, not eyeballed), or
+from a category-level slide/section in an uploaded deck. If nothing category-level was supplied, say so
+rather than reaching for general category memory dressed up as a finding.
+
+### Current situation
+
+Two to four sentences, about the focal brand specifically, not the category. Its share, its penetration,
+its distribution — using the real figures verbatim where a spreadsheet was uploaded, the same discipline
+the pricing/distribution snapshot already follows. State the trend direction (rising, falling, flat), not
+just a snapshot number, when the data supports it.
+
+### Consumer insights
+
+Three to five bullets. Each one a specific, citable finding — a need-state, a perception, a barrier, a
+verbatim worth quoting — never a generic restatement like "consumers value quality and trust," which
+could be written about any brand in any category without reading a single file. Pull from qualitative
+research where it was supplied. If several sources corroborate the same finding, that is worth saying (it
+is stronger evidence than one source alone). If nothing qualitative was supplied, say so.
+
+### Problem statement
+
+One paragraph, no more. This is the hardest part to write well because it has two failure modes:
+
+- **Too vague to act on**: "Heritage needs to grow" is not a problem statement, it is a wish.
+- **Actually a solution in disguise**: "Heritage needs a new campaign" skips past diagnosis straight to
+  a prescription — the brief hasn't earned that yet.
+
+A working problem statement names the specific gap the category perspective, current situation, and
+consumer insights together point to. Formula: *despite [what's working], [the brand] faces [the actual
+constraint], because [the underlying reason surfaced by the evidence].*
+
+### Worked example (Heritage Foods, dairy — illustrative)
+
+| Input | Value |
+|---|---|
+| Category perspective | AP/Telangana dairy is a large, largely branded milk category but a fragmented, mostly-unbranded curd category. |
+| Current situation | Heritage leads milk penetration and distribution in its home markets (~0.33 and ~0.77 respectively), but its first-choice/consideration rate trails its awareness by a wide margin. |
+| Consumer insights | Awareness and trust are high but taken for granted; quality is assumed rather than actively noticed; curd is bought loose or unbranded by habit, not by brand preference. |
+
+Problem statement: *Despite leading distribution and near-universal awareness in its home markets,
+Heritage is not the brand consumers actively choose first — trust is assumed rather than demonstrated, so
+purchase reverts to habit and price instead of active preference, and curd in particular is ceded to an
+unbranded default rather than claimed as a branded occasion.*
+
+Notice what that problem statement does NOT do: it doesn't say "Heritage needs a new tagline" (a
+solution) and it doesn't say "Heritage should grow" (a wish). It names a specific, evidenced gap between
+what the brand has earned (distribution, awareness) and what it hasn't (active first choice) — which is
+exactly the gap CB/CA → DB/DA and the SMP then exist to close.
+
+## How the problem statement hands off to CB/CA
+
+The problem statement is diagnosis; CB/CA → DB/DA is the planning bridge that turns diagnosis into a
+communication job (see `references/cb-ca-db-da-framework.md`). They must agree with each other — CA
+(Current Attitude) should read as the attitude that produces the problem statement's gap, and DA (Desired
+Attitude) should read as the attitude that would close it. If the problem statement names "quality assumed,
+not noticed" and CB/CA's shift line is about something unrelated, one of the two is wrong — reconcile them
+before moving on to the SMP.
+
+## Common pitfalls
+
+- **Restating the executive summary.** The backgrounder is evidence; the executive summary is conclusions.
+  If a sentence could sit in either section unchanged, it belongs in the executive summary and the
+  backgrounder needs a more specific replacement.
+- **A problem statement that is really a KPI.** "Awareness needs to increase by 10 points" is a target,
+  not a problem. Ask what's causing the gap the target would close — that's the actual problem statement.
+- **Manufacturing consumer insights with no source.** If no qualitative research was uploaded, say so.
+  A confident-sounding insight with nothing behind it is worse than an honest gap, because the reader has
+  no way to tell the difference until they try to act on it.
+- **Category perspective that is really just the focal brand's numbers again.** Category perspective is
+  about the category as a whole — if every sentence names only the focal brand, it belongs in current
+  situation instead.
+
+
+
+===== reference: needscope-framework.md =====
+# NeedScope Framework
+
+NeedScope (Kantar) is an emotional brand positioning framework. Six emotional needs are arranged on a colour-coded wheel. Each brand's communications point to one or two of them.
+
+## The six territories
+
+| Colour | Territory | Need shorthand | Communication cues that anchor here |
+|---|---|---|---|
+| Red | Power | Strength, performance, dominance | Active verbs, performance language, masculine-coded energy, hero films, competitive metaphors |
+| Orange | Freedom | Self-expression, spontaneity, anti-establishment | Individualism, "break free" language, irreverent or playful tone, youthful counter-culture coding |
+| Yellow | Vitality | Optimism, fun, sociable warmth | Smile equity, bright palettes, sharing and togetherness, social-occasion cues |
+| Green | Belonging | Family, intimacy, inclusive warmth | Heritage, every-home ubiquity, intergenerational stories, comfort metaphors, classless framing |
+| Blue | Security | Trust, control, reliability | Process language, "proven", ritual language, calm authority, expert testimonials |
+| Purple | Discernment | Sophistication, refinement, status | Sensorial language, cinematic visuals, restraint, premium materials, romance and indulgence coding |
+
+The wheel rotation is fixed clockwise from twelve o'clock: Power, Freedom, Vitality, Belonging, Security, Discernment. Never reorder the wheel — consistency across briefs makes them comparable.
+
+## How to assign a brand to a territory
+
+For each brand, gather:
+
+- Current tagline.
+- Two or three recent campaign films or hero ads (or descriptions if no video).
+- Packaging cues (colour, typography, character/mascot, price point).
+- Tone of voice in copy.
+
+Then:
+
+1. **Identify the primary need** the brand speaks to. Use the cue column above. If the brand speaks to two adjacent needs, pick the dominant one and treat the other as a "pull" direction.
+2. **Locate the pin** at a radius of roughly 120–160 (in the 800×640 viewBox of the template) from the wheel centre `(400, 320)`. Pins closer to the centre indicate a brand that straddles territories; pins further out indicate strong commitment to a single territory.
+3. **Mark the anchor brand** (the focal brand of this brief) with a slightly larger pin (radius 11) and the label "(anchor)" below it.
+
+## Reading user-uploaded NeedScope charts
+
+If the user uploaded a NeedScope chart (image, PDF, or PPTX slide):
+
+- Read the image with vision tools.
+- Identify which brands sit in which territories and roughly where.
+- Reproduce those positions in the wheel rather than inferring fresh ones from communications.
+- If a brand on the user's chart is not in scope for this brief, drop it. If a brand in scope is missing, add it via the communications method.
+
+## The strategic-bridge arrow
+
+Once all brands are placed, the wheel must include a dashed arrow from the anchor brand to the adjacent territory the brand should *extend into*. This is the brand's strategic move — and it must match the SMP narrative.
+
+Pick the bridge territory using these rules:
+
+- The bridge territory must be adjacent on the wheel (one step clockwise or anti-clockwise from the anchor's territory).
+- It must be a territory not strongly owned by a direct competitor, or where the anchor brand has unique permission a competitor cannot match.
+- It must be reachable from the anchor's existing equity without breaking it — usually by introducing a single new dimension (e.g. ambition, performance, indulgence) while keeping the original anchor intact.
+
+Label the arrow with the platform name in quotes (e.g. `"G for Genius"` or `"Pure Power"`) and the words "strategic bridge" beneath.
+
+## Reading the wheel — the standard interpretation paragraph
+
+In the brief, after the figure, always write exactly two short subsections:
+
+### Reading the wheel
+
+State, for each major brand on the wheel, its primary territory and any pull. Note which territories are crowded, which have a single owner, and which are empty whitespace.
+
+### Strategic implication
+
+Name the wheel's strategic implication for the anchor brand in one paragraph. Default formula:
+
+> Do not chase the claimed poles — they have defined owners. Defend [anchor territory] by activating it, and extend a single disciplined thread into [bridge territory] via the "[platform name]" platform. No competitor has permission to occupy this bridge: [name three competitors and why each cannot match it].
+
+Adapt the formula to the specifics. Never copy it verbatim.
+
+## Generating the wheel image
+
+Use `assets/needscope_template.svg`. It contains the wheel chrome (six coloured sectors, territory labels, centre badge) but blank space for brand pins. The skill:
+
+1. Reads the template.
+2. Injects brand pins as additional `<circle>` and `<text>` elements at the computed coordinates.
+3. Injects the strategic-bridge arrow as a `<path>` and accompanying labels.
+4. Writes the result to `outputs/needscope_filled.svg`.
+5. Converts to PNG with `cairosvg` at 1800 px width for crisp embedding in the docx.
+
+### Coordinate helper
+
+```python
+import math
+CENTER = (400, 320)
+def polar(theta_deg, r):
+    t = math.radians(theta_deg)
+    return (CENTER[0] + r * math.cos(t), CENTER[1] + r * math.sin(t))
+```
+
+Standard radii: 125 for anchor brand, 140 for major competitors, 150 for fringe brands.
+Standard angle for each territory's centre:
+
+| Territory | Centre angle |
+|---|---|
+| Power | 270° (12 o'clock) |
+| Freedom | 330° (2 o'clock) |
+| Vitality | 30° (4 o'clock) |
+| Belonging | 90° (6 o'clock) |
+| Security | 150° (8 o'clock) |
+| Discernment | 210° (10 o'clock) |
+
+To express a "pull" toward an adjacent territory, shift the angle 10–25° toward that territory's centre.
+
+## Common pitfalls
+
+- Confusing Vitality with Freedom — Vitality is sociable warmth, Freedom is individualistic self-expression.
+- Confusing Belonging with Security — Belonging is "we", Security is "I am safe".
+- Over-stuffing a single territory. If three direct competitors all map to one territory, the territory is over-claimed and the differentiation lies elsewhere on the wheel.
+- Putting the anchor and its strategic bridge on opposite sides of the wheel. The bridge must be adjacent — otherwise the brand has to abandon its equity to reach it, which is not a strategic bridge, it is a relaunch.
+
+
+
+===== reference: cb-ca-db-da-framework.md =====
+# CB / CA → DB / DA Framework
+
+The Current Behaviour / Current Attitude → Desired Behaviour / Desired Attitude framework isolates what communication has to *shift*, not just what it has to say. It is the planning bridge between the NeedScope read and the SMP.
+
+## The four cells
+
+| Cell | What it captures | Sources |
+|---|---|---|
+| CB — Current Behaviour | Observable purchase and usage patterns today. Where, when, how much, with whom, for what occasion | HH consumption data, retail audits, qualitative interviews, social listening |
+| CA — Current Attitude | How the brand is held in the consumer's head today — affection, indifference, trust, fatigue, status. Includes one verbatim consumer quote | Qualitative research, brand tracker, reviews, social sentiment |
+| DB — Desired Behaviour | The new behaviours the brand wants over the next 12–24 months — new occasions, new baskets, trade-up, share of voice, advocacy | Strategy team, ambition statement, business plan |
+| DA — Desired Attitude | The new way of holding the brand — what shifts in the way consumers think and feel about it. Includes the aspirational quote | Strategic narrative, planning workshops |
+
+## Populating the cells
+
+### CB — Current Behaviour
+
+Three bullets, each one observable and quantifiable. Use HH consumption data if uploaded. Examples of the form to follow:
+
+- "Reflex purchase at ₹5 — habit, not choice."
+- "Consumed only at chai-time and in kid lunchboxes; rarely the hero of any occasion."
+- "Materially under-represented in quick-commerce baskets and Gen-Z snacking repertoires."
+
+### CA — Current Attitude
+
+A verbatim quote in inverted commas — three lines, pulled from qualitative research where available, otherwise written in plain consumer voice based on category memory. Then two short declarative lines naming the underlying emotional state.
+
+Example:
+
+> "The cheap, dependable biscuit my family always had — basic, trusted, slightly dated."
+>
+> Affection is passive.
+> A memory, not a choice.
+
+### DB — Desired Behaviour
+
+Three bullets, each one specific enough to know whether it has happened. Examples:
+
+- "Actively chosen across new occasions: study, post-workout, tiffin upgrade, festival gifting."
+- "Trade-up within franchise: classic → fortified variant → family pack."
+- "Earned cultural share of voice on social, especially around results day and comfort-food moments."
+
+### DA — Desired Attitude
+
+The aspirational quote in inverted commas — three lines, in the voice the consumer would use if the strategic shift succeeded. Then two short declarative lines naming the new emotional state.
+
+Example:
+
+> "Parle-G is the biscuit India grows on — affordable ambition that respects everyone."
+>
+> Active pride, not affection.
+> "Still ₹5, still mine, still the spark."
+
+## The shift line
+
+The most important sentence in the entire framework. One line, present-tense verb, ending in a full stop.
+
+Formula: `From {current emotional state} to {desired emotional state}.`
+
+Examples:
+- "From passive trust to active pride."
+- "From dependable utility to quietly aspirational craft."
+- "From mass familiarity to chosen everyday luxury."
+
+Underneath the diagram, always write a one-sentence caption naming the implication: the desired attitude is *layered on top of* the current one, not a replacement. The NeedScope anchor stays; a single thread is added.
+
+## Generating the diagram
+
+Use `assets/cbca_dbda_template.svg`. It contains the two-card chrome (left grey "CURRENT", right green "DESIRED"), the four labelled sub-cards, the green arrow, and the caption slot. The skill:
+
+1. Reads the template.
+2. Substitutes placeholder strings for the CB bullets, CA quote, CA declarative lines, DB bullets, DA quote, DA declarative lines, the shift line, and the caption.
+3. Writes the result to `outputs/cbca_dbda_filled.svg`.
+4. Converts to PNG with `cairosvg` at 1800 px width.
+
+## Placeholder tokens in the template
+
+The template uses these tokens, which the skill replaces with actual content:
+
+| Token | What to substitute |
+|---|---|
+| `{{CB_LINE_1}}` ... `{{CB_LINE_6}}` | Six visual lines covering the three CB bullets (each bullet wraps to two text lines) |
+| `{{CA_QUOTE_1}}` ... `{{CA_QUOTE_3}}` | Three lines of the current-attitude verbatim quote |
+| `{{CA_DECLARATIVE_1}}` ... `{{CA_DECLARATIVE_2}}` | Two declarative summary lines |
+| `{{DB_LINE_1}}` ... `{{DB_LINE_6}}` | Six visual lines for the three DB bullets |
+| `{{DA_QUOTE_1}}` ... `{{DA_QUOTE_3}}` | Three lines of the desired-attitude aspirational quote |
+| `{{DA_DECLARATIVE_1}}` ... `{{DA_DECLARATIVE_2}}` | Two declarative summary lines |
+| `{{SHIFT_FROM}}` | The "current state" half of the shift line |
+| `{{SHIFT_TO}}` | The "desired state" half of the shift line |
+| `{{CAPTION}}` | The sentence beneath the diagram |
+
+Keep each line under 36 characters so the text does not overflow the card width.
+
+## Common pitfalls
+
+- Writing DB as if it is a campaign objective ("increase awareness by 10 points"). DB is behaviour, not a metric. Reframe metrics as the behaviour they reflect.
+- Writing DA in the brand's own voice rather than the consumer's voice. Use first person and inverted commas.
+- Putting a totally new attitude in DA that is unrelated to CA. The shift has to be reachable from the current state — there must be a credible bridge.
+- Asking the communication to do all the work. The DB shift almost always also needs a product or pricing move; flag that in the brief's recommended actions, not in this diagram.
+
+
+
+===== reference: smp-guidance.md =====
+# Single Minded Proposition (SMP)
+
+The SMP is the single sentence that resolves the tension uncovered by the NeedScope read and the CB/CA → DB/DA shift. It is the strategic spine of the brief and every recommended action must ladder up to it.
+
+## Definition
+
+> A Single Minded Proposition is one sentence, max 14 words, ending in a full stop, that names the one thing the brand is for the consumer that no competitor can credibly claim.
+
+It is not a tagline. It is not a campaign theme. It is the underlying truth from which taglines and themes are written.
+
+## How to construct it
+
+Triangulate three inputs:
+
+1. **The NeedScope position.** Anchor territory + strategic bridge direction.
+2. **The CB/CA → DB/DA shift.** Specifically the desired attitude — the sentence the consumer must come to believe.
+3. **The competitive whitespace.** What no competitor on the wheel can credibly hold.
+
+Then write a sentence that:
+
+- Compresses 3–4 ideas into one feeling (geography, value, ambition, accessibility, etc.).
+- Names a productive tension only the focal brand can resolve.
+- Reads like a fact, not a slogan.
+
+### Worked example (Parle-G)
+
+| Input | Value |
+|---|---|
+| NeedScope position | Anchored in Belonging; bridge into Power via "G for Genius" |
+| Desired attitude | "Affordable ambition that respects everyone" |
+| Competitive whitespace | Tiger has power but not affordability; Dark Fantasy has indulgence but not affordability; Patanjali has tradition but not forward-facing |
+
+SMP: ***Parle-G is India's most affordable act of ambition.***
+
+That sentence:
+- Compresses four ideas: Indian, affordable, active choice, ambition.
+- Names a productive tension only Parle-G resolves.
+- Cannot be plagiarised by any competitor because each of them fails at least one anchor word.
+
+## The four tests
+
+Every SMP draft must pass all four:
+
+1. **Tension-resolving.** It names a productive contradiction (e.g. affordable + ambition, mass + premium, simple + powerful) only the brand can hold.
+2. **Brand-true.** It can be said without abandoning the existing equity. The current consumer recognises themselves in it.
+3. **Competitor-defeating.** At least one named direct competitor would have to lie or fundamentally restructure to claim it.
+4. **Future-facing.** It allows the brand to grow into new occasions, new variants, new audiences without breaking equity.
+
+If a draft SMP fails even one test, iterate. Three drafts is normal; one-shot SMPs are rare.
+
+## Defending the SMP
+
+Every SMP in a brief must be followed by a "Why only [brand] can say it" defence. This is a table or short paragraph naming each direct competitor and the specific anchor word they fail.
+
+Template:
+
+| Competitor | Why their version of this SMP collapses |
+|---|---|
+| Competitor A | Claims [word in SMP] but [structural reason they cannot earn it]. |
+| Competitor B | Claims [word in SMP] but [structural reason they cannot earn it]. |
+| Competitor C | Claims [word in SMP] but [structural reason they cannot earn it]. |
+
+This defence is not optional. If the SMP cannot be defended head-to-head against each direct competitor, it is not single-minded enough — sharpen and retry.
+
+## "What this unlocks" list
+
+After the defence, always provide an illustrative platform-thinking list:
+
+- **Brand line** — one short line that puts the SMP into brand-voice. Tag as illustrative.
+- **Mass line** — a vernacular or mass-market interpretation. Tag as illustrative.
+- **Activation idea** — a programme or platform that lives the SMP in the world (a scholarship, a ritual, a public commitment).
+- **Product or pricing idea** — a tangible product or pricing move that productises the SMP.
+
+The phrase "illustrative — not final copy" must appear next to this list. The brand team owns the final wording; the SMP is what they should never compromise on.
+
+## Common pitfalls
+
+- **Two ideas in one sentence.** "Parle-G is India's most affordable biscuit and the most loved" is two SMPs. Pick one.
+- **Adjective stacking.** "Trusted, affordable, ambitious" is not an SMP, it is a wish list. Compress to one feeling.
+- **Generic claims.** "We help India grow" could be said by any brand. The SMP must be defensible against the specific competitors on this wheel.
+- **Saying what the brand does instead of what it is for the consumer.** "Parle-G makes glucose biscuits" is a product description. "Parle-G is India's most affordable act of ambition" is what it is for the consumer.
+- **Naming the category.** "Parle-G is India's most affordable biscuit" locks the brand into the biscuit category forever. "Parle-G is India's most affordable act of ambition" releases it to grow.
+
+
+
+=====  YOUR OUTPUT  =====
+Apply the skill above to the inputs, then return ONLY a single JSON object (no prose, no
+markdown fences) with EXACTLY these keys. Every field must be filled from the inputs where
+present, and sensibly inferred (and later flagged in caveats) where the inputs are silent.
+
+{
+  "brand": string,                       // focal brand
+  "category": string,
+  "prepared_for": string,
+  "backgrounder": {                       // see references/backgrounder-guidance.md — evidence, not conclusions
+    "category_perspective": string,       // 2-4 sentences on the CATEGORY as a whole, from real data where supplied
+    "current_situation": string,          // 2-4 sentences on the FOCAL BRAND's own share/penetration/distribution trend
+    "consumer_insights": [string, ...],   // 3-5 specific, citable findings from qualitative research; say so if none supplied
+    "problem_statement": string           // ONE paragraph: the real business/marketing problem CB/CA and the SMP must answer
+  },
+  "competitors": [                        // 3-5 direct competitors. Cite real figures from the research
+                                           // verbatim wherever the competitor's numbers appear there
+                                           // (share, distribution, penetration, equity/tracker scores) —
+                                           // same discipline as the backgrounder above. A live brief was
+                                           // caught with a well-reasoned but entirely un-numbered
+                                           // competitor table on a run where real per-competitor figures
+                                           // WERE in the uploaded research — don't leave them on the table.
+    { "name": string, "hero_brands": string, "positioning": string, "recent_moves": string,
+      "latest_metric": string   // ONE short line: this competitor's latest market-share OR household-
+                                 // penetration reading and its move vs the same period last year,
+                                 // copied VERBATIM from the LATEST METRICS BY BRAND block below (that
+                                 // block is computed by code, not by you — never compute or estimate
+                                 // this figure yourself). E.g. "Value Share 18.2% in Sep 2026, +1.4 pts
+                                 // vs Sep 2025." If this competitor's name is not in that block, write
+                                 // exactly "Not in the attached market/panel data."
+    }
+  ],
+  "needscope": {
+    "pins": [                             // one per brand: the focal brand AND every competitor
+      { "brand": string, "x": int, "y": int, "anchor": bool }
+    ],
+    "bridge_territory": one of ["Power","Freedom","Vitality","Belonging","Security","Discernment"],
+    "bridge_label": string,               // the platform name, e.g. "Pure Doodh Ki Shakti"
+    "reading": string                     // 2-3 sentences: each brand's territory + whitespace
+  },
+  "cb_ca_db_da": {
+    "cb": [string, ...],                  // 3 current-behaviour bullets
+    "db": [string, ...],                  // 3 desired-behaviour bullets
+    "ca_quote": string,                   // ONE verbatim current consumer quote (from research if provided)
+    "ca_declarative": [string, string],   // 2 short lines on how the brand is currently held
+    "da_quote": string,                   // ONE aspirational desired consumer quote
+    "da_declarative": [string, string],   // 2 short lines on the desired attitude
+    "shift_from": string,                 // e.g. "dependable purity"
+    "shift_to": string,                   // e.g. "chosen family strength"
+    "caption": string                     // one sentence: layer desired ON TOP of current, never replace
+  },
+  "smp": string,                          // ONE sentence, <=14 words, ends in a full stop
+  "smp_defence": [                        // exactly one row per NAMED entry in "competitors" above —
+                                           // even when two share a parent company (e.g. Hatsun/Arokya),
+                                           // give each its own row if they read as distinct brands to
+                                           // the consumer (different imagery, naming, positioning).
+                                           // Never fold two competitors into one combined row.
+    { "competitor": string, "why_collapses": string }
+  ],
+  "smp_unlocks": {
+    "brand_line": string, "mass_line": string, "activation": string, "product": string
+  }
+}
+
+=====  NEEDSCOPE PIN COORDINATES (critical)  =====
+The wheel template is an 800x640 canvas. Centre = (400, 320). Place each pin with:
+  x = 400 + r * cos(theta_deg in radians)
+  y = 320 + r * sin(theta_deg in radians)
+Territory centre angles (degrees): Power 270, Freedom 330, Vitality 30, Belonging 90,
+Security 150, Discernment 210. Radii: focal/anchor brand r=125, major competitors r=140,
+fringe brands r=150. To show a "pull" toward an adjacent territory, shift theta 10-25 deg
+toward that territory's centre. Round x and y to integers. Exactly ONE pin has "anchor": true
+(the focal brand). Do NOT put the anchor and its bridge_territory on opposite sides — the
+bridge must be an ADJACENT territory.
+
+
+[{'type': 'text', 'text': "FOCAL BRAND: Parle G\nCATEGORY: Biscuits — glucose, mass-market (₹5 price point)\nPREPARED FOR: \n\nBRIEF ASK (the marketer's request — anchor everything to this):\n(none given — build from the files and category)\n\nAny attached images are NeedScope charts or CB/CA diagrams — read their brand positions as ground truth and reproduce them on the wheel."}]

@@ -1,0 +1,37 @@
+You are writing the campaign layer for Loomwell.
+A CAMPAIGN is the time-bound expression of a durable platform: one route up the ladder, one tension, one resolution. It is not the platform restated with dates on it.
+THE BRAND
+BRAND: Loomwell
+CATEGORY: Apparel — everyday and casual wear, men's and women's
+MARKET: India, metros and tier-1/2, online-first with a growing own-store footprint — write for this market's habits, retail and idiom, not a generic global one.
+HERO PRODUCT: The everyday cotton shirt
+MASTER BRAND IDEA: Clothes that earn their place in the wardrobe — everything ladders to this.
+POSITIONING: Fewer, better everyday clothes for people who dress for their own day
+TONE: Plain, confident, unfashiony — no hype, no trend-chasing
+BRAND CODES / HASHTAGS: #Loomwell, #EarnsItsPlace
+MANDATORY ON EVERY PIECE: fabric composition on every asset; care instructions on pack; Legal Metrology declarations
+COMPETITORS: Zara, H&M, Max, Uniqlo, D2C natives, unorganised local tailoring
+NEVER DO: never imply a garment is a season-only purchase; never use 'fast fashion' language
+BRAND PALETTE: primary Indigo, secondary Undyed cotton, accent Rust
+ALSO TRUE: Seasonal category with festive and wedding peaks. Online returns run 25-40% and are the single biggest economic issue — fit and colour accuracy matter more than reach. Discounting is structural in the channel, so full-price sell-through is the real measure.
+Only these are the brand's. Anything else you need, ask for rather than assume.
+AUTHORITY: if the request below names a different brand, product, category or market, it is out of date — ignore it and use Loomwell. Do not blend the two.
+THE PLATFORM (binding — the campaign expresses this, never contradicts it)
+  line: Loomwell idea
+  mechanic: Loomwell mechanic
+THE HOUSE'S CORE MESSAGE (ambient — the platform above is the sharper, more specific expression of this; where they differ, the platform wins)
+  Loomwell core message
+THE LADDER PATH THIS CAMPAIGN ARGUES
+  functional truth: Loomwell functional truth
+  bridge: Loomwell bridge
+  emotional truth: Loomwell emotional truth
+NO CURRENT→DESIRED SHIFT WAS SUPPLIED. Derive the tension from the emotional truth instead — what stops her believing it today — and say plainly that it is your inference and needs confirming.
+THE SHAPE TO USE: frame. No culture code points anywhere in particular, so the most portable shape is the default.
+The four shapes: frame — A sentence with a slot. Fill the slot and get the next execution — “{X} ki Shakti, Pure Doodh Se”. Strongest where the language conjugates cleanly, and it survives translation as a STRUCTURE rather than a string. · device — A recurring character, object or format that carries the idea. Amul's topical girl. The next execution is the same device pointed at something new. · rule — A reframe that licenses stories without prescribing them. “Daag Acche Hain” makes every stain a story. The next execution obeys the rule and is otherwise free. · act — Something the brand DOES, repeatedly. “Meet Your Farmer”. The next execution is the act performed again, somewhere else.
+Write:
+  insight — the TENSION, in one sentence. What is true and uncomfortable for this buyer that the work resolves. NOT a demographic and NOT a benefit restated. 'Mothers 25-40' is an audience; 'she feels the pressure of his growth more than anyone' is an insight.
+  resolution — what the work TELLS her, in one short sentence. It should be sayable and a little surprising: 'learning matters more than winning'.
+  frame — the frame itself. For a frame, a sentence with ONE slot marked {X}, built off the brand's idiom where there is one.
+  slots — the conjugations that fill it. Write two or three, enough to show the frame generates.
+    Each slot carries a `lang` where the word is not English — this is India, and a campaign line is a STRUCTURE instantiated per language, not one string translated.
+Return ONLY JSON: {"insight":"…","resolution":"…","shape":"frame","frame":"…","slots":[{"text":"…","lang":"hi|te|en|…"}],"why":"one sentence on why this is the campaign this platform should run now"}

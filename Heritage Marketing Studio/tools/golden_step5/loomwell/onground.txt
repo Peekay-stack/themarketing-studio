@@ -1,0 +1,59 @@
+You are planning consumer activations in India — real ones, that a field team has to book, staff and run.
+
+THE STRATEGY
+THE BRAND — GATE, NOT MATERIAL
+BRAND: Loomwell
+CATEGORY: Apparel — everyday and casual wear, men's and women's
+MARKET: India, metros and tier-1/2, online-first with a growing own-store footprint — write for this market's habits, retail and idiom, not a generic global one.
+HERO PRODUCT: The everyday cotton shirt
+MASTER BRAND IDEA: Clothes that earn their place in the wardrobe — everything ladders to this.
+POSITIONING: Fewer, better everyday clothes for people who dress for their own day
+TONE: Plain, confident, unfashiony — no hype, no trend-chasing
+BRAND CODES / HASHTAGS: #Loomwell, #EarnsItsPlace
+MANDATORY ON EVERY PIECE: fabric composition on every asset; care instructions on pack; Legal Metrology declarations
+COMPETITORS: Zara, H&M, Max, Uniqlo, D2C natives, unorganised local tailoring
+NEVER DO: never imply a garment is a season-only purchase; never use 'fast fashion' language
+BRAND PALETTE: primary Indigo, secondary Undyed cotton, accent Rust
+ALSO TRUE: Seasonal category with festive and wedding peaks. Online returns run 25-40% and are the single biggest economic issue — fit and colour accuracy matter more than reach. Discounting is structural in the channel, so full-price sell-through is the real measure.
+Only these are the brand's. Anything else you need, ask for rather than assume.
+AUTHORITY: if the request below names a different brand, product, category or market, it is out of date — ignore it and use Loomwell. Do not blend the two.
+THE IDEA PLATFORM (binding — every execution is one expression of this): Loomwell idea
+platform name: Loomwell platform
+platform mechanic: Loomwell mechanic
+the brand's core message (the platform above is the sharper, more specific expression of this — where they differ, the platform wins): Loomwell core message
+EVIDENCE ON FILE — real and sourced, offered to draw from. Use what fits this one piece; do not force all of it in, and never contradict it:
+the bridge — what the functional fact MEANS for the buyer, the step between a product fact and a feeling: Loomwell bridge
+
+WHAT THIS EXPRESSES (the idea platform)
+Loomwell idea
+
+VENUES YOU MAY USE — pick the right one per idea, and read its trap:
+  kirana · Kirana / general trade — who: The daily buyer at the counter, and the shopkeeper whose goodwill you need. | access: The shopkeeper. No formal permit, but no space either — you get a corner. | permits: Small footprint, short conversations, product in hand, shopkeeper endorsement. | the trap: The shopkeeper decides whether you exist. An activation he did not agree to is a promoter standing in the street.
+  modern_trade · Modern trade aisle — who: The planned shopper, mid-trip, with a trolley already half full. | access: Chain head office, weeks ahead, usually paid. Store manager on the day. | permits: Sampling, demo tables, aisle-end takeovers — within the chain's rules. | the trap: Chains sell the slot, not the outcome. A booked table with no offer is furniture.
+  mall_atrium · Mall atrium — who: Families with time, in a leisure frame of mind rather than a buying one. | access: Mall management, licensed by the day or week, priced by footfall. Fire and safety clearance for anything built. | permits: Built structures, demos, performance, prize mechanics. Not cooking or open flame. | the trap: Footfall is not intent. An atrium crowd photographs well and buys nothing unless there is a reason to act there and then.
+  office_complex · Office complex — who: Working adults in a 40-minute lunch window, alone or in twos. | access: Facilities or the park management, often free if it reads as an amenity. | permits: Sampling, quick demos, subscription sign-ups, desk drops. | the trap: The window is short and it closes. Anything needing more than three minutes fails here.
+  rwa · Apartment society / RWA — who: The household decider, at home, with the family present. | access: The RWA committee — a letter, sometimes a fee, usually a favour and a notice board. | permits: Morning or evening stalls, doorstep sampling, weekend demos, resident WhatsApp groups. | the trap: Access is personal and slow to arrange, but it is the highest-trust room you will get. Committee goodwill is the whole asset; burn it once and the society is closed.
+  sabzi_mandi · Sabzi mandi — who: The daily fresh-buyer, price-alert, early, in a hurry. | access: The mandi association or the municipal body; informal in practice. | permits: Loud, cheap, physical. Sampling and price-led messages. | the trap: Nobody stops. The message has to work while somebody keeps walking.
+  haat · Weekly haat — who: The rural and peri-urban buyer, on the one day the market runs. | access: The haat organiser or panchayat. Cheap, but the calendar is fixed. | permits: Demonstration, bulk sampling, local-language performance. | the trap: One day a week. Miss it and you wait seven days, so the plan is a route, not a date.
+  temple_festival · Temple or festival ground — who: Whole families, in a celebratory frame, at scale. | access: The temple trust or festival committee. Sensitivities apply and are not negotiable. | permits: Prasad-adjacent formats, community utility, free water, seating, shade. | the trap: Commercial intrusion is punished hard. Utility is welcome; a sales pitch is not.
+  transit · Transit hub — who: Commuters, daily, on a fixed route, with dead time. | access: The transport authority or a media owner holding the concession. | permits: Sampling, kiosks, digital, anything read in seconds. | the trap: Everybody is going somewhere. You get their eyes, not their hands.
+  college · College campus — who: Students — high trial, low loyalty, fast to share. | access: The college administration or the student union. | permits: Sampling, contests, campus ambassadors, social mechanics. | the trap: Enormous trial, weak conversion to a paying habit. Judge it on what happens after.
+  doorstep · Residential doorstep — who: The household, at home, one at a time. | access: Society permission for the building, then nobody — you are at the door. | permits: Sampling, subscription sign-up, demonstration in the kitchen. | the trap: The most expensive contact per head there is. It has to convert or it cannot be justified.
+
+Give 3 DIFFERENT activation ideas. Different venues, not one idea rewritten — an activation is not portable, and a set that is all one venue has offered no choice.
+
+Two rules, both from how on-ground actually fails:
+1. A CROWD IS NOT A RESULT. Every idea must say how somebody who engaged becomes a number you can act on — a scan, a sign-up, a pack bought there, a name taken. An idea whose outcome is 'awareness' or 'engagement' is one nobody can judge, and you must not write one.
+2. UNMANNED IS FURNITURE. Say what the promoter actually does and says. A table nobody is working is a table.
+
+For each idea:
+  what   — the central action, in one sentence. What a person physically DOES. Not what they feel, learn or engage with.
+  who    — who it is for, and who runs it
+  where  — the venue key from the list, and how many sites
+  when   — the daypart and the window, and why that one
+  how    — the mechanic, step by step, as a field team would run it
+  capture— how engagement becomes a measurable number
+  access — who has to say yes, from the venue's `access` above
+  risk   — the venue's trap, in this idea's terms, and what you do about it
+Do not invent costs, site counts you cannot justify, or permissions you do not know exist. Where a number is needed and unknown, say what has to be decided and by whom.
+Return ONLY JSON: {"ideas":[{"name":"three or four words","venue":"one key from the list","what":"...","who":"...","where":"...","when":"...","how":"...","capture":"...","access":"...","risk":"..."}]}

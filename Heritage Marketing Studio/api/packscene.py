@@ -93,7 +93,7 @@ _PLACEMENT = {
              "whether or not a hand is actually touching it. Never pose it as a hero product shot: not "
              "held out at arm's length toward the camera, not floating or resting alone as a display "
              "piece -- keep it close to the body or resting naturally against something the way a real "
-             "pack of milk actually would, clearly visible but secondary to the main subject, and not "
+             "pack of this kind actually would, clearly visible but secondary to the main subject, and not "
              "overlapping anyone's face."),
     "hero": " The pack is the hero of the image, centred and upright, its front label clearly visible.",
     "in_use": " Show the pack naturally in the action of the scene, its front label turned toward the camera.",
@@ -274,9 +274,9 @@ _POUR_OR_OPEN = re.compile(
 
 VIDEO_PACK_IN_USE = (" The pack is in use in this shot: reuse the EXACT pack from the pack reference (same container "
                      "type, colours and label design, never redrawn), held and angled naturally for the action with "
-                     "its front label toward the camera as far as the action allows. If the scene pours milk, show it "
-                     "clearly: milk visibly streaming from the pack's opened corner or spout into the glass, with a "
-                     "real stream and a liquid surface in the glass. Do not invent new legible text anywhere on the pack.")
+                     "its front label toward the camera as far as the action allows. If the scene pours the product, show it "
+                     "clearly: the product visibly streaming from the pack's opened corner or spout into its vessel, with a "
+                     "real stream and a surface in the vessel. Do not invent new legible text anywhere on the pack.")
 
 
 def video_pack_in_use(scene_text: str) -> bool:

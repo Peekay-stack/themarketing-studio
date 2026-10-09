@@ -1,0 +1,333 @@
+---
+name: trade-activation
+description: Build a route-to-market and trade activation plan — general trade, wholesale, modern trade, e-commerce, quick commerce, own retail and home delivery held in one view. Names the behaviour each scheme buys, its payback net of cost, how it will be gamed, and reconciles effective consumer price across channels so channel conflict surfaces before launch. Use when asked for a trade plan, trade activation, trade scheme, route to market, channel plan, distributor or retailer incentive, retailer loyalty programme, modern trade or quick commerce plan.
+---
+
+# Trade activation
+
+Trade spend is usually the largest line in a marketing budget and the least measured. This plans it
+in a way that can be argued with.
+
+It belongs to the same sequence as the rest:
+
+> **Brief → Messaging house → IMC plan → Executions** — and this is one of those executions
+
+The audience here is **the trade, not the consumer**. A distributor, a kirana owner, a modern-trade
+buyer and a q-commerce category manager each hear a different argument, and none of them is the
+argument you make to a shopper. If the messaging house has a trade message, use it. If it does not,
+say so — do not borrow the consumer line and hope.
+
+## One plan, all channels — and that is the point
+
+Do not plan general trade and quick commerce in separate documents. **Channel conflict is the central
+risk in trade**, and it is invisible unless every channel sits in one view: the same strategy applied
+across channels produces stock imbalances, inconsistent promotions and lost profitability. The single
+most valuable output here is the reconciliation of effective consumer price across channels.
+
+Channels to cover, all of them, even where a channel gets one line:
+
+| Channel | Shorthand |
+|---|---|
+| General trade | kirana, the long tail — still the large majority of Indian FMCG value |
+| Wholesale | traditional wholesale and cash & carry |
+| Modern trade | organised chains; listing, planogram, promoters, joint business plans |
+| E-commerce | Amazon, Flipkart, BigBasket — content, search, ratings, fill rate |
+| Quick commerce | Blinkit, Zepto, Instamart — dark-store assortment, in-app share, platform ads |
+| Own retail | brand parlours and outlets, where they exist |
+| Home delivery | subscription and daily delivery, decisive in daily categories |
+
+What each channel actually rewards, what its levers are, and how each one characteristically goes wrong: `references/channels.md`. Read it before assigning a lever — the same rupee behaves differently in each, and wholesale in particular is where a good scheme becomes someone else's cheap stock.
+
+**For daily cold-chain categories — dairy, fresh — weight this deliberately.** General trade and home
+delivery dominate, and quick commerce is *less* disruptive than in snacks and beverages, because dark
+stores cannot match an established cold chain. Do not over-index a channel because it is fashionable.
+Say what share of volume each channel actually holds today before assigning any money.
+
+## The eight layers
+
+One at a time. Offer 3–5 real options, number them, stop, and ask.
+
+**1. Route to market.** Every channel, its **current share of volume**, and its role: *volume ·
+reach · premium · trial · defence*. A channel with no role does not get money.
+
+**2. The behaviour to buy.** The core of the whole plan, and where most trade plans fail. Not
+"activate general trade" — *"move 40,000 outlets from fortnightly to weekly ordering"*, *"get two
+facings in the chiller instead of one"*, *"add the 500ml pack to 12,000 outlets that stock only the
+1L"*. A scheme that buys "visibility" buys nothing you can measure. Name the behaviour, the baseline
+and the target.
+
+**3. The lever.** Matched to that behaviour, from: retailer margin · trade scheme · display incentive
+· loyalty programme · listing and terms of trade · promoter or ISD · credit terms · platform ad
+spend · assortment and pack architecture. A lever that does not plausibly cause the behaviour in
+layer 2 is decoration.
+
+**4. Economics.** Cost per unit of behaviour bought, and payback **net of the scheme**. Effectiveness
+here means a defined period and territory linked to a measurable lift in offtake, minus what the
+scheme cost. If a number is unknown, write `payback unknown` — never estimate it into existence.
+
+**5. Leakage and gaming.** Every trade incentive has a failure mode. Name this one's, and the control
+that catches it. See `references/leakage.md`. A scheme without a leakage model is a donation.
+
+**6. Channel conflict.** The **effective consumer price** in each channel after every scheme, promo
+and platform discount, side by side. Then the judgement: where do they collide, and does it matter?
+A quick-commerce offer that undercuts the kirana who stocks you daily has bought volume and lost
+distribution.
+
+**7. Sell-through proof.** For each scheme, state whether it moves **primary** (to the distributor),
+**secondary** (to the retailer) or **tertiary** (to the consumer), and how you will know. Primary-only
+schemes produce phantom growth and a returns problem six weeks later.
+
+**8. Calendar.** Tied to the IMC plan's buying occasions, with the trade lead time in front of each —
+trade has to be stocked before consumers are told.
+
+## Discipline — enforce these on yourself
+
+1. **Name the behaviour or drop the scheme.** "Visibility", "engagement" and "excitement" are
+   rejected. If you cannot say what someone will do differently, there is nothing to buy.
+2. **Every scheme carries a payback, or an explicit `payback unknown`.** Never a number you made up.
+   An invented ROI is the most expensive sentence in a trade plan.
+3. **Every scheme carries a leakage model and a control.** Not "we will monitor it".
+4. **Name who receives the money** — retailer, wholesaler, salesman, platform, consumer. Who
+   receives it determines who games it, and schemes paid to the person who reports the result are
+   the ones that get gamed hardest.
+5. **Reconcile effective consumer price across channels.** Every time. Flag collisions rather than
+   averaging them away.
+6. **State the sell-through level.** Primary-only is flagged, always.
+7. **Mark sources.** `[brief]`, `[house]`, `[plan]`, or `[unverified]` for anything you supplied.
+   Shares, margins, outlet counts and platform fees are exactly the numbers that get invented — if
+   you do not have them, say the plan needs them.
+8. **Thin data, thin plan.** If channel shares are unknown, the plan says so and stays short. A
+   confident trade plan on invented shares is worse than an honest gap, because trade money moves
+   fast and quietly.
+
+## Style
+
+Write for someone who will have to defend this to a sales director. Short declaratives, real numbers
+where they exist, and the trade-off named rather than smoothed. No "synergies", no "win-win". A
+scheme a TSI can explain to a retailer in one sentence beats a scheme that scans well in a deck.
+
+## Output
+
+**A working table each time a layer is decided** — editable and copy-pasteable.
+
+**A channel grid on one page** — once route to market and the behaviours are decided, render it as a
+self-contained editable HTML artifact. The shape is in `references/grid.md`: one row per channel
+carrying role, behaviour, lever, cost per unit, leakage control and sell-through level, plus the
+**effective-price reconciliation strip** — the part nobody usually draws and the part that prevents
+the most expensive mistake.
+
+At the end, offer a `.docx` or `.xlsx` version, or a JSON block.
+
+
+# The channels, and what each one actually rewards
+
+Written for Indian FMCG. The point of this file is that the same rupee behaves differently in each
+channel, so a plan that treats them as interchangeable is wrong before it starts.
+
+## General trade — kirana
+
+Still the large majority of Indian FMCG value; unorganised retail is roughly four fifths of total
+retail value, declining slowly. Millions of outlets, reached through distributors and a TSI or
+salesman working a beat.
+
+**What it rewards:** reliability and rate of sale. A kirana owner has metres of shelf and finite
+working capital, so the question is never "do you like the brand" but "how fast does this turn and
+what do I make per foot".
+
+**Levers:** retailer margin, monthly or quarterly schemes, display incentive, weekly-order schemes,
+must-sell-list discipline, van selling, retailer loyalty programmes.
+
+**What goes wrong:** schemes that reward *loading* rather than *selling*. The retailer takes the
+scheme quantity, and offtake does not move, and eight weeks later nobody reorders.
+
+## Wholesale
+
+Traditional wholesale plus cash & carry. Serves the outlets a distributor cannot reach economically.
+
+**What it rewards:** price per case and credit. Almost nothing else.
+
+**What goes wrong:** wholesale is the main engine of **channel leakage**. Scheme goods bought cheap in
+one territory reappear in another at below the distributor's price, undercutting your own trade. If a
+plan gives wholesale a deep scheme, it must say how the goods are prevented from travelling.
+
+## Modern trade
+
+Organised chains. Higher transaction value, real data, premium SKU velocity — paid for with listing
+fees, slotting costs and continuous promotional pressure.
+
+**What it rewards:** category growth for the retailer, not brand growth for you. Argue in their terms.
+
+**Levers:** joint business plans, terms of trade, planogram and shelf share, end caps and gondolas,
+promoters and in-store demonstrators, retailer-funded promo participation.
+
+**What goes wrong:** margin erosion by a thousand cuts. Each individual ask is small; the annual total
+is not. And promoter cost is a fixed cost dressed as a variable one.
+
+## E-commerce
+
+Amazon, Flipkart, BigBasket. A shelf that is searched rather than walked.
+
+**What it rewards:** content quality, ratings, availability and search position. A perfect pack shot
+does nothing if the fill rate is poor.
+
+**Levers:** listing content and A+ pages, search and sponsored ads, ratings and reviews programmes,
+assortment built for the channel — multipacks and bundles that would not exist in a kirana.
+
+**What goes wrong:** treating it as a shop window rather than a supply chain. Out-of-stock is invisible
+to the brand team and total to the shopper.
+
+## Quick commerce
+
+Blinkit, Zepto, Instamart — between them the overwhelming majority of the market, run on dark stores
+with a few thousand SKUs each.
+
+**What it rewards:** being in the assortment of the right dark stores, and being findable in-app. Range
+is deliberately narrow, so getting listed is the whole game.
+
+**Levers:** dark-store assortment and city selection, pack architecture for immediacy — small, single-
+occasion packs — in-app share of category, and **platform advertising**, which is now a large media
+market in its own right.
+
+**Two things to hold in mind:**
+
+- **It is a media channel as much as a trade channel.** Platform ad spend belongs in one place with
+  one owner. Decide whether it sits here or in the IMC plan and do not let both claim it.
+- **For dairy and fresh it is less disruptive than the coverage suggests.** Dark stores cannot match
+  an established dairy cold chain, so these categories are the least affected, while snacks and
+  beverages have seen real metro volume shift. Weight it to the category you are actually in.
+
+## Own retail
+
+Brand parlours and company outlets, where they exist.
+
+**What it rewards:** full margin, complete control of range and experience, and a place to launch
+things the trade will not stock yet.
+
+**What goes wrong:** it is a property business wearing a marketing costume. Rent is fixed and
+footfall is not, and it competes with the retailers you also need.
+
+## Home delivery and subscription
+
+Daily delivery, milk booths, app-based subscription. **In a daily cold-chain category this is not a
+niche — it may be the most valuable channel you have.**
+
+**What it rewards:** habit. A subscription is a decision made once and honoured for months, which is
+the opposite economics of everything above.
+
+**Levers:** first-month trial pricing, referral, delivery reliability, pause-and-resume flexibility,
+bundling across the range.
+
+**What goes wrong:** churn measured badly. A subscription channel with unmeasured churn will report
+growth for a year and then report a cliff.
+
+
+# How trade money leaks, and what catches it
+
+Every trade incentive has a failure mode. This is not cynicism about the trade — it is arithmetic. If
+a scheme pays for a behaviour, and the behaviour is cheaper to *report* than to *perform*, some share
+of the money buys the report.
+
+The rule the skill enforces: **name this scheme's leakage and its control.** "We will monitor it" is
+not a control.
+
+## The common patterns
+
+**Loading.** The retailer or distributor takes the scheme quantity without any change in offtake.
+Stock sits, reorders stop, and the next quarter looks terrible for reasons nobody connects to this
+quarter's scheme.
+*Catches it:* measure secondary or tertiary offtake, not primary dispatch. Cap scheme quantity against
+the outlet's historical rate of sale rather than against appetite.
+
+**Diversion across territories.** Scheme goods bought cheaply in one market reappear in another below
+the local distributor's price. Usually flows through wholesale.
+*Catches it:* territory coding on cartons, scheme caps per outlet, and watching for a distributor whose
+purchases outrun their addressable outlets.
+
+**Phantom outlets and phantom orders.** Orders booked against outlets that do not exist, or exist and
+did not order. The salesman's incentive is paid on booking.
+*Catches it:* geo-fenced order capture — the order can only be booked at the outlet's location — plus
+OTP confirmation from the retailer, and periodic physical audit of new outlet additions.
+
+**Unperformed display.** The display incentive is claimed and the display was never built, or came
+down the day after the photograph.
+*Catches it:* timestamped, geotagged photographs at two points in the period rather than one, and
+paying part of the incentive at the end rather than all of it up front.
+
+**Claim inflation.** Invoices or volumes overstated in the claim, or the same invoice claimed twice.
+*Catches it:* invoice upload with multi-level approval, and duplicate detection on invoice number.
+
+**Loyalty points farming.** Points earned on purchases that are returned, cancelled, or made by a
+related party; or a single retailer operating several enrolments.
+*Catches it:* QR or unique-code scanning tied to the physical unit, earn reversal on return, and
+one enrolment per verified GST or outlet identity.
+
+**Promoter idle time.** In-store promoters paid for hours rather than outcomes, at outlets with too
+little footfall to justify them.
+*Catches it:* promoter productivity per outlet as a reported number, and a floor below which the
+outlet loses the promoter.
+
+## The controls, plainly
+
+The practitioner toolkit is well established: **geo-fencing** for field staff, **OTP confirmation**
+from the retailer, **QR or unique-code scanning** on the unit, **invoice upload with multi-level
+approval**, and **automated allocation per SKU** rather than manual credit. Use the ones that fit the
+scheme; do not list all six to look thorough.
+
+## Two rules worth stating in the plan itself
+
+**Never let the person paid on the result be the only person who reports it.** This is the single most
+reliable predictor of a gamed scheme. If the salesman's incentive depends on the number the salesman
+submits, the number will improve.
+
+**Pay in arrears, at least in part.** An incentive fully paid on promise rather than performance has
+no recourse. Splitting it — some on compliance, the balance on measured offtake — costs nothing and
+changes behaviour.
+
+## What to write in the plan
+
+For each scheme, one line each:
+
+- **Leakage mode** — the specific way this one gets gamed, not a generic list.
+- **Control** — the mechanism, named.
+- **Residual risk** — what the control does *not* catch. Every control has a gap, and writing it down
+  is what stops someone treating the control as a guarantee.
+
+
+
+---
+THE BRAND
+BRAND: Heritage Foods
+CATEGORY: Dairy — milk, curd, and value-added dairy
+MARKET: India, strongest across South India (Telangana, Andhra Pradesh, Karnataka, Tamil Nadu), expanding nationally — write for this market's habits, retail and idiom, not a generic global one.
+HERO PRODUCT: Heritage Pure Milk
+MASTER BRAND IDEA: Pure Doodh Ki Shakti — the strength of pure milk — everything ladders to this.
+POSITIONING: The purest everyday milk for families who will not compromise
+TONE: Warm, wholesome and reassuring, with a premium modern finish
+BRAND CODES / HASHTAGS: #PureDoodhKiShakti, #HeritageFoods
+MANDATORY ON EVERY PIECE: FSSAI mark; the line 'Pure Doodh Ki Shakti'
+COMPETITORS: Amul, Nandini, Dodla, Arokya, loose/unbranded milk
+BRAND PALETTE: primary Deep Forest, secondary Cream, accent Ghee gold
+ALSO TRUE: A daily cold-chain category: general trade and home delivery dominate, and quick commerce is less disruptive here than in snacks or beverages.
+Only these are the brand's. Anything else you need, ask for rather than assume.
+AUTHORITY: if the request below names a different brand, product, category or market, it is out of date — ignore it and use Heritage Foods. Do not blend the two.
+
+
+---
+THE TRADE MESSAGE
+NONE — the house has no trade message. Write one in message-by-medium — do not borrow the consumer line for a distributor. Say so in the output. Do NOT borrow the consumer line.
+
+Consumer core (context only, NOT for the trade): Heritage Foods core message
+
+
+---
+THIS CHANNEL: Traditional retail
+the kirana counter — still the large majority of Indian FMCG value
+What it rewards: reliability and rate of sale — what turns, and what it makes per foot
+How it goes wrong: schemes that reward loading rather than selling
+
+
+---
+NOW: fill this channel.
+Name the BEHAVIOUR with a baseline and a target — not 'visibility', which buys nothing measurable. State payback, or the literal string 'payback unknown'. Name the leakage mode, the control, and what the control misses. State sell-through as primary, secondary or tertiary. Name who receives the money.
+Return ONLY JSON: {"role":"","share_now":"","behaviour":"","baseline":"","target":"","lever":"","cost_per_unit":"","payback":"","leakage":"","control":"","residual_risk":"","sell_through":"","receives_money":"","effective_price":"","owner":"","source":""}
+Leave a field empty rather than inventing a share, a margin, an outlet count or a platform fee. Those are exactly the numbers that get invented.
