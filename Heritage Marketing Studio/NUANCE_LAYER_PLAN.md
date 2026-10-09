@@ -96,6 +96,14 @@ New from the audience step (Phase 4):
 
 Assumptions: the question table above stands as drafted unless the owner strikes or adds (item 2 is still open); product lines = option a (decided); web research is a late step; every step is its own commit, verified locally then live, and independently revertible. Sizes: S small, M medium, L large.
 
+## STATUS (9 Oct 2026): Steps 0 to 3 BUILT. Steps 0 to 2 are live and verified; Step 3 is committed (`4f2af7c`) and deploying.
+- Step 0 `37afd7e`: `tools/golden_prompts.py` and the baseline `tools/golden_pre_nuance/` (14 surfaces x 5 dev brands = 70 prompts, deterministic). `--compare` must show 0 changed for any brand with no answers; it does, after every step so far.
+- Step 1 `de49d28`: 16 questions (8 text or choice, 3 list, 5 rows) in `brandprofile`, none required, CORE unchanged. Joined existing groups where they fit (place notes and language mix to "Geography and language", trade terms to "The trade calculators", calendar moments to "Occasion-led strategy"); four new groups: "How the product is shown", "Who buys it and where it is met", "Proof and marks", "Look and sound".
+- Step 2 `129105d`: `brandprofile.nuance_lines` renders answers as single-line labelled entries after the category-aware half; the three look-and-sound answers start `HOUSE STYLE` and are dropped with TONE in a provocation (server and page).
+- Step 3 `4f2af7c`: Heritage's drafted answers as suggestions, plus `tools/test_nuance_heritage_checklist.py` (22 dairy-level behaviours).
+- Deviations from the plan above, and why: (1) `worst_case` and `trade_terms` are NOT rendered in `voice_block` (only PR and the trade sheet need them; every other prompt would carry noise). (2) `place_for` was dropped: the voice block already carries every place's notes (capped at 1800 characters), and `_execution_block` has no brand to look one up with. (3) The state in a place note is stored as typed and resolved to the real state at read time. (4) Heritage's seed is offered as suggestions, not through an import route (see Step 3). (5) The `lines` (product lines) answer is empty for Heritage on purpose.
+- Open for the owner: review and accept Heritage's answers on the live profile screen (the file's `_review` list names six judgement calls); check the live Heritage `states` and `languages`; go-ahead for Step 4's real-model test.
+
 ## Where the questions go (exact shape, so nothing is guessed at build time)
 Seeded into `brandprofile.py`, all optional (none `required`, so `CORE` and every existing brand's completeness are unchanged):
 - `FIELDS` (+8): `product_in_use`, `pack_in_scene` (choice), `imagery_style`, `buying_unit` (choice: a household / one person / either), `worst_case`, `language_mix`, `people_setting`, `sound_world`.
@@ -124,7 +132,7 @@ Seeded into `brandprofile.py`, all optional (none `required`, so `CORE` and ever
 - Rollback: revert; no data change.
 
 ## Step 3: Heritage's answers, and the owner-run live seed | M
-- Change: I draft Heritage's answers from the dairy text now in the code (the owner reviews every line). A login-protected import route fills only the EMPTY questions of a named brand from a reviewed JSON file, once. No Heritage text is placed in code paths.
+- Change (as built): I drafted Heritage's answers from the dairy text now in the code, as a DATA file (`api/seeds/answers/heritage-foods.json`). It is offered through the existing Accept/Dismiss suggestions on the profile screen, one question at a time, so the owner reviews every line and nothing is used until accepted and saved. This replaced the planned import route: no new route, and the review happens per question.
 - Verify local: import into the dev Heritage; the **Heritage checklist test** passes: rebuilt prompts contain every dairy-level behaviour in the table above (product handling, visible-milk rule, pack-in-use, kirana and route set, venue set, marks band, place texture, language mix, sound world, occasions).
 - Verify live: the owner runs the import once, opens the panel, and sees the lines.
 - Gate: nothing in Step 5 deploys to live until this has run on live.
