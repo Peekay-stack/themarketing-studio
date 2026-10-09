@@ -121,6 +121,39 @@ expect("a place row for a state the brand does not sell in is dropped, and the s
 r4 = bs.suggest_group(cement, "Proof and marks")
 expect("an empty value with a stated unknown is reported as unknown, not as a suggestion", "worst_case" not in r4["suggestions"] and r4["unknown"].get("worst_case") == "which regulator applies here", r4)
 
+print("What the real run taught (9 Oct)")
+REPLY["data"] = {"answers": {
+    "place_notes": {"value": [{"state": "Bihar", "how_people_buy_use": "", "register": "", "festivals_seasons": "", "references": ""},
+                              {"state": "Jharkhand", "how_people_buy_use": "by the bag", "register": "", "festivals_seasons": "", "references": ""}], "basis": "knowledge", "unknowns": ""},
+    "language_mix": {"value": "Hindi", "basis": "context", "unknowns": ""},
+    "calendar_moments": {"value": [{"moment": "post-monsoon build", "when": "October", "where_it_matters": "Bihar"}], "basis": "profile", "unknowns": ""}}}
+rr = bs.suggest_group(cement, "Place, language and occasions")
+expect("a place row that names a state and says nothing else is dropped (the model's blank for a place stays a blank)",
+       [x["state"] for x in rr["suggestions"]["place_notes"]["value"]] == ["Jharkhand"], rr["suggestions"].get("place_notes"))
+expect("a 'context' basis with nothing pasted is read as 'knowledge' (unconfirmed), because there was no context to come from",
+       rr["suggestions"]["language_mix"]["basis"] == "knowledge", rr["suggestions"].get("language_mix"))
+rc = bs.suggest_group(cement, "Place, language and occasions", context="Notes from the brand: Hindi first.")
+expect("with context pasted, 'context' stays", rc["suggestions"]["language_mix"]["basis"] == "context", rc["suggestions"].get("language_mix"))
+expect("a 'profile' basis is left as the model said it", rr["suggestions"]["calendar_moments"]["basis"] == "profile")
+REPLY["data"] = {"answers": {"place_notes": {"value": [
+    {"state": "Bihar", "how_people_buy_use": "by the bag", "register": "", "festivals_seasons": "", "references": ""},
+    {"state": "Jharkhand", "how_people_buy_use": "from the dealer", "register": "", "festivals_seasons": "", "references": ""},
+    {"state": "Jharkhand", "how_people_buy_use": "a contradicting row", "register": "", "festivals_seasons": "", "references": ""}], "basis": "knowledge", "unknowns": "local trade slang"}}}
+rd = bs.suggest_group(cement, "Place, language and occasions")
+expect("two rows for one state are both withheld and the conflict is said, while the other state's row stays",
+       [x["state"] for x in rd["suggestions"]["place_notes"]["value"]] == ["Bihar"]
+       and "conflicting rows for Jharkhand" in rd["suggestions"]["place_notes"]["unknowns"] and "local trade slang" in rd["suggestions"]["place_notes"]["unknowns"], rd)
+REPLY["data"] = {"answers": {"place_notes": {"value": [{"state": "Bihar", "how_people_buy_use": "x"}, {"state": "Bihar", "how_people_buy_use": "y"},
+                                                       {"state": "Jharkhand", "how_people_buy_use": "z"}, {"state": "Jharkhand", "how_people_buy_use": "w"}], "basis": "knowledge", "unknowns": ""}}}
+rdd = bs.suggest_group(cement, "Place, language and occasions")
+expect("when every state conflicts, nothing is offered for place notes and the reason is reported as unknown",
+       "place_notes" not in rdd["suggestions"] and "conflicting rows for Bihar, Jharkhand" in rdd["unknown"].get("place_notes", ""), rdd)
+rp = bs.build_prompt(cement, ["language_mix"])
+expect("the prompt tells the model to leave an unsure specific out of the value instead of hedging it in 'unknowns'",
+       "does not belong in the value at all" in rp and "Never state something in the value and then list the same thing as unknown" in rp)
+expect("the prompt tells the model not to coin local-language words", "Do not coin words or phrases in a local language" in rp)
+expect("the prompt says a plausible inference is not 'profile'", "a plausible inference is NOT \"profile\"" in rp)
+
 print("Failure is reported, nothing else")
 REPLY["data"], REPLY["err"] = None, "the reply was cut off"
 r5 = bs.suggest_group(cement, "Look and sound")

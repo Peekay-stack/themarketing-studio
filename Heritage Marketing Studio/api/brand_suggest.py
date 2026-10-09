@@ -203,11 +203,17 @@ def build_prompt(b: dict, keys: list[str], context: str = "", brief: str = "") -
         "- If the profile does not let you know, and your general knowledge of the category and the place is not solid, leave "
         "the value empty and say in \"unknowns\" what you would need. A blank is useful; an invented specific is harmful.\n"
         "- Never invent figures, shares, percentages, names of people or sources.\n"
+        "- A specific you are not sure of (a colour, a pack or product name, a registration or licence code, an outlet the brand may not have) "
+        "does not belong in the value at all: leave it out and name it in \"unknowns\". Never state something in the value and "
+        "then list the same thing as unknown.\n"
+        "- Do not coin words or phrases in a local language. Use a local word only if you are certain of it and of its script; "
+        "otherwise describe the register in English.\n"
         "- If the brand sells lines that behave differently (different buyers, a household versus one person), say so in "
         "\"lines\" and answer \"either\" for who it is bought for, rather than averaging them into one answer.\n"
         "- Keep every answer short and concrete. Say what is distinctive, not what is true of every product.\n"
-        "- \"basis\" says where an answer came from: \"profile\" (stated or directly implied by the profile or the brief), "
-        "\"context\" (from the extra context), or \"knowledge\" (your general knowledge, which the owner must confirm).")
+        "- \"basis\" says where an answer came from: \"profile\" (the profile or the brief says it, or it follows directly from a "
+        "stated fact; a plausible inference is NOT \"profile\"), \"context\" (from the extra context, only if there is any above), "
+        "or \"knowledge\" (your general knowledge or an inference, which the owner must confirm).")
     parts.append(
         "OUTPUT: only a JSON object, no prose and no code fence:\n"
         '{"answers": {"<key>": {"value": <in the stated format>, "basis": "profile|context|knowledge", "unknowns": "<what you could not know, or empty>"}}}\n'
@@ -233,7 +239,8 @@ def _clean_value(key: str, raw, states: list[str]):
             allowed = {geo.resolve_state(x) for x in states} - {None, ""}
             for r in rows:
                 code = geo.resolve_state(r.get("state", ""))
-                if code and code in allowed:
+                # a row that names a state and says nothing about it is not an answer; the model's blank for a place is a blank
+                if code and code in allowed and any(v for c, v in r.items() if c != "state"):
                     keep.append({**r, "state": geo.state_label(code)})
             rows = keep
         if key == "routes":
@@ -274,9 +281,22 @@ def suggest_group(b: dict, group: str, context: str = "", include_seeded: bool =
         if not isinstance(a, dict):
             continue
         val = _clean_value(k, a.get("value"), states)
+        conflict = ""
+        if k == "place_notes" and isinstance(val, list):
+            # The real run once returned two rows for the same state, one of them describing another state. Which one is right
+            # cannot be told, so neither is offered: a wrong place note is worse than a blank.
+            seen = [r["state"] for r in val]
+            dup = sorted({s for s in seen if seen.count(s) > 1})
+            if dup:
+                val = [r for r in val if r["state"] not in dup]
+                conflict = "The model gave conflicting rows for " + ", ".join(dup) + ", so none is offered for it."
         basis = _one_line(a.get("basis")).lower()
         basis = basis if basis in ("profile", "context", "knowledge") else "knowledge"
+        if basis == "context" and not context.strip():
+            basis = "knowledge"        # the real run labelled drafts 'context' when nothing had been pasted; unconfirmed is the safe reading
         why = _one_line(a.get("unknowns"), 260)
+        if conflict:
+            why = (why + " " + conflict).strip()
         if val in ("", []):
             if why:
                 unknown[k] = why
