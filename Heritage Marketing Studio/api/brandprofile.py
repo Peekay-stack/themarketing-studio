@@ -32,13 +32,18 @@ FIELDS = ("name", "category", "market", "master_idea", "positioning", "tone", "f
           "hero_product", "notes",
           # --- the seven that make the studio category-aware rather than generically competent ---
           "category_axis", "regulator", "purchase_cycle", "decider", "payer", "user",
-          "cheap_alternative", "price_tier")
+          "cheap_alternative", "price_tier",
+          # --- the nuance questions (NUANCE_LAYER_PLAN.md, Step 1): what the prompts used to assume ---
+          "product_in_use", "pack_in_scene", "imagery_style", "buying_unit", "worst_case",
+          "language_mix", "people_setting", "sound_world")
 LIST_FIELDS = ("states", "languages", "entry_points", "dos",
                "hashtags", "mandatories", "competitors", "avoid",
-               "banned_words", "channels")
+               "banned_words", "channels",
+               "must_show", "meeting_points", "statutory_marks")
 # Claims are rows, not a list of strings: a claim without what proves it is the thing the proof gate
 # exists to catch, so the two travel together or not at all.
-ROW_FIELDS = ("claims", "packs", "market_share", "palette")
+ROW_FIELDS = ("claims", "packs", "market_share", "palette",
+              "lines", "routes", "trade_terms", "place_notes", "calendar_moments")
 
 # What each field is, as data, so the form is rendered from the backend rather than hardcoded twice.
 #
@@ -213,6 +218,111 @@ SPEC: list[dict] = [
              "it stops being typed fresh into every campaign, which is how two campaigns end up "
              "disagreeing about the same brand's share."),
      "unlocks": "The competitive picture"},
+
+    # --- the nuance questions (NUANCE_LAYER_PLAN.md) ----------------------------------------------------
+    # What the prompts used to assume about ONE brand's category (dairy), asked of every brand instead.
+    # Every one is optional (none is `required`, so `CORE` and every existing brand's completeness are
+    # unchanged), and every example below deliberately spans categories so no single one reads as the
+    # house style. An answer becomes a labelled line in `voice_block`; an unanswered question says nothing.
+    {"key": "product_in_use", "label": "How it is used or handled", "kind": "textarea",
+     "ask": "When somebody uses it, what do they physically do with it — pour, spread, apply, wear, install, eat?",
+     "why": ("Decides the gesture in every image and film. Without it the studio falls back on its own "
+             "default for how a product is handled, which may not be yours."),
+     "placeholder": "poured into a glass · rubbed in and left on · worn for a day · mixed on site and laid",
+     "unlocks": "How the product is shown"},
+    {"key": "must_show", "label": "What must be visible", "kind": "list",
+     "ask": "What must be visible in a photograph of it for it to look real and right?",
+     "why": ("The detail that makes the product read as itself — and the one an image model leaves out "
+             "when nobody says so."),
+     "placeholder": "a full glass, visibly poured · the drape of the fabric in motion · the stencil facing out",
+     "unlocks": "How the product is shown"},
+    {"key": "pack_in_scene", "label": "Is the pack in the picture", "kind": "choice",
+     "options": ["always", "only when it is in use", "rarely", "not a packed product"],
+     "ask": "Does a pack, bottle, tag or label normally appear in the work?",
+     "why": ("Stops an invented pack or a stray label in an image, and stops a pack being left out where "
+             "the category always shows one."),
+     "unlocks": "How the product is shown"},
+    {"key": "imagery_style", "label": "Kind of imagery", "kind": "text",
+     "ask": "What kind of imagery does this category use?",
+     "why": "Sets the look of stills and films. Without it the studio uses its own default look.",
+     "placeholder": "food and lifestyle · product-led still life · fashion editorial · documentary, on site",
+     "unlocks": "How the product is shown"},
+
+    {"key": "buying_unit", "label": "Household or one person", "kind": "choice",
+     "options": ["a household", "one person", "either"],
+     "ask": "Is it bought for a household or for one person?",
+     "why": ("Decides whether the work speaks to a family around a table or to an individual. Where your "
+             "lines differ, say so per line below."),
+     "unlocks": "Who buys it and where it is met"},
+    {"key": "lines", "label": "Product lines", "kind": "rows",
+     "cols": ["line", "who_uses", "who_decides_pays", "how_bought", "where_sold", "how_used"],
+     "ask": "Each product line, and for each: who uses it, who decides and pays, how it is bought, where it is sold, how it is used.",
+     "why": ("Lines of one brand often behave differently — a family staple, a treat bought for one, a "
+             "functional product for an individual. A plan's audience can then name the line it is for."),
+     "unlocks": "Who buys it and where it is met"},
+    {"key": "routes", "label": "Routes to market", "kind": "rows",
+     "cols": ["route", "share_of_sales", "who_buys_there"],
+     "ask": "Each route the product reaches the buyer by, roughly what share of sales it carries, and who buys there.",
+     "why": ("The trade sheet, the activation venues and the retail formats are chosen from these rather "
+             "than from a fixed list."),
+     "placeholder": "neighbourhood shop · dealer and sub-dealer · own stores · online marketplace",
+     "unlocks": "Who buys it and where it is met"},
+    {"key": "meeting_points", "label": "Where people meet the brand", "kind": "list",
+     "ask": "Where do people meet the brand in person?",
+     "why": "The venues an activation is planned for, instead of a fixed list of them.",
+     "placeholder": "neighbourhood shop · dealer counter · mall store · pharmacy · salon · building site",
+     "unlocks": "Who buys it and where it is met"},
+
+    {"key": "trade_terms", "label": "Trade terms, with their source", "kind": "rows",
+     "cols": ["term", "value", "source"],
+     "ask": "Typical trade margin and credit terms in this category, and where each figure came from.",
+     "why": ("Read as sourced estimates, never as defaults — a figure with no source is not used, the "
+             "same rule the share of market follows."),
+     "unlocks": "The trade calculators"},
+
+    {"key": "statutory_marks", "label": "Marks and declarations", "kind": "list",
+     "ask": "Which marks, licence numbers or declarations must appear on the pack and in print?",
+     "why": ("Sets the statutory band on print and point-of-sale work. Without it the studio falls back on "
+             "its own default band, which may name a regulator that is not yours."),
+     "placeholder": "a licence number · a quality or grade mark · batch and MRP · a care label",
+     "unlocks": "Proof and marks"},
+    {"key": "worst_case", "label": "The worst public event", "kind": "textarea",
+     "ask": "What is the worst public event this category can have — a recall, a failed test, an adverse reaction — and who acts first?",
+     "why": "Shapes the crisis plan so it starts from this category's real risks rather than a generic one.",
+     "unlocks": "Proof and marks"},
+
+    {"key": "place_notes", "label": "Place by place", "kind": "rows",
+     "cols": ["state", "how_people_buy_use", "register", "festivals_seasons", "references"],
+     "ask": "For each state it sells in: how people there buy and use it, how they speak about it, the festivals and seasons that matter, and the local references that are safe to use.",
+     "why": ("Writes for the place's own idiom instead of a national one. The state must be one you listed "
+             "under where it sells; the language itself is held separately."),
+     "unlocks": "Geography and language"},
+    {"key": "language_mix", "label": "Language mix of the work", "kind": "text",
+     "ask": "What language mix should the copy and the voice-over use?",
+     "why": ("Sets the language of scripts and captions. Where the mix and the states do not fit, the "
+             "studio says so instead of guessing."),
+     "placeholder": "English only · Hindi and English · Telugu with English",
+     "unlocks": "Geography and language"},
+
+    {"key": "calendar_moments", "label": "Calendar moments", "kind": "rows",
+     "cols": ["moment", "when", "where_it_matters"],
+     "ask": "The dated moments that matter to this category — a festival, a season, a sale, a launch window — and where each one matters.",
+     "why": ("Sits beside the category entry points: those are everyday situations, these are dated. A plan's "
+             "phasing is written against both."),
+     "unlocks": "Occasion-led strategy"},
+
+    {"key": "people_setting", "label": "People and settings", "kind": "textarea",
+     "ask": "Who and where do we show — the people, homes, sites or shops?",
+     "why": ("Sets who appears and where the work is set. Without it the studio falls back on its own "
+             "default casting and setting, which may not be yours."),
+     "placeholder": "an urban kitchen at breakfast · a mason on a half-built wall · a student's hostel room",
+     "unlocks": "Look and sound"},
+    {"key": "sound_world", "label": "What it sounds like", "kind": "text",
+     "ask": "What does the brand sound like — the music, the voice accent, the pace?",
+     "why": ("Sets the music and the voice-over. Without it the studio uses its own default score and "
+             "voice."),
+     "placeholder": "unhurried strings · a plain, direct male voice · quick and bright",
+     "unlocks": "Look and sound"},
 ]
 SPEC_BY_KEY = {s["key"]: s for s in SPEC}
 
@@ -780,6 +890,18 @@ SETUP_GROUPS: list[dict] = [
     {"name": "Occasion-led strategy",
      "gates": "Nothing refuses for want of this. It is the input a brief's insight and a plan's "
               "phasing should be written against, and without it both get re-invented per campaign."},
+    {"name": "How the product is shown",
+     "gates": "Nothing refuses for want of this. Without it the studio uses its own default for how a "
+              "product is handled, shown and styled, which may not be this brand's."},
+    {"name": "Who buys it and where it is met",
+     "gates": "Nothing refuses for want of this. Without it the studio works from a fixed list of routes "
+              "and venues and from one set of buyer roles for the whole brand."},
+    {"name": "Proof and marks",
+     "gates": "Nothing refuses for want of this. Without it the statutory band on print work and the "
+              "crisis plan start from the studio's own defaults."},
+    {"name": "Look and sound",
+     "gates": "Nothing refuses for want of this. Without it casting, setting, music and voice start from "
+              "the studio's own defaults."},
     {"name": "Sharpens the work",
      "gates": "Everything here still works. The output is more generic than it needs to be."},
 ]

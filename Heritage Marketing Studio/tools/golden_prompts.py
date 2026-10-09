@@ -163,7 +163,7 @@ for p in profiles:
             missing += 1
             print(f"MISSING  {rel}")
             continue
-        old = open(path, encoding="utf-8", newline="").read()
+        old = open(path, encoding="utf-8", newline="").read().replace("\r\n", "\n")     # git may check the goldens out as CRLF
         if old == text:
             unchanged += 1
         else:
