@@ -9448,6 +9448,12 @@
             </sc-for>
           </div>
           <div style="font-size:13.5px; line-height:1.6; color:#41505F; text-wrap:pretty;">{{ bfSummary }}</div>
+          <sc-if value="{{ bfCanSuggest }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-top:12px; padding-top:11px; border-top:1px solid #E6E3DC;">
+              <span onClick="{{ suggestBrandAnswers }}" style="cursor:pointer; font-size:12.5px; font-weight:700; color:#17325E; background:#fff; border:1px solid #C9CEDA; border-radius:9px; padding:7px 13px;">{{ bfSuggestLabel }}</span>
+              <span style="font-size:12.5px; line-height:1.5; color:#6B7280; flex:1; min-width:220px; text-wrap:pretty;">{{ bfSuggestLine }}</span>
+            </div>
+          </sc-if>
           <sc-if value="{{ bfHasBlocking }}" hint-placeholder-val="{{ false }}">
             <div style="display:flex; flex-direction:column; gap:7px; margin-top:12px; padding-top:11px; border-top:1px solid #E6E3DC;">
               <sc-for list="{{ bfBlocking }}" as="b" hint-placeholder-count="1">
@@ -12537,7 +12543,7 @@ class Component extends DCLogic {
     // from this list: it held the OLD brand's "what the model is told" text, correct-looking but wrong,
     // right up until something re-fetched it — caught live, mid-testing, sitting under the new brand's
     // now-correct readiness numbers.
-    this.setState({ bf:null, bfVals:{}, bfVoice:'', bfCoreFramework:'', bfCoreEssence:'', bfCoreLayers:{}, bfCoreBoundaries:'', bfCoreOpen:false });
+    this.setState({ bf:null, bfVals:{}, bfVoice:'', bfCoreFramework:'', bfCoreEssence:'', bfCoreLayers:{}, bfCoreBoundaries:'', bfCoreOpen:false, bfSuggested:{}, bfSuggesting:'', bfSuggestNote:'' });
     // The pack chosen for social posts belongs to the brand it was chosen under: a switch clears it (and the
     // session photo), and the picker list is re-read for the new brand.
     this.setState({ socialPackChoice:'', socialPackRef:'', socialPackRefName:'', socialPackProduct:'' });
@@ -23542,7 +23548,7 @@ class Component extends DCLogic {
       screen:'brandform', settingsOpen:false, brandMenuOpen:false,
       bf:null, bfVals: {},
       bfVoice:'', bfCoreFramework:'', bfCoreEssence:'', bfCoreLayers:{},
-      bfCoreBoundaries:'', bfCoreOpen:false, bfIsNew:true,
+      bfCoreBoundaries:'', bfCoreOpen:false, bfIsNew:true, bfSuggested:{}, bfSuggesting:'', bfSuggestNote:'',
     });
     window.scrollTo(0, 0);
     this.loadBrandFields(true);
@@ -23619,6 +23625,30 @@ class Component extends DCLogic {
       bfDismissed: { ...(s.bfDismissed||{}), [key]: true }, bfDirty:true }));
   dismissSuggestion = (key) => () =>
     this.setState(s => ({ bfDismissed: { ...(s.bfDismissed||{}), [key]: true } }));
+
+  // The model drafts answers to the nuance questions, one group per request (each stays inside the proxy's timeout).
+  // Nothing is saved: a draft appears in the same Accept/Dismiss box as any other suggestion, and only an answer a
+  // person accepted and saved ever reaches a prompt. A group that fails is named, and the others still land.
+  suggestBrandAnswers = async () => {
+    const d = this.state.bf || {}, groups = (d.suggest_groups || []).filter(g => (g.keys || []).length);
+    const ref = (d.brand && (d.brand.id || d.brand.name)) || '';
+    if (!ref || !groups.length || this.state.bfSuggesting) return;
+    const failed = []; let drafted = 0, unknown = 0;
+    for (const g of groups) {
+      this.setState({ bfSuggesting: g.name, bfSuggestNote: 'Drafting “' + g.name + '”…' });
+      const r = await this.apiCall('/brand-suggest', { brand: ref, group: g.name });
+      const got = (r && r.ok && r.data && r.data.suggestions) || {};
+      if (!(r && r.ok)) failed.push(g.name + ((r && r.data && r.data.detail) ? ' (' + r.data.detail + ')' : ''));
+      drafted += Object.keys(got).length; unknown += Object.keys((r && r.data && r.data.unknown) || {}).length;
+      this.setState(s => {
+        const dis = { ...(s.bfDismissed || {}) }; Object.keys(got).forEach(k => { delete dis[k]; });
+        return { bfSuggested: { ...(s.bfSuggested || {}), ...got }, bfDismissed: dis };
+      });
+    }
+    this.setState({ bfSuggesting: '', bfSuggestNote: drafted + (drafted === 1 ? ' answer' : ' answers') + ' drafted; each shows under its question to accept or dismiss. Nothing is saved until you accept and save.'
+      + (unknown ? ' ' + unknown + ' left blank because the model could not know.' : '')
+      + (failed.length ? ' Could not draft: ' + failed.join('; ') + '.' : '') });
+  };
 
   // ---- brand core: the enduring root above the messaging house, optional and collapsed by default ----
   toggleBrandCore = () => this.setState(s => ({ bfCoreOpen: !s.bfCoreOpen }));
@@ -23725,6 +23755,10 @@ class Component extends DCLogic {
       openBrandForm: this.openBrandForm, closeBrandForm: this.closeBrandForm,
       onBrandField: this.onBrandField, onBrandRow: this.onBrandRow,
       saveBrandFields: this.saveBrandFields,
+      suggestBrandAnswers: this.suggestBrandAnswers,
+      bfCanSuggest: !s.bfIsNew && ((d.suggest_groups || []).some(g => (g.keys || []).length) || !!s.bfSuggesting || !!s.bfSuggestNote),
+      bfSuggestLabel: s.bfSuggesting ? 'Drafting…' : 'Draft the unanswered questions with the model',
+      bfSuggestLine: s.bfSuggestNote || 'Fills in nothing by itself: each draft waits under its question for you to accept or dismiss it.',
       bfSaveLabel: s.bfSaving ? 'Saving\u2026' : (s.bfDirty ? 'Save the profile' : 'Save and read the instruction'),
 
       bfReadyTitle: ready ? 'Enough to ground the work' : 'Not yet enough to ground the work',
@@ -23771,7 +23805,7 @@ class Component extends DCLogic {
             ? 'Everything above is what a brief is opened against. These ' + restCount
               + ' sharpen the work rather than unlock it — none of them is demanded, and a brand with the answers above can start today.'
             : '',
-          ...this.bfFieldRow(f, { fieldState, derivable, dismissed, spec }) };
+          ...this.bfFieldRow(f, { fieldState, derivable, dismissed, spec, suggested: s.bfSuggested || {} }) };
       }),
 
       // Landed here rather than navigated here: the reason is stated, and so is the way out.
@@ -23861,8 +23895,12 @@ class Component extends DCLogic {
     };
 
           const fs = fieldState[f.key] || {};
-          const state = fs.state || (filled(f.key) ? 'set' : (derivable[f.key] !== undefined ? 'derivable' : 'missing'));
-          const sug = fs.suggestion !== undefined ? fs.suggestion : derivable[f.key];
+          // A draft by the model (`ctx.suggested`) fills in only where there is no answer and no other suggestion (the reviewed file, a derivation).
+          const ms = (ctx.suggested || {})[f.key];
+          const state0 = fs.state || (filled(f.key) ? 'set' : (derivable[f.key] !== undefined ? 'derivable' : 'missing'));
+          const state = (ms && state0 === 'missing') ? 'drafted' : state0;
+          const sug = fs.suggestion !== undefined ? fs.suggestion : (derivable[f.key] !== undefined ? derivable[f.key] : (ms ? ms.value : undefined));
+          const basisWord = ms ? ({ profile: 'the profile or brief', context: 'the context you pasted', knowledge: 'the model’s general knowledge, so please confirm it' }[ms.basis] || 'the model’s general knowledge, so please confirm it') : '';
           const showSug = sug !== undefined && sug !== null && sug !== '' && !dismissed[f.key] && !filled(f.key);
           const cols = f.cols || [];
           const rows = f.kind === 'rows' ? (this.bfVal(f.key) || []) : [];
@@ -23870,7 +23908,7 @@ class Component extends DCLogic {
             ? rows.filter(r => (r.claim || '').trim() && !(r.proof || '').trim()).length
             : 0;
           const tone = state === 'set' ? { bg:'#EAF6EC', fg:'#1E7E34', line:'#C9E7CE' }
-            : (state === 'derivable' ? { bg:'#F4F7FC', fg:'#2E5EA6', line:'#D6E0F0' }
+            : ((state === 'derivable' || state === 'drafted') ? { bg:'#F4F7FC', fg:'#2E5EA6', line:'#D6E0F0' }
                                      : { bg:'#F1F3F7', fg:'#9AA1AC', line:'#E1E4EA' });
           return {
             key:f.key, label:f.label || f.key, ask:f.ask || f.label || f.key, why:f.why || '',
@@ -23897,7 +23935,10 @@ class Component extends DCLogic {
             unprovenNote: rowUnproven + (rowUnproven === 1 ? ' claim has' : ' claims have')
               + ' no proof. Kept, and the model may allude to them but never state them as fact.',
             hasSuggestion: showSug,
-            suggestFrom: fs.suggestion_from ? ('from ' + fs.suggestion_from) : (f.derives_from ? ('derived from the ' + f.derives_from) : 'derived from work already done'),
+            suggestFrom: fs.suggestion_from ? ('from ' + fs.suggestion_from)
+              : ((ms && fs.suggestion === undefined && derivable[f.key] === undefined)
+                  ? ('drafted by the model from ' + basisWord + (ms.unknowns ? ' · could not know: ' + ms.unknowns : ''))
+                  : (f.derives_from ? ('derived from the ' + f.derives_from) : 'derived from work already done')),
             suggestion: asText(sug),
             accept: this.acceptSuggestion(f.key, sug), dismiss: this.dismissSuggestion(f.key),
           };

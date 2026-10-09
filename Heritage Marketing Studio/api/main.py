@@ -47,6 +47,7 @@ import activation
 import actuals
 import auth as auth_mod
 import brandprofile
+import brand_suggest
 import selfcheck
 import briefguide
 import briefstore
@@ -3555,7 +3556,8 @@ def brand_fields(brand: str = "", house: str = "", brief: str = "", new: bool = 
     # returning an overlapping view of one document is how two screens start disagreeing about it.
     return {**r, "brand": b, "voice": brandprofile.voice_block(b) if b else "",
             "setup": brandprofile.setup_view(b, h, br),
-            "brand_core": brandprofile.brand_core_view(b)}
+            "brand_core": brandprofile.brand_core_view(b),
+            "suggest_groups": brand_suggest.groups_view(b)}
 
 
 @app.post("/brand-fields")
@@ -3594,7 +3596,28 @@ def brand_fields_save(payload: dict):
     # A save that returns a different shape from the GET is a form that has to guess what changed.
     return {"brand": b, "voice": brandprofile.voice_block(b), "brands": _brand_rows(),
             **brandprofile.readiness(b), "setup": brandprofile.setup_view(b),
-            "brand_core": brandprofile.brand_core_view(b)}
+            "brand_core": brandprofile.brand_core_view(b),
+            "suggest_groups": brand_suggest.groups_view(b)}
+
+
+@app.post("/brand-suggest")
+def brand_suggest_route(payload: dict):
+    """The model drafts answers to ONE group of the profile's nuance questions. `{brand, group, context?}` ->
+    `{suggestions: {key: {value, basis, unknowns}}, unknown: {key: why}, skipped: {key: why}}`.
+
+    Saves NOTHING. A draft is only ever shown with Accept/Dismiss, and a prompt reads only an answer a person
+    accepted and saved. One group per request keeps each call inside the reverse proxy's timeout (see
+    `/research-ingest`), and the page asks the groups in turn.
+    """
+    ref = str(payload.get("brand") or payload.get("id") or "").strip()
+    b = (brandprofile.load(ref) or brandprofile.by_name(ref)) if ref else None
+    if not b:
+        return JSONResponse(status_code=404, content={"detail": "No such brand profile."})
+    out = brand_suggest.suggest_group(b, str(payload.get("group") or ""), str(payload.get("context") or ""))
+    if out.get("error"):
+        return JSONResponse(status_code=503 if out["error"] == brand_suggest.NO_KEY else 502,
+                            content={"detail": out["error"], **{k: v for k, v in out.items() if k != "error"}})
+    return out
 
 
 @app.post("/brand-active")
