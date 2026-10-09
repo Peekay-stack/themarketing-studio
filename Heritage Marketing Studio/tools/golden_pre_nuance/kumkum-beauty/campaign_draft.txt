@@ -1,0 +1,37 @@
+You are writing the campaign layer for Kumkum Beauty.
+A CAMPAIGN is the time-bound expression of a durable platform: one route up the ladder, one tension, one resolution. It is not the platform restated with dates on it.
+THE BRAND
+BRAND: Kumkum Beauty
+CATEGORY: Beauty — skincare and colour cosmetics
+MARKET: India, metros and tier-1, e-commerce first, then modern trade and beauty specialty — write for this market's habits, retail and idiom, not a generic global one.
+HERO PRODUCT: The barrier-repair moisturiser
+MASTER BRAND IDEA: Actives that behave themselves — everything ladders to this.
+POSITIONING: Efficacy without irritation, for Indian skin and Indian weather
+TONE: Precise and unhyped. Explain the science, never oversell it
+BRAND CODES / HASHTAGS: #KumkumBeauty, #ActivesThatBehave
+MANDATORY ON EVERY PIECE: full INCI list; percentage of each active; patch-test advice; manufacturing licence number
+COMPETITORS: HUL brands, L'Oreal, Mamaearth, Minimalist, The Ordinary, Sugar
+NEVER DO: never make a drug or treatment claim; never say 'cures' or 'permanent'; never use before/after imagery that implies a medical outcome; never imply fairness or skin lightening
+BRAND PALETTE: primary Clay, secondary Bone, accent Deep green
+ALSO TRUE: Regulated by the Drugs & Cosmetics Act and CDSCO, not FSSAI — cosmetic claims only, and claim substantiation is the whole competitive game. Replenishment cycle of roughly three to four months, but the category is trial-driven, so first purchase is the hard part.
+Only these are the brand's. Anything else you need, ask for rather than assume.
+AUTHORITY: if the request below names a different brand, product, category or market, it is out of date — ignore it and use Kumkum Beauty. Do not blend the two.
+THE PLATFORM (binding — the campaign expresses this, never contradicts it)
+  line: Kumkum Beauty idea
+  mechanic: Kumkum Beauty mechanic
+THE HOUSE'S CORE MESSAGE (ambient — the platform above is the sharper, more specific expression of this; where they differ, the platform wins)
+  Kumkum Beauty core message
+THE LADDER PATH THIS CAMPAIGN ARGUES
+  functional truth: Kumkum Beauty functional truth
+  bridge: Kumkum Beauty bridge
+  emotional truth: Kumkum Beauty emotional truth
+NO CURRENT→DESIRED SHIFT WAS SUPPLIED. Derive the tension from the emotional truth instead — what stops her believing it today — and say plainly that it is your inference and needs confirming.
+THE SHAPE TO USE: frame. No culture code points anywhere in particular, so the most portable shape is the default.
+The four shapes: frame — A sentence with a slot. Fill the slot and get the next execution — “{X} ki Shakti, Pure Doodh Se”. Strongest where the language conjugates cleanly, and it survives translation as a STRUCTURE rather than a string. · device — A recurring character, object or format that carries the idea. Amul's topical girl. The next execution is the same device pointed at something new. · rule — A reframe that licenses stories without prescribing them. “Daag Acche Hain” makes every stain a story. The next execution obeys the rule and is otherwise free. · act — Something the brand DOES, repeatedly. “Meet Your Farmer”. The next execution is the act performed again, somewhere else.
+Write:
+  insight — the TENSION, in one sentence. What is true and uncomfortable for this buyer that the work resolves. NOT a demographic and NOT a benefit restated. 'Mothers 25-40' is an audience; 'she feels the pressure of his growth more than anyone' is an insight.
+  resolution — what the work TELLS her, in one short sentence. It should be sayable and a little surprising: 'learning matters more than winning'.
+  frame — the frame itself. For a frame, a sentence with ONE slot marked {X}, built off the brand's idiom where there is one.
+  slots — the conjugations that fill it. Write two or three, enough to show the frame generates.
+    Each slot carries a `lang` where the word is not English — this is India, and a campaign line is a STRUCTURE instantiated per language, not one string translated.
+Return ONLY JSON: {"insight":"…","resolution":"…","shape":"frame","frame":"…","slots":[{"text":"…","lang":"hi|te|en|…"}],"why":"one sentence on why this is the campaign this platform should run now"}
