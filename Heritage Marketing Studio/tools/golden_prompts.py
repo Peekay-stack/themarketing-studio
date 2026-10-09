@@ -23,6 +23,9 @@ ap.add_argument("--save", default="")
 ap.add_argument("--compare", default="")
 ap.add_argument("--brand", default="")
 ap.add_argument("--show", action="store_true", help="print a unified diff for each changed file")
+ap.add_argument("--summary", action="store_true", help="for each changed file print the lines added and removed, as labels")
+ap.add_argument("--with-seed", action="store_true", help="first apply each brand's reviewed starting answers (api/seeds/answers) as if accepted and saved")
+ap.add_argument("--answers", default="", help="a json file {brand name: {question: answer}} applied as if accepted and saved")
 args = ap.parse_args()
 if bool(args.save) == bool(args.compare):
     sys.exit("give exactly one of --save DIR or --compare DIR")
@@ -141,6 +144,18 @@ def build(profile):
 
 profiles = [json.load(open(f, encoding="utf-8")) for f in sorted(glob.glob(os.path.join(BRANDS_DIR, "*.json")))]
 profiles = [p for p in profiles if p.get("name") and (not args.brand or p["name"] == args.brand)]
+if args.with_seed or args.answers:
+    _extra = json.load(open(args.answers, encoding="utf-8")) if args.answers else {}
+    _applied = []
+    for _i, _p in enumerate(profiles):
+        _ans = {}
+        if args.with_seed:
+            _ans.update(brandprofile.seed_answers(_p))
+        _ans.update(_extra.get(_p["name"], {}))
+        if _ans:
+            profiles[_i] = brandprofile.put({"name": _p["name"], **_ans}, _p["id"])
+            _applied.append(f"{_p['name']} ({len(_ans)} answers)")
+    print("answers applied: " + (", ".join(_applied) or "none"))
 if not profiles:
     sys.exit("no brand matched")
 
@@ -169,6 +184,19 @@ for p in profiles:
         else:
             changed += 1
             print(f"CHANGED  {rel}  ({len(old)} -> {len(text)} chars)")
+            if args.summary:
+                import difflib
+                _a, _r = [], []
+                for ln in difflib.unified_diff(old.split("\n"), text.split("\n"), lineterm="", n=0):
+                    if ln.startswith("+") and not ln.startswith("+++"):
+                        _a.append(ln[1:61])
+                    elif ln.startswith("-") and not ln.startswith("---"):
+                        _r.append(ln[1:61])
+                print(f"           +{len(_a)} / -{len(_r)} lines")
+                for ln in _a[:14]:
+                    print("           + " + ln)
+                for ln in _r[:6]:
+                    print("           - " + ln)
             if args.show:
                 import difflib
                 for ln in list(difflib.unified_diff(old.split("\n"), text.split("\n"), "before", "after", lineterm="", n=0))[:60]:
