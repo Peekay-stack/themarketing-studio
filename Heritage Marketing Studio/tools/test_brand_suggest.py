@@ -195,6 +195,21 @@ saved = client.post("/brand-fields", json={"brand": cement["id"], "worst_case": 
 expect("saving returns the groups too, and the answered question has left its group",
        "worst_case" not in next(g for g in saved["suggest_groups"] if g["name"] == "Proof and marks")["keys"], saved.get("suggest_groups"))
 
+print("Entries it could not place stay visible")
+up = bp.put({"name": "Unplaced Probe", "category": "Cement"})
+ru = client.post("/brand-fields", json={"brand": up["id"], "states": ["Mumbai", "Atlantis"], "languages": ["Telugu", "Klingon"]}).json()
+expect("a save returns, on the brand, the entries it could not place (the page shows them) and the ones it could",
+       ru["brand"]["states"] == ["mh"] and ru["brand"]["states_unresolved"] == ["Atlantis"] and ru["brand"]["languages"] == ["te"] and ru["brand"]["languages_unresolved"] == ["Klingon"],
+       {k: ru["brand"].get(k) for k in ("states", "states_unresolved", "languages", "languages_unresolved")})
+gu = client.get("/brand-fields", params={"brand": up["id"]}).json()
+expect("a later load returns them too", gu["brand"]["states_unresolved"] == ["Atlantis"] and gu["brand"]["languages_unresolved"] == ["Klingon"])
+expect("the box itself holds only what was placed, which is why the page has to name the rest",
+       next(f for f in gu["fields"] if f["key"] == "states")["value"] == ["mh"] and next(f for f in gu["fields"] if f["key"] == "languages")["value"] == ["te"])
+rf = client.post("/brand-fields", json={"brand": up["id"], "states": ["Maharashtra"], "languages": ["Telugu"]}).json()
+expect("saving again without the bad entries clears them", rf["brand"]["states_unresolved"] == [] and rf["brand"]["languages_unresolved"] == [], rf["brand"].get("states_unresolved"))
+known = next(f for f in gu["spec"] if f["key"] == "languages").get("known")
+expect("the languages question carries the thirteen names the studio can write, for the note to list", known and len(known) == 13 and "Telugu" in known and "Konkani" not in known, known)
+
 print("Place notes cover the states that have none yet")
 H = bp.put({"name": "Heritage Foods", "category": "Dairy", "states": ["ap", "tg"]})
 expect("Heritage with its two seeded states has nothing left to draft for place notes", bs.uncovered_states(H) == [] and "place_notes" not in bs.pending_keys(H), bs.uncovered_states(H))

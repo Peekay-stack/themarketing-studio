@@ -169,6 +169,7 @@ SPEC: list[dict] = [
     {"key": "languages", "label": "Languages it can be written in", "kind": "list",
      "ask": "Which of the studio's languages can this brand actually be written in? Names or codes both work.",
      "placeholder": "Telugu, Kannada, Tamil, Hindi, English",
+     "known": list(geo.LANGUAGE_NAMES.values()),        # what the studio can write: the screen names them when an entry is not one of these
      "why": ("Ten of thirty-six states have a principal language the studio holds no code for. Naming "
              "what this brand can be written in is what lets a plan refuse a state it cannot speak to, "
              "before the money is committed rather than after the posts underperform."),

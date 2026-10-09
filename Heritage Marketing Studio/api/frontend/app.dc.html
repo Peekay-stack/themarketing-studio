@@ -9490,6 +9490,9 @@
               <sc-if value="{{ fd.isList }}" hint-placeholder-val="{{ false }}">
                 <textarea data-k="{{ fd.key }}" value="{{ fd.value }}" onChange="{{ onBrandField }}" rows="3" placeholder="{{ fd.ph }}" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:10px; padding:11px 13px; font-size:14px; line-height:1.55; color:#17325E; background:#FBFAF8; resize:vertical; font-family:inherit;"></textarea>
                 <div style="font-size:11.5px; color:#9AA1AC; margin-top:6px;">One per line.</div>
+                <sc-if value="{{ fd.hasUnrecognised }}" hint-placeholder-val="{{ false }}">
+                  <div style="font-size:12.5px; line-height:1.5; color:#B07A12; margin-top:6px; text-wrap:pretty;">{{ fd.unrecognisedNote }}</div>
+                </sc-if>
               </sc-if>
               <sc-if value="{{ fd.isChoice }}" hint-placeholder-val="{{ false }}">
                 <div style="display:flex; flex-wrap:wrap; gap:8px;">
@@ -23923,6 +23926,8 @@ class Component extends DCLogic {
           if (placeAdd.length) { const baseSt = new Set(placeBase.map(stKey)); sug = placeBase.concat(placeAdd.filter(r => !baseSt.has(stKey(r)))); }
           const basisWord = ms ? ({ profile: 'the profile or brief', context: 'the context you pasted', knowledge: 'the model’s general knowledge, so please confirm it' }[ms.basis] || 'the model’s general knowledge, so please confirm it') : '';
           const showSug = sug !== undefined && sug !== null && sug !== '' && !dismissed[f.key] && (!filled(f.key) || placeAdd.length > 0);
+          const unrecognised = (f.key === 'states' || f.key === 'languages')
+            ? ((((this.state.bf || {}).brand || {})[f.key + '_unresolved']) || []).map(x => String(x || '').trim()).filter(Boolean) : [];
           const cols = f.cols || [];
           const rows = f.kind === 'rows' ? (this.bfVal(f.key) || []) : [];
           const rowUnproven = f.kind === 'rows'
@@ -23952,6 +23957,15 @@ class Component extends DCLogic {
               cells: cols.map(c => ({ col:c, v: r[c] || '',
                 ph: c === 'proof' ? 'what makes it true' : c })) })),
             addRow: this.addBrandRow(f.key, cols),
+            // Entries the server could not place (`states_unresolved`, `languages_unresolved`) are kept on the brand but are NOT in the box above
+            // after a save, so without this line they simply vanished. As of the last save, which is what the server holds.
+            hasUnrecognised: unrecognised.length > 0,
+            unrecognisedNote: unrecognised.length
+              ? ('Not recognised at the last save, so not used: ' + unrecognised.join(', ') + '. '
+                 + (f.key === 'languages'
+                    ? ('Type a language by name or code (the studio can write ' + (f.known || []).join(', ') + '), or take it out.')
+                    : 'Type a state by name, code or old name, or a big city for its state, or take it out.'))
+              : '',
             hasUnproven: rowUnproven > 0,
             unprovenNote: rowUnproven + (rowUnproven === 1 ? ' claim has' : ' claims have')
               + ' no proof. Kept, and the model may allude to them but never state them as fact.',
