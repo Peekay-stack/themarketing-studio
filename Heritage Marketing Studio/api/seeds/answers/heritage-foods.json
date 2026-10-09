@@ -1,0 +1,59 @@
+{
+  "_what": "Heritage Foods' answers to the nuance questions, drafted on 9 Oct 2026 from the dairy text the studio's code assumed before the nuance layer (producers.py, packscene.py, posm.py, main.py, filmaudio.py, sales.py, pr.py). They are SUGGESTIONS: the profile screen shows each one with Accept and Dismiss, and nothing reaches a prompt until the owner accepts it and saves. Keys starting with an underscore are notes and are ignored by the loader.",
+  "_review": [
+    "language_mix: today's film prompt says 'English + Hinglish where natural', but Heritage's profile says Telugu and English. Drafted as today's behaviour; please choose.",
+    "routes: no share of sales is given. The code only says general trade is the large majority and home delivery matters in a daily cold-chain category. Please add real shares or leave them blank.",
+    "lines: left empty on purpose. The code never described Heritage's product lines (milk, curd, value-added), so nothing here would be drawn from the code.",
+    "place_notes and calendar_moments: only what the code mentions (Sankranti and Pongal as texture, Diwali as a gifting window, a Telugu-accented default voice). Please add the rest of what you know about each place.",
+    "buying_unit: 'a household', your statement that dairy is largely a family category; the code assumed families throughout.",
+    "trade_terms: copied from the figures and the source line in sales.py. Please check they still hold."
+  ],
+
+  "product_in_use": "A small pack of milk is handled the way people really handle one: carried at the side, handed over, tucked into a crate, set down on a counter, poured from its opened corner into a glass or a vessel. Never held out at arm's length toward the camera, and never left alone as a centrepiece with no one touching it, because both read as an advertising hero shot and make the pack render oversized.",
+  "must_show": [
+    "enough visible milk in any glass (liquid, a film on the sides, a ring at the base) for it to read as a milk glass in a photograph, whether the glass is full, half or already drained",
+    "a pour seen clearly: milk visibly streaming from the pack's opened corner",
+    "the pack's front label toward the camera as far as the action allows, and only one pack in the image"
+  ],
+  "pack_in_scene": "only when it is in use",
+  "imagery_style": "photorealistic food and lifestyle photography: full-frame DSLR look, 50mm lens, shallow depth of field, warm natural light; illustration, when used, carries a warm storybook or folk-art feel in the brand palette",
+  "buying_unit": "a household",
+  "language_mix": "English with Hinglish where natural",
+  "people_setting": "An authentic family setting: a family in a warm home, a mother and children at the table, shopkeepers at a neighbourhood shop, real locations in natural light, premium and wholesome.",
+  "sound_world": "Warm, wholesome and uplifting. Gentle instrumentation (warm strings, a solo bansuri flute over a soft tanpura drone, light tabla), no vocals and no lyrics. A warm female voice, Telugu-accented English by default.",
+  "statutory_marks": ["veg mark", "FSSAI mark", "FSSAI licence number"],
+  "meeting_points": [
+    "neighbourhood shop (kirana, general trade)",
+    "modern trade aisle",
+    "mall atrium",
+    "office complex",
+    "apartment society (RWA)",
+    "sabzi mandi",
+    "weekly haat",
+    "temple or festival ground",
+    "transit hub",
+    "college campus",
+    "residential doorstep"
+  ],
+  "routes": [
+    {"route": "traditional retail (the neighbourhood shop)", "share_of_sales": "", "who_buys_there": "the daily buyer at the counter"},
+    {"route": "home delivery and subscription (including milk booths)", "share_of_sales": "", "who_buys_there": "households that want one decision honoured for months"},
+    {"route": "modern retail", "share_of_sales": "", "who_buys_there": "the planned shopper on a trip"},
+    {"route": "e-commerce", "share_of_sales": "", "who_buys_there": ""},
+    {"route": "quick commerce", "share_of_sales": "", "who_buys_there": "less disruptive here than in snacks or beverages"}
+  ],
+  "trade_terms": [
+    {"term": "healthy annual distributor ROI, dairy", "value": "roughly 25-40%", "source": "Published Indian FMCG distribution benchmarks (distributor margin and ROI guides, 2026)"},
+    {"term": "healthy annual distributor ROI, Indian FMCG overall", "value": "roughly 20-35%", "source": "Published Indian FMCG distribution benchmarks (distributor margin and ROI guides, 2026)"}
+  ],
+  "worst_case": "A food-safety recall under FSSAI: a contaminated or adulterated batch. The regulator is notified within 24 hours, the recall is classed I, II or III, and a public notice follows for Class I. The plant and the cold chain act first.",
+  "place_notes": [
+    {"state": "Telangana", "how_people_buy_use": "daily milk from the neighbourhood shop or a delivery round; loose milk from the dairy is the real alternative", "register": "Telugu with English", "festivals_seasons": "Sankranti", "references": ""},
+    {"state": "Andhra Pradesh", "how_people_buy_use": "daily milk from the neighbourhood shop or a delivery round; loose milk from the dairy is the real alternative", "register": "Telugu with English", "festivals_seasons": "Sankranti", "references": ""}
+  ],
+  "calendar_moments": [
+    {"moment": "Sankranti", "when": "January", "where_it_matters": "Andhra Pradesh and Telangana"},
+    {"moment": "Pongal", "when": "January", "where_it_matters": "Tamil Nadu"},
+    {"moment": "Diwali", "when": "October to November", "where_it_matters": "a gifting window for dairy and daily-strength messaging"}
+  ]
+}

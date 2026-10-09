@@ -9524,7 +9524,7 @@
               <sc-if value="{{ fd.hasSuggestion }}" hint-placeholder-val="{{ false }}">
                 <div style="background:#F4F7FC; border:1px solid #D6E0F0; border-radius:12px; padding:12px 14px; margin-top:11px;">
                   <div style="font-size:11px; font-weight:800; letter-spacing:0.05em; text-transform:uppercase; color:#2E5EA6; margin-bottom:6px;">{{ fd.suggestFrom }}</div>
-                  <div style="font-size:13px; line-height:1.55; color:#41505F; margin-bottom:10px; text-wrap:pretty;">{{ fd.suggestion }}</div>
+                  <div style="font-size:13px; line-height:1.55; color:#41505F; margin-bottom:10px; text-wrap:pretty; white-space:pre-line;">{{ fd.suggestion }}</div>
                   <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
                     <span onClick="{{ fd.accept }}" style="cursor:pointer; font-size:12.5px; font-weight:700; color:#17325E; background:#fff; border:1px solid #C9CEDA; border-radius:9px; padding:7px 13px;">Use this, then correct it</span>
                     <span onClick="{{ fd.dismiss }}" style="cursor:pointer; font-size:12.5px; font-weight:700; color:#6B7280; text-decoration:underline;">Not this</span>
@@ -23850,7 +23850,8 @@ class Component extends DCLogic {
     const fieldState = ctx.fieldState, derivable = ctx.derivable, dismissed = ctx.dismissed;
     const asText = (v) => {
       if (v === undefined || v === null) return '';
-      if (Array.isArray(v)) return v.map(x => typeof x === 'string' ? x : (x.claim || '')).join(String.fromCharCode(10));
+      // A rows answer (a product line, a route, a place) has no `claim`; show its filled cells so a suggested row can be read before it is accepted.
+      if (Array.isArray(v)) return v.map(x => typeof x === 'string' ? x : (x.claim || Object.values(x || {}).filter(Boolean).join(' · '))).join(String.fromCharCode(10));
       return String(v);
     };
     const filled = (key) => {
@@ -23896,7 +23897,7 @@ class Component extends DCLogic {
             unprovenNote: rowUnproven + (rowUnproven === 1 ? ' claim has' : ' claims have')
               + ' no proof. Kept, and the model may allude to them but never state them as fact.',
             hasSuggestion: showSug,
-            suggestFrom: f.derives_from ? ('derived from the ' + f.derives_from) : 'derived from work already done',
+            suggestFrom: fs.suggestion_from ? ('from ' + fs.suggestion_from) : (f.derives_from ? ('derived from the ' + f.derives_from) : 'derived from work already done'),
             suggestion: asText(sug),
             accept: this.acceptSuggestion(f.key, sug), dismiss: this.dismissSuggestion(f.key),
           };

@@ -753,6 +753,46 @@ def _has(b: dict, key: str) -> bool:
     return bool(str(v or "").strip())
 
 
+NUANCE_KEYS = ("product_in_use", "must_show", "pack_in_scene", "imagery_style", "buying_unit", "lines", "routes",
+               "meeting_points", "trade_terms", "statutory_marks", "worst_case", "place_notes", "language_mix",
+               "calendar_moments", "people_setting", "sound_world")
+SEED_ANSWERS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "seeds", "answers")
+SEED_ANSWERS_FROM = "the reviewed answers file for this brand, drafted from what the studio used to assume"
+
+
+def seed_answers(b: dict | None) -> dict:
+    """Reviewed starting answers to the nuance questions for one brand, from `seeds/answers/<brand-slug>.json`.
+
+    A DATA file, not code: it is how a brand whose nuance used to live inside prompts gets that nuance back as
+    answers its owner can read, correct and accept. Suggestions only: the profile screen offers each one with
+    Accept/Dismiss, and nothing reaches a prompt until it is accepted and saved. Keys that are not nuance
+    questions (the file's own notes start with an underscore) are ignored, and values are normalised the way
+    a save would store them, so what is offered is exactly what accepting it would keep.
+    """
+    name = str((b or {}).get("name") or "").strip()
+    if not name:
+        return {}
+    try:
+        with open(os.path.join(SEED_ANSWERS_DIR, tenancy.slug(name) + ".json"), encoding="utf-8") as fh:
+            data = json.load(fh)
+    except (OSError, ValueError):
+        return {}
+    if not isinstance(data, dict):
+        return {}
+    out: dict = {}
+    for k in NUANCE_KEYS:
+        v = data.get(k)
+        if k in ROW_FIELDS:
+            v = _rows(v, SPEC_BY_KEY[k]["cols"])
+        elif k in LIST_FIELDS:
+            v = _listify(v)
+        else:
+            v = str(v or "").strip()
+        if v:
+            out[k] = v
+    return out
+
+
 def derivable(b: dict | None, house: dict | None = None, brief: dict | None = None) -> dict:
     """What could be pre-filled from work already done. Suggestions only — never written.
 
@@ -793,6 +833,10 @@ def derivable(b: dict | None, house: dict | None = None, brief: dict | None = No
         comp = (brief or {}).get("competitors")
         if comp:
             out.setdefault("competitors", comp if isinstance(comp, list) else [str(comp)])
+    # Reviewed starting answers for this brand, when a file for it exists (see `seed_answers`). Offered like
+    # any other derived value: shown with Accept/Dismiss, never saved, never read by a prompt until accepted.
+    for k, v in seed_answers(b).items():
+        out.setdefault(k, v)
     return {k: v for k, v in out.items() if v}
 
 
@@ -818,6 +862,8 @@ def readiness(b: dict | None = None, house: dict | None = None,
         if not set_ and k in sug:
             row["suggestion"] = sug[k]
             row["state"] = "derivable"
+            if k in NUANCE_KEYS:
+                row["suggestion_from"] = SEED_ANSWERS_FROM
         else:
             row["state"] = "set" if set_ else "missing"
         fields.append(row)
