@@ -997,6 +997,134 @@ def market_share_of(name_or_doc) -> dict:
 SIGNOFF_LINE_RE = re.compile(r"^\s*(?:the\s+|our\s+)?(?:brand\s+|master\s+|standing\s+)?(?:tag[\s-]?line|sign[\s-]?off(?:\s+line)?|pay[\s-]?off(?:\s+line)?|slogan|end[\s-]?line|line)\b", re.I)
 
 
+# --- the nuance questions, as prompt lines (NUANCE_LAYER_PLAN.md, Step 2) --------------------------------
+#
+# Each answered question becomes ONE labelled line (a rows question becomes a short list), after the
+# category-aware half. An unanswered question produces nothing at all, so a brand with no answers gets
+# exactly the text it got before. Three rules keep the page's own line surgery working (`brandPreamble`
+# drops lines starting `TONE:` and rewrites the `MANDATORY ON EVERY PIECE:` line by prefix):
+#   - every answer is collapsed to a single line, so a multi-line answer cannot start a line with one of
+#     those prefixes;
+#   - no label here starts with either prefix;
+#   - the three lines about HOW THE CATEGORY LOOKS (imagery, people and settings, sound) all start
+#     `HOUSE STYLE`, so a provocation, which breaks the category's conventions, can drop them as it drops TONE.
+# `worst_case` and `trade_terms` are deliberately NOT rendered here: they only matter to PR and to the trade
+# sheet, which read them directly (Steps 5 and 6), and every other prompt would only carry the noise.
+
+_UNIT_RULE = {
+    "a household": "so write to the household, the family together, not one member alone",
+    "one person": "so write to the individual's own choice, not to a family around a table",
+    "either": "so decide per audience whether it is a household or one person, and do not default to a family",
+}
+_PACK_RULE = {
+    "always": "the pack is part of the picture; show it",
+    "only when it is in use": "show a pack only when it is in use in the scene, never as a prop beside it",
+    "rarely": "leave the pack out unless the piece is about the pack itself",
+    "not a packed product": "there is no pack; never invent a bottle, box, bag, label or tag",
+}
+
+
+def _one_line(v) -> str:
+    return " ".join(str(v or "").split())
+
+
+def _rows_of(b: dict, key: str) -> list[dict]:
+    return [r for r in (b.get(key) or []) if isinstance(r, dict) and any(_one_line(x) for x in r.values())]
+
+
+def _place_rows(b: dict) -> list[dict]:
+    """Place notes with the state resolved to the real vocabulary at READ time (the stored text stays as typed)."""
+    out = []
+    for r in _rows_of(b, "place_notes"):
+        raw = _one_line(r.get("state"))
+        if not raw:
+            continue
+        code = geo.resolve_state(raw)
+        bits = [f"{lab}: {_one_line(r.get(k))}" for k, lab in
+                (("how_people_buy_use", "how people buy and use it"), ("register", "how they speak about it"),
+                 ("festivals_seasons", "festivals and seasons"), ("references", "safe local references"))
+                if _one_line(r.get(k))]
+        if bits:
+            out.append({"code": code or "", "label": geo.state_label(code) if code else raw, "text": "; ".join(bits)})
+    return out
+
+
+def nuance_lines(b: dict) -> list[str]:
+    """The answered nuance questions as prompt lines, in a fixed order. Empty when nothing is answered."""
+    out: list[str] = []
+    unit = _one_line(b.get("buying_unit"))
+    if unit in _UNIT_RULE:
+        out.append(f"BOUGHT FOR: {unit} — {_UNIT_RULE[unit]}.")
+    lines_ = _rows_of(b, "lines")
+    if lines_:
+        rows = []
+        for r in lines_:
+            name = _one_line(r.get("line")) or "a line"
+            bits = [f"{lab} {_one_line(r.get(k))}" for k, lab in
+                    (("who_uses", "used by"), ("who_decides_pays", "decided and paid for by"),
+                     ("how_bought", "bought"), ("where_sold", "sold"), ("how_used", "used")) if _one_line(r.get(k))]
+            rows.append(f"  - {name}" + (": " + "; ".join(bits) if bits else ""))
+        out.append("PRODUCT LINES — they behave differently, so write for the line a piece is about, not "
+                   "for the brand's average:\n" + "\n".join(rows))
+    routes = []
+    for r in _rows_of(b, "routes"):
+        name = _one_line(r.get("route"))
+        if not name:
+            continue
+        extra = [x for x in (f"{_one_line(r.get('share_of_sales'))} of sales" if _one_line(r.get("share_of_sales")) else "",
+                             f"buyers there: {_one_line(r.get('who_buys_there'))}" if _one_line(r.get("who_buys_there")) else "") if x]
+        routes.append(name + (f" ({'; '.join(extra)})" if extra else ""))
+    if routes:
+        out.append("ROUTES TO MARKET: " + "; ".join(routes) + ". Do not write for a route that is not on this list.")
+    meet = [_one_line(x) for x in (b.get("meeting_points") or []) if _one_line(x)]
+    if meet:
+        out.append("WHERE PEOPLE MEET THE BRAND IN PERSON: " + ", ".join(meet) + ".")
+    if _one_line(b.get("product_in_use")):
+        out.append(f"HOW IT IS USED OR HANDLED: {_one_line(b['product_in_use'])} — show and describe it being "
+                   f"handled this way, in every image and film, never in a gesture borrowed from another category.")
+    show = [_one_line(x) for x in (b.get("must_show") or []) if _one_line(x)]
+    if show:
+        out.append("MUST BE VISIBLE IN ANY IMAGE OF IT: " + "; ".join(show) + ".")
+    pack = _one_line(b.get("pack_in_scene"))
+    if pack in _PACK_RULE:
+        out.append(f"PACK IN THE PICTURE: {pack} — {_PACK_RULE[pack]}.")
+    marks = [_one_line(x) for x in (b.get("statutory_marks") or []) if _one_line(x)]
+    if marks:
+        out.append("MARKS AND DECLARATIONS THAT MUST APPEAR ON PACK AND IN PRINT: " + "; ".join(marks) + ".")
+    if _one_line(b.get("language_mix")):
+        out.append(f"LANGUAGE OF THE WORK: {_one_line(b['language_mix'])}.")
+    places = _place_rows(b)
+    if places:
+        shown, used = [], 0
+        for p in places:
+            row = f"  - {p['label']}: {p['text']}"
+            if shown and used + len(row) > 1800:
+                break
+            shown.append(row)
+            used += len(row)
+        out.append("PLACE BY PLACE — write for each place's own habits and idiom, not a national one:\n"
+                   + "\n".join(shown)
+                   + (f"\n  (+{len(places) - len(shown)} more places on file)" if len(shown) < len(places) else ""))
+    moments = []
+    for r in _rows_of(b, "calendar_moments"):
+        name = _one_line(r.get("moment"))
+        if not name:
+            continue
+        extra = [x for x in (_one_line(r.get("when")), f"matters in {_one_line(r.get('where_it_matters'))}" if _one_line(r.get("where_it_matters")) else "") if x]
+        moments.append(name + (f" ({'; '.join(extra)})" if extra else ""))
+    if moments:
+        out.append("DATED MOMENTS THAT MATTER: " + "; ".join(moments) + ".")
+    for key, label in (("imagery_style", "IMAGERY"), ("people_setting", "PEOPLE AND SETTINGS"), ("sound_world", "SOUND")):
+        if _one_line(b.get(key)):
+            out.append(f"HOUSE STYLE, {label}: {_one_line(b[key])}.")
+    return out
+
+
+# Dropped alongside TONE when a piece is written from a provocation: these describe how the category
+# conventionally looks and sounds, which is exactly what a provocation sets out to break.
+HOUSE_STYLE_FIELDS = ("imagery_style", "people_setting", "sound_world")
+
+
 def voice_block(b: dict | None, *, brief_brand: str = "", skip_mandatories: bool = False, film: bool = False) -> str:
     """The grounding paragraph, built from a profile instead of hardcoded.
 
@@ -1108,6 +1236,8 @@ def voice_block(b: dict | None, *, brief_brand: str = "", skip_mandatories: bool
                      f"unbranded. Argue against this rather than against the other brands.")
     if b.get("price_tier"):
         lines.append(f"PRICE TIER: {b['price_tier']} — how much the work has to justify.")
+    # The nuance questions (Step 2): nothing at all for a brand that has answered none of them.
+    lines.extend(nuance_lines(b))
 
     cols = {k: v for k, v in (b.get("colours") or {}).items() if v}
     if cols:

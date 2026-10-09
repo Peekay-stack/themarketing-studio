@@ -635,7 +635,7 @@ def system_for(messages: list[dict], brand: dict | None = None, brand_mode: str 
     # the brand's guardrails stay in full, its usual TONE does not (the provocation's stance replaces it), the film instructions are the
     # provocation-aware ones, and the recurring character is dropped when the provocation casts objects, animation or nobody.
     # Not on a brief (upstream of any execution) and never on an Independent piece. With none named every line below is as it was.
-    voice_b = {**b, "tone": ""} if (prov and isinstance(b, dict)) else b
+    voice_b = {**b, "tone": "", **{k: "" for k in brandprofile.HOUSE_STYLE_FIELDS}} if (prov and isinstance(b, dict)) else b
     if prov and (prov.get("film") or {}).get("cast_approach") in ("objects", "animated", "none"):
         character_block = ""
     surface_text = VIDEO_PROVOCATION if (prov and surface is VIDEO) else surface

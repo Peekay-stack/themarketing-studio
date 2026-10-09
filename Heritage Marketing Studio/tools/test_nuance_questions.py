@@ -114,11 +114,8 @@ expect("each new question appears in its group", all(k in by_group.get(GROUP_OF[
 expect("none of the new questions lands in 'Sharpens the work'", not any(k in by_group.get("Sharpens the work", []) for k in NEW_ALL))
 expect("the four new groups are present", all(n in by_group for n in ("How the product is shown", "Who buys it and where it is met", "Proof and marks", "Look and sound")))
 
-print("Step 1 guarantee: no prompt changes yet")
-base = bp.put({"name": "Twin Brand", "category": "Cement", "market": "India"})
-plain = bp.voice_block(base)
-twin = bp.voice_block(bp.put({**answers, "name": "Twin Brand", "category": "Cement", "market": "India"}, base["id"]))
-expect("voice_block ignores the new answers (they are stored, not consumed, until Step 2)", plain == twin)
+# (Step 1 also pinned "voice_block ignores the new answers". From Step 2 the answers ARE consumed; that is
+# pinned in tools/test_nuance_prompt_lines.py, and an unanswered brand's prompts by tools/golden_prompts.py.)
 
 print()
 if failures:

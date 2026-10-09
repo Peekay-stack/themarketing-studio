@@ -12481,7 +12481,8 @@ class Component extends DCLogic {
     const b = this.activeBrand();
     let voice = this.brandVoiceText(b);
     // A film written from a provocation departs from the brand's usual tone (the provocation's stance replaces it); the guardrails stay.
-    if (dropTone) voice = String(voice || '').split(String.fromCharCode(10)).filter(l => !/^\s*TONE\s*:/i.test(l)).join(String.fromCharCode(10));
+    // The HOUSE STYLE lines (how the category conventionally looks and sounds) go with it: a provocation breaks those conventions.
+    if (dropTone) voice = String(voice || '').split(String.fromCharCode(10)).filter(l => !/^\s*(?:TONE\s*:|HOUSE STYLE\b)/i.test(l)).join(String.fromCharCode(10));
     if (film) voice = this.filmVoice(voice);
     if (!b || !(b.name || '').trim() || !String(voice || '').trim()) return null;
     return 'You are ' + (role || 'a senior marketer') + ' for ' + b.name + '.' + String.fromCharCode(10)
