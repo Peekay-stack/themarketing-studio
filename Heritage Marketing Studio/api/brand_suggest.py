@@ -109,14 +109,49 @@ def _one_line(v, n: int = 0) -> str:
     return t[:n] if n else t
 
 
-def pending_keys(b: dict, include_seeded: bool = False) -> list[str]:
-    """Nuance questions this brand has not answered (and, unless asked, has no reviewed starting answer for)."""
-    seeded = set() if include_seeded else set(bp.seed_answers(b))
-    return [k for k in bp.NUANCE_KEYS if k not in NOT_SUGGESTED and not bp._has(b, k) and k not in seeded]
-
-
 def _state_labels(b: dict) -> list[str]:
     return [geo.state_label(c) for c in (b.get("states") or []) if geo.resolve_state(c)]
+
+
+def _row_states(rows) -> set:
+    """The real state codes a place-notes list already has an informative row for (a row naming only a state does not count)."""
+    out = set()
+    for r in rows or []:
+        if isinstance(r, dict) and any(_one_line(v) for k, v in r.items() if k != "state"):
+            code = geo.resolve_state(_one_line(r.get("state")))
+            if code:
+                out.add(code)
+    return out
+
+
+def uncovered_states(b: dict, include_seeded: bool = False) -> list[str]:
+    """The brand's listed states that have no place note yet, as labels. A state covered by an answered row, or (unless
+    `include_seeded`) by a row in the reviewed starting answers, is not asked again: place notes are the one question whose
+    answer GROWS when the market does, so the draft covers only what is missing and never repeats what is already there."""
+    have = _row_states(b.get("place_notes"))
+    if not include_seeded:
+        have |= _row_states(bp.seed_answers(b).get("place_notes"))
+    return [geo.state_label(c) for c in (b.get("states") or []) if geo.resolve_state(c) and geo.resolve_state(c) not in have]
+
+
+def pending_keys(b: dict, include_seeded: bool = False) -> list[str]:
+    """Nuance questions still worth drafting: unanswered, with no reviewed starting answer (unless asked). Place notes are
+    different: pending whenever a listed state has no row (see `uncovered_states`), even if some rows already exist."""
+    seeded = set() if include_seeded else set(bp.seed_answers(b))
+    out = []
+    for k in bp.NUANCE_KEYS:
+        if k in NOT_SUGGESTED:
+            continue
+        if k == "place_notes":
+            if _state_labels(b):
+                if uncovered_states(b, include_seeded):
+                    out.append(k)
+            elif not bp._has(b, k) and k not in seeded:
+                out.append(k)                      # no states listed: pending only so the group can say why it is skipped
+            continue
+        if not bp._has(b, k) and k not in seeded:
+            out.append(k)
+    return out
 
 
 def groups_view(b: dict | None) -> list[dict]:
@@ -209,8 +244,9 @@ def _format_of(key: str, states: list[str]) -> str:
     return "a short text of at most two sentences"
 
 
-def build_prompt(b: dict, keys: list[str], context: str = "", brief: str = "") -> str:
-    states = _state_labels(b)
+def build_prompt(b: dict, keys: list[str], context: str = "", brief: str = "", place_states: list[str] | None = None) -> str:
+    # place notes are asked only for the states that have none yet (`uncovered_states`), never for the whole market again
+    states = place_states if place_states is not None else uncovered_states(b)
     qs = []
     for i, k in enumerate(keys, 1):
         qs.append(f'{i}. "{k}": {_spec(k)["ask"]}\n   What it is after: {HINT[k]}\n   Value format: {_format_of(k, states)}')
@@ -299,7 +335,8 @@ def suggest_group(b: dict, group: str, context: str = "", include_seeded: bool =
         keys.append(k)
     if not keys:
         return {"suggestions": {}, "unknown": {}, "skipped": skipped, "error": ""}
-    prompt = build_prompt(b, keys, context, brief_text(b))
+    place_states = uncovered_states(b, include_seeded)
+    prompt = build_prompt(b, keys, context, brief_text(b), place_states)
     data, err = jsonout.ask_json(prompt, max_tokens=700 + 650 * len(keys))
     if data is None:
         return {"suggestions": {}, "unknown": {}, "skipped": skipped, "error": err or "no reply"}
@@ -309,7 +346,7 @@ def suggest_group(b: dict, group: str, context: str = "", include_seeded: bool =
         a = answers.get(k) if isinstance(answers, dict) else None
         if not isinstance(a, dict):
             continue
-        val = _clean_value(k, a.get("value"), states)
+        val = _clean_value(k, a.get("value"), place_states if k == "place_notes" else states)
         conflict = ""
         if k == "place_notes" and isinstance(val, list):
             # The real run once returned two rows for the same state, one of them describing another state. Which one is right

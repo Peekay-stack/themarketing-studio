@@ -70,3 +70,12 @@ Page-shaped save through `/brand-fields` (lists as arrays, rows as arrays of dic
 5. **A fourth buying-unit option, "a business or trade buyer"**, with its own line ("write to a professional buying for the job or the business...") and the model's draft matched to it. The question wording was widened to say so. The strategy scope keeps this line.
 
 Committed together, not separately, because the edits interleave in `brandprofile.py`, `app.dc.html` and the test files. Verified: full suite, golden 70 of 70, `selfcheck` 1,367 calls, `checkfe`, `partials verify`, the real page (scoped prompts on the real answered voice, the four options, the caveat, the 429 stop, both resets), and the tenant unchanged.
+
+## Follow-up (9 Oct): the wider Heritage market, and the languages box
+
+The owner widened Heritage's market (Karnataka, Tamil Nadu, Mumbai, Pune, Delhi NCR, Haryana) and found the languages list empty. Two gaps showed up and were fixed:
+
+- **Place-note drafts now cover the states that have none yet.** `brand_suggest.uncovered_states` compares the listed states with the rows already answered and the rows in the reviewed starting answers (matched by real state, so a name and a code count the same, and a row naming only a state counts for nothing). The model is asked, and allowed to answer, only for the rest, and it is shown the notes already written. In the page, a place-notes draft combines with the starting rows when nothing is saved yet (one box, "from the reviewed answers file..., plus 5 places with no note yet, drafted by the model...") and is added to saved rows when there are some ("adds to the places you have"), never replacing them and never doubling a place. Before this, the starting answers hid the draft, so Karnataka, Tamil Nadu, Maharashtra, Delhi and Haryana could never have been drafted.
+- **The languages box accepts names as well as codes** (`geo.resolve_language`): Telugu, Kannada, Tamil, Marathi, Hindi, English save as te, kn, ta, mr, hi, en, spellings such as Bangla or Oriya resolve, and anything else is kept in `languages_unresolved` rather than dropped. The question says so and shows an example. A test fails if `geo.LANGUAGE_NAMES` and `pr.LANGUAGES` disagree.
+
+Not done, on purpose: Heritage's starting language mix still says "English with Hinglish where natural" (today's behaviour), to be changed once the owner confirms the languages. Cities such as Mumbai and Pune still do not resolve to their state in the states box (the same class of trap; a candidate next fix).

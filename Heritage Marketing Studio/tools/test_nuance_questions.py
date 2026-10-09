@@ -103,6 +103,21 @@ expect("an unknown key is ignored", "not_a_question" not in junk)
 rows_blank = bp.put({"name": "Probe Brand", "lines": [{"line": "", "who_uses": ""}]}, b["id"])
 expect("a blank row is dropped", rows_blank["lines"] == [])
 
+print("Languages: names or codes")
+import geo as _geo   # noqa: E402
+import pr as _pr     # noqa: E402
+expect("the names table holds exactly the studio's thirteen codes", set(_geo.LANGUAGE_NAMES) == set(_geo.language_codes()), set(_geo.LANGUAGE_NAMES) ^ set(_geo.language_codes()))
+expect("and agrees with pr.LANGUAGES on every label (one truth, guarded)", all(_pr.LANGUAGES[c]["label"] == n for c, n in _geo.LANGUAGE_NAMES.items()),
+       [c for c, n in _geo.LANGUAGE_NAMES.items() if _pr.LANGUAGES.get(c, {}).get("label") != n])
+expect("a code, a name, any case and spacing, and an alternative spelling all resolve (exact)",
+       [_geo.resolve_language(x) for x in ("te", "Telugu", "  KANNADA ", "Tamil", "english", "Bangla", "Oriya", "Panjabi")] == ["te", "te", "kn", "ta", "en", "bn", "or", "pa"],
+       [_geo.resolve_language(x) for x in ("te", "Telugu", "  KANNADA ", "Tamil", "english", "Bangla", "Oriya", "Panjabi")])
+expect("anything else resolves to nothing, never a guess", [_geo.resolve_language(x) for x in ("Klingon", "", None, "Hinglish", "tel")] == ["", "", "", "", ""])
+lb = bp.put({"name": "Lang Probe", "languages": ["Telugu", "Kannada", "ta", "  Marathi ", "english", "Bangla", "Klingon", "Telugu"]})
+expect("typed names are saved as codes, de-duplicated, in the order given", lb["languages"] == ["te", "kn", "ta", "mr", "en", "bn"], lb["languages"])
+expect("what is not a language is kept as typed in languages_unresolved, not dropped", lb["languages_unresolved"] == ["Klingon"], lb["languages_unresolved"])
+expect("the question says names or codes work, and gives an example", "Names or codes both work" in bp.SPEC_BY_KEY["languages"]["ask"] and "Telugu" in bp.SPEC_BY_KEY["languages"].get("placeholder", ""))
+
 print("Readiness and groups")
 rd = bp.readiness(bp.load(b["id"]))
 expect("readiness carries the new questions", all(any(f["key"] == k for f in rd["fields"]) for k in NEW_ALL))

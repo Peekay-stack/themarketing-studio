@@ -195,6 +195,33 @@ saved = client.post("/brand-fields", json={"brand": cement["id"], "worst_case": 
 expect("saving returns the groups too, and the answered question has left its group",
        "worst_case" not in next(g for g in saved["suggest_groups"] if g["name"] == "Proof and marks")["keys"], saved.get("suggest_groups"))
 
+print("Place notes cover the states that have none yet")
+H = bp.put({"name": "Heritage Foods", "category": "Dairy", "states": ["ap", "tg"]})
+expect("Heritage with its two seeded states has nothing left to draft for place notes", bs.uncovered_states(H) == [] and "place_notes" not in bs.pending_keys(H), bs.uncovered_states(H))
+H = bp.put({"name": "Heritage Foods", "states": ["ap", "tg", "ka", "tn", "mh", "dl", "hr"]}, H["id"])
+expect("once the market is wider, only the states with no note are left", bs.uncovered_states(H) == ["Karnataka", "Tamil Nadu", "Maharashtra", "Delhi", "Haryana"], bs.uncovered_states(H))
+expect("and place notes are pending again, even though the starting answers cover two states", "place_notes" in bs.pending_keys(H))
+expect("the calibration run (include_seeded) asks for all seven", len(bs.uncovered_states(H, include_seeded=True)) == 7)
+H2 = bp.put({"name": "Heritage Foods", "place_notes": [{"state": "Karnataka", "how_people_buy_use": "bought daily", "register": "", "festivals_seasons": "", "references": ""},
+                                                       {"state": "tn", "how_people_buy_use": "bought daily"},
+                                                       {"state": "Maharashtra", "how_people_buy_use": "", "register": "", "festivals_seasons": "", "references": ""}]}, H["id"])
+expect("an answered row covers its state, whether typed as a name or a code; a row that only names a state covers nothing",
+       bs.uncovered_states(H2) == ["Maharashtra", "Delhi", "Haryana"], bs.uncovered_states(H2))
+pp = bs.build_prompt(H2, ["place_notes"])
+seg = pp.split("must be exactly one of:")[1].split(".")[0]
+expect("the prompt allows only the uncovered states", all(s in seg for s in ("Maharashtra", "Delhi", "Haryana")) and not any(s in seg for s in ("Karnataka", "Tamil Nadu", "Telangana")), seg)
+expect("the prompt still shows the model the notes already written (so it does not contradict them)", "Karnataka: how people buy and use it: bought daily" in pp, pp[-600:])
+REPLY["data"] = {"answers": {"place_notes": {"value": [{"state": "Telangana", "how_people_buy_use": "x"}, {"state": "Karnataka", "how_people_buy_use": "y"},
+                                                       {"state": "Delhi", "how_people_buy_use": "z"}], "basis": "knowledge", "unknowns": ""}}}
+rpl = bs.suggest_group(H2, "Place, language and occasions")
+expect("a draft keeps only uncovered states: a covered one (Telangana, Karnataka) is dropped even if the model returns it",
+       [r["state"] for r in rpl["suggestions"]["place_notes"]["value"]] == ["Delhi"], rpl["suggestions"].get("place_notes"))
+expect("the group is offered while a state is uncovered", "place_notes" in next(g for g in bs.groups_view(H2) if g["name"] == "Place, language and occasions")["keys"])
+full = bp.put({"name": "Heritage Foods", "place_notes": [{"state": s, "how_people_buy_use": "x"} for s in ("Karnataka", "tn", "Maharashtra", "Delhi", "Haryana")]}, H["id"])
+expect("when every listed state has a row, place notes are no longer drafted and the group drops it",
+       "place_notes" not in bs.pending_keys(full) and all("place_notes" not in g["keys"] for g in bs.groups_view(full)), bs.pending_keys(full))
+bp.put({"name": "Heritage Foods", "states": ["ap", "tg"], "place_notes": []}, H["id"])
+
 print("The hourly brake")
 expect("the default is 20 group requests an hour", bs.CALLS_PER_HOUR == 20, bs.CALLS_PER_HOUR)
 bs._calls.clear()

@@ -328,6 +328,29 @@ def language_codes() -> tuple[str, ...]:
     return tuple(sorted({c for v in STATES.values() for c in (v.get("languages") or [])}))
 
 
+# The names people type for those codes. `pr.LANGUAGES` carries the same thirteen with their native names; a test
+# (`tools/test_nuance_questions.py`) fails if the two disagree, so there is still one truth about what the studio holds.
+LANGUAGE_NAMES: dict[str, str] = {
+    "as": "Assamese", "bn": "Bengali", "en": "English", "gu": "Gujarati", "hi": "Hindi", "kn": "Kannada",
+    "ml": "Malayalam", "mr": "Marathi", "or": "Odia", "pa": "Punjabi", "ta": "Tamil", "te": "Telugu", "ur": "Urdu",
+}
+_LANGUAGE_ALIASES = {"bangla": "bn", "oriya": "or", "panjabi": "pa", "kannad": "kn"}
+
+
+def resolve_language(raw) -> str:
+    """A language code for whatever was typed: the code itself ('te'), or the name ('Telugu', 'telugu '), or a common
+    alternative spelling ('Bangla', 'Oriya'). '' when it is none of the studio's thirteen."""
+    t = " ".join(str(raw or "").split()).lower()
+    if not t:
+        return ""
+    if t in LANGUAGE_NAMES:
+        return t
+    for code, name in LANGUAGE_NAMES.items():
+        if t == name.lower():
+            return code
+    return _LANGUAGE_ALIASES.get(t, "")
+
+
 def language_gaps(keys: list[str] | None = None) -> list[dict]:
     """States in scope whose principal language the studio cannot write in.
 

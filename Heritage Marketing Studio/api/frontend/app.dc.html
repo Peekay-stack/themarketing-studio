@@ -23627,6 +23627,13 @@ class Component extends DCLogic {
   acceptSuggestion = (key, val) => () =>
     this.setState(s => ({ bfVals: { ...(s.bfVals||{}), [key]: val },
       bfDismissed: { ...(s.bfDismissed||{}), [key]: true }, bfDirty:true }));
+  // Rows drafted for places with no note yet are ADDED to the rows already saved (a place already there is never doubled).
+  addSuggestedRows = (key, rows) => () => this.setState(s => {
+    const cur = (s.bfVals || {})[key] || [], k = (r) => String((r && r.state) || '').trim().toLowerCase();
+    const have = new Set(cur.map(k));
+    return { bfVals: { ...(s.bfVals||{}), [key]: cur.concat(rows.filter(r => !have.has(k(r)))) },
+      bfDismissed: { ...(s.bfDismissed||{}), [key]: true }, bfDirty:true };
+  });
   dismissSuggestion = (key) => () =>
     this.setState(s => ({ bfDismissed: { ...(s.bfDismissed||{}), [key]: true } }));
 
@@ -23904,9 +23911,18 @@ class Component extends DCLogic {
           const ms = (ctx.suggested || {})[f.key];
           const state0 = fs.state || (filled(f.key) ? 'set' : (derivable[f.key] !== undefined ? 'derivable' : 'missing'));
           const state = (ms && state0 === 'missing') ? 'drafted' : state0;
-          const sug = fs.suggestion !== undefined ? fs.suggestion : (derivable[f.key] !== undefined ? derivable[f.key] : (ms ? ms.value : undefined));
+          let sug = fs.suggestion !== undefined ? fs.suggestion : (derivable[f.key] !== undefined ? derivable[f.key] : (ms ? ms.value : undefined));
+          // Place notes are the one question whose answer grows with the market. The server drafts only the states with no note yet, so a draft
+          // COMBINES with the reviewed starting rows, or is ADDED to rows already saved; it never replaces what is there.
+          const isPlace = f.key === 'place_notes';
+          const stKey = (r) => String((r && r.state) || '').trim().toLowerCase();
+          const haveSt = new Set(((isPlace && this.bfVal(f.key)) || []).map(stKey));
+          const placeAdd = (isPlace && ms && Array.isArray(ms.value)) ? ms.value.filter(r => !haveSt.has(stKey(r))) : [];
+          // Once the field already holds rows, the starting suggestion is spent (it was accepted); only the new places are on offer.
+          const placeBase = filled(f.key) ? [] : (Array.isArray(fs.suggestion) ? fs.suggestion : (Array.isArray(derivable[f.key]) ? derivable[f.key] : []));
+          if (placeAdd.length) { const baseSt = new Set(placeBase.map(stKey)); sug = placeBase.concat(placeAdd.filter(r => !baseSt.has(stKey(r)))); }
           const basisWord = ms ? ({ profile: 'the profile or brief', context: 'the context you pasted', knowledge: 'the model’s general knowledge, so please confirm it' }[ms.basis] || 'the model’s general knowledge, so please confirm it') : '';
-          const showSug = sug !== undefined && sug !== null && sug !== '' && !dismissed[f.key] && !filled(f.key);
+          const showSug = sug !== undefined && sug !== null && sug !== '' && !dismissed[f.key] && (!filled(f.key) || placeAdd.length > 0);
           const cols = f.cols || [];
           const rows = f.kind === 'rows' ? (this.bfVal(f.key) || []) : [];
           const rowUnproven = f.kind === 'rows'
@@ -23940,12 +23956,15 @@ class Component extends DCLogic {
             unprovenNote: rowUnproven + (rowUnproven === 1 ? ' claim has' : ' claims have')
               + ' no proof. Kept, and the model may allude to them but never state them as fact.',
             hasSuggestion: showSug,
-            suggestFrom: fs.suggestion_from ? ('from ' + fs.suggestion_from)
+            suggestFrom: placeAdd.length
+              ? ((placeBase.length ? ('from ' + fs.suggestion_from + ', plus ') : 'adds to the places you have: ') + placeAdd.length + (placeAdd.length === 1 ? ' place' : ' places')
+                  + ' with no note yet, drafted by the model from ' + basisWord + (ms.unknowns ? ' · could not know: ' + ms.unknowns : ''))
+              : fs.suggestion_from ? ('from ' + fs.suggestion_from)
               : ((ms && fs.suggestion === undefined && derivable[f.key] === undefined)
                   ? ('drafted by the model from ' + basisWord + (ms.unknowns ? ' · could not know: ' + ms.unknowns : ''))
                   : (f.derives_from ? ('derived from the ' + f.derives_from) : 'derived from work already done')),
             suggestion: asText(sug),
-            accept: this.acceptSuggestion(f.key, sug), dismiss: this.dismissSuggestion(f.key),
+            accept: (placeAdd.length && filled(f.key)) ? this.addSuggestedRows(f.key, placeAdd) : this.acceptSuggestion(f.key, sug), dismiss: this.dismissSuggestion(f.key),
           };
   }
 

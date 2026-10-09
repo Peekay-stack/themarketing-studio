@@ -167,7 +167,8 @@ SPEC: list[dict] = [
      "derives_from": "brief"},
 
     {"key": "languages", "label": "Languages it can be written in", "kind": "list",
-     "ask": "Which of the studio's languages can this brand actually be written in?",
+     "ask": "Which of the studio's languages can this brand actually be written in? Names or codes both work.",
+     "placeholder": "Telugu, Kannada, Tamil, Hindi, English",
      "why": ("Ten of thirty-six states have a principal language the studio holds no code for. Naming "
              "what this brand can be written in is what lets a plan refuse a state it cannot speak to, "
              "before the money is committed rather than after the posts underperform."),
@@ -691,11 +692,10 @@ def put(data: dict, brand_id: str = "") -> dict:
         b["states"] = list(dict.fromkeys(codes))
         b["states_unresolved"] = unresolved
     if "languages" in data:
-        known = set(geo.language_codes())
         codes, unresolved = [], []
         for raw in b.get("languages") or []:
-            c = str(raw).strip().lower()
-            (codes if c in known else unresolved).append(c if c in known else raw)
+            c = geo.resolve_language(raw)        # a code or a name ('te' or 'Telugu'); anything else is kept, not dropped
+            (codes if c else unresolved).append(c or raw)
         b["languages"] = list(dict.fromkeys(codes))
         b["languages_unresolved"] = unresolved
 
