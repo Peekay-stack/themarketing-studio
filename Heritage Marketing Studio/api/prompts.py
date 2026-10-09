@@ -639,6 +639,6 @@ def system_for(messages: list[dict], brand: dict | None = None, brand_mode: str 
     if prov and (prov.get("film") or {}).get("cast_approach") in ("objects", "animated", "none"):
         character_block = ""
     surface_text = VIDEO_PROVOCATION if (prov and surface is VIDEO) else surface
-    parts = (GLOBAL_MASTER, "THE BRAND\n" + brandprofile.voice_block(voice_b, skip_mandatories=skip_mandatories, film=bool(film or surface is VIDEO)),
+    parts = (GLOBAL_MASTER, "THE BRAND\n" + brandprofile.voice_block(voice_b, skip_mandatories=skip_mandatories, film=bool(film or surface is VIDEO), scope="strategy" if surface is BRIEF else "creative"),
              character_block, spine, provocation_block(prov), this_one, surface_text)
     return "\n\n".join(x for x in parts if x).strip()

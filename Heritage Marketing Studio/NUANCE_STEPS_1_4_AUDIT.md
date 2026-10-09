@@ -58,3 +58,15 @@ Page-shaped save through `/brand-fields` (lists as arrays, rows as arrays of dic
 - Hold model drafts for non-dairy brands out of live work until Step 5? (finding 2)
 - Add a spend or rate guard on `/brand-suggest` now, or leave it to Phase 4? (finding 4)
 - Add a "business or trade buyer" option to the buying-unit question (from the Step 4 run).
+
+---
+
+## Resolution (9 Oct): the owner took the recommendations on all five
+
+1. **Strategy surfaces now carry only the strategic subset.** `voice_block(scope="strategy")` drops the five production-craft labels (`brandprofile.CRAFT_LINE_PREFIXES`). Strategy scope is used by the messaging house, platform ideation and judging, campaign drafting, the IMC plan, the sales sheet, the brief written server-side, and provocation ideation. **Left at the full set on purpose:** the two per-medium expression writers (platform and campaign `write_expressions`), because they feed the producers directly, plus Social, Video, Carousel, POSM, Onground and the cast. The page filters the same five labels for its own brief-writer, IMC-lead and analytics prompts (`brandPreamble(..., strategic)`), and a test fails if the page's list and the server's list drift. Measured with Heritage's 15 answers accepted: house +38% to +18%, idea platform +40% to +19%, campaign +89% to +41%, IMC plan +26% to +12%, sales +18% to +8%; every creative surface unchanged; an unanswered brand unchanged (70 of 70). The "what the model is told" panel still shows the full set.
+2. **"Not this" is cleared on brand switch and on the new-brand form** (`bfDismissed`), checked in the real page.
+3. **A visible caveat** sits in the button's note: until the studio's built-in dairy rules are removed from its prompts, answers for a non-dairy brand will sit beside them, so accept them only to test. **To remove when Step 5 completes.**
+4. **A coarse hourly brake on `/brand-suggest`:** 20 group requests an hour per tenant (`SUGGEST_CALLS_PER_HOUR`), answered with a plain 429 and no model call; the page stops at the first refusal and says why. It is in this process's memory (a restart resets it), so it is a brake, not a spend cap.
+5. **A fourth buying-unit option, "a business or trade buyer"**, with its own line ("write to a professional buying for the job or the business...") and the model's draft matched to it. The question wording was widened to say so. The strategy scope keeps this line.
+
+Committed together, not separately, because the edits interleave in `brandprofile.py`, `app.dc.html` and the test files. Verified: full suite, golden 70 of 70, `selfcheck` 1,367 calls, `checkfe`, `partials verify`, the real page (scoped prompts on the real answered voice, the four options, the caveat, the 429 stop, both resets), and the tenant unchanged.

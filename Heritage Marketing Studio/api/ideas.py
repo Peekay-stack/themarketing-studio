@@ -1184,7 +1184,7 @@ def judge(p: dict, item_id: str, house: dict | None = None) -> tuple[dict, str]:
     prompt = "\n".join([
         "You are the hardest reader this idea will meet, and you are on the brand's side. Be specific "
         "and be brief. A verdict with a vague reason is worth nothing.",
-        "\n\n---\nTHE BRAND\n" + brandprofile.voice_block(brandprofile.resolve(house, p)),
+        "\n\n---\nTHE BRAND\n" + brandprofile.voice_block(brandprofile.resolve(house, p), scope="strategy"),
         "\n\n---\nTHE PLATFORM",
         f"Name: {it.get('name') or '(unnamed)'}",
         f"Idea: {it.get('idea')}",
@@ -1307,7 +1307,7 @@ def draft_prompt(core: str, brief: dict | None, house: dict | None = None, n: in
     _general = str(brand_mode or "").strip().lower() == "general"
     b = None if _general else brandprofile.resolve(brief, house)
     basis = house_basis(None if _general else house)
-    out = [_skill_text(), "\n\n---\nTHE BRAND\n" + brandprofile.voice_block(b)]
+    out = [_skill_text(), "\n\n---\nTHE BRAND\n" + brandprofile.voice_block(b, scope="strategy")]
 
     if core:
         out.append(f"\n\n---\nTHE CORE MESSAGE THIS EXPRESSES (verbatim, chosen by a person)\n{core}")
@@ -1453,7 +1453,7 @@ def prompt_for(p: dict, house: dict | None, build_from: dict | None = None, n: i
                extra: str = "", anchors: str = "", rules: str = "") -> str:
     basis = house_basis(house)
     out = [_skill_text(),
-           "\n\n---\nTHE BRAND\n" + brandprofile.voice_block(brandprofile.resolve(house, p)),
+           "\n\n---\nTHE BRAND\n" + brandprofile.voice_block(brandprofile.resolve(house, p), scope="strategy"),
            "\n\n---\nTHE MESSAGING HOUSE THIS EXPRESSES"]
     out.append("Core message: " + "; ".join(basis["core"]))
     out.append(f"Emotional pillar: {basis['emotional'] or '(none chosen)'}")

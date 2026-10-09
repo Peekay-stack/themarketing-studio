@@ -249,10 +249,10 @@ SPEC: list[dict] = [
      "unlocks": "How the product is shown"},
 
     {"key": "buying_unit", "label": "Household or one person", "kind": "choice",
-     "options": ["a household", "one person", "either"],
-     "ask": "Is it bought for a household or for one person?",
-     "why": ("Decides whether the work speaks to a family around a table or to an individual. Where your "
-             "lines differ, say so per line below."),
+     "options": ["a household", "one person", "a business or trade buyer", "either"],
+     "ask": "Is it bought for a household, for one person, or by a business or tradesperson for the job?",
+     "why": ("Decides whether the work speaks to a family around a table, to an individual, or to a professional "
+             "buying for the job. Where your lines differ, say so per line below."),
      "unlocks": "Who buys it and where it is met"},
     {"key": "lines", "label": "Product lines", "kind": "rows",
      "cols": ["line", "who_uses", "who_decides_pays", "how_bought", "where_sold", "how_used"],
@@ -1060,6 +1060,8 @@ SIGNOFF_LINE_RE = re.compile(r"^\s*(?:the\s+|our\s+)?(?:brand\s+|master\s+|stand
 _UNIT_RULE = {
     "a household": "so write to the household, the family together, not one member alone",
     "one person": "so write to the individual's own choice, not to a family around a table",
+    "a business or trade buyer": "so write to a professional buying for the job or the business: what it does for their work, their margin and "
+                                 "their name with their own customers, not to a household or a private individual",
     "either": "so decide per audience whether it is a household or one person, and do not default to a family",
 }
 _PACK_RULE = {
@@ -1095,8 +1097,27 @@ def _place_rows(b: dict) -> list[dict]:
     return out
 
 
-def nuance_lines(b: dict) -> list[str]:
-    """The answered nuance questions as prompt lines, in a fixed order. Empty when nothing is answered."""
+# The lines that only a producer can use: how the product is handled, what an image must show, whether a pack
+# appears, the marks on print, and how the category looks and sounds. A strategy surface (the messaging house,
+# platform ideation, campaign drafting, the IMC plan, the sales sheet, the brief) is asked `scope="strategy"` and
+# gets everything else (who buys, lines, routes, meeting points, language, place, dated moments). The page keeps
+# the same list for its own prompts (`NUANCE_CRAFT_PREFIXES`); `tools/test_nuance_prompt_lines.py` fails if the two drift.
+CRAFT_LINE_PREFIXES = ("HOW IT IS USED OR HANDLED", "MUST BE VISIBLE IN ANY IMAGE OF IT", "PACK IN THE PICTURE",
+                       "MARKS AND DECLARATIONS THAT MUST APPEAR", "HOUSE STYLE")
+
+
+def nuance_lines(b: dict, scope: str = "creative") -> list[str]:
+    """The answered nuance questions as prompt lines, in a fixed order. Empty when nothing is answered.
+
+    `scope="strategy"` leaves out the production-craft lines (`CRAFT_LINE_PREFIXES`); anything else is the full set.
+    """
+    out = _nuance_lines_all(b)
+    if scope == "strategy":
+        out = [x for x in out if not x.startswith(CRAFT_LINE_PREFIXES)]
+    return out
+
+
+def _nuance_lines_all(b: dict) -> list[str]:
     out: list[str] = []
     unit = _one_line(b.get("buying_unit"))
     if unit in _UNIT_RULE:
@@ -1171,7 +1192,8 @@ def nuance_lines(b: dict) -> list[str]:
 HOUSE_STYLE_FIELDS = ("imagery_style", "people_setting", "sound_world")
 
 
-def voice_block(b: dict | None, *, brief_brand: str = "", skip_mandatories: bool = False, film: bool = False) -> str:
+def voice_block(b: dict | None, *, brief_brand: str = "", skip_mandatories: bool = False, film: bool = False,
+                scope: str = "creative") -> str:
     """The grounding paragraph, built from a profile instead of hardcoded.
 
     Returns an explicit *absence* rather than nothing when there is no profile. A generator told
@@ -1283,7 +1305,7 @@ def voice_block(b: dict | None, *, brief_brand: str = "", skip_mandatories: bool
     if b.get("price_tier"):
         lines.append(f"PRICE TIER: {b['price_tier']} — how much the work has to justify.")
     # The nuance questions (Step 2): nothing at all for a brand that has answered none of them.
-    lines.extend(nuance_lines(b))
+    lines.extend(nuance_lines(b, scope))
 
     cols = {k: v for k, v in (b.get("colours") or {}).items() if v}
     if cols:

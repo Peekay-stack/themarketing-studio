@@ -120,6 +120,87 @@ print("General (Independent) mode")
 gen = prompts.system_for(VIDEO_MSG, brand=None, brand_mode="general", house_id=house["id"])
 expect("an Independent piece carries none of the nuance lines", not any(s in gen for s in ("PRODUCT LINES", "PLACE BY PLACE", "HOW IT IS USED", "HOUSE STYLE", "BOUGHT FOR")), gen[:300])
 
+print("Scope: strategy surfaces carry only the strategic subset")
+CRAFT = ("HOW IT IS USED OR HANDLED", "MUST BE VISIBLE IN ANY IMAGE OF IT", "PACK IN THE PICTURE", "MARKS AND DECLARATIONS THAT MUST APPEAR", "HOUSE STYLE")
+STRAT = ("BOUGHT FOR", "PRODUCT LINES", "ROUTES TO MARKET", "WHERE PEOPLE MEET THE BRAND", "LANGUAGE OF THE WORK", "PLACE BY PLACE", "DATED MOMENTS")
+full_b = bp.load(plain_b["id"])
+vs = bp.voice_block(full_b, scope="strategy")
+vc = bp.voice_block(full_b)
+expect("scope='strategy' drops every production-craft line", not any(c in vs for c in CRAFT), [c for c in CRAFT if c in vs])
+expect("scope='strategy' keeps every strategic line", all(s in vs for s in STRAT), [s for s in STRAT if s not in vs])
+expect("the default scope is the full set, as before", all(c in vc for c in CRAFT) and all(s in vc for s in STRAT))
+expect("the rest of the voice is identical in both scopes", [l for l in vs.split("\n") if not l.startswith(CRAFT)] == [l for l in vc.split("\n") if not l.startswith(CRAFT)])
+expect("for a brand with no answers the two scopes are identical", bp.voice_block(bp.put({"name": "Blank Brand", "category": "x"}), scope="strategy") == bp.voice_block(bp.load(bp.by_name("Blank Brand")["id"])))
+expect("CRAFT_LINE_PREFIXES is exactly the five craft labels", set(bp.CRAFT_LINE_PREFIXES) == set(CRAFT), bp.CRAFT_LINE_PREFIXES)
+
+import jsonout, anthropic, plan, sales, campaign, producers   # noqa: E402
+CAP = []
+jsonout.ask_json = lambda prompt, *a, **k: (CAP.append(prompt) or (None, "stubbed"))
+
+
+class _M:
+    def create(self, **kw):
+        CAP.append((kw.get("system") or "") + "\n\n" + "\n".join(str(m.get("content")) for m in kw.get("messages", [])))
+        raise RuntimeError("stubbed")
+
+
+class _C:
+    def __init__(self, *a, **k):
+        self.messages = _M()
+
+
+anthropic.Anthropic = _C
+os.environ["ANTHROPIC_API_KEY"] = "never-used"
+h2 = strategy.new_house("Probe Brand")
+for lid, oid, txt in (("core", "c1", "core"), ("functional", "f1", "ft"), ("emotional", "e1", "et"), ("bridge", "b1", "bt")):
+    h2["nodes"][lid]["options"] = [{"id": oid, "text": txt}]
+    h2["nodes"][lid]["chosen"] = [oid]
+h2["ladders"] = [{"id": "l1", "f": "f1", "e": "e1", "b1": "b1"}]
+strategy.save(h2)
+ps2 = ideas.adopt(ideas.new_set("Probe Brand", h2["id"]), {"name": "p", "idea": "i", "mechanic": "m", "ladder": "l1"})
+ps2 = ideas.for_house(h2["id"])
+pf2 = ideas.chosen_platform(ps2)
+
+
+def grab(fn):
+    CAP.clear()
+    try:
+        r = fn()
+        if isinstance(r, str) and r:
+            CAP.append(r)
+    except Exception:                                  # noqa: BLE001 -- the stub raises on purpose
+        pass
+    return "\n".join(CAP)
+
+
+answered = bp.load(plain_b["id"])
+STRATEGY_SURFACES = {
+    "messaging house": lambda: strategy.generate(h2, "core"),
+    "platform ideation": lambda: ideas.draft_prompt("core", None, h2),
+    "campaign draft": lambda: campaign.draft(ps2, h2),
+    "IMC plan": lambda: plan.generate(plan.new_plan("Probe Brand", h2["id"]), "objectives", h2),
+    "sales sheet": lambda: sales.generate(sales.new_sheet("Probe Brand", "", h2["id"]), "trad", h2),
+    "the brief, written server-side": lambda: prompts.system_for([{"role": "user", "content": "You are a brief writer. Write the brief for this request, single-minded."}], brand=answered, house_id=h2["id"]),
+}
+CREATIVE_SURFACES = {
+    "social": lambda: prompts.system_for(VIDEO_MSG[:0] + [{"role": "user", "content": "You are a social media writer. platform-adapted posts. Write posts."}], brand=answered, house_id=h2["id"]),
+    "video": lambda: prompts.system_for(VIDEO_MSG, brand=answered, house_id=h2["id"], film=True),
+    "carousel": lambda: producers.carousel_concept("Brand awareness", h2, pf2),
+    "POSM": lambda: producers.key_visual("A board", h2, platform=pf2),
+    "Onground": lambda: producers.activation_ideas(h2, pf2),
+}
+for name, fn in STRATEGY_SURFACES.items():
+    t = grab(fn)
+    expect(f"{name}: has the strategic lines and none of the craft lines", bool(t) and all(s in t for s in ("PLACE BY PLACE", "ROUTES TO MARKET", "BOUGHT FOR")) and not any(c in t for c in CRAFT),
+           (len(t), [c for c in CRAFT if c in t]))
+for name, fn in CREATIVE_SURFACES.items():
+    t = grab(fn)
+    expect(f"{name}: still has every line, craft included", bool(t) and all(c in t for c in CRAFT) and all(s in t for s in STRAT), (len(t), [c for c in CRAFT + STRAT if c not in t]))
+import json as _json, re as _re   # noqa: E402,E401
+html = open(os.path.join(API, "frontend", "app.dc.html"), encoding="utf-8").read()
+m = _re.search(r"const NUANCE_CRAFT = /\^\\s\*\(\?:([^)]+)\)/;", html)
+expect("the page filters exactly the same five craft labels as the server (drift guard)", bool(m) and set(m.group(1).split("|")) == set(bp.CRAFT_LINE_PREFIXES), m and m.group(1))
+
 print()
 if failures:
     print(f"{failures} case(s) FAILED")

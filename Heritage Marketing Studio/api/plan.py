@@ -1111,7 +1111,7 @@ def prompt_for(p: dict, layer_id: str, house: dict | None = None, extra: str = "
     _plan_general = p.get("brand_mode") == "general"
     brand_for_prompt = None if _plan_general else brandprofile.resolve(p, house)
     out = [_skill_text(),
-           "\n\n---\nTHE BRAND\n" + brandprofile.voice_block(brand_for_prompt)]
+           "\n\n---\nTHE BRAND\n" + brandprofile.voice_block(brand_for_prompt, scope="strategy")]
     # Phase 2 (BRAND_GROUNDING_MODES_PLAN.md): this used to pull the bound house's real content in
     # unconditionally whenever one existed, same shape as the Phase 1 leaks already fixed in
     # producers.stands_on()/_ctx() and prompts.py's house_block/platform_block — a General plan with a

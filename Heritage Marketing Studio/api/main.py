@@ -3613,6 +3613,11 @@ def brand_suggest_route(payload: dict):
     b = (brandprofile.load(ref) or brandprofile.by_name(ref)) if ref else None
     if not b:
         return JSONResponse(status_code=404, content={"detail": "No such brand profile."})
+    # A coarse hourly brake on a paid route (not a spend cap; see brand_suggest.allow). Checked after the brand is known, before any call.
+    ok, wait = brand_suggest.allow()
+    if not ok:
+        return JSONResponse(status_code=429, content={"detail": f"Drafting is limited to {brand_suggest.CALLS_PER_HOUR} group requests an hour "
+                                                                f"to keep the cost in check. Try again in about {wait} minute{'s' if wait != 1 else ''}."})
     out = brand_suggest.suggest_group(b, str(payload.get("group") or ""), str(payload.get("context") or ""))
     if out.get("error"):
         return JSONResponse(status_code=503 if out["error"] == brand_suggest.NO_KEY else 502,

@@ -856,7 +856,7 @@ def prompt_for(s: dict, ch: str, house: dict | None = None, el: str = "", extra:
     c = CHANNEL_BY_KEY[ch]
     node = s["channels"][ch]
     out = [_skill_text(),
-           "\n\n---\nTHE BRAND\n" + brandprofile.voice_block(brandprofile.resolve(house, s))]
+           "\n\n---\nTHE BRAND\n" + brandprofile.voice_block(brandprofile.resolve(house, s), scope="strategy")]
     tm = trade_message(house)
     out.append("\n\n---\nTHE TRADE MESSAGE\n" + (
         "\n".join(f"  - {o['text']}" for o in tm["options"]) if tm["has"]

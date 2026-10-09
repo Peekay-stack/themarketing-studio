@@ -1010,7 +1010,7 @@ def prompt_for(house: dict, layer_id: str, extra: str = "",
         else brandprofile.resolve(house.get("brief"), house)
     parts = [
         _skill_text(),
-        "\n\n---\nTHE BRAND\n" + brandprofile.voice_block(brand_for_prompt),
+        "\n\n---\nTHE BRAND\n" + brandprofile.voice_block(brand_for_prompt, scope="strategy"),
         "\n\n---\nTHE BRIEF\n" + _brief_text(house),
     ]
     # Phase 3 (upstream-wiring plan): Core/Emotional/Functional only — the layers where a message gets

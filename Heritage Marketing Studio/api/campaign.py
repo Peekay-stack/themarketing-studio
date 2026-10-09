@@ -793,7 +793,7 @@ def draft(p: dict | None, house: dict | None, ladder_id: str = "",
     # line, with no voice_block() call at all — the one real gap left over from the earlier audit of
     # this same function. write_expressions(), one step later in the same flow, already calls it.
     import brandprofile
-    voice = brandprofile.voice_block(brandprofile.resolve(house, p))
+    voice = brandprofile.voice_block(brandprofile.resolve(house, p), scope="strategy")
     core = strategy._chosen_text(house, "core") if house else []
 
     parts = [

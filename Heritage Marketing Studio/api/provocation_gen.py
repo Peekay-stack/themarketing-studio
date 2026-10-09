@@ -99,7 +99,7 @@ def _context(house: dict | None, pset: dict | None, platform: dict | None, ev: d
     prof = _profile(house, pset)
     names = competitor_names(prof, ev)
     basis = ideas.house_basis(house)
-    voice = brandprofile.voice_block({**prof, "tone": "", **{k: "" for k in brandprofile.HOUSE_STYLE_FIELDS}}) if prof else brandprofile.voice_block(None)
+    voice = brandprofile.voice_block({**prof, "tone": "", **{k: "" for k in brandprofile.HOUSE_STYLE_FIELDS}}, scope="strategy") if prof else brandprofile.voice_block(None)
     out = ["THE BRAND (its guardrails apply in full; its usual tone is deliberately left out, because a provocation departs from it)",
            voice, "", "THE MESSAGING HOUSE",
            "Core message: " + ("; ".join(basis["core"]) or "(none chosen)"),

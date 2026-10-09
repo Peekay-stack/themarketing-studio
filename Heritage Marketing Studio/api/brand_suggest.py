@@ -21,13 +21,41 @@ model's memory of one is not good enough. It is entered by a person, or comes fr
 from __future__ import annotations
 
 import json
+import os
 import re
+import threading
+import time
+from collections import deque
 
 import brandprofile as bp
 import geo
 import jsonout
+import tenancy
 
 NO_KEY = "no ANTHROPIC_API_KEY"
+
+# A coarse brake on the paid route, not a spend cap. Every group request is one model call (two if the first reply
+# cannot be read), and a full run of one brand is five requests. This allows `SUGGEST_CALLS_PER_HOUR` requests an hour
+# per tenant (default 20: four full runs). It lives in this process's memory, so a restart resets it, and a second
+# server process would count on its own; a real spend cap is the studio's Phase 4.
+CALLS_PER_HOUR = int(os.environ.get("SUGGEST_CALLS_PER_HOUR", "20") or 20)
+_WINDOW_SECONDS = 3600.0
+_calls: dict[str, deque] = {}
+_lock = threading.Lock()
+
+
+def allow(now: float | None = None, tenant: str | None = None) -> tuple[bool, int]:
+    """Count one group request against this tenant's hour. Returns (allowed, minutes_to_wait)."""
+    t = time.monotonic() if now is None else now
+    key = tenant if tenant is not None else tenancy.tenant()
+    with _lock:
+        q = _calls.setdefault(key, deque())
+        while q and t - q[0] >= _WINDOW_SECONDS:
+            q.popleft()
+        if len(q) >= CALLS_PER_HOUR:
+            return False, max(1, int((_WINDOW_SECONDS - (t - q[0])) // 60) + 1)
+        q.append(t)
+        return True, 0
 
 # One model call each. Place notes, the language mix and the dated moments share a call because they all lean
 # on the same thing: where the brand sells.
@@ -50,7 +78,8 @@ HINT = {
                  "model leaves out unless it is told.",
     "pack_in_scene": "Whether a pack, bottle, bag, tag or label normally appears in advertising for this product.",
     "imagery_style": "The kind of imagery this category uses, as a creative director would brief it.",
-    "buying_unit": "Whether the product is bought for a household or for one person. If it depends on the line or the buyer, say 'either'.",
+    "buying_unit": "Whether the product is bought for a household, for one person, or by a business or tradesperson for the job. "
+                   "If it depends on the line or the buyer, say 'either'.",
     "lines": "The product lines of this brand that behave differently from each other (different buyers, different use, "
              "different place of sale). Only lines the profile or your solid knowledge of the brand's category supports.",
     "routes": "The routes by which the product reaches the buyer in this category and market. Never give a share of sales unless "

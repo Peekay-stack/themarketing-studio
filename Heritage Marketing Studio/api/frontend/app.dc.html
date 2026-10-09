@@ -12478,7 +12478,7 @@ class Component extends DCLogic {
   // whole point of Independent was "this piece gets no brand facts even though one is active
   // globally," which is exactly the case the old check skipped. `allowGeneral` now wins outright,
   // checked before anything about the active brand is even read.
-  brandPreamble(role, allowGeneral, dropTone, film){
+  brandPreamble(role, allowGeneral, dropTone, film, strategic){
     if (allowGeneral) {
       return 'You are ' + (role || 'a senior marketer') + '. No brand profile is attached to this piece '
         + '— do NOT invent a brand, category or product. Write from the brief alone, keep claims '
@@ -12489,6 +12489,10 @@ class Component extends DCLogic {
     // A film written from a provocation departs from the brand's usual tone (the provocation's stance replaces it); the guardrails stay.
     // The HOUSE STYLE lines (how the category conventionally looks and sounds) go with it: a provocation breaks those conventions.
     if (dropTone) voice = String(voice || '').split(String.fromCharCode(10)).filter(l => !/^\s*(?:TONE\s*:|HOUSE STYLE\b)/i.test(l)).join(String.fromCharCode(10));
+    // A strategy prompt (a brief, the IMC plan, analytics) has no use for the production-craft lines: how the product is handled, what an image
+    // must show, the pack, the marks on print, how the category looks and sounds. The same list as `brandprofile.CRAFT_LINE_PREFIXES` (a test compares them).
+    const NUANCE_CRAFT = /^\s*(?:HOW IT IS USED OR HANDLED|MUST BE VISIBLE IN ANY IMAGE OF IT|PACK IN THE PICTURE|MARKS AND DECLARATIONS THAT MUST APPEAR|HOUSE STYLE)/;
+    if (strategic) voice = String(voice || '').split(String.fromCharCode(10)).filter(l => !NUANCE_CRAFT.test(l)).join(String.fromCharCode(10));
     if (film) voice = this.filmVoice(voice);
     if (!b || !(b.name || '').trim() || !String(voice || '').trim()) return null;
     return 'You are ' + (role || 'a senior marketer') + ' for ' + b.name + '.' + String.fromCharCode(10)
@@ -12543,7 +12547,7 @@ class Component extends DCLogic {
     // from this list: it held the OLD brand's "what the model is told" text, correct-looking but wrong,
     // right up until something re-fetched it — caught live, mid-testing, sitting under the new brand's
     // now-correct readiness numbers.
-    this.setState({ bf:null, bfVals:{}, bfVoice:'', bfCoreFramework:'', bfCoreEssence:'', bfCoreLayers:{}, bfCoreBoundaries:'', bfCoreOpen:false, bfSuggested:{}, bfSuggesting:'', bfSuggestNote:'' });
+    this.setState({ bf:null, bfVals:{}, bfVoice:'', bfCoreFramework:'', bfCoreEssence:'', bfCoreLayers:{}, bfCoreBoundaries:'', bfCoreOpen:false, bfSuggested:{}, bfSuggesting:'', bfSuggestNote:'', bfDismissed:{} });
     // The pack chosen for social posts belongs to the brand it was chosen under: a switch clears it (and the
     // session photo), and the picker list is re-read for the new brand.
     this.setState({ socialPackChoice:'', socialPackRef:'', socialPackRefName:'', socialPackProduct:'' });
@@ -13384,7 +13388,7 @@ class Component extends DCLogic {
       const lbl = {};
       (this.SECTIONS[fmtId] || []).forEach(g => g.fields.forEach(fl => { lbl[fl[0]] = fl[1]; }));
       const keyList = keys.map(k => `"${k}" (${lbl[k] || k})`).join(', ');
-      const pre = this.brandPreamble('a senior brief writer', this.state.producerBrandMode === 'general');
+      const pre = this.brandPreamble('a senior brief writer', this.state.producerBrandMode === 'general', false, false, true);
       if (!pre) { // Every one of these eight routes sets a busy flag and then bails here when there is no brand
       // preamble — and seven of the eight bailed without clearing it, so the button span forever and the
       // route could never be retried. An early return has to undo what the route already did.
@@ -13661,7 +13665,7 @@ class Component extends DCLogic {
       const lbl = {};
       (this.SECTIONS[fmtId] || []).forEach(g => g.fields.forEach(fl => { lbl[fl[0]] = fl[1]; }));
       const keyList = keys.map(k => `"${k}" (${lbl[k] || k})`).join(', ');
-      const pre = this.brandPreamble('a senior marketing brief writer', this.state.producerBrandMode === 'general');
+      const pre = this.brandPreamble('a senior marketing brief writer', this.state.producerBrandMode === 'general', false, false, true);
       if (!pre) { this.showToast(this.BRAND_PREAMBLE_MISSING); this.setState({ generating:false }); return; }
       const prompt = `${pre}\n\nWrite a ${f.name} brief for this request: "${ask}". Return ONLY a JSON object (no markdown) with exactly these keys: ${keyList}. Each value 1-2 sentences, specific and India-relevant.`;
       let raw = await this.complete(prompt);
@@ -16864,7 +16868,7 @@ class Component extends DCLogic {
     try {
       if (!(window.claude && window.claude.complete)) throw new Error('no-api');
       const ctx = ` Ground everything in this brief \u2014 proposition: "${brief.proposition}"; audience: "${brief.audience}"; tone: "${brief.tone}".`;
-      const pre = this.brandPreamble('the lead on an integrated campaign', this.state.producerBrandMode === 'general');
+      const pre = this.brandPreamble('the lead on an integrated campaign', this.state.producerBrandMode === 'general', false, false, true);
       if (!pre) { this.showToast(this.BRAND_PREAMBLE_MISSING); this.setState({ campaignGenerating:false }); return; }
       const prompt = `${pre}\n\nYou are leading this brand’s integrated campaign. Objective: "${obj}".${ctx} Return ONLY JSON (no markdown): {"facebook":{"caption":...,"hashtags":...,"visual":...},"instagram":{...},"linkedin":{...},"video":{"logline":...,"duration":...,"vo":...,"scenes":[{"t":"0\u20135s","title":...,"desc":...} x4]}}. Posts adapted per platform; LinkedIn no emoji.`;
       let raw = await this.complete(prompt);
@@ -17476,7 +17480,7 @@ class Component extends DCLogic {
       if (!(window.claude && window.claude.complete)) throw new Error('no-api');
       const kpiTxt = d.kpis.map(k => `${k.label}: ${k.value} vs target ${k.target} (${k.sub})`).join('; ');
       const cohTxt = this.COHORTS.map(c => `${c.name}: quality ${c.quality}, reach ${c.reach}%, conv ${c.conv}`).join('; ');
-      const pre = this.brandPreamble('a marketing analytics lead', this.state.producerBrandMode === 'general');
+      const pre = this.brandPreamble('a marketing analytics lead', this.state.producerBrandMode === 'general', false, false, true);
       if (!pre) { this.showToast(this.BRAND_PREAMBLE_MISSING); this.setState({ insightsLoading:false }); return; }
       const prompt = `${pre}\n\nCampaign "${d.name}", objective: "${d.objective}". KPIs vs objectives: ${kpiTxt}. Audience cohorts: ${cohTxt}. Channels: Meta, Alphabet, Q-commerce, TV/Print. Give 4 concise, specific, action-oriented insights. Return ONLY a JSON array, each item {"kind":"Win|Opportunity|Watch-out|Linkage","text":"1-2 sentences"}.`;
       let raw = await this.complete(prompt);
@@ -23548,7 +23552,7 @@ class Component extends DCLogic {
       screen:'brandform', settingsOpen:false, brandMenuOpen:false,
       bf:null, bfVals: {},
       bfVoice:'', bfCoreFramework:'', bfCoreEssence:'', bfCoreLayers:{},
-      bfCoreBoundaries:'', bfCoreOpen:false, bfIsNew:true, bfSuggested:{}, bfSuggesting:'', bfSuggestNote:'',
+      bfCoreBoundaries:'', bfCoreOpen:false, bfIsNew:true, bfSuggested:{}, bfSuggesting:'', bfSuggestNote:'', bfDismissed:{},
     });
     window.scrollTo(0, 0);
     this.loadBrandFields(true);
@@ -23644,6 +23648,7 @@ class Component extends DCLogic {
         const dis = { ...(s.bfDismissed || {}) }; Object.keys(got).forEach(k => { delete dis[k]; });
         return { bfSuggested: { ...(s.bfSuggested || {}), ...got }, bfDismissed: dis };
       });
+      if (r && r.status === 429) break;   // the hourly limit: the remaining groups would only be refused too
     }
     this.setState({ bfSuggesting: '', bfSuggestNote: drafted + (drafted === 1 ? ' answer' : ' answers') + ' drafted; each shows under its question to accept or dismiss. Nothing is saved until you accept and save.'
       + (unknown ? ' ' + unknown + ' left blank because the model could not know.' : '')
@@ -23758,7 +23763,7 @@ class Component extends DCLogic {
       suggestBrandAnswers: this.suggestBrandAnswers,
       bfCanSuggest: !s.bfIsNew && ((d.suggest_groups || []).some(g => (g.keys || []).length) || !!s.bfSuggesting || !!s.bfSuggestNote),
       bfSuggestLabel: s.bfSuggesting ? 'Drafting…' : 'Draft the unanswered questions with the model',
-      bfSuggestLine: s.bfSuggestNote || 'Fills in nothing by itself: each draft waits under its question for you to accept or dismiss it.',
+      bfSuggestLine: s.bfSuggestNote || 'Fills in nothing by itself: each draft waits under its question for you to accept or dismiss it. Until the studio’s built-in dairy rules are removed from its prompts, answers for a non-dairy brand will sit beside them, so accept them only to test.',
       bfSaveLabel: s.bfSaving ? 'Saving\u2026' : (s.bfDirty ? 'Save the profile' : 'Save and read the instruction'),
 
       bfReadyTitle: ready ? 'Enough to ground the work' : 'Not yet enough to ground the work',

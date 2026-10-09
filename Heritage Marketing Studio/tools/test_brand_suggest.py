@@ -195,6 +195,41 @@ saved = client.post("/brand-fields", json={"brand": cement["id"], "worst_case": 
 expect("saving returns the groups too, and the answered question has left its group",
        "worst_case" not in next(g for g in saved["suggest_groups"] if g["name"] == "Proof and marks")["keys"], saved.get("suggest_groups"))
 
+print("The hourly brake")
+expect("the default is 20 group requests an hour", bs.CALLS_PER_HOUR == 20, bs.CALLS_PER_HOUR)
+bs._calls.clear()
+grants = [bs.allow(now=1000.0 + i, tenant="t1")[0] for i in range(20)]
+expect("the first 20 requests in an hour are allowed", all(grants), grants)
+ok21, wait21 = bs.allow(now=1030.0, tenant="t1")
+expect("the 21st is refused and says how many minutes to wait (about the time until the first falls out of the hour)", (not ok21) and 58 <= wait21 <= 60, (ok21, wait21))
+expect("a refused request does not use up a slot", len(bs._calls["t1"]) == 20, len(bs._calls["t1"]))
+expect("another tenant has its own count", bs.allow(now=1030.0, tenant="t2")[0])
+expect("an hour later the first slot is free again", bs.allow(now=1000.0 + 3600.0 + 1, tenant="t1")[0])
+bs._calls.clear()
+import tenancy                                                             # noqa: E402
+now = bs.time.monotonic()
+for i in range(bs.CALLS_PER_HOUR):
+    bs._calls.setdefault(tenancy.tenant(), bs.deque()).append(now)
+REPLY["data"], REPLY["err"] = {"answers": {"sound_world": {"value": "plain", "basis": "knowledge", "unknowns": ""}}}, ""
+CALLS.clear()
+lim = client.post("/brand-suggest", json={"brand": "Probe Cement", "group": "Look and sound"})
+expect("the route answers 429 with a plain message once the hour is used up, and makes no model call",
+       lim.status_code == 429 and "limited to 20 group requests an hour" in lim.json()["detail"] and "minute" in lim.json()["detail"] and CALLS == [], (lim.status_code, lim.text[:200], len(CALLS)))
+bs._calls.clear()
+expect("and works again when the count is clear", client.post("/brand-suggest", json={"brand": "Probe Cement", "group": "Look and sound"}).status_code == 200)
+
+print("A business or trade buyer")
+expect("the choice has four options, the trade buyer among them", bp.SPEC_BY_KEY["buying_unit"]["options"] == ["a household", "one person", "a business or trade buyer", "either"], bp.SPEC_BY_KEY["buying_unit"]["options"])
+REPLY["data"] = {"answers": {"buying_unit": {"value": "A Business or Trade Buyer", "basis": "profile", "unknowns": ""}}}
+rb = bs.suggest_group(cement, "Who buys it and where it is met")
+expect("a drafted 'business or trade buyer' is accepted, matched ignoring case", rb["suggestions"]["buying_unit"]["value"] == "a business or trade buyer", rb)
+expect("the prompt offers the option and explains it", "a business or trade buyer" in bs.build_prompt(cement, ["buying_unit"]) and "tradesperson for the job" in bs.build_prompt(cement, ["buying_unit"]))
+trade = bp.put({"name": "Trade Probe", "category": "Cement", "buying_unit": "a business or trade buyer"})
+tv = bp.voice_block(trade)
+expect("the voice speaks to a professional buying for the job, not a household or an individual",
+       "BOUGHT FOR: a business or trade buyer — so write to a professional buying for the job or the business" in tv and "not to a household or a private individual" in tv, tv[-400:])
+expect("the strategy scope keeps that line", "BOUGHT FOR: a business or trade buyer" in bp.voice_block(trade, scope="strategy"))
+
 print()
 if failures:
     print(f"{failures} case(s) FAILED")
