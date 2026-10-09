@@ -90,7 +90,7 @@ CHECKLIST = [
     ("statutory band: veg mark", "veg mark"),
     ("the kirana venue", "neighbourhood shop (kirana, general trade)"),
     ("the temple or festival venue", "temple or festival ground"),
-    ("language mix as the film prompt says today", "English with Hinglish where natural"),
+    ("language mix: each market in its own principal language (changed 9 Oct from today's 'English + Hinglish', to follow the languages the owner listed)", "Each market in its own principal language"),
     ("place: Telangana", "  - Telangana:"),
     ("place: Andhra Pradesh", "  - Andhra Pradesh:"),
     ("Sankranti as a dated moment", "Sankranti (January; matters in Andhra Pradesh and Telangana)"),
@@ -101,6 +101,11 @@ CHECKLIST = [
 for name, phrase in CHECKLIST:
     expect(f"voice says: {name}", phrase.lower() in v.lower(), phrase)
 expect("the film voice carries them too", "bansuri flute" in vf and "HOUSE STYLE, SOUND" in vf)
+import geo   # noqa: E402
+for st in ("Telangana", "Andhra Pradesh", "Karnataka", "Tamil Nadu", "Maharashtra", "Delhi", "Haryana"):
+    name = geo.LANGUAGE_NAMES[geo.principal_language_of(geo.resolve_state(st))]
+    expect(f"the language mix names {name}, the studio's principal language for {st}", re.search(rf"{name} in [^,)]*{re.escape(st)}", accepted["language_mix"]) is not None, accepted["language_mix"])
+expect("the language mix no longer carries the old Hinglish default", "Hinglish" not in accepted["language_mix"])
 expect("the hardcoded-text behaviours that live outside the voice are in the answers for PR and the trade sheet",
        "24 hours" in accepted["worst_case"] and "Class I" in accepted["worst_case"]
        and any("25-40%" in r["value"] for r in accepted["trade_terms"]) and all(r["source"] for r in accepted["trade_terms"]))

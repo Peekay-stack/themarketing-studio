@@ -159,7 +159,7 @@ SPEC: list[dict] = [
     # None of them is `required`, because `CORE` is derived from that flag and marking one required
     # would retroactively make every existing brand incomplete.
     {"key": "states", "label": "Where it actually sells", "kind": "list",
-     "ask": "Which states and union territories? Names, codes or old names all work.",
+     "ask": "Which states and union territories? Names, codes or old names all work, and a big city stands for its state (Mumbai is Maharashtra).",
      "why": ("`market` is prose and cannot be counted or filtered. This resolves through the real "
              "vocabulary, so a media plan can target it, PR can find the language press for it, and "
              "the language gaps below can be computed rather than guessed."),
@@ -687,7 +687,7 @@ def put(data: dict, brand_id: str = "") -> dict:
     if "states" in data:
         codes, unresolved = [], []
         for raw in b.get("states") or []:
-            code = geo.resolve_state(raw)
+            code = geo.resolve_place(raw)        # a state, or a city standing for its state (Mumbai -> Maharashtra)
             (codes if code else unresolved).append(code or raw)
         b["states"] = list(dict.fromkeys(codes))
         b["states_unresolved"] = unresolved

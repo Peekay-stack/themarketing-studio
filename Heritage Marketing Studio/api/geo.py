@@ -254,6 +254,31 @@ def resolve_state(key: str) -> str:
     return _BY_LABEL.get(raw.replace("&", "and"), "")
 
 
+# Names a person types for a city that the seeded list holds under another name (or does not hold at all). Each is a plain
+# fact: this city is in this state. `tools/test_nuance_questions.py` fails if a target is not a real state.
+_CITY_ALIASES = {"bangalore": "ka", "mysuru": "ka", "gurugram": "hr", "vizag": "ap", "secunderabad": "tg", "navi mumbai": "mh",
+                 "poona": "mh", "calcutta": "wb", "madras": "tn", "cochin": "kl", "trivandrum": "kl", "baroda": "gj"}
+
+
+def city_state(raw) -> str:
+    """The state a typed city belongs to: one of the seeded cities (Mumbai, Pune, Noida...) or a common alternative name
+    (Bangalore, Gurugram, Vizag...). '' when it is neither, or when the name would belong to two states. Deliberately NOT
+    folded into `resolve_state`: the social plan relies on that function saying "not a state" for a city."""
+    t = " ".join(str(raw or "").split()).lower()
+    if not t:
+        return ""
+    states = {s for n, s, _ in _SEED if n.lower() == t}
+    if not states:
+        return _CITY_ALIASES.get(t, "")
+    return next(iter(states)) if len(states) == 1 else ""
+
+
+def resolve_place(raw) -> str:
+    """A state code for what a person typed where a state was asked for: a state (code, name, old name) or, failing that,
+    a city, which stands for its state. This is what the brand profile's "where it sells" box uses."""
+    return resolve_state(raw) or city_state(raw)
+
+
 def principal_language_of(key: str) -> str:
     """The state's own principal language, IF the studio holds it. '' otherwise.
 

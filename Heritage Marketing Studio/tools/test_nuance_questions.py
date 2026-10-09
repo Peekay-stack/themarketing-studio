@@ -118,6 +118,25 @@ expect("typed names are saved as codes, de-duplicated, in the order given", lb["
 expect("what is not a language is kept as typed in languages_unresolved, not dropped", lb["languages_unresolved"] == ["Klingon"], lb["languages_unresolved"])
 expect("the question says names or codes work, and gives an example", "Names or codes both work" in bp.SPEC_BY_KEY["languages"]["ask"] and "Telugu" in bp.SPEC_BY_KEY["languages"].get("placeholder", ""))
 
+print("Cities in the states box")
+expect("a city resolves to its state through resolve_place",
+       [_geo.resolve_place(x) for x in ("Mumbai", "Pune", "  noida ", "Gurgaon", "Bengaluru", "Hyderabad", "Kolkata")] == ["mh", "mh", "up", "hr", "ka", "tg", "wb"],
+       [_geo.resolve_place(x) for x in ("Mumbai", "Pune", "  noida ", "Gurgaon", "Bengaluru", "Hyderabad", "Kolkata")])
+expect("common alternative names resolve too",
+       [_geo.resolve_place(x) for x in ("Bangalore", "Gurugram", "Vizag", "Secunderabad", "Navi Mumbai", "Calcutta", "Madras", "Cochin")] == ["ka", "hr", "ap", "tg", "mh", "wb", "tn", "kl"])
+expect("a state name, a code, 'Delhi NCR' and an old state name still resolve as states",
+       [_geo.resolve_place(x) for x in ("Karnataka", "tn", "Delhi NCR", "Orissa")] == ["ka", "tn", "dl", "or"], [_geo.resolve_place(x) for x in ("Karnataka", "tn", "Delhi NCR", "Orissa")])
+expect("an unknown place resolves to nothing, never a guess", [_geo.resolve_place(x) for x in ("Atlantis", "", None, "Mumbaii")] == ["", "", "", ""])
+expect("resolve_state ITSELF is unchanged: a city is still 'not a state' there (the social plan relies on that)", _geo.resolve_state("Mumbai") == "" and _geo.resolve_state("Pune") == "")
+expect("every alias target is a real state", all(v in _geo.STATES for v in _geo._CITY_ALIASES.values()), [k for k, v in _geo._CITY_ALIASES.items() if v not in _geo.STATES])
+_seed0 = _geo._SEED
+_geo._SEED = list(_seed0) + [("Aurangabad", "mh", 1), ("Aurangabad", "br", 1)]
+expect("a city name that belongs to two states resolves to nothing rather than to one of them", _geo.city_state("Aurangabad") == "", _geo.city_state("Aurangabad"))
+_geo._SEED = _seed0
+sb = bp.put({"name": "Cities Probe", "states": ["Mumbai", "Pune", "Delhi NCR", "Karnataka", "tn", "Gurugram", "Atlantis"]})
+expect("the states box saves cities as their state, once each, and keeps what it could not place", sb["states"] == ["mh", "dl", "ka", "tn", "hr"] and sb["states_unresolved"] == ["Atlantis"], (sb["states"], sb["states_unresolved"]))
+expect("the question says a big city stands for its state", "city stands for its state" in bp.SPEC_BY_KEY["states"]["ask"])
+
 print("Readiness and groups")
 rd = bp.readiness(bp.load(b["id"]))
 expect("readiness carries the new questions", all(any(f["key"] == k for f in rd["fields"]) for k in NEW_ALL))

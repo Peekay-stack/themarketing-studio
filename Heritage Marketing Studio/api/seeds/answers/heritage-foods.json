@@ -1,7 +1,8 @@
 {
   "_what": "Heritage Foods' answers to the nuance questions, drafted on 9 Oct 2026 from the dairy text the studio's code assumed before the nuance layer (producers.py, packscene.py, posm.py, main.py, filmaudio.py, sales.py, pr.py). They are SUGGESTIONS: the profile screen shows each one with Accept and Dismiss, and nothing reaches a prompt until the owner accepts it and saves. Keys starting with an underscore are notes and are ignored by the loader.",
   "_review": [
-    "language_mix: today's film prompt says 'English + Hinglish where natural', but Heritage's profile says Telugu and English. Drafted as today's behaviour; please choose.",
+    "language_mix: CHANGED 9 Oct. It used to repeat today's film prompt ('English + Hinglish where natural'). It now follows the languages you listed (Telugu, Kannada, Tamil, Marathi, Hindi, English): each market in its own principal language, from the studio's state data, with English for product and pack terms. Please check it, especially Hindi for Delhi and Haryana and whether English should lead anywhere.",
+    "sound_world: still says 'Telugu-accented English by default', the studio's default voice. With Karnataka, Tamil Nadu, Maharashtra, Delhi and Haryana in the market that default is probably wrong outside Telangana and Andhra Pradesh. Please edit it.",
     "routes: no share of sales is given. The code only says general trade is the large majority and home delivery matters in a daily cold-chain category. Please add real shares or leave them blank.",
     "lines: left empty on purpose. The code never described Heritage's product lines (milk, curd, value-added), so nothing here would be drawn from the code.",
     "place_notes and calendar_moments: only what the code mentions (Sankranti and Pongal as texture, Diwali as a gifting window, a Telugu-accented default voice). Please add the rest of what you know about each place.",
@@ -18,7 +19,7 @@
   "pack_in_scene": "only when it is in use",
   "imagery_style": "photorealistic food and lifestyle photography: full-frame DSLR look, 50mm lens, shallow depth of field, warm natural light; illustration, when used, carries a warm storybook or folk-art feel in the brand palette",
   "buying_unit": "a household",
-  "language_mix": "English with Hinglish where natural",
+  "language_mix": "Each market in its own principal language (Telugu in Telangana and Andhra Pradesh, Kannada in Karnataka, Tamil in Tamil Nadu, Marathi in Maharashtra, Hindi in Delhi and Haryana), with English for product and pack terms.",
   "people_setting": "An authentic family setting: a family in a warm home, a mother and children at the table, shopkeepers at a neighbourhood shop, real locations in natural light, premium and wholesome.",
   "sound_world": "Warm, wholesome and uplifting. Gentle instrumentation (warm strings, a solo bansuri flute over a soft tanpura drone, light tabla), no vocals and no lyrics. A warm female voice, Telugu-accented English by default.",
   "statutory_marks": ["veg mark", "FSSAI mark", "FSSAI licence number"],
