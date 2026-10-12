@@ -390,6 +390,9 @@ def write_expressions(p: dict, campaign_id: str, house: dict | None = None,
          if str(c.get("resolution") or "").strip() else ""),
         f"Shape: {c.get('shape') or 'frame'} — {SHAPES.get(c.get('shape') or 'frame', ('', ''))[0]}",
         (f"Frame: {c['frame']}" if str(c.get("frame") or "").strip() else ""),
+        ("When a line instantiates the frame's slot, the slotted words must not repeat a word the frame "
+         "already fixes (no word appearing twice); the slot and the frame together read as one clean line."
+         if "{x}" in str(c.get("frame") or "").lower() else ""),
         (("\n\n---\nALREADY WRITTEN FOR THIS CAMPAIGN, and not to be repeated or contradicted:\n"
           + "\n".join(f"  {k}: {v}" for k, v in already.items())) if already else ""),
         (f"\n\n---\nTHE PERSON ADDS\n{steer.strip()}" if str(steer or "").strip() else ""),
@@ -863,6 +866,9 @@ def draft(p: dict | None, house: dict | None, ladder_id: str = "",
             f"Write ONE PER DIVISION of the proof axis ({', '.join(axis)}), in that order, so the "
             f"campaign covers every dimension it claims." if axis else
             "Write two or three, enough to show the frame generates."),
+        "    The words that fill the slot must NOT repeat a word the frame already fixes: if the frame is "
+        "\"{X} Power\", the slot must not itself contain \"Power\" (a slot that repeats the fixed word reads "
+        "as \"Power Power\"). The slot and the frame together must read as one clean line, no word twice.",
         "    Each slot carries a `lang` where the word is not English — this is India, and a campaign "
         "line is a STRUCTURE instantiated per language, not one string translated.",
         "",

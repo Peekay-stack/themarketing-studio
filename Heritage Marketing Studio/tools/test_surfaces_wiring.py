@@ -173,6 +173,8 @@ for name, is_dairy in (("Sthir Cement", False), ("Heritage Foods", True)):
     expect("/campaign-draft prompt lists the four shapes with other-category examples and no mother-and-growth insight example",
            "The four shapes:" in t and "Share a Coke with {name}" in t and "Duracell bunny" in t and "Red Bull" in t and "Urban renters 25-35" in t
            and not re.search(r"ki Shakti|Meet Your Farmer|topical girl|pressure of his growth|learning matters more", t), (r.status_code, t[:80]))
+    expect("/campaign-draft carries the frame-redundancy guard (a slot must not repeat a word the frame fixes), with a neutral 'Power Power' example not a Heritage one",
+           "must NOT repeat a word the frame already fixes" in t and "Power Power" in t and "ki Shakti" not in t[t.find("must NOT repeat"):t.find("must NOT repeat") + 200], t[t.find("must NOT repeat"):][:120])
     r, t = run("/plan-generate", {"id": ids["plan"], "layer": "channels"})
     expect("/plan-generate (channels) carries the audience-language example, not Telugu", "in the audience language" in t and "reel, Telugu" not in t, (r.status_code, t[:80]))
 

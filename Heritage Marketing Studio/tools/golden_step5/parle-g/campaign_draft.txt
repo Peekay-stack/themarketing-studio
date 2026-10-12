@@ -27,5 +27,6 @@ Write:
   resolution — what the work TELLS her, in one short sentence. It should be sayable and a little surprising: 'fixing it yourself is the smart choice, not the cheap one'.
   frame — the frame itself. For a frame, a sentence with ONE slot marked {X}, built off the brand's idiom where there is one.
   slots — the conjugations that fill it. Write two or three, enough to show the frame generates.
+    The words that fill the slot must NOT repeat a word the frame already fixes: if the frame is "{X} Power", the slot must not itself contain "Power" (a slot that repeats the fixed word reads as "Power Power"). The slot and the frame together must read as one clean line, no word twice.
     Each slot carries a `lang` where the word is not English — this is India, and a campaign line is a STRUCTURE instantiated per language, not one string translated.
 Return ONLY JSON: {"insight":"…","resolution":"…","shape":"frame","frame":"…","slots":[{"text":"…","lang":"hi|te|en|…"}],"why":"one sentence on why this is the campaign this platform should run now"}
