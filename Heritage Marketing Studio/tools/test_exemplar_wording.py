@@ -11,6 +11,8 @@ What this proves (no model is called, scratch data only). It runs the golden cap
   - the structure those examples taught is still there: all four campaign shapes, the idea skill's mechanic and its five-media line, the Brief's
     worked example with its "notice what it does NOT do" lesson, the channel rule with its example;
   - every example now says it is from another category;
+  - the campaign insight/resolution example ("Mothers 25-40 ... pressure of his growth ... learning matters more than winning") and the idea
+    skill's "Celebrate the mothers of India" are gone, for every brand including Heritage;
   - Heritage's own stored data and answers are not touched (Heritage's voice block still carries its dairy specifics: the golden compare shows
     voice_block and every producer prompt unchanged).
 
@@ -69,6 +71,14 @@ for brand in ("sthir-cement", "kumkum-beauty", "loomwell", "parle-g", "heritage-
            "the platform name, in the brand's own words" in b and "where the buyer's attitude sits today, in plain words" in b)
     p = prompt(brand, "plan_channels")
     expect(f"{brand}: the channel rule keeps its example", "'15s vertical reel, in the audience language'" in p, p[p.find("vertical reel") - 40:][:120])
+
+print("The insight, resolution and sentiment examples are not about mothers or growth (all five brands)")
+OLD_EXAMPLES = re.compile(r"pressure of his growth|mothers 25|mothers of india|learning matters more than winning", re.I)
+for brand in ("sthir-cement", "kumkum-beauty", "loomwell", "parle-g", "heritage-foods"):
+    c, i = prompt(brand, "campaign_draft"), prompt(brand, "idea_platform_draft")
+    expect(f"{brand}: no mother-and-growth example in the campaign or idea prompt", not OLD_EXAMPLES.search(c) and not OLD_EXAMPLES.search(i),
+           (OLD_EXAMPLES.search(c) or OLD_EXAMPLES.search(i)).group(0) if (OLD_EXAMPLES.search(c) or OLD_EXAMPLES.search(i)) else "")
+    expect(f"{brand}: the replacements are in place", "Urban renters 25-35" in c and "fixing it yourself is the smart choice" in c and "keep the city running" in i)
 
 print("Heritage keeps its own specifics")
 hv = prompt("heritage-foods", "voice_block")

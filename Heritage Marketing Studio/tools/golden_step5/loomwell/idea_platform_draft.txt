@@ -26,7 +26,7 @@ The distinction is the whole point, and it is not a matter of scale.
 | Built on | a sentiment | a **mechanic** |
 | Test | does it work? | does it keep working? |
 
-*"Celebrate the mothers of India"* is a sentiment. It generates one film and then repeats itself.
+*"Celebrate the people who keep the city running"* is a sentiment. It generates one film and then repeats itself.
 
 *"Every shirt carries the name of the mill that wove it"* is a mechanic (an example from another
 category: take the structure, not the words). It generates a film about one mill, a tag change, a shelf

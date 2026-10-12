@@ -109,8 +109,8 @@ def save(p: dict, data: dict) -> tuple[dict | None, str]:
         return None, "A campaign needs a name — the two or three words a room will repeat."
     if not insight:
         return None, ("A campaign needs an insight: the tension it resolves. Not a demographic. "
-                      "“Mothers 25–40” is an audience; “she feels the pressure of "
-                      "his growth more than anyone” is an insight.")
+                      "“Urban renters 25–35” is an audience; “they fix things themselves because "
+                      "asking the landlord costs more than the problem” is an insight.")
 
     shape = str(data.get("shape") or "frame").strip().lower()
     if shape not in SHAPES:
@@ -853,10 +853,10 @@ def draft(p: dict | None, house: dict | None, ladder_id: str = "",
         "",
         "Write:",
         "  insight — the TENSION, in one sentence. What is true and uncomfortable for this buyer that "
-        "the work resolves. NOT a demographic and NOT a benefit restated. 'Mothers 25-40' is an "
-        "audience; 'she feels the pressure of his growth more than anyone' is an insight.",
+        "the work resolves. NOT a demographic and NOT a benefit restated. 'Urban renters 25-35' is an "
+        "audience; 'they fix things themselves because asking the landlord costs more than the problem' is an insight.",
         "  resolution — what the work TELLS her, in one short sentence. It should be sayable and a "
-        "little surprising: 'learning matters more than winning'.",
+        "little surprising: 'fixing it yourself is the smart choice, not the cheap one'.",
         f"  frame — the {shape} itself. For a frame, a sentence with ONE slot marked {{X}}, built off "
         "the brand's idiom where there is one.",
         "  slots — the conjugations that fill it. " + (

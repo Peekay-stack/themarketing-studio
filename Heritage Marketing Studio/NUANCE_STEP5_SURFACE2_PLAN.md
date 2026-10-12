@@ -51,3 +51,13 @@ Revert the commit. No data changes.
 1. **Replacement examples** (shirt and mill, Share a Coke, Duracell bunny, Red Bull stunt): go with them, or name your own.
 2. **Brief builder page** (`/brand-brief-builder`, Heritage pre-filled): is anyone still using it? If not, I leave it alone; if yes, I blank its defaults in its own commit.
 3. **Real Brief regeneration** after the change: yes or no.
+
+## Surface 2b (12 Oct): what the first sweep missed
+The first sweep searched for dairy words (milk, dairy, doodh, curd, ...), so it passed teaching examples and defaults that are Heritage-shaped without using one. Found afterwards, while checking the Brief screen the owner was about to test:
+- `app.dc.html` `imcSnapshot` (the on-screen IMC draft offered in the Pull-from-brief picker, and carried into the house and the producers): a built-in audience "Young urban families across core markets." and tone "Warm, wholesome, premium ... Lead with purity & family." for EVERY brand. Now blank when the brief does not say (`audience: ask`, `tone: d.tone || ''`); every reader already tolerates blank.
+- `campaign.py` lines 112 and 856-859: the insight example "Mothers 25-40 / she feels the pressure of his growth" and the resolution example "learning matters more than winning". Now "Urban renters 25-35 / they fix things themselves because asking the landlord costs more than the problem" and "fixing it yourself is the smart choice, not the cheap one".
+- `ideas_skill/SKILL.md` line 29: "Celebrate the mothers of India" is now "Celebrate the people who keep the city running".
+Golden compare: `campaign_draft` and `idea_platform_draft` changed for all 5 brands, 65 of 75 unchanged; `tools/golden_step5` re-saved. `test_exemplar_wording` extended. **Still open, deliberately left:** the campaign prompt says "what the work TELLS her" (campaign.py ~858), which assumes the buyer is a woman; it is wording, not an example, so it belongs with the audience answers (Step 7), not here. Keywords to use next time: purity, premium, wholesome, mother, family, young urban, South India, Telugu, farmer, nourish.
+
+## The IMC screen's stale state (12 Oct), found while preparing the Brief test
+Not a Surface 2 item, but found because Surface 2's check asked the owner to regenerate the Brief on that screen. Since the first commit the screen kept its whole brief (draft, prompt, files, project, library id) for the session; see commit `ee138f8` and `tools/page_checks/imc_screen_state.js` (11 cases, run before and after).

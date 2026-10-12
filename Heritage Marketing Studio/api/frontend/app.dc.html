@@ -14206,8 +14206,10 @@ class Component extends DCLogic {
       title: (brand || 'Independent') + ' — IMC Brief', format:'IMC', tag:'IM', tint:'#FCEFC7', fg:'#A77A00',
       meta:'Draft · just now · you', brand, brand_mode: this.state.producerBrandMode,
       proposition: d.smp || ask,
-      audience: ask || 'Young urban families across core markets.',
-      tone: 'Warm, wholesome, premium — proud but never preachy. Lead with purity & family.',
+      // Blank when the brief does not say: this used to fall back to a family audience and a "warm, wholesome, premium...
+      // lead with purity & family" tone for EVERY brand, and both ride into the house and the producers with the brief.
+      audience: ask,
+      tone: d.tone || '',
       objective: ask || d.smp || '',
     };
   }
