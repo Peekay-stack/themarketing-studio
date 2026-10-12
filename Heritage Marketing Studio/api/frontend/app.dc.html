@@ -11594,7 +11594,9 @@ class Component extends DCLogic {
       // ensureResearchIngested() for why this exists: ingestion is the slow step in this whole
       // pipeline, so it runs once and gets reused by drafting, exporting and the synthesis deck,
       // instead of each of those re-ingesting the same files and risking a proxy timeout.
-      research:null, ingesting:false },
+      research:null, ingesting:false,
+      // Which library row this draft belongs to, and when it was explicitly saved (see blankImc).
+      briefId:null, savedAt:null },
     launcherOpen: false,
     briefPickerOpen: false,
     briefPickerFor: 'social',
@@ -11901,6 +11903,21 @@ class Component extends DCLogic {
   ];
 
   setImc(patch){ this.setState(s => ({ imc: { ...s.imc, ...patch } })); }
+  // A new IMC brief: the same shape as the `imc` literal in the initial state (keep the two in step), plus the two
+  // fields that say which library row this screen's draft belongs to (`briefId`) and when it was explicitly saved
+  // (`savedAt`). The screen used to keep ALL of this for the whole session, so a brief you had saved was still on
+  // screen under "+ New brief", on a different brand, and its id was still the key the next Save wrote to.
+  blankImc(brand, category){
+    return { prompt:'', brand: brand || '', category: category || '', preparedFor:'', sourcesNote:'',
+      project:'', projectDraft:'',
+      files:{ market:[], household:[], wheel:[], cbca:[], research:[] },
+      marketData:null, householdData:null,
+      status:'idle', message:'', draft:null, tab:'brand', activePin:0,
+      genStatus:'', genMessage:'', showJson:false,
+      synthStatus:'', synthMessage:'',
+      research:null, ingesting:false,
+      briefId:null, savedAt:null };
+  }
   onImcText = (e) => { const k = e.target.getAttribute('data-k'); this.setImc({ [k]: e.target.value }); };
   setImcTab = (t) => () => this.setImc({ tab:t });
   // Naming-convention gate: locks in `projectDraft` as the real, saved `project` only on an explicit
@@ -12556,10 +12573,11 @@ class Component extends DCLogic {
     this.setState({ socialPackChoice:'', socialPackRef:'', socialPackRefName:'', socialPackProduct:'' });
     this.setCarousel({ packChoice:'', packRef:'', packRefName:'', packProduct:'' });
     this.loadCarouselAssetLib();
-    // Same reasoning, one more place: the IMC screen's Brand/Category fields would otherwise keep
-    // naming the PREVIOUS brand after a real switch — this one overwrites rather than only filling
-    // when blank, because switching brands is exactly the "no, I mean a different one now" case.
-    this.setState({ imc: { ...this.state.imc, brand: b.name || '', category: b.category || '' } });
+    // Same reasoning, one more place: the IMC screen would otherwise keep the PREVIOUS brand's whole brief — its
+    // draft, prompt, research files and project name, and the id of its library row (so the next Save overwrote
+    // that row with this brand's work) — under the new brand's name. A switch is exactly the "no, I mean a
+    // different one now" case, so the screen starts a new brief for the new brand.
+    this.setState({ imc: this.blankImc(b.name, b.category), briefId:null, briefSavedAt:null });
     // Studio Settings' name override outranks the active brand everywhere brandName() is read — including
     // PR sheets, brief-save and the IMC save, not just the header text. Left set, switching brands keeps
     // writing the OLD brand's typed-in name onto the new one's work. Clearing it here is what makes a
@@ -13169,7 +13187,10 @@ class Component extends DCLogic {
       // that only ever gets auto-drafted (never explicitly sent through `saveImcBrief`'s own "Save to
       // library" button) kept a permanently project-less row, found live: the project name showed as
       // saved on one brief but was silently missing on a sibling row from the same session.
-      project: im.project || '' }));
+      project: im.project || '',
+      // The row this screen's draft already belongs to, so a redraft corrects it in place instead of adding a near-copy
+      // (/brand-brief-draft has always accepted it; this call never sent it). Empty for a new brief.
+      brief_id: im.briefId || '' }));
     // Research (including any wheel/cbca upload that couldn't be read as a chart) is already ingested
     // above and travels in `research`. Only chart-capable wheel/cbca files still need to go as raw
     // bytes, in their own fields — draft_brief() reads those directly for vision.
@@ -13188,8 +13209,10 @@ class Component extends DCLogic {
       const payload = await r.json();
       // The id handed back here is the upsert key for /brief-save, so a redraft corrects this brief in
       // the library instead of leaving two versions of it for someone else to choose between.
-      if (payload && (payload.brief_id || payload.id)) this.setState({ briefId: payload.brief_id || payload.id, briefSavedAt:null });
-      this.setImc({ status:'ready', message:'Draft ready — review each tab, then generate.', draft: this.normalizeDraft(payload) });
+      const newId = payload && (payload.brief_id || payload.id);
+      if (newId) this.setState({ briefId: newId, briefSavedAt:null });
+      this.setImc({ status:'ready', message:'Draft ready — review each tab, then generate.', draft: this.normalizeDraft(payload),
+        briefId: newId || this.state.imc.briefId || null, savedAt:null });
     } catch (e) {
       this.setImc({ status:'error', message:'Couldn’t reach the drafting service (' + e.message + '). You can still fill the brief in manually.', draft: this.state.imc.draft || this.blankDraft() });
     }
@@ -13317,12 +13340,19 @@ class Component extends DCLogic {
   openBuilder = (id) => () => {
     if (id === 'imc') {
       const a = this.activeBrand();
-      this.setState(s => ({ screen:'imc',
-        // Grounded means the skill should actually be TOLD the active brand's own facts, not have
-        // to have them retyped by hand — filled only when blank, so a draft already in progress (or
-        // a deliberate override) is never overwritten by revisiting this screen.
-        imc: (s.producerBrandMode !== 'general' && a && !s.imc.brand && !s.imc.category)
-          ? { ...s.imc, brand: a.name || '', category: a.category || '' } : s.imc }));
+      this.setState(s => {
+        // A brief that was explicitly saved is finished: a new one starts empty, and the saved brief's id is not carried
+        // into it (the next Save would have overwritten that library row). A draft that was never saved is kept, as
+        // before. The id in play is this screen's own (`imc.briefId`): the shared one is cleared whenever another
+        // brief format opens.
+        const cur = s.imc.savedAt ? this.blankImc() : s.imc;
+        return { screen:'imc', briefId: cur.briefId || null, briefSavedAt: null,
+          // Grounded means the skill should actually be TOLD the active brand's own facts, not have
+          // to have them retyped by hand — filled only when blank, so a draft already in progress (or
+          // a deliberate override) is never overwritten by revisiting this screen.
+          imc: (s.producerBrandMode !== 'general' && a && !cur.brand && !cur.category)
+            ? { ...cur, brand: a.name || '', category: a.category || '' } : cur };
+      });
       return;
     }
     if (id === 'brand') { this.setState({ screen:'builder', format:'brand', builderReview:false, fromBuilder:true }); return; }
@@ -14149,7 +14179,9 @@ class Component extends DCLogic {
         audience: (im.prompt || '').trim(), tone: d.tone || '', category: d.category || im.category || '' } });
     this.setState({ briefSaveBusy:false });
     if (!r.ok) { this.showToast((r.data && r.data.detail) || 'Could not save — nothing was written to the library.'); return; }
-    this.setState({ briefId: (r.data && (r.data.id || r.data.brief_id)) || this.state.briefId || null, briefSavedAt: this.clock() });
+    const savedId = (r.data && (r.data.id || r.data.brief_id)) || this.state.briefId || null;
+    this.setState({ briefId: savedId, briefSavedAt: this.clock() });
+    this.setImc({ briefId: savedId, savedAt: this.clock() });
     this.loadBriefs();
     this.showToast(had ? 'Saved — the same entry was corrected.' : 'Saved to the brief library — pickers can pull it now.', 'ok');
   };
@@ -19647,10 +19679,12 @@ class Component extends DCLogic {
     this.setState(s => ({ producerBrandMode: m,
       imc: { ...(m === 'general' ? { ...s.imc, brand:'', category:'' }
         : (a && !s.imc.brand && !s.imc.category) ? { ...s.imc, brand: a.name || '', category: a.category || '' }
-        : s.imc), draft:null, status:'idle', message:'' },
+        : s.imc), draft:null, status:'idle', message:'', briefId:null, savedAt:null },
       // guided Brief Builder (Media/Digital/Packaging/PD/PR-format) \u2014 same shape a brand-new brief
       // of this format starts in, not a blank object that would disagree with formatDefaults elsewhere.
       brief: this.formatDefaults(s.format), briefRefusal:'', briefRefusalFrom:'',
+      // Both drafts above are cleared, so the library row either belonged to is no longer what is on screen.
+      briefId:null, briefSavedAt:null,
       // Idea Platform \u2014 live-testing this exact case caught a second version of the og.idea mistake:
       // `adoptIdea()` posts to `/idea-platform` and gets back a real server id the moment a line is
       // adopted, which makes an adopted platform a saved document \u2014 the same tier as House/Plan/
