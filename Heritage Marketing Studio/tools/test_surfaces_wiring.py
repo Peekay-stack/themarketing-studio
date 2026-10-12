@@ -300,8 +300,21 @@ for method, path, body in sweep:
     except Exception as e:  # noqa: BLE001 -- an unhandled exception is exactly the broken wiring this is looking for
         expect(f"{method} {path} raised", False, f"{type(e).__name__}: {e}")
 
+print("\n=== Surface 6: page strings carry no hardcoded Heritage or dairy")
+_html = open(os.path.join(API, "frontend", "app.dc.html"), encoding="utf-8").read()
+expect("download filenames use brandFile(), not a hardcoded 'Heritage'", "brandFile()" in _html
+       and "'Heritage'+(pbProj" not in _html and "'Heritage'+(scProj" not in _html and "'Heritage_Brief_'+" not in _html and "'Heritage_Film_'+" not in _html, "")
+expect("docx/mp4 title fallbacks are brand-driven, not 'Heritage Film'/'Heritage Brief'",
+       "'Heritage Film'" not in _html and "'Heritage Film Script'" not in _html and "||'Heritage Brief'" not in _html and "||'Heritage_Brief'" not in _html)
+expect("socialGrounding's empty state no longer says 'any dairy brand'", "any dairy brand in the category" not in _html and "could be any brand in the category" in _html)
+expect("the product placeholders no longer name a Heritage dairy product", 'placeholder="Which product is it? e.g. Heritage' not in _html and "e.g. Heritage Nourish+ Milk 500 ml" not in _html.replace("set and change (\"Heritage Nourish+ Milk\")", ""))
+expect("the sample cohort labels carry no 'dairy'", "Repeat dairy buyers" not in _html and "Premium dairy" not in _html and "Dairy & Groceries" not in _html and "dairy basket" not in _html and "dairy + baby" not in _html)
+
+print("\n=== Surface 7: a new tenant's seed profile is neutral, not Heritage")
+expect("brandprofile.SEED names no brand's category, codes or competitors", set(bp.SEED) <= {"name"} and not re.search(r"heritage|dairy|doodh|milk|FSSAI|amul|nandini", str(bp.SEED), re.I), bp.SEED)
+
 print("\n=== The page sends brand_mode on every call that reaches the music bed")
-html = open(os.path.join(API, "frontend", "app.dc.html"), encoding="utf-8").read()
+html = _html
 
 
 def region(start, end):

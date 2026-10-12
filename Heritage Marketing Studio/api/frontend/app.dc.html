@@ -1638,7 +1638,7 @@
       </div>
       <div style="font-size:12.5px; color:#6B7280; margin-bottom:12px;">{{ libCopyHint }}</div>
       <sc-if value="{{ libNameShown }}" hint-placeholder-val="{{ true }}">
-        <input value="{{ libName }}" onChange="{{ onLibName }}" placeholder="Name it: how you will pick it later, e.g. Heritage Nourish+ Milk 500 ml (used when you add one file)" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:10px; padding:9px 12px; font-size:13px; color:#38414F; background:#FBFAF8; font-family:inherit; margin-bottom:10px;" />
+        <input value="{{ libName }}" onChange="{{ onLibName }}" placeholder="Name it: how you will pick it later, e.g. a 500 ml pack of your product (used when you add one file)" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:10px; padding:9px 12px; font-size:13px; color:#38414F; background:#FBFAF8; font-family:inherit; margin-bottom:10px;" />
       </sc-if>
       <textarea value="{{ libNote }}" onChange="{{ onLibNote }}" rows="2" placeholder="What this is, or the exact wording for locked copy" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:10px; padding:10px 12px; font-size:13.5px; color:#38414F; background:#FBFAF8; resize:vertical; font-family:inherit; margin-bottom:10px;"></textarea>
       <input value="{{ libTags }}" onChange="{{ onLibTags }}" placeholder="Tags, comma separated (optional)" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:10px; padding:9px 12px; font-size:13px; color:#38414F; background:#FBFAF8; font-family:inherit; margin-bottom:12px;" />
@@ -6883,7 +6883,7 @@
             <input type="file" accept="image/*" onChange="{{ onSocialPackRef }}" style="font-size:11.5px; width:100%;" />
             <sc-if value="{{ socialPackHasRef }}" hint-placeholder-val="{{ false }}">
               <div style="font-size:11.5px; color:#1E7E34; margin-top:6px;">Using {{ socialPackRefLabel }} <span onClick="{{ clearSocialPackRef }}" style="cursor:pointer; color:#B0410E; text-decoration:underline; margin-left:6px;">remove</span></div>
-              <input type="text" value="{{ socialPackProduct }}" onChange="{{ onSocialPackProduct }}" placeholder="Which product is it? e.g. Heritage Nourish+ Milk 500 ml" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:10px; padding:7px 10px; font-size:12px; color:#17325E; background:#fff; font-family:inherit; margin-top:6px;" />
+              <input type="text" value="{{ socialPackProduct }}" onChange="{{ onSocialPackProduct }}" placeholder="Which product is it? e.g. a 500 ml pack of your product" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:10px; padding:7px 10px; font-size:12px; color:#17325E; background:#fff; font-family:inherit; margin-top:6px;" />
             </sc-if>
           </div>
         </div>
@@ -12410,6 +12410,8 @@ class Component extends DCLogic {
   }
   // For display only. Never send this to a route — it is a sentence, not an identifier.
   brandLabel(){ return this.brandName() || 'No brand selected'; }
+  // A file-safe active brand name for download names; falls back to a generic word, never a hardcoded brand.
+  brandFile(){ return (this.brandName() || '').replace(/[^a-z0-9]+/gi, '_').replace(/^_|_$/g, '') || 'Brand'; }
   // One accessor for the brand's own idea, because the hero, the campaign ribbon, the social card and
   // the produced-film placeholder all show it, and four derivations of one fact drift. Empty when there
   // is nothing to show — an empty ribbon beats another company's campaign.
@@ -15260,7 +15262,7 @@ class Component extends DCLogic {
       // someone is most likely to be reading it, and exactly when it can flatly contradict a quote box
       // one panel above it that already resolved (`loadSocialStandsOn`'s own, separately-timed fetch).
       if (!this.state.groundingLoaded) return { text:'Checking what grounds these posts\u2026', ok:true };
-      return { text:'Nothing is grounding these posts yet \u2014 no platform adopted, no plan bound. They will read competent and could be any dairy brand in the category.', ok:false };
+      return { text:'Nothing is grounding these posts yet \u2014 no platform adopted, no plan bound. They will read competent and could be any brand in the category.', ok:false };
     }
     return { text:'Written against ' + parts.join(', for ') + '.', ok:true };
   }
@@ -15806,7 +15808,7 @@ class Component extends DCLogic {
     const departments = this.DEPTS.map(d => ({ label:d.label, text:this.plainDept((this.state.shoot[d.id]||{}).text) }))
                                   .filter(d => d.text.trim());
     const blob = await this.apiBlob('/production-bible-docx', {
-      title: (this.state.linkedBrief ? this.state.linkedBrief.title.replace(/ brief.*/i,'').trim() : 'Heritage Film') + ' — production bible',
+      title: (this.state.linkedBrief ? this.state.linkedBrief.title.replace(/ brief.*/i,'').trim() : (this.brandName() ? this.brandName() + ' Film' : 'Film')) + ' — production bible',
       logline: vc ? vc.logline : '', scenes: rows, departments, frames,
       characters: this.state.videoCharacters, cast_reference: this.state.castRefUrl || '',
       meta: { Duration:this.state.prodDuration, Aspect:this.state.production.aspect,
@@ -15814,7 +15816,7 @@ class Component extends DCLogic {
     });
     if (!blob) { this.showToast('Couldn’t build the production bible — is the backend running?'); this.setState({ docBusy:'' }); return; }
     const pbProj = ((this.state.linkedBrief || {}).project || '').replace(/[^a-z0-9]+/gi,'_').replace(/^_|_$/g,'');
-    this.triggerDownload(blob, 'Heritage'+(pbProj ? '_'+pbProj : '')+'_Production_Bible_'+this.today()+'.docx');
+    this.triggerDownload(blob, this.brandFile()+(pbProj ? '_'+pbProj : '')+'_Production_Bible_'+this.today()+'.docx');
     this.setState({ docBusy:'' });
   };
 
@@ -15822,9 +15824,9 @@ class Component extends DCLogic {
     if (this.state.docBusy) return;
     this.setState({ docBusy:'script' });
     const vc = this.state.videoConcept;
-    const payload = { title: (this.state.linkedBrief? this.state.linkedBrief.title : 'Heritage Film'), logline: vc?vc.logline:'', scenes: this.state.fullScript || [] };
+    const payload = { title: (this.state.linkedBrief? this.state.linkedBrief.title : (this.brandName() ? this.brandName()+' Film' : 'Film')), logline: vc?vc.logline:'', scenes: this.state.fullScript || [] };
     const blob = await this.apiBlob('/video-script-docx', payload)
-      || this.wordBlob('Heritage Film Script', [
+      || this.wordBlob((this.brandName() ? this.brandName()+' Film Script' : 'Film Script'), [
           { k:'Logline', v: vc?vc.logline:'' },
           ...(this.state.fullScript||[]).flatMap(r => [
             { h:'Scene '+r.no+'  ·  '+r.tc },
@@ -15833,7 +15835,7 @@ class Component extends DCLogic {
             ...((r.beat_role || r.beat_note) ? [{ k:'Beat', v:[this.BEAT_ROLE_LABELS[this.beatRoleOf(r)] || '', r.beat_note || ''].filter(Boolean).join(' \u2014 ') }] : []) ])
         ]);
     const scProj = ((this.state.linkedBrief || {}).project || '').replace(/[^a-z0-9]+/gi,'_').replace(/^_|_$/g,'');
-    this.triggerDownload(blob, 'Heritage'+(scProj ? '_'+scProj : '')+'_Film_Script_'+this.today()+'.docx');
+    this.triggerDownload(blob, this.brandFile()+(scProj ? '_'+scProj : '')+'_Film_Script_'+this.today()+'.docx');
     this.setState({ docBusy:'' });
   };
 
@@ -16378,11 +16380,11 @@ class Component extends DCLogic {
     const payload = { title:this.state.title, format:fmt, objective:this.state.builderObjective, fields:b };
     const rows = [{ k:'Campaign objective', v:this.state.builderObjective||'' }];
     defs.forEach(g => { rows.push({ h:g.title }); g.fields.forEach(f => rows.push({ k:f[1], v:b[f[0]]||'' })); });
-    const blob = await this.apiBlob('/brief-docx', payload) || this.wordBlob(this.state.title||'Heritage Brief', rows);
+    const blob = await this.apiBlob('/brief-docx', payload) || this.wordBlob(this.state.title||(this.brandName() ? this.brandName()+' Brief' : 'Brief'), rows);
     if (!blob) { this.showToast('Couldn\u2019t build the document — try again.'); this.setState({ docBusy:'' }); return; }
-    const safe = (this.state.title||'Heritage_Brief').replace(/[^a-z0-9]+/gi,'_').replace(/^_|_$/g,'');
+    const safe = (this.state.title||(this.brandFile()+'_Brief')).replace(/[^a-z0-9]+/gi,'_').replace(/^_|_$/g,'');
     const brProj = ((this.state.brief || {}).project || '').replace(/[^a-z0-9]+/gi,'_').replace(/^_|_$/g,'');
-    this.triggerDownload(blob, 'Heritage_Brief_'+(brProj ? brProj+'_' : '')+safe+'_'+this.today()+'.docx');
+    this.triggerDownload(blob, this.brandFile()+'_Brief_'+(brProj ? brProj+'_' : '')+safe+'_'+this.today()+'.docx');
     this.setState({ docBusy:'' });
   };
 
@@ -16888,7 +16890,7 @@ class Component extends DCLogic {
   };
 
   downloadMp4 = () => {
-    if (this.state.producedUrl) { const a=document.createElement('a'); a.href=this.state.producedUrl; a.download='Heritage_Film_'+this.today()+'.mp4'; document.body.appendChild(a); a.click(); a.remove(); }
+    if (this.state.producedUrl) { const a=document.createElement('a'); a.href=this.state.producedUrl; a.download=this.brandFile()+'_Film_'+this.today()+'.mp4'; document.body.appendChild(a); a.click(); a.remove(); }
     else this.showToast('No rendered file yet — produce a cut and the MP4 downloads straight from the render.');
   };
 
@@ -17400,18 +17402,18 @@ class Component extends DCLogic {
   COHORTS = [
     { name:'Young Urban Families', size:'4.2M', reach:78, eng:'7.2%', conv:'4.1%', quality:86, grade:'High',
       meta:{ seg:'Parents 28\u201340 \u00b7 Lookalike of Tuch app buyers', size:'3.6M', match:82, signal:'IG/FB engagement + app purchase events' },
-      alpha:{ seg:'In-market: Dairy & Groceries + family YouTube', size:'3.1M', match:76, signal:'Search intent + YouTube viewing affinity' },
-      qcomm:{ seg:'Repeat dairy buyers \u00b7 Blinkit / Zepto / Instamart', size:'1.9M', match:68, signal:'Basket history + reorder cadence' },
+      alpha:{ seg:'In-market: Groceries + family YouTube', size:'3.1M', match:76, signal:'Search intent + YouTube viewing affinity' },
+      qcomm:{ seg:'Repeat grocery buyers \u00b7 Blinkit / Zepto / Instamart', size:'1.9M', match:68, signal:'Basket history + reorder cadence' },
       addressable:'4.2M', overlap:41 },
     { name:'New Parents', size:'1.8M', reach:71, eng:'8.4%', conv:'4.8%', quality:91, grade:'High',
       meta:{ seg:'Life event: New parent \u00b7 0\u20132y \u00b7 IG Reels engagers', size:'1.5M', match:79, signal:'Life-event signal + baby-care interest' },
       alpha:{ seg:'In-market: Baby & toddler nutrition', size:'1.3M', match:74, signal:'Search: \u201cmilk for toddlers\u201d + YT how-to' },
-      qcomm:{ seg:'Baby-care + dairy basket \u00b7 high reorder', size:'0.9M', match:71, signal:'Co-purchase: dairy + baby SKUs' },
+      qcomm:{ seg:'Baby-care + grocery basket \u00b7 high reorder', size:'0.9M', match:71, signal:'Co-purchase: grocery + baby SKUs' },
       addressable:'1.8M', overlap:46 },
     { name:'Health-conscious Millennials', size:'3.1M', reach:64, eng:'5.9%', conv:'3.2%', quality:74, grade:'Medium',
       meta:{ seg:'Interest: Fitness, wellness, clean eating', size:'2.7M', match:70, signal:'Wellness creators + protein-content engagers' },
       alpha:{ seg:'In-market: Health foods + YT fitness', size:'2.4M', match:73, signal:'Search: protein, nutrition labels' },
-      qcomm:{ seg:'Premium dairy + health SKU buyers', size:'1.4M', match:61, signal:'High-AOV health baskets' },
+      qcomm:{ seg:'Premium grocery + health SKU buyers', size:'1.4M', match:61, signal:'High-AOV health baskets' },
       addressable:'3.1M', overlap:38 },
     { name:'Premium Households', size:'1.2M', reach:58, eng:'6.6%', conv:'5.2%', quality:88, grade:'High',
       meta:{ seg:'Affluent metros \u00b7 device + travel signals', size:'1.0M', match:75, signal:'High-value LAL + premium interest' },

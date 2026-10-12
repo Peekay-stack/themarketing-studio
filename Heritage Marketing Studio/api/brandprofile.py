@@ -1381,21 +1381,14 @@ def set_active(brand_id: str) -> dict | None:
 # Exactly what was hardcoded in the prompts, moved here so nothing regresses on the day this lands. It
 # is a seed, not a default: `seed()` only runs when there are no profiles at all, so it can never
 # reappear over somebody's own brand.
+# A NEW tenant's first profile. It used to be a full Heritage Foods profile, which stamped one real
+# brand's category, codes and competitors onto every fresh install — the studio is brand-agnostic, so a
+# new tenant should start with an empty brand to fill in, not someone else's. Only `name` is set (a
+# placeholder the person renames); everything else is blank, so nothing is asserted until they answer it.
+# This changes nothing for an existing tenant: `seed()` only runs when a tenant has NO profiles at all,
+# and the live `default` tenant already has its brands saved.
 SEED = {
-    "name": "Heritage Foods",
-    "category": "Dairy — milk, curd, and value-added dairy",
-    "market": "India, strongest across South India (Telangana, Andhra Pradesh, Karnataka, "
-              "Tamil Nadu), expanding nationally",
-    "hero_product": "Heritage Pure Milk",
-    "master_idea": "Pure Doodh Ki Shakti — the strength of pure milk",
-    "positioning": "The purest everyday milk for families who will not compromise",
-    "tone": "Warm, wholesome and reassuring, with a premium modern finish",
-    "hashtags": ["#PureDoodhKiShakti", "#HeritageFoods"],
-    "mandatories": ["FSSAI mark", "the line 'Pure Doodh Ki Shakti'"],
-    "competitors": ["Amul", "Nandini", "Dodla", "Arokya", "loose/unbranded milk"],
-    "colours": {"primary": "Deep Forest", "secondary": "Cream", "accent": "Ghee gold"},
-    "notes": "A daily cold-chain category: general trade and home delivery dominate, and quick "
-             "commerce is less disruptive here than in snacks or beverages.",
+    "name": "Your brand",
 }
 
 
