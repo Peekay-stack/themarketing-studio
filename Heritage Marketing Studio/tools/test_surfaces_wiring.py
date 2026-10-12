@@ -175,6 +175,17 @@ for name, is_dairy in (("Sthir Cement", False), ("Heritage Foods", True)):
     r, t = run("/plan-generate", {"id": ids["plan"], "layer": "channels"})
     expect("/plan-generate (channels) carries the audience-language example, not Telugu", "in the audience language" in t and "reel, Telugu" not in t, (r.status_code, t[:80]))
 
+    print("Surface 4: POSM key-visual and mandatories")
+    r, t = run("/posm-keyvisual", {"house": ids["house"], "brief": "", "n": 2, "brand_mode": "grounded"})
+    expect("/posm-keyvisual answers 200 with routes and the stands-on shape the page reads", r.status_code == 200 and {"options", "stands_on", "layouts"} <= set(r.json()), r.text[:160])
+    expect("the POSM opener says 'Indian retail', not 'Indian FMCG'", "Indian retail point-of-sale" in t and "Indian FMCG" not in t, t[t.find("Indian "):][:60])
+    if is_dairy:
+        expect("Heritage's own marks and routes answers reach the POSM prompt", "MARKS AND DECLARATIONS THAT MUST APPEAR" in t and "FSSAI" in t and "ROUTES TO MARKET" in t)
+    else:
+        expect("a cement brand's POSM prompt carries no dairy word", not re.search(r"milk|dairy|doodh|curd", t, re.I), re.search(r"milk|dairy|doodh|curd", t, re.I) and t[max(0, re.search(r'milk|dairy|doodh|curd', t, re.I).start() - 60):][:140])
+    md = client.get("/posm-mandatories", params={"brand": name})
+    expect("/posm-mandatories returns this brand's own declared mandatories", md.status_code == 200 and isinstance(md.json().get("mandatories"), list), md.text[:120])
+
 print("\n=== Surface 2 + the IMC fix: /brand-brief-draft")
 bp.set_active(profiles["Sthir Cement"]["id"])
 CAP.clear()

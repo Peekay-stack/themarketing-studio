@@ -583,10 +583,10 @@ def key_visual(brief_text: str, house: dict | None = None,
     layouts = "\n".join(f"  {k}: {v}" for k, v in KV_LAYOUTS.items())
     heroes = "\n".join(f"  {k}: {v['what']}" for k, v in posm.HERO_TYPES.items())
     prompt = (
-        "You are art-directing point-of-sale material for Indian FMCG retail. POS is read at two metres "
+        "You are art-directing point-of-sale material for Indian retail. POS is read at two metres "
         "by someone who is not looking for it, in bad light, next to nine other brands.\n\n"
         "HOW THIS CATEGORY IS BUILT — this governs every route below.\n"
-        "Indian FMCG point-of-sale is flat-colour graphic design with cut-out photographic elements "
+        "Indian retail point-of-sale is flat-colour graphic design with cut-out photographic elements "
         "placed on it: a flat brand-colour field, a hero masked out of its background, the real pack "
         "masked, type set in badges and boxes, a brand block and a base band. It is NOT a photograph "
         "with words on top. A route that describes a scene filling the frame is describing the wrong "
