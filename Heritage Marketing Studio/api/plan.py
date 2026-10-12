@@ -947,7 +947,7 @@ _COLUMN_RULES: dict[str, str] = {
         "`medium` is one id from the served media list and nothing else. It is what lets a channel be "
         "weighted, coloured and joined to the jobs table, and it is the only column here that is a "
         "vocabulary rather than prose. `channel` stays prose: it says what is being made and where "
-        "('15s vertical reel, Telugu'), which an id cannot. A row that genuinely covers several media "
+        "('15s vertical reel, in the audience language'), which an id cannot. A row that genuinely covers several media "
         "takes the not-one-medium option rather than its largest part -- a budget line dressed as a "
         "medium cannot carry a weight.\n"
         "`share` is a whole-number percentage of TOTAL spend, and every row's share together must "

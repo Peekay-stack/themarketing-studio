@@ -39,13 +39,13 @@ import strategy
 # whether it GENERATES, not whether it is a sentence.
 SHAPES = {
     "frame":  ("A sentence with a slot. Fill the slot and get the next execution — "
-               "“{X} ki Shakti, Pure Doodh Se”. Strongest where the language conjugates "
+               "“Share a Coke with {name}”, from another category. Strongest where the language conjugates "
                "cleanly, and it survives translation as a STRUCTURE rather than a string."),
-    "device": ("A recurring character, object or format that carries the idea. Amul's topical girl. "
+    "device": ("A recurring character, object or format that carries the idea. The Duracell bunny, from another category. "
                "The next execution is the same device pointed at something new."),
     "rule":   ("A reframe that licenses stories without prescribing them. “Daag Acche Hain” "
                "makes every stain a story. The next execution obeys the rule and is otherwise free."),
-    "act":    ("Something the brand DOES, repeatedly. “Meet Your Farmer”. The next execution "
+    "act":    ("Something the brand DOES, repeatedly. Red Bull staging a new stunt each year, from another category. The next execution "
                "is the act performed again, somewhere else."),
 }
 

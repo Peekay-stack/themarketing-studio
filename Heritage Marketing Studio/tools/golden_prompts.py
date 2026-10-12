@@ -136,6 +136,7 @@ def build(profile):
     grab("house_core", lambda: strategy.generate(house, "core"))
     pl = plan.new_plan(name, house["id"])
     grab("plan_objectives", lambda: plan.generate(pl, "objectives", house))
+    grab("plan_channels", lambda: jsonout.ask_json(plan.prompt_for(pl, "channels", house), max_tokens=10))   # generate() refuses until its parent layers are filled
     sh = sales.new_sheet(name, "", house["id"])
     grab("sales_trad", lambda: sales.generate(sh, "trad", house))
     grab("brief_draft", lambda: brief_ai.draft_brief({"brand": name, "category": profile.get("category", ""), "request": "Launch a new product"}))

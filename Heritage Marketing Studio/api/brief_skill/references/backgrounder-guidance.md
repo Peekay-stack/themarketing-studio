@@ -51,31 +51,31 @@ is stronger evidence than one source alone). If nothing qualitative was supplied
 
 One paragraph, no more. This is the hardest part to write well because it has two failure modes:
 
-- **Too vague to act on**: "Heritage needs to grow" is not a problem statement, it is a wish.
-- **Actually a solution in disguise**: "Heritage needs a new campaign" skips past diagnosis straight to
+- **Too vague to act on**: "The brand needs to grow" is not a problem statement, it is a wish.
+- **Actually a solution in disguise**: "The brand needs a new campaign" skips past diagnosis straight to
   a prescription — the brief hasn't earned that yet.
 
 A working problem statement names the specific gap the category perspective, current situation, and
 consumer insights together point to. Formula: *despite [what's working], [the brand] faces [the actual
 constraint], because [the underlying reason surfaced by the evidence].*
 
-### Worked example (Heritage Foods, dairy — illustrative)
+### Worked example (an invented pressure-cooker brand, "Kavya" — another category from yours: translate the thinking, do not copy the wording or the numbers)
 
 | Input | Value |
 |---|---|
-| Category perspective | AP/Telangana dairy is a large, largely branded milk category but a fragmented, mostly-unbranded curd category. |
-| Current situation | Heritage leads milk penetration and distribution in its home markets (~0.33 and ~0.77 respectively), but its first-choice/consideration rate trails its awareness by a wide margin. |
-| Consumer insights | Awareness and trust are high but taken for granted; quality is assumed rather than actively noticed; curd is bought loose or unbranded by habit, not by brand preference. |
+| Category perspective | Pressure cookers are a replacement category: most households already own one and buy the next when the old one fails, so the category is won at the moment of failure, not through steady demand. |
+| Current situation | Kavya leads awareness and shelf presence in its home states (illustrative: ~0.6 awareness, ~0.4 distribution), but its share of replacement purchases trails its awareness by a wide margin. |
+| Consumer insights | Awareness and goodwill are high but nostalgic ("the one my grandmother used"); at the moment of replacement buyers decide on price and the retailer's word; the safety and design improvements are rarely noticed until they matter. |
 
-Problem statement: *Despite leading distribution and near-universal awareness in its home markets,
-Heritage is not the brand consumers actively choose first — trust is assumed rather than demonstrated, so
-purchase reverts to habit and price instead of active preference, and curd in particular is ceded to an
-unbranded default rather than claimed as a branded occasion.*
+Problem statement: *Despite near-universal awareness and strong distribution in its home states, Kavya is
+not the cooker buyers actively choose at the moment of replacement — its goodwill is nostalgic rather than
+current, so the purchase is decided by price and the retailer's recommendation, and the improvements that
+would justify choosing it go unseen.*
 
-Notice what that problem statement does NOT do: it doesn't say "Heritage needs a new tagline" (a
-solution) and it doesn't say "Heritage should grow" (a wish). It names a specific, evidenced gap between
-what the brand has earned (distribution, awareness) and what it hasn't (active first choice) — which is
-exactly the gap CB/CA → DB/DA and the SMP then exist to close.
+Notice what that problem statement does NOT do: it doesn't say "Kavya needs a new tagline" (a solution)
+and it doesn't say "Kavya should grow" (a wish). It names a specific, evidenced gap between what the brand
+has earned (distribution, awareness) and what it hasn't (active choice at the point of purchase) — which
+is exactly the gap CB/CA → DB/DA and the SMP then exist to close.
 
 ## How the problem statement hands off to CB/CA
 

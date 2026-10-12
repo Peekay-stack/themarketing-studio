@@ -28,10 +28,11 @@ The distinction is the whole point, and it is not a matter of scale.
 
 *"Celebrate the mothers of India"* is a sentiment. It generates one film and then repeats itself.
 
-*"Every pack carries the name of the dairy that filled it"* is a mechanic. It generates a film about one
-dairy, a pack change, a shelf strip that names the local dairy, a promoter who can point at it, a
-q-commerce listing that sorts by nearest dairy, and a trade argument about provenance. Same idea, five
-media, none of them a translation of the others.
+*"Every shirt carries the name of the mill that wove it"* is a mechanic (an example from another
+category: take the structure, not the words). It generates a film about one mill, a tag change, a shelf
+strip that names the local mill, a promoter who can point at it, a q-commerce listing that sorts by
+nearest mill, and a trade argument about provenance. Same idea, five media, none of them a translation
+of the others.
 
 **If you cannot name the mechanic, you have a concept.** Write it down as one anyway — a good concept is
 worth having — but do not call it a platform, because everything downstream will then expect it to
