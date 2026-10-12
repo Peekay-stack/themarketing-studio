@@ -96,12 +96,18 @@ MUSIC_STYLES: list[dict] = [
 _MUSIC_BY_ID = {m["id"]: m for m in MUSIC_STYLES}
 
 
-def music_prompt(style_or_mood: str) -> str:
-    """A named style id, or free text, into the full generation prompt."""
+def music_prompt(style_or_mood: str, sound_world: str = "") -> str:
+    """A named style id, or free text, into the full generation prompt.
+
+    `sound_world` is the brand's own answer to "what does it sound like", when it has one. It used to be a
+    fixed tail on every prompt ("a premium Indian dairy brand film — warm, wholesome, uplifting, gentle Indian
+    instrumentation"), which also sat on top of a piano or orchestral pick for a brand that is none of those."""
     key = str(style_or_mood or "").strip()
     base = _MUSIC_BY_ID.get(key, {}).get("prompt") or key or "Warm, tender string ensemble."
-    return (f"{base} Instrumental score for a premium Indian dairy brand film — warm, wholesome, "
-            "uplifting, gentle Indian instrumentation. No vocals, no lyrics.")
+    world = " ".join(str(sound_world or "").split())
+    line = (f" THE BRAND'S SOUND WORLD (instrumentation and mood only; any voice it describes is cast "
+            f"separately): {world.rstrip('.')}.") if world else ""
+    return f"{base}{line} Instrumental score for a brand film. No vocals, no lyrics."
 
 # ElevenLabs voice names, picked for warm brand-film reads.
 _FEMALE, _MALE = "Sarah", "George"
@@ -175,9 +181,9 @@ def synth_vo(text: str, voice_hint: str = "") -> str | None:
     return run_fal(TTS_MODEL, args)
 
 
-def synth_music(mood: str, seconds: int) -> str | None:
+def synth_music(mood: str, seconds: int, sound_world: str = "") -> str | None:
     """One instrumental bed covering the full film length. `mood` may be a style id or free text."""
-    prompt = music_prompt(mood)
+    prompt = music_prompt(mood, sound_world)
     ms = max(10_000, min(300_000, int(seconds) * 1000))
     url = _run_fal(MUSIC_MODEL, {"prompt": prompt, "music_length_ms": ms,
                                  "force_instrumental": True})

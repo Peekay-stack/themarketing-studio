@@ -480,14 +480,23 @@ def engines():
             "google_ready": have_google, "fal_ready": have_fal}
 
 
-def _music_bed(mood, seconds, engine: str = "auto") -> tuple[str, str]:
+def _sound_world(payload: dict) -> str:
+    """The brand's own answer to "what does it sound like", for the music prompt. Blank when it is not answered
+    and in Independent mode (no brand): the music prompt used to say "premium Indian dairy brand film, gentle
+    Indian instrumentation" for every brand, which is now this answer or nothing."""
+    if str(payload.get("brand_mode") or "").strip().lower() == "general":
+        return ""
+    return str((brandprofile.resolve() or {}).get("sound_world") or "").strip()
+
+
+def _music_bed(mood, seconds, engine: str = "auto", sound_world: str = "") -> tuple[str, str]:
     """(url, provider) for one instrumental bed. Google first; fal only if Google can't serve."""
     if _use(engine, "google"):
-        url = gemini.music(filmaudio.music_prompt(mood), seconds)
+        url = gemini.music(filmaudio.music_prompt(mood, sound_world), seconds)
         if url:
             return url, "google"
     if _use(engine, "fal"):
-        url = filmaudio.synth_music(mood, seconds)
+        url = filmaudio.synth_music(mood, seconds, sound_world)
         if url:
             return url, "fal"
     return "", ""
@@ -522,7 +531,10 @@ def _voice_setup(payload: dict):
     if filmvoice.resolve(typed):
         narrator = filmvoice.resolve(typed).id
     else:
-        gender, age = filmvoice._band(typed).split("_")
+        # The page used to start this field as "Warm female (Telugu-accented English)", so the narrator was always a warm
+        # adult female unless someone typed otherwise. The field now starts empty, and `_band("")` answers male, so an empty
+        # field asks for the same narrator explicitly instead of flipping every brand to a male one.
+        gender, age = filmvoice._band(typed or "warm female voice").split("_")
         narrator = filmvoice.pool(accent, gender, age)[0].id
     # Scene lengths come from the dialogue, not the other way round: retime rewrites each row's
     # timecode from its spoken words so nothing has to be cut to fit a fixed grid.
@@ -561,7 +573,7 @@ def music_options(payload: dict):
     seconds = max(8, min(30, int(payload.get("seconds") or 15)))
     with ThreadPoolExecutor(max_workers=count) as pool:
         made = list(pool.map(lambda _: _music_bed(style, seconds,
-                                                 _engine(payload, "music")), range(count)))
+                                                 _engine(payload, "music"), _sound_world(payload)), range(count)))
     options = [{"n": i + 1, "style": style, "label": f"{label} · take {i + 1}",
                 "audio_url": u, "provider": prov}
                for i, (u, prov) in enumerate(made) if u]
@@ -591,7 +603,7 @@ def rescore(payload: dict):
     _secs = filmcut.parse_seconds(payload.get("duration"))
     music_url, music_provider = (str(payload["music_url"]), "locked") \
         if str(payload.get("music_url") or "") \
-        else _music_bed(payload.get("music", ""), _secs, _engine(payload, "music"))
+        else _music_bed(payload.get("music", ""), _secs, _engine(payload, "music"), _sound_world(payload))
     out_name = _next_scored_name(master)
     # An optional sound plan (see soundplan.py); absent -> the bed mixes exactly as before.
     plan = soundplan.resolve(payload.get("sound_plan"), payload.get("scenes"), total)
@@ -1085,7 +1097,7 @@ def voice_preview(payload: dict):
     music_url, music_provider = str(payload.get("music_url") or ""), "locked"
     if not music_url and payload.get("with_music", True):
         music_url, music_provider = _music_bed(payload.get("music", ""), total,
-                                              _engine(payload, "music"))
+                                              _engine(payload, "music"), _sound_world(payload))
     os.makedirs(filmcut.RENDERS_DIR, exist_ok=True)
     name = f"voice-preview-{uuid.uuid4().hex[:8]}.mp3"
     plan = soundplan.resolve(payload.get("sound_plan"), payload.get("scenes"), total)
@@ -1291,8 +1303,7 @@ def produce_video(payload: dict):
                  f"Film logline: {script.get('logline','')}. "
                  f"Depict ONLY this beat: {beat}.{role_note} "
                  f"{look} {camera_direction}Mood: {music}. "
-                 "Authentic Indian family setting, warm natural light, premium and wholesome; "
-                 "no on-screen text or logos. No spoken dialogue and no music in the clip itself — "
+                 "No on-screen text or logos. No spoken dialogue and no music in the clip itself — "
                  "the soundtrack is added in the edit.")
         return p + f" Revision note: {revise}." if revise else p
 
@@ -1476,7 +1487,7 @@ def produce_video(payload: dict):
     if str(payload.get("music_url") or ""):
         music_url, music_provider = str(payload["music_url"]), "locked"
     else:
-        music_url, music_provider = _music_bed(music, total, _engine(payload, "music"))
+        music_url, music_provider = _music_bed(music, total, _engine(payload, "music"), _sound_world(payload))
     if music_url:
         audio_kinds.append("music")
     else:
@@ -1536,44 +1547,44 @@ def produce_video(payload: dict):
 #   characters : a shared character sheet to keep the SAME people across a film's frames
 #   seed       : fixed integer per film/set -> visual consistency across images
 _IMG_STYLES = {
-    "real": ("High-resolution, photorealistic advertising photograph. Professional commercial food & "
-             "lifestyle photography: full-frame DSLR, 50mm lens, shallow depth of field, crisp sharp "
-             "focus, soft warm natural light, true-to-life colours, realistic textures and condensation "
-             "on fresh milk. Authentic contemporary Indian home, kitchen, or dawn dairy-farm setting with "
+    "real": ("High-resolution, photorealistic advertising photograph. Professional commercial "
+             "photography: full-frame DSLR, 50mm lens, shallow depth of field, crisp sharp "
+             "focus, soft warm natural light, true-to-life colours, realistic textures. "
+             "Authentic contemporary Indian setting with "
              "real people and natural expressions. Ultra-detailed and realistic — NOT illustrated, NOT "
              "cartoon, NOT 3D/CGI; no plastic skin, no distorted hands, no extra fingers."),
     "product": ("High-end product photograph: the brand's hero pack as the "
-                "hero on a clean minimal surface. Studio lighting, soft reflections, condensation, crisp "
-                "focus, appetising and premium. NO people, NO hands. Photorealistic, not illustrated."),
+                "hero on a clean minimal surface. Studio lighting, soft reflections, crisp "
+                "focus, polished and clean. NO people, NO hands. Photorealistic, not illustrated."),
     "infographic": ("Clean modern infographic / data-visualisation graphic. Flat design, generous "
                     "whitespace, simple line icons, clear visual hierarchy, in the brand palette named in the "
                     "prompt. Editorial and professional. No photographic imagery."),
     "vector": ("Flat vector illustration: bold clean shapes, smooth gradients, friendly modern style in the "
-               "the brand's own palette as given in the prompt. Warm and premium. Not photoreal, not 3D."),
+               "the brand's own palette as given in the prompt. Warm and polished. Not photoreal, not 3D."),
     "claymation": ("Stop-motion claymation still: characters and props sculpted from modelling clay with "
                    "visible fingerprints and tool marks, slightly uneven handmade surfaces, miniature "
                    "practical set, soft studio lighting with real shadows, shallow tabletop depth of field. "
                    "Charming and tactile, in the brand palette. Not CGI-smooth, not photoreal."),
-    "animation-3d": ("Modern 3D animated film still, premium feature-animation quality: appealing stylised "
+    "animation-3d": ("Modern 3D animated film still, feature-animation quality: appealing stylised "
                      "characters with expressive faces, soft global illumination, subsurface skin, rich "
-                     "materials, cinematic depth of field. Warm and family-friendly in the brand palette. "
+                     "materials, cinematic depth of field. Warm and friendly in the brand palette. "
                      "Stylised — not photoreal, not live action."),
     "animation-2d": ("Hand-drawn 2D animation still: clean confident line art, flat cel-shaded colour with "
                      "soft gradients, painted background, warm Indian storybook feel in the brand palette. "
                      "Traditional animation look — not 3D, not photoreal."),
     "watercolour": ("Hand-painted watercolour illustration: soft washes, visible paper grain, gentle bleeding "
                     "edges, delicate ink linework, warm Indian folk-art sensibility in the brand palette. "
-                    "Artisanal and premium. Not photoreal, not vector."),
+                    "Artisanal and handmade. Not photoreal, not vector."),
 }
 
 # The same look, phrased for a moving image.
 _VID_STYLES = {
     "real": "Live-action photoreal cinematography, shot on a cinema camera with warm natural light.",
-    "product": "Live-action tabletop product cinematography: macro pack and pouring shots, studio lighting, no people.",
+    "product": "Live-action tabletop product cinematography: macro product shots, studio lighting, no people.",
     "infographic": "Animated flat infographic motion-graphics: clean shapes and simple line icons in the brand palette, no live action.",
     "vector": "Flat vector motion-graphics animation: bold clean shapes and smooth gradients in the brand palette.",
     "claymation": "Stop-motion claymation, shot frame by frame: clay characters with visible fingerprints on a miniature practical set, charming slightly imperfect movement.",
-    "animation-3d": "Premium 3D animated film: stylised appealing characters, soft global illumination, cinematic camera moves. Stylised, not photoreal.",
+    "animation-3d": "3D animated film: stylised appealing characters, soft global illumination, cinematic camera moves. Stylised, not photoreal.",
     "animation-2d": "Hand-drawn 2D animation: cel-shaded characters over painted backgrounds, warm Indian storybook feel.",
     "watercolour": "Animated watercolour illustration: soft painted washes and paper texture, gentle hand-made motion.",
 }
