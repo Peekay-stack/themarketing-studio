@@ -197,6 +197,13 @@ _ADULT_WORDS = ("grown", "grown-up", "twenties", "thirties", "forties")
 
 def _band(hints: str) -> str:
     low = (hints or "").lower()
+    # A line's performance direction often names WHO is addressed -- "MOTHER (gentle, to child): ...". That
+    # addressee is not the speaker's own age: "to child" was casting an adult mother with a young-girl voice
+    # (live, the Telugu line "Taaza undi, raa"). Strip "to/for/at <child-word>" before any age detection; a
+    # speaker whose OWN label is a child (e.g. "Child (excited)") has no "to" in front of it and is untouched.
+    low = re.sub(r"\b(?:to|for|towards?|at)\s+(?:the\s+|her\s+|his\s+|their\s+|my\s+|a\s+|an\s+|young\s+|little\s+)*"
+                 r"(?:child|children|kid|kids|son|sons|daughter|daughters|boy|boys|girl|girls|baby|babies|toddler|"
+                 r"grandchild|grandchildren|grandson|granddaughter|little\s+one)\b", " ", low)
     # "a six-year-old boy" / "4 years old" is a child's age, not "old": a bare "old" matched inside it and cast a
     # little boy with a mature adult voice. A stated age of 16 or under counts as a child; any other stated age is dropped.
     def _stated_age(m):

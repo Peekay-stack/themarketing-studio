@@ -64,6 +64,13 @@ check("'grown' alone makes a boy an adult", fv._band("Son grown boy"), "male_adu
 check("a stated 30s beats 'son'", fv._band("Son a man in his 30s"), "male_adult")
 check("'mid-30s' beats 'boy'", fv._band("Man mid-30s, still the boy at heart"), "male_adult")
 check("a 50s man is still mature", fv._band("Father late-50s"), "male_mature")
+
+# The performance direction names WHO is addressed, not the speaker's own age: "MOTHER (gentle, to child)"
+# was casting the mother with a young-girl voice (live, the Telugu line "Taaza undi, raa").
+check("a mother speaking 'to child' is still an adult woman, not a girl", fv._band("Mother gentle, to child"), "female_adult")
+check("a mother 'to child' with an adult sheet age is an adult woman", fv._band("Mother gentle to child  MOTHER: female, 30-38"), "female_adult")
+check("a grandmother 'to her grandson' is still mature", fv._band("Grandmother hushed, to her grandson"), "female_mature")
+check("a real child speaker (no 'to' in front) is still young", fv._band("Child excited"), "male_young")
 check("a sheet that says only 'boy' is still a child", fv._band("Boy sleepy boy"), "male_young")
 print("plain words")
 check("'young woman' is an adult", fv._band("Woman a young woman"), "female_adult")

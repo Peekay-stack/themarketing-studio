@@ -2701,7 +2701,7 @@
                     </div>
                   </div>
                   <sc-if value="{{ d.hasText }}" hint-placeholder-val="{{ false }}">
-                    <textarea value="{{ d.text }}" onChange="{{ d.edit }}" rows="7" style="width:100%; box-sizing:border-box; flex:1; font-size:13px; line-height:1.55; color:#38414F; border:1px solid #E6E3DC; border-radius:10px; padding:10px 11px; background:#fff; resize:vertical; font-family:inherit;"></textarea>
+                    <textarea value="{{ d.text }}" onChange="{{ d.edit }}" rows="7" style="width:100%; box-sizing:border-box; flex:none; field-sizing:content; min-height:116px; font-size:13px; line-height:1.55; color:#38414F; border:1px solid #E6E3DC; border-radius:10px; padding:10px 11px; background:#fff; resize:vertical; font-family:inherit;"></textarea>
                   </sc-if>
                   <sc-if value="{{ d.showEmpty }}" hint-placeholder-val="{{ true }}">
                     <div style="font-size:13px; line-height:1.5; color:#6B7280; flex:1;">Draft a {{ d.label }} plan grounded in the approved script.</div>
@@ -3082,7 +3082,7 @@
               <div style="font-size:13px; line-height:1.55; color:#41505F; flex:1;">{{ doneFrames }} of {{ nScenes }} key frames rendered above. Regenerate any frame from the filmstrip.</div>
             </sc-if>
             <sc-if value="{{ d.hasText }}" hint-placeholder-val="{{ false }}">
-              <textarea value="{{ d.text }}" onChange="{{ d.edit }}" rows="7" style="width:100%; box-sizing:border-box; flex:1; font-size:13px; line-height:1.55; color:#38414F; border:1px solid #E6E3DC; border-radius:10px; padding:10px 11px; background:#FBFAF8; resize:vertical; font-family:inherit;"></textarea>
+              <textarea value="{{ d.text }}" onChange="{{ d.edit }}" rows="7" style="width:100%; box-sizing:border-box; flex:none; field-sizing:content; min-height:116px; font-size:13px; line-height:1.55; color:#38414F; border:1px solid #E6E3DC; border-radius:10px; padding:10px 11px; background:#FBFAF8; resize:vertical; font-family:inherit;"></textarea>
             </sc-if>
               <sc-if value="{{ d.hasStyleLine }}" hint-placeholder-val="{{ false }}">
                 <div onClick="{{ d.useStyle }}" style="margin-top:8px; font-size:12px; font-weight:700; color:#1E7E34; cursor:pointer;">Use "{{ d.styleLine }}" as the Production music mood</div>
