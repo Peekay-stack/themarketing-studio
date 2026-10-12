@@ -1825,7 +1825,15 @@ def scene_still(payload: dict):
         # Video frames and /shot-reference send no pack_mode, so they keep the original list exactly.
         if str(payload.get("pack_mode") or "").strip().lower() == "auto":
             _words += r"|\bpouch(es)?\b|\bsachets?\b|\bmilk bags?\b|\bbags? of milk\b"
-        want_pack = bool(str(payload.get("pack_id") or "").strip()) or bool(re.search(_words, subject, re.IGNORECASE))
+        _picked = bool(str(payload.get("pack_id") or "").strip())
+        want_pack = _picked or bool(re.search(_words, subject, re.IGNORECASE))
+        # 1b: respect the brand's own "is the pack in the picture" answer. A brand that answered "not a packed
+        # product" has no pack, so a stray "label"/"bottle"/"pour"/"pack" in a scene must not auto-attach one; the
+        # model already gets this as PACK IN THE PICTURE in the brand block, but the ATTACH decision ignored it.
+        # An explicit pick (pack_id) still wins; every other answer keeps the noun heuristic above. No new nouns
+        # are added (that would mis-attach one brand's single pack photo across its other products).
+        if want_pack and not _picked and str((brandprofile.resolve() or {}).get("pack_in_scene") or "").strip().lower() == "not a packed product":
+            want_pack = False
     # See library.py's brand-scoping note: without this, a shot for one brand could pull another
     # brand's signed-off cast/pack/plate purely because it was the most recent of its kind in the
     # tenant. No house/brief is bound at this route, so the active profile is today's correct default.

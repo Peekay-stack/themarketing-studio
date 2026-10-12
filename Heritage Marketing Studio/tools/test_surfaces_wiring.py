@@ -39,6 +39,7 @@ import briefstore           # noqa: E402
 import ideas                # noqa: E402
 import jsonout              # noqa: E402
 import plan as plan_mod     # noqa: E402
+import prompts              # noqa: E402
 import strategy             # noqa: E402
 import main                 # noqa: E402
 import selfcheck            # noqa: E402
@@ -322,7 +323,7 @@ _seed_prof = {"name": bp.SEED.get("name", "Your brand")}
 _vb = bp.voice_block(_seed_prof)
 expect("voice_block on the name-only seed profile builds, names the brand, and emits no dairy/Heritage",
        "BRAND: " + _seed_prof["name"] in _vb and not re.search(r"dairy|doodh|FSSAI|pure milk|heritage", _vb, re.I), _vb[:120])
-expect("system_for builds a social system prompt for the name-only seed brand", _seed_prof["name"] in str(main.prompts.system_for([{"role": "user", "content": "Write posts."}], brand=_seed_prof)))
+expect("system_for builds a social system prompt for the name-only seed brand", _seed_prof["name"] in str(prompts.system_for([{"role": "user", "content": "Write posts."}], brand=_seed_prof)))
 
 print("\n=== The page sends brand_mode on every call that reaches the music bed")
 html = _html

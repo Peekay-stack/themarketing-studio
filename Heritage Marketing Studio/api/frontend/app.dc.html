@@ -23813,7 +23813,7 @@ class Component extends DCLogic {
       suggestBrandAnswers: this.suggestBrandAnswers,
       bfCanSuggest: !s.bfIsNew && ((d.suggest_groups || []).some(g => (g.keys || []).length) || !!s.bfSuggesting || !!s.bfSuggestNote),
       bfSuggestLabel: s.bfSuggesting ? 'Drafting…' : 'Draft the unanswered questions with the model',
-      bfSuggestLine: s.bfSuggestNote || 'Fills in nothing by itself: each draft waits under its question for you to accept or dismiss it. Until the studio’s built-in dairy rules are removed from its prompts, answers for a non-dairy brand will sit beside them, so accept them only to test.',
+      bfSuggestLine: s.bfSuggestNote || 'Fills in nothing by itself: each draft waits under its question for you to accept or dismiss it.',
       bfSaveLabel: s.bfSaving ? 'Saving\u2026' : (s.bfDirty ? 'Save the profile' : 'Save and read the instruction'),
 
       bfReadyTitle: ready ? 'Enough to ground the work' : 'Not yet enough to ground the work',
