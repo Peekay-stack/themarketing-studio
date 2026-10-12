@@ -15125,7 +15125,8 @@ class Component extends DCLogic {
       carouselCastCheckBorder: c.wantCast ? '#17325E' : '#C9CEDA',
       carouselCastCheckMark: c.wantCast ? '✓' : '',
       carouselCastCheckNote: c.wantCast
-        ? 'Every slide in this carousel pins the person below.'
+        ? (c.castChoice ? 'Every slide in this carousel pins the person below.'
+          : 'No person chosen below: the most recent signed-off cast for this brand is used if there is one, otherwise each slide draws its own person. Choose one to pin the same person to every slide.')
         : 'Unchecked: no cast reference is used — each slide may show a different, unreferenced person.',
       // The pack chooser: this brand's signed-off packs, plus the session-only reference photo when
       // there is one (labelled with the product name if given). No default is ever pre-selected.
@@ -18689,7 +18690,8 @@ class Component extends DCLogic {
       socialCastCheckBg: s.socialWantCast ? '#17325E' : '#fff', socialCastCheckBorder: s.socialWantCast ? '#17325E' : '#C9CEDA',
       socialCastCheckMark: s.socialWantCast ? '✓' : '',
       socialCastCheckNote: s.socialWantCast
-        ? 'Every post in this batch pins the person below.'
+        ? (s.socialCastChoice ? 'Every post in this batch pins the person below.'
+          : 'No person chosen below: the most recent signed-off cast for this brand is used if there is one, otherwise each post draws its own person. Choose one to pin the same person to every post.')
         : 'Unchecked: no cast reference is used — each post may show a different, unreferenced person.',
       socialCastCard: { value: s.socialCastChoice, options: this.carouselAssetOptions('cast'),
         pick: this.pickSocialAsset('socialCastChoice'), upload: this.uploadSocialAsset('cast', 'socialCastChoice') },
