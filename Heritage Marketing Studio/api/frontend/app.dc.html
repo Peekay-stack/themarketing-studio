@@ -16499,7 +16499,7 @@ class Component extends DCLogic {
     // once just meant a long wait before anything could be heard.
     // The take is made from the music MOOD (the one field the chips, the Music note and Production all write), so what is
     // auditioned is what the film is told.
-    const r = await this.apiCall('/music-options', { style:this.state.musicStyle || this.state.production.music, count:1, seconds:15,
+    const r = await this.apiCall('/music-options', { style:this.state.musicStyle || this.state.production.music, count:1, seconds:15, brand_mode:this.state.producerBrandMode,
                                                     engines:this.state.engines });
     const d = (r && r.data) || {};
     const got = (d.options || []).filter(o => o.audio_url);
@@ -16527,7 +16527,7 @@ class Component extends DCLogic {
     this.setState({ rescoring:true });
     const p0 = this.state.production;
     const r = await this.apiCall('/rescore', {
-      master:this.state.silentMaster, scenes:this.state.fullScript||[],
+      master:this.state.silentMaster, scenes:this.state.fullScript||[], brand_mode:this.state.producerBrandMode,
       duration:this.state.prodDuration, voice:p0.voice, music:p0.music,
       music_url:this.state.musicUrl || '', music_level:this.state.musicLevel,
       voices:this.state.voiceChoices, accent:this.state.voiceAccent,
@@ -16675,7 +16675,7 @@ class Component extends DCLogic {
   }
   voicePayload(){
     const p = this.state.production;
-    return { scenes:this.state.fullScript||[], duration:this.state.prodDuration, voice:p.voice,
+    return { scenes:this.state.fullScript||[], duration:this.state.prodDuration, voice:p.voice, brand_mode:this.state.producerBrandMode,
              music:p.music, characters:this.state.videoCharacters, voices:this.state.voiceChoices,
              accent:this.state.voiceAccent,
              music_url:this.state.musicUrl || '', music_level:this.state.musicLevel,
@@ -16841,7 +16841,7 @@ class Component extends DCLogic {
       const f = this.state.sceneFrames[i];
       return (f && f.status==='done' && f.url) ? { ...r, frame_url:f.url } : r;
     });
-    const body = { scenes:rows, aspect:p0.aspect, duration:this.state.prodDuration, music:p0.music, voice:p0.voice, note,
+    const body = { scenes:rows, aspect:p0.aspect, duration:this.state.prodDuration, music:p0.music, voice:p0.voice, note, brand_mode:this.state.producerBrandMode,
                    voices:this.state.voiceChoices, characters:this.state.videoCharacters,
                    accent:this.state.voiceAccent, style:this.state.videoStyle,
                    music_url:this.state.musicUrl || '', music_level:this.state.musicLevel,
