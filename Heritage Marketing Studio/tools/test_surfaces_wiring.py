@@ -260,6 +260,46 @@ client.post("/produce-video", json={"scenes": [{"no": 1, "tc": "0-6s", "visual":
 gclip = VID[-1] if VID else ""
 expect("Independent mode: the clip prompt does not name the active brand ('a brand' instead)", bool(gclip) and "Sthir" not in gclip and "brand film for a brand" in gclip, gclip[:160])
 
+print("\n=== Surfaces 4 & 5 wiring: every POSM and Onground route the page drives is reachable (handled status, never a 5xx)")
+# Heritage is the active brand and `ids` is its house/set/plan from the loop above. Model and image engines are stubbed, so
+# any route that would generate falls back or 400s rather than calling out. A 200 must be a dict; a 4xx is a documented
+# input guard (correct wiring); a 5xx is an unhandled crash. This proves Surfaces 4/5 did not break the tabs around them.
+bp.set_active(profiles["Heritage Foods"]["id"])
+_H = ids["house"]
+_idea = {"name": "Milk run", "what": "a promoter hands a cold pack across the counter", "venue": "kirana",
+         "who": "the daily buyer", "where": "kirana", "when": "morning", "how": "step by step", "capture": "a scan"}
+sweep = [
+    ("GET", "/posm-formats", None), ("GET", "/posm-mandatories", {"brand": "Heritage Foods"}),
+    ("POST", "/posm-keyvisual", {"house": _H, "brief": "", "n": 2, "brand_mode": "grounded"}),
+    ("POST", "/posm-adapt", {"formats": ["poster-a4"], "line": "Strength begins here", "field": "horizontal-split",
+                             "hero": "person-in-benefit", "layout": "type-locked-base"}),
+    ("POST", "/posm-adapt", {"kit": "general-trade", "line": "Strength begins here"}),
+    ("POST", "/posm-palette", {"house": _H, "brand_mode": "grounded"}),
+    ("POST", "/posm-backdrop", {"brief": "a plain brand-colour field", "format": "poster-a4", "style": "real"}),
+    ("POST", "/posm-scamps", {"house": _H, "line": "Strength begins here", "hero": "person-in-benefit", "brand_mode": "grounded"}),
+    ("POST", "/posm-typeset", {"line": "Strength begins here", "line_emphasis": "Strength", "format": "poster-a4", "layout": "type-locked-base"}),
+    ("POST", "/posm-artwork", {"format": "poster-a4", "line": "Strength begins here"}),
+    ("POST", "/posm-print", {"format": "poster-a4"}),
+    ("POST", "/posm-assemble", {"format": "poster-a4", "line": "Strength begins here"}),
+    ("POST", "/posm-custom-format", {"name": "Test board", "w_mm": 600, "h_mm": 900, "distance_m": 2}),
+    ("POST", "/activation-idea", {"house": _H, "brand_mode": "grounded"}),
+    ("POST", "/activation-idea", {"house": _H, "idea": "a milk-booth sampling drive", "brand_mode": "grounded"}),
+    ("POST", "/activation-idea-adjust", {"idea": _idea, "note": "tighten the capture", "brand_mode": "grounded"}),
+    ("POST", "/activation-elements", {"idea": _idea, "brand_mode": "grounded"}),
+    ("POST", "/activation-element", {"idea": _idea, "element": "stall", "brand_mode": "grounded"}),
+    ("POST", "/activation-element-image", {"element": "stall", "venue": "kirana", "brief": "a sampling stall", "brand_mode": "grounded"}),
+    ("POST", "/activation-kit", {"idea": _idea, "brand_mode": "grounded"}),
+]
+for method, path, body in sweep:
+    try:
+        rr = client.get(path, params=body) if method == "GET" else client.post(path, json=body)
+        code = rr.status_code
+        ok = code != 500 and (not (code == 200) or isinstance(rr.json(), dict))
+        label = f"{method} {path}" + (f" ({'kit' if body and 'kit' in body else ('generate' if path == '/activation-idea' and body and 'idea' not in body else 'sharpen' if path == '/activation-idea' else '')})" if path in ("/posm-adapt", "/activation-idea") else "")
+        expect(f"{label} -> {code}, handled (no 5xx, 200 is a dict)", ok, rr.text[:160])
+    except Exception as e:  # noqa: BLE001 -- an unhandled exception is exactly the broken wiring this is looking for
+        expect(f"{method} {path} raised", False, f"{type(e).__name__}: {e}")
+
 print("\n=== The page sends brand_mode on every call that reaches the music bed")
 html = open(os.path.join(API, "frontend", "app.dc.html"), encoding="utf-8").read()
 
