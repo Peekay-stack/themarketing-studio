@@ -186,6 +186,14 @@ for name, is_dairy in (("Sthir Cement", False), ("Heritage Foods", True)):
     md = client.get("/posm-mandatories", params={"brand": name})
     expect("/posm-mandatories returns this brand's own declared mandatories", md.status_code == 200 and isinstance(md.json().get("mandatories"), list), md.text[:120])
 
+    print("Surface 5: Onground activation")
+    r, t = run("/activation-idea", {"house": ids["house"], "brand_mode": "grounded"})   # no 'idea' key -> generate, which builds the prompt
+    expect("the activation prompt no longer hardcodes 'in India' / an 'Indian' activation (market comes from the brand block)",
+           bool(t) and "activation in India" not in t and "activations in India" not in t and "Indian consumer activation" not in t, t[:120])
+    expect("the brand's own meeting points reach the activation prompt", "WHERE PEOPLE MEET THE BRAND IN PERSON" in t or "VENUES YOU MAY USE" in t, t[:120])
+    if not is_dairy:
+        expect("a cement brand's activation prompt carries no dairy word", not re.search(r"milk|dairy|doodh|curd", t, re.I), re.search(r"milk|dairy|doodh|curd", t, re.I) and t[max(0, re.search(r'milk|dairy|doodh|curd', t, re.I).start() - 60):][:140])
+
 print("\n=== Surface 2 + the IMC fix: /brand-brief-draft")
 bp.set_active(profiles["Sthir Cement"]["id"])
 CAP.clear()

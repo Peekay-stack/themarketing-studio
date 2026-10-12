@@ -920,7 +920,7 @@ def activation_ideas(house: dict | None = None, platform: dict | None = None,
         for k, v in VENUES.items())
 
     prompt = (
-        "You are planning consumer activations in India — real ones, that a field team has to book, "
+        "You are planning consumer activations — real ones, that a field team has to book, "
         "staff and run.\n\n"
         f"THE STRATEGY\n{_ctx(house, exec_brief, platform, plan, use_house=use_house, use_platform=use_platform, use_plan=use_plan, brand_mode=brand_mode, include_bridge=True, include_proof=True)}\n\n"
         f"WHAT THIS EXPRESSES ({src})\n{text}\n\n"
@@ -1100,7 +1100,7 @@ def sharpen_idea(idea: str, house: dict | None = None,
     if not idea:
         return "", "Write the idea first — this sharpens one, it does not supply one."
     prompt = (
-        "You are planning a consumer activation in India — a stall, a van, a promoter, a street.\n\n"
+        "You are planning a consumer activation — a stall, a van, a promoter, a street.\n\n"
         f"THE STRATEGY\n{_ctx(house, exec_brief, platform, plan, use_house=use_house, use_platform=use_platform, use_plan=use_plan, brand_mode=brand_mode, include_bridge=True, include_proof=True)}\n\n"
         f"THE IDEA AS WRITTEN\n{idea}\n\n"
         "Tighten it into something buildable in two or three sentences. Name what a person physically "
@@ -1132,7 +1132,7 @@ def element_brief(element: str, brief_text: str, idea: str, house: dict | None =
     if not (idea or "").strip():
         return "", "Settle the activation idea first — the four elements are briefed against it."
     prompt = (
-        "You are writing a production brief for one element of a consumer activation in India.\n\n"
+        "You are writing a production brief for one element of a consumer activation.\n\n"
         f"THE STRATEGY\n{_ctx(house, exec_brief, platform, plan, use_house=use_house, use_platform=use_platform, use_plan=use_plan, brand_mode=brand_mode, include_bridge=True, include_proof=True)}\n\n"
         f"THE ACTIVATION\n{idea.strip()}\n\n"
         f"THE ELEMENT: {element} — {spec}\n"

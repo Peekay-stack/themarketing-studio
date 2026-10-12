@@ -8506,7 +8506,7 @@ def activation_element_image(payload: dict):
                  if ref_roles else "")
 
     prompt = (
-        f"{lead} a {element.replace('_', ' ')} for an Indian consumer activation at "
+        f"{lead} a {element.replace('_', ' ')} for a consumer activation at "
         f"{v.get('label', venue)}. {spec} {brand_ctx} "
         + (f"Built as {size_row[1]}. " if size_row else "")
         + ref_lines
@@ -8516,7 +8516,7 @@ def activation_element_image(payload: dict):
            if refs else
            "No key visual, pack or cast reference is available — build this from the brand profile and "
            "the brief above alone, not from an invented layout.")
-        + " Photographic, real Indian location, natural light, no text overlays or captions added."
+        + " Photographic, a real location, natural light, no text overlays or captions added."
     )
 
     eng = _engine(payload, "image")
