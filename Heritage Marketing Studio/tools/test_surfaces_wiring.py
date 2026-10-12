@@ -310,8 +310,19 @@ expect("socialGrounding's empty state no longer says 'any dairy brand'", "any da
 expect("the product placeholders no longer name a Heritage dairy product", 'placeholder="Which product is it? e.g. Heritage' not in _html and "e.g. Heritage Nourish+ Milk 500 ml" not in _html.replace("set and change (\"Heritage Nourish+ Milk\")", ""))
 expect("the sample cohort labels carry no 'dairy'", "Repeat dairy buyers" not in _html and "Premium dairy" not in _html and "Dairy & Groceries" not in _html and "dairy basket" not in _html and "dairy + baby" not in _html)
 
-print("\n=== Surface 7: a new tenant's seed profile is neutral, not Heritage")
+print("\n=== Surface 6: the backend export filename follows the payload title, not a hardcoded Heritage")
+bp.set_active(profiles["Sthir Cement"]["id"])
+rb = client.post("/brief-docx", json={"title": "Sthir Cement Brief", "brand": "Sthir Cement", "fields": {}, "format": "Brand"})
+cd = rb.headers.get("content-disposition", "")
+expect("/brief-docx names the file from the title (Sthir...), never Heritage", rb.status_code == 200 and "Sthir" in cd and "Heritage" not in cd, (rb.status_code, cd))
+
+print("\n=== Surface 7: a new tenant's seed profile is neutral, not Heritage, and generates cleanly")
 expect("brandprofile.SEED names no brand's category, codes or competitors", set(bp.SEED) <= {"name"} and not re.search(r"heritage|dairy|doodh|milk|FSSAI|amul|nandini", str(bp.SEED), re.I), bp.SEED)
+_seed_prof = {"name": bp.SEED.get("name", "Your brand")}
+_vb = bp.voice_block(_seed_prof)
+expect("voice_block on the name-only seed profile builds, names the brand, and emits no dairy/Heritage",
+       "BRAND: " + _seed_prof["name"] in _vb and not re.search(r"dairy|doodh|FSSAI|pure milk|heritage", _vb, re.I), _vb[:120])
+expect("system_for builds a social system prompt for the name-only seed brand", _seed_prof["name"] in str(main.prompts.system_for([{"role": "user", "content": "Write posts."}], brand=_seed_prof)))
 
 print("\n=== The page sends brand_mode on every call that reaches the music bed")
 html = _html
