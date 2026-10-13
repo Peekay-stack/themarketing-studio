@@ -657,6 +657,16 @@ def synth(segments: list[Segment], max_workers: int = 4) -> int:
         url = filmaudio.run_fal(model, args)
         if url:
             return seg, url, ""
+        # The voice model may not support this line's language -- fal's ElevenLabs has no Telugu, so a line
+        # written in the brand's market language (the point of LANGUAGE OF THE WORK) failed and dropped out of
+        # the mix entirely. A read that is imperfect beats a line that is missing, so retry the SAME voice with
+        # no language hint: the model reads the (usually romanised) text as best it can. Only EL_MODEL carries a
+        # language_code, so this never touches the minimax path.
+        if "language_code" in args:
+            url = filmaudio.run_fal(model, {k: v for k, v in args.items() if k != "language_code"})
+            if url:
+                return seg, url, (f"{seg.speaker or 'narration'}: the voice model does not support "
+                                  f"'{args['language_code']}' -- read the line without a language hint")
         # A voice the account can't reach (a pasted ElevenLabs ID that isn't in the library, say)
         # must not silently drop the line — fall back to a stock voice and report which.
         chosen = resolve(seg.voice)
@@ -665,6 +675,7 @@ def synth(segments: list[Segment], max_workers: int = 4) -> int:
         if not chosen or fallback.id != chosen.id:
             seg.voice = fallback.id
             model, args = _tts_args(seg)
+            args.pop("language_code", None)
             url = filmaudio.run_fal(model, args)
             if url:
                 who = seg.speaker or "narration"
