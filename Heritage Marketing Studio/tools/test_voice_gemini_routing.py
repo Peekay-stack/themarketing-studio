@@ -1,10 +1,11 @@
 #!/usr/bin/env python
-"""test_voice_gemini_routing.py -- Telugu/Indic lines are voiced by Gemini TTS, English/Hindi stay on the fal voices.
+"""test_voice_gemini_routing.py -- Gemini is the default voice engine for every non-child speaker in every
+language; ElevenLabs is kept only for child voices (and stays resolvable for old saved films).
 
-Interim engine (13 Oct): the owner chose a native-Telugu engine; Chirp's credential isn't ready, so Gemini Flash
-TTS (on the Gemini API key already in .env) is wired in as the stopgap. A line whose language the fal ElevenLabs
-voices can't speak (Telugu + the Indic languages EL multilingual-v2 lacks) is routed to gemini.tts; everything
-else is unchanged. This pins: the language set, language-aware casting, the synth dispatch, and graceful fall-through.
+Owner call (13 Oct): "keep all voices from Google Flash and not use ElevenLabs at all ... Google is far
+superior", then "keep ElevenLabs for child". So: a genuine child is cast to an ElevenLabs child voice
+(Gemini has none); every other speaker -- narration, adult, elder, any language -- is cast to a Google
+voice and synthesised by Gemini TTS. Child/elderly age range is Gemini's known weak spot, accepted here.
 
     python tools/test_voice_gemini_routing.py       # exit 0 = behaves
 """
@@ -19,7 +20,6 @@ import filmvoice as fv       # noqa: E402
 import filmaudio            # noqa: E402
 import gemini               # noqa: E402
 
-# Scratchpad-shadow guard (CLAUDE.md): make sure we loaded the REAL modules.
 assert fv.__file__.replace("\\", "/").endswith("/api/filmvoice.py"), fv.__file__
 
 fails = 0
@@ -31,74 +31,73 @@ def check(name, cond, detail=""):
     fails += 0 if cond else 1
 
 
-print("Language classification")
-for lang, want in [("te", True), ("Telugu", True), ("te-IN", True), ("kn", True), ("mr", True),
-                   ("hi", False), ("ta", False), ("en", False), ("", False), (None, False)]:
-    check(f"_wants_gemini({lang!r}) == {want}", fv._wants_gemini(lang) == want, fv._wants_gemini(lang))
+def prov(vid):
+    v = fv.resolve(vid)
+    return v.provider if v else None
 
-print("\nThe roster carries Google voices in both genders across bands")
+
+print("The Google roster is gender-balanced and all banded 'adult' (no elderly/child on Gemini)")
 g = [v for v in fv.VOICES if v.provider == "gemini"]
-check("at least 12 Google voices", len(g) >= 12, len(g))
-for gender in ("female", "male"):
-    for age in ("young", "adult", "mature"):
-        check(f"a Google {gender}/{age} exists", any(v.gender == gender and v.age == age for v in g))
-check("Google voices don't pollute the Indian (EL) pool",
-      all(v.provider != "gemini" for v in fv.pool(fv.INDIAN, "female", "adult")))
-check("voice_catalog groups them under Google",
-      any(row["group"].startswith("Google") for row in fv.voice_catalog()))
+check("16 Google voices", len(g) == 16, len(g))
+check("8 female / 8 male", sum(v.gender == "female" for v in g) == 8 and sum(v.gender == "male" for v in g) == 8)
+check("all banded adult", all(v.age == "adult" for v in g), set(v.age for v in g))
+check("the three gender-disputed voices were dropped",
+      not any(v.ref in ("Orus", "Vindemiatrix", "Pulcherrima") for v in g))
+check("voice_catalog still lists a Google group", any(r["group"].startswith("Google") for r in fv.voice_catalog()))
+check("ElevenLabs child voices are still present (for child roles)",
+      any(v.provider == "elevenlabs" and v.age == "young" for v in fv.VOICES))
 
+print("\nEngine policy: child -> ElevenLabs, everyone else -> Google")
+check("young band -> ElevenLabs child", all(p == "elevenlabs" for p in map(lambda v: v.provider, fv._engine_pool(fv.INDIAN, "female", "young"))))
+check("adult band -> Google", fv._engine_pool(fv.INDIAN, "female", "adult")[0].provider == "gemini")
+check("mature band widens to a Google voice", fv._engine_pool(fv.INDIAN, "male", "mature")[0].provider == "gemini")
 
-print("\nCasting routes a Telugu character to a Google voice, an English one to a fal voice")
+print("\nCasting: adult speakers (any language) -> Google; a child -> ElevenLabs")
 segs = [
     fv.Segment(kind="vo", text="Fresh every morning.", language="en"),
     fv.Segment(kind="dialogue", speaker="Mother", text="Taaza undi, raa.", language="te"),
     fv.Segment(kind="dialogue", speaker="Shopkeeper", text="Best in town.", language="en"),
+    fv.Segment(kind="dialogue", speaker="Girl", text="Ammi, I want milk!", language="en"),
 ]
-fv.cast(segs, "in-f-riya", "en", characters="Mother (30s, warm); Shopkeeper (male, 40s)")
-mother = next(s for s in segs if s.speaker == "Mother")
-shop = next(s for s in segs if s.speaker == "Shopkeeper")
-check("Mother (Telugu) cast to a Google voice", (fv.resolve(mother.voice) or fv.Voice("", "", "x", "", "", "", "")).provider == "gemini", mother.voice)
-check("Shopkeeper (English) stays on ElevenLabs", fv.resolve(shop.voice).provider == "elevenlabs", shop.voice)
+fv.cast(segs, "", "en", characters="Mother (30s, warm); Shopkeeper (male, 40s); Girl (small child, 6)")
+by = {s.speaker or "VO": s.voice for s in segs}
+check("Mother (Telugu, adult) -> Google", prov(by["Mother"]) == "gemini", by["Mother"])
+check("Shopkeeper (English, adult) -> Google", prov(by["Shopkeeper"]) == "gemini", by["Shopkeeper"])
+check("Girl (child) -> ElevenLabs child voice", prov(by["Girl"]) == "elevenlabs" and (fv.resolve(by["Girl"]).age == "young"), by["Girl"])
+check("Narration default -> Google", prov(by["VO"]) == "gemini", by["VO"])
 
 
-print("\nSynth dispatch: Telugu -> Gemini, English -> fal, Gemini-cast -> Gemini, failure -> fal fallback")
+print("\nSynth dispatch: Google-cast -> Gemini; child/EL-cast -> fal; Gemini failure -> fal")
 
 def run(seg, gemini_returns="/media/vo-x.wav"):
-    """Stub both engines; return (which_engine_called, seg)."""
     called = {"gemini": 0, "fal": 0}
-    def fake_tts(text, voice, style=""):
-        called["gemini"] += 1
-        return gemini_returns
-    def fake_fal(model, args):
-        called["fal"] += 1
-        return "https://x/el.mp3"
-    gemini.tts = fake_tts
+    gemini.tts = lambda text, voice, style="": (called.__setitem__("gemini", called["gemini"] + 1) or gemini_returns)
     gemini.available = lambda: True
-    filmaudio.run_fal = fake_fal
+    filmaudio.run_fal = lambda model, args: (called.__setitem__("fal", called["fal"] + 1) or "https://x/el.mp3")
     fv.synth([seg])
-    return called, seg
+    return called
 
-# a Telugu line cast (by language) onto an EL voice still goes to Gemini, and the plan now shows the Google voice
-te = fv.Segment(kind="dialogue", speaker="Mother", text="Taaza undi, raa.", language="te", voice="in-f-kanika", settings={})
-c, _ = run(te)
-check("Telugu line -> gemini.tts, not fal", c["gemini"] == 1 and c["fal"] == 0, c)
-check("its voice is rewritten to the Google voice actually used", (fv.resolve(te.voice) or None) and fv.resolve(te.voice).provider == "gemini", te.voice)
-check("the line rendered (url set)", bool(te.url), te.url)
+# adult line cast to a Google voice -> Gemini
+c = run(fv.Segment(kind="dialogue", speaker="Mother", text="Taaza undi, raa.", language="te", voice="ga-f-kore", settings={}))
+check("Google-cast Telugu line -> gemini.tts, not fal", c["gemini"] == 1 and c["fal"] == 0, c)
 
-en = fv.Segment(kind="vo", text="Pure and simple.", language="en", voice="in-f-riya", settings={})
-c, _ = run(en)
-check("English line -> fal, not gemini", c["fal"] == 1 and c["gemini"] == 0, c)
+c = run(fv.Segment(kind="vo", text="Pure and simple.", language="en", voice="ga-m-charon", settings={}))
+check("Google-cast English line -> gemini.tts, not fal", c["gemini"] == 1 and c["fal"] == 0, c)
 
-gc = fv.Segment(kind="dialogue", speaker="Host", text="Welcome.", language="en", voice="ga-f-kore", settings={})
-c, _ = run(gc)
-check("a line explicitly cast to a Google voice -> gemini even in English", c["gemini"] == 1 and c["fal"] == 0, c)
+# a child line (ElevenLabs child voice) stays on fal EVEN in Telugu -- owner wants EL for child
+c = run(fv.Segment(kind="dialogue", speaker="Girl", text="Taaza undi, raa.", language="te", voice="in-g-gudiya", settings={}))
+check("child (ElevenLabs) Telugu line -> fal, not gemini", c["fal"] >= 1 and c["gemini"] == 0, c)
 
-fb = fv.Segment(kind="dialogue", speaker="Mother", text="Taaza undi, raa.", language="te", voice="in-f-kanika", settings={})
-c, _ = run(fb, gemini_returns=None)   # Gemini fails
-check("Gemini failure falls through to the fal path", c["gemini"] == 1 and c["fal"] >= 1, c)
+# an explicit ElevenLabs adult pick stays on fal (explicit choice beats the default engine)
+c = run(fv.Segment(kind="vo", text="Hello there.", language="en", voice="in-f-riya", settings={}))
+check("explicit ElevenLabs pick -> fal, not gemini", c["fal"] >= 1 and c["gemini"] == 0, c)
+
+# Gemini failure falls through to fal
+c = run(fv.Segment(kind="dialogue", speaker="Mother", text="Taaza undi, raa.", language="te", voice="ga-f-kore", settings={}), gemini_returns=None)
+check("Gemini failure falls through to fal", c["gemini"] == 1 and c["fal"] >= 1, c)
 
 print()
 if fails:
     print(f"{fails} case(s) FAILED")
     sys.exit(1)
-print("All Gemini-routing cases behave.")
+print("All Gemini-first routing cases behave.")
