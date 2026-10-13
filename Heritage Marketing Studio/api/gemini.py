@@ -153,6 +153,64 @@ def _store(data: bytes, ext: str, prefix: str = "gem") -> str:
     return f"/media/{name}"
 
 
+_TTS_MODEL = "gemini-2.5-flash-preview-tts"
+
+
+def _pcm_to_wav(pcm: bytes, rate: int = 24000, bits: int = 16, ch: int = 1) -> bytes:
+    """Gemini TTS returns raw little-endian PCM (audio/L16); wrap it in a WAV header so it plays and mixes."""
+    import struct
+    byte_rate = rate * ch * bits // 8
+    block = ch * bits // 8
+    return (b"RIFF" + struct.pack("<I", 36 + len(pcm)) + b"WAVE"
+            + b"fmt " + struct.pack("<IHHIIHH", 16, 1, ch, rate, byte_rate, block, bits)
+            + b"data" + struct.pack("<I", len(pcm)) + pcm)
+
+
+def tts(text: str, voice_name: str, style: str = "", model: str = _TTS_MODEL) -> str | None:
+    """Synthesise one line with Gemini TTS and store it as a served /media WAV. Returns the path, or None.
+
+    Used by filmvoice for Telugu and the other Indic languages the fal ElevenLabs voices can't speak. It uses
+    the same key as the rest of this module (GOOGLE_API_KEY / GEMINI_API_KEY). `style` is an optional
+    natural-language delivery hint the model reads but never speaks. One retry: the TTS model occasionally
+    returns no audio for a short or punctuation-heavy line.
+    """
+    import httpx
+    text = (text or "").strip()
+    if not text or not available():
+        return None
+    prompt = f"{style} {text}".strip() if style else text
+    body = {"contents": [{"parts": [{"text": prompt}]}],
+            "generationConfig": {"responseModalities": ["AUDIO"],
+                                 "speechConfig": {"voiceConfig": {"prebuiltVoiceConfig":
+                                                                  {"voiceName": voice_name}}}}}
+    for attempt in (1, 2):
+        try:
+            r = httpx.post(f"{BASE}/models/{model}:generateContent", headers=_headers(),
+                           json=body, timeout=180.0)
+            if r.status_code >= 400:
+                print(f"[gemini] tts {voice_name} HTTP {r.status_code}: {r.text[:200]}",
+                      file=sys.stderr, flush=True)
+                continue
+            cand = (r.json().get("candidates") or [{}])[0]
+            parts = (cand.get("content") or {}).get("parts") or []
+            inline = next((p["inlineData"] for p in parts if "inlineData" in p), None)
+            if not inline:
+                print(f"[gemini] tts {voice_name}: no audio (finish={cand.get('finishReason', '?')}), "
+                      f"attempt {attempt}", file=sys.stderr, flush=True)
+                continue
+            pcm = base64.b64decode(inline["data"])
+            rate, mime = 24000, inline.get("mimeType", "")
+            if "rate=" in mime:
+                try:
+                    rate = int(mime.split("rate=")[1].split(";")[0])
+                except ValueError:
+                    pass
+            return _store(_pcm_to_wav(pcm, rate), ".wav", "vo")
+        except Exception as e:
+            print(f"[gemini] tts {voice_name} failed: {e}", file=sys.stderr, flush=True)
+    return None
+
+
 def local_path(url_or_path: str) -> str | None:
     """Resolve a served '/media/...' or '/library-file/...' path (or a plain path) to a file on disk,
     else None.

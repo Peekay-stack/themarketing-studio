@@ -39,6 +39,7 @@ KO_MODEL = "fal-ai/kokoro/hindi"
 MM_MODEL = "fal-ai/minimax/speech-02-hd"
 
 INDIAN, INTL = "Indian", "International"
+GEMINI = "Google"   # Gemini TTS voices (native Telugu/Indic); routed by _wants_gemini
 
 
 @dataclass
@@ -118,6 +119,21 @@ VOICES: list[Voice] = [
     Voice("el-brian", "Brian", "elevenlabs", "Brian", INTL, "male", "adult"),
     Voice("el-bill", "Bill", "elevenlabs", "Bill", INTL, "male", "mature"),
     Voice("el-daniel", "Daniel", "elevenlabs", "Daniel", INTL, "male", "mature"),
+    # --- Google Gemini TTS voices (native Telugu/Indic diction; interim engine on the Gemini API key).
+    # Routed to automatically for a Telugu/Indic line (see _wants_gemini); also pickable by name. The
+    # "ref" is the Gemini prebuilt voice; all twelve verified to synthesise te-IN.
+    Voice("ga-f-sulafat", "Sulafat \u00b7 warm (Google)", "gemini", "Sulafat", GEMINI, "female", "adult"),
+    Voice("ga-f-aoede", "Aoede \u00b7 breezy (Google)", "gemini", "Aoede", GEMINI, "female", "adult"),
+    Voice("ga-f-kore", "Kore \u00b7 firm (Google)", "gemini", "Kore", GEMINI, "female", "adult"),
+    Voice("ga-f-gacrux", "Gacrux \u00b7 mature (Google)", "gemini", "Gacrux", GEMINI, "female", "mature"),
+    Voice("ga-f-vindemiatrix", "Vindemiatrix \u00b7 gentle (Google)", "gemini", "Vindemiatrix", GEMINI, "female", "mature"),
+    Voice("ga-f-leda", "Leda \u00b7 youthful (Google)", "gemini", "Leda", GEMINI, "female", "young"),
+    Voice("ga-m-charon", "Charon \u00b7 informative (Google)", "gemini", "Charon", GEMINI, "male", "adult"),
+    Voice("ga-m-iapetus", "Iapetus \u00b7 clear (Google)", "gemini", "Iapetus", GEMINI, "male", "adult"),
+    Voice("ga-m-algieba", "Algieba \u00b7 smooth (Google)", "gemini", "Algieba", GEMINI, "male", "adult"),
+    Voice("ga-m-alnilam", "Alnilam \u00b7 firm (Google)", "gemini", "Alnilam", GEMINI, "male", "mature"),
+    Voice("ga-m-schedar", "Schedar \u00b7 even (Google)", "gemini", "Schedar", GEMINI, "male", "mature"),
+    Voice("ga-m-puck", "Puck \u00b7 upbeat (Google)", "gemini", "Puck", GEMINI, "male", "young"),
 ]
 _BY_ID = {v.id: v for v in VOICES}
 _BY_LABEL = {v.label.lower(): v for v in VOICES}
@@ -146,6 +162,48 @@ def pool(accent: str, gender: str, age: str) -> list[Voice]:
     right_age = [v for v in VOICES if v.gender == gender and v.age == age]
     same_accent = [v for v in VOICES if v.accent == accent and v.gender == gender]
     return exact or right_age or same_accent or list(VOICES)
+
+
+# --- native-language routing (Gemini TTS for Telugu and the Indic languages the fal voices lack) ---
+# EL multilingual-v2 (the fal voice model) covers Hindi and Tamil among Indian languages, not these;
+# Gemini TTS reads them natively, so a line in one of them is voiced by Gemini. Hindi/Tamil/English stay.
+_LANG_CODE = {
+    "te": "te", "telugu": "te", "kn": "kn", "kannada": "kn", "ml": "ml", "malayalam": "ml",
+    "mr": "mr", "marathi": "mr", "bn": "bn", "bengali": "bn", "bangla": "bn", "gu": "gu",
+    "gujarati": "gu", "pa": "pa", "punjabi": "pa", "or": "or", "odia": "or", "oriya": "or",
+    "as": "as", "assamese": "as", "hi": "hi", "hindi": "hi", "ta": "ta", "tamil": "ta",
+    "en": "en", "english": "en",
+}
+_GEMINI_LANGS = {"te", "kn", "ml", "mr", "bn", "gu", "pa", "or", "as"}
+
+
+def _lang_code(lang: str | None) -> str:
+    s = (lang or "").strip().lower().replace("_", "-").split("-")[0]
+    return _LANG_CODE.get(s, s)
+
+
+def _wants_gemini(lang: str | None) -> bool:
+    """True when a line's language needs the Gemini TTS engine (the fal voices can't speak it)."""
+    return _lang_code(lang) in _GEMINI_LANGS
+
+
+def _gemini_pool(gender: str, age: str) -> list[Voice]:
+    """Google/Gemini voices for a band, widening by age then gender rather than returning nothing."""
+    g = [v for v in VOICES if v.provider == "gemini"]
+    return ([v for v in g if v.gender == gender and v.age == age]
+            or [v for v in g if v.gender == gender] or g)
+
+
+def _gemini_match(v: "Voice | None") -> "Voice | None":
+    """The Google voice closest to an already-cast voice's band, for a line that must switch engines."""
+    opts = _gemini_pool(v.gender if v else "female", v.age if v else "adult")
+    return opts[0] if opts else None
+
+
+def _gem_style(seg: "Segment") -> str:
+    """Gemini TTS takes a natural-language delivery hint before the line; use the performance note."""
+    emo = (seg.emotion or "").strip()
+    return f"Say this in a {emo} manner:" if emo else ""
 
 
 _FEMALE_WORDS = ("mother", "amma", "amamma", "ammamma", "mom", "mum", "woman", "girl", "daughter",
@@ -569,7 +627,13 @@ def cast(segments: list[Segment], narrator_voice: str, narrator_lang: str | None
         if who not in assigned:
             band = _band(f"{who} {seg.emotion} {_sheet_hint(characters, who)}")
             gender, age = band.split("_")
-            options = pool(accent, gender, age)
+            # A line in a language the fal voices can't speak (Telugu & the Indic languages EL lacks)
+            # is cast to a Google voice that can; every other language keeps the existing voices. An
+            # explicit per-speaker override in `voices` still wins (apply_overrides runs after this).
+            if _wants_gemini(seg.language or narrator_lang):
+                options = _gemini_pool(gender, age)
+            else:
+                options = pool(accent, gender, age)
             pick = next((v for v in options if v.id not in used), options[0])
             assigned[who] = pick.id
             used.add(pick.id)
@@ -653,6 +717,22 @@ def synth(segments: list[Segment], max_workers: int = 4) -> int:
     import filmaudio
 
     def one(seg: Segment):
+        # Native-language routing: a line whose language the fal voices can't speak (Telugu & kin), or any
+        # line cast to a Google voice, is synthesised by Gemini TTS instead of fal -- it reads native script
+        # with the right diction. On any failure we fall through to the fal path below (its own fallbacks).
+        _cv = resolve(seg.voice)
+        _gv = _cv if (_cv and _cv.provider == "gemini") else (
+            _gemini_match(_cv) if _wants_gemini(seg.language) else None)
+        if _gv is not None:
+            import gemini
+            if gemini.available():
+                _url = gemini.tts(seg.text, _gv.ref, _gem_style(seg))
+                if _url:
+                    seg.voice = _gv.id
+                    _note = "" if (_cv and _cv.provider == "gemini") else (
+                        f"{seg.speaker or 'narration'}: {_lang_code(seg.language)} line voiced by "
+                        f"Google TTS ({_gv.label.split(' \u00b7')[0]})")
+                    return seg, _url, _note
         model, args = _tts_args(seg)
         url = filmaudio.run_fal(model, args)
         if url:
