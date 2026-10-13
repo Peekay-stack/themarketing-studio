@@ -5,10 +5,12 @@ metadata:
   node_type: memory
   type: reference
   originSessionId: 60d5a7b2-1e0f-4999-a432-7547cc82bb56
-  modified: 2026-10-01T13:02:12.180Z
+  modified: 2026-10-13T13:28:47.770Z
 ---
 
 **LIVE DOCUMENT**: [Round 31 Queue](https://claude.ai/artifact/UpSArgACG53yWTUCPVwFSV)
+
+**REVISED 13 Oct 2026 (Version 7, republished).** The board was brought current after a heavy fortnight. Four big threads moved to a "Shipped since 1 Oct" green block (no longer in the task list): Brand-Agnostic/Nuance Layer Steps 0-5, the film voice engine (Gemini default, off ElevenLabs), Provocation P0-P2, and the Video production pipeline + Sound design Phases 1-4. The open work is now regrouped as: 4 IN-FLIGHT INITIATIVES -- A Provocation P3-P5 + wire provocation_id into Social/POSM/Onground/PR (gate: owner real-run judgement); B Nuance Steps 6-10 (Step 6 Brief-reads-profile needs owner's explicit OK); C voice Gemini->Chirp 3 HD (gate: Cloud credential); D Heritage's 3 core profile answers (owner input) -- plus Video loose ends (V1 ratio-mismatch experiment, V2 Kling/Seedance trials, V3 approved-video editor for platform sizes/durations, V4 persist lock image across reload, V5 unscoped /library read), Carousel/image craft (8; items 1-3 still ready), Platform (5; multi-brand concurrency + beta Phase 4 spend-caps now urgent), 2 A/B tests, 3 experiments. My recommended sequence given to the owner: D first (5-min input, lifts everything), then A or B, C when the credential lands. The detailed per-thread history below (through 7 Oct) + the nuance-layer-thread (8-13 Oct) remain the source of truth; the artifact summarises them.
 
 Built 25 Sep by consolidating every still-open item across four threads into one operational board:
 [[brand-grounding-modes-project]] (Carousel, Rounds 21-30), [[image-gen-engine-research]] (the Image and
