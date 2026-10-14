@@ -71,6 +71,12 @@ def music_level(name, has_voice: bool = True) -> float:
 
 # Named music styles, each with the wording that actually steers the model. Free text stays
 # supported — a style just gives a reliable starting point and something to audition against.
+# The picker's named styles. Each carries a rich generation prompt (instrumentation + mood + tempo) —
+# it is what actually drives the music model, resolved from either the id OR the label (see music_prompt),
+# so the chip a person clicks reaches the generator in full rather than as a bare two-word label. Grouped
+# loosely warm-Indian -> acoustic -> cinematic/premium -> modern/youth -> corporate/calm, which is the
+# order the chips render in. Adding a style is additive: give it a stable id (never reuse one — saved
+# films reference it), a short label and a prompt. Free text a person types is still honoured as-is.
 MUSIC_STYLES: list[dict] = [
     {"id": "warm-strings", "label": "Warm strings",
      "prompt": "Warm, tender string ensemble with soft sustained pads; gentle and reassuring."},
@@ -84,16 +90,52 @@ MUSIC_STYLES: list[dict] = [
      "prompt": "Celebratory dhol and shehnai with rising brass; festive, communal, joyous."},
     {"id": "devotional", "label": "Devotional / temple",
      "prompt": "Reverent harmonium and temple bells with a low drone; calm, devotional, timeless."},
+    {"id": "indie-fusion", "label": "Indian indie fusion",
+     "prompt": "Sitar and nylon-guitar melody over a relaxed modern beat and warm bass; traditional "
+               "instruments meeting a contemporary groove, bright and optimistic, bridging urban and rural."},
+    {"id": "sufi-soul", "label": "Sufi / soulful",
+     "prompt": "Soulful harmonium and sarangi over a slow hand-percussion pulse; aching, heartfelt and "
+               "restrained, an unhurried Sufi warmth."},
     {"id": "piano-ambient", "label": "Ambient piano",
      "prompt": "Sparse felt-piano motif with airy ambient pads; intimate, modern, unhurried."},
+    {"id": "nostalgic-warm", "label": "Nostalgic / heartfelt",
+     "prompt": "Tender nostalgic motif on music-box or felt piano with soft strings and a slow heartbeat "
+               "pulse; wistful, warm and emotional, the feeling of a cherished memory."},
+    {"id": "indie-folk", "label": "Acoustic indie folk",
+     "prompt": "Warm acoustic indie-folk bed — fingerpicked nylon guitar, hand claps, soft glockenspiel "
+               "and upright bass; honest, authentic and reassuring, the feeling of home and trust."},
     {"id": "cinematic", "label": "Cinematic orchestral",
      "prompt": "Cinematic orchestral build — strings, soft horns and light timpani; premium and "
                "emotive with a clear lift."},
+    {"id": "classical-luxury", "label": "Classical / luxury",
+     "prompt": "Refined classical string quartet with light harpsichord or solo piano; elegant, precise "
+               "and understated, signalling craftsmanship and premium quality."},
+    {"id": "inspiring-build", "label": "Inspiring build",
+     "prompt": "Emotive solo piano that blooms into warm strings and a gentle rhythmic swell; hopeful, "
+               "cinematic and purposeful, around 70-90 BPM for brand-story storytelling."},
     {"id": "upbeat-modern", "label": "Modern upbeat",
      "prompt": "Bright modern acoustic pop bed — claps, plucked guitar, warm bass; optimistic and "
                "contemporary."},
+    {"id": "electronic-pop", "label": "Upbeat electronic pop",
+     "prompt": "Bright electronic pop bed — shimmering synth arpeggios, a punchy four-on-the-floor kick, "
+               "warm sub bass and claps; high-energy, modern and optimistic for a product launch."},
+    {"id": "hiphop-urban", "label": "Hip-hop / urban groove",
+     "prompt": "Confident hip-hop groove — crisp boom-bap drums, deep 808 bass and a minimal melodic "
+               "hook; cool, contemporary and street-smart for a younger audience."},
+    {"id": "lofi-chill", "label": "Lo-fi chill",
+     "prompt": "Relaxed lo-fi beat with mellow Rhodes piano, soft vinyl crackle and a laid-back swing; "
+               "casual, modern and easy, sitting unobtrusively under a voiceover."},
+    {"id": "corporate-uplift", "label": "Uplifting corporate",
+     "prompt": "Clean, positive corporate bed — bright plucked guitar or marimba, steady claps and warm "
+               "pads around 100-120 BPM; professional, confident and forward-looking for brand awareness."},
+    {"id": "calm-ambient", "label": "Calm ambient",
+     "prompt": "Spacious ambient bed — airy sustained pads, soft bell tones and a slow evolving drone; "
+               "serene, meditative and weightless, suited to wellness and health."},
 ]
 _MUSIC_BY_ID = {m["id"]: m for m in MUSIC_STYLES}
+# A chip click sends the LABEL (the person-facing name), not the id, so resolve on the label too — without
+# this the rich prompts above never reached the generator on the render/preview path (only the bare label did).
+_MUSIC_BY_LABEL = {m["label"].strip().lower(): m for m in MUSIC_STYLES}
 
 
 def music_prompt(style_or_mood: str, sound_world: str = "") -> str:
@@ -103,7 +145,9 @@ def music_prompt(style_or_mood: str, sound_world: str = "") -> str:
     fixed tail on every prompt ("a premium Indian dairy brand film — warm, wholesome, uplifting, gentle Indian
     instrumentation"), which also sat on top of a piano or orchestral pick for a brand that is none of those."""
     key = str(style_or_mood or "").strip()
-    base = _MUSIC_BY_ID.get(key, {}).get("prompt") or key or "Warm, tender string ensemble."
+    # Resolve a known style by its id OR its label (a chip click sends the label); free text falls through.
+    hit = _MUSIC_BY_ID.get(key) or _MUSIC_BY_LABEL.get(key.lower())
+    base = (hit or {}).get("prompt") or key or "Warm, tender string ensemble."
     world = " ".join(str(sound_world or "").split())
     line = (f" THE BRAND'S SOUND WORLD (instrumentation and mood only; any voice it describes is cast "
             f"separately): {world.rstrip('.')}.") if world else ""

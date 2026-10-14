@@ -16248,10 +16248,18 @@ class Component extends DCLogic {
   // The music styles on offer: the server's list once loaded, else the same eight by name.
   musicChips(){
     return this.state.musicStyleList.length ? this.state.musicStyleList
+      // Fallback only (used before GET /music-styles returns). Kept in step with filmaudio.MUSIC_STYLES —
+      // the server list is authoritative; this is what the chips show on first paint or if that call fails.
       : [{id:'warm-strings',label:'Warm strings'},{id:'indian-flute',label:'Gentle Indian flute'},
          {id:'tabla-light',label:'Tabla & light percussion'},{id:'festive-dhol',label:'Festive dhol'},
-         {id:'devotional',label:'Devotional / temple'},{id:'piano-ambient',label:'Ambient piano'},
-         {id:'cinematic',label:'Cinematic orchestral'},{id:'upbeat-modern',label:'Modern upbeat'}];
+         {id:'devotional',label:'Devotional / temple'},{id:'indie-fusion',label:'Indian indie fusion'},
+         {id:'sufi-soul',label:'Sufi / soulful'},{id:'piano-ambient',label:'Ambient piano'},
+         {id:'nostalgic-warm',label:'Nostalgic / heartfelt'},{id:'indie-folk',label:'Acoustic indie folk'},
+         {id:'cinematic',label:'Cinematic orchestral'},{id:'classical-luxury',label:'Classical / luxury'},
+         {id:'inspiring-build',label:'Inspiring build'},{id:'upbeat-modern',label:'Modern upbeat'},
+         {id:'electronic-pop',label:'Upbeat electronic pop'},{id:'hiphop-urban',label:'Hip-hop / urban groove'},
+         {id:'lofi-chill',label:'Lo-fi chill'},{id:'corporate-uplift',label:'Uplifting corporate'},
+         {id:'calm-ambient',label:'Calm ambient'}];
   }
   // The ONE place the music mood changes: the Production field, the style chips, the Music note's suggested style and the
   // saved film all go through here, so they cannot disagree. A chip's name is a style (highlighted); anything else is free
