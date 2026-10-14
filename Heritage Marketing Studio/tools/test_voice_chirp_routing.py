@@ -97,6 +97,28 @@ check("child (ElevenLabs) line -> fal, not Chirp", c["fal"] >= 1 and c["chirp"] 
 c = run(fv.Segment(kind="vo", text="We didn't ask.", language="en", voice="ch-f-achernar", settings={}), chirp_returns=None)
 check("Chirp failure falls through to fal", c["chirp"] == 1 and c["fal"] >= 1, c)
 
+print("\nDirect ElevenLabs path: built but DORMANT, activatable by a voice row + the key")
+import ellabs  # noqa: E402
+check("no voice uses provider el-direct (dormant)", not any(v.provider == "el-direct" for v in fv.VOICES))
+check("ellabs.available() is False without ELEVENLABS_API_KEY", not ellabs.available())
+# register a temporary el-direct voice (as a future clone would be) to prove activation needs no code change
+fv.VOICES.append(fv.Voice("el-brand", "Brand clone (direct EL)", "el-direct", "voiceid123", fv.INDIAN, "female", "adult"))
+fv._BY_ID["el-brand"] = fv.VOICES[-1]
+
+
+def run_el(seg, el_available=True):
+    called = {"el": 0, "fal": 0}
+    ellabs.synth = lambda text, voice, **kw: (called.__setitem__("el", called["el"] + 1) or "/media/vo-el.mp3")
+    ellabs.available = lambda: el_available
+    filmaudio.run_fal = lambda model, args: (called.__setitem__("fal", called["fal"] + 1) or "https://x/el.mp3")
+    fv.synth([seg])
+    return called
+
+c = run_el(fv.Segment(kind="vo", text="Hello from the brand.", language="en", voice="el-brand", settings={}))
+check("an el-direct voice + key -> ellabs.synth, not fal", c["el"] == 1 and c["fal"] == 0, c)
+c = run_el(fv.Segment(kind="vo", text="Hello.", language="en", voice="el-brand", settings={}), el_available=False)
+check("el-direct with key OFF -> falls through to fal (graceful/dormant)", c["el"] == 0 and c["fal"] >= 1, c)
+
 print()
 if fails:
     print(f"{fails} case(s) FAILED")

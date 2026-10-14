@@ -46,7 +46,7 @@ CHIRP = "Google"    # Cloud Chirp 3 HD voices (native Telugu/Indic); routed by _
 class Voice:
     id: str            # what the UI stores
     label: str         # what the user reads
-    provider: str      # "elevenlabs" | "kokoro" | "minimax" | "chirp"
+    provider: str      # "elevenlabs" | "kokoro" | "minimax" | "chirp" | "el-direct"
     ref: str           # the provider's own voice identifier
     accent: str
     gender: str        # "female" | "male"
@@ -741,6 +741,15 @@ def synth(segments: list[Segment], max_workers: int = 4) -> int:
             import cloudtts
             if cloudtts.available():
                 _url = cloudtts.synth(seg.text, _cv.ref, _lang_code(seg.language))
+                if _url:
+                    return seg, _url, ""
+        # Direct ElevenLabs (the owner's own account) -- BUILT BUT DORMANT: no voice uses provider
+        # "el-direct" and ELEVENLABS_API_KEY is unset, so this never fires today. It activates with a
+        # voice row (e.g. a cloned brand voice) + the key, no code change; fal stays the fallback below.
+        if _cv and _cv.provider == "el-direct":
+            import ellabs
+            if ellabs.available():
+                _url = ellabs.synth(seg.text, _cv.ref)
                 if _url:
                     return seg, _url, ""
         model, args = _tts_args(seg)
