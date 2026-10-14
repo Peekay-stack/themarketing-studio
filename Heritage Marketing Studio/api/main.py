@@ -524,6 +524,7 @@ def _voice_setup(payload: dict):
     typed = str(payload.get("voice") or "")
     accent = str(payload.get("accent") or filmvoice.INDIAN)
     _, lang = filmaudio.pick_voice(typed)
+    lang = lang or "en"   # narration with no language stated is English -> Chirp en-IN, not fal
     # The studio's free-text "Voiceover" field ("Warm female (Telugu-accented English)") describes
     # a voice rather than naming one. Only treat it as a specific casting choice if it actually
     # names a voice we have; otherwise honour the accent choice and read gender/age off the text.

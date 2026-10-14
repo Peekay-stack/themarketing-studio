@@ -120,9 +120,9 @@ VOICES: list[Voice] = [
     Voice("el-bill", "Bill", "elevenlabs", "Bill", INTL, "male", "mature"),
     Voice("el-daniel", "Daniel", "elevenlabs", "Daniel", INTL, "male", "mature"),
     # --- Google Cloud Chirp 3 HD voices (Telugu/Indic). The owner chose Chirp 3 HD by ear over
-    # ElevenLabs and Gemini for Telugu diction, so a Telugu/Indic line is voiced by Chirp (see cloudtts.py
-    # + _wants_chirp). English keeps the ElevenLabs Indian artists above (Chirp has no en-IN voice, so its
-    # English is not Indian-accented) and child lines keep the ElevenLabs child voices. Genders are from
+    # ElevenLabs and Gemini for diction, so an ADULT line in any of Chirp's languages -- Telugu/Indic AND
+    # English (en-IN, Indian-accented) -- is voiced by Chirp (see cloudtts.py + _wants_chirp). ElevenLabs
+    # is kept for child lines and for elderly English/Hindi/Tamil (Chirp has no aged voice). Genders are from
     # the Cloud ListVoices API (authoritative -- no guessing). The voice names are language-independent;
     # `ref` is the bare name and cloudtts builds "<lang>-Chirp3-HD-<ref>". Chirp has no elderly voice, so
     # all are banded "adult" and a "mature" role widens to an adult one (see _chirp_pool).
@@ -172,11 +172,11 @@ def pool(accent: str, gender: str, age: str) -> list[Voice]:
     return exact or right_age or same_accent or list(VOICES)
 
 
-# --- voice engine by language (Cloud Chirp 3 HD for Telugu and the Indic languages the fal voices lack) ---
-# EL multilingual-v2 (the fal voice model) covers Hindi and Tamil among Indian languages, not these, and
-# Cloud Chirp 3 HD reads them natively, so a line in one of them is voiced by Chirp. English stays on the
-# ElevenLabs Indian artists (Chirp has no en-IN voice, so its English is not Indian-accented); Hindi and
-# Tamil stay on ElevenLabs too (it reads them). Odia/Assamese have no Chirp voice and fall back to fal.
+# --- voice engine by language + age (Cloud Chirp 3 HD is the default for every adult voice) ---
+# Chirp 3 HD reads English (en-IN, Indian-accented) and every Indic language that has it, so an ADULT
+# line in any of those is voiced by Chirp. ElevenLabs is kept only for what Chirp has no voice for: CHILD
+# lines (any language), and ELDERLY lines in the languages ElevenLabs reads (English/Hindi/Tamil), where
+# it has genuinely aged voices. Odia/Assamese have no Chirp voice and fall back to the fal path.
 _LANG_CODE = {
     "te": "te", "telugu": "te", "kn": "kn", "kannada": "kn", "ml": "ml", "malayalam": "ml",
     "mr": "mr", "marathi": "mr", "bn": "bn", "bengali": "bn", "bangla": "bn", "gu": "gu",
@@ -184,9 +184,13 @@ _LANG_CODE = {
     "as": "as", "assamese": "as", "hi": "hi", "hindi": "hi", "ta": "ta", "tamil": "ta",
     "ur": "ur", "urdu": "ur", "en": "en", "english": "en",
 }
-# The Indic languages routed to Chirp: those EL can't speak AND that have Chirp 3 HD voices (verified via
-# the ListVoices API). Odia/Assamese are excluded (no Chirp); Hindi/Tamil are excluded (EL reads them).
-_CHIRP_LANGS = {"te", "kn", "ml", "mr", "bn", "gu", "pa", "ur"}
+# Every language that HAS Chirp 3 HD voices (verified via the ListVoices API), English included (en-IN
+# Chirp is Indian-accented; the owner judged it good). Only Odia/Assamese are missing -> fall back to fal.
+_CHIRP_LANGS = {"en", "te", "hi", "ta", "kn", "ml", "mr", "bn", "gu", "pa", "ur"}
+# Languages ElevenLabs reads with its Indian voice artists -- used only for an ELDERLY speaker, since
+# Chirp has no aged voice while ElevenLabs does (Saanu, Kahani...). An elderly speaker in any other
+# language widens to a Chirp adult (no better option there).
+_EL_LANGS = {"en", "hi", "ta"}
 
 
 def _lang_code(lang: str | None) -> str:
@@ -207,11 +211,16 @@ def _chirp_pool(gender: str, age: str) -> list[Voice]:
 
 
 def _engine_pool(accent: str, gender: str, age: str, lang: str | None = None) -> list[Voice]:
-    """The casting pool for a band and language: a genuine child keeps the ElevenLabs child voices; a
-    Telugu/Indic line goes to Cloud Chirp 3 HD; English/Hindi/Tamil keep the ElevenLabs Indian voices."""
+    """The casting pool for a band and language. A CHILD keeps the ElevenLabs child voices (Chirp has
+    none). An ELDERLY speaker uses ElevenLabs' aged Indian voices when the language is one ElevenLabs
+    reads (English/Hindi/Tamil), since Chirp has no aged voice; otherwise it widens to a Chirp adult.
+    Every other ADULT -- any Chirp language, English included -- is cast to Cloud Chirp 3 HD."""
+    code = _lang_code(lang)
     if age == "young":
         return pool(accent, gender, age)
-    if _wants_chirp(lang):
+    if age == "mature" and code in _EL_LANGS:
+        return pool(accent, gender, "mature")
+    if code in _CHIRP_LANGS:
         return _chirp_pool(gender, age)
     return pool(accent, gender, age)
 
@@ -637,9 +646,9 @@ def cast(segments: list[Segment], narrator_voice: str, narrator_lang: str | None
         if who not in assigned:
             band = _band(f"{who} {seg.emotion} {_sheet_hint(characters, who)}")
             gender, age = band.split("_")
-            # Engine by language+age: a genuine child keeps an ElevenLabs child voice; a Telugu/Indic
-            # line goes to Cloud Chirp 3 HD (native); English/Hindi/Tamil keep the ElevenLabs Indian
-            # voices. An explicit per-speaker override in `voices` still wins (apply_overrides, after this).
+            # Engine by language+age: a child keeps an ElevenLabs child voice; an elderly English/Hindi/
+            # Tamil speaker keeps an ElevenLabs aged voice; every other adult (Telugu/Indic AND English)
+            # goes to Cloud Chirp 3 HD. An explicit `voices` override still wins (apply_overrides, after).
             options = _engine_pool(accent, gender, age, seg.language or narrator_lang)
             pick = next((v for v in options if v.id not in used), options[0])
             assigned[who] = pick.id

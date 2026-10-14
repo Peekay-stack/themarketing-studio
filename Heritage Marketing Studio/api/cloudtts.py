@@ -4,9 +4,10 @@ fal ElevenLabs voices can't speak natively.
 
 This is a DIFFERENT Google product from gemini.py: the Cloud TTS API (texttospeech.googleapis.com),
 authenticated with its own GOOGLE_TTS_API_KEY -- NOT the AI-Studio / Gemini key, which Cloud TTS rejects.
-The owner's ear chose Chirp 3 HD over both ElevenLabs and Gemini for Telugu diction. English stays on
-ElevenLabs (its Indian voice artists carry the Indian accent; Cloud TTS has no en-IN Chirp 3 HD voice),
-and child lines stay on ElevenLabs too. So this module is only ever reached for a Telugu/Indic adult line.
+The owner's ear chose Chirp 3 HD over both ElevenLabs and Gemini. Chirp reads English (en-IN, Indian-
+accented) and every Indic language that has it, so this module voices every ADULT line. ElevenLabs is kept
+only where Chirp has no voice: child lines (any language) and elderly English/Hindi/Tamil (Chirp has no
+aged voice). So this module is reached for an adult line in any Chirp-supported language, English included.
 """
 from __future__ import annotations
 import os
@@ -15,11 +16,10 @@ import base64
 
 BASE = "https://texttospeech.googleapis.com/v1"
 
-# 2-letter code -> BCP-47, for the Indic languages that actually have Chirp 3 HD voices (verified via the
-# ListVoices API). Odia (or) and Assamese (as) have NO Chirp 3 HD, so they are deliberately absent and a
-# line in them falls back to the fal path. Hindi/Tamil have Chirp 3 HD too but are routed to ElevenLabs
-# upstream (it reads them with an Indian voice), so they only reach here if a Chirp voice is picked by hand.
-_BCP47 = {"te": "te-IN", "kn": "kn-IN", "ml": "ml-IN", "mr": "mr-IN", "bn": "bn-IN",
+# 2-letter code -> BCP-47, for the languages that have Chirp 3 HD voices (verified via the ListVoices API),
+# English (en-IN) included. Odia (or) and Assamese (as) have NO Chirp 3 HD, so they are deliberately absent
+# and a line in them falls back to the fal path.
+_BCP47 = {"en": "en-IN", "te": "te-IN", "kn": "kn-IN", "ml": "ml-IN", "mr": "mr-IN", "bn": "bn-IN",
           "gu": "gu-IN", "pa": "pa-IN", "ur": "ur-IN", "hi": "hi-IN", "ta": "ta-IN"}
 
 
