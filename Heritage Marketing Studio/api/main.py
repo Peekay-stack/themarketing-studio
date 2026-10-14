@@ -209,6 +209,8 @@ def health():
             "heygen": seen("HEYGEN_API_KEY"),
             "sarvam": seen("SARVAM_API_KEY"),
             "nvidia": seen("NVIDIA_API_KEY"),
+            "chirp_tts": seen("GOOGLE_TTS_API_KEY"),            # Cloud Chirp 3 HD (Telugu + Indian English)
+            "elevenlabs_direct": seen("ELEVENLABS_API_KEY"),    # direct ElevenLabs (dormant; for a voice clone)
             "model": os.environ.get("GEN_MODEL", "claude-opus-4-8")}
 
 
