@@ -1775,11 +1775,15 @@ def scene_still(payload: dict):
     # P3: a Video frame that stands on an approved provocation follows ITS visual language, which OVERRIDES the
     # generic look above -- a provocation deliberately breaks the category's conventional look. Only video_frame
     # frames that name an approved provocation of this house are affected; every other caller is byte-identical.
+    # P3b: a provocation that casts objects, animation or nobody has no people to hold identical across
+    # frames. Default False, set only below, so every other frame keeps the people-continuity clause.
+    _prov_no_people = False
     if payload.get("video_frame") and payload.get("use_provocation", True) is not False and str(payload.get("provocation_id") or "").strip():
         _pr = provocation.resolve_for(str(payload.get("house_id") or ""), str(payload.get("provocation_id") or ""))
         _prov_vis = str(((_pr or {}).get("film") or {}).get("visual_language") or "").strip()
         if _prov_vis:
             craft = craft + " The visual language and cinematography of THIS film — it OVERRIDES any generic look or lighting stated above: " + _prov_vis + "."
+        _prov_no_people = str(((_pr or {}).get("film") or {}).get("cast_approach") or "").strip().lower() in ("objects", "animated", "none")
     subject = str(payload.get("prompt", "")).strip() or "brand key visual"
     characters = str(payload.get("characters", "")).strip()
     # A cast reference image pins identity in a way text never can — use it when we have one.
@@ -2046,6 +2050,18 @@ def scene_still(payload: dict):
                 subject, _ = packscene.scrub_pack_colours(subject)
             _tail += (" Render ONE single full-frame photograph: one camera view of one moment -- not a collage, "
                       "split screen, diptych, triptych, grid, montage or multiple panels.")
+        # P3b: with no people to hold identical, the people-continuity sentence (faces/hair/skin/clothing/
+        # age) is replaced by object/style continuity. Only no-people provocation frames change; every
+        # other frame keeps the exact wording it had (the two strings below reproduce it byte-for-byte).
+        _same_people = (f"reusing the EXACT same people from the reference image: identical faces, hair, "
+                        f"skin tone and body type, and {clothing}, and {age}.")
+        _same_people_plate = (f"Reuse the EXACT same people from the reference images: identical faces, hair, "
+                              f"skin tone and body type, and {clothing}, and {age}.")
+        if _prov_no_people:
+            _same_people = ("keeping the objects, materials, colours and visual style consistent with the "
+                            "other shots of this same film.")
+            _same_people_plate = ("Keep the objects, materials, colours and visual style consistent with the "
+                                  "other shots of this same film.")
         if _pack_only:
             prompt = (f"{packscene.PACK_ONLY_OPENING}{pack_clause} Scene: {subject}. {craft} {_tail}")
         elif not plate_used and _scene_wording:
@@ -2073,9 +2089,7 @@ def scene_still(payload: dict):
                 f"{_tail}")
         elif plate_used:
             prompt = (
-                f"{_video_ref_note}Generate the next shot of the same film. Reuse the EXACT same people from the "
-                f"reference images: identical faces, hair, skin tone and body type, and {clothing}, "
-                f"and {age}."
+                f"{_video_ref_note}Generate the next shot of the same film. {_same_people_plate}"
                 f"{pack_clause} Reuse the SAME location and the same light from the reference images: "
                 "the same room or place, the same time of day, the same quality and direction of "
                 "light. If this shot continues the same scene as the reference, also keep people in "
@@ -2086,9 +2100,7 @@ def scene_still(payload: dict):
                 f"{_tail}")
         else:
             prompt = (
-                f"{_video_ref_note}Generate the next shot of the same film, reusing the EXACT same people from the "
-                f"reference image: identical faces, hair, skin tone and body type, and {clothing}, "
-                f"and {age}."
+                f"{_video_ref_note}Generate the next shot of the same film, {_same_people}"
                 f"{pack_clause} Change only the action, setting and camera. "
                 f"New shot: {subject}. {craft} "
                 f"{_tail}")

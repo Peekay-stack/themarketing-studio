@@ -15783,7 +15783,8 @@ class Component extends DCLogic {
     const seed = this.state.videoSeed || (Math.floor(Math.random()*900000) + 100000);
     this.setState({ scriptStatus:'approved', videoStep:'shootboard', videoSeed:seed });
     this.showToast('Script approved — Shoot Board & Production unlocked.', 'ok');
-    if (!this.state.videoCharacters.trim()) this.deriveCharacters();
+    // P3b: a no-people provocation film (objects / animated / none) casts no characters, so no sheet is derived.
+    if (!this.state.videoCharacters.trim() && !this.provNoPeople()) this.deriveCharacters();
     // Read the spoken script straight away. It costs nothing (no synthesis) and it is what supplies
     // the cast pickers and the per-scene timings — previously you had to press a button before any
     // voice could be chosen at all, so on a first pass there was nothing to choose from.
@@ -15980,6 +15981,9 @@ class Component extends DCLogic {
     // P3: a frame that stands on an approved provocation sends its id, so the server follows the provocation's
     // visual language and overrides the generic look. Part of the frame recipe, so a provocation change reflags frames.
     if (this.provMode()) { body.provocation_id = s.videoProvId; body.use_provocation = true; const _ph = this.provHouseId(); if (_ph) body.house_id = _ph; }
+    // P3b: a no-people provocation film (objects / animated / none) must not pull the brand's signed-off
+    // actor into a frame, and sends no character sheet — nothing describes people to hold identical.
+    if (this.provNoPeople()) body.use_cast = false;
     const chars = (s.videoCharacters || '').trim();
     if (chars) body.characters = chars;
     // The reference image is what actually holds the characters together.
@@ -16046,7 +16050,9 @@ class Component extends DCLogic {
     //
     // Refused rather than warned, and the storyboard says so before the button is pressed
     // (castNeedsLock below), so this is the backstop and not the announcement.
-    if (!this.state.castRefUrl) {
+    // P3b: a no-people provocation film has no faces to hold, so the cast lock is not required — the
+    // fixed seed, the written look and the provocation's own visual language carry its consistency.
+    if (!this.state.castRefUrl && !this.provNoPeople()) {
       this.setState({ castGateHit: true });
       this.showToast('Lock location and cast first ' + String.fromCharCode(8212) + ' frames are generated from that one image, and without it every frame invents its own faces.', 'warn');
       return;
@@ -16080,7 +16086,8 @@ class Component extends DCLogic {
     if (this.state.framesBatch) return;
     if (!rows.length) { this.showToast('Write the full script first — frames render one per script scene.'); return; }
     // Checked before the loop as well: without this the per-frame refusal fired once per scene.
-    if (!this.state.castRefUrl) {
+    // P3b: skipped for a no-people provocation film — see generateFrame's note.
+    if (!this.state.castRefUrl && !this.provNoPeople()) {
       this.setState({ castGateHit: true });
       this.showToast('Lock location and cast first ' + String.fromCharCode(8212) + ' every frame is generated from that one image.', 'warn');
       return;
@@ -18888,7 +18895,7 @@ class Component extends DCLogic {
       // Standing, not a consequence: the storyboard says what it needs while the button is still
       // unpressed. `castGateHit` only changes the ink, so the sentence does not appear to arrive
       // because something went wrong.
-      castNeedsLock: !s.castRefUrl,
+      castNeedsLock: !s.castRefUrl && !this.provNoPeople(),
       castNeedsLockText: s.castGateHit
         ? 'Frames need a locked location and cast. Lock it in Live action above — every frame is generated from that one image, which is what keeps the setting and the faces the same across the film.'
         : 'Lock location and cast in Live action first. Every frame is generated from that one image; without it each frame invents its own faces and setting.',
@@ -21392,6 +21399,14 @@ class Component extends DCLogic {
   provMode(){
     const st = this.state, c = st.videoConcept, p = this.videoProv();
     return !!(c && c.from_provocation && p && c.from_provocation === p.id && st.videoProvOn !== false && st.producerBrandMode !== 'general');
+  }
+  // P3b: a provocation that casts objects, animation or nobody has no people to keep consistent — so the
+  // human-cast machinery (the cast lock, the derived character sheet, the "same people" frame prompt) is
+  // skipped. Only true when the film is standing on such a provocation; an ordinary film is unaffected.
+  provNoPeople(){
+    const p = this.provMode() ? this.videoProv() : null;
+    const c = ((p && p.film) || {}).cast_approach;
+    return c === 'objects' || c === 'animated' || c === 'none';
   }
   // What a call sends so the server writes it from the provocation (empty when the film is not standing on one).
   provExtra(){
