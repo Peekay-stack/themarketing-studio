@@ -16022,8 +16022,15 @@ class Component extends DCLogic {
     const fb = this.frameBody(idx);
     if (!fb) return null;
     const b = fb.body;
-    const t = JSON.stringify([b.prompt, b.characters || '', b.look_note || '', b.style, b.include_pack === undefined ? null : b.include_pack,
-      b.pack_id || '', b.use_cast, b.cast_id || '', b.use_plate, b.plate_id || '', b.brand_mode, b.ratio, fb.matchNo]);
+    // The provocation's visual language is applied server-side (P3a), so it never reaches b.prompt. Include it
+    // here with the provocation id, so switching the provocation OR editing its visual language reflags frames
+    // as out of date. (cast_approach already rides in via b.use_cast, P3b.) Appended ONLY in provocation mode,
+    // so an ordinary film's recipe is byte-identical and existing frames are not spuriously reflagged.
+    const _prov = this.provMode() ? this.videoProv() : null;
+    const arr = [b.prompt, b.characters || '', b.look_note || '', b.style, b.include_pack === undefined ? null : b.include_pack,
+      b.pack_id || '', b.use_cast, b.cast_id || '', b.use_plate, b.plate_id || '', b.brand_mode, b.ratio, fb.matchNo];
+    if (_prov) arr.push([_prov.id || '', ((_prov.film || {}).visual_language || '')]);
+    const t = JSON.stringify(arr);
     let h = 5381;
     for (let i = 0; i < t.length; i++) h = ((h * 33) ^ t.charCodeAt(i)) >>> 0;
     return h.toString(36) + ':' + t.length;
