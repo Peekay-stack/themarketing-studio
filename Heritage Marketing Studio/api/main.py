@@ -1772,6 +1772,14 @@ def scene_still(payload: dict):
     style = str(payload.get("style") or "real").lower()
     craft = _IMG_STYLES.get(style, _IMG_STYLES["real"])
     craft = _with_look_note(craft, payload)       # Video's written look reference; absent elsewhere
+    # P3: a Video frame that stands on an approved provocation follows ITS visual language, which OVERRIDES the
+    # generic look above -- a provocation deliberately breaks the category's conventional look. Only video_frame
+    # frames that name an approved provocation of this house are affected; every other caller is byte-identical.
+    if payload.get("video_frame") and payload.get("use_provocation", True) is not False and str(payload.get("provocation_id") or "").strip():
+        _pr = provocation.resolve_for(str(payload.get("house_id") or ""), str(payload.get("provocation_id") or ""))
+        _prov_vis = str(((_pr or {}).get("film") or {}).get("visual_language") or "").strip()
+        if _prov_vis:
+            craft = craft + " The visual language and cinematography of THIS film — it OVERRIDES any generic look or lighting stated above: " + _prov_vis + "."
     subject = str(payload.get("prompt", "")).strip() or "brand key visual"
     characters = str(payload.get("characters", "")).strip()
     # A cast reference image pins identity in a way text never can — use it when we have one.

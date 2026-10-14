@@ -15977,6 +15977,9 @@ class Component extends DCLogic {
     // The written look reference rides with the style, not inside the scene text.
     const lookRef = (s.videoLookRef || '').trim();
     if (lookRef) body.look_note = lookRef;
+    // P3: a frame that stands on an approved provocation sends its id, so the server follows the provocation's
+    // visual language and overrides the generic look. Part of the frame recipe, so a provocation change reflags frames.
+    if (this.provMode()) { body.provocation_id = s.videoProvId; body.use_provocation = true; const _ph = this.provHouseId(); if (_ph) body.house_id = _ph; }
     const chars = (s.videoCharacters || '').trim();
     if (chars) body.characters = chars;
     // The reference image is what actually holds the characters together.
