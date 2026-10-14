@@ -39,14 +39,14 @@ KO_MODEL = "fal-ai/kokoro/hindi"
 MM_MODEL = "fal-ai/minimax/speech-02-hd"
 
 INDIAN, INTL = "Indian", "International"
-GEMINI = "Google"   # Gemini TTS voices (native Telugu/Indic); routed by _wants_gemini
+CHIRP = "Google"    # Cloud Chirp 3 HD voices (native Telugu/Indic); routed by _wants_chirp
 
 
 @dataclass
 class Voice:
     id: str            # what the UI stores
     label: str         # what the user reads
-    provider: str      # "elevenlabs" | "kokoro" | "minimax"
+    provider: str      # "elevenlabs" | "kokoro" | "minimax" | "chirp"
     ref: str           # the provider's own voice identifier
     accent: str
     gender: str        # "female" | "male"
@@ -119,28 +119,29 @@ VOICES: list[Voice] = [
     Voice("el-brian", "Brian", "elevenlabs", "Brian", INTL, "male", "adult"),
     Voice("el-bill", "Bill", "elevenlabs", "Bill", INTL, "male", "mature"),
     Voice("el-daniel", "Daniel", "elevenlabs", "Daniel", INTL, "male", "mature"),
-    # --- Google Gemini TTS voices. Gemini is the default engine for every non-child speaker in every
-    # language (owner: "Google is far superior to ElevenLabs"). ElevenLabs is kept only for child voices
-    # (Gemini has none) and so old saved films still resolve. Genders were verified by listening (Google
-    # does not label them); the three where a listen disagreed with the published name (Orus,
-    # Vindemiatrix, Pulcherrima) were dropped. Gemini has no distinctly elderly voice, so all are banded
-    # "adult" and a "mature" role simply widens to an adult one (see _gemini_pool).
-    Voice("ga-f-sulafat", "Sulafat \u00b7 warm (Google)", "gemini", "Sulafat", GEMINI, "female", "adult"),
-    Voice("ga-f-kore", "Kore \u00b7 firm (Google)", "gemini", "Kore", GEMINI, "female", "adult"),
-    Voice("ga-f-aoede", "Aoede \u00b7 breezy (Google)", "gemini", "Aoede", GEMINI, "female", "adult"),
-    Voice("ga-f-achernar", "Achernar \u00b7 soft (Google)", "gemini", "Achernar", GEMINI, "female", "adult"),
-    Voice("ga-f-callirrhoe", "Callirrhoe \u00b7 easy-going (Google)", "gemini", "Callirrhoe", GEMINI, "female", "adult"),
-    Voice("ga-f-despina", "Despina \u00b7 smooth (Google)", "gemini", "Despina", GEMINI, "female", "adult"),
-    Voice("ga-f-laomedeia", "Laomedeia \u00b7 upbeat (Google)", "gemini", "Laomedeia", GEMINI, "female", "adult"),
-    Voice("ga-f-gacrux", "Gacrux \u00b7 even (Google)", "gemini", "Gacrux", GEMINI, "female", "adult"),
-    Voice("ga-m-charon", "Charon \u00b7 informative (Google)", "gemini", "Charon", GEMINI, "male", "adult"),
-    Voice("ga-m-iapetus", "Iapetus \u00b7 clear (Google)", "gemini", "Iapetus", GEMINI, "male", "adult"),
-    Voice("ga-m-algieba", "Algieba \u00b7 smooth (Google)", "gemini", "Algieba", GEMINI, "male", "adult"),
-    Voice("ga-m-enceladus", "Enceladus \u00b7 breathy (Google)", "gemini", "Enceladus", GEMINI, "male", "adult"),
-    Voice("ga-m-umbriel", "Umbriel \u00b7 even (Google)", "gemini", "Umbriel", GEMINI, "male", "adult"),
-    Voice("ga-m-rasalgethi", "Rasalgethi \u00b7 informative (Google)", "gemini", "Rasalgethi", GEMINI, "male", "adult"),
-    Voice("ga-m-alnilam", "Alnilam \u00b7 firm (Google)", "gemini", "Alnilam", GEMINI, "male", "adult"),
-    Voice("ga-m-schedar", "Schedar \u00b7 even (Google)", "gemini", "Schedar", GEMINI, "male", "adult"),
+    # --- Google Cloud Chirp 3 HD voices (Telugu/Indic). The owner chose Chirp 3 HD by ear over
+    # ElevenLabs and Gemini for Telugu diction, so a Telugu/Indic line is voiced by Chirp (see cloudtts.py
+    # + _wants_chirp). English keeps the ElevenLabs Indian artists above (Chirp has no en-IN voice, so its
+    # English is not Indian-accented) and child lines keep the ElevenLabs child voices. Genders are from
+    # the Cloud ListVoices API (authoritative -- no guessing). The voice names are language-independent;
+    # `ref` is the bare name and cloudtts builds "<lang>-Chirp3-HD-<ref>". Chirp has no elderly voice, so
+    # all are banded "adult" and a "mature" role widens to an adult one (see _chirp_pool).
+    Voice("ch-f-achernar", "Achernar \u00b7 soft (Chirp)", "chirp", "Achernar", CHIRP, "female", "adult"),
+    Voice("ch-f-kore", "Kore \u00b7 firm (Chirp)", "chirp", "Kore", CHIRP, "female", "adult"),
+    Voice("ch-f-aoede", "Aoede \u00b7 breezy (Chirp)", "chirp", "Aoede", CHIRP, "female", "adult"),
+    Voice("ch-f-sulafat", "Sulafat \u00b7 warm (Chirp)", "chirp", "Sulafat", CHIRP, "female", "adult"),
+    Voice("ch-f-callirrhoe", "Callirrhoe \u00b7 easy-going (Chirp)", "chirp", "Callirrhoe", CHIRP, "female", "adult"),
+    Voice("ch-f-despina", "Despina \u00b7 smooth (Chirp)", "chirp", "Despina", CHIRP, "female", "adult"),
+    Voice("ch-f-laomedeia", "Laomedeia \u00b7 upbeat (Chirp)", "chirp", "Laomedeia", CHIRP, "female", "adult"),
+    Voice("ch-f-gacrux", "Gacrux \u00b7 even (Chirp)", "chirp", "Gacrux", CHIRP, "female", "adult"),
+    Voice("ch-m-charon", "Charon \u00b7 informative (Chirp)", "chirp", "Charon", CHIRP, "male", "adult"),
+    Voice("ch-m-iapetus", "Iapetus \u00b7 clear (Chirp)", "chirp", "Iapetus", CHIRP, "male", "adult"),
+    Voice("ch-m-algieba", "Algieba \u00b7 smooth (Chirp)", "chirp", "Algieba", CHIRP, "male", "adult"),
+    Voice("ch-m-orus", "Orus \u00b7 firm (Chirp)", "chirp", "Orus", CHIRP, "male", "adult"),
+    Voice("ch-m-enceladus", "Enceladus \u00b7 breathy (Chirp)", "chirp", "Enceladus", CHIRP, "male", "adult"),
+    Voice("ch-m-umbriel", "Umbriel \u00b7 even (Chirp)", "chirp", "Umbriel", CHIRP, "male", "adult"),
+    Voice("ch-m-alnilam", "Alnilam \u00b7 firm (Chirp)", "chirp", "Alnilam", CHIRP, "male", "adult"),
+    Voice("ch-m-schedar", "Schedar \u00b7 even (Chirp)", "chirp", "Schedar", CHIRP, "male", "adult"),
 ]
 _BY_ID = {v.id: v for v in VOICES}
 _BY_LABEL = {v.label.lower(): v for v in VOICES}
@@ -171,17 +172,21 @@ def pool(accent: str, gender: str, age: str) -> list[Voice]:
     return exact or right_age or same_accent or list(VOICES)
 
 
-# --- native-language routing (Gemini TTS for Telugu and the Indic languages the fal voices lack) ---
-# EL multilingual-v2 (the fal voice model) covers Hindi and Tamil among Indian languages, not these;
-# Gemini TTS reads them natively, so a line in one of them is voiced by Gemini. Hindi/Tamil/English stay.
+# --- voice engine by language (Cloud Chirp 3 HD for Telugu and the Indic languages the fal voices lack) ---
+# EL multilingual-v2 (the fal voice model) covers Hindi and Tamil among Indian languages, not these, and
+# Cloud Chirp 3 HD reads them natively, so a line in one of them is voiced by Chirp. English stays on the
+# ElevenLabs Indian artists (Chirp has no en-IN voice, so its English is not Indian-accented); Hindi and
+# Tamil stay on ElevenLabs too (it reads them). Odia/Assamese have no Chirp voice and fall back to fal.
 _LANG_CODE = {
     "te": "te", "telugu": "te", "kn": "kn", "kannada": "kn", "ml": "ml", "malayalam": "ml",
     "mr": "mr", "marathi": "mr", "bn": "bn", "bengali": "bn", "bangla": "bn", "gu": "gu",
     "gujarati": "gu", "pa": "pa", "punjabi": "pa", "or": "or", "odia": "or", "oriya": "or",
     "as": "as", "assamese": "as", "hi": "hi", "hindi": "hi", "ta": "ta", "tamil": "ta",
-    "en": "en", "english": "en",
+    "ur": "ur", "urdu": "ur", "en": "en", "english": "en",
 }
-_GEMINI_LANGS = {"te", "kn", "ml", "mr", "bn", "gu", "pa", "or", "as"}
+# The Indic languages routed to Chirp: those EL can't speak AND that have Chirp 3 HD voices (verified via
+# the ListVoices API). Odia/Assamese are excluded (no Chirp); Hindi/Tamil are excluded (EL reads them).
+_CHIRP_LANGS = {"te", "kn", "ml", "mr", "bn", "gu", "pa", "ur"}
 
 
 def _lang_code(lang: str | None) -> str:
@@ -189,36 +194,26 @@ def _lang_code(lang: str | None) -> str:
     return _LANG_CODE.get(s, s)
 
 
-def _wants_gemini(lang: str | None) -> bool:
-    """True when a line's language needs the Gemini TTS engine (the fal voices can't speak it)."""
-    return _lang_code(lang) in _GEMINI_LANGS
+def _wants_chirp(lang: str | None) -> bool:
+    """True when a line's language is voiced by Cloud Chirp 3 HD (the fal voices can't speak it natively)."""
+    return _lang_code(lang) in _CHIRP_LANGS
 
 
-def _gemini_pool(gender: str, age: str) -> list[Voice]:
-    """Google/Gemini voices for a band, widening by age then gender rather than returning nothing."""
-    g = [v for v in VOICES if v.provider == "gemini"]
+def _chirp_pool(gender: str, age: str) -> list[Voice]:
+    """Chirp voices for a band, widening by age then gender rather than returning nothing."""
+    g = [v for v in VOICES if v.provider == "chirp"]
     return ([v for v in g if v.gender == gender and v.age == age]
             or [v for v in g if v.gender == gender] or g)
 
 
-def _gemini_match(v: "Voice | None") -> "Voice | None":
-    """The Google voice closest to an already-cast voice's band, for a line that must switch engines."""
-    opts = _gemini_pool(v.gender if v else "female", v.age if v else "adult")
-    return opts[0] if opts else None
-
-
-def _engine_pool(accent: str, gender: str, age: str) -> list[Voice]:
-    """Casting pool under the Gemini-first policy: a genuine child keeps the ElevenLabs child voices
-    (Gemini has no native child voice); every other speaker is cast to a Google voice, any language."""
+def _engine_pool(accent: str, gender: str, age: str, lang: str | None = None) -> list[Voice]:
+    """The casting pool for a band and language: a genuine child keeps the ElevenLabs child voices; a
+    Telugu/Indic line goes to Cloud Chirp 3 HD; English/Hindi/Tamil keep the ElevenLabs Indian voices."""
     if age == "young":
         return pool(accent, gender, age)
-    return _gemini_pool(gender, age)
-
-
-def _gem_style(seg: "Segment") -> str:
-    """Gemini TTS takes a natural-language delivery hint before the line; use the performance note."""
-    emo = (seg.emotion or "").strip()
-    return f"Say this in a {emo} manner:" if emo else ""
+    if _wants_chirp(lang):
+        return _chirp_pool(gender, age)
+    return pool(accent, gender, age)
 
 
 _FEMALE_WORDS = ("mother", "amma", "amamma", "ammamma", "mom", "mum", "woman", "girl", "daughter",
@@ -629,7 +624,7 @@ def cast(segments: list[Segment], narrator_voice: str, narrator_lang: str | None
     """
     narr = resolve(narrator_voice)
     if not narr:
-        narr = _engine_pool(accent, "female", "adult")[0]
+        narr = _engine_pool(accent, "female", "adult", narrator_lang)[0]
     used = {narr.id}
     assigned: dict[str, str] = {}
     for seg in segments:
@@ -642,10 +637,10 @@ def cast(segments: list[Segment], narrator_voice: str, narrator_lang: str | None
         if who not in assigned:
             band = _band(f"{who} {seg.emotion} {_sheet_hint(characters, who)}")
             gender, age = band.split("_")
-            # Gemini-first: a genuine child keeps an ElevenLabs child voice (Gemini has none); every
-            # other speaker, in any language, is cast to a Google voice. An explicit per-speaker
-            # override in `voices` still wins (apply_overrides runs after this).
-            options = _engine_pool(accent, gender, age)
+            # Engine by language+age: a genuine child keeps an ElevenLabs child voice; a Telugu/Indic
+            # line goes to Cloud Chirp 3 HD (native); English/Hindi/Tamil keep the ElevenLabs Indian
+            # voices. An explicit per-speaker override in `voices` still wins (apply_overrides, after this).
+            options = _engine_pool(accent, gender, age, seg.language or narrator_lang)
             pick = next((v for v in options if v.id not in used), options[0])
             assigned[who] = pick.id
             used.add(pick.id)
@@ -729,14 +724,14 @@ def synth(segments: list[Segment], max_workers: int = 4) -> int:
     import filmaudio
 
     def one(seg: Segment):
-        # Gemini-first: a line cast to a Google voice is synthesised by Gemini TTS (the default engine for
-        # every non-child speaker, in any language). Child lines keep an ElevenLabs voice and any explicit
-        # non-Google pick take the fal route below; on Gemini failure we also fall through to it.
+        # A Telugu/Indic line cast to a Chirp voice is synthesised by Cloud Chirp 3 HD (native diction).
+        # English/Hindi/Tamil (ElevenLabs Indian), child lines (ElevenLabs) and any explicit non-Chirp
+        # pick take the fal route below; on a Chirp failure we also fall through to it.
         _cv = resolve(seg.voice)
-        if _cv and _cv.provider == "gemini":
-            import gemini
-            if gemini.available():
-                _url = gemini.tts(seg.text, _cv.ref, _gem_style(seg))
+        if _cv and _cv.provider == "chirp":
+            import cloudtts
+            if cloudtts.available():
+                _url = cloudtts.synth(seg.text, _cv.ref, _lang_code(seg.language))
                 if _url:
                     return seg, _url, ""
         model, args = _tts_args(seg)

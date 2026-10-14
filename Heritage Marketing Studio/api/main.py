@@ -535,7 +535,7 @@ def _voice_setup(payload: dict):
         # adult female unless someone typed otherwise. The field now starts empty, and `_band("")` answers male, so an empty
         # field asks for the same narrator explicitly instead of flipping every brand to a male one.
         gender, age = filmvoice._band(typed or "warm female voice").split("_")
-        narrator = filmvoice._engine_pool(accent, gender, age)[0].id
+        narrator = filmvoice._engine_pool(accent, gender, age, lang)[0].id
     # Scene lengths come from the dialogue, not the other way round: retime rewrites each row's
     # timecode from its spoken words so nothing has to be cut to fit a fixed grid.
     total, time_notes = filmvoice.retime(scenes, target_total=total)
