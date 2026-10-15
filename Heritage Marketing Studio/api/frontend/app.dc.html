@@ -11760,6 +11760,7 @@ class Component extends DCLogic {
     // social
     socialStandsOn: null, socialForceTyped: false, socialPostsForceTyped: false, groundingLoaded: false,
     socialProvId: '',              // the approved provocation these posts stand on ('' = none) — same picker as Video's
+    posmProvId: '', ogProvId: '',  // the provocation POSM / Onground stand on (Phase 2) — same picker, one pick per producer
 
     socialObjective: '',
     socialPlatforms: { facebook:true, instagram:true, linkedin:true },
@@ -14970,7 +14971,10 @@ class Component extends DCLogic {
   // Producer provocation wiring (pilot: Social). Picking an approved provocation makes these posts stand on
   // it — generateSocial/reworkPosts/adjustPost send its id, and the backend (/complete) folds in the
   // provocation's social expression, exactly as Video already does for a film. '' = none.
-  onPickSocialProv = (e) => this.setState({ socialProvId: e.target.value });
+  // The producer provocation picker, shared by Social/POSM/Onground — each keeps its own pick, same as Video's.
+  PROV_FIELD = { social:'socialProvId', posm:'posmProvId', onground:'ogProvId' };
+  provIdFor(tab){ const f = this.PROV_FIELD[tab]; return f ? (this.state[f] || '') : ''; }
+  onPickProv = (tab) => (e) => { const f = this.PROV_FIELD[tab]; if (f) this.setState({ [f]: e.target.value }); };
   // Round 92: Video gets the same real override Social/POSM have — `kind:'video'` was already supported
   // server-side (`producers.py`'s own medium dict already had `"video":"tv"`), it just had no free-text
   // field or quote box to attach it to. Same shape as `loadSocialStandsOn`/`onToggleSocialForceTyped`.
@@ -22382,6 +22386,8 @@ class Component extends DCLogic {
     if (plat) body.platform = { name:plat.name, line:plat.line, mechanic:plat.mechanic || '' };
     if (p.ignore_platform && (p.brief || '').trim()) body.ignore_platform = true;
     const e = this.currentExec(); if (e && e.id) body.execution = e.id;
+    // Phase 2: POSM stands on the chosen provocation the same way Social does — the server folds in its POSM expression.
+    body.provocation_id = this.provIdFor('posm'); body.use_provocation = true;
     const r = await this.apiCall('/posm-keyvisual', body);
     this.setState({ kvBusy:false });
     const d = (r && r.data) || {};
@@ -23331,6 +23337,8 @@ class Component extends DCLogic {
     // (that mode is `idea:`, sent separately by `developIdea`) — it was just never wired.
     const steer = (this.og().idea || '').trim();
     if (steer) body.steer = steer;
+    // Phase 2: Onground stands on the chosen provocation (the server folds in its activation expression).
+    body.provocation_id = this.provIdFor('onground'); body.use_provocation = true;
     const r = await this.apiCall('/activation-idea', body);
     this.setState({ ogGenBusy:false });
     const d = (r && r.data) || {};
@@ -24938,21 +24946,21 @@ class Component extends DCLogic {
             toggle: unified ? standsFor.toggle : this.toggleInput('idea') };
         })(),
         // "The provocation" — the same card and picker Video has in "What this film is given". A deliberate
-        // departure a person approved in Strategy; pick one and the posts stand on it (the backend folds in
-        // its social expression). Pilot: Social only for now; the other producers follow once this is proven.
-        ...(tab === 'social' ? [(() => {
-          const list = s.videoProvList || [], selId = s.socialProvId || '', sel = list.find(r => r.id === selId) || null;
+        // departure a person approved in Strategy; pick one and the piece stands on it (the backend folds in
+        // its per-medium expression). Shown on every producer that writes against the spine.
+        (() => {
+          const list = s.videoProvList || [], selId = this.provIdFor(tab), sel = list.find(r => r.id === selId) || null;
           return { k:'prov', name:'The provocation', on: !!sel,
             state: sel ? (sel.name || 'chosen') : (list.length ? 'not used' : 'none made'),
             stateFg: sel ? '#1E7E34' : '#B07A12',
             sub: sel ? (((sel.core || {}).line) || 'A deliberate departure from how the category talks and looks.')
-              : (list.length ? 'Optional. A deliberate departure from how the category talks and looks. Pick an approved one for these posts to stand on.'
+              : (list.length ? 'Optional. A deliberate departure from how the category talks and looks. Pick an approved one for this piece to stand on.'
                   : 'Optional. A deliberate departure from how the category talks and looks — made in Strategy, once approved.'),
             toggle: () => {},
-            hasPicker: list.length > 0, pickerValue: selId, pick: this.onPickSocialProv,
+            hasPicker: list.length > 0, pickerValue: selId, pick: this.onPickProv(tab),
             pickerOpts: [{ v:'', label:'No provocation' }, ...list.map(r => ({ v:r.id, label:r.name || '(unnamed)' }))],
             hasAction: true, action: list.length ? 'Open the provocation' : 'Make one', onAction: this.goProvocation };
-        })()] : []),
+        })(),
       ].map(c => ({ ...c, hasPicker: !!c.hasPicker, hasAction: !!c.hasAction,
         line: c.on ? '#17325E' : '#DDD9D1', bg: c.on ? '#F7F9FC' : '#fff',
         dotBg: c.on ? '#17325E' : '#fff', dotLine: c.on ? '#17325E' : '#C9CEDA',

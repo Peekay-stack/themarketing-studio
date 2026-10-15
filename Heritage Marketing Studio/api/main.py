@@ -2304,6 +2304,21 @@ def _prov_ctx(house_id: str):
     return house, (execution.platform_for(house) if house else None)
 
 
+def _prov_from(payload: dict):
+    """The approved provocation a producer request names (`provocation_id` + `house_id`), or None.
+    Only an approved one of that house is honoured, and `use_provocation: false` sets it aside — the same
+    rule /complete applies inline. Shared by the POSM/Onground/PR generation routes (Phase 2)."""
+    if not isinstance(payload, dict):
+        return None
+    if payload.get("use_provocation", True) is False:
+        return None
+    pid = str(payload.get("provocation_id") or "").strip()
+    if not pid:
+        return None
+    # Producers send the house as `house`; /complete-style callers send `house_id`. Accept either.
+    return provocation.resolve_for(str(payload.get("house_id") or payload.get("house") or ""), pid)
+
+
 @app.get("/provocations")
 def provocations_list(house: str = "", platform: str = "", archived: bool = False):
     """A house's provocations, newest first, each with why it may be stale and what blocks approval. An empty house returns
@@ -6706,7 +6721,7 @@ def posm_keyvisual(payload: dict):
     _brand_mode = str(payload.get("brand_mode") or "")
     text, src = producers.stands_on("posm", house, platform, typed, force_typed=force_typed,
                                     use_house=use_house, use_platform=use_platform,
-                                    campaign=(brief or {}).get("campaign"), brand_mode=_brand_mode)
+                                    campaign=(brief or {}).get("campaign"), provocation=_prov_from(payload), brand_mode=_brand_mode)
     try:
         n = max(1, min(6, int(payload.get("n") or 3)))
     except (TypeError, ValueError):
@@ -6823,7 +6838,7 @@ def posm_image(payload: dict):
     if not subject and " " in route_txt and len(route_txt) > 12:
         subject = route_txt
     stood, src = producers.stands_on("posm", house, platform, str(payload.get("brief") or ""),
-                                     campaign=(brief or {}).get("campaign"),
+                                     campaign=(brief or {}).get("campaign"), provocation=_prov_from(payload),
                                      brand_mode=_posm_image_mode)
 
     # **The proposition is not a subject, and falling back to it is not a kindness.** This route used to
@@ -8095,7 +8110,7 @@ def posm_spec(payload: dict):
     # further down — it used to run before this existed and stood on the house's real content anyway.
     _spec_mode = str(payload.get("brand_mode") or "").strip().lower() or (house or {}).get("brand_mode") or "grounded"
     text, src = producers.stands_on("posm", house, platform, str(payload.get("brief") or ""),
-                                    campaign=(brief or {}).get("campaign"), brand_mode=_spec_mode)
+                                    campaign=(brief or {}).get("campaign"), provocation=_prov_from(payload), brand_mode=_spec_mode)
     formats = [f for f in (payload.get("formats") or []) if f in posm.FORMATS]
     if not formats:
         formats = posm.KIT_PRESETS.get(str(payload.get("kit") or ""), {}).get("formats", [])
@@ -8272,7 +8287,7 @@ def activation_idea(payload: dict):
     if "idea" in payload and not typed:
         stood, src = producers.stands_on("activation", house, platform, "",
                                          use_house=use_house, use_platform=use_platform,
-                                         campaign=(brief or {}).get("campaign"), brand_mode=_brand_mode)
+                                         campaign=(brief or {}).get("campaign"), provocation=_prov_from(payload), brand_mode=_brand_mode)
         return {"stands_on": {"text": stood, "source": src}, "ideas": [], "count": 0,
                 "venues": producers.VENUES,
                 "detail": "Nothing generated — send no `idea` key at all to generate ideas."}
@@ -8294,13 +8309,13 @@ def activation_idea(payload: dict):
         if not ideas:
             stood, src = producers.stands_on("activation", house, platform, "",
                                              use_house=use_house, use_platform=use_platform,
-                                             campaign=(brief or {}).get("campaign"),
+                                             campaign=(brief or {}).get("campaign"), provocation=_prov_from(payload),
                                              brand_mode=_brand_mode)
             return JSONResponse(status_code=400, content={
                 "detail": note, "stands_on": {"text": stood, "source": src}})
         stood, src = producers.stands_on("activation", house, platform, "",
                                          use_house=use_house, use_platform=use_platform,
-                                         campaign=(brief or {}).get("campaign"), brand_mode=_brand_mode)
+                                         campaign=(brief or {}).get("campaign"), provocation=_prov_from(payload), brand_mode=_brand_mode)
         return {"ideas": ideas, "count": len(ideas), "note": note,
                 "venues": producers.VENUES,
                 "stands_on": {"text": stood, "source": src}}
@@ -8311,7 +8326,7 @@ def activation_idea(payload: dict):
     if not idea:
         stood, src = producers.stands_on("activation", house, platform, "",
                                          use_house=use_house, use_platform=use_platform,
-                                         campaign=(brief or {}).get("campaign"), brand_mode=_brand_mode)
+                                         campaign=(brief or {}).get("campaign"), provocation=_prov_from(payload), brand_mode=_brand_mode)
         return JSONResponse(status_code=400,
                             content={"detail": note, "stands_on": {"text": stood, "source": src}})
     return {"idea": idea, "note": note}
