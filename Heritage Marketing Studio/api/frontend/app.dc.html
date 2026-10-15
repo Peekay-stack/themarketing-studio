@@ -21834,6 +21834,8 @@ class Component extends DCLogic {
       videoLookRef: d.video_look_ref || '', videoLocationSrc: d.video_location_src || '',
       soundPlan: d.sound_plan || {},
       videoProvId: d.provocation_id || '', videoProvOn: d.provocation_on !== false,
+      // Restore the locked cast/location image so the Shoot Board shows it (not the Lock button) after a reload (#10).
+      castRefUrl: d.cast_ref_url || null, castLockSig: d.cast_lock_sig || '', castSavedUrl: d.cast_saved_url || '',
       // the music mood the person chose travels with the film (Production's own settings are not saved otherwise)
       ...((d.sound_plan && d.sound_plan.mood) ? { production:{ ...this.state.production, music:d.sound_plan.mood },
         musicStyle: ((this.musicChips().find(o => String(o.label).toLowerCase() === String(d.sound_plan.mood).toLowerCase() || o.id === d.sound_plan.mood)) || {}).id || '' } : {}) });
@@ -21859,7 +21861,10 @@ class Component extends DCLogic {
       full_script: s.fullScript, scene_frames: s.sceneFrames, shoot: s.shoot,
       video_characters: s.videoCharacters, video_location_line: s.videoLocationLine,
       video_look_ref: s.videoLookRef, video_location_src: s.videoLocationSrc, sound_plan: s.soundPlan || {},
-      provocation_id: s.videoProvId || '', provocation_on: s.videoProvOn !== false });
+      provocation_id: s.videoProvId || '', provocation_on: s.videoProvOn !== false,
+      // The locked cast/location image (and its lock signature + saved-to-library marker) so a reload keeps the
+      // lock instead of dropping back to "Lock location and cast" and forcing a costly re-render (#10).
+      cast_ref_url: s.castRefUrl || '', cast_lock_sig: s.castLockSig || '', cast_saved_url: s.castSavedUrl || '' });
   };
   saveVideoScriptDebounced = () => {
     clearTimeout(this._videoScriptSaveTimer);
@@ -21915,7 +21920,8 @@ class Component extends DCLogic {
                    shoot: s.shoot, videoConcept: s.videoConcept, scriptStatus: s.scriptStatus,
                    scriptPhase: s.scriptPhase, videoObjective: s.videoObjective, videoLocationLine: s.videoLocationLine,
                    videoLookRef: s.videoLookRef, videoLocationSrc: s.videoLocationSrc, soundPlan: s.soundPlan,
-                   videoProvId: s.videoProvId, videoProvOn: s.videoProvOn };
+                   videoProvId: s.videoProvId, videoProvOn: s.videoProvOn,
+                   castRefUrl: s.castRefUrl, castLockSig: s.castLockSig, castSavedUrl: s.castSavedUrl };
     const vPrev = this._videoScriptSig || {};
     const vChanged = Object.keys(vsig).some(k => vsig[k] !== vPrev[k]);
     this._videoScriptSig = vsig;

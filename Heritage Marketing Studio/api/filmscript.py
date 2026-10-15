@@ -35,7 +35,8 @@ DIR = tenancy.dir("filmscripts")
 # is Phase 1 of the gap, the part that loses real authored work (a written script, a department note, a
 # rendered frame) rather than a picked option that costs one click to redo.
 FIELDS = ("video_objective", "video_concept", "script_status", "script_phase",
-          "full_script", "scene_frames", "shoot", "video_characters", "video_location_line", "video_look_ref", "video_location_src", "sound_plan", "provocation_id", "provocation_on")
+          "full_script", "scene_frames", "shoot", "video_characters", "video_location_line", "video_look_ref", "video_location_src", "sound_plan", "provocation_id", "provocation_on",
+          "cast_ref_url", "cast_lock_sig", "cast_saved_url")
 
 
 def _now() -> str:
@@ -49,7 +50,8 @@ def _path(house_id: str) -> str:
 def _blank(house_id: str) -> dict:
     return {"house": house_id, "video_objective": None, "video_concept": None,
             "script_status": "none", "script_phase": "concept", "full_script": None,
-            "scene_frames": {}, "shoot": {}, "video_characters": "", "video_location_line": "", "video_look_ref": "", "video_location_src": "", "sound_plan": {}, "provocation_id": "", "provocation_on": True, "updated": ""}
+            "scene_frames": {}, "shoot": {}, "video_characters": "", "video_location_line": "", "video_look_ref": "", "video_location_src": "", "sound_plan": {}, "provocation_id": "", "provocation_on": True,
+            "cast_ref_url": "", "cast_lock_sig": "", "cast_saved_url": "", "updated": ""}
 
 
 def load(house_id: str) -> dict:
@@ -110,6 +112,17 @@ def save(house_id: str, data: dict) -> dict:
                            else str(load(house_id).get("provocation_id") or "")),
         "provocation_on": ((data.get("provocation_on") is not False) if "provocation_on" in data
                            else (load(house_id).get("provocation_on") is not False)),
+        # The locked cast/location reference image (the Shoot Board's "Lock location and cast" render that every
+        # frame is generated FROM), plus the signature it was taken at (to flag when the lock is stale vs the
+        # current cast sheet) and whether it was saved to the library. Without these a reload lost the lock and
+        # forced a costly re-render. Same absent-key guard as the fields above -- a page from before this
+        # existed never sends them, so a save from it must not blank what is stored.
+        "cast_ref_url": (str(data.get("cast_ref_url") or "") if "cast_ref_url" in data
+                         else str(load(house_id).get("cast_ref_url") or "")),
+        "cast_lock_sig": (str(data.get("cast_lock_sig") or "") if "cast_lock_sig" in data
+                          else str(load(house_id).get("cast_lock_sig") or "")),
+        "cast_saved_url": (str(data.get("cast_saved_url") or "") if "cast_saved_url" in data
+                           else str(load(house_id).get("cast_saved_url") or "")),
         "updated": _now(),
     }
     tmp = _path(house_id) + ".tmp"
