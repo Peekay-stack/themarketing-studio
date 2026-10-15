@@ -7348,6 +7348,17 @@ def studio_shot(payload: dict):
         "animation-3d": "Rendered as a stylised 3D asset rather than a photograph.",
     }
     craft = _SHOT_REGISTERS.get(style, _SHOT_REGISTERS["real"])
+    # A POSM scene/studio shot that stands on an approved provocation takes ITS visual language, overriding the
+    # register's generic look — the same disruptive look Social/Carousel stills and video frames get. Only an
+    # approved provocation of this house, never Independent; the hero cut-out (/posm-image) stays neutral for
+    # compositing, so this applies to the SCENE shot only (the branch below that appends `craft`).
+    _sp_pid = str(payload.get("provocation_id") or "").strip()
+    if (_sp_pid and payload.get("use_provocation", True) is not False
+            and str(payload.get("brand_mode") or "").strip().lower() != "general"):
+        _sp_pr = provocation.resolve_for(str(payload.get("house_id") or payload.get("house") or ""), _sp_pid)
+        _sp_vis = str(((_sp_pr or {}).get("film") or {}).get("visual_language") or "").strip()
+        if _sp_vis:
+            craft = craft + " The visual language of THIS image — it OVERRIDES any generic look or lighting stated above: " + _sp_vis + "."
 
     role_lines = "; ".join(f"reference image {i + 1} shows {r}" for i, r in enumerate(roles))
     parts = [f"{role_lines}."]

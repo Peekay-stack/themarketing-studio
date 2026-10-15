@@ -22596,6 +22596,9 @@ class Component extends DCLogic {
     if (!body.cast_id && !body.pack_id && !body.product_id) {
       this.showToast('Nothing locked to shoot from — lock a model, a pack shot or a product above first.'); return;
     }
+    // A POSM SCENE shot (mode:'scene') stands on the chosen provocation's visual language — the disruptive look.
+    // The model-angle cut-out above stays neutral for compositing, so only this fresh scene carries it.
+    Object.assign(body, this.provImgFields('posm'));
     this.setState({ posmStudioBusy:true });
     const r = await this.apiCall('/studio-shot', body);
     this.setState({ posmStudioBusy:false });
