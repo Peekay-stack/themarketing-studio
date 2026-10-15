@@ -6503,6 +6503,16 @@
               <span style="margin-left:auto; font-size:11.5px; font-weight:700; color:{{ c.stateFg }};">{{ c.state }}</span>
             </div>
             <div style="font-size:12.5px; line-height:1.5; color:#6B7280; padding-left:28px; text-wrap:pretty;">{{ c.sub }}</div>
+            <sc-if value="{{ c.hasPicker }}" hint-placeholder-val="{{ false }}">
+              <div style="padding-left:28px; margin-top:8px;">
+                <select value="{{ c.pickerValue }}" onChange="{{ c.pick }}" style="width:100%; border:1px solid #DDD9D1; border-radius:8px; padding:6px 8px; font-size:12.5px; color:#17325E; background:#fff; font-family:inherit;">
+                  <sc-for list="{{ c.pickerOpts }}" as="po" hint-placeholder-count="2"><option value="{{ po.v }}">{{ po.label }}</option></sc-for>
+                </select>
+              </div>
+            </sc-if>
+            <sc-if value="{{ c.hasAction }}" hint-placeholder-val="{{ false }}">
+              <div style="padding-left:28px; margin-top:8px;"><span onClick="{{ c.onAction }}" style="cursor:pointer; font-size:12.5px; font-weight:700; color:#2E5EA6; text-decoration:underline;">{{ c.action }}</span></div>
+            </sc-if>
           </div>
         </sc-for>
         <!-- The third input: which brief this producer is written against. One source brief for the whole
@@ -11749,6 +11759,8 @@ class Component extends DCLogic {
     importing: false,
     // social
     socialStandsOn: null, socialForceTyped: false, socialPostsForceTyped: false, groundingLoaded: false,
+    socialProvId: '',              // the approved provocation these posts stand on ('' = none) — same picker as Video's
+
     socialObjective: '',
     socialPlatforms: { facebook:true, instagram:true, linkedin:true },
     socialGenerating: false,
@@ -14424,6 +14436,7 @@ class Component extends DCLogic {
         // script's own comment for why this previously never reached the server at all.
         let raw = await this.complete(prompt, { ...(execId1 ? { execution: execId1 } : {}),
           ...(h1 && h1.id ? { house_id: h1.id } : {}),
+          provocation_id: this.state.socialProvId || '', use_provocation: true,
           force_typed: !!this.state.socialForceTyped, skip_mandatories: this.socialNoTrio() });
         raw = String(raw).trim().replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();
         data = JSON.parse(raw.slice(raw.indexOf('{'), raw.lastIndexOf('}')+1));
@@ -14480,6 +14493,7 @@ class Component extends DCLogic {
         // 29 Sep (part 2): house_id — see reworkPosts's own comment.
         let raw = await this.complete(prompt, { ...(execId1 ? { execution: execId1 } : {}),
           ...(h1 && h1.id ? { house_id: h1.id } : {}),
+          provocation_id: this.state.socialProvId || '', use_provocation: true,
           force_typed: !!this.state.socialForceTyped, skip_mandatories: this.socialNoTrio() });
         raw = String(raw).trim().replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();
         data = JSON.parse(raw.slice(raw.indexOf('{'), raw.lastIndexOf('}')+1));
@@ -14953,6 +14967,10 @@ class Component extends DCLogic {
     this.setState({ socialForceTyped: v });
     this.loadSocialStandsOn(this.state.socialObjective);
   };
+  // Producer provocation wiring (pilot: Social). Picking an approved provocation makes these posts stand on
+  // it — generateSocial/reworkPosts/adjustPost send its id, and the backend (/complete) folds in the
+  // provocation's social expression, exactly as Video already does for a film. '' = none.
+  onPickSocialProv = (e) => this.setState({ socialProvId: e.target.value });
   // Round 92: Video gets the same real override Social/POSM have — `kind:'video'` was already supported
   // server-side (`producers.py`'s own medium dict already had `"video":"tv"`), it just had no free-text
   // field or quote box to attach it to. Same shape as `loadSocialStandsOn`/`onToggleSocialForceTyped`.
@@ -15051,7 +15069,7 @@ class Component extends DCLogic {
       // reached the server at all, and prompts.plan_channels_block's own note on the real bug it closes.
       const h0 = this.state.house;
       let raw = await this.complete(prompt, { ...(execId ? { execution: execId } : {}),
-        ...(h0 && h0.id ? { house_id: h0.id } : {}), force_typed: forceTyped, skip_mandatories: noTrio });
+        ...(h0 && h0.id ? { house_id: h0.id } : {}), provocation_id: this.state.socialProvId || '', use_provocation: true, force_typed: forceTyped, skip_mandatories: noTrio });
       raw = String(raw).trim().replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();
       const data = JSON.parse(raw.slice(raw.indexOf('{'), raw.lastIndexOf('}')+1));
       const posts = [];
@@ -21929,6 +21947,10 @@ class Component extends DCLogic {
     // its own (`xTab` flips from several call sites, not one), so it's fetched here instead, on the one
     // change this producer's tab switch always fires through regardless of which button set it.
     if (changed && s.screen === 'exec' && s.xTab === 'social') this.loadLibrary();
+    // Producer provocation wiring: the house's approved provocations feed each producer's "The provocation"
+    // picker (pilot: Social). House-scoped, so loaded on entry to any producer tab, the same single change
+    // the tab switch always fires through (see loadLibrary's note right above).
+    if (changed && s.screen === 'exec') this.loadVideoProvocations();
 
     // 1 Oct (Video document-layer persistence) — tracked separately from `_seen` above, which the
     // exec/video-options triggers already own and which this must not disturb. The saved draft is
@@ -24915,7 +24937,23 @@ class Component extends DCLogic {
             stateFg: asideNow ? '#6B7280' : (this.ideaUsable() ? '#1E7E34' : (rp ? '#2E5EA6' : '#B07A12')),
             toggle: unified ? standsFor.toggle : this.toggleInput('idea') };
         })(),
-      ].map(c => ({ ...c,
+        // "The provocation" — the same card and picker Video has in "What this film is given". A deliberate
+        // departure a person approved in Strategy; pick one and the posts stand on it (the backend folds in
+        // its social expression). Pilot: Social only for now; the other producers follow once this is proven.
+        ...(tab === 'social' ? [(() => {
+          const list = s.videoProvList || [], selId = s.socialProvId || '', sel = list.find(r => r.id === selId) || null;
+          return { k:'prov', name:'The provocation', on: !!sel,
+            state: sel ? (sel.name || 'chosen') : (list.length ? 'not used' : 'none made'),
+            stateFg: sel ? '#1E7E34' : '#B07A12',
+            sub: sel ? (((sel.core || {}).line) || 'A deliberate departure from how the category talks and looks.')
+              : (list.length ? 'Optional. A deliberate departure from how the category talks and looks. Pick an approved one for these posts to stand on.'
+                  : 'Optional. A deliberate departure from how the category talks and looks — made in Strategy, once approved.'),
+            toggle: () => {},
+            hasPicker: list.length > 0, pickerValue: selId, pick: this.onPickSocialProv,
+            pickerOpts: [{ v:'', label:'No provocation' }, ...list.map(r => ({ v:r.id, label:r.name || '(unnamed)' }))],
+            hasAction: true, action: list.length ? 'Open the provocation' : 'Make one', onAction: this.goProvocation };
+        })()] : []),
+      ].map(c => ({ ...c, hasPicker: !!c.hasPicker, hasAction: !!c.hasAction,
         line: c.on ? '#17325E' : '#DDD9D1', bg: c.on ? '#F7F9FC' : '#fff',
         dotBg: c.on ? '#17325E' : '#fff', dotLine: c.on ? '#17325E' : '#C9CEDA',
         dotFg: c.on ? '#F7F5F1' : 'transparent' })),
