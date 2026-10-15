@@ -14632,6 +14632,10 @@ class Component extends DCLogic {
     const body = { objective: c.brief, slide_count_mode: c.slideCountMode, slide_count: c.slideCount,
       force_typed: !!s.socialForceTyped, brand_mode: s.producerBrandMode };
     const execId = (this.currentExec() || {}).id; if (execId) body.execution = execId;
+    // Phase 2: a carousel stands on the SAME provocation the Social posts do (shared pick) — send the house too,
+    // since this route didn't carry one before and the server needs it to resolve the provocation.
+    const h = s.house; if (h && h.id) body.house = h.id;
+    body.provocation_id = this.provIdFor('social'); body.use_provocation = true;
     const r = await this.apiCall('/social-carousel-concept', body);
     this.setCarousel({ routesBusy: false });
     const routes = (r && r.ok && r.data && Array.isArray(r.data.routes)) ? r.data.routes : [];

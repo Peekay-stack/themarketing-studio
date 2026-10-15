@@ -677,6 +677,7 @@ def carousel_concept(objective: str, house: dict | None = None, platform: dict |
                      plan: dict | None = None, exec_brief: dict | None = None,
                      n_mode: str = "manual", n: int = 5, *, use_house: bool = True,
                      use_platform: bool = True, use_plan: bool = True,
+                     provocation: dict | None = None, use_provocation: bool = True,
                      brand_mode: str = "") -> tuple[list[dict], str]:
     """Returns (routes, note). `routes` is a list of `{name, rationale, slides}` — up to three genuinely
     different narrative directions for the same objective, each carrying its own ordered slide list
@@ -706,6 +707,18 @@ def carousel_concept(objective: str, house: dict | None = None, platform: dict |
         n_instruction = f"Every route uses exactly {n} slides."
     ctx = _ctx(house, exec_brief, platform, plan,
               use_house=use_house, use_platform=use_platform, use_plan=use_plan, brand_mode=brand_mode)
+    # A carousel stands on an approved provocation the same way Social does (it shares Social's pick). Its
+    # expression, when there is one, leads the brief as the most deliberate decision — the same priority
+    # `stands_on` gives it — so the narrative departs from the category rather than restating the platform.
+    prov_block = ""
+    if provocation and use_provocation and str(brand_mode or "").lower() != "general" and provocation.get("status") == "approved":
+        _expr = str((provocation.get("expressions") or {}).get("social", "") or "").strip() \
+            or str((provocation.get("core") or {}).get("line", "") or "").strip()
+        if _expr:
+            _nm = str(provocation.get("name") or "").strip()
+            prov_block = (f"THIS CAROUSEL STANDS ON AN APPROVED PROVOCATION{(' — ' + _nm) if _nm else ''}: {_expr} "
+                          "It is a deliberate departure from how the category usually talks and looks — let it lead "
+                          "the narrative angle and the visual direction, not the category's defaults.\n\n")
     prompt = (
         "You are writing narrative concepts for an Instagram/LinkedIn carousel — a swipeable, ordered "
         "set of slides read as one continuous story, not independent posts. Propose THREE genuinely "
@@ -715,7 +728,7 @@ def carousel_concept(objective: str, house: dict | None = None, platform: dict |
         "next — slide 3 has to actually deliver on what slide 1 promised, not restate it. The shape a "
         "route follows: one hook slide that stops the scroll, several value slides, one closing "
         "call-to-action slide.\n\n"
-        f"THE STRATEGY\n{ctx}\n\n"
+        f"{prov_block}THE STRATEGY\n{ctx}\n\n"
         f"WHAT THESE SLIDES HAVE TO LAND\n{objective}\n\n"
         f"{n_instruction}\n"
         "For each route give a short name, a one-line rationale for why this angle could work, and its "

@@ -6755,6 +6755,7 @@ def social_carousel_concept(payload: dict):
         use_house=payload.get("use_house", True) is not False,
         use_platform=payload.get("use_platform", True) is not False,
         use_plan=payload.get("use_plan", True) is not False,
+        provocation=_prov_from(payload),
         brand_mode=str(payload.get("brand_mode") or ""))
     if not routes:
         return JSONResponse(status_code=400, content={"detail": note})
