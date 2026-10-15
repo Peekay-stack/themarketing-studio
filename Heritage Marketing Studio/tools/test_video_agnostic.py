@@ -78,7 +78,7 @@ print("a tagline is optional in a film, the marks are not")
 HF = {"name": "Heritage Foods", "category": "Dairy", "tone": "warm", "mandatories": ["FSSAI mark", "the line 'Pure Doodh Ki Shakti'"]}
 plain = brandprofile.voice_block(HF)
 film = brandprofile.voice_block(HF, film=True)
-check("outside a film the mandatories are exactly what they were", "MANDATORY ON EVERY PIECE: FSSAI mark; the line 'Pure Doodh Ki Shakti'" in plain and "SIGN-OFF" not in plain, plain)
+check("outside a film the mark stays mandatory and the sign-off line is on file, NOT forced on every piece (owner 15 Oct)", "MANDATORY ON EVERY PIECE: FSSAI mark" in plain and "SIGN-OFF LINE ON FILE (NOT required on every piece" in plain and "Pure Doodh Ki Shakti" in plain and "FSSAI mark; the line 'Pure Doodh" not in plain, plain)
 check("in a film the mark stays mandatory", "MANDATORY ON EVERY PIECE: FSSAI mark" in film and "Pure Doodh Ki Shakti'" not in film.split("SIGN-OFF")[0], film)
 check("in a film the tagline is on file but explicitly NOT mandatory", "SIGN-OFF LINE ON FILE (NOT mandatory in a film" in film and "Pure Doodh Ki Shakti" in film, film)
 CEM = {"name": "Sthir Cement", "category": "Cement", "mandatories": ["BIS grade mark and IS number", "batch and packing date", "MRP on bag"]}
@@ -97,11 +97,11 @@ BRIEF_MSG = [{"role": "user", "content": "You are a brief writer. Write the brie
 sv = prompts.system_for(VIDEO_MSG, brand=HF)
 check("a film surface moves the tagline out of the mandatories", "SIGN-OFF LINE ON FILE" in sv and "MANDATORY ON EVERY PIECE: FSSAI mark" in sv, "")
 sd = prompts.system_for(DEPT_MSG, brand=HF)
-check("a department prompt (no film surface) keeps it until it says it is a film", "SIGN-OFF" not in sd, "")
+check("a department prompt (no film surface) now ALSO moves the sign-off line out (not forced on every piece)", "SIGN-OFF LINE ON FILE" in sd, "")
 sd2 = prompts.system_for(DEPT_MSG, brand=HF, film=True)
 check("...and with film=True it too moves the tagline out", "SIGN-OFF LINE ON FILE" in sd2, "")
 sb = prompts.system_for(BRIEF_MSG, brand=HF)
-check("a brief is untouched", "SIGN-OFF" not in sb and "the line 'Pure Doodh Ki Shakti'" in sb, "")
+check("a brief, like every non-film surface, moves the sign-off line out (the mark stays mandatory)", "SIGN-OFF LINE ON FILE" in sb and "Pure Doodh Ki Shakti" in sb and "MANDATORY ON EVERY PIECE: FSSAI mark" in sb, "")
 
 print("/complete passes the film flag")
 from starlette.testclient import TestClient  # noqa: E402

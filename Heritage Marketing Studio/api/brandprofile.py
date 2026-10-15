@@ -1238,17 +1238,21 @@ def voice_block(b: dict | None, *, brief_brand: str = "", skip_mandatories: bool
     if b.get("hashtags"):
         lines.append("BRAND CODES / HASHTAGS: " + ", ".join(b["hashtags"]))
     if b.get("mandatories") and not skip_mandatories:
-        if film:
-            # In a film the marks and declarations stay mandatory; a tagline/sign-off line does not (each film has its own payoff line).
-            req = [m for m in b["mandatories"] if not SIGNOFF_LINE_RE.match(str(m))]
-            sig = [m for m in b["mandatories"] if SIGNOFF_LINE_RE.match(str(m))]
-            if req:
-                lines.append("MANDATORY ON EVERY PIECE: " + "; ".join(req))
-            if sig:
+        # The marks and declarations (FSSAI, veg mark, "contains…") stay mandatory on every piece. A tagline/
+        # sign-off LINE does not — forcing it into every caption reads as a tagline dump and dilutes it (owner,
+        # 15 Oct, on Social output where "Pure Doodh Ki Shakti" closed every post). It is offered as a line on
+        # file to use where it genuinely lands, in a film and now in a static piece alike.
+        req = [m for m in b["mandatories"] if not SIGNOFF_LINE_RE.match(str(m))]
+        sig = [m for m in b["mandatories"] if SIGNOFF_LINE_RE.match(str(m))]
+        if req:
+            lines.append("MANDATORY ON EVERY PIECE: " + "; ".join(req))
+        if sig:
+            if film:
                 lines.append("SIGN-OFF LINE ON FILE (NOT mandatory in a film: each film carries its own payoff line, a benefit or a thought written from "
                              "that film's message; use this one only when it truly fits): " + "; ".join(sig))
-        else:
-            lines.append("MANDATORY ON EVERY PIECE: " + "; ".join(b["mandatories"]))
+            else:
+                lines.append("SIGN-OFF LINE ON FILE (NOT required on every piece: use it only where it genuinely adds and lands — "
+                             "never as a reflexive sign-off closing every caption; most pieces are stronger without it): " + "; ".join(sig))
     if b.get("competitors"):
         lines.append("COMPETITORS: " + ", ".join(b["competitors"]))
     if b.get("avoid"):
