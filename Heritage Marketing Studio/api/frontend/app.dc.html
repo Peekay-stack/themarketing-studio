@@ -13855,7 +13855,7 @@ class Component extends DCLogic {
         routeConfirmLabel: c.route_confirmed ? 'confirmed' : (c.route ? 'unconfirmed' : ''),
         routeConfirmFg: c.route_confirmed ? '#1E7E34' : '#B07A12',
         testsLabel: (c.tests_passed||0) + '/' + (c.tests_total||6),
-        hasRef: !!ref, noRef: !ref, refUrl: ref ? ref.url : '',
+        hasRef: !!(ref && ref.url), noRef: !(ref && ref.url), refUrl: (ref && ref.url) || '',
       };
     });
     const cd = s.charDetail;
@@ -13894,7 +13894,7 @@ class Component extends DCLogic {
       const doneShots = ((c.pressure_test||{}).shots || []).filter(sh=>sh.done).length;
       const castItems = libItems.filter(x => x.kind === 'cast' && x.signed_off).map(x => {
         const chosen = c.reference_id === x.id || ((c.reference||{}).chosen === x.id);
-        return { id:x.id, name:x.name, url:x.url, chosen, pick:this.pickCharReference(x.id), borderColor: chosen ? '#17325E' : '#DDD9D1' };
+        return { id:x.id, name:x.name, url:x.url || '', chosen, pick:this.pickCharReference(x.id), borderColor: chosen ? '#17325E' : '#DDD9D1' };
       });
       const missing = cd.missing || [];
       detail = {
@@ -15170,8 +15170,8 @@ class Component extends DCLogic {
         options: this.carouselAssetOptions('pack').map(o => ({ id: o.id, name: o.name })).concat(c.packRef
           ? [{ id: '__ref__', name: 'Reference photo: ' + ((c.packProduct || '').trim() || c.packRefName || 'your photo') + ' (this session, not signed off)' }] : []),
         pick: this.onCarouselAsset('packChoice') },
-      carouselPackThumb: (() => { const v = c.packChoice; if (v === '__ref__') return c.packRef;
-        if (!v || v === '__none__') return ''; const it = (c.assets || []).find(a => a.id === v); return it ? it.url : ''; })(),
+      carouselPackThumb: (() => { const v = c.packChoice; if (v === '__ref__') return c.packRef || '';
+        if (!v || v === '__none__') return ''; const it = (c.assets || []).find(a => a.id === v); return (it && it.url) || ''; })(),
       carouselPackHasThumb: (() => { const v = c.packChoice; if (v === '__ref__') return !!c.packRef;
         if (!v || v === '__none__') return false; return !!(c.assets || []).find(a => a.id === v); })(),
       carouselPackHint: !c.packChoice ? 'Choose the pack this carousel shows. Nothing is picked for you.'
@@ -15190,7 +15190,7 @@ class Component extends DCLogic {
       // this was the one place that wasn't.
       carouselCastDraftLabel: c.castBusy ? 'Drafting…' : '✦ AI-draft a cast reference, from this concept',
       carouselCastBusy: c.castBusy, carouselCastCandidates: (c.castCandidates || []).map((im, i) => ({
-        url: im.image_url, adopt: this.adoptCarouselCastDraft(im.image_url),
+        url: im.image_url || '', adopt: this.adoptCarouselCastDraft(im.image_url),
         // 23 Sep: the 64px thumbnail is too small to actually judge a candidate before signing it in --
         // reuses the SAME lightbox the storyboard frames already use (openLightbox/closeLightbox), not
         // a new component.
@@ -18736,8 +18736,8 @@ class Component extends DCLogic {
         options: this.carouselAssetOptions('pack').map(o => ({ id: o.id, name: o.name })).concat(s.socialPackRef
           ? [{ id: '__ref__', name: 'Reference photo: ' + ((s.socialPackProduct || '').trim() || s.socialPackRefName || 'your photo') + ' (this session, not signed off)' }] : []),
         pick: this.pickSocialAsset('socialPackChoice'), upload: this.uploadSocialAsset('pack', 'socialPackChoice') },
-      socialPackThumb: (() => { const v = s.socialPackChoice; if (v === '__ref__') return s.socialPackRef;
-        if (!v || v === '__none__') return ''; const it = (s.carousel.assets || []).find(a => a.id === v); return it ? it.url : ''; })(),
+      socialPackThumb: (() => { const v = s.socialPackChoice; if (v === '__ref__') return s.socialPackRef || '';
+        if (!v || v === '__none__') return ''; const it = (s.carousel.assets || []).find(a => a.id === v); return (it && it.url) || ''; })(),
       socialPackHasThumb: (() => { const v = s.socialPackChoice; if (v === '__ref__') return !!s.socialPackRef;
         if (!v || v === '__none__') return false; return !!(s.carousel.assets || []).find(a => a.id === v); })(),
       socialPackHint: !s.socialPackChoice ? 'Choose the pack these posts show. Nothing is picked for you.'
