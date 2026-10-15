@@ -36,7 +36,7 @@ DIR = tenancy.dir("filmscripts")
 # rendered frame) rather than a picked option that costs one click to redo.
 FIELDS = ("video_objective", "video_concept", "script_status", "script_phase",
           "full_script", "scene_frames", "shoot", "video_characters", "video_location_line", "video_look_ref", "video_location_src", "sound_plan", "provocation_id", "provocation_on",
-          "cast_ref_url", "cast_lock_sig", "cast_saved_url")
+          "cast_ref_url", "cast_lock_sig", "cast_saved_url", "video_cast_choice", "video_plate_choice")
 
 
 def _now() -> str:
@@ -51,7 +51,8 @@ def _blank(house_id: str) -> dict:
     return {"house": house_id, "video_objective": None, "video_concept": None,
             "script_status": "none", "script_phase": "concept", "full_script": None,
             "scene_frames": {}, "shoot": {}, "video_characters": "", "video_location_line": "", "video_look_ref": "", "video_location_src": "", "sound_plan": {}, "provocation_id": "", "provocation_on": True,
-            "cast_ref_url": "", "cast_lock_sig": "", "cast_saved_url": "", "updated": ""}
+            "cast_ref_url": "", "cast_lock_sig": "", "cast_saved_url": "",
+            "video_cast_choice": "", "video_plate_choice": "", "updated": ""}
 
 
 def load(house_id: str) -> dict:
@@ -123,6 +124,13 @@ def save(house_id: str, data: dict) -> dict:
                           else str(load(house_id).get("cast_lock_sig") or "")),
         "cast_saved_url": (str(data.get("cast_saved_url") or "") if "cast_saved_url" in data
                            else str(load(house_id).get("cast_saved_url") or "")),
+        # The library cast/plate the lock (and every frame's cast_id/plate_id) was built from. These feed the
+        # lock's freshness check (castSig) AND the frame render, so persisting the lock image without them left
+        # a reloaded lock reading as stale and frames re-rendering with a different attachment. Same guard.
+        "video_cast_choice": (str(data.get("video_cast_choice") or "") if "video_cast_choice" in data
+                              else str(load(house_id).get("video_cast_choice") or "")),
+        "video_plate_choice": (str(data.get("video_plate_choice") or "") if "video_plate_choice" in data
+                               else str(load(house_id).get("video_plate_choice") or "")),
         "updated": _now(),
     }
     tmp = _path(house_id) + ".tmp"
