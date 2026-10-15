@@ -1772,18 +1772,25 @@ def scene_still(payload: dict):
     style = str(payload.get("style") or "real").lower()
     craft = _IMG_STYLES.get(style, _IMG_STYLES["real"])
     craft = _with_look_note(craft, payload)       # Video's written look reference; absent elsewhere
-    # P3: a Video frame that stands on an approved provocation follows ITS visual language, which OVERRIDES the
-    # generic look above -- a provocation deliberately breaks the category's conventional look. Only video_frame
-    # frames that name an approved provocation of this house are affected; every other caller is byte-identical.
-    # P3b: a provocation that casts objects, animation or nobody has no people to hold identical across
-    # frames. Default False, set only below, so every other frame keeps the people-continuity clause.
+    # A piece that stands on an approved provocation takes ITS visual language, which OVERRIDES the generic look
+    # above -- a provocation deliberately breaks the category's conventional look. This applies to STATIC images
+    # too (Social posts, Carousel slides), not only video frames: for a disruptive provocation it is the LOOK, not
+    # just the subject, that has to depart. Only an approved one of this house counts, and never in Independent
+    # mode (a piece set to Independent stands on no brand decision). Accepts `house` or `house_id`.
+    # P3b (the no-people cast handling) stays video-only -- cast approach is a film concept.
     _prov_no_people = False
-    if payload.get("video_frame") and payload.get("use_provocation", True) is not False and str(payload.get("provocation_id") or "").strip():
-        _pr = provocation.resolve_for(str(payload.get("house_id") or ""), str(payload.get("provocation_id") or ""))
+    _pid = str(payload.get("provocation_id") or "").strip()
+    if (_pid and payload.get("use_provocation", True) is not False
+            and str(payload.get("brand_mode") or "").strip().lower() != "general"):
+        _pr = provocation.resolve_for(str(payload.get("house_id") or payload.get("house") or ""), _pid)
         _prov_vis = str(((_pr or {}).get("film") or {}).get("visual_language") or "").strip()
         if _prov_vis:
-            craft = craft + " The visual language and cinematography of THIS film — it OVERRIDES any generic look or lighting stated above: " + _prov_vis + "."
-        _prov_no_people = str(((_pr or {}).get("film") or {}).get("cast_approach") or "").strip().lower() in ("objects", "animated", "none")
+            if payload.get("video_frame"):
+                craft = craft + " The visual language and cinematography of THIS film — it OVERRIDES any generic look or lighting stated above: " + _prov_vis + "."
+            else:
+                craft = craft + " The visual language of THIS image — it OVERRIDES any generic look or lighting stated above: " + _prov_vis + "."
+        if payload.get("video_frame"):
+            _prov_no_people = str(((_pr or {}).get("film") or {}).get("cast_approach") or "").strip().lower() in ("objects", "animated", "none")
     subject = str(payload.get("prompt", "")).strip() or "brand key visual"
     characters = str(payload.get("characters", "")).strip()
     # A cast reference image pins identity in a way text never can — use it when we have one.

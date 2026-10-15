@@ -14375,6 +14375,7 @@ class Component extends DCLogic {
         scene_no: 1, ratio: '1:1', style: this.state.socialStyle || 'real',
         prompt: (p.visual || ((this.brandName() || 'Brand') + ' key visual')) + ' Square social image for ' + p.platName + '.',
         brand_mode: this.state.producerBrandMode,
+        ...this.provImgFields('social'),
         ...this.socialPackFields(p.packRole),
         // Live-tested finding: the server auto-attaches the most-recently-signed-off cast whenever one
         // exists UNLESS told not to — leaving this checkbox unchecked used to still silently pin the
@@ -14407,6 +14408,7 @@ class Component extends DCLogic {
         use_cast: !!s0.socialWantCast,
         cast_id: s0.socialWantCast ? (s0.socialCastChoice || undefined) : undefined,
         prompt: (p.visual || ((this.brandName() || 'Brand') + ' key visual')) + ' Square social image for ' + p.platName + '.',
+        ...this.provImgFields('social'),
         brand_mode: this.state.producerBrandMode,
       });
       if (res && res.image_url) { ok++; this.setState(s => ({ posts: s.posts.map(x => x.id === p.id ? { ...x, ...this.postImagePatch(res) } : x) })); }
@@ -14718,6 +14720,7 @@ class Component extends DCLogic {
       const res = await this.apiJson('/scene-still', {
         scene_no: s.n, ratio, style,
         prompt: (s.visual_note || s.headline || '') + this.carouselNoTextPrompt(),
+        ...this.provImgFields('social'),
         ...this.carouselPackFields(c, role), use_cast: !!c.wantCast,
         cast_id: c.wantCast ? (c.castChoice || undefined) : undefined,
         brand_mode: this.state.producerBrandMode,
@@ -14751,6 +14754,7 @@ class Component extends DCLogic {
       // regenerating ONE slide with the cast checkbox unchecked still silently auto-pinned a signed-off
       // cast face (`want_cast` defaults True when the field is absent) — the same class of bug already
       // fixed everywhere else this pattern appears in this file.
+      ...this.provImgFields('social'),
       ...this.carouselPackFields(c, role), use_cast: !!c.wantCast,
       cast_id: c.wantCast ? (c.castChoice || undefined) : undefined,
       brand_mode: this.state.producerBrandMode,
@@ -14979,6 +14983,10 @@ class Component extends DCLogic {
   PROV_FIELD = { social:'socialProvId', posm:'posmProvId', onground:'ogProvId' };
   provIdFor(tab){ const f = this.PROV_FIELD[tab]; return f ? (this.state[f] || '') : ''; }
   onPickProv = (tab) => (e) => { const f = this.PROV_FIELD[tab]; if (f) this.setState({ [f]: e.target.value }); };
+  // The provocation fields a STATIC image call (/scene-still) sends, so the server applies the provocation's
+  // VISUAL LANGUAGE to the look — not just the subject the writer already wrote standing on it. The house rides
+  // along since /scene-still needs it to resolve the provocation.
+  provImgFields(tab){ const hid = (this.state.house || {}).id; return { provocation_id: this.provIdFor(tab) || '', use_provocation: true, ...(hid ? { house: hid } : {}) }; }
   // Round 92: Video gets the same real override Social/POSM have — `kind:'video'` was already supported
   // server-side (`producers.py`'s own medium dict already had `"video":"tv"`), it just had no free-text
   // field or quote box to attach it to. Same shape as `loadSocialStandsOn`/`onToggleSocialForceTyped`.

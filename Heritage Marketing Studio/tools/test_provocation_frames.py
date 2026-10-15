@@ -63,10 +63,16 @@ check("wrong house -> no injection", VIS not in p3, p3[-120:])
 p4 = frame_prompt({**base, "provocation_id": "prov-1", "use_provocation": False, "house_id": "house-1"})
 check("set aside (use_provocation false) -> no injection", VIS not in p4, p4[-120:])
 
-print("\nA non-video_frame caller (Social/Carousel/POSM) never gets the injection even with the field present")
+print("\nA STATIC caller (Social/Carousel/POSM) NOW gets the provocation's visual language too, as 'THIS image'")
 p5 = frame_prompt({"prompt": "a social still", "style": "real", "engines": {"image": "google"},
                    "provocation_id": "prov-1", "use_provocation": True, "house_id": "house-1"})
-check("no video_frame -> no injection", VIS not in p5, p5[-120:])
+check("static -> visual language IS applied (the disruptive look, not just the subject)", VIS in p5, p5[-200:])
+check("static wording is 'THIS image', not 'THIS film'", ("THIS image" in p5) and ("THIS film" not in p5), p5[-200:])
+
+print("\nAn Independent (general) static caller does NOT get it — it stands on no brand decision")
+p6 = frame_prompt({"prompt": "a social still", "style": "real", "engines": {"image": "google"},
+                   "provocation_id": "prov-1", "use_provocation": True, "house_id": "house-1", "brand_mode": "general"})
+check("general mode -> no injection", VIS not in p6, p6[-120:])
 
 print()
 if fails:
