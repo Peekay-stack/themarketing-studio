@@ -3288,6 +3288,9 @@
               <span onClick="{{ m.set }}" style="cursor:pointer; padding:6px 12px; border-radius:8px; font-size:12.5px; font-weight:700; border:1px solid {{ m.border }}; background:{{ m.bg }}; color:{{ m.fg }};">{{ m.label }}</span>
             </sc-for>
           </div>
+          <sc-if value="{{ provSoundSuggest }}" hint-placeholder-val="{{ false }}">
+            <div style="font-size:11.5px; line-height:1.5; color:#2E5EA6; background:#EEF3FB; border:1px solid #D4E0F0; border-radius:8px; padding:8px 11px; margin-bottom:14px; text-wrap:pretty;">This film stands on a provocation &mdash; its sound language: &ldquo;{{ provSoundText }}&rdquo;. <span onClick="{{ useProvSound }}" style="cursor:pointer; font-weight:800; text-decoration:underline; color:#17325E;">Use it as the music mood</span></div>
+          </sc-if>
           <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:14px;">
             <span style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#6B7280;">Level under voice</span>
             <sc-for list="{{ musicLevels }}" as="l" hint-placeholder-count="3">
@@ -15386,6 +15389,13 @@ class Component extends DCLogic {
   // Total spoken words for the WHOLE film — voiceover and dialogue combined. Deliberately sparse:
   // filling every second with speech is what made early cuts feel like a documentary read.
   voWords(dur){ return { '10s':12, '20s':22, '30s':32 }[dur || this.state.prodDuration] || 22; }
+  // P4: a film standing on a provocation uses ITS voice-over budget (the provocation's vo_words; 0 = a
+  // wordless film). Every other film's budget still comes from the duration. One place, so the voice panel,
+  // the rework budget note and the script writer all agree on the number.
+  voBudget(dur){
+    if (this.provMode()) { const w = ((this.videoProv() || {}).film || {}).vo_words; if (typeof w === 'number') return w; }
+    return this.voWords(dur);
+  }
   // Voices read ~2.2 words/second, so a scene can only hold so much speech. Anything over runs
   // past its scene and the backend has to tighten or trim it — so budget it in the script itself.
   // Length of one scene in seconds, read off its timecode ("6–14s" -> 8).
@@ -15396,7 +15406,7 @@ class Component extends DCLogic {
     return Math.max(2, Math.round(parseInt(this.state.prodDuration, 10) / Math.max(1, n)));
   }
   voBudgetNote(dur, n){
-    const total = this.voWords(dur), per = Math.max(4, Math.round(total / Math.max(1, n)));
+    const total = this.voBudget(dur), per = Math.max(4, Math.round(total / Math.max(1, n)));
     return 'STRICT SPEECH BUDGET — this is a hard limit, not a target: across the ENTIRE film, all "text" values combined (voiceover AND dialogue) must total NO MORE than '+total+' words, about '+per+' words per scene. Great commercials are mostly picture and music: say less, leave space, never narrate what the viewer can already see. At least one scene MUST have "audio": [] so the film can breathe. Cut every word that is not doing work.';
   }
 
@@ -16280,6 +16290,14 @@ class Component extends DCLogic {
     this.setMood(line, false);
     this.showToast('Production music mood set from the Music note: ' + line, 'ok');
   }
+  // P4: a provocation describes the film's sound in its own words (sound_language). It is OFFERED as the music
+  // mood, never forced — the person clicks to apply it, exactly like picking a style chip.
+  useProvSound = () => {
+    const sl = ((((this.videoProv() || {}).film) || {}).sound_language || '').trim();
+    if (!sl) return;
+    this.setMood(sl, true);
+    this.showToast('Music mood set from the provocation’s sound language.', 'ok');
+  };
   // What the card starts from: each scene's beat role and music state, from the server (the mix derives the same ones).
   // Re-asked only when the scenes or their Beat roles change.
   refreshSoundBase = async () => {
@@ -18993,6 +19011,12 @@ class Component extends DCLogic {
       }),
       hasLockedMusic: !!s.musicUrl,
       musicMoodChanged: !!s.musicUrl && s.musicLockMood != null && s.musicLockMood !== s.production.music,
+      // P4: when the film stands on a provocation, offer its sound language as the music mood. Hidden once the
+      // mood already matches it (applied), so it reads as a suggestion to act on, not a standing banner.
+      provSoundSuggest: this.provMode() && !!((((this.videoProv()||{}).film||{}).sound_language)||'').trim()
+        && ((((this.videoProv()||{}).film||{}).sound_language)||'').trim() !== String(s.production.music||'').trim(),
+      provSoundText: ((((this.videoProv()||{}).film||{}).sound_language)||'').trim(),
+      useProvSound: this.useProvSound,
       soundOn: !(s.soundPlan || {}).off, toggleSoundOn: this.toggleSoundOn, resetSoundPlan: this.resetSoundPlan,
       soundCarve: (s.soundPlan || {}).carve !== false, toggleSoundCarve: this.toggleSoundCarve, setSoundScene: this.setSoundScene,
       soundSummary: this.soundSummary(), goSoundDesign: this.goSoundDesign,
@@ -19204,9 +19228,9 @@ class Component extends DCLogic {
                  fg: l.kind==='vo' ? '#A0761F' : '#1E7E34' };
       }) : [],
       voiceWordsLabel: s.voicePlan ? ((s.voicePlan.words||0)+' spoken words') : '',
-      voiceBudgetBg: (s.voicePlan && (s.voicePlan.words||0) > this.voWords(s.prodDuration)) ? '#FDF0DC' : '#EAF2EC',
-      voiceBudgetFg: (s.voicePlan && (s.voicePlan.words||0) > this.voWords(s.prodDuration)) ? '#A0761F' : '#1E7E34',
-      voiceFitNote: s.voicePlan ? ('≈'+Math.round(((s.voicePlan.words||0)/2.2))+'s of speech in a '+s.prodDuration+' film · target '+this.voWords(s.prodDuration)+' words') : '',
+      voiceBudgetBg: (s.voicePlan && (s.voicePlan.words||0) > this.voBudget(s.prodDuration)) ? '#FDF0DC' : '#EAF2EC',
+      voiceBudgetFg: (s.voicePlan && (s.voicePlan.words||0) > this.voBudget(s.prodDuration)) ? '#A0761F' : '#1E7E34',
+      voiceFitNote: s.voicePlan ? ('≈'+Math.round(((s.voicePlan.words||0)/2.2))+'s of speech in a '+s.prodDuration+' film · target '+this.voBudget(s.prodDuration)+' words'+(this.provMode() && typeof (((this.videoProv()||{}).film||{}).vo_words)==='number' ? ' (set by the provocation)' : '')) : '',
       hasVoiceAudio: !!s.voiceAudioUrl,
       voiceAudioPlayer: s.voiceAudioUrl ? React.createElement('audio', { src:s.voiceAudioUrl, controls:true, style:{ width:'100%' } }) : null,
       prodQualities: qualities,
