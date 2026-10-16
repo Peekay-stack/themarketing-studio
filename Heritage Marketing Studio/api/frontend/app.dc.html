@@ -3670,13 +3670,17 @@
           <span style="font-size:12px; color:#6B7280;">derived from the {{ cutdownRescriptFrom }} master · the master is untouched</span>
           <span onClick="{{ discardCutdownRescript }}" style="margin-left:auto; cursor:pointer; font-size:12px; font-weight:700; color:#C0392B;">Discard</span>
         </div>
-        <div style="font-size:12.5px; color:#6B7280; margin-bottom:14px; text-wrap:pretty;">The key message is kept (hook, turn, sign-off) and the survivors are rewritten to the new length. Edit the spoken line or on-screen super on any scene. Re-synthesising the voice and rendering this cut land in the next build.</div>
+        <div style="font-size:12.5px; color:#6B7280; margin-bottom:14px; text-wrap:pretty;">The key message is kept (hook, turn, sign-off) and the survivors are rewritten to the new length. Edit the spoken line or on-screen super on any scene, and set how long each shot stays. Then hear the voices, and freeze &amp; render the cut.</div>
         <sc-for list="{{ cutdownRescriptRows }}" as="cr" hint-placeholder-count="3">
           <div style="border:1px solid #E6E3DC; border-radius:11px; padding:12px 14px; margin-bottom:10px; background:#FBFAF8;">
-            <div style="display:flex; gap:10px; align-items:baseline; margin-bottom:7px;">
+            <div style="display:flex; gap:10px; align-items:center; margin-bottom:7px;">
               <span style="font-size:11px; font-weight:800; color:#2E5EA6;">{{ cr.no }}</span>
               <span style="font-size:11.5px; font-weight:700; color:#17325E;">{{ cr.tc }}</span>
               <span style="font-size:12px; color:#6B7280; flex:1; min-width:0; text-wrap:pretty;">{{ cr.visual }}</span>
+              <!-- Phase 1c — per-shot stay (seconds); editing it retimes the whole cut. -->
+              <span style="font-size:11px; color:#9AA1AC; white-space:nowrap;">stay</span>
+              <input value="{{ cr.secs }}" onChange="{{ cr.onStay }}" type="number" min="1" step="1" style="width:56px; border:1px solid #DDD9D1; border-radius:7px; padding:5px 7px; font-size:12px; color:#17325E; background:#fff; font-family:inherit;" />
+              <span style="font-size:11px; color:#9AA1AC;">s</span>
             </div>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
               <div>
@@ -3690,6 +3694,32 @@
             </div>
           </div>
         </sc-for>
+        <!-- Phase 1c/1d — hear the cut's voices (no render), then freeze & render it as a deliverable. -->
+        <div style="display:flex; gap:9px; align-items:center; flex-wrap:wrap; margin-top:4px;">
+          <button onClick="{{ previewCutVoices }}" style="background:#fff; color:#1E7E34; border:1px solid #C9E3CD; border-radius:10px; padding:9px 16px; font-weight:700; font-size:12.5px; cursor:pointer;">{{ cutVoiceLabel }}</button>
+          <button onClick="{{ renderCut }}" style="background:#17325E; color:#F7F5F1; border:none; border-radius:10px; padding:9px 16px; font-weight:700; font-size:12.5px; cursor:pointer;">{{ renderCutLabel }}</button>
+          <span style="font-size:11.5px; color:#9AA1AC;">Rendering spends on the video engine — only this cut, from its own clips and script.</span>
+        </div>
+        <sc-if value="{{ hasCutVoice }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:12px;">{{ cutVoiceAudio }}</div>
+        </sc-if>
+      </div>
+      </sc-if>
+
+      <!-- Phase 1d — rendered cut deliverables, each derived from the master, the master untouched. -->
+      <sc-if value="{{ hasCutDeliverables }}" hint-placeholder-val="{{ false }}">
+      <div style="background:#fff; border:1px solid #DDD9D1; border-radius:16px; padding:22px 24px; margin-bottom:16px;">
+        <div style="font-family:'Epilogue',sans-serif; font-weight:700; font-size:18px; color:#17325E; margin-bottom:4px;">Deliverables</div>
+        <div style="font-size:12.5px; color:#6B7280; margin-bottom:14px;">Rendered cuts derived from the master film.</div>
+        <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:14px;">
+          <sc-for list="{{ cutDeliverables }}" as="cd" hint-placeholder-count="0">
+            <div style="border:1px solid #E6E3DC; border-radius:12px; padding:12px; background:#FBFAF8;">
+              <div style="font-size:13px; font-weight:700; color:#17325E; margin-bottom:6px;">{{ cd.label }}</div>
+              {{ cd.video }}
+              <div style="margin-top:8px;"><a href="{{ cd.url }}" download style="font-size:12px; font-weight:700; color:#2E5EA6; text-decoration:none;">Download</a><span style="font-size:11px; color:#9AA1AC; margin-left:8px;">{{ cd.at }}</span></div>
+            </div>
+          </sc-for>
+        </div>
       </div>
       </sc-if>
 
@@ -11696,6 +11726,9 @@ class Component extends DCLogic {
     // then (1c) VO re-synth and (1d) freeze -> render.
     cutdownRescript: null,
     cutdownRescriptBusy: false,
+    cutVoiceBusy: false,          // 1c — building the cut's voice preview
+    cutVoiceUrl: null,            // 1c — the cut's soundtrack preview (no video rendered)
+    cutRenderBusy: false,         // 1d — rendering the cut as a deliverable
     scriptWriting: false,
     rewritingScene: null,
     sceneFrames: {},               // { [idx]: {status:'idle|rendering|done|error', url} }
@@ -16805,9 +16838,11 @@ class Component extends DCLogic {
       return await r.json();
     } catch (e) { return null; }
   }
-  voicePayload(){
+  // `scenes`/`duration` default to the master script, but a derived cutdown passes its own rows and
+  // target so the Edit room can preview/produce a cut WITHOUT touching fullScript (the master).
+  voicePayload(scenes, duration){
     const p = this.state.production;
-    return { scenes:this.state.fullScript||[], duration:this.state.prodDuration, voice:p.voice, brand_mode:this.state.producerBrandMode,
+    return { scenes:scenes || this.state.fullScript||[], duration:duration || this.state.prodDuration, voice:p.voice, brand_mode:this.state.producerBrandMode,
              music:p.music, characters:this.state.videoCharacters, voices:this.state.voiceChoices,
              accent:this.state.voiceAccent,
              music_url:this.state.musicUrl || '', music_level:this.state.musicLevel,
@@ -17234,8 +17269,8 @@ class Component extends DCLogic {
       } catch (e) {}
     }
     if (!rows) { this.setState({ cutdownRescriptBusy:false }); this.showToast('Couldn\u2019t re-script that cutdown \u2014 nothing changed.'); return; }
-    this.setState({ cutdownRescriptBusy:false, cutdownPreview:null,
-      cutdownRescript:{ target, fromDuration:this.state.prodDuration, rows } });
+    this.setState({ cutdownRescriptBusy:false, cutdownPreview:null, cutVoiceUrl:null,
+      cutdownRescript:{ target, fromDuration:this.state.prodDuration, rows:this.withCutTimecodes(rows) } });
     this.showToast(target + 's cut drafted \u2014 review the lines below. (VO re-synth and render land in the next build.)', 'ok');
   };
   // Inline edit of a derived cutdown row (its spoken dialogue / on-screen super) \u2014 touches the draft only,
@@ -17245,7 +17280,51 @@ class Component extends DCLogic {
     this.setState(s => s.cutdownRescript ? { cutdownRescript: { ...s.cutdownRescript,
       rows: (s.cutdownRescript.rows || []).map((r,i) => i===idx ? { ...r, [field]:val } : r) } } : {});
   };
-  discardCutdownRescript = () => this.setState({ cutdownRescript:null });
+  discardCutdownRescript = () => this.setState({ cutdownRescript:null, cutVoiceUrl:null });
+  // Phase 1c — per-shot "stay": each cut row carries an explicit `secs`; editing one recomputes the
+  // continuous timecodes down the whole cut. Draft-only — the master is never touched.
+  cutSecsOf(r){ const m = String((r && r.tc) || '').match(/(\d+(?:\.\d+)?)\s*[-–—]+\s*(\d+(?:\.\d+)?)/); if (m){ const d = parseFloat(m[2]) - parseFloat(m[1]); if (d > 0) return Math.round(d); } return 4; }
+  withCutTimecodes(rows){ let t = 0; return (rows || []).map(r => { const s = Math.max(1, Math.round(parseFloat(r.secs) || this.cutSecsOf(r))); const tc = t + '–' + (t + s) + 's'; t += s; return { ...r, secs:s, tc }; }); }
+  setCutStay = (idx) => (e) => {
+    const v = Math.max(1, Math.round(parseFloat(e.target.value) || 1));
+    this.setState(s => s.cutdownRescript ? { cutdownRescript: { ...s.cutdownRescript,
+      rows: this.withCutTimecodes((s.cutdownRescript.rows || []).map((r,i) => i===idx ? { ...r, secs:v } : r)) } } : {});
+  };
+  // Phase 1c — hear the cut's voices without rendering video (parameterised voicePayload; master untouched).
+  previewCutVoices = async () => {
+    const cr = this.state.cutdownRescript;
+    if (!cr || !cr.rows.length || this.state.cutVoiceBusy) return;
+    this.setState({ cutVoiceBusy:true, cutVoiceUrl:null });
+    const r = await this.apiCall('/voice-preview', this.voicePayload(cr.rows, cr.target + 's'));
+    const d = (r && r.data) || {};
+    if (!r || !r.ok || !d.audio_url) { this.setState({ cutVoiceBusy:false }); this.showToast(d.detail || 'Couldn’t build the voice preview for this cut.'); return; }
+    this.setState({ cutVoiceBusy:false, cutVoiceUrl:d.audio_url });
+    this.showToast('Voices ready for the ' + cr.target + 's cut — no video was rendered.', 'ok');
+  };
+  // Phase 1d — freeze & render the reviewed cut as a DELIVERABLE. Produces over the cut's OWN rows,
+  // target length and the master's cast / look / voice context, so the master film is never touched; the
+  // result is stored in `edits` and recorded by the server (made.py). Real render spend happens only when
+  // the owner clicks this, on a real film.
+  renderCut = async () => {
+    const cr = this.state.cutdownRescript;
+    if (!cr || !cr.rows.length || this.state.cutRenderBusy) return;
+    this.setState({ cutRenderBusy:true });
+    const p0 = this.state.production;
+    const body = { scenes:cr.rows, aspect:p0.aspect, duration:cr.target + 's', music:p0.music, voice:p0.voice,
+      note:cr.target + 's cut', brand_mode:this.state.producerBrandMode, voices:this.state.voiceChoices,
+      characters:this.state.videoCharacters, accent:this.state.voiceAccent, style:this.state.videoStyle,
+      music_url:this.state.musicUrl || '', music_level:this.state.musicLevel, engines:this.state.engines,
+      tier:this.tierNow(), model: this.tierNow()==='standard' ? 'veo-3.1' : 'veo-3.1-fast' };
+    const lookRef = (this.state.videoLookRef || '').trim(); if (lookRef) body.look_note = lookRef;
+    Object.assign(body, this.loudnessParam());
+    const r = await this.apiCall('/produce-video', body);
+    const d = (r && r.data) || {};
+    const url = (r && r.ok && d.video_url) ? d.video_url : null;
+    if (!url) { this.setState({ cutRenderBusy:false }); this.showToast(d.detail || 'Couldn’t render the cut — see heritage-log.txt.'); return; }
+    this.setState(s => ({ cutRenderBusy:false, cutdownRescript:null, cutVoiceUrl:null,
+      edits: [{ id:'cut-' + Date.now(), kind:'cutdown', target:cr.target, fromDuration:cr.fromDuration, url, at:'Just now' }, ...(s.edits || [])] }));
+    this.showToast(cr.target + 's cut rendered — see Deliverables below.', 'ok');
+  };
   // The film's cut belongs to the FILM. This resolved `(this.state.execs||{}).social`, which is wrong
   // two ways at once: with a Social execution briefed, the Video tab's cut editor silently read and
   // WROTE the social execution's cut history — film versions landing in another producer's file; with
@@ -17855,9 +17934,20 @@ class Component extends DCLogic {
       cutdownRescriptTarget: s.cutdownRescript ? s.cutdownRescript.target : '',
       cutdownRescriptFrom: s.cutdownRescript ? s.cutdownRescript.fromDuration : '',
       cutdownRescriptRows: (s.cutdownRescript ? (s.cutdownRescript.rows || []) : []).map((r, i) => ({
-        no: r.no, tc: r.tc, visual: r.visual || '', dialogue: r.dialogue || '', supr: r.supr || '',
-        onDialogue: this.editCutdownRow(i, 'dialogue'), onSupr: this.editCutdownRow(i, 'supr') })),
+        no: r.no, tc: r.tc, visual: r.visual || '', dialogue: r.dialogue || '', supr: r.supr || '', secs: r.secs || this.cutSecsOf(r),
+        onDialogue: this.editCutdownRow(i, 'dialogue'), onSupr: this.editCutdownRow(i, 'supr'), onStay: this.setCutStay(i) })),
       discardCutdownRescript: this.discardCutdownRescript,
+      // Phase 1c/1d — voice preview + freeze&render of the cut, and the rendered deliverables.
+      previewCutVoices: this.previewCutVoices,
+      cutVoiceLabel: s.cutVoiceBusy ? 'Building voices…' : '▶ Preview voices',
+      renderCut: this.renderCut,
+      renderCutLabel: s.cutRenderBusy ? 'Rendering…' : ('Freeze & render the ' + ((s.cutdownRescript && s.cutdownRescript.target) || '') + 's cut'),
+      hasCutVoice: !!s.cutVoiceUrl,
+      cutVoiceAudio: s.cutVoiceUrl ? React.createElement('audio', { src:s.cutVoiceUrl, controls:true, style:{ width:'100%' } }) : null,
+      hasCutDeliverables: !!(s.edits || []).filter(e => e.kind === 'cutdown' && e.url).length,
+      cutDeliverables: (s.edits || []).filter(e => e.kind === 'cutdown' && e.url).map(e => ({
+        label: e.target + 's cut' + (e.fromDuration ? ' · from ' + e.fromDuration : ''), url: e.url, at: e.at || '',
+        video: React.createElement('video', { src:e.url, controls:true, style:{ width:'100%', borderRadius:8, background:'#000', aspectRatio:'16/9' } }) })),
       // continuity check: provenance (cause) rendered before drift (symptom), per the ask
       checkContinuity: this.checkContinuity, continuityLabel: s.continuityBusy ? 'Checking\u2026' : 'Check continuity',
       hasContinuityCheck: !!s.continuityCheck,
