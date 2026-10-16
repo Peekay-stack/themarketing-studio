@@ -6603,10 +6603,24 @@ def _record_made(kind: str, title: str, *, url: str = "", urls: list[str] | None
     try:
         payload = payload or {}
         brand, proj = _made_brand_project(payload, house)
+        # Phase 2 — record the approved provocation this piece stood on, resolved the same way the
+        # generation routes do (`_prov_from`: only an approved provocation of the named house, honouring
+        # `use_provocation:false`). A piece that stood on nothing carries an empty label, which is true.
+        prov_label, prov_id = "", ""
+        try:
+            prov = _prov_from(payload)
+            if prov:
+                prov_id = str(prov.get("id") or "").strip()
+                nm = str(prov.get("name") or "").strip()
+                line = str((prov.get("core") or {}).get("line") or "").strip()
+                prov_label = (f"{nm} — {line}" if (nm and line) else (nm or line))[:200]
+        except Exception:
+            pass
         targets = [u for u in (urls or [url]) if u] or [""]
         for u in targets:
             made.record(kind, title, url=u, ref_kind=ref_kind, ref_id=ref_id, brand=brand,
-                        project=proj, made_by=str(payload.get("who") or ""), route=route, note=note)
+                        project=proj, made_by=str(payload.get("who") or ""), route=route, note=note,
+                        provocation=prov_label, provocation_id=prov_id)
     except Exception as e:
         print(f"[made] record failed for {route!r}: {e}", file=sys.stderr, flush=True)
 

@@ -45,6 +45,21 @@ def test_record_and_list_round_trip():
     _clear()
 
 
+def test_provocation_is_recorded_on_the_row_and_defaults_empty():
+    # Phase 2 — the approved provocation a piece stood on is persisted on its row (name + line + id),
+    # and a piece that stood on nothing carries empty strings rather than a missing key.
+    _clear()
+    stood = made.record("scene_still", "A disruptive still", url="/media/p.jpg",
+                        provocation="The Quiet Rebellion — stop performing purity", provocation_id="abc123")
+    plain = made.record("scene_still", "A plain still", url="/media/q.jpg")
+    rows = made.list_entries("scene_still")
+    got = {r["id"]: r for r in rows}
+    assert got[stood["id"]]["provocation"] == "The Quiet Rebellion — stop performing purity"
+    assert got[stood["id"]]["provocation_id"] == "abc123"
+    assert got[plain["id"]]["provocation"] == "" and got[plain["id"]]["provocation_id"] == ""
+    _clear()
+
+
 def test_approve_hides_from_default_listing_but_keeps_the_row():
     _clear()
     row = made.record("posm_hero", "Test hero cutout", url="/media/a.jpg")

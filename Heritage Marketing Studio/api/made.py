@@ -72,7 +72,7 @@ def _save(rows: list[dict]) -> None:
 
 def record(kind: str, title: str, *, url: str = "", ref_kind: str = "", ref_id: str = "",
            brand: str = "", project: str = "", made_by: str = "", route: str = "",
-           note: str = "") -> dict:
+           note: str = "", provocation: str = "", provocation_id: str = "") -> dict:
     """Record one thing the studio produced. Returns the row.
 
     `kind` and `title` are the only things a caller must supply — everything else this app already
@@ -81,6 +81,12 @@ def record(kind: str, title: str, *, url: str = "", ref_kind: str = "", ref_id: 
     `"brief"`/`<id>`) rather than a dedicated field per possible parent — most generation routes in this
     app don't operate against any single parent document at all, so a field that's usually empty isn't
     worth naming specially.
+
+    `provocation` is the short human label of the approved provocation the piece stood on (its name and
+    the line it departed on), with `provocation_id` the exact record it resolves to — the provenance the
+    Phase 2 work records on the saved piece so "what it has made" can show that a disruptive piece was a
+    deliberate, approved departure, not a stray render. Both default empty: a piece that stood on nothing
+    (Independent, or no provocation picked) carries no label, which is the true answer.
     """
     kind = str(kind or "").strip()
     title = str(title or "").strip()
@@ -90,6 +96,7 @@ def record(kind: str, title: str, *, url: str = "", ref_kind: str = "", ref_id: 
         "id": uuid.uuid4().hex[:12], "kind": kind, "title": title, "url": url,
         "ref_kind": ref_kind, "ref_id": ref_id, "brand": brand, "project": project,
         "made_by": made_by or "Unattributed", "route": route, "note": note,
+        "provocation": str(provocation or "").strip(), "provocation_id": str(provocation_id or "").strip(),
         "made_at": _now(),
         "approved": False, "approved_at": "", "approved_by": "", "approved_into": "",
     }
