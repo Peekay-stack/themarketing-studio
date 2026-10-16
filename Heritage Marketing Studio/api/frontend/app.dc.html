@@ -3546,7 +3546,7 @@
   </div>
   </sc-if>
 
-  <!-- ===================== CUT, GRADE & SOUND ===================== -->
+  <!-- ===================== EDIT ROOM (was "Cut, grade & sound"; evolving into the full editor — board item 5) ===================== -->
   <!-- Operates on a cut that already exists: an addressable manifest of beats/tracks/grade, not a
        rendered file. Every edit is priced before it commits — propose writes nothing, commit makes v+1. -->
   <sc-if value="{{ isCraft }}" hint-placeholder-val="{{ false }}">
@@ -3560,7 +3560,7 @@
       </sc-for>
     </div>
     <div style="margin-bottom:8px; font-size:13px; font-weight:700; letter-spacing:0.06em; color:#F0561E; text-transform:uppercase;">Production</div>
-    <h1 style="font-family:'Epilogue',sans-serif; font-size:34px; font-weight:700; letter-spacing:-0.02em; margin:0 0 6px; color:#17325E;">Cut, grade &amp; sound</h1>
+    <h1 style="font-family:'Epilogue',sans-serif; font-size:34px; font-weight:700; letter-spacing:-0.02em; margin:0 0 6px; color:#17325E;">Edit room</h1>
     <div style="font-size:14.5px; color:#6B7280; max-width:720px; margin-bottom:22px; text-wrap:pretty;">The approved film as an addressable manifest, not a rendered file. Every change is priced before anything re-renders — reorder and retime for free, a new render only for the beats that actually need one.</div>
 
     <sc-if value="{{ noCut }}" hint-placeholder-val="{{ true }}">
@@ -18750,7 +18750,7 @@ class Component extends DCLogic {
       planShots:this.planShots, addShot:this.addShot, callSheet:this.callSheet,
       handoffShots:this.handoffShots, editShot:this.editShot,
       shotsPlanLabel: this.shots().length ? 'Re-plan from the script' : 'Plan the shots',
-      videoTabs: [['film','Film','Objective, script, storyboard, render'],['shots','Live action','Plan the shoot, attach the takes, sign them off'],['craft','Cut, grade & sound','Edit the approved cut, apply a look, mix the audio'],['comp','Compositor','Key a green screen onto a plate']]
+      videoTabs: [['film','Film','Objective, script, storyboard, render'],['shots','Live action','Plan the shoot, attach the takes, sign them off'],['craft','Edit room','Edit the finalised film — durations, shots, look and sound'],['comp','Compositor','Key a green screen onto a plate']]
         .map(([k,label,sub]) => ({ label, sub, go:this.goVideoTab(k),
           fg: (s.vTab||'film')===k ? '#17325E' : '#6B7280',
           subFg: (s.vTab||'film')===k ? '#41505F' : '#9AA1AC',
