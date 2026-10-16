@@ -3613,12 +3613,18 @@
 
         <div style="margin-top:16px; padding-top:14px; border-top:1px dashed #E6E3DC;">
           <div style="font-family:'Epilogue',sans-serif; font-weight:700; font-size:14px; color:#17325E; margin-bottom:4px;">Make a cutdown</div>
-          <div style="font-size:12px; color:#6B7280; margin-bottom:10px; text-wrap:pretty;">Free — the clips already exist on disk, so this re-cuts and never re-renders.</div>
+          <div style="font-size:12px; color:#6B7280; margin-bottom:10px; text-wrap:pretty;">Pick a length — the key message is kept first (hook, turn and sign-off never drop); supporting beats drop in order. Free: the clips already exist on disk, so this re-cuts and never re-renders.</div>
           <sc-if value="{{ hasNeverDropped }}" hint-placeholder-val="{{ false }}">
             <div style="font-size:11.5px; color:#9AA1AC; margin-bottom:10px;">Never dropped: {{ neverDroppedList }} — below three beats there is no film left to cut down, only footage.</div>
           </sc-if>
+          <!-- Phase 1 (1a): the ad-standard duration ladder. -->
+          <div style="display:flex; gap:7px; flex-wrap:wrap; margin-bottom:10px;">
+            <sc-for list="{{ cutdownLadder }}" as="rung" hint-placeholder-count="6">
+              <button onClick="{{ rung.go }}" style="background:{{ rung.bg }}; color:{{ rung.fg }}; border:1px solid {{ rung.line }}; border-radius:9px; padding:7px 14px; font-weight:700; font-size:12.5px; cursor:pointer; font-family:inherit;">{{ rung.label }}</button>
+            </sc-for>
+          </div>
           <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:10px;">
-            <input value="{{ cutdownTarget }}" onChange="{{ onCutdownTarget }}" type="number" step="1" placeholder="target seconds" style="width:140px; border:1px solid #DDD9D1; border-radius:9px; padding:8px 11px; font-size:12.5px; color:#17325E; background:#fff; font-family:inherit;" />
+            <input value="{{ cutdownTarget }}" onChange="{{ onCutdownTarget }}" type="number" step="1" placeholder="or a custom target in seconds" style="width:200px; border:1px solid #DDD9D1; border-radius:9px; padding:8px 11px; font-size:12.5px; color:#17325E; background:#fff; font-family:inherit;" />
             <button onClick="{{ previewCutdown }}" style="background:#fff; color:#17325E; border:1px solid #C9CEDA; border-radius:10px; padding:8px 15px; font-weight:700; font-size:12.5px; cursor:pointer;">{{ cutdownPreviewLabel }}</button>
           </div>
           <sc-if value="{{ hasCutdownPreview }}" hint-placeholder-val="{{ false }}">
@@ -17134,6 +17140,12 @@ class Component extends DCLogic {
 
   // ---------- the cut: an addressable manifest, priced before anything re-renders ----------
   // ---------- the cutdown: drop whole beats in role order, never re-render ----------
+  // Phase 1 (1a) — the fixed duration ladder the owner asked for (45/30/20/15/10/6s): the standard ad
+  // lengths as first-class buttons. Picking one sets the target and previews the cutdown straight away;
+  // the free-entry box below stays for an odd target. Key-message priority is the server's job
+  // (cutdown_plan protects hook/turn/brand) — these buttons only choose the rung.
+  CUTDOWN_LADDER = [45, 30, 20, 15, 10, 6];
+  cutdownTo = (secs) => () => this.setState({ cutdownTarget:String(secs), cutdownPreview:null }, this.previewCutdown);
   onCutdownTarget = (e) => this.setState({ cutdownTarget:e.target.value, cutdownPreview:null });
   previewCutdown = async () => {
     const d = this.cutDraft(), secs = parseFloat(this.state.cutdownTarget);
@@ -17740,6 +17752,13 @@ class Component extends DCLogic {
         return 'Plan comes to ' + total + 's, not the ' + bp.asked + 's asked \u2014 clips render at 4, 6 or 8s.'; })(),
       // cutdown
       onCutdownTarget: this.onCutdownTarget, cutdownTarget: s.cutdownTarget || '',
+      // Phase 1 (1a) \u2014 the duration ladder rungs, each an ad-standard length with its own preview action.
+      cutdownLadder: this.CUTDOWN_LADDER.map(secs => {
+        const active = String(s.cutdownTarget || '') === String(secs);
+        return { label: secs + 's', secs, go: this.cutdownTo(secs),
+          bg: active ? '#17325E' : '#fff', fg: active ? '#F7F5F1' : '#17325E',
+          line: active ? '#17325E' : '#C9CEDA' };
+      }),
       previewCutdown: this.previewCutdown, cutdownPreviewLabel: s.cutdownBusy ? 'Checking\u2026' : 'Preview cutdown',
       hasCutdownPreview: !!s.cutdownPreview,
       cutdownSeconds: s.cutdownPreview ? s.cutdownPreview.seconds : '',
