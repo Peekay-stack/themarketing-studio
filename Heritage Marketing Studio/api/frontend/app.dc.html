@@ -3652,11 +3652,46 @@
                   </sc-if>
                 </div>
               </div>
-              <button onClick="{{ commitCutdown }}" style="margin-top:12px; background:#17325E; color:#F7F5F1; border:none; border-radius:10px; padding:9px 16px; font-weight:700; font-size:12.5px; cursor:pointer;">Apply to the beats above</button>
+              <div style="display:flex; gap:9px; flex-wrap:wrap; margin-top:12px;">
+                <button onClick="{{ commitCutdown }}" style="background:#fff; color:#17325E; border:1px solid #C9CEDA; border-radius:10px; padding:9px 16px; font-weight:700; font-size:12.5px; cursor:pointer;">Trim-only (apply to the beats above)</button>
+                <!-- Phase 1b: the crafted path — re-script the survivors to the new clock, review, then freeze & render. -->
+                <button onClick="{{ rescriptCutdown }}" style="background:#17325E; color:#F7F5F1; border:none; border-radius:10px; padding:9px 16px; font-weight:700; font-size:12.5px; cursor:pointer;">{{ rescriptCutdownLabel }}</button>
+              </div>
             </div>
           </sc-if>
         </div>
       </div>
+
+      <!-- Phase 1b: the derived shorter script — review & edit before it is frozen and rendered (1c/1d). -->
+      <sc-if value="{{ hasCutdownRescript }}" hint-placeholder-val="{{ false }}">
+      <div style="background:#fff; border:1px solid #C9D6EC; border-radius:16px; padding:22px 24px; margin-bottom:16px;">
+        <div style="display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; margin-bottom:4px;">
+          <span style="font-family:'Epilogue',sans-serif; font-weight:700; font-size:18px; color:#17325E;">{{ cutdownRescriptTarget }}s cut — review the script</span>
+          <span style="font-size:12px; color:#6B7280;">derived from the {{ cutdownRescriptFrom }} master · the master is untouched</span>
+          <span onClick="{{ discardCutdownRescript }}" style="margin-left:auto; cursor:pointer; font-size:12px; font-weight:700; color:#C0392B;">Discard</span>
+        </div>
+        <div style="font-size:12.5px; color:#6B7280; margin-bottom:14px; text-wrap:pretty;">The key message is kept (hook, turn, sign-off) and the survivors are rewritten to the new length. Edit the spoken line or on-screen super on any scene. Re-synthesising the voice and rendering this cut land in the next build.</div>
+        <sc-for list="{{ cutdownRescriptRows }}" as="cr" hint-placeholder-count="3">
+          <div style="border:1px solid #E6E3DC; border-radius:11px; padding:12px 14px; margin-bottom:10px; background:#FBFAF8;">
+            <div style="display:flex; gap:10px; align-items:baseline; margin-bottom:7px;">
+              <span style="font-size:11px; font-weight:800; color:#2E5EA6;">{{ cr.no }}</span>
+              <span style="font-size:11.5px; font-weight:700; color:#17325E;">{{ cr.tc }}</span>
+              <span style="font-size:12px; color:#6B7280; flex:1; min-width:0; text-wrap:pretty;">{{ cr.visual }}</span>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+              <div>
+                <div style="font-size:10.5px; font-weight:800; letter-spacing:0.04em; text-transform:uppercase; color:#9AA1AC; margin-bottom:4px;">Spoken line</div>
+                <textarea value="{{ cr.dialogue }}" onChange="{{ cr.onDialogue }}" rows="2" placeholder="(no speech this scene)" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:7px 9px; font-size:12.5px; line-height:1.5; color:#17325E; background:#fff; resize:vertical; font-family:inherit;"></textarea>
+              </div>
+              <div>
+                <div style="font-size:10.5px; font-weight:800; letter-spacing:0.04em; text-transform:uppercase; color:#9AA1AC; margin-bottom:4px;">On-screen super</div>
+                <textarea value="{{ cr.supr }}" onChange="{{ cr.onSupr }}" rows="2" placeholder="(no super this scene)" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:7px 9px; font-size:12.5px; line-height:1.5; color:#17325E; font-weight:600; background:#fff; resize:vertical; font-family:inherit;"></textarea>
+              </div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      </sc-if>
 
       <div style="background:#fff; border:1px solid #DDD9D1; border-radius:16px; padding:22px 24px; margin-bottom:16px;">
         <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:5px;">
@@ -11655,6 +11690,12 @@ class Component extends DCLogic {
     scriptPhase: 'concept',        // concept | script
     scriptStatus: 'none',          // none | concept | drafted | approved
     fullScript: null,              // [{no,tc,visual,camera,dialogue,supr}]
+    // Phase 1b — a derived shorter script for a chosen cutdown length. NEVER overwrites fullScript (the
+    // master film's script): a duration cut is a deliverable derived from the master, not a replacement.
+    // { target, fromDuration, rows:[{no,tc,visual,camera,dialogue,supr,audio}] }. Reviewed/edited here,
+    // then (1c) VO re-synth and (1d) freeze -> render.
+    cutdownRescript: null,
+    cutdownRescriptBusy: false,
     scriptWriting: false,
     rewritingScene: null,
     sceneFrames: {},               // { [idx]: {status:'idle|rendering|done|error', url} }
@@ -17169,6 +17210,42 @@ class Component extends DCLogic {
     this.setState({ cutDraft: { ...d, beats:newBeats }, cutPropose:null, cutdownPreview:null, cutdownTarget:'' });
     this.showToast('Cutdown applied to the beats above \u2014 review and commit when ready.', 'ok');
   };
+  // Phase 1b \u2014 re-script a cutdown into a coherent shorter film, held as a DERIVED draft that NEVER
+  // overwrites fullScript (the master). This is the owner's "duration cuts go through script/storyboard
+  // and freeze before rendering" step: the model keeps the key message (hook, turn, sign-off) and drops
+  // supporting scenes, rewriting the survivors to the new clock so the result reads as a crafted Ns film,
+  // not a truncation. Mirrors reworkScript's generation contract. The reviewed draft feeds 1c (VO
+  // re-synth) and 1d (freeze -> render).
+  rescriptCutdown = (secs) => async () => {
+    const target = parseInt(secs, 10);
+    const master = this.state.fullScript;
+    if (!master || !master.length) { this.showToast('Write the full script first \u2014 a cutdown is derived from it.'); return; }
+    if (!(target > 0) || this.state.cutdownRescriptBusy) return;
+    const estScenes = Math.max(2, Math.round(target / 6));   // ~6s/scene, only to size the per-scene speech budget
+    this.setState({ cutdownRescriptBusy:true, cutdownRescript:null });
+    let rows = null;
+    if (window.claude && window.claude.complete) {
+      try {
+        const prompt = 'Cut this ' + (this.brandRef() || 'brand') + ' commercial down to a crafted ' + target + '-second version. CURRENT SCRIPT ROWS: ' + JSON.stringify(this.scriptForPrompt(master)) + '. Keep the KEY MESSAGE: the opening hook, the turn, and the brand sign-off (the pack-shot scene and its super) must survive. Drop the supporting scenes that only add texture. Rewrite the surviving scenes so the whole reads as a deliberate ' + target + 's film, not a truncated one \u2014 a very short cut is a hook, one line, and the sign-off. Keep the same row shape and keep the pack-shot super on the scene that carries it \u2014 do not invent or substitute another brand\u2019s line. Give timecodes that run continuously from 0s to ' + target + 's. EVERY row keeps its "audio" array in sync with the revised dialogue \u2014 "text" holds ONLY spoken words (no speaker names, stage directions, SFX or on-screen text), "speaker" the character, "emotion" the performance note, and type is "vo" for narration or "dialogue" for a character. Any non-English spoken line \u2014 the "text" of each "audio" entry and the "dialogue" cell \u2014 is written in its own native script (Telugu in Telugu script), never romanised; in the "dialogue" cell add a short romanised gloss in round brackets. ' + this.voBudgetNote(target + 's', estScenes) + ' Return ONLY JSON: {"rows":[{"no":1,"tc":"0\u20135s","visual":"...","camera":"...","dialogue":"...","supr":"...","audio":[{"type":"vo","emotion":"warm","language":"en","text":"spoken words only"}]}]}';
+        let raw = await this.complete(prompt, this.videoExtra());
+        raw = String(raw).trim().replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();
+        const data = JSON.parse(raw.slice(raw.indexOf('{'), raw.lastIndexOf('}')+1));
+        if (data.rows && data.rows.length) rows = data.rows;
+      } catch (e) {}
+    }
+    if (!rows) { this.setState({ cutdownRescriptBusy:false }); this.showToast('Couldn\u2019t re-script that cutdown \u2014 nothing changed.'); return; }
+    this.setState({ cutdownRescriptBusy:false, cutdownPreview:null,
+      cutdownRescript:{ target, fromDuration:this.state.prodDuration, rows } });
+    this.showToast(target + 's cut drafted \u2014 review the lines below. (VO re-synth and render land in the next build.)', 'ok');
+  };
+  // Inline edit of a derived cutdown row (its spoken dialogue / on-screen super) \u2014 touches the draft only,
+  // never the master fullScript.
+  editCutdownRow = (idx, field) => (e) => {
+    const val = e.target.value;
+    this.setState(s => s.cutdownRescript ? { cutdownRescript: { ...s.cutdownRescript,
+      rows: (s.cutdownRescript.rows || []).map((r,i) => i===idx ? { ...r, [field]:val } : r) } } : {});
+  };
+  discardCutdownRescript = () => this.setState({ cutdownRescript:null });
   // The film's cut belongs to the FILM. This resolved `(this.state.execs||{}).social`, which is wrong
   // two ways at once: with a Social execution briefed, the Video tab's cut editor silently read and
   // WROTE the social execution's cut history — film versions landing in another producer's file; with
@@ -17771,6 +17848,16 @@ class Component extends DCLogic {
       hasNeverDropped: !!(s.cutdownPreview && (s.cutdownPreview.never_dropped || []).length),
       neverDroppedList: s.cutdownPreview ? (s.cutdownPreview.never_dropped || []).join(', ') : '',
       commitCutdown: this.commitCutdown,
+      // Phase 1b — re-script a cutdown (crafted path) + the derived-draft review panel.
+      rescriptCutdown: this.rescriptCutdown(s.cutdownTarget),
+      rescriptCutdownLabel: s.cutdownRescriptBusy ? 'Re-scripting…' : ('Re-script as a crafted ' + (s.cutdownTarget || '') + 's cut →'),
+      hasCutdownRescript: !!s.cutdownRescript,
+      cutdownRescriptTarget: s.cutdownRescript ? s.cutdownRescript.target : '',
+      cutdownRescriptFrom: s.cutdownRescript ? s.cutdownRescript.fromDuration : '',
+      cutdownRescriptRows: (s.cutdownRescript ? (s.cutdownRescript.rows || []) : []).map((r, i) => ({
+        no: r.no, tc: r.tc, visual: r.visual || '', dialogue: r.dialogue || '', supr: r.supr || '',
+        onDialogue: this.editCutdownRow(i, 'dialogue'), onSupr: this.editCutdownRow(i, 'supr') })),
+      discardCutdownRescript: this.discardCutdownRescript,
       // continuity check: provenance (cause) rendered before drift (symptom), per the ask
       checkContinuity: this.checkContinuity, continuityLabel: s.continuityBusy ? 'Checking\u2026' : 'Check continuity',
       hasContinuityCheck: !!s.continuityCheck,
