@@ -6953,9 +6953,14 @@
             </sc-if>
             <!-- creative visual -->
             <div style="position:relative; aspect-ratio:1/1; background:{{ p.visualBg }}; display:flex; flex-direction:column; justify-content:flex-end; padding:18px; overflow:hidden;">
-              <!-- Live-tested finding (21 Sep): white-on-16%-white was unreadable over bright kitchen photos.
-                   A dark translucent chip holds up on any background, light or dark. -->
-              <div style="position:absolute; left:16px; top:16px; background:rgba(15,26,43,0.62); color:#fff; font-size:11px; font-weight:700; letter-spacing:0.04em; padding:4px 10px; border-radius:20px;">{{ p.ideaBadge }}</div>
+              <!-- The post's OWN message, overlaid on its image like a carousel slide's headline (owner 16 Oct):
+                   not the fixed brand idea that used to sit here. A gradient scrim carries it legibly over any photo,
+                   bold white Epilogue on top — it is literally the headline string, so nothing can be misspelt. -->
+              <sc-if value="{{ p.showHeadline }}" hint-placeholder-val="{{ true }}">
+                <div style="position:absolute; left:0; right:0; bottom:0; padding:26px 16px 16px; background:linear-gradient(to top, rgba(0,0,0,0.74), transparent);">
+                  <div style="font-family:'Epilogue',sans-serif; font-size:15px; font-weight:700; color:#fff; line-height:1.3; text-wrap:balance;">{{ p.headline }}</div>
+                </div>
+              </sc-if>
               <sc-if value="{{ p.noImage }}" hint-placeholder-val="{{ true }}">
                 <div style="position:absolute; right:-30px; top:-30px; width:140px; height:140px; border-radius:50%; background:rgba(240,86,30,0.22);"></div>
                 <div style="position:relative; color:rgba(255,255,255,0.9); font-size:12px; line-height:1.45;"><span style="font-weight:700; color:#F5C86E;">Key visual:</span> {{ p.visual }}</div>
@@ -14426,11 +14431,11 @@ class Component extends DCLogic {
     if (!note) { this.showToast('Add a note describing what to change.'); return; }
     this.setState({ socialReworking:true });
     const current = {};
-    this.state.posts.forEach(p => { current[p.platform] = { caption:p.caption, hashtags:p.hashtags, visual:p.visual }; });
+    this.state.posts.forEach(p => { current[p.platform] = { caption:p.caption, hashtags:p.hashtags, visual:p.visual, headline:p.headline }; });
     let data = null;
     if (window.claude && window.claude.complete) {
       try {
-        const prompt = 'Revise these existing ' + (this.brandRef() || 'brand') + ' social posts per the instruction.' + ' INSTRUCTION: "' + note + '". CURRENT POSTS: ' + JSON.stringify(current) + '. Return ONLY the same JSON shape with the revised posts; keep the platform keys identical.';
+        const prompt = 'Revise these existing ' + (this.brandRef() || 'brand') + ' social posts per the instruction.' + ' INSTRUCTION: "' + note + '". CURRENT POSTS: ' + JSON.stringify(current) + '. Return ONLY the same JSON shape with the revised posts; keep the platform keys identical. "headline" is the ONE line shown ON the image itself (this post’s single message in the viewer’s own words, at most 8 words) — keep it in step with any caption or visual change; it is NOT the brand tagline and NOT the caption repeated.';
         const execId1 = (this.currentExec() || {}).id;
         const h1 = this.state.house;
         // Round 92: threaded the same force_typed/skip_mandatories generateSocial already sends — this
@@ -14453,7 +14458,7 @@ class Component extends DCLogic {
         const d = data[p.platform]; if (!d) return p;
         const visual = d.visual || p.visual;
         if (visual !== p.visual) changed.push(p.id);
-        return { ...p, caption: d.caption || p.caption, hashtags: d.hashtags || p.hashtags, visual };
+        return { ...p, caption: d.caption || p.caption, hashtags: d.hashtags || p.hashtags, visual, headline: d.headline || p.headline };
       }),
     }), () => {
       if (changed.length) {
@@ -14477,7 +14482,7 @@ class Component extends DCLogic {
     const post = this.state.posts.find(p => p.id === id);
     if (!post) return;
     this.setState({ socialAdjustingId: id });
-    const current = { caption:post.caption, hashtags:post.hashtags, visual:post.visual };
+    const current = { caption:post.caption, hashtags:post.hashtags, visual:post.visual, headline:post.headline };
     let data = null;
     if (window.claude && window.claude.complete) {
       try {
@@ -14489,7 +14494,7 @@ class Component extends DCLogic {
         // it's actually good at; asking it to reproduce text exactly is not. `socialAssetAnchor()` is
         // the other half of the same live finding — without it, an adjustment could drift the caption
         // (and then the image) onto a different real SKU than the one actually pinned by reference.
-        const prompt = 'Revise this one existing ' + (this.brandRef() || 'brand') + ' social post per the instruction, keeping everything else about it the same otherwise.' + this.socialAssetAnchor() + ' INSTRUCTION: "' + note + '". CURRENT POST: ' + JSON.stringify(current) + '. Return ONLY JSON: {"caption":string,"hashtags":string,"visual":string,"visual_changed":boolean}. Set visual_changed to true ONLY if the instruction actually calls for something different in the image itself (a different scene, subject, composition or style) — if the instruction is about the caption, hook or hashtags only, set visual_changed to false and return "visual" completely unchanged from CURRENT POST.';
+        const prompt = 'Revise this one existing ' + (this.brandRef() || 'brand') + ' social post per the instruction, keeping everything else about it the same otherwise.' + this.socialAssetAnchor() + ' INSTRUCTION: "' + note + '". CURRENT POST: ' + JSON.stringify(current) + '. Return ONLY JSON: {"caption":string,"hashtags":string,"visual":string,"headline":string,"visual_changed":boolean}. "headline" is the ONE line shown ON the image itself (this post’s single message in the viewer’s own words, at most 8 words, NOT the brand tagline and NOT the caption repeated) — keep it unchanged unless the instruction calls for a different on-image message. Set visual_changed to true ONLY if the instruction actually calls for something different in the image itself (a different scene, subject, composition or style) — if the instruction is about the caption, hook or hashtags only, set visual_changed to false and return "visual" completely unchanged from CURRENT POST.';
         const execId1 = (this.currentExec() || {}).id;
         const h1 = this.state.house;
         // Round 92: same force_typed/skip_mandatories generateSocial/reworkPosts send.
@@ -14513,7 +14518,7 @@ class Component extends DCLogic {
       socialAdjustNotes: { ...s.socialAdjustNotes, [id]: '' },
       posts: s.posts.map(p => p.id === id
         ? { ...p, caption: data.caption || p.caption, hashtags: data.hashtags || p.hashtags,
-            visual: data.visual || p.visual, imageUrl: visualChanged ? '' : p.imageUrl }
+            visual: data.visual || p.visual, headline: data.headline || p.headline, imageUrl: visualChanged ? '' : p.imageUrl }
         : p),
     }), () => {
       // When the image genuinely is being redone, carry the post's own previous render forward as an
@@ -15038,6 +15043,7 @@ class Component extends DCLogic {
       handle: this.platHandle(plat), sub: m.sub,
       isFacebook: plat==='facebook', isInstagram: plat==='instagram', isLinkedin: plat==='linkedin',
       caption: data.caption || '', hashtags: data.hashtags || '', visual: data.visual || ((this.brandName() || 'The brand') + ' key visual'),
+      headline: (data.headline || '').trim(),
       refusal: data.refusal || '', hasRefusal: !!data.refusal,
       job: data.job || '', hasJob: !!(data.job || '').trim(),
       packRole: this.normPackRole(data.pack), packSource: '', packStale: false,
@@ -15080,7 +15086,7 @@ class Component extends DCLogic {
       // platform was never a choice anybody made; it was the shape asking for one.
       const pre = this.brandPreamble('a senior social media writer', this.state.producerBrandMode === 'general');
       if (!pre) { this.showToast(this.BRAND_PREAMBLE_MISSING); this.setState({ socialGenerating:false }); return; }
-      const prompt = `${pre}\n\nCampaign objective: "${obj}".${ctx}${assetAnchor}${kit} Write platform-adapted posts for exactly these platforms: ${plats.join(', ')}. Return ONLY a JSON object (no markdown) whose keys are the platform names, each value an ARRAY of exactly 3 post objects {"job": one of "recruit"|"prove"|"occasion", "caption": string, "hashtags": "#a #b #c", "visual": "one short line describing the key visual", "pack": "side"|"hero"|"in_use"|"none"}. The three must do different jobs, not say the same thing three ways: "recruit" brings a new person in, "prove" makes the claim checkable, "occasion" belongs to a moment in the year or the day. "pack" says how the product pack appears in that post\u2019s image: "side" (the default \u2014 beside the main subject), "hero" (only when the image is about the pack itself), "in_use" (only when the scene truly needs the pack opened or poured), or "none" (only when the post\u2019s job is not the product, such as recruiting people or a festival greeting, where a pack would look forced). Prefer "side". In each "visual", describe the scene only: never ask for the back or side of the pack, its nutrition panel or its ingredients, and never describe opening, pouring from or holding the pack unless "pack" is "in_use" — the studio places the one real pack itself. Facebook: warm, community, a little longer. Instagram: punchy, sensory, minimal emoji. LinkedIn: professional, purpose-led, no emoji.`;
+      const prompt = `${pre}\n\nCampaign objective: "${obj}".${ctx}${assetAnchor}${kit} Write platform-adapted posts for exactly these platforms: ${plats.join(', ')}. Return ONLY a JSON object (no markdown) whose keys are the platform names, each value an ARRAY of exactly 3 post objects {"job": one of "recruit"|"prove"|"occasion", "headline": string, "caption": string, "hashtags": "#a #b #c", "visual": "one short line describing the key visual", "pack": "side"|"hero"|"in_use"|"none"}. "headline" is the ONE line shown ON the image itself — this post's single message in the viewer's own words, at most 8 words; it is NOT the brand tagline, NOT hashtags, and NOT the caption repeated — the image carries this line and the caption expands on it. The three must do different jobs, not say the same thing three ways: "recruit" brings a new person in, "prove" makes the claim checkable, "occasion" belongs to a moment in the year or the day. "pack" says how the product pack appears in that post\u2019s image: "side" (the default \u2014 beside the main subject), "hero" (only when the image is about the pack itself), "in_use" (only when the scene truly needs the pack opened or poured), or "none" (only when the post\u2019s job is not the product, such as recruiting people or a festival greeting, where a pack would look forced). Prefer "side". In each "visual", describe the scene only: never ask for the back or side of the pack, its nutrition panel or its ingredients, and never describe opening, pouring from or holding the pack unless "pack" is "in_use" — the studio places the one real pack itself. Facebook: warm, community, a little longer. Instagram: punchy, sensory, minimal emoji. LinkedIn: professional, purpose-led, no emoji.`;
       // 29 Sep (part 2): house_id — see the bridge script's own comment on why this previously never
       // reached the server at all, and prompts.plan_channels_block's own note on the real bug it closes.
       const h0 = this.state.house;
@@ -17957,7 +17963,9 @@ class Component extends DCLogic {
 
     // ---- social posts display ----
     const posts = s.posts.map(p => ({ ...p,
-      ideaBadge: this.brandIdea(), hasIdeaBadge: !!this.brandIdea(),
+      // The post's OWN message, overlaid on its image like a carousel slide's headline — replaces the fixed
+      // brand idea that used to sit on every post (owner 16 Oct: the image should carry the post's message).
+      showHeadline: !!(p.headline && p.imageUrl),
       noImage: !p.imageUrl,
       visualBg: p.imageUrl ? ("url('" + p.imageUrl + "') center/cover no-repeat")
                            : 'linear-gradient(150deg,#2E5EA6,#12294B)',
