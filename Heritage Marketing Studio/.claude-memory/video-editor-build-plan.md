@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: fcd137c0-c85a-447d-9d35-c10659cecac7
-  modified: 2026-10-16T06:12:05.403Z
+  modified: 2026-10-16T06:37:27.814Z
 ---
 
 **Board item 5 (Round 31) — the video editor for a finalised film.** Owner spec (16 Oct), approved to build; evolve the EXISTING `craft` tab into it (NOT a new tab — see below). See [[round31-queue]].
@@ -24,4 +24,4 @@ metadata:
 - **Phase 4 (medium):** edit one scene/frame — regenerate a beat's clip via `/cut-propose`→`/cut-commit`, re-freeze, re-stitch (your #3).
 - **Phase 5 (medium):** Sound — music tempo+dynamics (crescendo/steady/fade) on `synth_music`/`music_prompt`, + mix controls (VO↔music balance, ducking depth, ambience level, foley spot place+gain, fades/in-out = one new ffmpeg `afade`, sign-off stinger) (your #4 + sound design).
 
-**STATUS:** approved 16 Oct, starting Phase 0→1.
+**STATUS:** approved 16 Oct. **Phase 0 + ALL of Phase 1 SHIPPED & LIVE (16 Oct).** Commits: Phase 0 rename fa3ce9b; 1a ladder 88b9313; 1b re-script 838781e; 1c+1d (per-shot stay + VO preview + freeze&render + Deliverables) 2f7d432. Where it lives: Edit room = the `craft` tab (key unchanged). The cutdown panel has the duration ladder; "Re-script as a crafted Ns cut" → a derived draft (`cutdownRescript` state, NEVER overwrites fullScript) shown in a review panel with per-scene editable spoken-line/super + per-shot `secs` stay (retimes tcs via `withCutTimecodes`); "Preview voices" (`previewCutVoices` → parameterised `voicePayload(rows, target)` → /voice-preview); "Freeze & render the Ns cut" (`renderCut` → /produce-video over the cut's own rows+target+master cast/look/voice context) → stored in `edits` (kind:'cutdown') + a Deliverables panel (inline video + download). made.record stamps provocation automatically. **NOT yet eyeballed on a LIVE cut** (needs a started film+cut, owner's session) — mirrors produceVideo/reworkScript patterns; render spends only on the owner's click. **v1 limitation (follow-on):** cut deliverables live in `edits` state (session), not persisted server-side; crafted render is frameless (continuity via character sheet + look ref, not per-cut storyboard frames) — a later finisher can add per-cut storyboard frames + a persisted deliverable store. **NEXT: Phase 2 (captions).**
