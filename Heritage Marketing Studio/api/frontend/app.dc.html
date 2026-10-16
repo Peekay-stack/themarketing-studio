@@ -3698,6 +3698,10 @@
         <div style="display:flex; gap:9px; align-items:center; flex-wrap:wrap; margin-top:4px;">
           <button onClick="{{ previewCutVoices }}" style="background:#fff; color:#1E7E34; border:1px solid #C9E3CD; border-radius:10px; padding:9px 16px; font-weight:700; font-size:12.5px; cursor:pointer;">{{ cutVoiceLabel }}</button>
           <button onClick="{{ renderCut }}" style="background:#17325E; color:#F7F5F1; border:none; border-radius:10px; padding:9px 16px; font-weight:700; font-size:12.5px; cursor:pointer;">{{ renderCutLabel }}</button>
+          <!-- Phase 2 — burn captions (sound-off) into the rendered cut. -->
+          <label style="display:inline-flex; align-items:center; gap:6px; font-size:12px; color:#41505F; cursor:pointer;">
+            <input type="checkbox" checked="{{ cutCaptions }}" onChange="{{ onToggleCutCaptions }}" /> Burn captions (sound-off)
+          </label>
           <span style="font-size:11.5px; color:#9AA1AC;">Rendering spends on the video engine — only this cut, from its own clips and script.</span>
         </div>
         <sc-if value="{{ hasCutVoice }}" hint-placeholder-val="{{ false }}">
@@ -3714,9 +3718,20 @@
         <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:14px;">
           <sc-for list="{{ cutDeliverables }}" as="cd" hint-placeholder-count="0">
             <div style="border:1px solid #E6E3DC; border-radius:12px; padding:12px; background:#FBFAF8;">
-              <div style="font-size:13px; font-weight:700; color:#17325E; margin-bottom:6px;">{{ cd.label }}</div>
+              <div style="display:flex; align-items:center; gap:7px; margin-bottom:6px;">
+                <span style="font-size:13px; font-weight:700; color:#17325E;">{{ cd.label }}</span>
+                <sc-if value="{{ cd.captioned }}" hint-placeholder-val="{{ false }}">
+                  <span style="font-size:10px; font-weight:800; letter-spacing:0.03em; color:#1E7E34; background:#EAF6EC; border-radius:6px; padding:2px 7px;">CAPTIONS</span>
+                </sc-if>
+              </div>
               {{ cd.video }}
-              <div style="margin-top:8px;"><a href="{{ cd.url }}" download style="font-size:12px; font-weight:700; color:#2E5EA6; text-decoration:none;">Download</a><span style="font-size:11px; color:#9AA1AC; margin-left:8px;">{{ cd.at }}</span></div>
+              <div style="margin-top:8px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                <a href="{{ cd.url }}" download style="font-size:12px; font-weight:700; color:#2E5EA6; text-decoration:none;">Download</a>
+                <sc-if value="{{ cd.showCaption }}" hint-placeholder-val="{{ false }}">
+                  <span onClick="{{ cd.caption }}" style="cursor:pointer; font-size:12px; font-weight:700; color:#17325E;">{{ cd.captionLabel }}</span>
+                </sc-if>
+                <span style="font-size:11px; color:#9AA1AC; margin-left:auto;">{{ cd.at }}</span>
+              </div>
             </div>
           </sc-for>
         </div>
@@ -11729,6 +11744,8 @@ class Component extends DCLogic {
     cutVoiceBusy: false,          // 1c — building the cut's voice preview
     cutVoiceUrl: null,            // 1c — the cut's soundtrack preview (no video rendered)
     cutRenderBusy: false,         // 1d — rendering the cut as a deliverable
+    cutCaptions: true,            // Phase 2 — burn captions (sound-off) when rendering the cut
+    cutCaptionBusyId: null,       // Phase 2 — a deliverable currently having captions added
     scriptWriting: false,
     rewritingScene: null,
     sceneFrames: {},               // { [idx]: {status:'idle|rendering|done|error', url} }
@@ -17321,9 +17338,33 @@ class Component extends DCLogic {
     const d = (r && r.data) || {};
     const url = (r && r.ok && d.video_url) ? d.video_url : null;
     if (!url) { this.setState({ cutRenderBusy:false }); this.showToast(d.detail || 'Couldn’t render the cut — see heritage-log.txt.'); return; }
+    // Phase 2 — burn captions (sound-off) if the toggle is on. A failed burn never loses the cut:
+    // we keep the clean render and say so.
+    let finalUrl = url, captioned = false;
+    if (this.state.cutCaptions) {
+      const cap = await this.apiCall('/burn-captions', { video_url:url, scenes:cr.rows });
+      if (cap && cap.ok && cap.data && cap.data.video_url) { finalUrl = cap.data.video_url; captioned = true; }
+      else this.showToast('Rendered, but captions couldn’t be burned — keeping the clean cut.', 'info');
+    }
     this.setState(s => ({ cutRenderBusy:false, cutdownRescript:null, cutVoiceUrl:null,
-      edits: [{ id:'cut-' + Date.now(), kind:'cutdown', target:cr.target, fromDuration:cr.fromDuration, url, at:'Just now' }, ...(s.edits || [])] }));
-    this.showToast(cr.target + 's cut rendered — see Deliverables below.', 'ok');
+      edits: [{ id:'cut-' + Date.now(), kind:'cutdown', target:cr.target, fromDuration:cr.fromDuration,
+                url:finalUrl, captioned, rows:cr.rows, at:'Just now' }, ...(s.edits || [])] }));
+    this.showToast(cr.target + 's cut rendered' + (captioned ? ' with captions' : '') + ' — see Deliverables below.', 'ok');
+  };
+  onToggleCutCaptions = (e) => this.setState({ cutCaptions: !!e.target.checked });
+  // Phase 2 — burn captions onto an already-rendered deliverable (uses the cut's stored rows for the
+  // spoken text + timing). Stored as a new captioned deliverable; the clean one stays.
+  captionDeliverable = (edit) => async () => {
+    if (!edit || !edit.url || this.state.cutCaptionBusyId) return;
+    if (!edit.rows || !edit.rows.length) { this.showToast('This deliverable has no script on file to caption from.'); return; }
+    this.setState({ cutCaptionBusyId: edit.id });
+    const cap = await this.apiCall('/burn-captions', { video_url:edit.url, scenes:edit.rows });
+    const cu = (cap && cap.data) || {};
+    if (!cap || !cap.ok || !cu.video_url) { this.setState({ cutCaptionBusyId:null }); this.showToast(cu.detail || 'Couldn’t burn captions for that cut.'); return; }
+    this.setState(s => ({ cutCaptionBusyId:null,
+      edits: [{ id:'cut-' + Date.now(), kind:'cutdown', target:edit.target, fromDuration:edit.fromDuration,
+                url:cu.video_url, captioned:true, rows:edit.rows, at:'Just now' }, ...(s.edits || [])] }));
+    this.showToast(edit.target + 's cut captioned — added to Deliverables.', 'ok');
   };
   // The film's cut belongs to the FILM. This resolved `(this.state.execs||{}).social`, which is wrong
   // two ways at once: with a Social execution briefed, the Video tab's cut editor silently read and
@@ -17942,11 +17983,16 @@ class Component extends DCLogic {
       cutVoiceLabel: s.cutVoiceBusy ? 'Building voices…' : '▶ Preview voices',
       renderCut: this.renderCut,
       renderCutLabel: s.cutRenderBusy ? 'Rendering…' : ('Freeze & render the ' + ((s.cutdownRescript && s.cutdownRescript.target) || '') + 's cut'),
+      cutCaptions: !!s.cutCaptions, onToggleCutCaptions: this.onToggleCutCaptions,
       hasCutVoice: !!s.cutVoiceUrl,
       cutVoiceAudio: s.cutVoiceUrl ? React.createElement('audio', { src:s.cutVoiceUrl, controls:true, style:{ width:'100%' } }) : null,
       hasCutDeliverables: !!(s.edits || []).filter(e => e.kind === 'cutdown' && e.url).length,
       cutDeliverables: (s.edits || []).filter(e => e.kind === 'cutdown' && e.url).map(e => ({
         label: e.target + 's cut' + (e.fromDuration ? ' · from ' + e.fromDuration : ''), url: e.url, at: e.at || '',
+        captioned: !!e.captioned,
+        showCaption: !e.captioned && !!(e.rows && e.rows.length),
+        caption: this.captionDeliverable(e),
+        captionLabel: s.cutCaptionBusyId === e.id ? 'Captioning…' : 'Add captions',
         video: React.createElement('video', { src:e.url, controls:true, style:{ width:'100%', borderRadius:8, background:'#000', aspectRatio:'16/9' } }) })),
       // continuity check: provenance (cause) rendered before drift (symptom), per the ask
       checkContinuity: this.checkContinuity, continuityLabel: s.continuityBusy ? 'Checking\u2026' : 'Check continuity',

@@ -499,3 +499,115 @@ def stitch(urls: list[str], lengths: list[int] | None = None) -> str | None:
         return None
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
+
+
+# --- captions (Edit room, Phase 2) -----------------------------------------------------------------
+# Burned captions for sound-off viewing: most feed video is watched muted, so the words the voice says
+# are shown on screen, timed to each scene. libass (the bundled ffmpeg has it) does the timing, line
+# wrapping and complex-script shaping (Telugu/Devanagari via harfbuzz/fribidi); a font that carries the
+# glyphs still has to be present on the host — English is always safe, Indian-language captions depend
+# on the server's fonts (bundle a Noto face if they render as boxes).
+
+def _secs_from_tc(tc) -> float:
+    m = re.search(r"(\d+(?:\.\d+)?)\s*[-–—]+\s*(\d+(?:\.\d+)?)", str(tc or ""))
+    if m:
+        d = float(m.group(2)) - float(m.group(1))
+        if d > 0:
+            return d
+    return 0.0
+
+
+def _srt_time(t: float) -> str:
+    """Seconds -> SRT timestamp HH:MM:SS,mmm."""
+    t = max(0.0, float(t))
+    whole = int(t)
+    ms = int(round((t - whole) * 1000))
+    if ms >= 1000:
+        whole += 1
+        ms = 0
+    h, rem = divmod(whole, 3600)
+    m, s = divmod(rem, 60)
+    return f"{h:02d}:{m:02d}:{s:02d},{ms:03d}"
+
+
+def caption_cues(scenes: list[dict]) -> list[dict]:
+    """Timed caption cues from a cut's scenes: each scene's spoken words over its own time window.
+
+    The text is the scene's `audio[].text` joined (spoken words only — the exact field the voice reads),
+    falling back to the `dialogue` cell with any trailing romanised gloss in (brackets) stripped. A silent
+    scene (no spoken words) gets no cue. Timing follows each scene's own length (`secs`, else parsed from
+    `tc`), laid end to end — the same ordering the film is stitched in.
+    """
+    cues: list[dict] = []
+    t = 0.0
+    for s in scenes or []:
+        if not isinstance(s, dict):
+            continue
+        try:
+            secs = float(s.get("secs") or 0)
+        except (TypeError, ValueError):
+            secs = 0.0
+        if secs <= 0:
+            secs = _secs_from_tc(s.get("tc")) or 4.0
+        text = ""
+        audio = s.get("audio")
+        if isinstance(audio, list):
+            text = " ".join(str((a or {}).get("text") or "").strip()
+                             for a in audio if isinstance(a, dict)).strip()
+        if not text:
+            # Fallback for a row with no structured audio: the dialogue cell is "Speaker (how): words
+            # (romanised gloss)" — drop a leading speaker prefix and a trailing gloss so the caption is
+            # just the spoken words. (The cut path always has clean audio[].text, so this rarely fires.)
+            text = re.sub(r"\s*\([^)]*\)\s*$", "", str(s.get("dialogue") or "")).strip()
+            text = re.sub(r"^[^:]{1,40}:\s*", "", text).strip()
+        if text:
+            cues.append({"start": round(t, 3), "end": round(t + secs, 3), "text": text})
+        t += secs
+    return cues
+
+
+def _write_srt(cues: list[dict], path: str) -> None:
+    blocks = []
+    for i, c in enumerate(cues, 1):
+        blocks.append(f"{i}\n{_srt_time(c['start'])} --> {_srt_time(c['end'])}\n"
+                      + str(c.get("text") or "").strip() + "\n")
+    with open(path, "w", encoding="utf-8") as fh:
+        fh.write("\n".join(blocks))
+
+
+def burn_captions(src_path: str, cues: list[dict]) -> str | None:
+    """Burn timed captions onto a video, bottom-centred inside the safe zone. Returns the output
+    filename under RENDERS_DIR, or None.
+
+    Run with cwd=the temp dir and a bare `caps.srt`, so the `subtitles` filter never sees a Windows
+    drive colon or backslash (both break the filtergraph parser). Safe-zone styling: Alignment=2
+    (bottom-centre), MarginV lifts the text clear of the bottom where platform UI sits, side margins keep
+    it inside the centre, and an outline + shadow hold it legible on any footage.
+    """
+    if not src_path or not os.path.exists(src_path) or not cues:
+        return None
+    exe = ffmpeg_exe()
+    if not exe:
+        print("[filmcut] no ffmpeg available; cannot burn captions", file=sys.stderr, flush=True)
+        return None
+    os.makedirs(RENDERS_DIR, exist_ok=True)
+    name = f"captioned-{uuid.uuid4().hex[:10]}.mp4"
+    out_path = os.path.join(RENDERS_DIR, name)
+    tmp = tempfile.mkdtemp(prefix="caps-")
+    try:
+        _write_srt(cues, os.path.join(tmp, "caps.srt"))
+        style = ("FontName=Arial,Fontsize=18,Alignment=2,MarginV=48,MarginL=60,MarginR=60,"
+                 "PrimaryColour=&H00FFFFFF&,OutlineColour=&H00000000&,BorderStyle=1,Outline=2,Shadow=1,Bold=1")
+        vf = "subtitles=caps.srt:force_style='" + style + "'"
+        cmd = [exe, "-y", "-i", os.path.abspath(src_path), "-vf", vf,
+               "-c:v", "libx264", "-preset", "veryfast", "-crf", "20",
+               "-c:a", "copy", "-movflags", "+faststart", out_path]
+        res = subprocess.run(cmd, capture_output=True, text=True, cwd=tmp)
+        if res.returncode == 0 and os.path.exists(out_path) and os.path.getsize(out_path) > 0:
+            print(f"[filmcut] burned {len(cues)} caption cue(s) -> {name}", file=sys.stderr, flush=True)
+            return name
+        print(f"[filmcut] caption burn failed ({res.returncode}): {res.stderr[-500:]}",
+              file=sys.stderr, flush=True)
+        return None
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)

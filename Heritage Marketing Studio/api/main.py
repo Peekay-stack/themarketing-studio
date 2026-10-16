@@ -1542,6 +1542,32 @@ def produce_video(payload: dict):
     return out
 
 
+@app.post("/burn-captions")
+def burn_captions_route(payload: dict):
+    """Burn timed captions onto a rendered video for sound-off viewing (Edit room, Phase 2).
+    `{video_url, scenes?} ` or `{video_url, cues?:[{start,end,text}]}` -> `{video_url}`.
+
+    Captions are what the voice actually says each scene: `scenes` (a cut's rows, with `audio`/`secs`)
+    are turned into timed cues server-side, or explicit `cues` may be passed. The picture is untouched;
+    a new captioned file is written and served, so the uncaptioned master still exists.
+    """
+    src = _resolve_media(str(payload.get("video_url") or payload.get("url") or ""))
+    if not src or not os.path.exists(src):
+        return JSONResponse(status_code=400, content={
+            "detail": "That video is no longer on disk — render the cut again before captioning it."})
+    cues = payload.get("cues") if isinstance(payload.get("cues"), list) else filmcut.caption_cues(payload.get("scenes") or [])
+    if not cues:
+        return JSONResponse(status_code=400, content={
+            "detail": "No spoken lines to caption — this cut has no voice to show on screen."})
+    out_name = filmcut.burn_captions(src, cues)
+    if not out_name:
+        return JSONResponse(status_code=500, content={
+            "detail": "Could not burn the captions — see render-log.txt."})
+    url = f"/renders/{out_name}"
+    _record_made("captioned_cut", "Captioned cut", url=url, payload=payload, route="/burn-captions")
+    return {"video_url": url, "url": url, "cues": len(cues)}
+
+
 # --- image generation (storyboard frames AND social-post visuals) ----------------
 # {prompt, ratio, style, characters, seed} -> {image_url}. Needs FAL_KEY (real images).
 # Without it we return 501 so the UI keeps its clean branded placeholder.
