@@ -1,0 +1,27 @@
+---
+name: video-editor-build-plan
+description: "Round 31 board item 5 — the Video 'Edit room': full spec + phased build plan (duration edits, frame sizes, VO, sound, captions, scene edit). Read before working the video editor."
+metadata:
+  node_type: memory
+  type: project
+  originSessionId: fcd137c0-c85a-447d-9d35-c10659cecac7
+  modified: 2026-10-16T06:12:05.403Z
+---
+
+**Board item 5 (Round 31) — the video editor for a finalised film.** Owner spec (16 Oct), approved to build; evolve the EXISTING `craft` tab into it (NOT a new tab — see below). See [[round31-queue]].
+
+**KEY ARCHITECTURE DECISION (owner approved 16 Oct):** a post-production editor sub-tab ALREADY EXISTS — Video's `craft` tab ("Cut, grade & sound"), 3rd of 4 (`videoTabs` app.dc.html ~18753: film / shots / craft / comp). It already does: cutdown via `/cut-down` (TRIM-ONLY today, "never a re-render", app.dc.html ~3472/17136-17157), grade `/cut-grade`, sound mix `/cut-sound` (ambience/music/foley spots + levels, library uploads not generation), and beat-edit → FREEZE via `/cut-propose`→`/cut-commit`→`/cut-approve`. The Film-tab SCRIPT editor already has editable `dialogue` (VO) + `supr` (super) per row (~2646/2647); supers bake into frames at `/scene-still`. So the editor is an EVOLUTION of `craft`, renamed "Edit room" — do NOT build a parallel tab (would duplicate the cut backend). The duration-edit re-script step RE-ENTERS the Film tab's script/storyboard screens, then returns to render. **Keep the tab KEY `craft` unchanged (routing/isCraft/goVideoTab); only relabel.**
+
+**Owner's requested capabilities:** (1) duration edits — cut to 45/30/20/15/10/6s with KEY MESSAGE priority; (2) frame-size edits for platforms; (3) edit a particular scene/frame; (4) music tempo/crescendo; (5) increase/decrease the stay (duration) on a particular shot; (6) add a sign-off/benefit line; + (owner adds) EDIT THE VO; + duration cuts must go through STORYBOARD/SCRIPT and be FROZEN before rendering (not a blind trim). Web best-practice adds folded in: burned captions (sound-off, ~85% muted), safe zones (center ~80%, top/bottom ~15% clear), per-scene reframe + manual crop nudge (not one global crop), explicit CTA/end-card, build short cuts deliberately (6s = hook+signoff, not trim), sound-design MIX controls (VO↔music balance, ducking depth, fades). Parked: beat-synced cutting.
+
+**Existing backend to reuse:** `cut.py` (version history: beats {n,role,shot_id,clip_url,seconds,super}, tracks {voice_url,music_url,ambience_url,spots[{url,at,gain}]}, master_url; propose/commit/approve); `filmcut.py` (bundled ffmpeg `ffmpeg_exe()`, `stitch(urls,lengths)` concat+trim-to-beat, `cutdown_plan(beats,target)` drops by DROP_ORDER=button/world/mechanism — hook/turn/brand PROTECTED = key-message priority, `_ALLOWED_CLIP=(4,6,8)` Veo lengths; NO crop/pad/reframe — that's genuinely new); `filmaudio.py` (music_level ducking has_voice, ambience_level, `loudness_pass` presets tv-us -24/tv-eu -23/online -14 @ TP -1, `synth_music`, `probe_duration`); `filmvoice.py` (voice synth); `filmscript.py` (persist). made.record now stamps provocation (f1fa92f) so deliverables carry provenance automatically.
+
+**PHASED BUILD (each ships + verifies alone: checkfe/partials/selfcheck/smoke/live gate):**
+- **Phase 0 (small):** rename/restructure `craft` → "Edit room" shell. Relabel tab (`videoTabs` ~18753) + H1 (~3563 "Cut, grade & sound"); KEEP key `craft`. No backend.
+- **Phase 1 (large):** duration edits via plan → re-script/storyboard → FREEZE → render (your #1,#5 + VO). Ladder 45/30/20/15/10/6. `/cut-down` seeds shorter script+storyboard → edit in Film script screen (dialogue/supr/per-shot stay) → re-synth changed VO (`/voice-preview`) → `/cut-approve` → render (stitch trims + `/produce-video` for re-rendered beats) → re-score → loudness → record. KEEP the fast trim path as one option, ADD the re-script path (don't replace). Guard: VO can't fill 6s — "too dense" flag.
+- **Phase 2 (medium):** burned captions from frozen VO text+timing, safe zone, ffmpeg overlay.
+- **Phase 3 (large):** frame size — new `filmcut.reframe()` crop/pad → 9:16/1:1/16:9, per-scene crop + manual nudge, safe-zone guides, supers re-laid (not cropped), sign-off/benefit line + optional CTA end-card (your #2,#6). `edits` state stub (~11660) becomes real; deliverable presets (~12010).
+- **Phase 4 (medium):** edit one scene/frame — regenerate a beat's clip via `/cut-propose`→`/cut-commit`, re-freeze, re-stitch (your #3).
+- **Phase 5 (medium):** Sound — music tempo+dynamics (crescendo/steady/fade) on `synth_music`/`music_prompt`, + mix controls (VO↔music balance, ducking depth, ambience level, foley spot place+gain, fades/in-out = one new ffmpeg `afade`, sign-off stinger) (your #4 + sound design).
+
+**STATUS:** approved 16 Oct, starting Phase 0→1.
