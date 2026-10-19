@@ -3713,9 +3713,17 @@
       <!-- Phase 1d — rendered cut deliverables, each derived from the master, the master untouched. -->
       <sc-if value="{{ hasCutDeliverables }}" hint-placeholder-val="{{ false }}">
       <div style="background:#fff; border:1px solid #DDD9D1; border-radius:16px; padding:22px 24px; margin-bottom:16px;">
-        <div style="font-family:'Epilogue',sans-serif; font-weight:700; font-size:18px; color:#17325E; margin-bottom:4px;">Deliverables</div>
-        <div style="font-size:12.5px; color:#6B7280; margin-bottom:14px;">Rendered cuts derived from the master film.</div>
-        <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:14px;">
+        <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:4px;">
+          <span style="font-family:'Epilogue',sans-serif; font-weight:700; font-size:18px; color:#17325E;">Deliverables</span>
+          <!-- Phase 3 — how a reframe fills the new shape: crop (fill, lose the sides) or pad (letterbox). -->
+          <span style="margin-left:auto; font-size:11px; color:#9AA1AC;">Reframe fills by</span>
+          <div style="display:inline-flex; border:1px solid #DDD9D1; border-radius:8px; overflow:hidden;">
+            <span onClick="{{ reframeModeCrop }}" style="cursor:pointer; font-size:12px; font-weight:700; padding:5px 11px; background:{{ reframeCropBg }}; color:{{ reframeCropFg }};">Crop</span>
+            <span onClick="{{ reframeModePad }}" style="cursor:pointer; font-size:12px; font-weight:700; padding:5px 11px; background:{{ reframePadBg }}; color:{{ reframePadFg }};">Pad</span>
+          </div>
+        </div>
+        <div style="font-size:12.5px; color:#6B7280; margin-bottom:14px;">Rendered cuts derived from the master film. Make platform versions with the frame-size buttons on each.</div>
+        <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:14px;">
           <sc-for list="{{ cutDeliverables }}" as="cd" hint-placeholder-count="0">
             <div style="border:1px solid #E6E3DC; border-radius:12px; padding:12px; background:#FBFAF8;">
               <div style="display:flex; align-items:center; gap:7px; margin-bottom:6px;">
@@ -3731,6 +3739,13 @@
                   <span onClick="{{ cd.caption }}" style="cursor:pointer; font-size:12px; font-weight:700; color:#17325E;">{{ cd.captionLabel }}</span>
                 </sc-if>
                 <span style="font-size:11px; color:#9AA1AC; margin-left:auto;">{{ cd.at }}</span>
+              </div>
+              <!-- Phase 3 — platform versions of this cut. -->
+              <div style="margin-top:9px; padding-top:9px; border-top:1px dashed #E6E3DC; display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                <span style="font-size:10.5px; font-weight:800; letter-spacing:0.03em; text-transform:uppercase; color:#9AA1AC;">Frame</span>
+                <sc-for list="{{ cd.reframes }}" as="rf" hint-placeholder-count="3">
+                  <span onClick="{{ rf.go }}" style="cursor:pointer; font-size:11.5px; font-weight:700; color:#17325E; background:#fff; border:1px solid #C9CEDA; border-radius:7px; padding:4px 9px;">{{ rf.label }}</span>
+                </sc-for>
               </div>
             </div>
           </sc-for>
@@ -11746,6 +11761,8 @@ class Component extends DCLogic {
     cutRenderBusy: false,         // 1d — rendering the cut as a deliverable
     cutCaptions: true,            // Phase 2 — burn captions (sound-off) when rendering the cut
     cutCaptionBusyId: null,       // Phase 2 — a deliverable currently having captions added
+    cutReframeMode: 'crop',       // Phase 3 — 'crop' (fill, lose sides) | 'pad' (letterbox, keep all)
+    cutReframeBusyId: '',         // Phase 3 — a deliverable currently being reframed ('<id>|<aspect>')
     scriptWriting: false,
     rewritingScene: null,
     sceneFrames: {},               // { [idx]: {status:'idle|rendering|done|error', url} }
@@ -17348,8 +17365,23 @@ class Component extends DCLogic {
     }
     this.setState(s => ({ cutRenderBusy:false, cutdownRescript:null, cutVoiceUrl:null,
       edits: [{ id:'cut-' + Date.now(), kind:'cutdown', target:cr.target, fromDuration:cr.fromDuration,
-                url:finalUrl, captioned, rows:cr.rows, at:'Just now' }, ...(s.edits || [])] }));
+                url:finalUrl, captioned, aspect:p0.aspect || '16:9', rows:cr.rows, at:'Just now' }, ...(s.edits || [])] }));
     this.showToast(cr.target + 's cut rendered' + (captioned ? ' with captions' : '') + ' — see Deliverables below.', 'ok');
+  };
+  // Phase 3 — re-aspect a rendered deliverable to a platform shape (9:16 / 1:1 / 4:5 / 16:9). The source
+  // deliverable is untouched; the reframed version is added as its own deliverable (captions baked into
+  // the picture ride along with it). crop fills the frame, pad letterboxes — one toggle for both.
+  setCutReframeMode = (m) => () => this.setState({ cutReframeMode: m });
+  reframeDeliverable = (edit, aspect) => async () => {
+    if (!edit || !edit.url || this.state.cutReframeBusyId) return;
+    this.setState({ cutReframeBusyId: edit.id + '|' + aspect });
+    const r = await this.apiCall('/reframe', { video_url:edit.url, aspect, mode:this.state.cutReframeMode });
+    const d = (r && r.data) || {};
+    if (!r || !r.ok || !d.video_url) { this.setState({ cutReframeBusyId:'' }); this.showToast(d.detail || 'Couldn’t reframe that cut.'); return; }
+    this.setState(s => ({ cutReframeBusyId:'',
+      edits: [{ id:'cut-' + Date.now(), kind:'cutdown', target:edit.target, fromDuration:edit.fromDuration,
+                url:d.video_url, captioned:!!edit.captioned, aspect, rows:edit.rows, at:'Just now' }, ...(s.edits || [])] }));
+    this.showToast(edit.target + 's cut reframed to ' + aspect + ' (' + this.state.cutReframeMode + ') — added to Deliverables.', 'ok');
   };
   onToggleCutCaptions = (e) => this.setState({ cutCaptions: !!e.target.checked });
   // Phase 2 — burn captions onto an already-rendered deliverable (uses the cut's stored rows for the
@@ -17987,12 +18019,19 @@ class Component extends DCLogic {
       hasCutVoice: !!s.cutVoiceUrl,
       cutVoiceAudio: s.cutVoiceUrl ? React.createElement('audio', { src:s.cutVoiceUrl, controls:true, style:{ width:'100%' } }) : null,
       hasCutDeliverables: !!(s.edits || []).filter(e => e.kind === 'cutdown' && e.url).length,
+      // Phase 3 — the crop/pad toggle for reframing.
+      reframeModeCrop: this.setCutReframeMode('crop'), reframeModePad: this.setCutReframeMode('pad'),
+      reframeCropBg: s.cutReframeMode === 'crop' ? '#17325E' : '#fff', reframeCropFg: s.cutReframeMode === 'crop' ? '#F7F5F1' : '#6B7280',
+      reframePadBg: s.cutReframeMode === 'pad' ? '#17325E' : '#fff', reframePadFg: s.cutReframeMode === 'pad' ? '#F7F5F1' : '#6B7280',
       cutDeliverables: (s.edits || []).filter(e => e.kind === 'cutdown' && e.url).map(e => ({
-        label: e.target + 's cut' + (e.fromDuration ? ' · from ' + e.fromDuration : ''), url: e.url, at: e.at || '',
+        label: e.target + 's' + (e.aspect ? ' · ' + e.aspect : '') + (e.fromDuration ? ' · from ' + e.fromDuration : ''), url: e.url, at: e.at || '',
         captioned: !!e.captioned,
         showCaption: !e.captioned && !!(e.rows && e.rows.length),
         caption: this.captionDeliverable(e),
         captionLabel: s.cutCaptionBusyId === e.id ? 'Captioning…' : 'Add captions',
+        // a platform version for each frame size except this deliverable's own
+        reframes: ['9:16', '1:1', '4:5', '16:9'].filter(a => a !== (e.aspect || '16:9')).map(a => ({
+          label: s.cutReframeBusyId === (e.id + '|' + a) ? (a + '…') : a, go: this.reframeDeliverable(e, a) })),
         video: React.createElement('video', { src:e.url, controls:true, style:{ width:'100%', borderRadius:8, background:'#000', aspectRatio:'16/9' } }) })),
       // continuity check: provenance (cause) rendered before drift (symptom), per the ask
       checkContinuity: this.checkContinuity, continuityLabel: s.continuityBusy ? 'Checking\u2026' : 'Check continuity',

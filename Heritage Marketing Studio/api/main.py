@@ -1584,6 +1584,32 @@ def burn_captions_route(payload: dict):
     return {"video_url": url, "url": url, "cues": len(cues)}
 
 
+@app.post("/reframe")
+def reframe_route(payload: dict):
+    """Re-aspect a rendered video to a platform shape (Edit room, Phase 3).
+    `{video_url, aspect:"9:16"|"1:1"|"4:5"|"16:9", mode?:"crop"|"pad"}` -> `{video_url}`.
+
+    "crop" fills the new frame and loses the sides; "pad" keeps the whole picture inside bars. A new
+    file is written and served; the source deliverable is untouched.
+    """
+    src = _resolve_media(str(payload.get("video_url") or payload.get("url") or ""))
+    if not src or not os.path.exists(src):
+        return JSONResponse(status_code=400, content={
+            "detail": "That video is no longer on disk — render the cut again before reframing it."})
+    aspect = str(payload.get("aspect") or "").strip()
+    if aspect not in filmcut.reframe_targets():
+        return JSONResponse(status_code=400, content={
+            "detail": f"Unknown frame size '{aspect}'. Choose one of: {', '.join(filmcut.reframe_targets())}."})
+    mode = str(payload.get("mode") or "crop").strip().lower()
+    out_name = filmcut.reframe(src, aspect, mode if mode in ("crop", "pad") else "crop")
+    if not out_name:
+        return JSONResponse(status_code=500, content={
+            "detail": "Could not reframe that video — see render-log.txt."})
+    url = f"/renders/{out_name}"
+    _record_made("reframed_cut", f"{aspect} cut", url=url, payload=payload, route="/reframe")
+    return {"video_url": url, "url": url, "aspect": aspect, "mode": mode}
+
+
 # --- image generation (storyboard frames AND social-post visuals) ----------------
 # {prompt, ratio, style, characters, seed} -> {image_url}. Needs FAL_KEY (real images).
 # Without it we return 501 so the UI keeps its clean branded placeholder.

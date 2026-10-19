@@ -611,3 +611,53 @@ def burn_captions(src_path: str, cues: list[dict]) -> str | None:
         return None
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
+
+
+# --- platform reframe (Edit room, Phase 3) ---------------------------------------------------------
+# Re-aspect a finished film to a platform shape (9:16 for Reels/Shorts, 1:1 or 4:5 for feed, 16:9 for
+# YouTube). Two modes: "crop" fills the new frame and loses the sides — native and punchy, but can clip a
+# subject sitting at the edge; "pad" keeps the whole picture inside bars — nothing is lost, but it is
+# letterboxed. Anything already burned into the picture (captions, a baked super) is subject to the same
+# crop; per-scene safe-area framing is a later refinement.
+
+_REFRAME_DIMS = {
+    "9:16": (1080, 1920),   # Reels / Shorts / TikTok
+    "1:1":  (1080, 1080),   # square feed
+    "4:5":  (1080, 1350),   # portrait feed
+    "16:9": (1920, 1080),   # YouTube / landscape
+}
+
+
+def reframe_targets() -> list[str]:
+    return list(_REFRAME_DIMS.keys())
+
+
+def reframe(src_path: str, aspect: str, mode: str = "crop") -> str | None:
+    """Re-aspect a video to `aspect` by "crop" (scale to cover, then centre-crop) or "pad" (scale to fit,
+    then letterbox). Returns the output filename under RENDERS_DIR, or None. Audio is stream-copied; only
+    the picture is reframed."""
+    dims = _REFRAME_DIMS.get(str(aspect or "").strip())
+    if not src_path or not os.path.exists(src_path) or not dims:
+        return None
+    exe = ffmpeg_exe()
+    if not exe:
+        print("[filmcut] no ffmpeg available; cannot reframe", file=sys.stderr, flush=True)
+        return None
+    w, h = dims
+    if str(mode) == "pad":
+        vf = (f"scale={w}:{h}:force_original_aspect_ratio=decrease,"
+              f"pad={w}:{h}:(ow-iw)/2:(oh-ih)/2:color=black,setsar=1")
+    else:
+        vf = f"scale={w}:{h}:force_original_aspect_ratio=increase,crop={w}:{h},setsar=1"
+    os.makedirs(RENDERS_DIR, exist_ok=True)
+    name = f"reframed-{str(aspect).replace(':', 'x')}-{uuid.uuid4().hex[:8]}.mp4"
+    out_path = os.path.join(RENDERS_DIR, name)
+    cmd = [exe, "-y", "-i", os.path.abspath(src_path), "-vf", vf,
+           "-c:v", "libx264", "-preset", "veryfast", "-crf", "20",
+           "-c:a", "copy", "-movflags", "+faststart", out_path]
+    res = subprocess.run(cmd, capture_output=True, text=True)
+    if res.returncode == 0 and os.path.exists(out_path) and os.path.getsize(out_path) > 0:
+        print(f"[filmcut] reframed to {aspect} ({mode}) -> {name}", file=sys.stderr, flush=True)
+        return name
+    print(f"[filmcut] reframe failed ({res.returncode}): {res.stderr[-400:]}", file=sys.stderr, flush=True)
+    return None
