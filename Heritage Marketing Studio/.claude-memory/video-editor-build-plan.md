@@ -5,8 +5,10 @@ metadata:
   node_type: memory
   type: project
   originSessionId: fcd137c0-c85a-447d-9d35-c10659cecac7
-  modified: 2026-10-19T14:40:15.781Z
+  modified: 2026-10-19T14:40:59.381Z
 ---
+
+**>>> NEXT SESSION (planned 20 Oct): LIVE TESTING. Build is DONE (all phases 0-5 live); credit is topped up so the render path works. <<<** Owner wants to run a real film end-to-end through the Edit room. **What to watch, in order:** (1) duration ladder → "Re-script as a crafted Ns cut" keeps hook/turn/sign-off, reads deliberate not truncated; (2) review panel: edit spoken line (reaches voice+captions now), on-screen super, VISUAL (drives the render), per-shot STAY retimes, REMOVE a scene; (3) "Preview voices" plays the shorter narration; (4) music Tempo + Dynamics/crescendo chips audibly shape the bed (reaches the FINAL film on every path after 32e79a5); (5) "Freeze & render the Ns cut" PRODUCES a cut → lands in Deliverables; (6) captions burn — **specifically check TELUGU: may render as BOXES if the Render host lacks a Telugu glyph font → fix = bundle a Noto Sans Telugu face and point libass at it**; (7) platform reframe 9:16/1:1/4:5 (crop/pad) → new deliverables; (8) "+ Sign-off" end-card appends. ALSO test: the out-of-credit POP-UP (only shows on a real exhausted-balance render), the "Hand over to Production" button + pre-flight flagging stale frames, and that Google-first render comes back after a top-up (90s cooldown). **Known v1 limits (expected, not bugs):** cut deliverables are session-state (lost on reload; the rendered files persist on disk + in "What it has made"); crafted render is FRAMELESS (continuity via character sheet + look ref, not per-cut storyboard frames). **Deferred/optional:** 3b per-scene safe-area crop nudge; consolidate the older `/edit-master` trim list into the Edit room; persist deliverables server-side; per-cut storyboard frames. **Also still untouched: the TMS brand book** (navy #17325E, orange #F0561E, Epilogue, Human-Gate/diamond motif from api/static/landing.html).
 
 **Board item 5 (Round 31) — the video editor for a finalised film.** Owner spec (16 Oct), approved to build; evolve the EXISTING `craft` tab into it (NOT a new tab — see below). See [[round31-queue]].
 
