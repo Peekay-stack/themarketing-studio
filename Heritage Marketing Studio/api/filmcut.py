@@ -661,3 +661,57 @@ def reframe(src_path: str, aspect: str, mode: str = "crop") -> str | None:
         return name
     print(f"[filmcut] reframe failed ({res.returncode}): {res.stderr[-400:]}", file=sys.stderr, flush=True)
     return None
+
+
+# --- sign-off / benefit line end-card (Edit room, Phase 3c) ----------------------------------------
+
+def _video_dims(exe: str, path: str) -> tuple[int, int]:
+    """(width, height) of a video, read from ffmpeg's banner; a sane 16:9 default if it can't be read."""
+    r = subprocess.run([exe, "-hide_banner", "-i", path], capture_output=True, text=True)
+    m = re.search(r"Video:.*?(\d{2,5})x(\d{2,5})", r.stderr)
+    return (int(m.group(1)), int(m.group(2))) if m else (1920, 1080)
+
+
+def add_endcard(src_path: str, line: str, cta: str = "", seconds: float = 2.5) -> str | None:
+    """Append a closing end-card carrying a sign-off / benefit line (and an optional CTA) to a cut.
+
+    The card is a brand-navy frame at the film's own size, the line centred on it via libass (the same
+    text engine the captions use), concatenated after the picture through a normalising filtergraph (fps
+    / size / pixel-format aligned, silent audio on the card) so it joins any cut cleanly. Returns the
+    output filename under RENDERS_DIR, or None. The source film is untouched.
+    """
+    if not src_path or not os.path.exists(src_path) or not str(line or "").strip():
+        return None
+    exe = ffmpeg_exe()
+    if not exe:
+        print("[filmcut] no ffmpeg available; cannot add an end-card", file=sys.stderr, flush=True)
+        return None
+    w, h = _video_dims(exe, os.path.abspath(src_path))
+    sec = max(1.5, min(6.0, float(seconds or 2.5)))
+    os.makedirs(RENDERS_DIR, exist_ok=True)
+    name = f"signoff-{uuid.uuid4().hex[:8]}.mp4"
+    out_path = os.path.join(RENDERS_DIR, name)
+    tmp = tempfile.mkdtemp(prefix="card-")
+    try:
+        text = str(line).strip() + ("\n" + str(cta).strip() if str(cta or "").strip() else "")
+        with open(os.path.join(tmp, "card.srt"), "w", encoding="utf-8") as fh:
+            fh.write("1\n" + _srt_time(0) + " --> " + _srt_time(sec) + "\n" + text + "\n")
+        style = ("FontName=Arial,Fontsize=40,Alignment=5,PrimaryColour=&H00FFFFFF&,"
+                 "OutlineColour=&H00000000&,BorderStyle=1,Outline=2,Shadow=0,Bold=1,MarginL=80,MarginR=80")
+        fg = (f"[0:v]fps=30,scale={w}:{h},setsar=1,format=yuv420p[v0];"
+              f"[1:v]fps=30,scale={w}:{h},setsar=1,format=yuv420p,subtitles=card.srt:force_style='{style}'[v1];"
+              f"[v0][0:a][v1][2:a]concat=n=2:v=1:a=1[v][a]")
+        cmd = [exe, "-y", "-i", os.path.abspath(src_path),
+               "-f", "lavfi", "-i", f"color=c=0x0F1A2B:s={w}x{h}:d={sec}",
+               "-f", "lavfi", "-i", f"anullsrc=r=44100:cl=stereo:d={sec}",
+               "-filter_complex", fg, "-map", "[v]", "-map", "[a]",
+               "-c:v", "libx264", "-preset", "veryfast", "-crf", "20",
+               "-c:a", "aac", "-movflags", "+faststart", out_path]
+        res = subprocess.run(cmd, capture_output=True, text=True, cwd=tmp)
+        if res.returncode == 0 and os.path.exists(out_path) and os.path.getsize(out_path) > 0:
+            print(f"[filmcut] appended sign-off end-card -> {name}", file=sys.stderr, flush=True)
+            return name
+        print(f"[filmcut] end-card failed ({res.returncode}): {res.stderr[-500:]}", file=sys.stderr, flush=True)
+        return None
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)

@@ -3746,7 +3746,19 @@
                 <sc-for list="{{ cd.reframes }}" as="rf" hint-placeholder-count="3">
                   <span onClick="{{ rf.go }}" style="cursor:pointer; font-size:11.5px; font-weight:700; color:#17325E; background:#fff; border:1px solid #C9CEDA; border-radius:7px; padding:4px 9px;">{{ rf.label }}</span>
                 </sc-for>
+                <span onClick="{{ cd.openSignoff }}" style="cursor:pointer; font-size:11.5px; font-weight:700; color:#17325E; margin-left:auto;">+ Sign-off</span>
               </div>
+              <!-- Phase 3c — the sign-off / benefit line end-card form. -->
+              <sc-if value="{{ cd.signoffOpen }}" hint-placeholder-val="{{ false }}">
+                <div style="margin-top:9px; display:flex; flex-direction:column; gap:7px;">
+                  <input value="{{ signoffLine }}" onChange="{{ onSignoffLine }}" placeholder="Sign-off / benefit line" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:7px 9px; font-size:12px; color:#17325E; background:#fff; font-family:inherit;" />
+                  <input value="{{ signoffCta }}" onChange="{{ onSignoffCta }}" placeholder="Call to action (optional)" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:7px 9px; font-size:12px; color:#17325E; background:#fff; font-family:inherit;" />
+                  <div style="display:flex; gap:7px;">
+                    <button onClick="{{ cd.addSignoff }}" style="background:#17325E; color:#F7F5F1; border:none; border-radius:8px; padding:7px 13px; font-weight:700; font-size:12px; cursor:pointer;">{{ cd.signoffLabel }}</button>
+                    <button onClick="{{ cancelSignoff }}" style="background:#fff; color:#6B7280; border:1px solid #DDD9D1; border-radius:8px; padding:7px 13px; font-weight:700; font-size:12px; cursor:pointer;">Cancel</button>
+                  </div>
+                </div>
+              </sc-if>
             </div>
           </sc-for>
         </div>
@@ -11763,6 +11775,9 @@ class Component extends DCLogic {
     cutCaptionBusyId: null,       // Phase 2 — a deliverable currently having captions added
     cutReframeMode: 'crop',       // Phase 3 — 'crop' (fill, lose sides) | 'pad' (letterbox, keep all)
     cutReframeBusyId: '',         // Phase 3 — a deliverable currently being reframed ('<id>|<aspect>')
+    signoffForId: '',             // Phase 3c — which deliverable's sign-off form is open
+    signoffLine: '', signoffCta: '',
+    signoffBusyId: '',            // Phase 3c — a deliverable currently having a sign-off added
     scriptWriting: false,
     rewritingScene: null,
     sceneFrames: {},               // { [idx]: {status:'idle|rendering|done|error', url} }
@@ -17383,6 +17398,25 @@ class Component extends DCLogic {
                 url:d.video_url, captioned:!!edit.captioned, aspect, rows:edit.rows, at:'Just now' }, ...(s.edits || [])] }));
     this.showToast(edit.target + 's cut reframed to ' + aspect + ' (' + this.state.cutReframeMode + ') — added to Deliverables.', 'ok');
   };
+  // Phase 3c — append a sign-off / benefit line (and optional CTA) as a closing end-card on a cut. The
+  // line is prefilled from the brand's idea but fully editable; the source deliverable is untouched.
+  openSignoff = (edit) => () => this.setState({ signoffForId: edit.id, signoffLine: this.brandIdea() || '', signoffCta: '' });
+  cancelSignoff = () => this.setState({ signoffForId: '' });
+  onSignoffLine = (e) => this.setState({ signoffLine: e.target.value });
+  onSignoffCta = (e) => this.setState({ signoffCta: e.target.value });
+  addSignoff = (edit) => async () => {
+    const line = (this.state.signoffLine || '').trim();
+    if (!line) { this.showToast('Add the sign-off line to show.'); return; }
+    if (this.state.signoffBusyId) return;
+    this.setState({ signoffBusyId: edit.id });
+    const r = await this.apiCall('/add-endcard', { video_url:edit.url, line, cta:(this.state.signoffCta || '').trim() });
+    const d = (r && r.data) || {};
+    if (!r || !r.ok || !d.video_url) { this.setState({ signoffBusyId:'' }); this.showToast(d.detail || 'Couldn’t add the sign-off.'); return; }
+    this.setState(s => ({ signoffBusyId:'', signoffForId:'', signoffLine:'', signoffCta:'',
+      edits: [{ id:'cut-' + Date.now(), kind:'cutdown', target:edit.target, fromDuration:edit.fromDuration,
+                url:d.video_url, captioned:!!edit.captioned, aspect:edit.aspect, rows:edit.rows, at:'Just now' }, ...(s.edits || [])] }));
+    this.showToast('Sign-off added — new cut in Deliverables.', 'ok');
+  };
   onToggleCutCaptions = (e) => this.setState({ cutCaptions: !!e.target.checked });
   // Phase 2 — burn captions onto an already-rendered deliverable (uses the cut's stored rows for the
   // spoken text + timing). Stored as a new captioned deliverable; the clean one stays.
@@ -18023,6 +18057,9 @@ class Component extends DCLogic {
       reframeModeCrop: this.setCutReframeMode('crop'), reframeModePad: this.setCutReframeMode('pad'),
       reframeCropBg: s.cutReframeMode === 'crop' ? '#17325E' : '#fff', reframeCropFg: s.cutReframeMode === 'crop' ? '#F7F5F1' : '#6B7280',
       reframePadBg: s.cutReframeMode === 'pad' ? '#17325E' : '#fff', reframePadFg: s.cutReframeMode === 'pad' ? '#F7F5F1' : '#6B7280',
+      // Phase 3c — the shared sign-off form fields (one form open at a time).
+      signoffLine: s.signoffLine || '', signoffCta: s.signoffCta || '',
+      onSignoffLine: this.onSignoffLine, onSignoffCta: this.onSignoffCta, cancelSignoff: this.cancelSignoff,
       cutDeliverables: (s.edits || []).filter(e => e.kind === 'cutdown' && e.url).map(e => ({
         label: e.target + 's' + (e.aspect ? ' · ' + e.aspect : '') + (e.fromDuration ? ' · from ' + e.fromDuration : ''), url: e.url, at: e.at || '',
         captioned: !!e.captioned,
@@ -18032,6 +18069,8 @@ class Component extends DCLogic {
         // a platform version for each frame size except this deliverable's own
         reframes: ['9:16', '1:1', '4:5', '16:9'].filter(a => a !== (e.aspect || '16:9')).map(a => ({
           label: s.cutReframeBusyId === (e.id + '|' + a) ? (a + '…') : a, go: this.reframeDeliverable(e, a) })),
+        openSignoff: this.openSignoff(e), signoffOpen: s.signoffForId === e.id,
+        addSignoff: this.addSignoff(e), signoffLabel: s.signoffBusyId === e.id ? 'Adding…' : 'Add sign-off',
         video: React.createElement('video', { src:e.url, controls:true, style:{ width:'100%', borderRadius:8, background:'#000', aspectRatio:'16/9' } }) })),
       // continuity check: provenance (cause) rendered before drift (symptom), per the ask
       checkContinuity: this.checkContinuity, continuityLabel: s.continuityBusy ? 'Checking\u2026' : 'Check continuity',

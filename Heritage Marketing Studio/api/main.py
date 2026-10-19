@@ -1610,6 +1610,27 @@ def reframe_route(payload: dict):
     return {"video_url": url, "url": url, "aspect": aspect, "mode": mode}
 
 
+@app.post("/add-endcard")
+def add_endcard_route(payload: dict):
+    """Append a sign-off / benefit line end-card to a rendered cut (Edit room, Phase 3c).
+    `{video_url, line, cta?, seconds?}` -> `{video_url}`. A new file is written; the source is untouched.
+    """
+    src = _resolve_media(str(payload.get("video_url") or payload.get("url") or ""))
+    if not src or not os.path.exists(src):
+        return JSONResponse(status_code=400, content={
+            "detail": "That video is no longer on disk — render the cut again before adding a sign-off."})
+    line = str(payload.get("line") or "").strip()
+    if not line:
+        return JSONResponse(status_code=400, content={"detail": "A sign-off needs a line to show."})
+    out_name = filmcut.add_endcard(src, line, str(payload.get("cta") or ""), payload.get("seconds") or 2.5)
+    if not out_name:
+        return JSONResponse(status_code=500, content={
+            "detail": "Could not add the sign-off end-card — see render-log.txt."})
+    url = f"/renders/{out_name}"
+    _record_made("signoff_cut", "Cut with sign-off", url=url, payload=payload, route="/add-endcard")
+    return {"video_url": url, "url": url}
+
+
 # --- image generation (storyboard frames AND social-post visuals) ----------------
 # {prompt, ratio, style, characters, seed} -> {image_url}. Needs FAL_KEY (real images).
 # Without it we return 501 so the UI keeps its clean branded placeholder.
