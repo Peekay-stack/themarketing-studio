@@ -11778,6 +11778,9 @@ class Component extends DCLogic {
     signoffForId: '',             // Phase 3c — which deliverable's sign-off form is open
     signoffLine: '', signoffCta: '',
     signoffBusyId: '',            // Phase 3c — a deliverable currently having a sign-off added
+    // The Edit room's rendered cut deliverables. Kept SEPARATE from `edits` (which belongs to the older
+    // production-screen `/edit-master` trim list rendered via `madeEdits`) so the two never collide.
+    cutEdits: [],
     scriptWriting: false,
     rewritingScene: null,
     sceneFrames: {},               // { [idx]: {status:'idle|rendering|done|error', url} }
@@ -17159,6 +17162,10 @@ class Component extends DCLogic {
     produced_film: { tag:'VD', tint:'#FBE3E1', fg:'#C0392B', category:'Video' },
     video_rescore: { tag:'VD', tint:'#FBE3E1', fg:'#C0392B', category:'Video' },
     cut_sound: { tag:'VD', tint:'#FBE3E1', fg:'#C0392B', category:'Video' },
+    // Edit room (Phase 2-3) deliverables, so they read as Video in "What it has made", not "??/Other".
+    captioned_cut: { tag:'VD', tint:'#FBE3E1', fg:'#C0392B', category:'Video' },
+    reframed_cut: { tag:'VD', tint:'#FBE3E1', fg:'#C0392B', category:'Video' },
+    signoff_cut: { tag:'VD', tint:'#FBE3E1', fg:'#C0392B', category:'Video' },
     brief_draft: { tag:'BR', tint:'#EAF6EC', fg:'#1E7E34', category:'Brief' },
   };
   madeMeta(kind){ return this.MADE_META[kind] || { tag:'??', tint:'#EEF1F5', fg:'#6B7280', category:'Other' }; }
@@ -17326,8 +17333,20 @@ class Component extends DCLogic {
   // never the master fullScript.
   editCutdownRow = (idx, field) => (e) => {
     const val = e.target.value;
-    this.setState(s => s.cutdownRescript ? { cutdownRescript: { ...s.cutdownRescript,
-      rows: (s.cutdownRescript.rows || []).map((r,i) => i===idx ? { ...r, [field]:val } : r) } } : {});
+    this.setState(s => {
+      if (!s.cutdownRescript) return {};
+      return { cutdownRescript: { ...s.cutdownRescript,
+        rows: (s.cutdownRescript.rows || []).map((r, i) => {
+          if (i !== idx) return r;
+          if (field !== 'dialogue') return { ...r, [field]: val };
+          // Editing the spoken line must reach what the VOICE reads (audio[].text) and the CAPTIONS show,
+          // not just the on-screen cell. Short-cut scenes carry one line, so collapse the scene's audio to
+          // a single spoken entry carrying the new words, keeping the first entry's voice/speaker/emotion.
+          const a0 = (Array.isArray(r.audio) && r.audio[0]) || { type: 'vo', language: 'en' };
+          const audio = val.trim() ? [{ ...a0, text: val.trim() }] : [];
+          return { ...r, dialogue: val, audio };
+        }) } };
+    });
   };
   discardCutdownRescript = () => this.setState({ cutdownRescript:null, cutVoiceUrl:null });
   // Phase 1c — per-shot "stay": each cut row carries an explicit `secs`; editing one recomputes the
@@ -17379,8 +17398,8 @@ class Component extends DCLogic {
       else this.showToast('Rendered, but captions couldn’t be burned — keeping the clean cut.', 'info');
     }
     this.setState(s => ({ cutRenderBusy:false, cutdownRescript:null, cutVoiceUrl:null,
-      edits: [{ id:'cut-' + Date.now(), kind:'cutdown', target:cr.target, fromDuration:cr.fromDuration,
-                url:finalUrl, captioned, aspect:p0.aspect || '16:9', rows:cr.rows, at:'Just now' }, ...(s.edits || [])] }));
+      cutEdits: [{ id:'cut-' + Date.now(), kind:'cutdown', target:cr.target, fromDuration:cr.fromDuration,
+                url:finalUrl, captioned, aspect:p0.aspect || '16:9', rows:cr.rows, at:'Just now' }, ...(s.cutEdits || [])] }));
     this.showToast(cr.target + 's cut rendered' + (captioned ? ' with captions' : '') + ' — see Deliverables below.', 'ok');
   };
   // Phase 3 — re-aspect a rendered deliverable to a platform shape (9:16 / 1:1 / 4:5 / 16:9). The source
@@ -17394,8 +17413,8 @@ class Component extends DCLogic {
     const d = (r && r.data) || {};
     if (!r || !r.ok || !d.video_url) { this.setState({ cutReframeBusyId:'' }); this.showToast(d.detail || 'Couldn’t reframe that cut.'); return; }
     this.setState(s => ({ cutReframeBusyId:'',
-      edits: [{ id:'cut-' + Date.now(), kind:'cutdown', target:edit.target, fromDuration:edit.fromDuration,
-                url:d.video_url, captioned:!!edit.captioned, aspect, rows:edit.rows, at:'Just now' }, ...(s.edits || [])] }));
+      cutEdits: [{ id:'cut-' + Date.now(), kind:'cutdown', target:edit.target, fromDuration:edit.fromDuration,
+                url:d.video_url, captioned:!!edit.captioned, aspect, rows:edit.rows, at:'Just now' }, ...(s.cutEdits || [])] }));
     this.showToast(edit.target + 's cut reframed to ' + aspect + ' (' + this.state.cutReframeMode + ') — added to Deliverables.', 'ok');
   };
   // Phase 3c — append a sign-off / benefit line (and optional CTA) as a closing end-card on a cut. The
@@ -17413,8 +17432,8 @@ class Component extends DCLogic {
     const d = (r && r.data) || {};
     if (!r || !r.ok || !d.video_url) { this.setState({ signoffBusyId:'' }); this.showToast(d.detail || 'Couldn’t add the sign-off.'); return; }
     this.setState(s => ({ signoffBusyId:'', signoffForId:'', signoffLine:'', signoffCta:'',
-      edits: [{ id:'cut-' + Date.now(), kind:'cutdown', target:edit.target, fromDuration:edit.fromDuration,
-                url:d.video_url, captioned:!!edit.captioned, aspect:edit.aspect, rows:edit.rows, at:'Just now' }, ...(s.edits || [])] }));
+      cutEdits: [{ id:'cut-' + Date.now(), kind:'cutdown', target:edit.target, fromDuration:edit.fromDuration,
+                url:d.video_url, captioned:!!edit.captioned, aspect:edit.aspect, rows:edit.rows, at:'Just now' }, ...(s.cutEdits || [])] }));
     this.showToast('Sign-off added — new cut in Deliverables.', 'ok');
   };
   onToggleCutCaptions = (e) => this.setState({ cutCaptions: !!e.target.checked });
@@ -17428,8 +17447,8 @@ class Component extends DCLogic {
     const cu = (cap && cap.data) || {};
     if (!cap || !cap.ok || !cu.video_url) { this.setState({ cutCaptionBusyId:null }); this.showToast(cu.detail || 'Couldn’t burn captions for that cut.'); return; }
     this.setState(s => ({ cutCaptionBusyId:null,
-      edits: [{ id:'cut-' + Date.now(), kind:'cutdown', target:edit.target, fromDuration:edit.fromDuration,
-                url:cu.video_url, captioned:true, rows:edit.rows, at:'Just now' }, ...(s.edits || [])] }));
+      cutEdits: [{ id:'cut-' + Date.now(), kind:'cutdown', target:edit.target, fromDuration:edit.fromDuration,
+                url:cu.video_url, captioned:true, aspect:edit.aspect, rows:edit.rows, at:'Just now' }, ...(s.cutEdits || [])] }));
     this.showToast(edit.target + 's cut captioned — added to Deliverables.', 'ok');
   };
   // The film's cut belongs to the FILM. This resolved `(this.state.execs||{}).social`, which is wrong
@@ -18052,7 +18071,7 @@ class Component extends DCLogic {
       cutCaptions: !!s.cutCaptions, onToggleCutCaptions: this.onToggleCutCaptions,
       hasCutVoice: !!s.cutVoiceUrl,
       cutVoiceAudio: s.cutVoiceUrl ? React.createElement('audio', { src:s.cutVoiceUrl, controls:true, style:{ width:'100%' } }) : null,
-      hasCutDeliverables: !!(s.edits || []).filter(e => e.kind === 'cutdown' && e.url).length,
+      hasCutDeliverables: !!(s.cutEdits || []).filter(e => e.kind === 'cutdown' && e.url).length,
       // Phase 3 — the crop/pad toggle for reframing.
       reframeModeCrop: this.setCutReframeMode('crop'), reframeModePad: this.setCutReframeMode('pad'),
       reframeCropBg: s.cutReframeMode === 'crop' ? '#17325E' : '#fff', reframeCropFg: s.cutReframeMode === 'crop' ? '#F7F5F1' : '#6B7280',
@@ -18060,7 +18079,7 @@ class Component extends DCLogic {
       // Phase 3c — the shared sign-off form fields (one form open at a time).
       signoffLine: s.signoffLine || '', signoffCta: s.signoffCta || '',
       onSignoffLine: this.onSignoffLine, onSignoffCta: this.onSignoffCta, cancelSignoff: this.cancelSignoff,
-      cutDeliverables: (s.edits || []).filter(e => e.kind === 'cutdown' && e.url).map(e => ({
+      cutDeliverables: (s.cutEdits || []).filter(e => e.kind === 'cutdown' && e.url).map(e => ({
         label: e.target + 's' + (e.aspect ? ' · ' + e.aspect : '') + (e.fromDuration ? ' · from ' + e.fromDuration : ''), url: e.url, at: e.at || '',
         captioned: !!e.captioned,
         showCaption: !e.captioned && !!(e.rows && e.rows.length),
@@ -19070,7 +19089,7 @@ class Component extends DCLogic {
       planShots:this.planShots, addShot:this.addShot, callSheet:this.callSheet,
       handoffShots:this.handoffShots, editShot:this.editShot,
       shotsPlanLabel: this.shots().length ? 'Re-plan from the script' : 'Plan the shots',
-      videoTabs: [['film','Film','Objective, script, storyboard, render'],['shots','Live action','Plan the shoot, attach the takes, sign them off'],['craft','Edit room','Edit the finalised film — durations, shots, look and sound'],['comp','Compositor','Key a green screen onto a plate']]
+      videoTabs: [['film','Film','Objective, script, storyboard, render'],['shots','Live action','Plan the shoot, attach the takes, sign them off'],['craft','Edit room','Edit the finalised film — durations, voice, frame sizes, captions and sound'],['comp','Compositor','Key a green screen onto a plate']]
         .map(([k,label,sub]) => ({ label, sub, go:this.goVideoTab(k),
           fg: (s.vTab||'film')===k ? '#17325E' : '#6B7280',
           subFg: (s.vTab||'film')===k ? '#41505F' : '#9AA1AC',
