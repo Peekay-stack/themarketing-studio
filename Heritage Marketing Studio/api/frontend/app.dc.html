@@ -11680,6 +11680,26 @@
     </div>
   </sc-if>
 
+  <!-- ===================== OUT-OF-CREDIT POP-UP ===================== -->
+  <!-- A render that fails because an engine is out of credit gets a clear pop-up, not just a toast. -->
+  <sc-if value="{{ hasCreditsAlert }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed; inset:0; background:rgba(23,50,94,0.6); z-index:600; display:flex; align-items:center; justify-content:center; padding:24px; animation:hf-fade 0.2s ease;">
+      <div style="background:#fff; border-radius:20px; padding:30px 32px; max-width:460px; width:100%; box-shadow:0 30px 60px -20px rgba(23,50,94,0.5);">
+        <div style="font-size:12px; font-weight:800; letter-spacing:0.06em; text-transform:uppercase; color:#C0392B; margin-bottom:8px;">Out of render credit</div>
+        <h2 style="font-family:'Epilogue',sans-serif; font-size:22px; font-weight:700; color:#17325E; margin:0 0 10px;">The video engine is out of credit</h2>
+        <p style="font-size:13.5px; color:#41505F; line-height:1.6; margin:0 0 14px; text-wrap:pretty;">Nothing rendered because the engine’s balance is exhausted. Top up and render again — re-rendering on its own cannot fix an empty balance.</p>
+        <div style="display:flex; flex-direction:column; gap:7px; margin-bottom:16px;">
+          <a href="https://fal.ai/dashboard/billing" target="_blank" rel="noopener" style="font-size:13px; font-weight:700; color:#2E5EA6; text-decoration:none;">→ Top up fal.ai (fal.ai/dashboard/billing)</a>
+          <span style="font-size:12px; color:#6B7280;">or restore credit on your Google / Gemini-Veo billing account, then re-render.</span>
+        </div>
+        <sc-if value="{{ hasCreditsDetail }}" hint-placeholder-val="{{ false }}">
+          <div style="font-size:11.5px; color:#9AA1AC; line-height:1.5; margin-bottom:16px; max-height:96px; overflow:auto; background:#F7F6F3; border-radius:9px; padding:9px 11px;">{{ creditsAlertDetail }}</div>
+        </sc-if>
+        <button onClick="{{ closeCreditsAlert }}" style="width:100%; background:#17325E; color:#fff; border:none; border-radius:10px; padding:11px; font-weight:700; font-size:14px; cursor:pointer;">Got it</button>
+      </div>
+    </div>
+  </sc-if>
+
   <!-- ===================== FRAME LIGHTBOX ===================== -->
   <sc-if value="{{ hasLightbox }}" hint-placeholder-val="{{ false }}">
     <div onClick="{{ closeLightbox }}" style="position:fixed; inset:0; z-index:210; background:rgba(8,20,12,0.82); display:flex; align-items:center; justify-content:center; padding:40px; cursor:zoom-out;">
@@ -11781,6 +11801,7 @@ class Component extends DCLogic {
     // The Edit room's rendered cut deliverables. Kept SEPARATE from `edits` (which belongs to the older
     // production-screen `/edit-master` trim list rendered via `madeEdits`) so the two never collide.
     cutEdits: [],
+    creditsAlert: '',             // when set, the out-of-credit pop-up shows (holds the server detail)
     scriptWriting: false,
     rewritingScene: null,
     sceneFrames: {},               // { [idx]: {status:'idle|rendering|done|error', url} }
@@ -15492,6 +15513,17 @@ class Component extends DCLogic {
   setVoice = (e) => this.setState(s => ({ production:{ ...s.production, voice:e.target.value } }));
 
   showToast(text, tone){ this.setState({ toast:{ text, tone: tone||'info' } }); clearTimeout(this._toastT); this._toastT = setTimeout(()=>this.setState({ toast:null }), 4200); }
+  // A render that fails because an engine is out of credit deserves a clear pop-up, not a toast that
+  // scrolls away. The words come from the server (produce-video now names an exhausted-balance wall).
+  // flagCredits returns true when the detail IS a credit wall (and shows the pop-up), so the caller can
+  // skip its own toast.
+  CREDIT_WALL_RE = /out of credit|exhausted balance|top up|user is locked|\/billing|insufficient (balance|funds|credit)/i;
+  flagCredits(detail){
+    const t = String(detail || '');
+    if (t && this.CREDIT_WALL_RE.test(t)) { this.setState({ creditsAlert: t }); return true; }
+    return false;
+  }
+  closeCreditsAlert = () => this.setState({ creditsAlert: '' });
   dismissToast = () => this.setState({ toast:null });
 
   // graceful fetch: returns parsed json, or null on any failure / 501
@@ -17095,10 +17127,10 @@ class Component extends DCLogic {
     if (!isRevise) this.addCreated({ type:'Video', title:(this.state.linkedBrief ? this.state.linkedBrief.title.replace(/ brief.*/i,'').trim()+' — produced film' : 'Produced film'), format:this.state.production.aspect+' · '+this.state.prodDuration, status:'Draft' });
     // B4 — surface the server's `detail` on failure AND on a 200 that carries a warning.
     if (url) {
-      if (d.detail) this.showToast(d.detail);
-      else this.showToast('Cut ready — ' + this.renderSummary(info) + '.', 'ok');
+      if (d.detail && !this.flagCredits(d.detail)) this.showToast(d.detail);
+      else if (!d.detail) this.showToast('Cut ready — ' + this.renderSummary(info) + '.', 'ok');
     } else if (d && d.detail) {
-      this.showToast(d.detail);
+      if (!this.flagCredits(d.detail)) this.showToast(d.detail);
     } else if (r && r.status === 501) {
       this.showToast('Video rendering isn\u2019t configured on this server — showing the preview placeholder.');
     } else {
@@ -17388,7 +17420,7 @@ class Component extends DCLogic {
     const r = await this.apiCall('/produce-video', body);
     const d = (r && r.data) || {};
     const url = (r && r.ok && d.video_url) ? d.video_url : null;
-    if (!url) { this.setState({ cutRenderBusy:false }); this.showToast(d.detail || 'Couldn’t render the cut — see heritage-log.txt.'); return; }
+    if (!url) { this.setState({ cutRenderBusy:false }); if (!this.flagCredits(d.detail)) this.showToast(d.detail || 'Couldn’t render the cut — see heritage-log.txt.'); return; }
     // Phase 2 — burn captions (sound-off) if the toggle is on. A failed burn never loses the cut:
     // we keep the clean render and say so.
     let finalUrl = url, captioned = false;
@@ -19747,6 +19779,7 @@ class Component extends DCLogic {
       imcJson: dr ? JSON.stringify(dr, null, 2) : '',
       // toast + word downloads
       toast: s.toast, hasToast: !!s.toast, toastText: s.toast ? s.toast.text : '', dismissToast:this.dismissToast,
+      hasCreditsAlert: !!s.creditsAlert, hasCreditsDetail: !!s.creditsAlert, creditsAlertDetail: s.creditsAlert || '', closeCreditsAlert: this.closeCreditsAlert,
       lightbox: s.lightbox, hasLightbox: !!s.lightbox, closeLightbox:this.closeLightbox,
       lightboxImg: s.lightbox ? React.createElement('img', { src:s.lightbox, style:{ maxWidth:'100%', maxHeight:'100%', borderRadius:14, boxShadow:'0 30px 80px -20px rgba(0,0,0,0.7)' } }) : null,
       toastBg: s.toast && s.toast.tone==='ok' ? '#17325E' : (s.toast && s.toast.tone==='info' ? '#1c4a2c' : '#17325E'),
