@@ -3685,11 +3685,18 @@
             <div style="display:flex; gap:10px; align-items:center; margin-bottom:7px;">
               <span style="font-size:11px; font-weight:800; color:#2E5EA6;">{{ cr.no }}</span>
               <span style="font-size:11.5px; font-weight:700; color:#17325E;">{{ cr.tc }}</span>
-              <span style="font-size:12px; color:#6B7280; flex:1; min-width:0; text-wrap:pretty;">{{ cr.visual }}</span>
+              <span style="flex:1;"></span>
+              <!-- Phase 4 — drop this scene from the cut. -->
+              <span onClick="{{ cr.onRemove }}" style="cursor:pointer; font-size:11px; font-weight:700; color:#C0392B;">Remove</span>
               <!-- Phase 1c — per-shot stay (seconds); editing it retimes the whole cut. -->
               <span style="font-size:11px; color:#9AA1AC; white-space:nowrap;">stay</span>
               <input value="{{ cr.secs }}" onChange="{{ cr.onStay }}" type="number" min="1" step="1" style="width:56px; border:1px solid #DDD9D1; border-radius:7px; padding:5px 7px; font-size:12px; color:#17325E; background:#fff; font-family:inherit;" />
               <span style="font-size:11px; color:#9AA1AC;">s</span>
+            </div>
+            <!-- Phase 4 — what the scene shows (edited here, it drives what this scene renders). -->
+            <div style="margin-bottom:8px;">
+              <div style="font-size:10.5px; font-weight:800; letter-spacing:0.04em; text-transform:uppercase; color:#9AA1AC; margin-bottom:4px;">What the scene shows</div>
+              <textarea value="{{ cr.visual }}" onChange="{{ cr.onVisual }}" rows="2" placeholder="what is on screen" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:7px 9px; font-size:12.5px; line-height:1.5; color:#41505F; background:#fff; resize:vertical; font-family:inherit;"></textarea>
             </div>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
               <div>
@@ -17409,6 +17416,16 @@ class Component extends DCLogic {
     });
   };
   discardCutdownRescript = () => this.setState({ cutdownRescript:null, cutVoiceUrl:null });
+  // Phase 4 — drop one scene from the cut draft and re-time the rest. Never removes the last scene.
+  removeCutdownRow = (idx) => () => {
+    this.setState(s => {
+      if (!s.cutdownRescript) return {};
+      const rows = (s.cutdownRescript.rows || []);
+      if (rows.length <= 1) { this.showToast('A cut needs at least one scene.'); return {}; }
+      const kept = rows.filter((_r, i) => i !== idx).map((r, i) => ({ ...r, no: i + 1 }));
+      return { cutdownRescript: { ...s.cutdownRescript, rows: this.withCutTimecodes(kept) }, cutVoiceUrl: null };
+    });
+  };
   // Phase 1c — per-shot "stay": each cut row carries an explicit `secs`; editing one recomputes the
   // continuous timecodes down the whole cut. Draft-only — the master is never touched.
   cutSecsOf(r){ const m = String((r && r.tc) || '').match(/(\d+(?:\.\d+)?)\s*[-–—]+\s*(\d+(?:\.\d+)?)/); if (m){ const d = parseFloat(m[2]) - parseFloat(m[1]); if (d > 0) return Math.round(d); } return 4; }
@@ -18121,7 +18138,8 @@ class Component extends DCLogic {
       cutdownRescriptFrom: s.cutdownRescript ? s.cutdownRescript.fromDuration : '',
       cutdownRescriptRows: (s.cutdownRescript ? (s.cutdownRescript.rows || []) : []).map((r, i) => ({
         no: r.no, tc: r.tc, visual: r.visual || '', dialogue: r.dialogue || '', supr: r.supr || '', secs: r.secs || this.cutSecsOf(r),
-        onDialogue: this.editCutdownRow(i, 'dialogue'), onSupr: this.editCutdownRow(i, 'supr'), onStay: this.setCutStay(i) })),
+        onDialogue: this.editCutdownRow(i, 'dialogue'), onSupr: this.editCutdownRow(i, 'supr'),
+        onVisual: this.editCutdownRow(i, 'visual'), onStay: this.setCutStay(i), onRemove: this.removeCutdownRow(i) })),
       discardCutdownRescript: this.discardCutdownRescript,
       // Phase 1c/1d — voice preview + freeze&render of the cut, and the rendered deliverables.
       previewCutVoices: this.previewCutVoices,
