@@ -610,7 +610,8 @@ def rescore(payload: dict):
     _secs = filmcut.parse_seconds(payload.get("duration"))
     music_url, music_provider = (str(payload["music_url"]), "locked") \
         if str(payload.get("music_url") or "") \
-        else _music_bed(payload.get("music", ""), _secs, _engine(payload, "music"), _sound_world(payload))
+        else _music_bed(payload.get("music", ""), _secs, _engine(payload, "music"), _sound_world(payload),
+                        str(payload.get("tempo") or ""), str(payload.get("dynamics") or ""))
     out_name = _next_scored_name(master)
     # An optional sound plan (see soundplan.py); absent -> the bed mixes exactly as before.
     plan = soundplan.resolve(payload.get("sound_plan"), payload.get("scenes"), total)
@@ -1104,7 +1105,8 @@ def voice_preview(payload: dict):
     music_url, music_provider = str(payload.get("music_url") or ""), "locked"
     if not music_url and payload.get("with_music", True):
         music_url, music_provider = _music_bed(payload.get("music", ""), total,
-                                              _engine(payload, "music"), _sound_world(payload))
+                                              _engine(payload, "music"), _sound_world(payload),
+                                              str(payload.get("tempo") or ""), str(payload.get("dynamics") or ""))
     os.makedirs(filmcut.RENDERS_DIR, exist_ok=True)
     name = f"voice-preview-{uuid.uuid4().hex[:8]}.mp3"
     plan = soundplan.resolve(payload.get("sound_plan"), payload.get("scenes"), total)
@@ -1510,7 +1512,8 @@ def produce_video(payload: dict):
     if str(payload.get("music_url") or ""):
         music_url, music_provider = str(payload["music_url"]), "locked"
     else:
-        music_url, music_provider = _music_bed(music, total, _engine(payload, "music"), _sound_world(payload))
+        music_url, music_provider = _music_bed(music, total, _engine(payload, "music"), _sound_world(payload),
+                                               str(payload.get("tempo") or ""), str(payload.get("dynamics") or ""))
     if music_url:
         audio_kinds.append("music")
     else:

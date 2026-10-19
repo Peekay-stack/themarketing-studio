@@ -15498,7 +15498,7 @@ class Component extends DCLogic {
 
   // ---------- video generation ----------
   pickVideoObjective = (name) => () => {
-    this.setState({ videoObjective:name, videoConcept:null, provConcept:null, videoRefusal:'', scriptVersions:[], scriptStatus:'none', fullScript:null, sceneFrames:{}, shoot:{}, producedUrl:null, scriptPhase:'concept', videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null, renderInfo:null, castRefUrl:null, videoCastChoice:'', videoPlateChoice:'', videoPackChoice:'', frameNote:'', scriptRefine:'', soundPlan:{}, soundBase:[], musicStyle:'warm-strings', musicLockMood:null, production:{ aspect:'16:9', music:'Warm strings', voice:'', status:'idle', versions:[] } });
+    this.setState({ videoObjective:name, videoConcept:null, provConcept:null, videoRefusal:'', scriptVersions:[], scriptStatus:'none', fullScript:null, sceneFrames:{}, shoot:{}, producedUrl:null, scriptPhase:'concept', videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null, renderInfo:null, castRefUrl:null, videoCastChoice:'', videoPlateChoice:'', videoPackChoice:'', frameNote:'', scriptRefine:'', soundPlan:{}, soundBase:[], musicStyle:'warm-strings', musicTempo:'', musicDynamics:'', musicLockMood:null, production:{ aspect:'16:9', music:'Warm strings', voice:'', status:'idle', versions:[] } });
     // Same "surfaced up front" reasoning as POSM's loadPosmAssetLib: a real reference picker with
     // nothing loaded to pick from is just a slower text box.
     if (!this.state.videoAssets.length) this.loadVideoAssetLib();
@@ -16833,6 +16833,7 @@ class Component extends DCLogic {
       master:this.state.silentMaster, scenes:this.state.fullScript||[], brand_mode:this.state.producerBrandMode,
       duration:this.state.prodDuration, voice:p0.voice, music:p0.music,
       music_url:this.state.musicUrl || '', music_level:this.state.musicLevel,
+      tempo:this.state.musicTempo || '', dynamics:this.state.musicDynamics || '',
       voices:this.state.voiceChoices, accent:this.state.voiceAccent,
       characters:this.state.videoCharacters, engines:this.state.engines,
       ...(this.soundPlanPayload() ? { sound_plan:this.soundPlanPayload() } : {}), ...this.loudnessParam() });
@@ -16984,6 +16985,7 @@ class Component extends DCLogic {
              music:p.music, characters:this.state.videoCharacters, voices:this.state.voiceChoices,
              accent:this.state.voiceAccent,
              music_url:this.state.musicUrl || '', music_level:this.state.musicLevel,
+             tempo:this.state.musicTempo || '', dynamics:this.state.musicDynamics || '',
              engines:this.state.engines, ...(this.soundPlanPayload() ? { sound_plan:this.soundPlanPayload() } : {}), ...this.loudnessParam() };
   }
   // Rows written before structured audio existed have no `audio` array. The plan knows what the
@@ -17150,6 +17152,7 @@ class Component extends DCLogic {
                    voices:this.state.voiceChoices, characters:this.state.videoCharacters,
                    accent:this.state.voiceAccent, style:this.state.videoStyle,
                    music_url:this.state.musicUrl || '', music_level:this.state.musicLevel,
+                   tempo:this.state.musicTempo || '', dynamics:this.state.musicDynamics || '',
                    engines:this.state.engines };
     // `tier` drives Google (lite | standard); `model` drives fal (fast | standard). Send the
     // RESOLVED tier — the raw state can hold a tier the current engine has no model for.
@@ -17477,7 +17480,8 @@ class Component extends DCLogic {
     const body = { scenes:cr.rows, aspect:p0.aspect, duration:cr.target + 's', music:p0.music, voice:p0.voice,
       note:cr.target + 's cut', brand_mode:this.state.producerBrandMode, voices:this.state.voiceChoices,
       characters:this.state.videoCharacters, accent:this.state.voiceAccent, style:this.state.videoStyle,
-      music_url:this.state.musicUrl || '', music_level:this.state.musicLevel, engines:this.state.engines,
+      music_url:this.state.musicUrl || '', music_level:this.state.musicLevel,
+      tempo:this.state.musicTempo || '', dynamics:this.state.musicDynamics || '', engines:this.state.engines,
       tier:this.tierNow(), model: this.tierNow()==='standard' ? 'veo-3.1' : 'veo-3.1-fast' };
     const lookRef = (this.state.videoLookRef || '').trim(); if (lookRef) body.look_note = lookRef;
     Object.assign(body, this.loudnessParam());
