@@ -3180,6 +3180,15 @@
           </div>
         </sc-for>
       </div>
+
+      <!-- Hand over to Production — a CHECKED step so Production never renders stale or missing frames. -->
+      <div style="background:#fff; border:1px solid #DDD9D1; border-radius:16px; padding:18px 20px; margin-top:16px; display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+        <div style="flex:1; min-width:220px;">
+          <div style="font-family:'Epilogue',sans-serif; font-weight:700; font-size:15px; color:#17325E;">Hand over to Production</div>
+          <div style="font-size:12.5px; color:#6B7280; margin-top:3px; text-wrap:pretty;">{{ handoverNote }}</div>
+        </div>
+        <button onClick="{{ handToProduction }}" style="background:{{ handoverBg }}; color:#F7F5F1; border:none; border-radius:11px; padding:11px 20px; font-weight:700; font-size:14px; cursor:pointer;">Hand over to Production →</button>
+      </div>
     </sc-if>
 
     <!-- ============ STEP: PRODUCTION ============ -->
@@ -16591,6 +16600,25 @@ class Component extends DCLogic {
     const out = { ...sp }; delete out.scenes; delete out.sounds; return out;
   }
   goSoundDesign = () => this.setVideoStep('shootboard')();
+  // A CHECKED hand-over from the Shoot Board to Production, so Production never renders stale or missing
+  // frames (the staleness the owner hit jumping straight across via the step nav). A frame is out of date
+  // when the scene's words, the look, a department note or the cast changed after it was rendered.
+  framesStaleCount(){
+    const s = this.state;
+    return (s.fullScript || []).filter((r, i) => { const f = s.sceneFrames[i]; return f && f.status === 'done' && this.frameIsStale(i, f); }).length;
+  }
+  handToProduction = () => {
+    const s = this.state;
+    if (s.scriptStatus !== 'approved') { this.showToast('Approve the full script first.'); return; }
+    const n = (s.fullScript || []).length;
+    if (!n) { this.showToast('Write and approve the script first.'); return; }
+    const done = Object.values(s.sceneFrames).filter(f => f.status === 'done').length;
+    if (done < n) { this.showToast('Render all ' + n + ' storyboard frames first — ' + done + ' of ' + n + ' done.'); return; }
+    const stale = this.framesStaleCount();
+    if (stale > 0) { this.showToast(stale + (stale > 1 ? ' frames are' : ' frame is') + ' out of date — re-render ' + (stale > 1 ? 'them' : 'it') + ' so Production uses the current script and cast.'); return; }
+    this.setVideoStep('production')();
+    this.showToast('Handed over to Production — all frames current.', 'ok');
+  };
   SOUND_STATE_LABELS = { under:'Under (stay low)', open:'Open (lift in pauses)', swell:'Swell', out:'Out (drop away)' };
   // Mirrors soundplan.DUCK_DB -- for display only; the mix reads the server's own table.
   SOUND_DUCK_DB = { subtle:5, normal:8, strong:12 };
@@ -18492,6 +18520,7 @@ class Component extends DCLogic {
     const approved = s.scriptStatus==='approved';
     const nScenes = (s.fullScript || []).length;
     const doneFrames = Object.values(s.sceneFrames).filter(f=>f.status==='done').length;
+    const staleFrames = this.framesStaleCount();   // done frames the script/cast/look has outrun
     const statusLabel = { none:'Not started', concept:'Concept ready', drafted:'Script drafted', approved:'Approved' }[s.scriptStatus] || 'Not started';
     const stepDefs = [ {key:'brief',label:'Brief'}, {key:'scripting',label:'Scripting'}, {key:'shootboard',label:'Shoot Board'}, {key:'production',label:'Production'} ];
     const videoSteps = stepDefs.map((d,i) => {
@@ -18543,10 +18572,16 @@ class Component extends DCLogic {
       border: s.socialStyle===v.id ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.28)' }));
     const preflight = [
       { label:'Full script approved', ok: approved, note: approved ? 'Approved' : 'Pending' },
-      { label:'Storyboard frames', ok: nScenes>0 && doneFrames===nScenes, note: doneFrames+' of '+nScenes },
+      { label:'Storyboard frames', ok: nScenes>0 && doneFrames===nScenes && staleFrames===0,
+        note: staleFrames>0 ? (staleFrames+' of '+nScenes+' out of date') : (doneFrames+' of '+nScenes) },
       { label:'Aspect ratio', ok: !!prod.aspect, note: prod.aspect },
       { label:'Duration / cut', ok: !!s.prodDuration, note: s.prodDuration },
     ].map(x => ({ ...x, mark: x.ok ? '✓' : '–', markBg: x.ok ? '#EAF6EC' : '#F3EFE3', markFg: x.ok ? '#259821' : '#A8AEB8' }));
+    const handoverReady = approved && nScenes>0 && doneFrames===nScenes && staleFrames===0;
+    const handoverNote = !approved ? 'Approve the script first.'
+      : (doneFrames<nScenes ? ((nScenes-doneFrames)+' of '+nScenes+' frames still to render.')
+      : (staleFrames>0 ? (staleFrames+' of '+nScenes+' frames out of date — re-render so the film matches the current script & cast.')
+      : ('All '+nScenes+' frames rendered and current.')));
 
     const isEditor = s.screen==='editor';
 
@@ -19354,6 +19389,8 @@ class Component extends DCLogic {
       castNeedsLockLine: s.castGateHit ? '#F1C9C4' : '#F0DFB4',
       allFramesLabel: s.framesBatch ? 'Rendering frames…' : '✦ Generate all frames',
       doneFrames, nScenes,
+      handToProduction: this.handToProduction, handoverNote,
+      handoverBg: handoverReady ? '#259821' : '#B07A12',
       // script / frame rework + character continuity
       scriptRefine: s.scriptRefine, onScriptRefine:this.onScriptRefine,
       reworkScript:this.reworkScript, scriptReworking: s.scriptReworking,
