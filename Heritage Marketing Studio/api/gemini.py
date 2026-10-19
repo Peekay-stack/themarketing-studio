@@ -95,11 +95,16 @@ VIDEO_BEATS = (4, 6, 8)   # Veo accepts only these clip lengths
 # there is no call site that would ever want a different list.
 VIDEO_NEGATIVE_PROMPT = "text, typographic letters, watermark, logo, warped geometry"
 
-# A model whose quota is spent stays spent — Veo's preview tiers have a daily allowance, not just a
-# per-minute one. Remember that per model so six shots don't each sit through the full backoff
-# ladder: one film burned eight minutes of waiting and still returned nothing.
+# When Veo returns 429 twice, bench it briefly so the other shots of the SAME film skip straight to fal
+# instead of each sitting through the full backoff ladder (one film burned eight minutes of waiting and
+# still returned nothing). The bench is deliberately SHORT: Google is the preferred engine under Auto, so
+# once it is topped up again it must come back on the very next render — a long bench would trap the film
+# on fal for minutes after the balance was restored. The cost of a short bench is at most one wasted
+# Google attempt per render while it is still genuinely out of credit, which is the right trade: being
+# first back to Google matters more than saving one failed call.
 _QUOTA_SPENT: dict[str, float] = {}
-QUOTA_COOLDOWN = 900.0    # stop asking this model for 15 minutes
+QUOTA_COOLDOWN = 90.0     # skip this model for 90s — long enough to cover one film's remaining shots,
+                          # short enough that a top-up is picked up on the next render
 
 
 def quota_spent(tier: str = "") -> str:
