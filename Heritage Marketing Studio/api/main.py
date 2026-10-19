@@ -1408,11 +1408,19 @@ def produce_video(payload: dict):
     missing = sorted({int((segments[i]["scenes"] or [{}])[0].get("no") or (i + 1))
                       for i, u in enumerate(slots) if not u})
     incomplete = bool(missing)
+    # A provider that is out of credit or locked is a different wall from a transient per-minute quota:
+    # re-rendering cannot fix an exhausted balance, so detect it and say the true cause and the action
+    # instead of the quota hint (which sent people to re-render over and over against a locked account).
+    _err_blob = " ".join(str(e) for e in errors).lower()
+    _billing_wall = any(k in _err_blob for k in
+                        ("exhausted balance", "user is locked", "top up", "/billing", "insufficient", "out of credit"))
     if incomplete:
+        _cause = ("The video engine is out of credit — top up before re-rendering, re-rendering cannot "
+                  "fix an exhausted balance" if _billing_wall
+                  else "The usual cause is Veo's per-minute quota; re-render to complete it")
         errors.insert(0, f"INCOMPLETE CUT — {len(slots) - len(clips)} of {len(slots)} shots did not "
                          f"render, so scene(s) {', '.join(str(n) for n in missing)} are missing and "
-                         f"this film is {sum(beats)}s of the {chosen}s you asked for. The usual cause "
-                         f"is Veo's per-minute quota; re-render to complete it")
+                         f"this film is {sum(beats)}s of the {chosen}s you asked for. {_cause}")
     video_provider = "+".join(sorted(used_providers)) if used_providers else ""
     # Say who actually rendered it. Reporting the requested model meant the UI could show "Veo 3.1
     # Lite" while fal had quietly done the work at its own rate — the exact thing that made the
@@ -1438,14 +1446,22 @@ def produce_video(payload: dict):
 
     if not clips:
         # Name the actual wall. "produced no clips" sent people to the log to find a quota message
-        # they could have been shown directly, along with what to switch to.
+        # they could have been shown directly, along with what to switch to. The same provider wall
+        # repeats once per failed shot, so de-duplicate before showing it.
         spent = gemini.quota_spent(tier) if _use(video_engine, "google") else ""
-        return JSONResponse(status_code=500 if errors else 501, content={
-            "detail": (f"No shots rendered — {spent}" if spent else
-                       f"Video render via '{model_id}' produced no clips. "
-                       + ("; ".join(errors) if errors else
-                          "See render-log.txt for the provider response; the model may be gated "
-                          "on your account."))})
+        uniq = list(dict.fromkeys(str(e) for e in errors))
+        if _billing_wall:
+            detail = ("No shots rendered — the video engine is out of credit. Top up your balance "
+                      "(for fal.ai: fal.ai/dashboard/billing; for Google: the Gemini/Veo billing account), "
+                      "or switch the engine, then re-render. " + "; ".join(uniq))
+        elif spent:
+            detail = f"No shots rendered — {spent}"
+        else:
+            detail = (f"Video render via '{model_id}' produced no clips. "
+                      + ("; ".join(uniq) if uniq else
+                         "See render-log.txt for the provider response; the model may be gated "
+                         "on your account."))
+        return JSONResponse(status_code=500 if errors else 501, content={"detail": detail})
 
     rendered = filmcut.stitch(clips, beats)
     if not rendered:
