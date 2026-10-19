@@ -138,12 +138,34 @@ _MUSIC_BY_ID = {m["id"]: m for m in MUSIC_STYLES}
 _MUSIC_BY_LABEL = {m["label"].strip().lower(): m for m in MUSIC_STYLES}
 
 
-def music_prompt(style_or_mood: str, sound_world: str = "") -> str:
+# Tempo and dynamics (crescendo) — two extra dimensions on the generated bed, chosen in the Edit room /
+# Production music controls (Phase 5). Each id maps to a phrase folded into the generation prompt; an
+# empty / unknown id adds nothing, so the style preset alone still works unchanged.
+_TEMPO = {
+    "slow":    "a slow, unhurried tempo",
+    "gentle":  "a gentle, relaxed tempo",
+    "steady":  "a steady mid-tempo",
+    "upbeat":  "an upbeat, lively tempo",
+    "driving": "a driving, energetic tempo",
+}
+_DYNAMICS = {
+    "even":         "holding even dynamics throughout, without a big swell",
+    "build":        "building gradually in intensity",
+    "crescendo":    "building to a clear crescendo near the end",
+    "swell":        "sitting back and swelling in the gaps and at the turn",
+    "rise_resolve": "rising through the middle, then resolving softly at the close",
+}
+
+
+def music_prompt(style_or_mood: str, sound_world: str = "", tempo: str = "", dynamics: str = "") -> str:
     """A named style id, or free text, into the full generation prompt.
 
     `sound_world` is the brand's own answer to "what does it sound like", when it has one. It used to be a
     fixed tail on every prompt ("a premium Indian dairy brand film — warm, wholesome, uplifting, gentle Indian
-    instrumentation"), which also sat on top of a piano or orchestral pick for a brand that is none of those."""
+    instrumentation"), which also sat on top of a piano or orchestral pick for a brand that is none of those.
+
+    `tempo` and `dynamics` are optional shaping chosen in the music controls (Phase 5); each resolves to a
+    phrase and is folded in, so a crescendo or a driving tempo can be asked for on top of the style."""
     key = str(style_or_mood or "").strip()
     # Resolve a known style by its id OR its label (a chip click sends the label); free text falls through.
     hit = _MUSIC_BY_ID.get(key) or _MUSIC_BY_LABEL.get(key.lower())
@@ -151,7 +173,23 @@ def music_prompt(style_or_mood: str, sound_world: str = "") -> str:
     world = " ".join(str(sound_world or "").split())
     line = (f" THE BRAND'S SOUND WORLD (instrumentation and mood only; any voice it describes is cast "
             f"separately): {world.rstrip('.')}.") if world else ""
-    return f"{base}{line} Instrumental score for a brand film. No vocals, no lyrics."
+    tphr = _TEMPO.get(str(tempo or "").strip().lower(), "")
+    dphr = _DYNAMICS.get(str(dynamics or "").strip().lower(), "")
+    shape = ""
+    if tphr or dphr:
+        parts = (["at " + tphr] if tphr else []) + ([dphr] if dphr else [])
+        shape = " Play it " + ", ".join(parts) + "."
+    return f"{base}{line}{shape} Instrumental score for a brand film. No vocals, no lyrics."
+
+
+def tempo_options() -> list[dict]:
+    return [{"id": k, "label": k.replace("_", " ").title()} for k in _TEMPO]
+
+
+def dynamics_options() -> list[dict]:
+    _lbl = {"even": "Even", "build": "Build", "crescendo": "Crescendo", "swell": "Swell at the turn",
+            "rise_resolve": "Rise & resolve"}
+    return [{"id": k, "label": _lbl.get(k, k.title())} for k in _DYNAMICS]
 
 # ElevenLabs voice names, picked for warm brand-film reads.
 _FEMALE, _MALE = "Sarah", "George"
@@ -225,9 +263,9 @@ def synth_vo(text: str, voice_hint: str = "") -> str | None:
     return run_fal(TTS_MODEL, args)
 
 
-def synth_music(mood: str, seconds: int, sound_world: str = "") -> str | None:
+def synth_music(mood: str, seconds: int, sound_world: str = "", tempo: str = "", dynamics: str = "") -> str | None:
     """One instrumental bed covering the full film length. `mood` may be a style id or free text."""
-    prompt = music_prompt(mood, sound_world)
+    prompt = music_prompt(mood, sound_world, tempo, dynamics)
     ms = max(10_000, min(300_000, int(seconds) * 1000))
     url = _run_fal(MUSIC_MODEL, {"prompt": prompt, "music_length_ms": ms,
                                  "force_instrumental": True})

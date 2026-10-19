@@ -491,14 +491,16 @@ def _sound_world(payload: dict) -> str:
     return str((brandprofile.resolve() or {}).get("sound_world") or "").strip()
 
 
-def _music_bed(mood, seconds, engine: str = "auto", sound_world: str = "") -> tuple[str, str]:
-    """(url, provider) for one instrumental bed. Google first; fal only if Google can't serve."""
+def _music_bed(mood, seconds, engine: str = "auto", sound_world: str = "",
+               tempo: str = "", dynamics: str = "") -> tuple[str, str]:
+    """(url, provider) for one instrumental bed. Google first; fal only if Google can't serve.
+    `tempo`/`dynamics` shape the bed (Phase 5) — folded into the generation prompt."""
     if _use(engine, "google"):
-        url = gemini.music(filmaudio.music_prompt(mood, sound_world), seconds)
+        url = gemini.music(filmaudio.music_prompt(mood, sound_world, tempo, dynamics), seconds)
         if url:
             return url, "google"
     if _use(engine, "fal"):
-        url = filmaudio.synth_music(mood, seconds, sound_world)
+        url = filmaudio.synth_music(mood, seconds, sound_world, tempo, dynamics)
         if url:
             return url, "fal"
     return "", ""
@@ -574,9 +576,11 @@ def music_options(payload: dict):
     label = next((m["label"] for m in filmaudio.MUSIC_STYLES if m["id"] == style), style)
     count = max(1, min(4, int(payload.get("count") or 3)))
     seconds = max(8, min(30, int(payload.get("seconds") or 15)))
+    tempo = str(payload.get("tempo") or "")
+    dynamics = str(payload.get("dynamics") or "")
     with ThreadPoolExecutor(max_workers=count) as pool:
-        made = list(pool.map(lambda _: _music_bed(style, seconds,
-                                                 _engine(payload, "music"), _sound_world(payload)), range(count)))
+        made = list(pool.map(lambda _: _music_bed(style, seconds, _engine(payload, "music"),
+                                                 _sound_world(payload), tempo, dynamics), range(count)))
     options = [{"n": i + 1, "style": style, "label": f"{label} · take {i + 1}",
                 "audio_url": u, "provider": prov}
                for i, (u, prov) in enumerate(made) if u]

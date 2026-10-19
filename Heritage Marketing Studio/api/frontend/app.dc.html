@@ -3300,10 +3300,23 @@
           <sc-if value="{{ provSoundSuggest }}" hint-placeholder-val="{{ false }}">
             <div style="font-size:11.5px; line-height:1.5; color:#2E5EA6; background:#EEF3FB; border:1px solid #D4E0F0; border-radius:8px; padding:8px 11px; margin-bottom:14px; text-wrap:pretty;">This film stands on a provocation &mdash; its sound language: &ldquo;{{ provSoundText }}&rdquo;. <span onClick="{{ useProvSound }}" style="cursor:pointer; font-weight:800; text-decoration:underline; color:#17325E;">Use it as the music mood</span></div>
           </sc-if>
-          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:14px;">
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
             <span style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#6B7280;">Level under voice</span>
             <sc-for list="{{ musicLevels }}" as="l" hint-placeholder-count="3">
               <span onClick="{{ l.set }}" style="cursor:pointer; padding:6px 12px; border-radius:8px; font-size:12.5px; font-weight:700; border:1px solid {{ l.border }}; background:{{ l.bg }}; color:{{ l.fg }};">{{ l.label }}</span>
+            </sc-for>
+          </div>
+          <!-- Phase 5 — tempo + dynamics (crescendo) shape the generated bed, on top of the style. -->
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
+            <span style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#6B7280;">Tempo</span>
+            <sc-for list="{{ musicTempos }}" as="t" hint-placeholder-count="6">
+              <span onClick="{{ t.set }}" style="cursor:pointer; padding:6px 12px; border-radius:8px; font-size:12.5px; font-weight:700; border:1px solid {{ t.border }}; background:{{ t.bg }}; color:{{ t.fg }};">{{ t.label }}</span>
+            </sc-for>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:14px;">
+            <span style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#6B7280;">Dynamics</span>
+            <sc-for list="{{ musicDynamicsOpts }}" as="dy" hint-placeholder-count="6">
+              <span onClick="{{ dy.set }}" style="cursor:pointer; padding:6px 12px; border-radius:8px; font-size:12.5px; font-weight:700; border:1px solid {{ dy.border }}; background:{{ dy.bg }}; color:{{ dy.fg }};">{{ dy.label }}</span>
             </sc-for>
           </div>
 
@@ -11863,6 +11876,8 @@ class Component extends DCLogic {
     musicOptions: [],              // auditioned candidate beds
     musicUrl: null,                // the LOCKED bed — preview and render both use this one
     musicLevel: 'balanced',        // subtle | balanced | forward
+    musicTempo: '',                // Phase 5 — '' | slow | gentle | steady | upbeat | driving
+    musicDynamics: '',             // Phase 5 — '' | even | build | crescendo | swell | rise_resolve
     // Sound design (soundplan.py). soundPlan holds ONLY what the person chose -- {off, duck, ending, carve, scenes:{no:state},
     // mood, moodTouched}; everything else is derived. soundBase is the plan the film starts from (POST /sound-plan).
     soundPlan: {},
@@ -16776,6 +16791,9 @@ class Component extends DCLogic {
   // so you can compare a flute bed against a strings bed side by side.
   setMusicStyle = (id) => () => { const hit = this.musicChips().find(o => o.id === id); this.setMood(hit ? hit.label : id, true); };
   setMusicLevel = (id) => () => this.setState({ musicLevel:id, voiceAudioUrl:null });
+  // Phase 5 — tempo + dynamics shape the generated bed. Toggle off a chip to clear back to style-only.
+  setMusicTempo = (id) => () => this.setState(s => ({ musicTempo: s.musicTempo === id ? '' : id }));
+  setMusicDynamics = (id) => () => this.setState(s => ({ musicDynamics: s.musicDynamics === id ? '' : id }));
   auditionMusic = async () => {
     if (this.state.musicBusy) return;
     this.setState({ musicBusy:true });
@@ -16784,6 +16802,7 @@ class Component extends DCLogic {
     // The take is made from the music MOOD (the one field the chips, the Music note and Production all write), so what is
     // auditioned is what the film is told.
     const r = await this.apiCall('/music-options', { style:this.state.musicStyle || this.state.production.music, count:1, seconds:15, brand_mode:this.state.producerBrandMode,
+                                                    tempo:this.state.musicTempo || '', dynamics:this.state.musicDynamics || '',
                                                     engines:this.state.engines });
     const d = (r && r.data) || {};
     const got = (d.options || []).filter(o => o.audio_url);
@@ -19469,6 +19488,15 @@ class Component extends DCLogic {
                     .map(o => ({ label:o.label, set:this.setMusicLevel(o.id),
                       bg: s.musicLevel===o.id ? '#17325E' : '#fff', fg: s.musicLevel===o.id ? '#fff' : '#17325E',
                       border: s.musicLevel===o.id ? '#17325E' : '#DDD9D1' })),
+      // Phase 5 — tempo + dynamics chips (toggle; '' = style-only).
+      musicTempos: [{id:'slow',label:'Slow'},{id:'gentle',label:'Gentle'},{id:'steady',label:'Steady'},{id:'upbeat',label:'Upbeat'},{id:'driving',label:'Driving'}]
+                    .map(o => ({ label:o.label, set:this.setMusicTempo(o.id),
+                      bg: s.musicTempo===o.id ? '#17325E' : '#fff', fg: s.musicTempo===o.id ? '#fff' : '#17325E',
+                      border: s.musicTempo===o.id ? '#17325E' : '#DDD9D1' })),
+      musicDynamicsOpts: [{id:'even',label:'Even'},{id:'build',label:'Build'},{id:'crescendo',label:'Crescendo'},{id:'swell',label:'Swell at the turn'},{id:'rise_resolve',label:'Rise & resolve'}]
+                    .map(o => ({ label:o.label, set:this.setMusicDynamics(o.id),
+                      bg: s.musicDynamics===o.id ? '#17325E' : '#fff', fg: s.musicDynamics===o.id ? '#fff' : '#17325E',
+                      border: s.musicDynamics===o.id ? '#17325E' : '#DDD9D1' })),
       hasMusicOptions: (s.musicOptions||[]).length > 0,
       musicOptionCards: (s.musicOptions||[]).map((o, i) => {
         const chosen = s.musicUrl === o.audio_url;
