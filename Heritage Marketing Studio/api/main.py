@@ -1298,13 +1298,15 @@ def _produce_video_sync(payload: dict):
                     if camera_note else
                     "Natural, restrained camera movement that keeps the face clearly recognisable "
                     "throughout the shot — no rapid rotation or orbit around it.")
-            p = (f"Animate this storyboard frame as shot {seg['index'] + 1} of {len(segments)} of a "
-                 f"{_brand_line(brand_mode=_vid_brand_mode)} brand film. Keep the people, wardrobe, set and colour grade "
-                 f"exactly as they appear in the image — do not redesign anything. {cont}"
-                 f"Bring it to life for this beat: {beat}.{role_note} "
-                 f"{look} {camera_direction} Mood: {music}. "
-                 "No on-screen text or logos. No dialogue or music in the clip — the soundtrack is "
-                 "added in the edit.")
+            p = (f"Animate this storyboard frame — shot {seg['index'] + 1} of {len(segments)} of a "
+                 f"{_brand_line(brand_mode=_vid_brand_mode)} brand film. This is image-to-video: treat the image as "
+                 f"FIXED. The people, their faces and wardrobe, the set, the colour grade and ESPECIALLY the "
+                 f"product pack — its shape, label, logo, colours and every printed word — must stay exactly as "
+                 f"in the image. Do not redesign, re-draw, re-letter, restyle, swap or morph the pack into a "
+                 f"different pack. {cont}"
+                 f"Add ONLY the motion of this beat: {beat}.{role_note} {camera_direction} "
+                 "Do not add any on-screen captions, subtitles, watermarks or new text or logos, and do not "
+                 "alter the pack's existing label — the soundtrack and any supers are added later in the edit.")
         else:
             if movement_phrase:
                 camera_direction = f"Camera: {movement_phrase}" + (f" {camera_note}. " if camera_note else ". ")
@@ -1315,9 +1317,9 @@ def _produce_video_sync(payload: dict):
                  f"the other shots so the parts cut together seamlessly. {cont}"
                  f"Film logline: {script.get('logline','')}. "
                  f"Depict ONLY this beat: {beat}.{role_note} "
-                 f"{look} {camera_direction}Mood: {music}. "
-                 "No on-screen text or logos. No spoken dialogue and no music in the clip itself — "
-                 "the soundtrack is added in the edit.")
+                 f"{look} {camera_direction}"
+                 "No on-screen captions, subtitles, watermarks or logos. No spoken dialogue and no musicians "
+                 "or instruments in the picture — the soundtrack is added separately in the edit.")
         return p + f" Revision note: {revise}." if revise else p
 
     # Render the picture SILENT and in parallel: a 2-minute film is 15 shots, which would take far
