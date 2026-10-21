@@ -253,13 +253,13 @@ expect("/scene-still answers 200 and its look carries no dairy, farm or premium"
        (r.status_code, IMG[-1][:200] if IMG else "no prompt"))
 VID.clear()
 r = client.post("/produce-video", json={"scenes": [{"no": 1, "tc": "0-6s", "visual": "A mason checks a finished joint", "camera": "static", "audio": [{"type": "vo", "text": "A short line."}]}],
-                                       "duration": "30s", "aspect": "16:9", "style": "real", "engines": {"video": "fal"}, "music": "warm", "brand_mode": "grounded"})
+                                       "duration": "30s", "aspect": "16:9", "style": "real", "engines": {"video": "fal"}, "music": "warm", "brand_mode": "grounded", "sync": True})
 clip = VID[-1] if VID else ""
-expect("a clip prompt is built, with no 'Indian family' or 'premium and wholesome' and with its silent-clip rules", bool(clip) and not re.search(r"Indian family|premium and wholesome|dairy", clip) and "No on-screen text or logos" in clip, clip[:200])
+expect("a clip prompt is built, with no 'Indian family' or 'premium and wholesome' and with its silent-clip rules", bool(clip) and not re.search(r"Indian family|premium and wholesome|dairy", clip) and "no musicians or instruments in the picture" in clip, clip[:200])
 
 VID.clear()
 client.post("/produce-video", json={"scenes": [{"no": 1, "tc": "0-6s", "visual": "A mason checks a finished joint", "camera": "static", "audio": [{"type": "vo", "text": "A short line."}]}],
-                                    "duration": "30s", "aspect": "16:9", "style": "real", "engines": {"video": "fal"}, "music": "warm", "brand_mode": "general"})
+                                    "duration": "30s", "aspect": "16:9", "style": "real", "engines": {"video": "fal"}, "music": "warm", "brand_mode": "general", "sync": True})
 gclip = VID[-1] if VID else ""
 expect("Independent mode: the clip prompt does not name the active brand ('a brand' instead)", bool(gclip) and "Sthir" not in gclip and "brand film for a brand" in gclip, gclip[:160])
 
@@ -339,8 +339,8 @@ def region(start, end):
 
 expect("/music-options", "brand_mode" in region("apiCall('/music-options', {", "});"))
 expect("/rescore", "brand_mode" in region("apiCall('/rescore', {", "});"))
-expect("the shared voice/preview payload (voicePayload)", "brand_mode" in region("return { scenes:this.state.fullScript||[], duration:this.state.prodDuration, voice:p.voice,", "};"))
-expect("/produce-video", "brand_mode" in region("const body = { scenes:rows, aspect:p0.aspect", "apiCall('/produce-video', body)"))
+expect("the shared voice/preview payload (voicePayload)", "brand_mode" in region("return { scenes:scenes || this.state.fullScript||[], duration:duration || this.state.prodDuration, voice:p.voice,", "};"))
+expect("/produce-video", "brand_mode" in region("const body = { scenes:rows, aspect:p0.aspect", "renderViaJob(body)"))
 
 print()
 if failures:

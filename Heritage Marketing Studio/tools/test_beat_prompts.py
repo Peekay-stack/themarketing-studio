@@ -61,7 +61,7 @@ def scene(no, visual, **extra):
 def prompts_for(scenes):
     seen.clear()
     client.post("/produce-video", json={"scenes": scenes, "duration": "30s", "aspect": "16:9", "style": "real",
-                                        "engines": {"video": "fal"}, "music": "warm"})
+                                        "engines": {"video": "fal"}, "music": "warm", "sync": True})
     return [seen[i] for i in sorted(seen)]
 
 

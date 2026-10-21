@@ -89,7 +89,7 @@ finally:
 print("The clip prompt")
 src = open(os.path.join(API, "main.py"), encoding="utf-8").read()
 expect("main.py no longer says 'Authentic Indian family setting' or 'premium and wholesome'", "Authentic Indian family setting" not in src and "premium and wholesome" not in src)
-expect("the clip prompt keeps its no-text and silent-clip rules", "No on-screen text or logos. No spoken dialogue and no music in the clip itself" in src)
+expect("the clip prompt keeps its no-text and silent-clip rules", "No on-screen captions, subtitles, watermarks or logos. No spoken dialogue and no musicians" in src)
 
 print("An empty voice field casts the narrator the old default string did")
 old = main._voice_setup({"scenes": [], "duration": "30s", "voice": "Warm female (Telugu-accented English)"})[1]

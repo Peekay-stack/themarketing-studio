@@ -1600,7 +1600,13 @@ def _render_jobs_gc() -> None:
 @app.post("/produce-video")
 def produce_video(payload: dict):
     """Start a render in the background and return a `job_id` to poll (see /render-status). The render
-    itself runs minutes — past the request timeout — so it cannot complete inside this call."""
+    itself runs minutes — past the request timeout — so it cannot complete inside this call.
+
+    `sync: true` runs the render inline and returns its result directly, for callers that can wait and
+    want the old one-shot behaviour (the in-process tests, which stub every paid call). The live UI never
+    sends it — it would re-expose the request-timeout this route exists to avoid."""
+    if payload.get("sync"):
+        return _produce_video_sync(payload)
     _render_jobs_gc()
     job_id = uuid.uuid4().hex[:12]
     _render_job_set(job_id, status="rendering", at=time.time())

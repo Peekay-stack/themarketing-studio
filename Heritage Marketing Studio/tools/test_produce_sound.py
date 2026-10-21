@@ -94,7 +94,7 @@ def rows():
 
 def produce(**extra):
     body = {"scenes": rows(), "duration": "30s", "aspect": "16:9", "style": "real", "engines": {"video": "fal", "music": "auto"},
-            "music_url": MUSIC, "music_level": "balanced", "voice": "Warm female", **extra}
+            "music_url": MUSIC, "music_level": "balanced", "voice": "Warm female", "sync": True, **extra}
     return client.post("/produce-video", json=body)
 
 
