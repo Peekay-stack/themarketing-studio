@@ -9,6 +9,8 @@ import json
 import os
 import re
 import sys
+import threading
+import time
 import uuid
 
 # Load environment keys robustly: read the .env that sits NEXT TO this file (api/.env) by
@@ -1130,8 +1132,10 @@ def voice_preview(payload: dict):
     return out
 
 
-@app.post("/produce-video")
-def produce_video(payload: dict):
+def _produce_video_sync(payload: dict):
+    # The actual render — several Veo shots + voice + music + mix. Runs for minutes, so it is NEVER called
+    # inside an HTTP request (that hit the proxy's ~100s limit and returned a 499 to the browser); the
+    # `/produce-video` route below runs this in a background thread and the browser polls /render-status.
     # New frontend sends {scenes, aspect, duration, music, voice, note} and reads {video_url};
     # the legacy caller sent {script, board, ...} and read {url}. Support both.
     aspect = payload.get("aspect") or "16:9"
@@ -1563,6 +1567,78 @@ def produce_video(payload: dict):
         out["detail"] = "; ".join(dict.fromkeys(errors))     # de-duplicate, keep order
     _record_made("produced_film", "Produced film", url=url, payload=payload, route="/produce-video")
     return out
+
+
+# --- async render ----------------------------------------------------------------------------------
+# A full render (six Veo shots + voice + music + mix) takes minutes, which is far past the ~100s a
+# request can stay open behind the proxy — a synchronous render was cut off with a 499 every time and
+# the browser only ever saw "render failed". So the render now runs in a background thread and the
+# browser polls /render-status for the result. In-memory registry: a single instance, one tenant per
+# process, so this is enough; a job is lost only if the instance restarts mid-render (the poll then
+# reports it unknown and the person re-renders).
+_RENDER_JOBS: dict = {}
+_RENDER_JOBS_LOCK = threading.Lock()
+
+
+def _render_job_set(job_id: str, **fields) -> None:
+    with _RENDER_JOBS_LOCK:
+        job = _RENDER_JOBS.get(job_id) or {}
+        job.update(fields)
+        _RENDER_JOBS[job_id] = job
+
+
+def _render_jobs_gc() -> None:
+    """Drop finished jobs older than an hour so the registry can't grow without bound."""
+    cutoff = time.time() - 3600
+    with _RENDER_JOBS_LOCK:
+        for k in [k for k, v in _RENDER_JOBS.items() if float(v.get("done_at") or 1e18) < cutoff]:
+            _RENDER_JOBS.pop(k, None)
+
+
+@app.post("/produce-video")
+def produce_video(payload: dict):
+    """Start a render in the background and return a `job_id` to poll (see /render-status). The render
+    itself runs minutes — past the request timeout — so it cannot complete inside this call."""
+    _render_jobs_gc()
+    job_id = uuid.uuid4().hex[:12]
+    _render_job_set(job_id, status="rendering", at=time.time())
+
+    def _run():
+        try:
+            result = _produce_video_sync(payload)
+            if isinstance(result, JSONResponse):
+                try:
+                    detail = json.loads(bytes(result.body).decode() or "{}").get("detail") or "Render failed."
+                except Exception:
+                    detail = "Render failed."
+                _render_job_set(job_id, status="error", detail=detail,
+                                status_code=result.status_code, done_at=time.time())
+            else:
+                _render_job_set(job_id, status="done", result=result, done_at=time.time())
+        except Exception as e:                       # noqa: BLE001 — a crashed render must mark the job, not vanish
+            print(f"[render] job {job_id} crashed: {e}", file=sys.stderr, flush=True)
+            _render_job_set(job_id, status="error", detail=f"Render crashed: {e}", done_at=time.time())
+
+    threading.Thread(target=_run, name=f"render-{job_id}", daemon=True).start()
+    return {"job_id": job_id, "status": "rendering"}
+
+
+@app.get("/render-status/{job_id}")
+def render_status(job_id: str):
+    """Where a background render is: `{status: rendering|done|error|unknown, ...}`. On done, the render
+    result is spread in (video_url, etc.); on error, a `detail`."""
+    with _RENDER_JOBS_LOCK:
+        job = dict(_RENDER_JOBS.get(job_id) or {})
+    st = job.get("status")
+    if not st:
+        return {"status": "unknown",
+                "detail": "That render is no longer tracked — it may have finished on an earlier server. Render again."}
+    if st == "done":
+        return {"status": "done", **(job.get("result") or {})}
+    if st == "error":
+        return {"status": "error", "detail": job.get("detail") or "Render failed.",
+                "status_code": job.get("status_code", 500)}
+    return {"status": "rendering"}
 
 
 @app.post("/burn-captions")

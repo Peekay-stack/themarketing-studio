@@ -16977,6 +16977,25 @@ class Component extends DCLogic {
       return await r.json();
     } catch (e) { return null; }
   }
+  // Video renders run in the background now (they take minutes — longer than a request can stay open
+  // behind the proxy, which used to cut them off as "render failed"). POST /produce-video starts a job
+  // and returns a job_id; we poll /render-status until it's done, then hand back a result shaped exactly
+  // like the old synchronous apiCall response, so every caller processes it unchanged.
+  async renderViaJob(body){
+    const start = await this.apiCall('/produce-video', body);
+    const sd = (start && start.data) || {};
+    if (!start || !start.ok || !sd.job_id) return start;   // error, or a server still answering synchronously
+    const jid = sd.job_id;
+    for (let i = 0; i < 200; i++){                           // ~16 min ceiling at 5s between polls
+      await new Promise(r => setTimeout(r, 5000));
+      const s = await this.apiGet('/render-status/' + jid);
+      if (!s) continue;                                      // a transient blip while polling — keep going
+      if (s.status === 'done') return { ok:true, status:200, data:s };
+      if (s.status === 'error') return { ok:false, status:s.status_code || 500, data:s };
+      if (s.status === 'unknown') return { ok:false, status:404, data:{ detail:s.detail || 'The render is no longer tracked — render again.' } };
+    }
+    return { ok:false, status:504, data:{ detail:'The render is taking unusually long. It may still finish — check “What it has made” shortly, or render again.' } };
+  }
   // `scenes`/`duration` default to the master script, but a derived cutdown passes its own rows and
   // target so the Edit room can preview/produce a cut WITHOUT touching fullScript (the master).
   voicePayload(scenes, duration){
@@ -17165,7 +17184,7 @@ class Component extends DCLogic {
     const soundPlan = this.soundPlanPayload();
     if (soundPlan) body.sound_plan = soundPlan;
     Object.assign(body, this.loudnessParam());
-    const r = await this.apiCall('/produce-video', body);
+    const r = await this.renderViaJob(body);   // background job + poll — a full render runs minutes
     const d = (r && r.data) || {};
     const url = (r && r.ok && d.video_url) ? d.video_url : null;
     const info = url ? { shots:d.shots || null, seconds:d.seconds || null, audio:d.audio || 'none',
@@ -17485,7 +17504,7 @@ class Component extends DCLogic {
       tier:this.tierNow(), model: this.tierNow()==='standard' ? 'veo-3.1' : 'veo-3.1-fast' };
     const lookRef = (this.state.videoLookRef || '').trim(); if (lookRef) body.look_note = lookRef;
     Object.assign(body, this.loudnessParam());
-    const r = await this.apiCall('/produce-video', body);
+    const r = await this.renderViaJob(body);   // background job + poll — a full render runs minutes
     const d = (r && r.data) || {};
     const url = (r && r.ok && d.video_url) ? d.video_url : null;
     if (!url) { this.setState({ cutRenderBusy:false }); if (!this.flagCredits(d.detail)) this.showToast(d.detail || 'Couldn’t render the cut — see heritage-log.txt.'); return; }
