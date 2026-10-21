@@ -1326,12 +1326,20 @@ def _produce_video_sync(payload: dict):
                 camera_direction = f"Camera: {movement_phrase}" + (f" {camera_note}. " if camera_note else ". ")
             else:
                 camera_direction = f"Camera: {camera_note}. " if camera_note else ""
+            # No approved frame to inherit from, so this branch sets its own composition and costume:
+            # the scene's chosen shot size (if any) and the film-wide wardrobe lock (if any). The
+            # from_frame branch needs neither — the frame already fixes framing and wardrobe.
+            _ss = str((seg["scenes"][0] if seg["scenes"] else {}).get("shot_size") or "").strip().lower()
+            _ss_phrase = (" " + _SHOT_SIZES[_ss]) if _ss in _SHOT_SIZES else ""
+            _wd = str(payload.get("wardrobe") or "").strip()
+            _wd_phrase = (" WARDROBE — the exact clothing each person wears, identical to every other shot of "
+                          "this film: " + _wd[:400].rstrip(" .") + ".") if _wd else ""
             p = (f"Cinematic {aspect} brand film for {_brand_line(brand_mode=_vid_brand_mode)}. This is shot {seg['index'] + 1} of {len(segments)} in one "
                  f"continuous film — keep the characters, wardrobe, location and grade IDENTICAL to "
-                 f"the other shots so the parts cut together seamlessly. {cont}"
+                 f"the other shots so the parts cut together seamlessly.{_wd_phrase} {cont}"
                  f"Film logline: {script.get('logline','')}. "
                  f"Depict ONLY this beat: {beat}.{role_note} "
-                 f"{look} {camera_direction}"
+                 f"{look} {camera_direction}{_ss_phrase} "
                  "No on-screen captions, subtitles, watermarks or logos. No spoken dialogue and no musicians "
                  "or instruments in the picture — the soundtrack is added separately in the edit.")
         return p + f" Revision note: {revise}." if revise else p
@@ -1817,6 +1825,16 @@ _VID_STYLES = {
     "watercolour": "Animated watercolour illustration: soft painted washes and paper texture, gentle hand-made motion.",
 }
 
+# Shot size (framing) — an optional per-scene composition the writer can fix instead of leaving it to the
+# model. Used by /scene-still (the storyboard frame) and segment_prompt (the motion clip) so a frame and
+# its video agree. "" (the default on every scene) adds nothing — the model decides, exactly as before.
+_SHOT_SIZES = {
+    "wide": "Framing: a WIDE shot — the whole scene and its setting in view, the subjects small within the environment.",
+    "medium": "Framing: a MEDIUM shot — the subject from roughly the waist up, some of the surroundings visible.",
+    "close": "Framing: a CLOSE-UP — tight on the subject (a face, or the hands and what they hold), very little background.",
+    "product": "Framing: a PRODUCT HERO — the pack fills the frame, its front label square to camera, on a clean uncluttered background; a tight, product-forward composition, not a wide room with people.",
+}
+
 
 def _with_look_note(style_text: str, payload: dict) -> str:
     """Append Video's written look reference (`look_note`: lens, light, grade, texture, camera behaviour the film
@@ -2016,6 +2034,19 @@ def scene_still(payload: dict):
                 craft = craft + " The visual language of THIS image — it OVERRIDES any generic look or lighting stated above: " + _prov_vis + "."
         if payload.get("video_frame"):
             _prov_no_people = str(((_pr or {}).get("film") or {}).get("cast_approach") or "").strip().lower() in ("objects", "animated", "none")
+    # Shot size (framing) — an optional per-scene choice that FIXES the composition. It rides with `craft`
+    # so it reaches BOTH the reference and the text-to-image paths below; the video prompt (segment_prompt)
+    # gets the same phrase, so a frame and its motion clip agree. A tighter endframe here is what breaks a
+    # jump cut against a wide scene before it (21 Oct, the pour->pack-hold teleport).
+    _shot_size = str(payload.get("shot_size") or "").strip().lower()
+    if _shot_size in _SHOT_SIZES:
+        craft = craft + " " + _SHOT_SIZES[_shot_size]
+    # Wardrobe lock — one costume description held identical across every shot (optional, film-level). The
+    # strongest text lever against the wardrobe drifting shot to shot; the same line reaches the video.
+    _wardrobe = str(payload.get("wardrobe") or "").strip()
+    if _wardrobe:
+        craft = craft + (" WARDROBE — the exact clothing each person wears, kept identical in every single "
+                         "shot of this film, no variation: " + _wardrobe[:400].rstrip(" .") + ".")
     subject = str(payload.get("prompt", "")).strip() or "brand key visual"
     characters = str(payload.get("characters", "")).strip()
     # A cast reference image pins identity in a way text never can — use it when we have one.

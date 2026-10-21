@@ -2659,6 +2659,14 @@
                       <option value="brand">Sign-off — the pack shot</option>
                       <option value="button">Button — after the sign-off</option>
                     </select>
+                    <span style="font-size:10.5px; font-weight:800; letter-spacing:0.05em; text-transform:uppercase; color:#9AA1AC;">Shot</span>
+                    <select data-row="{{ r.rowIdx }}" data-cell="shot_size" value="{{ r.shotSize }}" onChange="{{ editSceneChoice }}" style="border:1px solid #E6E3DC; border-radius:8px; padding:5px 9px; font-size:11.5px; font-weight:700; color:#17325E; background:#fff; font-family:inherit;">
+                      <option value="">Shot size — auto</option>
+                      <option value="wide">Wide — scene &amp; setting</option>
+                      <option value="medium">Medium — waist up</option>
+                      <option value="close">Close-up — tight</option>
+                      <option value="product">Product hero — pack fills frame</option>
+                    </select>
                     <input data-row="{{ r.rowIdx }}" data-cell="beat_note" value="{{ r.beatNote }}" onChange="{{ editSceneChoice }}" placeholder="Direction for this beat, in your own words (optional)" style="flex:1; min-width:220px; border:1px solid #E6E3DC; border-radius:8px; padding:6px 10px; font-size:12px; color:#38414F; background:#fff; font-family:inherit;" />
                   </div>
                 </div>
@@ -2744,6 +2752,13 @@
               <textarea value="{{ videoLookRef }}" onChange="{{ onVideoLookRef }}" rows="2" placeholder="e.g. soft low-contrast window light, 35mm handheld, shallow focus, muted warm grade, fine grain — or name a film or describe the mood and press the button to turn it into notes." style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:10px; padding:9px 12px; font-size:13px; line-height:1.5; background:#FBFAF8; color:#17325E; resize:vertical; font-family:inherit;"></textarea>
             </div>
             <textarea value="{{ videoCharacters }}" onChange="{{ onVideoCharacters }}" rows="2" placeholder="e.g. Lead: a woman in her 30s, shoulder-length hair, mustard shirt; her colleague, 50s, grey cardigan; a boy ~7 in a navy school uniform." style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:10px; padding:11px 13px; font-size:13.5px; line-height:1.55; background:#FBFAF8; color:#17325E; resize:vertical; font-family:inherit;"></textarea>
+
+            <!-- Wardrobe lock: one fixed costume per person, held IDENTICAL across every shot. It rides into every
+                 frame and the video prompt, so the uniform/outfit stops drifting shot to shot. Optional. -->
+            <div style="margin-top:10px;">
+              <div style="font-size:11px; font-weight:700; color:#17325E; margin-bottom:4px;">Wardrobe lock <span style="font-weight:600; color:#9AA1AC;">· one fixed outfit per person — held identical in every shot, no drift</span></div>
+              <textarea value="{{ videoWardrobe }}" onChange="{{ onVideoWardrobe }}" rows="2" placeholder="e.g. The boy wears a navy sweater-vest over a white shirt with a striped navy tie and grey shorts; the mother wears a cream-and-gold Kerala sari — the SAME in every scene." style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:10px; padding:9px 12px; font-size:13px; line-height:1.5; background:#FBFAF8; color:#17325E; resize:vertical; font-family:inherit;"></textarea>
+            </div>
 
             <div style="margin-top:10px;">
               <div style="font-size:11px; font-weight:700; color:#17325E; margin-bottom:4px;">Location line <span style="font-weight:600; color:#9AA1AC;">· what the camera sees — sent to the lock and to every frame</span></div>
@@ -11921,6 +11936,7 @@ class Component extends DCLogic {
     videoLocationSrc: '',          // fingerprint of the Location note that line was written from (drift marker)
     scriptInfluence: null, scriptInfluenceOpen: false, scriptInfluenceBusy: false,   // 'what informed this script' view
     videoLookRef: '', lookRefBusy: false,   // written cinematography reference: the look the film should resemble
+    videoWardrobe: '',                      // wardrobe lock: one costume per character, held identical across every shot
     castGateHit: false,            // a frame was asked for with no cast locked
     // Real references for the cast lock — picked once here, same pattern as POSM's "Assets for this
     // piece" panel (`posmAssetOptions`/`pickPosmAsset`/`uploadPosmAsset`). Before this, `/cast-reference`
@@ -15510,7 +15526,7 @@ class Component extends DCLogic {
 
   // ---------- video generation ----------
   pickVideoObjective = (name) => () => {
-    this.setState({ videoObjective:name, videoConcept:null, provConcept:null, videoRefusal:'', scriptVersions:[], scriptStatus:'none', fullScript:null, sceneFrames:{}, shoot:{}, producedUrl:null, scriptPhase:'concept', videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null, renderInfo:null, castRefUrl:null, videoCastChoice:'', videoPlateChoice:'', videoPackChoice:'', frameNote:'', scriptRefine:'', soundPlan:{}, soundBase:[], musicStyle:'warm-strings', musicTempo:'', musicDynamics:'', musicLockMood:null, production:{ aspect:'16:9', music:'Warm strings', voice:'', status:'idle', versions:[] } });
+    this.setState({ videoObjective:name, videoConcept:null, provConcept:null, videoRefusal:'', scriptVersions:[], scriptStatus:'none', fullScript:null, sceneFrames:{}, shoot:{}, producedUrl:null, scriptPhase:'concept', videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null, renderInfo:null, castRefUrl:null, videoCastChoice:'', videoPlateChoice:'', videoPackChoice:'', frameNote:'', scriptRefine:'', soundPlan:{}, soundBase:[], musicStyle:'warm-strings', musicTempo:'', musicDynamics:'', musicLockMood:null, production:{ aspect:'16:9', music:'Warm strings', voice:'', status:'idle', versions:[] } });
     // Same "surfaced up front" reasoning as POSM's loadPosmAssetLib: a real reference picker with
     // nothing loaded to pick from is just a slower text box.
     if (!this.state.videoAssets.length) this.loadVideoAssetLib();
@@ -15777,6 +15793,7 @@ class Component extends DCLogic {
   onScriptRefine = (e) => this.setState({ scriptRefine: e.target.value });
   onFrameNote = (e) => this.setState({ frameNote: e.target.value });
   onVideoCharacters = (e) => this.setState({ videoCharacters: e.target.value });
+  onVideoWardrobe = (e) => this.setState({ videoWardrobe: e.target.value });
 
   // B3 — refine the whole script from a note.
   reworkScript = async () => {
@@ -16243,6 +16260,11 @@ class Component extends DCLogic {
     if (this.provNoPeople()) body.use_cast = false;
     const chars = (s.videoCharacters || '').trim();
     if (chars) body.characters = chars;
+    // Shot size (per-scene framing) and the film-wide wardrobe lock — both fix the composition/costume and
+    // ride into the staleness recipe below, so changing either re-flags the frame as out of date.
+    if (row.shot_size) body.shot_size = row.shot_size;
+    const wardrobe = (s.videoWardrobe || '').trim();
+    if (wardrobe) body.wardrobe = wardrobe;
     // The reference image is what actually holds the characters together.
     if (s.castRefUrl) body.reference_url = s.castRefUrl;
     // Match this frame's blocking/orientation to an already-approved sibling frame: send BOTH the cast ref and the chosen
@@ -16285,7 +16307,8 @@ class Component extends DCLogic {
     // so an ordinary film's recipe is byte-identical and existing frames are not spuriously reflagged.
     const _prov = this.provMode() ? this.videoProv() : null;
     const arr = [b.prompt, b.characters || '', b.look_note || '', b.style, b.include_pack === undefined ? null : b.include_pack,
-      b.pack_id || '', b.use_cast, b.cast_id || '', b.use_plate, b.plate_id || '', b.brand_mode, b.ratio, fb.matchNo];
+      b.pack_id || '', b.use_cast, b.cast_id || '', b.use_plate, b.plate_id || '', b.brand_mode, b.ratio, fb.matchNo,
+      b.shot_size || '', b.wardrobe || ''];
     if (_prov) arr.push([_prov.id || '', ((_prov.film || {}).visual_language || '')]);
     const t = JSON.stringify(arr);
     let h = 5381;
@@ -16752,7 +16775,7 @@ class Component extends DCLogic {
       this.setState({ conceptRoutes: routes.length > 1 ? routes : [], conceptRoute:0 });
       if (!isRefine) this.addCreated(this.videoItem(obj, data));
       this.setState(s => ({ videoGenerating:false, videoConcept:data, refinePrompt:'', videoRefusal:'',
-        scriptStatus:'concept', fullScript:null, sceneFrames:{}, scriptPhase:'concept', videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null,
+        scriptStatus:'concept', fullScript:null, sceneFrames:{}, scriptPhase:'concept', videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null,
         scriptVersions: [...s.scriptVersions, { v:s.scriptVersions.length+1, logline:data.logline, note: isRefine ? s.refinePrompt.trim() : 'Initial draft', duration:data.duration }],
         videoCheck: this.runCreativeCheck([data.logline, (data.scenes||[]).map(x=>x.title+' '+x.desc).join(' ')]) }));
     } catch (err) {
@@ -16774,7 +16797,7 @@ class Component extends DCLogic {
     if (!r || this.state.conceptRoute === i) return;
     // Switching route invalidates everything downstream — script, frames, cast, cut.
     this.setState({ conceptRoute:i, videoConcept:r, scriptStatus:'concept', fullScript:null,
-                    sceneFrames:{}, castRefUrl:null, videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null,
+                    sceneFrames:{}, castRefUrl:null, videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null,
                     producedUrl:null, renderInfo:null, scriptPhase:'concept', voicePlan:null });
     this.showToast('Route ' + (i+1) + ' loaded — ' + (r.name || 'concept') + '.', 'ok');
   };
@@ -17192,6 +17215,9 @@ class Component extends DCLogic {
     // The look reference also reaches the video prompt (it matters most for shots with no storyboard frame).
     const lookRef = (this.state.videoLookRef || '').trim();
     if (lookRef) body.look_note = lookRef;
+    // The wardrobe lock reaches the video prompt too, for shots rendered without an approved frame to inherit it from.
+    const wardrobe = (this.state.videoWardrobe || '').trim();
+    if (wardrobe) body.wardrobe = wardrobe;
     // The Sound design card's plan shapes the music bed around the voice (nothing is sent when it is switched off).
     const soundPlan = this.soundPlanPayload();
     if (soundPlan) body.sound_plan = soundPlan;
@@ -17538,6 +17564,7 @@ class Component extends DCLogic {
       tempo:this.state.musicTempo || '', dynamics:this.state.musicDynamics || '', engines:this.state.engines,
       tier:this.tierNow(), model: this.tierNow()==='standard' ? 'veo-3.1' : 'veo-3.1-fast' };
     const lookRef = (this.state.videoLookRef || '').trim(); if (lookRef) body.look_note = lookRef;
+    const wardrobe = (this.state.videoWardrobe || '').trim(); if (wardrobe) body.wardrobe = wardrobe;
     Object.assign(body, this.loudnessParam());
     const r = await this.renderViaJob(body);   // background job + poll — a full render runs minutes
     const d = (r && r.data) || {};
@@ -17922,7 +17949,7 @@ class Component extends DCLogic {
       no: r.no || String(i + 1), tc: r.tc || '', visual: r.visual || '', supr: r.supr || '' })) });
     this.showToast(rows.length + ' board row' + (rows.length === 1 ? '' : 's') + ' pulled \u2014 each take can be keyed against the frame it is for.', 'ok');
   };
-  openVideoFromCampaign = () => { const c = this.state.campaign; this.setState({ screen:'video', videoConcept: c ? c.video : null, linkedBrief: c ? c.brief : null, videoObjective:'Campaign film', scriptStatus: (c && c.video) ? 'concept' : 'none', scriptPhase:'concept', videoStep:'scripting', fullScript:null, sceneFrames:{}, videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null, renderInfo:null, castRefUrl:null });
+  openVideoFromCampaign = () => { const c = this.state.campaign; this.setState({ screen:'video', videoConcept: c ? c.video : null, linkedBrief: c ? c.brief : null, videoObjective:'Campaign film', scriptStatus: (c && c.video) ? 'concept' : 'none', scriptPhase:'concept', videoStep:'scripting', fullScript:null, sceneFrames:{}, videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null, renderInfo:null, castRefUrl:null });
     this.loadGrounding(); this.loadVideoStandsOn(); }; // round 92: video's own six-entry-point audit
 
   // ---------- campaign analysis ----------
@@ -18651,7 +18678,7 @@ class Component extends DCLogic {
     // written by the drafting step sets it), so a never-touched row shows the plain default select
     // and segment_prompt() behaves exactly as Phase 3 shipped it.
     const scriptRows = (s.fullScript||[]).map((r,i)=>({ ...r, rowIdx:i, rewriting: s.rewritingScene===i, rewriteLabel: s.rewritingScene===i ? 'Rewriting…' : '↻ Rewrite scene',
-      movementClass: r.movement_class || '', hasMovementRisk: r.movement_class === 'orbit',
+      movementClass: r.movement_class || '', hasMovementRisk: r.movement_class === 'orbit', shotSize: r.shot_size || '',
       beatRole: this.beatRoleOf(r), beatNote: r.beat_note || '' }));
     // One row-builder, two homes -- `home` on each DEPTS entry decides scripting vs shoot board, not
     // two copies of this mapping drifting apart the way the medium vocabulary did.
@@ -19506,6 +19533,7 @@ class Component extends DCLogic {
       reworkScriptLabel: s.scriptReworking ? 'Reworking…' : '↻ Rework script',
       frameNote: s.frameNote, onFrameNote:this.onFrameNote,
       videoCharacters: s.videoCharacters, onVideoCharacters:this.onVideoCharacters,
+      videoWardrobe: s.videoWardrobe || '', onVideoWardrobe: this.onVideoWardrobe,
       deriveCharacters:this.deriveCharacters, charBusy: s.charBusy,
       charBtnLabel: s.charBusy ? 'Deriving…' : (s.videoCharacters ? '↻ Re-derive from script' : '✦ Derive from script'),
       seedLabel: s.videoSeed ? ' · seed ' + s.videoSeed : '',
@@ -22067,7 +22095,7 @@ class Component extends DCLogic {
       if (!data0 || !data0.scenes || !data0.scenes.length) throw new Error('bad');
       const data = { ...data0, from_provocation: prov.id, provocation_name: prov.name || '' };
       this.setState(s2 => ({ provRouteBusy:false, provConcept:data, conceptRoute:-1, videoConcept:data, refinePrompt:'', videoRefusal:'',
-        scriptStatus:'concept', fullScript:null, sceneFrames:{}, castRefUrl:null, videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null,
+        scriptStatus:'concept', fullScript:null, sceneFrames:{}, castRefUrl:null, videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null,
         producedUrl:null, renderInfo:null, scriptPhase:'concept', voicePlan:null,
         scriptVersions: [...s2.scriptVersions, { v:s2.scriptVersions.length + 1, logline:data.logline, note: refine || ('From the provocation: ' + (prov.name || '')), duration:data.duration }],
         videoCheck: this.runCreativeCheck([data.logline, (data.scenes || []).map(x => x.title + ' ' + x.desc).join(' ')]) }));
@@ -22087,7 +22115,7 @@ class Component extends DCLogic {
     if (st.videoConcept && st.videoConcept.from_provocation === p.id) return;
     if (st.provConcept && st.provConcept.from_provocation === p.id) {
       this.setState({ conceptRoute:-1, videoConcept:st.provConcept, scriptStatus:'concept', fullScript:null,
-        sceneFrames:{}, castRefUrl:null, videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null,
+        sceneFrames:{}, castRefUrl:null, videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null,
         producedUrl:null, renderInfo:null, scriptPhase:'concept', voicePlan:null });
       this.showToast('The provocation route loaded \u2014 ' + (st.provConcept.name || 'concept') + '.', 'ok');
       return;
@@ -22524,7 +22552,7 @@ class Component extends DCLogic {
     const vsig = { fullScript: s.fullScript, videoCharacters: s.videoCharacters, sceneFrames: s.sceneFrames,
                    shoot: s.shoot, videoConcept: s.videoConcept, scriptStatus: s.scriptStatus,
                    scriptPhase: s.scriptPhase, videoObjective: s.videoObjective, videoLocationLine: s.videoLocationLine,
-                   videoLookRef: s.videoLookRef, videoLocationSrc: s.videoLocationSrc, soundPlan: s.soundPlan,
+                   videoLookRef: s.videoLookRef, videoWardrobe: s.videoWardrobe, videoLocationSrc: s.videoLocationSrc, soundPlan: s.soundPlan,
                    videoProvId: s.videoProvId, videoProvOn: s.videoProvOn,
                    castRefUrl: s.castRefUrl, castLockSig: s.castLockSig, castSavedUrl: s.castSavedUrl,
                    videoCastChoice: s.videoCastChoice, videoPlateChoice: s.videoPlateChoice };
@@ -23757,7 +23785,7 @@ class Component extends DCLogic {
   // or reworked script starts without the old script's choices (before, a tick on frame 3 followed you into the next
   // script in the same session and vanished on reload). None of these edits drop an approved script back to
   // "drafted" -- they change how a still is drawn, not what the script says.
-  SCENE_EXTRAS = ['frame_note', 'movement_class', 'include_pack', 'match_no', 'beat_role', 'beat_note'];
+  SCENE_EXTRAS = ['frame_note', 'movement_class', 'shot_size', 'include_pack', 'match_no', 'beat_role', 'beat_note'];
   sceneNo(row, i){ return String(row && row.no != null ? row.no : i + 1); }
   // The script's Beat role cell: Auto ('') or one of these. Anything else counts as Auto, as on the server.
   BEAT_ROLE_IDS = ['hook', 'world', 'mechanism', 'turn', 'brand', 'button'];
