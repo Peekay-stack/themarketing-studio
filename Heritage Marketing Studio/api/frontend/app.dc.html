@@ -3424,6 +3424,7 @@
                   <div style="display:flex; gap:12px; align-items:flex-start; padding:11px 13px; border-bottom:1px solid #F5EFE0; background:{{ l.bg }};">
                     <div style="min-width:118px;">
                       <div style="font-size:11px; color:#6B7280; font-weight:700;">SC {{ l.scene }} · {{ l.window }}</div>
+                      <div style="font-size:10.5px; color:#A0761F; font-weight:700;">{{ l.plays }}</div>
                       <div style="font-size:12.5px; font-weight:800; color:{{ l.fg }};">{{ l.who }}</div>
                       <div style="font-size:11px; color:#6B7280;">{{ l.voice }}</div>
                     </div>
@@ -19821,6 +19822,7 @@ class Component extends DCLogic {
         const est = l.words ? Math.round((l.words/2.2)*10)/10 : (l.est_seconds||0);
         const over = est > win + 0.4;
         return { scene:l.scene, window:(l.start||0)+'–'+(l.end||0)+'s',
+                 plays: (l.play_start!=null && l.play_end!=null) ? ('lands ≈'+l.play_start+'–'+l.play_end+'s') : '',
                  who: l.kind==='vo' ? 'Narration (VO)' : l.speaker, voice:l.voice, text:l.text,
                  edit: this.editVoiceLine(l.scene, same.indexOf(l)),
                  fit: est+'s / '+Math.round(win)+'s', fitFg: over ? '#C0392B' : '#1E7E34',

@@ -493,6 +493,22 @@ def _plan_bed(plan, lines, vol: float, total: float) -> str | None:
 _CUT_LEADOUT = 0.4
 
 
+def predict_windows(segments) -> list:
+    """Where each line is PREDICTED to land on the finished timeline — the same placement rule the real
+    mix uses (`_lay_start` + the no-overlap cursor), but with the line's length ESTIMATED from its word
+    count (≈2.2 words/sec, filmvoice.WORDS_PER_SEC) because the audio is not synthesised yet. For the
+    voice-plan readout, so it shows where a line actually lands (late in its shot, into the cut) instead
+    of just the shot's own window. Returns [(start, end)] aligned to `segments`."""
+    out, cursor = [], 0.0
+    for seg in (segments or []):
+        words = len((getattr(seg, "text", "") or "").split())
+        eff = max(0.3, words / 2.2)
+        start = _lay_start(seg, cursor, eff)
+        out.append((round(start, 1), round(start + eff, 1)))
+        cursor = start + eff + 0.18
+    return out
+
+
 def _lay_start(seg, cursor: float, eff: float) -> float:
     s0 = float(getattr(seg, "start", 0.0) or 0.0)      # the shot opens here
     s1 = float(getattr(seg, "end", 0.0) or 0.0)        # and cuts here

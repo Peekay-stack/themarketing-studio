@@ -696,10 +696,15 @@ def apply_overrides(segments: list[Segment], choices: dict, narrator: str) -> st
 
 def plan(segments: list[Segment], narrator: str) -> dict:
     """A readable account of exactly what will be said, by whom, in which voice and when."""
+    import filmaudio
     speakers: dict[str, str] = {"Narration": narrator}
     for s in segments:
         if s.kind == "dialogue" and s.speaker:
             speakers[s.speaker] = s.voice
+    # `start`/`end` are the line's SHOT window; `play_start`/`play_end` are where it actually LANDS on the
+    # finished timeline (the mix lays each line a breath before its cut, or wherever its timing says) —
+    # predicted with estimated durations so the readout can show the real placement, not just the window.
+    windows = filmaudio.predict_windows(segments)
     return {
         "narrator": narrator,
         "cast": [{"speaker": k, "voice_id": v, "voice": voice_label(v)}
@@ -708,6 +713,7 @@ def plan(segments: list[Segment], narrator: str) -> dict:
                    "voice": voice_label(s.voice), "voice_id": s.voice,
                    "text": s.text, "emotion": s.emotion,
                    "start": round(s.start, 1), "end": round(s.end, 1), "words": s.words,
+                   "play_start": windows[i][0], "play_end": windows[i][1],
                    "est_seconds": round(s.words / WORDS_PER_SEC, 1)}
                   for i, s in enumerate(segments)],
         "words": sum(s.words for s in segments),
