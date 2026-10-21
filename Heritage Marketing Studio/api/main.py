@@ -1505,6 +1505,37 @@ def _produce_video_sync(payload: dict):
                                     if isinstance(r, dict) and int(r.get("no") or 0) in kept]}
     voice_segments, narrator, _, budget_notes = _voice_setup(voice_payload)
     errors.extend(budget_notes)
+    # SYNC: the picture clips are beat-snapped (Veo takes only 4/6/8s), so a scene's real position on the
+    # stitched timeline is the cumulative BEAT length, not its script timecode — the two drift apart and a
+    # spoken line can land a whole scene early (live test 21 Oct: "you test it every morning" over the
+    # kitchen, before the lab shot it belongs to). Re-window each line onto its scene's ACTUAL picture
+    # position so it lands on its own shot. Dropped shots take no time, so they shift nothing.
+    _scene_win: dict[int, tuple[float, float]] = {}
+    _cur = 0.0
+    for _i, _seg in enumerate(segments):
+        if not slots[_i]:
+            continue
+        _no = int(((_seg["scenes"] or [{}])[0] or {}).get("no") or 0)
+        _dur = float(_seg["seconds"] or 0)
+        if _no:
+            _prev = _scene_win.get(_no)
+            _scene_win[_no] = ((_prev[0] if _prev else _cur), _cur + _dur)
+        _cur += _dur
+    _by_scene: dict[int, list] = {}
+    for _vs in voice_segments:
+        _by_scene.setdefault(_vs.scene, []).append(_vs)
+    for _no, _lines in _by_scene.items():
+        _w = _scene_win.get(_no)
+        if not _w:
+            continue                       # scene has no surviving picture — leave its line where it was
+        _ws, _span = _w[0], max(0.1, _w[1] - _w[0])
+        _durs = [max(0.1, l.end - l.start) for l in _lines]
+        _den = sum(_durs) or 1.0
+        _t = _ws
+        for _l, _d in zip(_lines, _durs):       # lay the scene's lines in order across its real window
+            _share = _span * (_d / _den)
+            _l.start, _l.end = round(_t, 3), round(_t + _share, 3)
+            _t += _share
     casting = {s.speaker: s.voice for s in voice_segments if s.kind == "dialogue" and s.speaker}
     if voice_segments:
         spoken, voice_notes = filmvoice.synth(voice_segments)
