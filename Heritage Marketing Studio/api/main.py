@@ -1290,6 +1290,19 @@ def _produce_video_sync(payload: dict):
                     f"Camera: {movement_phrase}" + (f" {camera_note}." if camera_note else ".") +
                     " Whatever this movement does, keep the face clearly recognisable and matching "
                     "the reference image throughout.")
+            elif str(seg.get("role") or "") == "brand":
+                # The ENDFRAME pack hero, with no movement explicitly chosen. The generic
+                # "restrained movement" default below reads to the model as a slow push-in, and a
+                # push-in on a pack scales it up through the clip — the owner's "pack starts fine
+                # but grows/extends" artdefact. A product endframe wants a HOLD, not a move, so lock
+                # it: the pack stays the same size and place in frame from first to last frame. An
+                # explicit movement_class still wins (handled above); this is only the default.
+                camera_direction = (
+                    (f"Camera: {camera_note} " if camera_note else "") +
+                    "Hold the shot locked and still — a steady product hero. Keep the pack at the exact "
+                    "same size, scale and position in frame from the first frame to the last; the camera "
+                    "does not push in, pull out, zoom or drift, and the pack does not move toward or away "
+                    "from the lens.")
             else:
                 # Unchanged from Phase 3 — the default, system-decided behaviour.
                 camera_direction = (
@@ -1301,9 +1314,10 @@ def _produce_video_sync(payload: dict):
             p = (f"Animate this storyboard frame — shot {seg['index'] + 1} of {len(segments)} of a "
                  f"{_brand_line(brand_mode=_vid_brand_mode)} brand film. This is image-to-video: treat the image as "
                  f"FIXED. The people, their faces and wardrobe, the set, the colour grade and ESPECIALLY the "
-                 f"product pack — its shape, label, logo, colours and every printed word — must stay exactly as "
-                 f"in the image. Do not redesign, re-draw, re-letter, restyle, swap or morph the pack into a "
-                 f"different pack. {cont}"
+                 f"product pack — its shape, size, scale, position, label, logo, colours and every printed word — "
+                 f"must stay exactly as in the image and hold constant for the whole shot: the pack must not grow, "
+                 f"shrink, stretch, warp, drift or change its proportions as the shot plays. Do not redesign, "
+                 f"re-draw, re-letter, restyle, swap or morph the pack into a different pack. {cont}"
                  f"Add ONLY the motion of this beat: {beat}.{role_note} {camera_direction} "
                  "Do not add any on-screen captions, subtitles, watermarks or new text or logos, and do not "
                  "alter the pack's existing label — the soundtrack and any supers are added later in the edit.")
