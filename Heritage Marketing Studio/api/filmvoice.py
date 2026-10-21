@@ -337,6 +337,8 @@ class Segment:
     voice: str = ""
     url: str | None = None
     settings: dict = field(default_factory=dict)
+    timing: str = ""               # where the line sits in its shot: "" (default)|"start"|"middle"|"end"
+    timing_at: float | None = None  # explicit seconds INTO the shot; overrides the preset when set
 
     @property
     def words(self) -> int:
@@ -419,12 +421,21 @@ def _from_structured(items) -> list[Segment]:
         speaker = str(it.get("speaker") or "").strip()
         if kind == "vo" or speaker.lower() in _VO_LABELS:
             kind, speaker = "vo", ""
+        # Where this line sits in its shot (Edit room control). An absolute offset wins over the preset;
+        # anything unrecognised falls through to the default (resolve into the cut), exactly as before.
+        _tmode = str(it.get("timing") or "").strip().lower()
+        _tmode = _tmode if _tmode in ("start", "middle", "end") else ""
+        _tat = it.get("timing_at")
+        try:
+            _tat = float(_tat) if _tat is not None and str(_tat).strip() != "" else None
+        except (TypeError, ValueError):
+            _tat = None
         segs.append(Segment(
             kind=kind, speaker=speaker.title(),
             emotion=" ".join(x for x in (str(it.get("emotion") or "").strip(),
                                          str(it.get("age") or "").strip(), inline) if x),
             language=(str(it.get("language") or "").strip() or None),
-            text=text))
+            text=text, timing=_tmode, timing_at=_tat))
     return segs
 
 

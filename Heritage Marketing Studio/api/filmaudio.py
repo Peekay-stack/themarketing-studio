@@ -494,8 +494,25 @@ _CUT_LEADOUT = 0.4
 
 
 def _lay_start(seg, cursor: float, eff: float) -> float:
-    want = float(getattr(seg, "end", 0.0) or 0.0) - eff - _CUT_LEADOUT
-    return max(float(getattr(seg, "start", 0.0) or 0.0), cursor, want)
+    s0 = float(getattr(seg, "start", 0.0) or 0.0)      # the shot opens here
+    s1 = float(getattr(seg, "end", 0.0) or 0.0)        # and cuts here
+    span = max(0.0, s1 - s0)
+    at = getattr(seg, "timing_at", None)
+    mode = str(getattr(seg, "timing", "") or "").lower()
+    if at is not None:                                 # an explicit "N seconds into the shot" wins
+        try:
+            target = s0 + float(at)
+        except (TypeError, ValueError):
+            target = s1 - eff - _CUT_LEADOUT
+    elif mode == "start":
+        target = s0                                    # as the shot opens
+    elif mode == "middle":
+        target = s0 + max(0.0, (span - eff) / 2.0)     # centred in the shot
+    else:                                              # "end" or unset — resolve into the cut (default)
+        target = s1 - eff - _CUT_LEADOUT
+    # Never before the shot opens, never over the previous line; a line too long for its target simply
+    # starts as early as those two floors allow.
+    return max(s0, cursor, target)
 
 
 def preview_audio(exe: str, seconds: float, out_path: str, segments,

@@ -3721,6 +3721,18 @@
                 <textarea value="{{ cr.supr }}" onChange="{{ cr.onSupr }}" rows="2" placeholder="(no super this scene)" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:7px 9px; font-size:12.5px; line-height:1.5; color:#17325E; font-weight:600; background:#fff; resize:vertical; font-family:inherit;"></textarea>
               </div>
             </div>
+            <!-- Timing — where this scene's spoken line lands in its shot: a preset, or an exact offset into the shot. -->
+            <sc-if value="{{ cr.hasSpoken }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex; align-items:center; gap:7px; flex-wrap:wrap; margin-top:9px;">
+              <span style="font-size:10.5px; font-weight:800; letter-spacing:0.04em; text-transform:uppercase; color:#9AA1AC;">Line lands</span>
+              <span onClick="{{ cr.onTimingStart }}" style="cursor:pointer; font-size:11px; font-weight:700; border-radius:7px; padding:4px 10px; background:{{ cr.tStartBg }}; color:{{ cr.tStartFg }}; border:1px solid #DDE3EC;">At the start</span>
+              <span onClick="{{ cr.onTimingMiddle }}" style="cursor:pointer; font-size:11px; font-weight:700; border-radius:7px; padding:4px 10px; background:{{ cr.tMiddleBg }}; color:{{ cr.tMiddleFg }}; border:1px solid #DDE3EC;">Middle</span>
+              <span onClick="{{ cr.onTimingEnd }}" style="cursor:pointer; font-size:11px; font-weight:700; border-radius:7px; padding:4px 10px; background:{{ cr.tEndBg }}; color:{{ cr.tEndFg }}; border:1px solid #DDE3EC;">Into the cut</span>
+              <span style="font-size:11px; color:#9AA1AC; margin-left:4px;">or at</span>
+              <input value="{{ cr.timingAt }}" onChange="{{ cr.onTimingAt }}" type="number" min="0" step="0.1" placeholder="—" style="width:58px; border:1px solid #DDD9D1; border-radius:7px; padding:5px 7px; font-size:12px; color:#17325E; background:{{ cr.tAtBg }}; font-family:inherit;" />
+              <span style="font-size:11px; color:#9AA1AC;">s into the shot</span>
+            </div>
+            </sc-if>
           </div>
         </sc-for>
         <!-- Phase 1c/1d — hear the cut's voices (no render), then freeze & render it as a deliverable. -->
@@ -17476,6 +17488,29 @@ class Component extends DCLogic {
     this.setState(s => s.cutdownRescript ? { cutdownRescript: { ...s.cutdownRescript,
       rows: this.withCutTimecodes((s.cutdownRescript.rows || []).map((r,i) => i===idx ? { ...r, secs:v } : r)) } } : {});
   };
+  // Timing — WHERE a scene's spoken line sits in its shot. A preset (at the start / middle / into the cut)
+  // or an explicit "N seconds into the shot". Both ride on the scene's audio entries (timing / timing_at),
+  // which the server's _lay_start reads, so the voice preview and the render place the line identically. A
+  // dialogue edit keeps it (editCutdownRow spreads the existing audio entry). Changing it clears the stale
+  // voice preview so the player can't show a mix that no longer matches.
+  setCutTiming = (idx, mode) => () => {
+    this.setState(s => {
+      if (!s.cutdownRescript) return {};
+      return { cutVoiceUrl:null, cutdownRescript: { ...s.cutdownRescript,
+        rows: (s.cutdownRescript.rows || []).map((r,i) => i===idx ? { ...r, timing:mode, timingAt:'',
+          audio: (Array.isArray(r.audio) ? r.audio : []).map(a => ({ ...a, timing:mode, timing_at:null })) } : r) } };
+    });
+  };
+  setCutTimingAt = (idx) => (e) => {
+    const raw = String(e.target.value); const n = parseFloat(raw);
+    const v = (raw.trim() === '' || isNaN(n)) ? null : Math.max(0, n);   // seconds INTO the shot; blank -> back to preset
+    this.setState(s => {
+      if (!s.cutdownRescript) return {};
+      return { cutVoiceUrl:null, cutdownRescript: { ...s.cutdownRescript,
+        rows: (s.cutdownRescript.rows || []).map((r,i) => i===idx ? { ...r, timing:'', timingAt:(v==null?'':v),
+          audio: (Array.isArray(r.audio) ? r.audio : []).map(a => ({ ...a, timing:'', timing_at:v })) } : r) } };
+    });
+  };
   // Phase 1c — hear the cut's voices without rendering video (parameterised voicePayload; master untouched).
   previewCutVoices = async () => {
     const cr = this.state.cutdownRescript;
@@ -18178,10 +18213,24 @@ class Component extends DCLogic {
       hasCutdownRescript: !!s.cutdownRescript,
       cutdownRescriptTarget: s.cutdownRescript ? s.cutdownRescript.target : '',
       cutdownRescriptFrom: s.cutdownRescript ? s.cutdownRescript.fromDuration : '',
-      cutdownRescriptRows: (s.cutdownRescript ? (s.cutdownRescript.rows || []) : []).map((r, i) => ({
-        no: r.no, tc: r.tc, visual: r.visual || '', dialogue: r.dialogue || '', supr: r.supr || '', secs: r.secs || this.cutSecsOf(r),
-        onDialogue: this.editCutdownRow(i, 'dialogue'), onSupr: this.editCutdownRow(i, 'supr'),
-        onVisual: this.editCutdownRow(i, 'visual'), onStay: this.setCutStay(i), onRemove: this.removeCutdownRow(i) })),
+      cutdownRescriptRows: (s.cutdownRescript ? (s.cutdownRescript.rows || []) : []).map((r, i) => {
+        const a0 = (Array.isArray(r.audio) && r.audio[0]) || null;
+        const tAt = (r.timingAt !== undefined && r.timingAt !== null && r.timingAt !== '')
+          ? r.timingAt : ((a0 && a0.timing_at != null) ? a0.timing_at : '');
+        const tMode = (tAt !== '') ? 'at' : (r.timing || (a0 && a0.timing) || 'end');   // unset -> default "into the cut"
+        const onBg = (on) => on ? '#17325E' : '#fff';
+        const onFg = (on) => on ? '#F7F5F1' : '#6B7280';
+        return { no: r.no, tc: r.tc, visual: r.visual || '', dialogue: r.dialogue || '', supr: r.supr || '', secs: r.secs || this.cutSecsOf(r),
+          hasSpoken: !!((r.dialogue || '').trim()), timingAt: tAt,
+          tStartBg: onBg(tMode==='start'), tStartFg: onFg(tMode==='start'),
+          tMiddleBg: onBg(tMode==='middle'), tMiddleFg: onFg(tMode==='middle'),
+          tEndBg: onBg(tMode==='end'), tEndFg: onFg(tMode==='end'),
+          tAtBg: (tMode==='at') ? '#EEF2FB' : '#fff',
+          onTimingStart: this.setCutTiming(i, 'start'), onTimingMiddle: this.setCutTiming(i, 'middle'),
+          onTimingEnd: this.setCutTiming(i, 'end'), onTimingAt: this.setCutTimingAt(i),
+          onDialogue: this.editCutdownRow(i, 'dialogue'), onSupr: this.editCutdownRow(i, 'supr'),
+          onVisual: this.editCutdownRow(i, 'visual'), onStay: this.setCutStay(i), onRemove: this.removeCutdownRow(i) };
+      }),
       discardCutdownRescript: this.discardCutdownRescript,
       // Phase 1c/1d — voice preview + freeze&render of the cut, and the rendered deliverables.
       previewCutVoices: this.previewCutVoices,
