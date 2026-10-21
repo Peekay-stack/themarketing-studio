@@ -484,6 +484,20 @@ def _plan_bed(plan, lines, vol: float, total: float) -> str | None:
     return f"{core},afade=t=in:st=0:d=1.2{soundplan.ending_filter(plan, total)}"
 
 
+# A spoken line RESOLVES a short breath before its scene's cut, not at the top of the shot: the brief's
+# lines should land as the beat lands and lead into the cut (owner's direction, 21 Oct — "the dialogue
+# needs to come toward the latter part of the frame, not the start"). The line still never begins before
+# its scene opens (`seg.start`) or over the previous line (`cursor`); a line too long to sit in the tail
+# simply starts as early as it is allowed, exactly as before. Both the preview and the real mix call this,
+# so what you approve in the soundtrack preview is what the render places.
+_CUT_LEADOUT = 0.4
+
+
+def _lay_start(seg, cursor: float, eff: float) -> float:
+    want = float(getattr(seg, "end", 0.0) or 0.0) - eff - _CUT_LEADOUT
+    return max(float(getattr(seg, "start", 0.0) or 0.0), cursor, want)
+
+
 def preview_audio(exe: str, seconds: float, out_path: str, segments,
                   music: str | None = None, tmp_dir: str | None = None,
                   level=None, plan=None, ambience: str | None = None, ambience_level_name=None,
@@ -523,8 +537,8 @@ def _preview_audio_once(exe: str, seconds: float, out_path: str, segments,
     cursor = 0.0
     line_windows = []
     for n, (seg, path, dur) in enumerate(takes):
-        start = max(seg.start, cursor)
         eff = dur / tempo
+        start = _lay_start(seg, cursor, eff)   # resolve into the cut, not at the top of the shot
         line_windows.append((start, start + eff))
         inputs += ["-i", path]
         chain = f"[{idx}:a]"
@@ -616,8 +630,8 @@ def _mix_timeline_once(exe: str, video: str, out_path: str, segments, music: str
     cursor, idx = 0.0, 1                      # input 0 is the picture
     line_windows = []                         # where each line really falls, for a sound plan's envelope
     for n, (seg, path, dur) in enumerate(takes):
-        start = max(seg.start, cursor)        # never talk over the previous line
         eff = dur / tempo
+        start = _lay_start(seg, cursor, eff)  # resolve into the cut; never over the previous line
         line_windows.append((start, start + eff))
         if picture and start + eff > picture + 0.25:
             notes.append(f"{seg.speaker or 'narration'} line still runs past the end of the cut at "
