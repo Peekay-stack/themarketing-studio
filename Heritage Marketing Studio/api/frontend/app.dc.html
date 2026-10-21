@@ -22456,7 +22456,7 @@ class Component extends DCLogic {
       scriptStatus: d.script_status || 'none', scriptPhase: d.script_phase || 'concept',
       fullScript: d.full_script, sceneFrames: d.scene_frames || {}, shoot: cleaned.shoot,
       videoCharacters: d.video_characters || '', videoLocationLine: d.video_location_line || '',
-      videoLookRef: d.video_look_ref || '', videoLocationSrc: d.video_location_src || '',
+      videoLookRef: d.video_look_ref || '', videoWardrobe: d.video_wardrobe || '', videoLocationSrc: d.video_location_src || '',
       soundPlan: d.sound_plan || {},
       videoProvId: d.provocation_id || '', videoProvOn: d.provocation_on !== false,
       // Restore the locked cast/location image so the Shoot Board shows it (not the Lock button) after a reload (#10).
@@ -22486,7 +22486,7 @@ class Component extends DCLogic {
       video_concept: s.videoConcept, script_status: s.scriptStatus, script_phase: s.scriptPhase,
       full_script: s.fullScript, scene_frames: s.sceneFrames, shoot: s.shoot,
       video_characters: s.videoCharacters, video_location_line: s.videoLocationLine,
-      video_look_ref: s.videoLookRef, video_location_src: s.videoLocationSrc, sound_plan: s.soundPlan || {},
+      video_look_ref: s.videoLookRef, video_wardrobe: s.videoWardrobe || '', video_location_src: s.videoLocationSrc, sound_plan: s.soundPlan || {},
       provocation_id: s.videoProvId || '', provocation_on: s.videoProvOn !== false,
       // The locked cast/location image (and its lock signature + saved-to-library marker) so a reload keeps the
       // lock instead of dropping back to "Lock location and cast" and forcing a costly re-render (#10).
