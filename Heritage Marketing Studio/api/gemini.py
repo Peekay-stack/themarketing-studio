@@ -454,8 +454,14 @@ def video(prompt: str, *, image_ref: str = "", seconds: int = 8, ratio: str = "1
     # the soundtrack, which is placed on the planned timecodes. Snap to a beat Veo accepts.
     beat = min(VIDEO_BEATS, key=lambda b: (abs(b - int(seconds or 8)), b))
     params = {"aspectRatio": ratio if ratio in ("16:9", "9:16") else "16:9",
-              "resolution": "720p", "durationSeconds": beat,
-              "negativePrompt": VIDEO_NEGATIVE_PROMPT}
+              "resolution": "720p", "durationSeconds": beat}
+    # veo-3.1-LITE rejects `negativePrompt` outright ("isn't supported by this model", HTTP 400) — the
+    # same way it rejects inlineData. Sending it 400'd EVERY draft-tier frame-animation shot, which then
+    # retried the unsupported encoding, fell to fal, failed there too and dropped to text-to-video (losing
+    # the cast lock) — ~2x the time, enough to blow the proxy's request timeout. Only the standard model
+    # takes a negative prompt; Lite goes without one.
+    if model != VIDEO_MODELS["lite"]:
+        params["negativePrompt"] = VIDEO_NEGATIVE_PROMPT
     # Two different retries, kept apart on purpose. Conflating them cost us two shots of a film:
     #   * a QUOTA error (429) is transient — Veo's per-minute allowance. Wait and ask again.
     #   * an "isn't supported" error is about the request shape — asking again is pointless, but the
@@ -465,7 +471,10 @@ def video(prompt: str, *, image_ref: str = "", seconds: int = 8, ratio: str = "1
     if quota_spent(tier):
         print(f"[gemini] skipping {model}: {quota_spent(tier)}", file=sys.stderr, flush=True)
         return None
-    alt = {**inst, "image": {"inlineData": {"mimeType": ref[0], "data": ref[1]}}} if ref else None
+    # The inlineData encoding is only worth retrying on a model that accepts it — Lite never does, so for
+    # Lite there is no alternate shape to try (bytesBase64Encoded above is the one it takes).
+    alt = ({**inst, "image": {"inlineData": {"mimeType": ref[0], "data": ref[1]}}}
+           if ref and model != VIDEO_MODELS["lite"] else None)
     # One short wait for a genuine burst, then stop. Riding out three long waits only helps when the
     # limit is per-minute; when the daily allowance is gone every wait is dead time.
     body, op, waits, quota_hits = inst, None, [20.0, 45.0], 0

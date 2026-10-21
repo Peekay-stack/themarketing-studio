@@ -309,9 +309,17 @@ def video_from_image(model_id: str, prompt: str, image_url: str, *, seconds: int
                      ratio: str = "16:9") -> str | None:
     """Animate an approved storyboard frame, so the shot matches the board it was signed off from."""
     ref = I2V_MODELS.get(model_id) or I2V_MODELS["veo-3.1-fast"]
+    # fal fetches the image itself, and a `/media/...` frame is both relative AND behind this app's login,
+    # so a bare path fails with "Failed to download the file" on every frame-animation shot (found live,
+    # 21 Oct). `_fal_ref` turns a local frame into a `data:` URI fal can read directly — the same fix the
+    # other fal calls already use; this one was missed.
+    img = _fal_ref(image_url)
+    if not img:
+        print(f"[creative] frame unusable for image-to-video: {image_url!r}", file=sys.stderr, flush=True)
+        return None
     secs = min(8, max(4, int(seconds)))
     return run_endpoint(ref, {
-        "prompt": prompt, "image_url": image_url,
+        "prompt": prompt, "image_url": img,
         "duration": f"{secs if secs in (4, 6, 8) else 8}s",
         "aspect_ratio": ratio if ratio in ("16:9", "9:16") else "16:9",
         "resolution": "720p", "generate_audio": False})
