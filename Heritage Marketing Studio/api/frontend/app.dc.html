@@ -11920,6 +11920,7 @@ class Component extends DCLogic {
     musicLockMood: null,           // the music mood the locked bed was made under, to say when the mood has moved on
     musicBusy: false,
     silentMaster: null,            // silent cut kept so music can change with no video spend
+    prodClips: null,               // the produced film's per-shot clip URLs, to seed the cut manifest's beats
     providers: {},                 // which engine served video / music / voice on the last run
     engines: { image:'auto', video:'auto', music:'auto' },  // user's engine choice per layer
     engineInfo: null,              // from GET /engines — which are configured
@@ -17236,10 +17237,13 @@ class Component extends DCLogic {
         producedUrl: url || s.producedUrl, renderInfo: info || s.renderInfo,
         providers: d.providers || s.providers,
         // the silent cut stays on the server, so music can be swapped with no video spend
-        silentMaster: d.master || s.silentMaster,
+        silentMaster: d.master || s.silentMaster, prodClips: d.clips || s.prodClips,
         musicUrl: d.music_url || s.musicUrl, loudnessInfo: d.loudness || s.loudnessInfo };
     });
     if (!isRevise) this.addCreated({ type:'Video', title:(this.state.linkedBrief ? this.state.linkedBrief.title.replace(/ brief.*/i,'').trim()+' — produced film' : 'Produced film'), format:this.state.production.aspect+' · '+this.state.prodDuration, status:'Draft' });
+    // Forward wiring: a produced film gets its cut manifest started here, so the Edit room opens straight
+    // onto it instead of "No cut yet". Runs on the fresh render data (state may not have flushed yet).
+    if (url) this.startCutFromFilm(d.clips, d.master);
     // B4 — surface the server's `detail` on failure AND on a 200 that carries a warning.
     if (url) {
       if (d.detail && !this.flagCredits(d.detail)) this.showToast(d.detail);
@@ -17662,13 +17666,41 @@ class Component extends DCLogic {
     this.setState({ continuityCheck:r.data });
   };
   cutDraft(){ return this.state.cutDraft || { beats:[], tracks:{ music_url:'', ambience_url:'', ambience_level:'', music_level:'', spots:[] }, grade:'' }; }
-  loadCut = async () => {
+  loadCut = async (autostart = true) => {
     const e = this.cutExec(); if (!e || !e.id) { this.setState({ cut:null }); return; }
     const d = await this.apiGet('/cut/' + encodeURIComponent(e.id));
-    if (!d || !d.cut) { this.setState({ cut:null, cutSummary:null }); return; }
-    const versions = d.cut.versions || [], last = versions[versions.length - 1] || {};
-    this.setState({ cut:d.cut, cutSummary:d.summary || null, cutPropose:null,
-      cutDraft: { beats:(last.beats || []).map(b => ({ ...b })), tracks:{ ...(last.tracks || {}) }, grade:last.grade || '' } });
+    if (d && d.cut) {
+      const versions = d.cut.versions || [], last = versions[versions.length - 1] || {};
+      this.setState({ cut:d.cut, cutSummary:d.summary || null, cutPropose:null,
+        cutDraft: { beats:(last.beats || []).map(b => ({ ...b })), tracks:{ ...(last.tracks || {}) }, grade:last.grade || '' } });
+      return;
+    }
+    // No cut has been started for this film yet. A produced film has no cut manifest of its own, so the
+    // Edit room stayed on "No cut yet" even after a render — the missing forward link between the tabs.
+    // Start one from the film the first time the Edit room is opened for it; `autostart:false` on the
+    // reload inside startCutFromFilm stops this recursing.
+    if (autostart && await this.startCutFromFilm()) return;
+    this.setState({ cut:null, cutSummary:null });
+  };
+  // Create the cut manifest from the film that was just (or already) produced: one beat per script scene,
+  // carrying its role, its on-screen super and its length, with the rendered clip URL where we still have
+  // it. `/cut` refuses a second start, so on a re-render this simply 400s and we load the existing cut —
+  // the crafted cutdown re-derives from the script anyway, and rescore/renderCut use the live silentMaster.
+  startCutFromFilm = async (clips, master) => {
+    const e = this.cutExec(); if (!e || !e.id) return false;
+    const rows = this.state.fullScript || [];
+    // This film has actually been rendered: a fresh master from the render call, or producedUrl (which is
+    // reset per film, unlike silentMaster) on the lazy path. Guards against seeding a new film's cut from a
+    // prior film's leftover master.
+    const hasFilm = master ? true : !!this.state.producedUrl;
+    if (!rows.length || !hasFilm) return false;
+    const m = master || this.state.silentMaster || '';
+    const cl = clips || this.state.prodClips || [];
+    const beats = rows.map((r, i) => ({ n:i + 1, role:this.beatRoleOf(r), shot_id:'',
+      clip_url: cl[i] || '', seconds: this.cutSecsOf(r), super:(r.supr || '').trim() }));
+    await this.apiCall('/cut', { execution:e.id, beats, master_url:m });
+    await this.loadCut(false);
+    return true;
   };
   moveBeat = (i, dir) => () => {
     const d = this.cutDraft(), beats = d.beats.slice(), j = i + dir;
