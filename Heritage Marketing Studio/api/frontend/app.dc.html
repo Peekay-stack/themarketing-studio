@@ -3511,6 +3511,15 @@
            film with less of it, so it carries the approval; re-generating would produce a different
            film that merely resembles the one legal cleared. -->
       <sc-if value="{{ hasProduced }}" hint-placeholder-val="{{ false }}">
+        <!-- Straight into the full Edit room from the rendered film: shorter cuts, platform reframes,
+             captions, a sign-off, voice-timing — more than the trim/crop presets below. -->
+        <div style="background:#17325E; border-radius:16px; padding:18px 22px; margin-bottom:16px; display:flex; align-items:center; gap:18px; flex-wrap:wrap;">
+          <div style="flex:1; min-width:260px;">
+            <div style="font-family:'Epilogue',sans-serif; font-weight:700; font-size:16px; color:#F7F5F1; margin-bottom:3px;">Edit this film</div>
+            <div style="font-size:12.5px; color:#C9D6EC; line-height:1.5;">Open it in the Edit room — make shorter cuts, reframe to platform sizes, add captions or a sign-off, and tune the voice timing.</div>
+          </div>
+          <button onClick="{{ openEditRoom }}" style="background:#F0561E; color:#fff; border:none; border-radius:11px; padding:12px 22px; font-weight:700; font-size:14px; cursor:pointer; white-space:nowrap;">Edit this film →</button>
+        </div>
         <!-- The decision is what starts the retrieval loop: an approval keeps this cut as an anchor
              for the next script, a rejection's reason becomes a house rule. Without it the Learning
              log stays empty forever and the studio never compounds. -->
@@ -17466,6 +17475,9 @@ class Component extends DCLogic {
     this.loadGrounding(); this.loadVideoStandsOn(); // round 92: video's own six-entry-point audit
     if (k === 'shots') { this.loadShots(); this.loadContinuity(); }
     if (k === 'craft') { this.loadCut(); this.loadGradeStatus(); this.loadSoundStatus(); this.loadContinuityMetrics(); this.loadLibraryFilms(); } };
+  // Jump from a produced film straight into the Edit room. The forward wiring already started this film's
+  // cut on render (or loadCut lazily starts it on entry), so the Edit room opens onto it ready to work.
+  openEditRoom = () => this.goVideoTab('craft')();
 
   // ================= LIVE ACTION: the shots =================
   // Everything else in the studio generates. This does not: it plans a real shoot, holds what came
@@ -20107,7 +20119,7 @@ class Component extends DCLogic {
       prodIdle: prod.status==='idle', prodRendering: prod.status==='rendering', prodReady: prod.status==='ready',
       prodVersions, hasProdVersions: prodVersions.length>0, prodAspect: prod.aspect,
       produceBtnLabel: prod.status==='rendering' ? 'Rendering…' : (prod.versions.length ? '↻ Render revision' : '● Produce video'),
-      producedUrl: s.producedUrl, hasProducedUrl: !!s.producedUrl, noProducedUrl: !s.producedUrl, downloadMp4:this.downloadMp4,
+      producedUrl: s.producedUrl, hasProducedUrl: !!s.producedUrl, noProducedUrl: !s.producedUrl, downloadMp4:this.downloadMp4, openEditRoom:this.openEditRoom,
       producedVideo: s.producedUrl ? React.createElement('video', { src:s.producedUrl, controls:true, style:{ width:'100%', borderRadius:12, background:'#000', aspectRatio:'16/9' } }) : null,
       prodNeedsApproval: !approved,
       // campaign
