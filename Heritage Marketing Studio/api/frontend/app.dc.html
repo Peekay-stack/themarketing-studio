@@ -3601,6 +3601,84 @@
     <h1 style="font-family:'Epilogue',sans-serif; font-size:34px; font-weight:700; letter-spacing:-0.02em; margin:0 0 6px; color:#17325E;">Edit room</h1>
     <div style="font-size:14.5px; color:#6B7280; max-width:720px; margin-bottom:22px; text-wrap:pretty;">The approved film as an addressable manifest, not a rendered file. Every change is priced before anything re-renders — reorder and retime for free, a new render only for the beats that actually need one.</div>
 
+    <!-- Open a film to edit — from memory (the library) or uploaded from a drive. Pixel-ops only. -->
+    <div style="background:#fff; border:1px solid #DDD9D1; border-radius:16px; padding:18px 22px; margin-bottom:16px;">
+      <div style="font-family:'Epilogue',sans-serif; font-weight:700; font-size:16px; color:#17325E; margin-bottom:3px;">Open a film to edit</div>
+      <div style="font-size:12.5px; color:#6B7280; margin-bottom:13px; text-wrap:pretty;">Pull one of your made films from memory, or bring one in from your drive. An imported film can be reframed, trimmed, given a sign-off card and captioned — the re-script cutdown and music change need a film made here, with its script.</div>
+      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+        <select value="{{ pickedFilmUrl }}" onChange="{{ onPickFilm }}" style="min-width:260px; border:1px solid #DDD9D1; border-radius:9px; padding:8px 11px; font-size:12.5px; color:#17325E; background:#FBFAF8; font-family:inherit;">
+          <option value="">From memory — pick a film…</option>
+          <sc-for list="{{ libraryFilms }}" as="lf" hint-placeholder-count="3">
+            <option value="{{ lf.url }}">{{ lf.label }}</option>
+          </sc-for>
+        </select>
+        <button onClick="{{ loadPickedFilm }}" style="background:#fff; color:#17325E; border:1px solid #C9CEDA; border-radius:9px; padding:8px 15px; font-weight:700; font-size:12.5px; cursor:pointer;">Load</button>
+        <span style="font-size:12px; color:#9AA1AC;">or</span>
+        <label style="background:#17325E; color:#F7F5F1; border-radius:9px; padding:8px 15px; font-weight:700; font-size:12.5px; cursor:pointer;">{{ importLabel }}<input type="file" accept="video/*" onChange="{{ uploadFilm }}" style="display:none;" /></label>
+      </div>
+    </div>
+
+    <sc-if value="{{ hasDirectFilm }}" hint-placeholder-val="{{ false }}">
+      <div style="background:#fff; border:1px solid #C9D6EC; border-radius:16px; padding:22px 24px; margin-bottom:16px;">
+        <div style="display:flex; align-items:baseline; gap:10px; margin-bottom:12px; flex-wrap:wrap;">
+          <span style="font-family:'Epilogue',sans-serif; font-weight:700; font-size:18px; color:#17325E;">Editing: {{ directFilmName }}</span>
+          <span style="font-size:12px; color:#6B7280;">{{ directFilmSecs }}</span>
+          <span onClick="{{ closeDirectFilm }}" style="margin-left:auto; cursor:pointer; font-size:12px; font-weight:700; color:#C0392B;">Close</span>
+        </div>
+        <div style="max-width:420px; margin-bottom:16px;">{{ directFilmPlayer }}</div>
+        <div style="border-top:1px dashed #E6E3DC; padding-top:13px; margin-bottom:13px;">
+          <div style="font-size:11px; font-weight:800; letter-spacing:0.04em; text-transform:uppercase; color:#9AA1AC; margin-bottom:7px;">Reframe to a platform size</div>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <span onClick="{{ setDfReframeCrop }}" style="cursor:pointer; font-size:11.5px; font-weight:700; border-radius:7px; padding:5px 11px; background:{{ dfReframeCropBg }}; color:{{ dfReframeCropFg }}; border:1px solid #DDE3EC;">Crop</span>
+            <span onClick="{{ setDfReframePad }}" style="cursor:pointer; font-size:11.5px; font-weight:700; border-radius:7px; padding:5px 11px; background:{{ dfReframePadBg }}; color:{{ dfReframePadFg }}; border:1px solid #DDE3EC;">Pad</span>
+            <span style="width:8px;"></span>
+            <sc-for list="{{ dfSizes }}" as="sz" hint-placeholder-count="4">
+              <button onClick="{{ sz.run }}" style="background:#fff; color:#17325E; border:1px solid #C9CEDA; border-radius:8px; padding:6px 13px; font-weight:700; font-size:12.5px; cursor:pointer;">{{ sz.label }}</button>
+            </sc-for>
+          </div>
+        </div>
+        <div style="border-top:1px dashed #E6E3DC; padding-top:13px; margin-bottom:13px;">
+          <div style="font-size:11px; font-weight:800; letter-spacing:0.04em; text-transform:uppercase; color:#9AA1AC; margin-bottom:7px;">Trim</div>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; font-size:12.5px; color:#41505F;">
+            <span>Keep from</span>
+            <input value="{{ dfTrimStart }}" onChange="{{ onDfTrimStart }}" type="number" min="0" step="0.5" placeholder="0" style="width:64px; border:1px solid #DDD9D1; border-radius:7px; padding:5px 8px; font-family:inherit;" />
+            <span>s, for</span>
+            <input value="{{ dfTrimDur }}" onChange="{{ onDfTrimDur }}" type="number" min="0" step="0.5" placeholder="secs" style="width:64px; border:1px solid #DDD9D1; border-radius:7px; padding:5px 8px; font-family:inherit;" />
+            <span>s</span>
+            <button onClick="{{ dfTrim }}" style="background:#fff; color:#17325E; border:1px solid #C9CEDA; border-radius:8px; padding:6px 13px; font-weight:700; font-size:12.5px; cursor:pointer;">{{ dfTrimLabel }}</button>
+          </div>
+        </div>
+        <div style="border-top:1px dashed #E6E3DC; padding-top:13px; margin-bottom:13px;">
+          <div style="font-size:11px; font-weight:800; letter-spacing:0.04em; text-transform:uppercase; color:#9AA1AC; margin-bottom:7px;">Sign-off end-card</div>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <input value="{{ dfSignLine }}" onChange="{{ onDfSignLine }}" placeholder="the line to show" style="flex:1; min-width:200px; border:1px solid #DDD9D1; border-radius:7px; padding:6px 10px; font-size:12.5px; color:#17325E; font-family:inherit;" />
+            <input value="{{ dfSignCta }}" onChange="{{ onDfSignCta }}" placeholder="CTA (optional)" style="width:150px; border:1px solid #DDD9D1; border-radius:7px; padding:6px 10px; font-size:12.5px; color:#17325E; font-family:inherit;" />
+            <button onClick="{{ dfSignoff }}" style="background:#fff; color:#17325E; border:1px solid #C9CEDA; border-radius:8px; padding:6px 13px; font-weight:700; font-size:12.5px; cursor:pointer;">{{ dfSignLabel }}</button>
+          </div>
+        </div>
+        <div style="border-top:1px dashed #E6E3DC; padding-top:13px;">
+          <div style="font-size:11px; font-weight:800; letter-spacing:0.04em; text-transform:uppercase; color:#9AA1AC; margin-bottom:4px;">Captions</div>
+          <div style="font-size:11.5px; color:#9AA1AC; margin-bottom:7px;">One per line, as <b>start end text</b> — e.g. <span style="color:#41505F;">0 3 Pure milk, every morning</span></div>
+          <textarea value="{{ dfCapText }}" onChange="{{ onDfCapText }}" rows="3" placeholder="0 3 First caption&#10;3 6 Second caption" style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:8px; padding:8px 10px; font-size:12.5px; line-height:1.5; color:#17325E; background:#fff; resize:vertical; font-family:inherit;"></textarea>
+          <button onClick="{{ dfCaptions }}" style="margin-top:8px; background:#fff; color:#17325E; border:1px solid #C9CEDA; border-radius:8px; padding:6px 13px; font-weight:700; font-size:12.5px; cursor:pointer;">{{ dfCapLabel }}</button>
+        </div>
+        <sc-if value="{{ hasDirectEdits }}" hint-placeholder-val="{{ false }}">
+          <div style="border-top:1px solid #E6E3DC; margin-top:16px; padding-top:14px;">
+            <div style="font-size:11px; font-weight:800; letter-spacing:0.04em; text-transform:uppercase; color:#9AA1AC; margin-bottom:10px;">Made from this film</div>
+            <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:14px;">
+              <sc-for list="{{ directEdits }}" as="de" hint-placeholder-count="2">
+                <div style="border:1px solid #E6E3DC; border-radius:11px; padding:10px; background:#FBFAF8;">
+                  <div style="font-size:12px; font-weight:700; color:#17325E; margin-bottom:7px;">{{ de.label }}</div>
+                  {{ de.player }}
+                  <a href="{{ de.url }}" download style="display:inline-block; margin-top:7px; font-size:11.5px; font-weight:700; color:#1E7E34; text-decoration:none;">↓ Download</a>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
     <sc-if value="{{ noCut }}" hint-placeholder-val="{{ true }}">
       <div style="background:#fff; border:1px dashed #C9CEDA; border-radius:16px; padding:28px 24px; max-width:660px;">
         <div style="font-family:'Epilogue',sans-serif; font-size:17px; font-weight:700; color:#17325E; margin-bottom:6px;">No cut yet</div>
@@ -11921,6 +11999,16 @@ class Component extends DCLogic {
     musicBusy: false,
     silentMaster: null,            // silent cut kept so music can change with no video spend
     prodClips: null,               // the produced film's per-shot clip URLs, to seed the cut manifest's beats
+    // Importing a film into the Edit room — a remembered film (from /made) or one uploaded from a drive.
+    // These have no generated script or silent stem behind them, so only the pixel ops apply.
+    directFilm: null,              // { url, name, seconds } — the film loaded for direct (pixel-ops) editing
+    directEdits: [],               // deliverables made from directFilm (reframe/trim/sign-off/captions)
+    directBusy: '',                // which direct-film op is running
+    importBusy: false,             // an upload is in flight
+    libraryFilms: null,            // the video list from /made, for the "from memory" picker
+    pickedFilmUrl: '',             // the library film chosen in the picker
+    dfReframeMode: 'crop',         // crop | pad for a direct-film reframe
+    dfTrimStart: '', dfTrimDur: '', dfSignLine: '', dfSignCta: '', dfCapText: '',  // direct-film op inputs
     providers: {},                 // which engine served video / music / voice on the last run
     engines: { image:'auto', video:'auto', music:'auto' },  // user's engine choice per layer
     engineInfo: null,              // from GET /engines — which are configured
@@ -17355,7 +17443,7 @@ class Component extends DCLogic {
   goVideoTab = (k) => () => { this.setState({ screen:'video', vTab:k }); window.scrollTo(0,0);
     this.loadGrounding(); this.loadVideoStandsOn(); // round 92: video's own six-entry-point audit
     if (k === 'shots') { this.loadShots(); this.loadContinuity(); }
-    if (k === 'craft') { this.loadCut(); this.loadGradeStatus(); this.loadSoundStatus(); this.loadContinuityMetrics(); } };
+    if (k === 'craft') { this.loadCut(); this.loadGradeStatus(); this.loadSoundStatus(); this.loadContinuityMetrics(); this.loadLibraryFilms(); } };
 
   // ================= LIVE ACTION: the shots =================
   // Everything else in the studio generates. This does not: it plans a real shoot, holds what came
@@ -17701,6 +17789,79 @@ class Component extends DCLogic {
     await this.apiCall('/cut', { execution:e.id, beats, master_url:m });
     await this.loadCut(false);
     return true;
+  };
+  // ---------- import a film into the Edit room (from memory / from a drive) ----------
+  // A loaded film is just a URL under /renders; the pixel-ops routes (reframe/trim/end-card/captions)
+  // read it straight off disk. No script or silent stem is implied, so the re-script cutdown and clean
+  // re-score deliberately do not apply to one of these.
+  loadLibraryFilms = async () => {
+    const d = await this.apiGet('/made');
+    const kinds = ['produced_film','imported_film','captioned_cut','reframed_cut','signoff_cut','video_rescore'];
+    const vids = ((d && d.items) || []).filter(it => it && it.url && kinds.includes(it.kind));
+    this.setState({ libraryFilms: vids });
+  };
+  onPickFilm = (e) => this.setState({ pickedFilmUrl: e.target.value });
+  loadPickedFilm = () => {
+    const u = this.state.pickedFilmUrl; if (!u) { this.showToast('Pick a film from the list first.'); return; }
+    const f = (this.state.libraryFilms || []).find(x => x.url === u);
+    this.setState({ directFilm: { url:u, name:(f && f.title) || 'Film', seconds:0 }, directEdits:[] });
+  };
+  uploadFilm = async (e) => {
+    const file = e.target.files && e.target.files[0]; e.target.value = '';
+    if (!file) return;
+    this.setState({ importBusy:true });
+    const fd = new FormData(); fd.append('file', file);
+    try {
+      const r = await fetch('/import-film', { method:'POST', body: fd });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok || !d.url) { this.setState({ importBusy:false }); this.showToast(d.detail || 'Upload failed.'); return; }
+      this.setState({ importBusy:false, directFilm:{ url:d.url, name:d.name || 'Imported film', seconds:d.seconds || 0 }, directEdits:[] });
+      this.showToast('Film imported — edit it below.', 'ok');
+    } catch (err) { this.setState({ importBusy:false }); this.showToast('Upload failed — is the backend running?'); }
+  };
+  closeDirectFilm = () => this.setState({ directFilm:null, directEdits:[], pickedFilmUrl:'' });
+  pushDirectEdit = (label, url) => this.setState(s => ({ directEdits: [{ label, url }, ...(s.directEdits || [])] }));
+  onDf = (k) => (e) => this.setState({ [k]: e.target.value });
+  setDfReframeMode = (m) => () => this.setState({ dfReframeMode: m });
+  dfReframe = (aspect) => async () => {
+    const f = this.state.directFilm; if (!f || this.state.directBusy) return;
+    this.setState({ directBusy:'reframe:' + aspect });
+    const r = await this.apiCall('/reframe', { video_url:f.url, aspect, mode:this.state.dfReframeMode });
+    this.setState({ directBusy:'' });
+    const d = (r && r.data) || {}; if (!r || !r.ok || !d.url) { this.showToast(d.detail || 'Reframe failed.'); return; }
+    this.pushDirectEdit(aspect + ' · ' + this.state.dfReframeMode, d.url);
+  };
+  dfTrim = async () => {
+    const f = this.state.directFilm; if (!f || this.state.directBusy) return;
+    const start = parseFloat(this.state.dfTrimStart) || 0, dur = parseFloat(this.state.dfTrimDur) || 0;
+    if (dur <= 0) { this.showToast('Enter how many seconds to keep.'); return; }
+    this.setState({ directBusy:'trim' });
+    const r = await this.apiCall('/edit-master', { master:f.url, start, seconds:dur, label:'trim' });
+    this.setState({ directBusy:'' });
+    const d = (r && r.data) || {}; if (!r || !r.ok || !d.url) { this.showToast(d.detail || 'Trim failed.'); return; }
+    this.pushDirectEdit('Trim ' + start + '–' + (start + dur) + 's', d.url);
+  };
+  dfSignoff = async () => {
+    const f = this.state.directFilm; if (!f || this.state.directBusy) return;
+    const line = (this.state.dfSignLine || '').trim(); if (!line) { this.showToast('Write a sign-off line to show.'); return; }
+    this.setState({ directBusy:'signoff' });
+    const r = await this.apiCall('/add-endcard', { video_url:f.url, line, cta:(this.state.dfSignCta || '').trim() });
+    this.setState({ directBusy:'' });
+    const d = (r && r.data) || {}; if (!r || !r.ok || !d.url) { this.showToast(d.detail || 'Could not add the sign-off.'); return; }
+    this.pushDirectEdit('Sign-off', d.url);
+  };
+  dfCaptions = async () => {
+    const f = this.state.directFilm; if (!f || this.state.directBusy) return;
+    const cues = (this.state.dfCapText || '').split('\n').map(l => l.trim()).filter(Boolean).map(l => {
+      const m = l.match(/^(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+(.+)$/);
+      return m ? { start:parseFloat(m[1]), end:parseFloat(m[2]), text:m[3] } : null;
+    }).filter(Boolean);
+    if (!cues.length) { this.showToast('Add caption lines as:  start end text  — e.g.  0 3 Pure milk'); return; }
+    this.setState({ directBusy:'captions' });
+    const r = await this.apiCall('/burn-captions', { video_url:f.url, cues });
+    this.setState({ directBusy:'' });
+    const d = (r && r.data) || {}; if (!r || !r.ok || !d.url) { this.showToast(d.detail || 'Could not burn the captions.'); return; }
+    this.pushDirectEdit('Captions (' + cues.length + ')', d.url);
   };
   moveBeat = (i, dir) => () => {
     const d = this.cutDraft(), beats = d.beats.slice(), j = i + dir;
@@ -18187,6 +18348,28 @@ class Component extends DCLogic {
       // `setMusicLevel` -> `setCutMusicLevel` rename, but on a bag KEY, which `checkfe`'s
       // unique-class-members check does not cover.
       noCut: !cut, hasCutManifest: !!cut,
+      // Import a film to edit (from memory / a drive): the "Open a film" card + the direct pixel-ops editor.
+      libraryFilms: (s.libraryFilms || []).map(it => ({ url:it.url, label:(it.title || 'Film') + (it.brand ? ' · ' + it.brand : '') })),
+      libraryLoaded: s.libraryFilms !== null, pickedFilmUrl: s.pickedFilmUrl || '',
+      onPickFilm: this.onPickFilm, loadPickedFilm: this.loadPickedFilm,
+      uploadFilm: this.uploadFilm, importBusy: !!s.importBusy, importLabel: s.importBusy ? 'Uploading…' : '↑ Upload a film',
+      hasDirectFilm: !!s.directFilm, directFilmName: s.directFilm ? s.directFilm.name : '',
+      directFilmSecs: (s.directFilm && s.directFilm.seconds) ? (Math.round(s.directFilm.seconds) + 's') : '',
+      directFilmPlayer: s.directFilm ? React.createElement('video', { src:s.directFilm.url, controls:true, style:{ width:'100%', borderRadius:'10px', background:'#000' } }) : null,
+      closeDirectFilm: this.closeDirectFilm,
+      dfReframeCropBg: s.dfReframeMode==='crop' ? '#17325E' : '#fff', dfReframeCropFg: s.dfReframeMode==='crop' ? '#F7F5F1' : '#6B7280',
+      dfReframePadBg: s.dfReframeMode==='pad' ? '#17325E' : '#fff', dfReframePadFg: s.dfReframeMode==='pad' ? '#F7F5F1' : '#6B7280',
+      setDfReframeCrop: this.setDfReframeMode('crop'), setDfReframePad: this.setDfReframeMode('pad'),
+      dfSizes: ['9:16','1:1','4:5','16:9'].map(a => ({ label:a, run:this.dfReframe(a), busy: s.directBusy==='reframe:'+a })),
+      dfTrimStart: s.dfTrimStart, dfTrimDur: s.dfTrimDur, dfSignLine: s.dfSignLine, dfSignCta: s.dfSignCta, dfCapText: s.dfCapText,
+      onDfTrimStart: this.onDf('dfTrimStart'), onDfTrimDur: this.onDf('dfTrimDur'),
+      onDfSignLine: this.onDf('dfSignLine'), onDfSignCta: this.onDf('dfSignCta'), onDfCapText: this.onDf('dfCapText'),
+      dfTrim: this.dfTrim, dfSignoff: this.dfSignoff, dfCaptions: this.dfCaptions,
+      dfTrimLabel: s.directBusy==='trim' ? 'Trimming…' : 'Trim', dfSignLabel: s.directBusy==='signoff' ? 'Adding…' : 'Add sign-off',
+      dfCapLabel: s.directBusy==='captions' ? 'Burning…' : 'Burn captions',
+      hasDirectEdits: !!(s.directEdits || []).length,
+      directEdits: (s.directEdits || []).map(e => ({ label:e.label, url:e.url,
+        player: React.createElement('video', { src:e.url, controls:true, style:{ width:'100%', borderRadius:'8px', background:'#000' } }) })),
       cutVersionLabel: cut ? ('v' + ((cut.versions || []).length || 1)) : '',
       cutBeatRows: draft.beats.map((b, i) => ({ i, n:i + 1, role:b.role || '', super:b.super || '', seconds:b.seconds != null ? b.seconds : '',
         up:this.moveBeat(i, -1), down:this.moveBeat(i, 1) })),

@@ -1775,6 +1775,46 @@ def add_endcard_route(payload: dict):
     return {"video_url": url, "url": url}
 
 
+@app.post("/import-film")
+async def import_film(file: UploadFile = File(...)):
+    """Bring an external film into the Edit room. The upload is stored where the pixel-ops routes can
+    reach it (RENDERS_DIR, served at /renders), and its URL + length are returned. There is no generated
+    script or silent stem behind an imported film, so only reframe / trim / end-card / captions apply —
+    not the re-script cutdown or a clean re-score. Produced films already live under /renders, so a film
+    pulled 'from memory' needs no upload; this route is only the drive-import half."""
+    name = str(file.filename or "film.mp4")
+    ext = os.path.splitext(name)[1].lower()
+    if ext not in (".mp4", ".mov", ".webm", ".m4v"):
+        return JSONResponse(status_code=400, content={"detail": "Upload an MP4, MOV, WEBM or M4V video."})
+    os.makedirs(filmcut.RENDERS_DIR, exist_ok=True)
+    safe = f"import-{uuid.uuid4().hex[:10]}{ext}"
+    dest = os.path.join(filmcut.RENDERS_DIR, safe)
+    size, cap = 0, 300 * 1024 * 1024
+    try:
+        with open(dest, "wb") as out:
+            while True:
+                chunk = await file.read(1 << 20)
+                if not chunk:
+                    break
+                size += len(chunk)
+                if size > cap:
+                    break
+                out.write(chunk)
+    except OSError as e:
+        return JSONResponse(status_code=500, content={"detail": f"Could not save the upload: {e}"})
+    if size > cap:
+        try:
+            os.remove(dest)
+        except OSError:
+            pass
+        return JSONResponse(status_code=413, content={"detail": "That film is too large — 300 MB maximum."})
+    exe = filmcut.ffmpeg_exe()
+    secs = round(filmcut.probe_seconds(exe, dest), 2) if exe else 0
+    url = f"/renders/{safe}"
+    _record_made("imported_film", name[:80] or "Imported film", url=url, route="/import-film")
+    return {"url": url, "video_url": url, "name": name, "seconds": secs}
+
+
 # --- image generation (storyboard frames AND social-post visuals) ----------------
 # {prompt, ratio, style, characters, seed} -> {image_url}. Needs FAL_KEY (real images).
 # Without it we return 501 so the UI keeps its clean branded placeholder.

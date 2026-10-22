@@ -672,6 +672,17 @@ def _video_dims(exe: str, path: str) -> tuple[int, int]:
     return (int(m.group(1)), int(m.group(2))) if m else (1920, 1080)
 
 
+def _has_audio(exe: str, path: str) -> bool:
+    """Whether a file carries an audio stream. An imported film can be video-only, and a concat that
+    references [0:a] on a silent source fails the whole filtergraph — so callers that add silent audio
+    need to know. Defaults to True (the common case) if the probe cannot be read."""
+    try:
+        r = subprocess.run([exe, "-hide_banner", "-i", os.path.abspath(path)], capture_output=True, text=True)
+        return "Audio:" in (r.stderr or "")
+    except Exception:
+        return True
+
+
 def add_endcard(src_path: str, line: str, cta: str = "", seconds: float = 2.5) -> str | None:
     """Append a closing end-card carrying a sign-off / benefit line (and an optional CTA) to a cut.
 
@@ -698,12 +709,20 @@ def add_endcard(src_path: str, line: str, cta: str = "", seconds: float = 2.5) -
             fh.write("1\n" + _srt_time(0) + " --> " + _srt_time(sec) + "\n" + text + "\n")
         style = ("FontName=Arial,Fontsize=40,Alignment=5,PrimaryColour=&H00FFFFFF&,"
                  "OutlineColour=&H00000000&,BorderStyle=1,Outline=2,Shadow=0,Bold=1,MarginL=80,MarginR=80")
+        # A source with no audio stream (an imported film can be video-only) would make [0:a] match no
+        # streams and fail the whole concat; give it its own silent track in that case.
+        inputs = ["-i", os.path.abspath(src_path),
+                  "-f", "lavfi", "-i", f"color=c=0x0F1A2B:s={w}x{h}:d={sec}",
+                  "-f", "lavfi", "-i", f"anullsrc=r=44100:cl=stereo:d={sec}"]
+        src_audio = "[0:a]"
+        if not _has_audio(exe, src_path):
+            src_dur = probe_seconds(exe, src_path) or sec
+            inputs += ["-f", "lavfi", "-i", f"anullsrc=r=44100:cl=stereo:d={max(0.1, src_dur):.3f}"]
+            src_audio = "[3:a]"
         fg = (f"[0:v]fps=30,scale={w}:{h},setsar=1,format=yuv420p[v0];"
               f"[1:v]fps=30,scale={w}:{h},setsar=1,format=yuv420p,subtitles=card.srt:force_style='{style}'[v1];"
-              f"[v0][0:a][v1][2:a]concat=n=2:v=1:a=1[v][a]")
-        cmd = [exe, "-y", "-i", os.path.abspath(src_path),
-               "-f", "lavfi", "-i", f"color=c=0x0F1A2B:s={w}x{h}:d={sec}",
-               "-f", "lavfi", "-i", f"anullsrc=r=44100:cl=stereo:d={sec}",
+              f"[v0]{src_audio}[v1][2:a]concat=n=2:v=1:a=1[v][a]")
+        cmd = [exe, "-y", *inputs,
                "-filter_complex", fg, "-map", "[v]", "-map", "[a]",
                "-c:v", "libx264", "-preset", "veryfast", "-crf", "20",
                "-c:a", "aac", "-movflags", "+faststart", out_path]
