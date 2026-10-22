@@ -16437,19 +16437,18 @@ class Component extends DCLogic {
     for (let i = 0; i < t.length; i++) h = ((h * 33) ^ t.charCodeAt(i)) >>> 0;
     return h.toString(36) + ':' + t.length;
   }
-  // The scene's words and spoken lines without its timecode (approving a script re-times its scenes; the picture is the same).
-  sceneSigNoTc(row){
-    const said = (Array.isArray(row && row.audio) ? row.audio : []).map(a => (a && a.text) || '').join(' | ');
-    return [row && row.visual, said].join(' ~ ');
-  }
-  // Is the frame at `idx` out of date? Frames drawn with a recipe compare recipes; frames from before that compare the scene's
-  // words and the look (the timecode no longer counts).
+  // Is the frame at `idx` out of date? Frames drawn with a recipe compare recipes; frames from before that compare the
+  // scene's VISUAL and the look (the timecode and the spoken words no longer count — the picture is drawn from the visual).
   frameIsStale(idx, f){
     if (!f || f.status !== 'done') return false;
     if (f.recipe) { const now = this.frameRecipe(idx); return now !== null && now !== f.recipe; }
     const row = (this.state.fullScript || [])[idx] || {};
-    const wordsMoved = !!f.sig && f.sig.split(' ~ ').slice(1).join(' ~ ') !== this.sceneSigNoTc(row);
-    return wordsMoved || (f.look || '') !== (this.state.videoLookRef || '').trim();
+    // Only the VISUAL reflags a frame — the picture is drawn from the visual, not from the spoken words.
+    // f.sig is stored as `tc ~ visual ~ said`; slice(1,-1) keeps just the visual (even if it contains ' ~ '),
+    // dropping both the timecode and the spoken text, so re-timing the VO, re-wording it or changing a line's
+    // tone no longer marks a frame out of date (that is handled downstream by re-score / re-render, not the picture).
+    const visualMoved = !!f.sig && f.sig.split(' ~ ').slice(1, -1).join(' ~ ') !== ((row && row.visual) || '');
+    return visualMoved || (f.look || '') !== (this.state.videoLookRef || '').trim();
   }
   generateFrame = (idx) => async () => {
     // A frame without a cast reference is where the drift came from, and the machinery to stop it was
