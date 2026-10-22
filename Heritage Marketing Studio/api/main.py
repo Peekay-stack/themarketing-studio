@@ -1702,6 +1702,36 @@ def render_status(job_id: str):
     return {"status": "rendering"}
 
 
+def _spawn_job(worker):
+    """Run a slow ffmpeg edit (reframe / trim / end-card / captions on a full film is ~50s on the live
+    box) in a background thread tracked by the render-job registry, returning a `job_id` the UI polls via
+    /render-status — the same escape from the ~100s proxy wall that /produce-video uses. `worker()`
+    returns the route's normal dict, or a JSONResponse on failure. Routes opt in with `job: true`; the
+    plain synchronous path is unchanged for callers that can wait (and the in-process tests)."""
+    _render_jobs_gc()
+    job_id = uuid.uuid4().hex[:12]
+    _render_job_set(job_id, status="rendering", at=time.time())
+
+    def _run():
+        try:
+            result = worker()
+            if isinstance(result, JSONResponse):
+                try:
+                    detail = json.loads(bytes(result.body).decode() or "{}").get("detail") or "That edit failed."
+                except Exception:
+                    detail = "That edit failed."
+                _render_job_set(job_id, status="error", detail=detail,
+                                status_code=result.status_code, done_at=time.time())
+            else:
+                _render_job_set(job_id, status="done", result=result, done_at=time.time())
+        except Exception as e:                           # noqa: BLE001 — a crashed edit must mark the job, not vanish
+            print(f"[film-op] job {job_id} crashed: {e}", file=sys.stderr, flush=True)
+            _render_job_set(job_id, status="error", detail=f"That edit crashed: {e}", done_at=time.time())
+
+    threading.Thread(target=_run, name=f"filmop-{job_id}", daemon=True).start()
+    return {"job_id": job_id, "status": "rendering"}
+
+
 @app.post("/burn-captions")
 def burn_captions_route(payload: dict):
     """Burn timed captions onto a rendered video for sound-off viewing (Edit room, Phase 2).
@@ -1711,10 +1741,16 @@ def burn_captions_route(payload: dict):
     are turned into timed cues server-side, or explicit `cues` may be passed. The picture is untouched;
     a new captioned file is written and served, so the uncaptioned master still exists.
     """
+    if payload.get("job"):
+        return _spawn_job(lambda: _burn_captions_do(payload))
+    return _burn_captions_do(payload)
+
+
+def _burn_captions_do(payload: dict):
     src = _resolve_media(str(payload.get("video_url") or payload.get("url") or ""))
     if not src or not os.path.exists(src):
         return JSONResponse(status_code=400, content={
-            "detail": "That video is no longer on disk — render the cut again before captioning it."})
+            "detail": "That video is no longer available to caption — if it was imported, upload it again."})
     cues = payload.get("cues") if isinstance(payload.get("cues"), list) else filmcut.caption_cues(payload.get("scenes") or [])
     if not cues:
         return JSONResponse(status_code=400, content={
@@ -1736,10 +1772,16 @@ def reframe_route(payload: dict):
     "crop" fills the new frame and loses the sides; "pad" keeps the whole picture inside bars. A new
     file is written and served; the source deliverable is untouched.
     """
+    if payload.get("job"):
+        return _spawn_job(lambda: _reframe_do(payload))
+    return _reframe_do(payload)
+
+
+def _reframe_do(payload: dict):
     src = _resolve_media(str(payload.get("video_url") or payload.get("url") or ""))
     if not src or not os.path.exists(src):
         return JSONResponse(status_code=400, content={
-            "detail": "That video is no longer on disk — render the cut again before reframing it."})
+            "detail": "That video is no longer available to reframe — if it was imported, upload it again."})
     aspect = str(payload.get("aspect") or "").strip()
     if aspect not in filmcut.reframe_targets():
         return JSONResponse(status_code=400, content={
@@ -1759,10 +1801,16 @@ def add_endcard_route(payload: dict):
     """Append a sign-off / benefit line end-card to a rendered cut (Edit room, Phase 3c).
     `{video_url, line, cta?, seconds?}` -> `{video_url}`. A new file is written; the source is untouched.
     """
+    if payload.get("job"):
+        return _spawn_job(lambda: _add_endcard_do(payload))
+    return _add_endcard_do(payload)
+
+
+def _add_endcard_do(payload: dict):
     src = _resolve_media(str(payload.get("video_url") or payload.get("url") or ""))
     if not src or not os.path.exists(src):
         return JSONResponse(status_code=400, content={
-            "detail": "That video is no longer on disk — render the cut again before adding a sign-off."})
+            "detail": "That video is no longer available for a sign-off — if it was imported, upload it again."})
     line = str(payload.get("line") or "").strip()
     if not line:
         return JSONResponse(status_code=400, content={"detail": "A sign-off needs a line to show."})
@@ -3459,9 +3507,15 @@ def edit_master(payload: dict):
     That is deliberate: a 9:16 cutdown of a signed-off film is the same footage, so it inherits the
     sign-off. Re-rendering it would produce a different film that merely resembles the approved one.
     """
+    if payload.get("job"):
+        return _spawn_job(lambda: _edit_master_do(payload))
+    return _edit_master_do(payload)
+
+
+def _edit_master_do(payload: dict):
     src = _resolve_media(payload.get("master"))
     if not src or not os.path.exists(src):
-        return JSONResponse(status_code=400, content={"detail": "That master is no longer on disk."})
+        return JSONResponse(status_code=400, content={"detail": "That master is no longer available — if it was imported, upload it again."})
     os.makedirs(composite.EDITS_DIR, exist_ok=True)
     label = str(payload.get("label") or "edit")
     name = composite.new_edit_name(label)

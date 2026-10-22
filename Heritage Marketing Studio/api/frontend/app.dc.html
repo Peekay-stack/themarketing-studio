@@ -3626,6 +3626,9 @@
           <span onClick="{{ closeDirectFilm }}" style="margin-left:auto; cursor:pointer; font-size:12px; font-weight:700; color:#C0392B;">Close</span>
         </div>
         <div style="max-width:420px; margin-bottom:16px;">{{ directFilmPlayer }}</div>
+        <sc-if value="{{ directWorking }}" hint-placeholder-val="{{ false }}">
+          <div style="background:#EAF6EC; border:1px solid #C9E7CE; border-radius:9px; padding:9px 13px; margin-bottom:14px; font-size:12.5px; font-weight:700; color:#1E7E34;">Applying your edit… a full-film edit can take up to a minute — it keeps working in the background.</div>
+        </sc-if>
         <div style="border-top:1px dashed #E6E3DC; padding-top:13px; margin-bottom:13px;">
           <div style="font-size:11px; font-weight:800; letter-spacing:0.04em; text-transform:uppercase; color:#9AA1AC; margin-bottom:7px;">Reframe to a platform size</div>
           <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
@@ -12334,7 +12337,7 @@ class Component extends DCLogic {
     if (!master) { this.showToast('Render a cut first — an edit is derived from an approved master.'); return; }
     if (this.state.editBusy) return;
     this.setState({ editBusy: preset.label });
-    const r = await this.apiCall('/edit-master', { master, ...preset.body });
+    const r = await this.opViaJob('/edit-master', { master, ...preset.body });
     const d = (r && r.data) || {};
     this.setState({ editBusy:'' });
     if (!r || !r.ok) { this.showToast(d.detail || 'Couldn’t make that edit.'); return; }
@@ -17121,6 +17124,25 @@ class Component extends DCLogic {
     }
     return { ok:false, status:504, data:{ detail:'The render is taking unusually long. It may still finish — check “What it has made” shortly, or render again.' } };
   }
+  // A slow ffmpeg edit (a full-film reframe is ~50s live) would die at the ~100s proxy wall if run inline,
+  // so these go through the same background-job path as a render: POST with `job:true` -> poll the status.
+  // If the server answers synchronously (no job_id — an older build, or a fast op it finished inline), that
+  // answer IS the result, so it is returned as-is.
+  async opViaJob(path, body){
+    const start = await this.apiCall(path, { ...body, job:true });
+    const sd = (start && start.data) || {};
+    if (!start || !start.ok || !sd.job_id) return start;
+    const jid = sd.job_id;
+    for (let i = 0; i < 120; i++){                          // ~4 min ceiling at 2s between polls
+      await new Promise(r => setTimeout(r, 2000));
+      const s = await this.apiGet('/render-status/' + jid);
+      if (!s) continue;
+      if (s.status === 'done') return { ok:true, status:200, data:s };
+      if (s.status === 'error') return { ok:false, status:s.status_code || 500, data:s };
+      if (s.status === 'unknown') return { ok:false, status:404, data:{ detail:s.detail || 'That edit is no longer tracked — try it again.' } };
+    }
+    return { ok:false, status:504, data:{ detail:'That edit is taking unusually long — check “What it has made” shortly, or try again.' } };
+  }
   // `scenes`/`duration` default to the master script, but a derived cutdown passes its own rows and
   // target so the Edit room can preview/produce a cut WITHOUT touching fullScript (the master).
   voicePayload(scenes, duration){
@@ -17667,7 +17689,7 @@ class Component extends DCLogic {
     // we keep the clean render and say so.
     let finalUrl = url, captioned = false;
     if (this.state.cutCaptions) {
-      const cap = await this.apiCall('/burn-captions', { video_url:url, scenes:cr.rows });
+      const cap = await this.opViaJob('/burn-captions', { video_url:url, scenes:cr.rows });
       if (cap && cap.ok && cap.data && cap.data.video_url) { finalUrl = cap.data.video_url; captioned = true; }
       else this.showToast('Rendered, but captions couldn’t be burned — keeping the clean cut.', 'info');
     }
@@ -17683,7 +17705,7 @@ class Component extends DCLogic {
   reframeDeliverable = (edit, aspect) => async () => {
     if (!edit || !edit.url || this.state.cutReframeBusyId) return;
     this.setState({ cutReframeBusyId: edit.id + '|' + aspect });
-    const r = await this.apiCall('/reframe', { video_url:edit.url, aspect, mode:this.state.cutReframeMode });
+    const r = await this.opViaJob('/reframe', { video_url:edit.url, aspect, mode:this.state.cutReframeMode });
     const d = (r && r.data) || {};
     if (!r || !r.ok || !d.video_url) { this.setState({ cutReframeBusyId:'' }); this.showToast(d.detail || 'Couldn’t reframe that cut.'); return; }
     this.setState(s => ({ cutReframeBusyId:'',
@@ -17702,7 +17724,7 @@ class Component extends DCLogic {
     if (!line) { this.showToast('Add the sign-off line to show.'); return; }
     if (this.state.signoffBusyId) return;
     this.setState({ signoffBusyId: edit.id });
-    const r = await this.apiCall('/add-endcard', { video_url:edit.url, line, cta:(this.state.signoffCta || '').trim() });
+    const r = await this.opViaJob('/add-endcard', { video_url:edit.url, line, cta:(this.state.signoffCta || '').trim() });
     const d = (r && r.data) || {};
     if (!r || !r.ok || !d.video_url) { this.setState({ signoffBusyId:'' }); this.showToast(d.detail || 'Couldn’t add the sign-off.'); return; }
     this.setState(s => ({ signoffBusyId:'', signoffForId:'', signoffLine:'', signoffCta:'',
@@ -17717,7 +17739,7 @@ class Component extends DCLogic {
     if (!edit || !edit.url || this.state.cutCaptionBusyId) return;
     if (!edit.rows || !edit.rows.length) { this.showToast('This deliverable has no script on file to caption from.'); return; }
     this.setState({ cutCaptionBusyId: edit.id });
-    const cap = await this.apiCall('/burn-captions', { video_url:edit.url, scenes:edit.rows });
+    const cap = await this.opViaJob('/burn-captions', { video_url:edit.url, scenes:edit.rows });
     const cu = (cap && cap.data) || {};
     if (!cap || !cap.ok || !cu.video_url) { this.setState({ cutCaptionBusyId:null }); this.showToast(cu.detail || 'Couldn’t burn captions for that cut.'); return; }
     this.setState(s => ({ cutCaptionBusyId:null,
@@ -17826,7 +17848,7 @@ class Component extends DCLogic {
   dfReframe = (aspect) => async () => {
     const f = this.state.directFilm; if (!f || this.state.directBusy) return;
     this.setState({ directBusy:'reframe:' + aspect });
-    const r = await this.apiCall('/reframe', { video_url:f.url, aspect, mode:this.state.dfReframeMode });
+    const r = await this.opViaJob('/reframe', { video_url:f.url, aspect, mode:this.state.dfReframeMode });
     this.setState({ directBusy:'' });
     const d = (r && r.data) || {}; if (!r || !r.ok || !d.url) { this.showToast(d.detail || 'Reframe failed.'); return; }
     this.pushDirectEdit(aspect + ' · ' + this.state.dfReframeMode, d.url);
@@ -17836,7 +17858,7 @@ class Component extends DCLogic {
     const start = parseFloat(this.state.dfTrimStart) || 0, dur = parseFloat(this.state.dfTrimDur) || 0;
     if (dur <= 0) { this.showToast('Enter how many seconds to keep.'); return; }
     this.setState({ directBusy:'trim' });
-    const r = await this.apiCall('/edit-master', { master:f.url, start, seconds:dur, label:'trim' });
+    const r = await this.opViaJob('/edit-master', { master:f.url, start, seconds:dur, label:'trim' });
     this.setState({ directBusy:'' });
     const d = (r && r.data) || {}; if (!r || !r.ok || !d.url) { this.showToast(d.detail || 'Trim failed.'); return; }
     this.pushDirectEdit('Trim ' + start + '–' + (start + dur) + 's', d.url);
@@ -17845,7 +17867,7 @@ class Component extends DCLogic {
     const f = this.state.directFilm; if (!f || this.state.directBusy) return;
     const line = (this.state.dfSignLine || '').trim(); if (!line) { this.showToast('Write a sign-off line to show.'); return; }
     this.setState({ directBusy:'signoff' });
-    const r = await this.apiCall('/add-endcard', { video_url:f.url, line, cta:(this.state.dfSignCta || '').trim() });
+    const r = await this.opViaJob('/add-endcard', { video_url:f.url, line, cta:(this.state.dfSignCta || '').trim() });
     this.setState({ directBusy:'' });
     const d = (r && r.data) || {}; if (!r || !r.ok || !d.url) { this.showToast(d.detail || 'Could not add the sign-off.'); return; }
     this.pushDirectEdit('Sign-off', d.url);
@@ -17858,7 +17880,7 @@ class Component extends DCLogic {
     }).filter(Boolean);
     if (!cues.length) { this.showToast('Add caption lines as:  start end text  — e.g.  0 3 Pure milk'); return; }
     this.setState({ directBusy:'captions' });
-    const r = await this.apiCall('/burn-captions', { video_url:f.url, cues });
+    const r = await this.opViaJob('/burn-captions', { video_url:f.url, cues });
     this.setState({ directBusy:'' });
     const d = (r && r.data) || {}; if (!r || !r.ok || !d.url) { this.showToast(d.detail || 'Could not burn the captions.'); return; }
     this.pushDirectEdit('Captions (' + cues.length + ')', d.url);
@@ -18353,7 +18375,7 @@ class Component extends DCLogic {
       libraryLoaded: s.libraryFilms !== null, pickedFilmUrl: s.pickedFilmUrl || '',
       onPickFilm: this.onPickFilm, loadPickedFilm: this.loadPickedFilm,
       uploadFilm: this.uploadFilm, importBusy: !!s.importBusy, importLabel: s.importBusy ? 'Uploading…' : '↑ Upload a film',
-      hasDirectFilm: !!s.directFilm, directFilmName: s.directFilm ? s.directFilm.name : '',
+      hasDirectFilm: !!s.directFilm, directFilmName: s.directFilm ? s.directFilm.name : '', directWorking: !!s.directBusy,
       directFilmSecs: (s.directFilm && s.directFilm.seconds) ? (Math.round(s.directFilm.seconds) + 's') : '',
       directFilmPlayer: s.directFilm ? React.createElement('video', { src:s.directFilm.url, controls:true, style:{ width:'100%', borderRadius:'10px', background:'#000' } }) : null,
       closeDirectFilm: this.closeDirectFilm,
