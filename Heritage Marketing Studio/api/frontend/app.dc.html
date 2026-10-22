@@ -3421,15 +3421,27 @@
               </div>
               <div style="border:1px solid #E6E3DC; border-radius:12px; overflow:hidden;">
                 <sc-for list="{{ voiceLines }}" as="l" hint-placeholder-count="5">
-                  <div style="display:flex; gap:12px; align-items:flex-start; padding:11px 13px; border-bottom:1px solid #F5EFE0; background:{{ l.bg }};">
-                    <div style="min-width:118px;">
-                      <div style="font-size:11px; color:#6B7280; font-weight:700;">SC {{ l.scene }} · {{ l.window }}</div>
-                      <div style="font-size:10.5px; color:#A0761F; font-weight:700;">{{ l.plays }}</div>
-                      <div style="font-size:12.5px; font-weight:800; color:{{ l.fg }};">{{ l.who }}</div>
-                      <div style="font-size:11px; color:#6B7280;">{{ l.voice }}</div>
+                  <div style="padding:11px 13px; border-bottom:1px solid #F5EFE0; background:{{ l.bg }};">
+                    <div style="display:flex; gap:12px; align-items:flex-start;">
+                      <div style="min-width:118px;">
+                        <div style="font-size:11px; color:#6B7280; font-weight:700;">SC {{ l.scene }} · {{ l.window }}</div>
+                        <div style="font-size:10.5px; color:#A0761F; font-weight:700;">{{ l.plays }}</div>
+                        <div style="font-size:12.5px; font-weight:800; color:{{ l.fg }};">{{ l.who }}</div>
+                        <div style="font-size:11px; color:#6B7280;">{{ l.voice }}</div>
+                      </div>
+                      <textarea value="{{ l.text }}" onChange="{{ l.edit }}" rows="2" style="flex:1; border:1px solid #DDD9D1; border-radius:9px; padding:8px 10px; font-size:13.5px; line-height:1.5; background:#fff; color:#17325E; resize:vertical; font-family:inherit;"></textarea>
+                      <div style="min-width:64px; text-align:right; font-size:11.5px; color:{{ l.fitFg }}; font-weight:700;">{{ l.fit }}</div>
                     </div>
-                    <textarea value="{{ l.text }}" onChange="{{ l.edit }}" rows="2" style="flex:1; border:1px solid #DDD9D1; border-radius:9px; padding:8px 10px; font-size:13.5px; line-height:1.5; background:#fff; color:#17325E; resize:vertical; font-family:inherit;"></textarea>
-                    <div style="min-width:64px; text-align:right; font-size:11.5px; color:{{ l.fitFg }}; font-weight:700;">{{ l.fit }}</div>
+                    <!-- Where this line lands in its shot — the same control as the Edit-room cutdown rows. -->
+                    <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-top:8px;">
+                      <span style="font-size:10px; font-weight:800; letter-spacing:0.04em; text-transform:uppercase; color:#9AA1AC;">Line lands</span>
+                      <span onClick="{{ l.onTimingStart }}" style="cursor:pointer; font-size:11px; font-weight:700; border-radius:7px; padding:3px 9px; background:{{ l.tStartBg }}; color:{{ l.tStartFg }}; border:1px solid #DDE3EC;">At the start</span>
+                      <span onClick="{{ l.onTimingMiddle }}" style="cursor:pointer; font-size:11px; font-weight:700; border-radius:7px; padding:3px 9px; background:{{ l.tMiddleBg }}; color:{{ l.tMiddleFg }}; border:1px solid #DDE3EC;">Middle</span>
+                      <span onClick="{{ l.onTimingEnd }}" style="cursor:pointer; font-size:11px; font-weight:700; border-radius:7px; padding:3px 9px; background:{{ l.tEndBg }}; color:{{ l.tEndFg }}; border:1px solid #DDE3EC;">Into the cut</span>
+                      <span style="font-size:11px; color:#9AA1AC; margin-left:3px;">or at</span>
+                      <input value="{{ l.timingAt }}" onChange="{{ l.onTimingAt }}" type="number" min="0" step="0.1" placeholder="—" style="width:54px; border:1px solid #DDD9D1; border-radius:7px; padding:4px 7px; font-size:12px; color:#17325E; background:{{ l.tAtBg }}; font-family:inherit;" />
+                      <span style="font-size:11px; color:#9AA1AC;">s into the shot</span>
+                    </div>
                   </div>
                 </sc-for>
               </div>
@@ -17249,6 +17261,39 @@ class Component extends DCLogic {
     // scene lengths too — otherwise the mix is built against timings the picture no longer uses.
     }), this.retimeFromScript);
   };
+  // Where a spoken line lands in its shot, on the MAIN production voices panel (the same control the
+  // Edit-room cutdown rows have). Writes timing / timing_at onto the scene's audio entry — the server's
+  // _lay_start reads it and the preview/render place the line there. Clears the stale soundtrack preview.
+  // A preset click refreshes the "lands ≈" readout (cheap); the N-second field updates on its own.
+  setVoiceTiming = (sceneNo, ordinal, mode) => () => {
+    this.setState(s => ({ voiceAudioUrl:null,
+      fullScript: (s.fullScript||[]).map((r,i) => ((r.no||i+1)!==sceneNo || !Array.isArray(r.audio)) ? r
+        : { ...r, audio: r.audio.map((a,j) => j===ordinal ? { ...a, timing:mode, timing_at:null } : a) }) }),
+      this.refreshVoicePlacement);
+  };
+  setVoiceTimingAt = (sceneNo, ordinal) => (e) => {
+    const raw = String(e.target.value), n = parseFloat(raw);
+    const v = (raw.trim()==='' || isNaN(n)) ? null : Math.max(0, n);
+    this.setState(s => ({ voiceAudioUrl:null,
+      fullScript: (s.fullScript||[]).map((r,i) => ((r.no||i+1)!==sceneNo || !Array.isArray(r.audio)) ? r
+        : { ...r, audio: r.audio.map((a,j) => j===ordinal ? { ...a, timing:'', timing_at:v } : a) }) }));
+  };
+  // Refresh ONLY the predicted placement ("lands ≈") on the existing lines — no voiceBusy, no retime, no
+  // audio re-materialise (which would drop the timing). Merges new play_start/play_end by scene order.
+  refreshVoicePlacement = async () => {
+    if (!this.state.fullScript || !this.state.voicePlan) return;
+    const r = await this.apiCall('/voice-plan', this.voicePayload());
+    const d = (r && r.data) || {};
+    if (!r || !r.ok || !Array.isArray(d.lines)) return;
+    const byScene = {}; d.lines.forEach(l => { (byScene[l.scene] = byScene[l.scene] || []).push(l); });
+    this.setState(s => { if (!s.voicePlan) return {}; const seen = {};
+      return { voicePlan: { ...s.voicePlan, lines: (s.voicePlan.lines||[]).map(l => {
+        const i = (seen[l.scene] = (seen[l.scene] || 0)); seen[l.scene]++;
+        const nl = (byScene[l.scene] || [])[i];
+        return nl ? { ...l, play_start:nl.play_start, play_end:nl.play_end } : l;
+      }) } };
+    });
+  };
   previewVoices = async () => {
     if (!this.state.fullScript) { this.showToast('Write and approve the script first.'); return; }
     if (this.state.voiceBusy) return;
@@ -20067,14 +20112,29 @@ class Component extends DCLogic {
       }) : [],
       voiceLines: s.voicePlan ? (s.voicePlan.lines||[]).map(l => {
         const same = (s.voicePlan.lines||[]).filter(x => x.scene===l.scene);
+        const ordinal = same.indexOf(l);
         const win = Math.max(0.1, (l.end||0)-(l.start||0));
         const est = l.words ? Math.round((l.words/2.2)*10)/10 : (l.est_seconds||0);
         const over = est > win + 0.4;
+        // the line's current "lands" choice, read from the script (source of truth), for the chip highlight
+        const row = (s.fullScript||[]).find((r,i) => (r.no||i+1)===l.scene);
+        const a0 = (row && Array.isArray(row.audio) && row.audio[ordinal]) || null;
+        const tAt = (a0 && a0.timing_at!=null) ? a0.timing_at : '';
+        const tMode = (tAt!=='') ? 'at' : ((a0 && a0.timing) || 'end');   // unset -> default "into the cut"
+        const onBg = (on) => on ? '#17325E' : '#fff', onFg = (on) => on ? '#F7F5F1' : '#6B7280';
         return { scene:l.scene, window:(l.start||0)+'–'+(l.end||0)+'s',
                  plays: (l.play_start!=null && l.play_end!=null) ? ('lands ≈'+l.play_start+'–'+l.play_end+'s') : '',
                  who: l.kind==='vo' ? 'Narration (VO)' : l.speaker, voice:l.voice, text:l.text,
-                 edit: this.editVoiceLine(l.scene, same.indexOf(l)),
+                 edit: this.editVoiceLine(l.scene, ordinal),
                  fit: est+'s / '+Math.round(win)+'s', fitFg: over ? '#C0392B' : '#1E7E34',
+                 timingAt: tAt,
+                 tStartBg:onBg(tMode==='start'), tStartFg:onFg(tMode==='start'),
+                 tMiddleBg:onBg(tMode==='middle'), tMiddleFg:onFg(tMode==='middle'),
+                 tEndBg:onBg(tMode==='end'), tEndFg:onFg(tMode==='end'), tAtBg:(tMode==='at')?'#EEF2FB':'#fff',
+                 onTimingStart:this.setVoiceTiming(l.scene, ordinal, 'start'),
+                 onTimingMiddle:this.setVoiceTiming(l.scene, ordinal, 'middle'),
+                 onTimingEnd:this.setVoiceTiming(l.scene, ordinal, 'end'),
+                 onTimingAt:this.setVoiceTimingAt(l.scene, ordinal),
                  bg: l.kind==='vo' ? '#FBFAF8' : '#FFFFFF',
                  fg: l.kind==='vo' ? '#A0761F' : '#1E7E34' };
       }) : [],
