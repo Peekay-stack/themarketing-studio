@@ -596,9 +596,16 @@ def music_options(payload: dict):
 def rescore(payload: dict):
     """Re-mix an existing cut with different music, WITHOUT re-rendering any video.
 
-    Picture and soundtrack are separate layers, so swapping the bed only costs the audio. Each
-    re-score writes a new file so takes can be compared rather than overwritten.
+    Picture and soundtrack are separate layers, so swapping the bed (or the voices — re-synthesised from
+    the edited script) only costs the audio. Each re-score writes a new file so takes can be compared
+    rather than overwritten. Slow enough on a full film (TTS + mix) to want the background-job path.
     """
+    if payload.get("job"):
+        return _spawn_job(lambda: _rescore_do(payload))
+    return _rescore_do(payload)
+
+
+def _rescore_do(payload: dict):
     exe = filmcut.ffmpeg_exe()
     master = os.path.basename(str(payload.get("master") or ""))
     master_path = os.path.join(filmcut.RENDERS_DIR, master) if master else ""

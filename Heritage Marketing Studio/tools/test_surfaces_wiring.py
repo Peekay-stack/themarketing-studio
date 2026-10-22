@@ -338,7 +338,7 @@ def region(start, end):
 
 
 expect("/music-options", "brand_mode" in region("apiCall('/music-options', {", "});"))
-expect("/rescore", "brand_mode" in region("apiCall('/rescore', {", "});"))
+expect("/rescore", "brand_mode" in region("opViaJob('/rescore', {", "});"))
 expect("the shared voice/preview payload (voicePayload)", "brand_mode" in region("return { scenes:scenes || this.state.fullScript||[], duration:duration || this.state.prodDuration, voice:p.voice,", "};"))
 expect("/produce-video", "brand_mode" in region("const body = { scenes:rows, aspect:p0.aspect", "renderViaJob(body)"))
 
