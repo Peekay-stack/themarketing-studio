@@ -3860,6 +3860,13 @@
               <input value="{{ cr.timingAt }}" onChange="{{ cr.onTimingAt }}" type="number" min="0" step="0.1" placeholder="—" style="width:58px; border:1px solid #DDD9D1; border-radius:7px; padding:5px 7px; font-size:12px; color:#17325E; background:{{ cr.tAtBg }}; font-family:inherit;" />
               <span style="font-size:11px; color:#9AA1AC;">s into the shot</span>
             </div>
+            <!-- Pace — how fast this line is read; applied on render or a per-cut re-voice (same as the main voices panel). -->
+            <div style="display:flex; align-items:center; gap:7px; flex-wrap:wrap; margin-top:7px;">
+              <span style="font-size:10.5px; font-weight:800; letter-spacing:0.04em; text-transform:uppercase; color:#9AA1AC;">Pace</span>
+              <span onClick="{{ cr.onPaceSlow }}" style="cursor:pointer; font-size:11px; font-weight:700; border-radius:7px; padding:4px 10px; background:{{ cr.pSlowBg }}; color:{{ cr.pSlowFg }}; border:1px solid #DDE3EC;">Slow</span>
+              <span onClick="{{ cr.onPaceSteady }}" style="cursor:pointer; font-size:11px; font-weight:700; border-radius:7px; padding:4px 10px; background:{{ cr.pSteadyBg }}; color:{{ cr.pSteadyFg }}; border:1px solid #DDE3EC;">Steady</span>
+              <span onClick="{{ cr.onPaceFast }}" style="cursor:pointer; font-size:11px; font-weight:700; border-radius:7px; padding:4px 10px; background:{{ cr.pFastBg }}; color:{{ cr.pFastFg }}; border:1px solid #DDE3EC;">Fast</span>
+            </div>
             </sc-if>
           </div>
         </sc-for>
@@ -3906,6 +3913,10 @@
                 <a href="{{ cd.url }}" download style="font-size:12px; font-weight:700; color:#2E5EA6; text-decoration:none;">Download</a>
                 <sc-if value="{{ cd.showCaption }}" hint-placeholder-val="{{ false }}">
                   <span onClick="{{ cd.caption }}" style="cursor:pointer; font-size:12px; font-weight:700; color:#17325E;">{{ cd.captionLabel }}</span>
+                </sc-if>
+                <!-- This cut keeps its own silent master, so its sound can be re-voiced & re-mixed without re-rendering. -->
+                <sc-if value="{{ cd.canRevoice }}" hint-placeholder-val="{{ false }}">
+                  <span onClick="{{ cd.revoice }}" style="cursor:pointer; font-size:12px; font-weight:700; color:#A0761F;">{{ cd.revoiceLabel }}</span>
                 </sc-if>
                 <span style="font-size:11px; color:#9AA1AC; margin-left:auto;">{{ cd.at }}</span>
               </div>
@@ -11981,6 +11992,7 @@ class Component extends DCLogic {
     cutCaptionBusyId: null,       // Phase 2 — a deliverable currently having captions added
     cutReframeMode: 'crop',       // Phase 3 — 'crop' (fill, lose sides) | 'pad' (letterbox, keep all)
     cutReframeBusyId: '',         // Phase 3 — a deliverable currently being reframed ('<id>|<aspect>')
+    cutRescoreBusyId: '',         // Build 3 — a cutdown deliverable currently being re-voiced & re-mixed
     signoffForId: '',             // Phase 3c — which deliverable's sign-off form is open
     signoffLine: '', signoffCta: '',
     signoffBusyId: '',            // Phase 3c — a deliverable currently having a sign-off added
@@ -17768,6 +17780,17 @@ class Component extends DCLogic {
           audio: (Array.isArray(r.audio) ? r.audio : []).map(a => ({ ...a, timing:'', timing_at:v })) } : r) } };
     });
   };
+  // Pace — delivery speed for this cut's line ('slow'|'fast'|'' = steady). Writes `pace` onto the row's
+  // audio entries (what the server reads); clicking the active chip clears it. Mirrors setVoicePace on the
+  // main panel. Clears the stale voice preview. Applied on render or a per-cut re-voice.
+  setCutPace = (idx, paceId) => () => {
+    this.setState(s => {
+      if (!s.cutdownRescript) return {};
+      return { cutVoiceUrl:null, cutdownRescript: { ...s.cutdownRescript,
+        rows: (s.cutdownRescript.rows || []).map((r,i) => i===idx ? { ...r, pace:((r.pace||'').trim().toLowerCase()===paceId ? '' : paceId),
+          audio: (Array.isArray(r.audio) ? r.audio : []).map(a => ({ ...a, pace:((a.pace||'').trim().toLowerCase()===paceId ? '' : paceId) })) } : r) } };
+    });
+  };
   // Phase 1c — hear the cut's voices without rendering video (parameterised voicePayload; master untouched).
   previewCutVoices = async () => {
     const cr = this.state.cutdownRescript;
@@ -17809,10 +17832,42 @@ class Component extends DCLogic {
       if (cap && cap.ok && cap.data && cap.data.video_url) { finalUrl = cap.data.video_url; captioned = true; }
       else this.showToast('Rendered, but captions couldn’t be burned — keeping the clean cut.', 'info');
     }
+    // Keep THIS cut's own silent master (returned by /produce-video) so its sound can be re-voiced &
+    // re-mixed later without re-rendering the picture — the same trick the full film uses. If captions
+    // were burned we keep the clean (pre-caption) master for a clean re-score. No master -> no re-voice.
     this.setState(s => ({ cutRenderBusy:false, cutdownRescript:null, cutVoiceUrl:null,
       cutEdits: [{ id:'cut-' + Date.now(), kind:'cutdown', target:cr.target, fromDuration:cr.fromDuration,
-                url:finalUrl, captioned, aspect:p0.aspect || '16:9', rows:cr.rows, at:'Just now' }, ...(s.cutEdits || [])] }));
+                url:finalUrl, captioned, aspect:p0.aspect || '16:9', rows:cr.rows, at:'Just now',
+                master:(d.master || ''), cleanUrl:url }, ...(s.cutEdits || [])] }));
     this.showToast(cr.target + 's cut rendered' + (captioned ? ' with captions' : '') + ' — see Deliverables below.', 'ok');
+  };
+  // Re-voice & re-mix a RENDERED cutdown — the cut's own sound changed (VO wording/pace/timing, music),
+  // picture kept. It re-scores onto the cut's own silent master (the one renderCut stored), exactly the
+  // way the full film's "Re-voice & re-mix" does, and lands as a NEW deliverable so the original is kept.
+  // This is where sound for the 20s / 10s edits is changed — the owner's question. No master -> no button.
+  rescoreCutdown = (edit) => async () => {
+    if (!edit || !edit.master || this.state.cutRescoreBusyId) return;
+    this.setState({ cutRescoreBusyId: edit.id });
+    const p0 = this.state.production;
+    const r = await this.opViaJob('/rescore', {
+      master: edit.master, scenes: edit.rows || [], brand_mode: this.state.producerBrandMode,
+      duration: edit.target + 's', voice: p0.voice, music: p0.music,
+      music_url: this.state.musicUrl || '', music_level: this.state.musicLevel,
+      tempo: this.state.musicTempo || '', dynamics: this.state.musicDynamics || '',
+      voices: this.state.voiceChoices, accent: this.state.voiceAccent,
+      characters: this.state.videoCharacters, engines: this.state.engines,
+      ...(this.soundPlanPayload() ? { sound_plan: this.soundPlanPayload() } : {}), ...this.loudnessParam() });
+    const d = (r && r.data) || {};
+    if (!r || !r.ok || !d.video_url) {
+      this.setState({ cutRescoreBusyId:'' });
+      if (!this.flagCredits(d.detail)) this.showToast(d.detail || 'Re-voice failed — see heritage-log.txt.');
+      return;
+    }
+    this.setState(s => ({ cutRescoreBusyId:'',
+      cutEdits: [{ id:'cut-' + Date.now(), kind:'cutdown', target:edit.target, fromDuration:edit.fromDuration,
+                url:d.video_url, captioned:false, aspect:edit.aspect, rows:edit.rows, at:'Just now',
+                master:(d.master || edit.master), cleanUrl:d.video_url }, ...(s.cutEdits || [])] }));
+    this.showToast('Re-voiced & re-mixed the ' + edit.target + 's cut — no video was re-rendered. See Deliverables.', 'ok');
   };
   // Phase 3 — re-aspect a rendered deliverable to a platform shape (9:16 / 1:1 / 4:5 / 16:9). The source
   // deliverable is untouched; the reframed version is added as its own deliverable (captions baked into
@@ -18601,6 +18656,7 @@ class Component extends DCLogic {
         const tMode = (tAt !== '') ? 'at' : (r.timing || (a0 && a0.timing) || 'end');   // unset -> default "into the cut"
         const onBg = (on) => on ? '#17325E' : '#fff';
         const onFg = (on) => on ? '#F7F5F1' : '#6B7280';
+        const pace = ((r.pace || (a0 && a0.pace) || '')).trim().toLowerCase();   // 'slow'|'fast'|'' = steady
         return { no: r.no, tc: r.tc, visual: r.visual || '', dialogue: r.dialogue || '', supr: r.supr || '', secs: r.secs || this.cutSecsOf(r),
           hasSpoken: !!((r.dialogue || '').trim()), timingAt: tAt,
           tStartBg: onBg(tMode==='start'), tStartFg: onFg(tMode==='start'),
@@ -18609,6 +18665,10 @@ class Component extends DCLogic {
           tAtBg: (tMode==='at') ? '#EEF2FB' : '#fff',
           onTimingStart: this.setCutTiming(i, 'start'), onTimingMiddle: this.setCutTiming(i, 'middle'),
           onTimingEnd: this.setCutTiming(i, 'end'), onTimingAt: this.setCutTimingAt(i),
+          pSlowBg: onBg(pace==='slow'), pSlowFg: onFg(pace==='slow'),
+          pSteadyBg: onBg(pace===''), pSteadyFg: onFg(pace===''),
+          pFastBg: onBg(pace==='fast'), pFastFg: onFg(pace==='fast'),
+          onPaceSlow: this.setCutPace(i, 'slow'), onPaceSteady: this.setCutPace(i, ''), onPaceFast: this.setCutPace(i, 'fast'),
           onDialogue: this.editCutdownRow(i, 'dialogue'), onSupr: this.editCutdownRow(i, 'supr'),
           onVisual: this.editCutdownRow(i, 'visual'), onStay: this.setCutStay(i), onRemove: this.removeCutdownRow(i) };
       }),
@@ -18635,6 +18695,9 @@ class Component extends DCLogic {
         showCaption: !e.captioned && !!(e.rows && e.rows.length),
         caption: this.captionDeliverable(e),
         captionLabel: s.cutCaptionBusyId === e.id ? 'Captioning…' : 'Add captions',
+        canRevoice: !!e.master,
+        revoice: this.rescoreCutdown(e),
+        revoiceLabel: s.cutRescoreBusyId === e.id ? 'Re-voicing…' : '↻ Re-voice & re-mix',
         // a platform version for each frame size except this deliverable's own
         reframes: ['9:16', '1:1', '4:5', '16:9'].filter(a => a !== (e.aspect || '16:9')).map(a => ({
           label: s.cutReframeBusyId === (e.id + '|' + a) ? (a + '…') : a, go: this.reframeDeliverable(e, a) })),
