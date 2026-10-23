@@ -142,6 +142,17 @@ VOICES: list[Voice] = [
     Voice("ch-m-umbriel", "Umbriel \u00b7 even (Chirp)", "chirp", "Umbriel", CHIRP, "male", "adult"),
     Voice("ch-m-alnilam", "Alnilam \u00b7 firm (Chirp)", "chirp", "Alnilam", CHIRP, "male", "adult"),
     Voice("ch-m-schedar", "Schedar \u00b7 even (Chirp)", "chirp", "Schedar", CHIRP, "male", "adult"),
+    # More character voices from the ListVoices API (genders authoritative, no guessing) \u2014 the owner's ear
+    # picked Chirp over Gemini/ElevenLabs in the 23 Oct bake-off, so tonality is cast by VOICE CHARACTER
+    # here (plus a per-line pace). Vindemiatrix (gentle) won the tender Mother lines and was not yet listed.
+    Voice("ch-f-vindemiatrix", "Vindemiatrix \u00b7 gentle (Chirp)", "chirp", "Vindemiatrix", CHIRP, "female", "adult"),
+    Voice("ch-f-pulcherrima", "Pulcherrima \u00b7 forward (Chirp)", "chirp", "Pulcherrima", CHIRP, "female", "adult"),
+    Voice("ch-f-zephyr", "Zephyr \u00b7 bright (Chirp)", "chirp", "Zephyr", CHIRP, "female", "adult"),
+    Voice("ch-f-erinome", "Erinome \u00b7 clear (Chirp)", "chirp", "Erinome", CHIRP, "female", "adult"),
+    Voice("ch-f-leda", "Leda \u00b7 youthful (Chirp)", "chirp", "Leda", CHIRP, "female", "adult"),
+    Voice("ch-m-achird", "Achird \u00b7 friendly (Chirp)", "chirp", "Achird", CHIRP, "male", "adult"),
+    Voice("ch-m-fenrir", "Fenrir \u00b7 excitable (Chirp)", "chirp", "Fenrir", CHIRP, "male", "adult"),
+    Voice("ch-m-puck", "Puck \u00b7 upbeat (Chirp)", "chirp", "Puck", CHIRP, "male", "adult"),
 ]
 _BY_ID = {v.id: v for v in VOICES}
 _BY_LABEL = {v.label.lower(): v for v in VOICES}
@@ -339,6 +350,7 @@ class Segment:
     settings: dict = field(default_factory=dict)
     timing: str = ""               # where the line sits in its shot: "" (default)|"start"|"middle"|"end"
     timing_at: float | None = None  # explicit seconds INTO the shot; overrides the preset when set
+    pace: str = ""                 # delivery speed: "" (steady)|"slow"|"fast" — Chirp speakingRate
 
     @property
     def words(self) -> int:
@@ -430,12 +442,16 @@ def _from_structured(items) -> list[Segment]:
             _tat = float(_tat) if _tat is not None and str(_tat).strip() != "" else None
         except (TypeError, ValueError):
             _tat = None
+        # Per-line delivery speed (Edit room / Voices panel). Only slow/fast are honoured; the empty
+        # default keeps the voice's natural rate, so legacy lines with no pace behave exactly as before.
+        _pace = str(it.get("pace") or "").strip().lower()
+        _pace = _pace if _pace in ("slow", "fast") else ""
         segs.append(Segment(
             kind=kind, speaker=speaker.title(),
             emotion=" ".join(x for x in (str(it.get("emotion") or "").strip(),
                                          str(it.get("age") or "").strip(), inline) if x),
             language=(str(it.get("language") or "").strip() or None),
-            text=text, timing=_tmode, timing_at=_tat))
+            text=text, timing=_tmode, timing_at=_tat, pace=_pace))
     return segs
 
 
@@ -725,6 +741,11 @@ def voice_label(vid: str) -> str:
     return v.label if v else (vid or "")
 
 
+def _pace_rate(pace: str) -> float:
+    """Per-line delivery speed -> a speakingRate multiplier (Chirp). Steady = 1.0 (natural)."""
+    return {"slow": 0.85, "fast": 1.15}.get((pace or "").strip().lower(), 1.0)
+
+
 def _tts_args(seg: Segment) -> tuple[str, dict]:
     """Build the provider-specific request for one line. Param names differ per provider."""
     v = resolve(seg.voice) or pool(INDIAN, "female", "adult")[0]
@@ -738,6 +759,12 @@ def _tts_args(seg: Segment) -> tuple[str, dict]:
     args = {"text": seg.text, "voice": v.ref, "similarity_boost": 0.8}
     args.update({k: val for k, val in seg.settings.items()
                  if k in ("stability", "style", "speed")})
+    # Per-line pace, unless an emotion preset already set a speed. ElevenLabs' range is tighter than
+    # Chirp's, so a gentler multiplier here; steady leaves speed unset (the model's natural rate).
+    if seg.pace and "speed" not in args:
+        _sp = {"slow": 0.9, "fast": 1.1}.get(seg.pace)
+        if _sp:
+            args["speed"] = _sp
     if seg.language:
         args["language_code"] = seg.language
     return EL_MODEL, args
@@ -757,7 +784,8 @@ def synth(segments: list[Segment], max_workers: int = 4) -> int:
         if _cv and _cv.provider == "chirp":
             import cloudtts
             if cloudtts.available():
-                _url = cloudtts.synth(seg.text, _cv.ref, _lang_code(seg.language))
+                _url = cloudtts.synth(seg.text, _cv.ref, _lang_code(seg.language),
+                                      rate=_pace_rate(seg.pace))
                 if _url:
                     return seg, _url, ""
         # Direct ElevenLabs (the owner's own account) -- BUILT BUT DORMANT: no voice uses provider

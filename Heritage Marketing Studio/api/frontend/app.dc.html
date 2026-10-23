@@ -3445,10 +3445,12 @@
                       <input value="{{ l.timingAt }}" onChange="{{ l.onTimingAt }}" type="number" min="0" step="0.1" placeholder="—" style="width:54px; border:1px solid #DDD9D1; border-radius:7px; padding:4px 7px; font-size:12px; color:#17325E; background:{{ l.tAtBg }}; font-family:inherit;" />
                       <span style="font-size:11px; color:#9AA1AC;">s into the shot</span>
                     </div>
-                    <!-- How it's said — tonality drives the delivery; applied on re-voice. -->
+                    <!-- How fast it's read — the per-line delivery speed; applied on re-voice (no re-render). -->
                     <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-top:6px;">
-                      <span style="font-size:10px; font-weight:800; letter-spacing:0.04em; text-transform:uppercase; color:#9AA1AC;">Tone</span>
-                      {{ l.toneRow }}
+                      <span style="font-size:10px; font-weight:800; letter-spacing:0.04em; text-transform:uppercase; color:#9AA1AC;">Pace</span>
+                      <span onClick="{{ l.onPaceSlow }}" style="cursor:pointer; font-size:11px; font-weight:700; border-radius:7px; padding:3px 9px; background:{{ l.pSlowBg }}; color:{{ l.pSlowFg }}; border:1px solid #DDE3EC;">Slow</span>
+                      <span onClick="{{ l.onPaceSteady }}" style="cursor:pointer; font-size:11px; font-weight:700; border-radius:7px; padding:3px 9px; background:{{ l.pSteadyBg }}; color:{{ l.pSteadyFg }}; border:1px solid #DDE3EC;">Steady</span>
+                      <span onClick="{{ l.onPaceFast }}" style="cursor:pointer; font-size:11px; font-weight:700; border-radius:7px; padding:3px 9px; background:{{ l.pFastBg }}; color:{{ l.pFastFg }}; border:1px solid #DDE3EC;">Fast</span>
                     </div>
                   </div>
                 </sc-for>
@@ -17285,12 +17287,13 @@ class Component extends DCLogic {
       fullScript: (s.fullScript||[]).map((r,i) => ((r.no||i+1)!==sceneNo || !Array.isArray(r.audio)) ? r
         : { ...r, audio: r.audio.map((a,j) => j===ordinal ? { ...a, timing:'', timing_at:v } : a) }) }));
   };
-  // Tonality — writes the delivery keyword onto the line's `emotion` (what delivery_for reads). Clicking the
-  // active tone again clears it (back to the script's own note). Clears the stale preview; applied on re-score.
-  setVoiceTone = (sceneNo, ordinal, toneId) => () => {
+  // Per-line delivery speed — writes `pace` ('slow'|'fast'|'' = steady) onto the line; Chirp reads it as a
+  // speakingRate (ElevenLabs lines as a gentler `speed`). Clicking the active Slow/Fast clears it back to
+  // steady; Steady always clears. Clears the stale preview; applied on re-voice (no re-render).
+  setVoicePace = (sceneNo, ordinal, paceId) => () => {
     this.setState(s => ({ voiceAudioUrl:null,
       fullScript: (s.fullScript||[]).map((r,i) => ((r.no||i+1)!==sceneNo || !Array.isArray(r.audio)) ? r
-        : { ...r, audio: r.audio.map((a,j) => j===ordinal ? { ...a, emotion: ((a.emotion||'').trim().toLowerCase()===toneId ? '' : toneId) } : a) }) }));
+        : { ...r, audio: r.audio.map((a,j) => j===ordinal ? { ...a, pace: ((a.pace||'').trim().toLowerCase()===paceId ? '' : paceId) } : a) }) }));
   };
   // Refresh ONLY the predicted placement ("lands ≈") on the existing lines — no voiceBusy, no retime, no
   // audio re-materialise (which would drop the timing). Merges new play_start/play_end by scene order.
@@ -17609,10 +17612,6 @@ class Component extends DCLogic {
   // the free-entry box below stays for an odd target. Key-message priority is the server's job
   // (cutdown_plan protects hook/turn/brand) — these buttons only choose the rung.
   CUTDOWN_LADDER = [45, 30, 20, 15, 10, 6];
-  // Per-line tonality — the `id` is the delivery keyword the server's delivery_for() recognises, so the
-  // picker shapes the TTS (stability / style / speed) without a code change. Applied via re-score.
-  VOICE_TONES = [{ id:'warm', label:'Warm' }, { id:'firm', label:'Firm' }, { id:'tender', label:'Tender' },
-                 { id:'playful', label:'Playful' }, { id:'soft', label:'Soft' }, { id:'urgent', label:'Urgent' }];
   cutdownTo = (secs) => () => this.setState({ cutdownTarget:String(secs), cutdownPreview:null }, this.previewCutdown);
   onCutdownTarget = (e) => this.setState({ cutdownTarget:e.target.value, cutdownPreview:null });
   previewCutdown = async () => {
@@ -20143,14 +20142,9 @@ class Component extends DCLogic {
         const tAt = (a0 && a0.timing_at!=null) ? a0.timing_at : '';
         const tMode = (tAt!=='') ? 'at' : ((a0 && a0.timing) || 'end');   // unset -> default "into the cut"
         const onBg = (on) => on ? '#17325E' : '#fff', onFg = (on) => on ? '#F7F5F1' : '#6B7280';
-        const emo = ((a0 && a0.emotion) || '').trim().toLowerCase();
-        // A fixed 6-chip row, built as a React element rather than a nested sc-for (a sc-for inside a sc-for
-        // leaves ghost placeholder chips). Clicking a tone toggles it onto the line's emotion.
-        const toneRow = React.createElement('span', { style:{ display:'inline-flex', gap:'6px', flexWrap:'wrap', alignItems:'center' } },
-          this.VOICE_TONES.map(t => React.createElement('span', { key:t.id, onClick: this.setVoiceTone(l.scene, ordinal, t.id),
-            style:{ cursor:'pointer', fontSize:'11px', fontWeight:700, borderRadius:'7px', padding:'3px 9px',
-                    background: emo===t.id ? '#1E7E34' : '#fff', color: emo===t.id ? '#fff' : '#6B7280', border:'1px solid #C9E7CE' } }, t.label)));
-        return { scene:l.scene, window:(l.start||0)+'–'+(l.end||0)+'s', toneRow,
+        // the line's current pace ('slow'|'fast'|'' = steady), read from the script, for the chip highlight
+        const pace = ((a0 && a0.pace) || '').trim().toLowerCase();
+        return { scene:l.scene, window:(l.start||0)+'–'+(l.end||0)+'s',
                  plays: (l.play_start!=null && l.play_end!=null) ? ('lands ≈'+l.play_start+'–'+l.play_end+'s') : '',
                  who: l.kind==='vo' ? 'Narration (VO)' : l.speaker, voice:l.voice, text:l.text,
                  edit: this.editVoiceLine(l.scene, ordinal),
@@ -20163,6 +20157,12 @@ class Component extends DCLogic {
                  onTimingMiddle:this.setVoiceTiming(l.scene, ordinal, 'middle'),
                  onTimingEnd:this.setVoiceTiming(l.scene, ordinal, 'end'),
                  onTimingAt:this.setVoiceTimingAt(l.scene, ordinal),
+                 pSlowBg:onBg(pace==='slow'), pSlowFg:onFg(pace==='slow'),
+                 pSteadyBg:onBg(pace===''), pSteadyFg:onFg(pace===''),
+                 pFastBg:onBg(pace==='fast'), pFastFg:onFg(pace==='fast'),
+                 onPaceSlow:this.setVoicePace(l.scene, ordinal, 'slow'),
+                 onPaceSteady:this.setVoicePace(l.scene, ordinal, ''),
+                 onPaceFast:this.setVoicePace(l.scene, ordinal, 'fast'),
                  bg: l.kind==='vo' ? '#FBFAF8' : '#FFFFFF',
                  fg: l.kind==='vo' ? '#A0761F' : '#1E7E34' };
       }) : [],

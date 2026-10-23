@@ -36,20 +36,28 @@ def supports(lang_code: str) -> bool:
     return (lang_code or "").strip().lower() in _BCP47
 
 
-def synth(text: str, voice_short: str, lang_code: str) -> str | None:
+def synth(text: str, voice_short: str, lang_code: str, rate: float = 1.0) -> str | None:
     """Synthesise one line with a Chirp 3 HD voice and store it as a served /media mp3. Returns the path.
 
     `voice_short` is the bare Chirp voice name (e.g. "Achernar"); the full voice id is built per language
-    ("te-IN-Chirp3-HD-Achernar"). Returns None on any failure so the caller can fall back to the fal path.
+    ("te-IN-Chirp3-HD-Achernar"). `rate` is the speakingRate multiplier (1.0 = natural; the per-line
+    Slow/Fast control). Returns None on any failure so the caller can fall back to the fal path.
     """
     import httpx
     text = (text or "").strip()
     bcp = _BCP47.get((lang_code or "").strip().lower())
     if not text or not bcp or not available():
         return None
+    audio_cfg = {"audioEncoding": "MP3"}
+    try:
+        _r = float(rate)
+    except (TypeError, ValueError):
+        _r = 1.0
+    if abs(_r - 1.0) > 1e-3:
+        audio_cfg["speakingRate"] = max(0.25, min(2.0, _r))  # Cloud TTS accepts 0.25–4.0; keep it gentle
     body = {"input": {"text": text},
             "voice": {"languageCode": bcp, "name": f"{bcp}-Chirp3-HD-{voice_short}"},
-            "audioConfig": {"audioEncoding": "MP3"}}
+            "audioConfig": audio_cfg}
     try:
         r = httpx.post(f"{BASE}/text:synthesize?key={_key()}", json=body, timeout=180.0)
         if r.status_code >= 400:
