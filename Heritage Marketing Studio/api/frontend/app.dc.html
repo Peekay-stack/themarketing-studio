@@ -3512,10 +3512,10 @@
       <sc-if value="{{ hasCut }}" hint-placeholder-val="{{ false }}">
         <div style="background:#FBFAF8; border:1px solid #DDD9D1; border-radius:16px; padding:18px 20px; margin-bottom:14px;">
           <div style="font-weight:700; font-size:14px; color:#17325E; margin-bottom:4px;">↻ Rework the cut</div>
-          <div style="font-size:12.5px; color:#6B7280; margin-bottom:11px;">A note for the re-render — e.g. “swap the opening shot”, “warmer grade”, “faster cut”. Renders a new version from the same approved script.</div>
+          <div style="font-size:12.5px; color:#6B7280; margin-bottom:11px;">A note for the re-render — e.g. “swap the opening shot”, “warmer grade”, “faster cut”. Renders a new version from the same approved script. A sound-only note (music, VO, mix) offers a re-voice instead — seconds, no re-render.</div>
           <div style="display:flex; gap:10px; align-items:flex-start;">
             <textarea value="{{ prodPrompt }}" onChange="{{ onProdPrompt }}" rows="2" placeholder="What should change in the cut?" style="flex:1; border:1px solid #DDD9D1; border-radius:10px; padding:11px 13px; font-size:14px; line-height:1.5; background:#fff; color:#17325E; resize:vertical; font-family:inherit;"></textarea>
-            <button onClick="{{ produceVideo }}" style="background:#fff; color:#17325E; border:1px solid #C9CEDA; border-radius:10px; padding:0 18px; height:46px; font-weight:700; font-size:14px; cursor:pointer; white-space:nowrap; display:flex; align-items:center; gap:8px;">
+            <button onClick="{{ reworkCut }}" style="background:#fff; color:#17325E; border:1px solid #C9CEDA; border-radius:10px; padding:0 18px; height:46px; font-weight:700; font-size:14px; cursor:pointer; white-space:nowrap; display:flex; align-items:center; gap:8px;">
               <sc-if value="{{ prodRendering }}" hint-placeholder-val="{{ false }}"><span style="width:14px; height:14px; border:2px solid rgba(23,50,94,0.25); border-top-color:#17325E; border-radius:50%; display:inline-block; animation:hf-spin 0.7s linear infinite;"></span></sc-if>
               ↻ Re-render
             </button>
@@ -11869,6 +11869,23 @@
     </div>
   </sc-if>
 
+  <!-- A sound-only rework offers re-score (seconds) in place of a full re-render (minutes). The owner
+       decides each time, so a misread of the note can never silently re-render — or silently skip the picture. -->
+  <sc-if value="{{ reworkConfirmOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed; inset:0; background:rgba(23,50,94,0.6); z-index:600; display:flex; align-items:center; justify-content:center; padding:24px; animation:hf-fade 0.2s ease;">
+      <div style="background:#fff; border-radius:20px; padding:30px 32px; max-width:480px; width:100%; box-shadow:0 30px 60px -20px rgba(23,50,94,0.5);">
+        <div style="font-size:12px; font-weight:800; letter-spacing:0.06em; text-transform:uppercase; color:#A0761F; margin-bottom:8px;">Sound-only change</div>
+        <h2 style="font-family:'Epilogue',sans-serif; font-size:22px; font-weight:700; color:#17325E; margin:0 0 10px;">This looks like a sound change, not a picture change</h2>
+        <p style="font-size:13.5px; color:#41505F; line-height:1.6; margin:0 0 16px; text-wrap:pretty;">The picture is already rendered. <b>Re-voice &amp; re-mix</b> keeps that exact picture and re-applies your current voice and music onto it in <b>seconds</b> — no re-render, no spend. A full re-render takes minutes and regenerates the film. <span style="color:#6B7280;">(Re-voice uses your current voice and music selections, not the note above — set those first if you need to.)</span></p>
+        <div style="display:flex; flex-direction:column; gap:9px;">
+          <button onClick="{{ confirmReworkRescore }}" style="width:100%; background:#17325E; color:#fff; border:none; border-radius:10px; padding:12px; font-weight:700; font-size:14px; cursor:pointer;">↻ Re-voice &amp; re-mix (keep the picture)</button>
+          <button onClick="{{ confirmReworkRender }}" style="width:100%; background:#fff; color:#17325E; border:1px solid #C9CEDA; border-radius:10px; padding:12px; font-weight:700; font-size:14px; cursor:pointer;">↻ Re-render the whole film anyway</button>
+          <button onClick="{{ closeReworkConfirm }}" style="width:100%; background:transparent; color:#6B7280; border:none; padding:6px; font-weight:700; font-size:13.5px; cursor:pointer;">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
   <!-- ===================== FRAME LIGHTBOX ===================== -->
   <sc-if value="{{ hasLightbox }}" hint-placeholder-val="{{ false }}">
     <div onClick="{{ closeLightbox }}" style="position:fixed; inset:0; z-index:210; background:rgba(8,20,12,0.82); display:flex; align-items:center; justify-content:center; padding:40px; cursor:zoom-out;">
@@ -12002,6 +12019,7 @@ class Component extends DCLogic {
     refinePrompt: '',
     scriptVersions: [],
     prodPrompt: '',
+    reworkConfirmOpen: false,      // the sound-only "re-score instead of re-render?" confirm
     prodQuality: 'lite',           // lite | fast | standard (Veo 3.1 tiers)
     renderInfo: null,              // { shots, seconds, audio, model }
     voicePlan: null,               // { cast, lines, words } from /voice-plan
@@ -17371,6 +17389,30 @@ class Component extends DCLogic {
     return [ i.shots ? i.shots + ' shots' : null, i.seconds ? i.seconds + 's' : null, this.audioLabel(i.audio) ].filter(Boolean).join(' · ');
   }
 
+  // Is this rework note about the SOUND only (music/VO/mix), with nothing touching the picture? A picture
+  // word vetoes, so the re-score offer only appears when we're confident — and even then the owner still
+  // chooses in the confirm, so a misread can never silently re-render OR silently skip the picture.
+  isSoundOnlyNote = (note) => {
+    const t = ' ' + String(note||'').toLowerCase().replace(/[^a-z0-9]+/g,' ') + ' ';
+    const SOUND = /\b(music|soundtrack|score|audio|sound|vo|voiceover|voice|narration|narrator|mix|remix|louder|quieter|softer|volume|tempo|foley|ambience|ambient|sfx|revoice|dub|bgm)\b/;
+    const PICTURE = /\b(shot|frame|re-?grade|grade|re-?colou?r|colou?r|visual|scene|wardrobe|pack|reframe|crop|trim|swap|opening|light|lighting|footage|picture|image|cast|actor|logo|text|super|caption|subtitle|transition|edit|pacing|slower|faster)\b/;
+    return SOUND.test(t) && !PICTURE.test(t);
+  };
+  // The "Rework the cut" button. A sound-only note on an already-rendered film offers re-score (seconds)
+  // instead of a full re-render (minutes); everything else re-renders exactly as before.
+  reworkCut = async () => {
+    if (this.state.production.status === 'rendering') return;
+    if (this.state.scriptStatus !== 'approved') { this.showToast('Approve the full script before producing.'); return; }
+    const note = (this.state.prodPrompt || '').trim();
+    if (note && this.state.silentMaster && this.isSoundOnlyNote(note)) {
+      this.setState({ reworkConfirmOpen:true });
+      return;
+    }
+    this.produceVideo();
+  };
+  closeReworkConfirm = () => this.setState({ reworkConfirmOpen:false });
+  confirmReworkRescore = () => { this.setState({ reworkConfirmOpen:false }); this.rescoreCut(); };
+  confirmReworkRender = () => { this.setState({ reworkConfirmOpen:false }); this.produceVideo(); };
   produceVideo = async () => {
     if (this.state.production.status === 'rendering') return;
     if (this.state.scriptStatus !== 'approved') { this.showToast('Approve the full script before producing.'); return; }
@@ -20203,6 +20245,8 @@ class Component extends DCLogic {
       renderModelLabel: s.renderInfo ? ({ standard:'Final · Veo 3.1 Standard', fast:'Veo 3.1 Fast',
         lite:'Draft · Veo 3.1 Lite' }[s.renderInfo.model] || String(s.renderInfo.model)) : '',
       prodPrompt: s.prodPrompt, onProdPrompt:this.onProdPrompt,
+      reworkCut:this.reworkCut, reworkConfirmOpen: s.reworkConfirmOpen,
+      confirmReworkRescore:this.confirmReworkRescore, confirmReworkRender:this.confirmReworkRender, closeReworkConfirm:this.closeReworkConfirm,
       produceVideo:this.produceVideo, prodStatus: prod.status,
       prodIdle: prod.status==='idle', prodRendering: prod.status==='rendering', prodReady: prod.status==='ready',
       prodVersions, hasProdVersions: prodVersions.length>0, prodAspect: prod.aspect,
