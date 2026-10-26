@@ -1,0 +1,181 @@
+<title>Video Engine Trial</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Epilogue:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: a decision record. Verdict and scoreboard first, then each test scene as a wall of playable clips with the
+   pouch close-ups under each, then what was not tested. Studio palette: navy ink, orange for what needs attention. */
+:root {
+  --bg: #F6F7F9; --surface: #FFFFFF; --ink: #17325E; --soft: #4A5870; --line: #DDE2EA; --accent: #E24E15;
+  --good-bg: #E3F3E8; --good-fg: #17683A; --part-bg: #FDEFD6; --part-fg: #8A5A00; --poor-bg: #FBE0DA; --poor-fg: #A3290E;
+  --note-bg: #EEF2FA;
+  --display: 'Epilogue', 'Segoe UI', system-ui, sans-serif; --body: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif; --mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0F1829; --surface: #16233B; --ink: #E8EDF6; --soft: #A9B6CC; --line: #2A3A57; --accent: #FF7A45;
+    --good-bg: #173A2A; --good-fg: #8FDDAE; --part-bg: #3F3216; --part-fg: #F2C772; --poor-bg: #4A2118; --poor-fg: #FFB19A; --note-bg: #1B2A47; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0F1829; --surface: #16233B; --ink: #E8EDF6; --soft: #A9B6CC; --line: #2A3A57; --accent: #FF7A45;
+  --good-bg: #173A2A; --good-fg: #8FDDAE; --part-bg: #3F3216; --part-fg: #F2C772; --poor-bg: #4A2118; --poor-fg: #FFB19A; --note-bg: #1B2A47; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.55; padding-inline: 16px; padding-block: 28px 64px; }
+main { max-width: 1180px; margin-inline: auto; display: flex; flex-direction: column; gap: 34px; }
+h1 { font-family: var(--display); font-weight: 800; font-size: clamp(27px, 4.6vw, 40px); line-height: 1.1; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-family: var(--display); font-weight: 700; font-size: 21px; margin: 0 0 4px; text-wrap: balance; }
+h3 { font-family: var(--display); font-weight: 700; font-size: 16px; margin: 0 0 6px; }
+p { margin: 0 0 10px; max-width: 74ch; }
+.lede { color: var(--soft); font-size: 16px; max-width: 70ch; margin-top: 10px; }
+.stamp { font-family: var(--mono); font-size: 12px; color: var(--soft); margin: 10px 0 0; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; }
+.panel.accent { border-left: 4px solid var(--accent); }
+.panel ul { margin: 6px 0 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+.tablewrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td { text-align: left; padding: 11px 14px; border-top: 1px solid var(--line); vertical-align: top; }
+thead th { border-top: 0; font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--soft); background: var(--bg); white-space: nowrap; }
+tbody th small, td small { display: block; color: var(--soft); font-weight: 400; margin-top: 2px; font-size: 12.5px; }
+.num { font-family: var(--mono); font-size: 13px; white-space: nowrap; }
+.dot { display: inline-block; width: 22px; height: 22px; line-height: 22px; text-align: center; border-radius: 6px; font-size: 11px; font-weight: 700; margin-right: 3px; }
+.dot.good { background: var(--good-bg); color: var(--good-fg); } .dot.part { background: var(--part-bg); color: var(--part-fg); } .dot.poor { background: var(--poor-bg); color: var(--poor-fg); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--soft); align-items: center; }
+.scene-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 10px 20px; margin-bottom: 12px; }
+.controls { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; font-size: 13px; font-weight: 600; background: var(--ink); color: var(--bg); border: 0; border-radius: 8px; padding: 8px 14px; cursor: pointer; }
+button.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+button:focus-visible, a:focus-visible, video:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.prompt { background: var(--note-bg); border-radius: 10px; padding: 12px 14px; font-size: 13.5px; margin-bottom: 14px; }
+.prompt b { font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--soft); display: block; margin-bottom: 4px; }
+.wall { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; }
+.card { margin: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; min-width: 0; }
+.card video, .card > img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; display: block; background: #000; }
+.card figcaption { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.card figcaption b { font-family: var(--display); font-size: 15px; }
+.card .read { font-size: 13.5px; }
+.card .meta { font-family: var(--mono); font-size: 11.5px; color: var(--soft); }
+.card .strip { width: 100%; height: auto; border-radius: 6px; border: 1px solid var(--line); display: block; }
+.card.start { border-style: dashed; }
+.card.start figcaption span { color: var(--soft); font-size: 13px; }
+.refs { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-top: 12px; }
+.refs figure { margin: 0; } .refs img { width: 100%; border-radius: 8px; border: 1px solid var(--line); display: block; background: #fff; } .refs figcaption { font-size: 12.5px; color: var(--soft); margin-top: 4px; }
+code { font-family: var(--mono); font-size: 12.5px; background: var(--note-bg); padding: 1px 5px; border-radius: 4px; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<main>
+  <header>
+    <h1>Video engine trial</h1>
+    <p class="lede">Seven video engines were given the same still frame from the Heritage film and the same instruction, in two scenes. This page lets you watch them side by side. The grades are my reading, so use your own eyes and tell me what you pick.</p>
+    <p class="stamp">26 October 2026 · five-second clips · 720p where the engine allows · originals in <code>Downloads\engine-trial</code></p>
+  </header>
+
+  <section class="two">
+    <div class="panel accent">
+      <h2>What the trial shows</h2>
+      <ul>
+        <li>With a good starting frame, every engine kept the real Heritage pouch, with its logo, its smiling-glass artwork and the words "Happy Full Cream Milk". Our storyboard-frame approach is what protects the pack. The engine mostly changes speed, cost and how far the scene drifts.</li>
+        <li>No engine won both scenes on every measure. Kling 4.0 held the pouch colour best in scene A and worst in scene B. Veo went the other way. One clip per engine per scene is a sanity check, not a ranking.</li>
+        <li>MiniMax H3 Max, Kling 3.0 and Veo held both scenes cleanly. MiniMax rendered in 11 seconds. Veo's endpoint ends on 17 November.</li>
+        <li>Gemini Omni was solid in scene A and drifted in scene B. It is Google's replacement for Veo and runs on the key we already have.</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h2>How fair is it</h2>
+      <ul>
+        <li>Same frame and the same prompt, word for word, for every engine in a scene.</li>
+        <li>Omni has "About 5 seconds." added, because it has no duration setting. Veo only makes 4, 6 or 8 second clips, so its clip is 6 seconds. MiniMax's nearest size is 1344 by 768.</li>
+        <li>Wan and MiniMax rewrite prompts by default. That was on in scene A and switched off in scene B.</li>
+        <li>MiniMax, Kling 4.0 and Omni add an audio track on their own. It is stripped on this page.</li>
+        <li>I cannot see fal's bill, so most prices are the published rates, not what these clips cost. Check the fal dashboard for the real spend.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>Scoreboard</h2>
+    <p>Grades: <b>P</b> pack label, <b>F</b> people and outfit, <b>S</b> scene, <b>M</b> follows the motion asked. The measured columns compare the pouch against the starting frame. Colour is how far the pouch's average colour moved, on a 0 to 255 scale where about 10 is hard to see. Size drift is how much the pouch's size varied during the clip. Lower is steadier for both.</p>
+    <div class="legend" style="margin-bottom:10px;"><span><span class="dot good">G</span> Good</span><span><span class="dot part">P</span> Partly</span><span><span class="dot poor">X</span> Poor</span><span>Scene A first, then scene B, in each paired column.</span></div>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Engine</th><th>Render time A / B</th><th>Grades A (P F S M)</th><th>Grades B (P F S M)</th><th>Colour moved A / B</th><th>Size drift A / B</th><th>Price and risk</th></tr></thead>
+      <tbody>__SCOREBOARD__</tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <div class="scene-head">
+      <div><h2>Scene A: the pour</h2><p style="margin:0;">One person, the pouch tilted and pouring into the steel vessel. The camera should drift slowly.</p></div>
+      <div class="controls"><button type="button" data-play="A">Play all together</button><button type="button" class="ghost" data-pause="A">Pause all</button></div>
+    </div>
+    <div class="prompt"><b>The prompt, the same for all</b>Animate this frame. The mother keeps pouring the milk from the Heritage pouch into the steel vessel, the milk stream falling steadily; her head and hands move naturally. Camera: a slow, gentle handheld drift, shallow depth of field. Keep the pouch, its label and colours, her face, her saree and the kitchen exactly as in the image. No on-screen text, captions or subtitles.</div>
+    <div class="wall">__PLAYERS_A__</div>
+    <p style="margin-top:12px;color:var(--soft);font-size:13.5px;">Under each clip is a strip of the pouch cropped at five moments, so you can judge the label up close. Click a strip to open it larger. In Wan's strip, the fourth and fifth crops show the sudden zoom.</p>
+  </section>
+
+  <section>
+    <div class="scene-head">
+      <div><h2>Scene B: the hold</h2><p style="margin:0;">A harder frame. A different child, a hand holding the pouch front-on, and a glass to pick up. This is the case where a model is tempted to redraw the label or change the room.</p></div>
+      <div class="controls"><button type="button" data-play="B">Play all together</button><button type="button" class="ghost" data-pause="B">Pause all</button></div>
+    </div>
+    <div class="prompt"><b>The prompt, the same for all</b>Animate this frame. The boy takes the steel glass of milk from the counter and lifts it; the mother keeps holding the Heritage pouch steady, its front label facing the camera. Camera: a slow, gentle handheld push-in, shallow depth of field. Keep the pouch, its label and colours, the boy's face, his white shirt and grey shorts, and the kitchen exactly as in the image. No on-screen text, captions or subtitles.</div>
+    <div class="wall">__PLAYERS_B__</div>
+    <p style="margin-top:12px;color:var(--soft);font-size:13.5px;">Omni and Seedance both add a crest to the boy's shirt, visible at the left edge of their pouch strips. Omni also replaces the window and stove with a plain wall.</p>
+  </section>
+
+  <section>
+    <h2>Reference mode: Kling O1</h2>
+    <p>A different test. Instead of one starting frame, the model was given separate references for the pouch, the mother and the kitchen, and the scene was described in words. The pouch, the pour, the mother and the kitchen all held. The boy's outfit changed, because the prompt only asked to keep his face. Seedance 2.0 refused the same references, saying they may contain likenesses of real people. The prompt for this clip used reference tags, so it is not comparable with the clips above.</p>
+    <div class="two" style="align-items:start;">
+      <figure class="card" style="max-width:640px;"><video class="vid" src="clips/R_kling_o1.mp4" muted loop playsinline preload="metadata" controls></video><figcaption><b>Kling O1, reference to video</b><span class="meta">153 s to render · 1920 by 1080 · 5 s</span></figcaption></figure>
+      <div class="refs">
+        <figure><img src="img/ref1_pack.png" alt="Reference: the real Heritage pouch photo" loading="lazy"><figcaption>The real pouch photo, from the old library.</figcaption></figure>
+        <figure><img src="img/ref2_mother.jpg" alt="Reference: the mother" loading="lazy"><figcaption>Mother, a frame from the 30s film.</figcaption></figure>
+        <figure><img src="img/ref3_boy_kitchen.jpg" alt="Reference: the boy in the kitchen" loading="lazy"><figcaption>Boy and kitchen, a frame from the 30s film.</figcaption></figure>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Not tested, and why</h2>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Option</th><th>What I found</th><th>Why it was not run</th></tr></thead>
+      <tbody>__NOT_TESTED__</tbody>
+    </table></div>
+  </section>
+
+  <section class="two">
+    <div class="panel accent">
+      <h2>What I would do next</h2>
+      <ul>
+        <li>Move the Google path to Omni, because Google's Veo models are gone from the Gemini API and Omni works on our existing key.</li>
+        <li>Add a second engine from this group for resilience. MiniMax H3 Max and Kling 3.0 held both scenes. Check MiniMax's real price first.</li>
+        <li>Keep fal's Veo only as a bridge until 17 November.</li>
+        <li>Keep the storyboard-frame approach. It is the reason the pack holds on any of these.</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h2>What I need from you</h2>
+      <ul>
+        <li>Watch the clips and tell me which ones you would put your name to, and which fail for you.</li>
+        <li>Check the fal dashboard for what these clips cost in total.</li>
+        <li>Decide whether Google's Omni restriction on images of minors in the EEA, Switzerland and the UK matters for your audience.</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+<script>
+document.querySelectorAll('[data-play]').forEach(function (b) {
+  b.addEventListener('click', function () {
+    var sc = b.getAttribute('data-play');
+    document.querySelectorAll('video[data-scene="' + sc + '"]').forEach(function (v) { try { v.currentTime = 0; var p = v.play(); if (p && p.catch) p.catch(function () {}); } catch (e) {} });
+  });
+});
+document.querySelectorAll('[data-pause]').forEach(function (b) {
+  b.addEventListener('click', function () {
+    var sc = b.getAttribute('data-pause');
+    document.querySelectorAll('video[data-scene="' + sc + '"]').forEach(function (v) { try { v.pause(); } catch (e) {} });
+  });
+});
+</script>
