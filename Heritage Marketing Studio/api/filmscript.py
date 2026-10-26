@@ -35,7 +35,7 @@ DIR = tenancy.dir("filmscripts")
 # is Phase 1 of the gap, the part that loses real authored work (a written script, a department note, a
 # rendered frame) rather than a picked option that costs one click to redo.
 FIELDS = ("video_objective", "video_concept", "script_status", "script_phase",
-          "full_script", "scene_frames", "shoot", "video_characters", "video_location_line", "video_look_ref", "video_wardrobe", "video_location_src", "sound_plan", "provocation_id", "provocation_on",
+          "full_script", "scene_frames", "shoot", "video_characters", "video_location_line", "video_look_ref", "video_wardrobe", "video_camera", "video_location_src", "sound_plan", "provocation_id", "provocation_on",
           "cast_ref_url", "cast_lock_sig", "cast_saved_url", "video_cast_choice", "video_plate_choice")
 
 
@@ -50,7 +50,7 @@ def _path(house_id: str) -> str:
 def _blank(house_id: str) -> dict:
     return {"house": house_id, "video_objective": None, "video_concept": None,
             "script_status": "none", "script_phase": "concept", "full_script": None,
-            "scene_frames": {}, "shoot": {}, "video_characters": "", "video_location_line": "", "video_look_ref": "", "video_wardrobe": "", "video_location_src": "", "sound_plan": {}, "provocation_id": "", "provocation_on": True,
+            "scene_frames": {}, "shoot": {}, "video_characters": "", "video_location_line": "", "video_look_ref": "", "video_wardrobe": "", "video_camera": "", "video_location_src": "", "sound_plan": {}, "provocation_id": "", "provocation_on": True,
             "cast_ref_url": "", "cast_lock_sig": "", "cast_saved_url": "",
             "video_cast_choice": "", "video_plate_choice": "", "updated": ""}
 
@@ -103,6 +103,10 @@ def save(house_id: str, data: dict) -> dict:
         # so a page from before this field existed never blanks a saved value.
         "video_wardrobe": (str(data.get("video_wardrobe") or "") if "video_wardrobe" in data
                            else str(load(house_id).get("video_wardrobe") or "")),
+        # The film's camera & lens notes (lens, depth of field, handheld feel, grain, grade); same absent-key guard,
+        # so a page from before this field existed never blanks a saved value.
+        "video_camera": (str(data.get("video_camera") or "") if "video_camera" in data
+                         else str(load(house_id).get("video_camera") or "")),
         # A fingerprint of the Location note the Location line was written from, so the screen can say when the note
         # has changed since (same absent-key guard as the line itself).
         "video_location_src": (str(data.get("video_location_src") or "") if "video_location_src" in data

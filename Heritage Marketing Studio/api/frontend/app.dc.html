@@ -2760,6 +2760,17 @@
               <textarea value="{{ videoWardrobe }}" onChange="{{ onVideoWardrobe }}" rows="2" placeholder="e.g. The boy wears a navy sweater-vest over a white shirt with a striped navy tie and grey shorts; the mother wears a cream-and-gold Kerala sari — the SAME in every scene." style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:10px; padding:9px 12px; font-size:13px; line-height:1.5; background:#FBFAF8; color:#17325E; resize:vertical; font-family:inherit;"></textarea>
             </div>
 
+            <!-- Camera & lens: the film's technical spine (lens, depth of field, handheld feel, grain, grade). Optional.
+                 It rides into every frame (the video animates the frame, so the look is set there) and into every shot's video
+                 prompt. Set it BEFORE the lock, like the Look reference. Empty = nothing changes. -->
+            <div style="margin-top:10px;">
+              <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:4px;">
+                <div style="font-size:11px; font-weight:700; color:#17325E;">Camera &amp; lens <span style="font-weight:600; color:#9AA1AC;">· how the camera sees and moves — sent to every frame and every shot (optional)</span></div>
+                <span onClick="{{ useSuggestedCamera }}" style="cursor:pointer; border:1px solid #C9E3CD; background:#F1F8F2; color:#1E7E34; border-radius:8px; padding:4px 10px; font-size:11.5px; font-weight:700;">Use suggested notes</span>
+              </div>
+              <textarea value="{{ videoCamera }}" onChange="{{ onVideoCamera }}" rows="3" placeholder="e.g. Super 35 cinema camera, 35–60mm, shallow depth of field; handheld with a gentle breathing sway, never gimbal-smooth; fine grain; warm balanced grade. Leave empty to keep the studio's default camera." style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:10px; padding:9px 12px; font-size:13px; line-height:1.5; background:#FBFAF8; color:#17325E; resize:vertical; font-family:inherit;"></textarea>
+            </div>
+
             <div style="margin-top:10px;">
               <div style="font-size:11px; font-weight:700; color:#17325E; margin-bottom:4px;">Location line <span style="font-weight:600; color:#9AA1AC;">· what the camera sees — sent to the lock and to every frame</span></div>
               <textarea value="{{ videoLocationLine }}" onChange="{{ onVideoLocationLine }}" rows="2" placeholder="Press Derive from script to write this from the Location note — or type it." style="width:100%; box-sizing:border-box; border:1px solid #DDD9D1; border-radius:10px; padding:9px 12px; font-size:13px; line-height:1.5; background:#FBFAF8; color:#17325E; resize:vertical; font-family:inherit;"></textarea>
@@ -12091,6 +12102,7 @@ class Component extends DCLogic {
     scriptInfluence: null, scriptInfluenceOpen: false, scriptInfluenceBusy: false,   // 'what informed this script' view
     videoLookRef: '', lookRefBusy: false,   // written cinematography reference: the look the film should resemble
     videoWardrobe: '',                      // wardrobe lock: one costume per character, held identical across every shot
+    videoCamera: '',                        // camera & lens notes: the film's technical spine (lens, DOF, handheld feel, grain, grade)
     castGateHit: false,            // a frame was asked for with no cast locked
     // Real references for the cast lock — picked once here, same pattern as POSM's "Assets for this
     // piece" panel (`posmAssetOptions`/`pickPosmAsset`/`uploadPosmAsset`). Before this, `/cast-reference`
@@ -15680,7 +15692,7 @@ class Component extends DCLogic {
 
   // ---------- video generation ----------
   pickVideoObjective = (name) => () => {
-    this.setState({ videoObjective:name, videoConcept:null, provConcept:null, videoRefusal:'', scriptVersions:[], scriptStatus:'none', fullScript:null, sceneFrames:{}, shoot:{}, producedUrl:null, scriptPhase:'concept', videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null, renderInfo:null, castRefUrl:null, videoCastChoice:'', videoPlateChoice:'', videoPackChoice:'', frameNote:'', scriptRefine:'', soundPlan:{}, soundBase:[], musicStyle:'warm-strings', musicTempo:'', musicDynamics:'', musicLockMood:null, production:{ aspect:'16:9', music:'Warm strings', voice:'', status:'idle', versions:[] } });
+    this.setState({ videoObjective:name, videoConcept:null, provConcept:null, videoRefusal:'', scriptVersions:[], scriptStatus:'none', fullScript:null, sceneFrames:{}, shoot:{}, producedUrl:null, scriptPhase:'concept', videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', videoCamera:'', castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null, renderInfo:null, castRefUrl:null, videoCastChoice:'', videoPlateChoice:'', videoPackChoice:'', frameNote:'', scriptRefine:'', soundPlan:{}, soundBase:[], musicStyle:'warm-strings', musicTempo:'', musicDynamics:'', musicLockMood:null, production:{ aspect:'16:9', music:'Warm strings', voice:'', status:'idle', versions:[] } });
     // Same "surfaced up front" reasoning as POSM's loadPosmAssetLib: a real reference picker with
     // nothing loaded to pick from is just a slower text box.
     if (!this.state.videoAssets.length) this.loadVideoAssetLib();
@@ -15870,7 +15882,7 @@ class Component extends DCLogic {
   // Rules for every scene's "visual", because each one becomes ONE storyboard image (5 Oct live test: a scene that
   // listed three views came back as a three-panel collage, and a pack described by colour came back in those
   // colours instead of the real pack's). The real pack's look comes from the pack photo, never from the script.
-  VISUAL_RULES = 'One scene = one frame: describe a SINGLE moment seen from a SINGLE camera view, never a split screen, collage, montage or several views in one scene (a scene that needs more than one view must be split into separate scenes). The "visual" describes ONLY what the camera sees: never put a tagline, title, locked copy, super line or any on-screen text in it — those belong in "supr" or the voiceover. A scene must not repeat another scene’s moment, and a time jump (a character grows up) is shown by cutting between scenes, never inside one frame. Whenever a character appears at a different age or in different clothes from their usual look, name that age and those clothes in the scene’s visual (e.g. "the older lead in the grey cardigan"). When the product pack appears, call it only "the pack" or "the product pack" and describe how it is held or placed (including any pouring), never its colours, artwork or material — its real look comes from the pack photo.';
+  VISUAL_RULES = 'One scene = one frame: describe a SINGLE moment seen from a SINGLE camera view, never a split screen, collage, montage or several views in one scene (a scene that needs more than one view must be split into separate scenes). The "visual" describes ONLY what the camera sees: never put a tagline, title, locked copy, super line or any on-screen text in it — those belong in "supr" or the voiceover. A scene must not repeat another scene’s moment, and a time jump (a character grows up) is shown by cutting between scenes, never inside one frame. Whenever a character appears at a different age or in different clothes from their usual look, name that age and those clothes in the scene’s visual (e.g. "the older lead in the grey cardigan"). When the product pack appears, call it only "the pack" or "the product pack" and describe how it is held or placed (including any pouring), never its colours, artwork or material — its real look comes from the pack photo. Vary the framing across the film: mix wide establishing views, medium shots, close-ups and macro details of hands and objects, rather than the same framing scene after scene.';
   writeFullScript = async () => {
     const vc = this.state.videoConcept;
     if (!vc || this.state.scriptWriting) return;
@@ -15948,6 +15960,12 @@ class Component extends DCLogic {
   onFrameNote = (e) => this.setState({ frameNote: e.target.value });
   onVideoCharacters = (e) => this.setState({ videoCharacters: e.target.value });
   onVideoWardrobe = (e) => this.setState({ videoWardrobe: e.target.value });
+  onVideoCamera = (e) => this.setState({ videoCamera: e.target.value });
+  // A starting point, never applied on its own: the person reads it, edits it, and it only reaches a generator once it
+  // is in the box. Brand-neutral by design (no product, place or people). Handheld is the default feel the AI-filmmaking
+  // handout recommends; a locked product-hero endframe still holds still (the brand shot's own hold wins server-side).
+  CAMERA_NOTES_SUGGESTED = 'Shot on a Super 35 cinema camera, mostly 35–60mm lenses, shallow depth of field with soft background fall-off. Handheld by a real operator: gentle breathing sway, small reframing corrections, slight horizon drift — never gimbal-smooth, never locked off. Focus behaves like a human focus-puller. Fine natural grain, soft sensor noise in the shadows, a slightly warm balanced grade, natural skin tones. No visual effects, lens flares or readable signage.';
+  useSuggestedCamera = () => this.setState({ videoCamera: this.CAMERA_NOTES_SUGGESTED });
 
   // B3 — refine the whole script from a note.
   reworkScript = async () => {
@@ -16419,6 +16437,9 @@ class Component extends DCLogic {
     if (row.shot_size) body.shot_size = row.shot_size;
     const wardrobe = (s.videoWardrobe || '').trim();
     if (wardrobe) body.wardrobe = wardrobe;
+    // The film's camera & lens notes: decided at the FRAME (the video animates it), so they ride into every frame too.
+    const camera = (s.videoCamera || '').trim();
+    if (camera) body.camera_notes = camera;
     // The reference image is what actually holds the characters together.
     if (s.castRefUrl) body.reference_url = s.castRefUrl;
     // Match this frame's blocking/orientation to an already-approved sibling frame: send BOTH the cast ref and the chosen
@@ -16464,6 +16485,7 @@ class Component extends DCLogic {
       b.pack_id || '', b.use_cast, b.cast_id || '', b.use_plate, b.plate_id || '', b.brand_mode, b.ratio, fb.matchNo,
       b.shot_size || '', b.wardrobe || ''];
     if (_prov) arr.push([_prov.id || '', ((_prov.film || {}).visual_language || '')]);
+    if (b.camera_notes) arr.push(['camera', b.camera_notes]);   // only when set: a film without it keeps its recipe, so no frame is spuriously reflagged
     const t = JSON.stringify(arr);
     let h = 5381;
     for (let i = 0; i < t.length; i++) h = ((h * 33) ^ t.charCodeAt(i)) >>> 0;
@@ -16928,7 +16950,7 @@ class Component extends DCLogic {
       this.setState({ conceptRoutes: routes.length > 1 ? routes : [], conceptRoute:0 });
       if (!isRefine) this.addCreated(this.videoItem(obj, data));
       this.setState(s => ({ videoGenerating:false, videoConcept:data, refinePrompt:'', videoRefusal:'',
-        scriptStatus:'concept', fullScript:null, sceneFrames:{}, scriptPhase:'concept', videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null,
+        scriptStatus:'concept', fullScript:null, sceneFrames:{}, scriptPhase:'concept', videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', videoCamera:'', castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null,
         scriptVersions: [...s.scriptVersions, { v:s.scriptVersions.length+1, logline:data.logline, note: isRefine ? s.refinePrompt.trim() : 'Initial draft', duration:data.duration }],
         videoCheck: this.runCreativeCheck([data.logline, (data.scenes||[]).map(x=>x.title+' '+x.desc).join(' ')]) }));
     } catch (err) {
@@ -16950,7 +16972,7 @@ class Component extends DCLogic {
     if (!r || this.state.conceptRoute === i) return;
     // Switching route invalidates everything downstream — script, frames, cast, cut.
     this.setState({ conceptRoute:i, videoConcept:r, scriptStatus:'concept', fullScript:null,
-                    sceneFrames:{}, castRefUrl:null, videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null,
+                    sceneFrames:{}, castRefUrl:null, videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', videoCamera:'', castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null,
                     producedUrl:null, renderInfo:null, scriptPhase:'concept', voicePlan:null });
     this.showToast('Route ' + (i+1) + ' loaded — ' + (r.name || 'concept') + '.', 'ok');
   };
@@ -17455,6 +17477,9 @@ class Component extends DCLogic {
     // The wardrobe lock reaches the video prompt too, for shots rendered without an approved frame to inherit it from.
     const wardrobe = (this.state.videoWardrobe || '').trim();
     if (wardrobe) body.wardrobe = wardrobe;
+    // The camera & lens notes reach the video prompt too (frames carry the look; this carries how the camera behaves).
+    const camera = (this.state.videoCamera || '').trim();
+    if (camera) body.camera_notes = camera;
     // The Sound design card's plan shapes the music bed around the voice (nothing is sent when it is switched off).
     const soundPlan = this.soundPlanPayload();
     if (soundPlan) body.sound_plan = soundPlan;
@@ -17819,6 +17844,7 @@ class Component extends DCLogic {
       tier:this.tierNow(), model: this.tierNow()==='standard' ? 'veo-3.1' : 'veo-3.1-fast' };
     const lookRef = (this.state.videoLookRef || '').trim(); if (lookRef) body.look_note = lookRef;
     const wardrobe = (this.state.videoWardrobe || '').trim(); if (wardrobe) body.wardrobe = wardrobe;
+    const camera = (this.state.videoCamera || '').trim(); if (camera) body.camera_notes = camera;
     Object.assign(body, this.loudnessParam());
     const r = await this.renderViaJob(body);   // background job + poll — a full render runs minutes
     const d = (r && r.data) || {};
@@ -18336,7 +18362,7 @@ class Component extends DCLogic {
       no: r.no || String(i + 1), tc: r.tc || '', visual: r.visual || '', supr: r.supr || '' })) });
     this.showToast(rows.length + ' board row' + (rows.length === 1 ? '' : 's') + ' pulled \u2014 each take can be keyed against the frame it is for.', 'ok');
   };
-  openVideoFromCampaign = () => { const c = this.state.campaign; this.setState({ screen:'video', videoConcept: c ? c.video : null, linkedBrief: c ? c.brief : null, videoObjective:'Campaign film', scriptStatus: (c && c.video) ? 'concept' : 'none', scriptPhase:'concept', videoStep:'scripting', fullScript:null, sceneFrames:{}, videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null, renderInfo:null, castRefUrl:null });
+  openVideoFromCampaign = () => { const c = this.state.campaign; this.setState({ screen:'video', videoConcept: c ? c.video : null, linkedBrief: c ? c.brief : null, videoObjective:'Campaign film', scriptStatus: (c && c.video) ? 'concept' : 'none', scriptPhase:'concept', videoStep:'scripting', fullScript:null, sceneFrames:{}, videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', videoCamera:'', castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null, renderInfo:null, castRefUrl:null });
     this.loadGrounding(); this.loadVideoStandsOn(); }; // round 92: video's own six-entry-point audit
 
   // ---------- campaign analysis ----------
@@ -19951,6 +19977,7 @@ class Component extends DCLogic {
       frameNote: s.frameNote, onFrameNote:this.onFrameNote,
       videoCharacters: s.videoCharacters, onVideoCharacters:this.onVideoCharacters,
       videoWardrobe: s.videoWardrobe || '', onVideoWardrobe: this.onVideoWardrobe,
+      videoCamera: s.videoCamera || '', onVideoCamera: this.onVideoCamera, useSuggestedCamera: this.useSuggestedCamera,
       deriveCharacters:this.deriveCharacters, charBusy: s.charBusy,
       charBtnLabel: s.charBusy ? 'Deriving…' : (s.videoCharacters ? '↻ Re-derive from script' : '✦ Derive from script'),
       seedLabel: s.videoSeed ? ' · seed ' + s.videoSeed : '',
@@ -22541,7 +22568,7 @@ class Component extends DCLogic {
       if (!data0 || !data0.scenes || !data0.scenes.length) throw new Error('bad');
       const data = { ...data0, from_provocation: prov.id, provocation_name: prov.name || '' };
       this.setState(s2 => ({ provRouteBusy:false, provConcept:data, conceptRoute:-1, videoConcept:data, refinePrompt:'', videoRefusal:'',
-        scriptStatus:'concept', fullScript:null, sceneFrames:{}, castRefUrl:null, videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null,
+        scriptStatus:'concept', fullScript:null, sceneFrames:{}, castRefUrl:null, videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', videoCamera:'', castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null,
         producedUrl:null, renderInfo:null, scriptPhase:'concept', voicePlan:null,
         scriptVersions: [...s2.scriptVersions, { v:s2.scriptVersions.length + 1, logline:data.logline, note: refine || ('From the provocation: ' + (prov.name || '')), duration:data.duration }],
         videoCheck: this.runCreativeCheck([data.logline, (data.scenes || []).map(x => x.title + ' ' + x.desc).join(' ')]) }));
@@ -22561,7 +22588,7 @@ class Component extends DCLogic {
     if (st.videoConcept && st.videoConcept.from_provocation === p.id) return;
     if (st.provConcept && st.provConcept.from_provocation === p.id) {
       this.setState({ conceptRoute:-1, videoConcept:st.provConcept, scriptStatus:'concept', fullScript:null,
-        sceneFrames:{}, castRefUrl:null, videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null,
+        sceneFrames:{}, castRefUrl:null, videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', videoCamera:'', castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null,
         producedUrl:null, renderInfo:null, scriptPhase:'concept', voicePlan:null });
       this.showToast('The provocation route loaded \u2014 ' + (st.provConcept.name || 'concept') + '.', 'ok');
       return;
@@ -22902,7 +22929,7 @@ class Component extends DCLogic {
       scriptStatus: d.script_status || 'none', scriptPhase: d.script_phase || 'concept',
       fullScript: d.full_script, sceneFrames: d.scene_frames || {}, shoot: cleaned.shoot,
       videoCharacters: d.video_characters || '', videoLocationLine: d.video_location_line || '',
-      videoLookRef: d.video_look_ref || '', videoWardrobe: d.video_wardrobe || '', videoLocationSrc: d.video_location_src || '',
+      videoLookRef: d.video_look_ref || '', videoWardrobe: d.video_wardrobe || '', videoCamera: d.video_camera || '', videoLocationSrc: d.video_location_src || '',
       soundPlan: d.sound_plan || {},
       videoProvId: d.provocation_id || '', videoProvOn: d.provocation_on !== false,
       // Restore the locked cast/location image so the Shoot Board shows it (not the Lock button) after a reload (#10).
@@ -22932,7 +22959,7 @@ class Component extends DCLogic {
       video_concept: s.videoConcept, script_status: s.scriptStatus, script_phase: s.scriptPhase,
       full_script: s.fullScript, scene_frames: s.sceneFrames, shoot: s.shoot,
       video_characters: s.videoCharacters, video_location_line: s.videoLocationLine,
-      video_look_ref: s.videoLookRef, video_wardrobe: s.videoWardrobe || '', video_location_src: s.videoLocationSrc, sound_plan: s.soundPlan || {},
+      video_look_ref: s.videoLookRef, video_wardrobe: s.videoWardrobe || '', video_camera: s.videoCamera || '', video_location_src: s.videoLocationSrc, sound_plan: s.soundPlan || {},
       provocation_id: s.videoProvId || '', provocation_on: s.videoProvOn !== false,
       // The locked cast/location image (and its lock signature + saved-to-library marker) so a reload keeps the
       // lock instead of dropping back to "Lock location and cast" and forcing a costly re-render (#10).
@@ -22998,7 +23025,7 @@ class Component extends DCLogic {
     const vsig = { fullScript: s.fullScript, videoCharacters: s.videoCharacters, sceneFrames: s.sceneFrames,
                    shoot: s.shoot, videoConcept: s.videoConcept, scriptStatus: s.scriptStatus,
                    scriptPhase: s.scriptPhase, videoObjective: s.videoObjective, videoLocationLine: s.videoLocationLine,
-                   videoLookRef: s.videoLookRef, videoWardrobe: s.videoWardrobe, videoLocationSrc: s.videoLocationSrc, soundPlan: s.soundPlan,
+                   videoLookRef: s.videoLookRef, videoWardrobe: s.videoWardrobe, videoCamera: s.videoCamera, videoLocationSrc: s.videoLocationSrc, soundPlan: s.soundPlan,
                    videoProvId: s.videoProvId, videoProvOn: s.videoProvOn,
                    castRefUrl: s.castRefUrl, castLockSig: s.castLockSig, castSavedUrl: s.castSavedUrl,
                    videoCastChoice: s.videoCastChoice, videoPlateChoice: s.videoPlateChoice };

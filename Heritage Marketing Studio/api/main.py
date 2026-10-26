@@ -1169,10 +1169,21 @@ def _produce_video_sync(payload: dict):
                       "avoid an unbounded paid render. Split this into more than one film."})
 
     def scene_text(items) -> str:
-        return " ".join(
-            (f"{s.get('t','') or s.get('tc','')} {s.get('title','') or s.get('visual','')}: "
-             f"{s.get('desc','') or s.get('dialogue','')}").strip()
-            for s in items if isinstance(s, dict))
+        # What the CAMERA sees. The spoken line used to ride along here (`desc or dialogue`), so every video
+        # prompt carried e.g. "…: Mother (tender): ఇంకాసేపు, రాజూ…" while also saying "no spoken dialogue" — stray
+        # mouth movement and text for the model to act on. Voice is a separate layer, mixed on after, so the
+        # picture prompt gets the visual only; the dialogue stays as a last resort for a row that has no visual
+        # at all (a malformed row), exactly the text it would have got before.
+        out = []
+        for s in items:
+            if not isinstance(s, dict):
+                continue
+            head = f"{s.get('t','') or s.get('tc','')} {s.get('title','') or s.get('visual','')}".strip()
+            tail = str(s.get('desc', '') or '').strip()
+            if not tail and not (s.get('title', '') or s.get('visual', '')):
+                tail = str(s.get('dialogue', '') or '').strip()
+            out.append(f"{head}: {tail}".strip())      # a row with no description keeps its trailing colon, as before
+        return " ".join(out)
 
     def voiceover_text() -> str:
         """The VO to perform over the whole film.
@@ -1284,6 +1295,9 @@ def _produce_video_sync(payload: dict):
         }
         movement_class = str((seg["scenes"][0] if seg["scenes"] else {}).get("movement_class") or "").strip()
         movement_phrase = _MOVEMENT_CLASSES.get(movement_class, "")
+        # The film's own camera & lens notes (optional, film-level). Empty -> every prompt below is byte-for-byte what
+        # it was. An explicit movement_class and the brand endframe's locked hold both still win over it.
+        _cam = " ".join(str(payload.get("camera_notes") or "").split())[:600]
         if from_frame:
             # Animating an approved frame: the picture already fixes cast, wardrobe and set, so the
             # prompt only has to describe the MOVEMENT. This is also, by construction, the one branch
@@ -1310,6 +1324,15 @@ def _produce_video_sync(payload: dict):
                     "same size, scale and position in frame from the first frame to the last; the camera "
                     "does not push in, pull out, zoom or drift, and the pack does not move toward or away "
                     "from the lens.")
+            elif _cam:
+                # The film states how its camera behaves (e.g. handheld with a breathing sway). It replaces the
+                # generic "restrained" default below, with the same identity protection the explicit-movement
+                # branch uses: whatever the camera does, the face must stay recognisable.
+                camera_direction = (
+                    (f"Camera: {camera_note}. " if camera_note else "") +
+                    f"Camera behaviour for this whole film: {_cam.rstrip(' .')}. "
+                    "Whatever the camera does, keep the face clearly recognisable and matching the "
+                    "reference image throughout.")
             else:
                 # Unchanged from Phase 3 — the default, system-decided behaviour.
                 camera_direction = (
@@ -1346,7 +1369,8 @@ def _produce_video_sync(payload: dict):
                  f"the other shots so the parts cut together seamlessly.{_wd_phrase} {cont}"
                  f"Film logline: {script.get('logline','')}. "
                  f"Depict ONLY this beat: {beat}.{role_note} "
-                 f"{look} {camera_direction}{_ss_phrase} "
+                 f"{look} {camera_direction}{_ss_phrase}"
+                 f"{(' CAMERA AND LENS FOR THIS FILM, the same in every shot: ' + _cam.rstrip(' .') + '.') if _cam else ''} "
                  "No on-screen captions, subtitles, watermarks or logos. No spoken dialogue and no musicians "
                  "or instruments in the picture — the soundtrack is added separately in the edit.")
         return p + f" Revision note: {revise}." if revise else p
@@ -2142,6 +2166,14 @@ def scene_still(payload: dict):
     if _wardrobe:
         craft = craft + (" WARDROBE — the exact clothing each person wears, kept identical in every single "
                          "shot of this film, no variation: " + _wardrobe[:400].rstrip(" .") + ".")
+    # Camera & lens notes — the film's technical spine (lens, depth of field, handheld feel, grain, grade), optional
+    # and film-level. The video animates THIS frame, so the look is decided here: the generic "real" style above reads
+    # as a crisp stills photograph, which is why it is told explicitly that these notes override its camera wording.
+    # Only Video frames send `camera_notes`; every other caller's prompt is byte-for-byte unchanged.
+    _camera = " ".join(str(payload.get("camera_notes") or "").split())[:600]
+    if _camera:
+        craft = craft + (" CAMERA AND LENS FOR THIS FILM — it OVERRIDES any generic camera, lens, focus or "
+                         "sharpness wording above: " + _camera.rstrip(" .") + ".")
     subject = str(payload.get("prompt", "")).strip() or "brand key visual"
     characters = str(payload.get("characters", "")).strip()
     # A cast reference image pins identity in a way text never can — use it when we have one.
