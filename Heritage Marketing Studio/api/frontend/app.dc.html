@@ -3346,6 +3346,12 @@
             </sc-for>
           </div>
 
+          <!-- Placement, not generation: the track keeps its sound; it is moved so its strongest rise lands where the film turns. -->
+          <label style="display:flex; align-items:flex-start; gap:8px; margin:-4px 0 14px; cursor:pointer;">
+            <input type="checkbox" checked="{{ musicOnTurn }}" onChange="{{ toggleMusicOnTurn }}" style="margin-top:3px;" />
+            <span style="font-size:12.5px; line-height:1.5; color:#41505F;"><b style="color:#17325E;">Land the music’s lift on the turn</b> — moves the track so its biggest rise falls where the film turns, by up to 4 seconds. Applies when you preview, re-voice or render; a track with no clear rise is left as it is, and the notes say so.</span>
+          </label>
+
           <sc-if value="{{ hasMusicOptions }}" hint-placeholder-val="{{ false }}">
             <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:11px; margin-bottom:12px;">
               <sc-for list="{{ musicOptionCards }}" as="o" hint-placeholder-count="3">
@@ -12059,6 +12065,7 @@ class Component extends DCLogic {
     musicLevel: 'balanced',        // subtle | balanced | forward
     musicTempo: '',                // Phase 5 — '' | slow | gentle | steady | upbeat | driving
     musicDynamics: '',             // Phase 5 — '' | even | build | crescendo | swell | rise_resolve
+    musicOnTurn: false,            // land the music's strongest lift on the film's turn beat (re-voice / preview / render)
     // Sound design (soundplan.py). soundPlan holds ONLY what the person chose -- {off, duck, ending, carve, scenes:{no:state},
     // mood, moodTouched}; everything else is derived. soundBase is the plan the film starts from (POST /sound-plan).
     soundPlan: {},
@@ -15692,7 +15699,7 @@ class Component extends DCLogic {
 
   // ---------- video generation ----------
   pickVideoObjective = (name) => () => {
-    this.setState({ videoObjective:name, videoConcept:null, provConcept:null, videoRefusal:'', scriptVersions:[], scriptStatus:'none', fullScript:null, sceneFrames:{}, shoot:{}, producedUrl:null, scriptPhase:'concept', videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', videoCamera:'', castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null, renderInfo:null, castRefUrl:null, videoCastChoice:'', videoPlateChoice:'', videoPackChoice:'', frameNote:'', scriptRefine:'', soundPlan:{}, soundBase:[], musicStyle:'warm-strings', musicTempo:'', musicDynamics:'', musicLockMood:null, production:{ aspect:'16:9', music:'Warm strings', voice:'', status:'idle', versions:[] } });
+    this.setState({ videoObjective:name, videoConcept:null, provConcept:null, videoRefusal:'', scriptVersions:[], scriptStatus:'none', fullScript:null, sceneFrames:{}, shoot:{}, producedUrl:null, scriptPhase:'concept', videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', videoCamera:'', castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null, renderInfo:null, castRefUrl:null, videoCastChoice:'', videoPlateChoice:'', videoPackChoice:'', frameNote:'', scriptRefine:'', soundPlan:{}, soundBase:[], musicStyle:'warm-strings', musicTempo:'', musicDynamics:'', musicOnTurn:false, musicLockMood:null, production:{ aspect:'16:9', music:'Warm strings', voice:'', status:'idle', versions:[] } });
     // Same "surfaced up front" reasoning as POSM's loadPosmAssetLib: a real reference picker with
     // nothing loaded to pick from is just a slower text box.
     if (!this.state.videoAssets.length) this.loadVideoAssetLib();
@@ -17004,6 +17011,8 @@ class Component extends DCLogic {
   // Phase 5 — tempo + dynamics shape the generated bed. Toggle off a chip to clear back to style-only.
   setMusicTempo = (id) => () => this.setState(s => ({ musicTempo: s.musicTempo === id ? '' : id }));
   setMusicDynamics = (id) => () => this.setState(s => ({ musicDynamics: s.musicDynamics === id ? '' : id }));
+  // Placement, not generation: the track is moved, never regenerated. A preview made before the change no longer matches.
+  toggleMusicOnTurn = () => this.setState(s => ({ musicOnTurn: !s.musicOnTurn, voiceAudioUrl: null }));
   auditionMusic = async () => {
     if (this.state.musicBusy) return;
     this.setState({ musicBusy:true });
@@ -17044,6 +17053,7 @@ class Component extends DCLogic {
       duration:this.state.prodDuration, voice:p0.voice, music:p0.music,
       music_url:this.state.musicUrl || '', music_level:this.state.musicLevel,
       tempo:this.state.musicTempo || '', dynamics:this.state.musicDynamics || '',
+      ...(this.state.musicOnTurn ? { music_on_turn:true } : {}),
       voices:this.state.voiceChoices, accent:this.state.voiceAccent,
       characters:this.state.videoCharacters, engines:this.state.engines,
       ...(this.soundPlanPayload() ? { sound_plan:this.soundPlanPayload() } : {}), ...this.loudnessParam() });
@@ -17234,6 +17244,7 @@ class Component extends DCLogic {
              accent:this.state.voiceAccent,
              music_url:this.state.musicUrl || '', music_level:this.state.musicLevel,
              tempo:this.state.musicTempo || '', dynamics:this.state.musicDynamics || '',
+             ...(this.state.musicOnTurn ? { music_on_turn:true } : {}),
              engines:this.state.engines, ...(this.soundPlanPayload() ? { sound_plan:this.soundPlanPayload() } : {}), ...this.loudnessParam() };
   }
   // Rows written before structured audio existed have no `audio` array. The plan knows what the
@@ -17466,6 +17477,7 @@ class Component extends DCLogic {
                    accent:this.state.voiceAccent, style:this.state.videoStyle,
                    music_url:this.state.musicUrl || '', music_level:this.state.musicLevel,
                    tempo:this.state.musicTempo || '', dynamics:this.state.musicDynamics || '',
+                   ...(this.state.musicOnTurn ? { music_on_turn:true } : {}),
                    engines:this.state.engines };
     // `tier` drives Google (lite | standard); `model` drives fal (fast | standard). Send the
     // RESOLVED tier — the raw state can hold a tier the current engine has no model for.
@@ -20037,6 +20049,7 @@ class Component extends DCLogic {
                     .map(o => ({ label:o.label, set:this.setMusicTempo(o.id),
                       bg: s.musicTempo===o.id ? '#17325E' : '#fff', fg: s.musicTempo===o.id ? '#fff' : '#17325E',
                       border: s.musicTempo===o.id ? '#17325E' : '#DDD9D1' })),
+      musicOnTurn: !!s.musicOnTurn, toggleMusicOnTurn: this.toggleMusicOnTurn,
       musicDynamicsOpts: [{id:'even',label:'Even'},{id:'build',label:'Build'},{id:'crescendo',label:'Crescendo'},{id:'swell',label:'Swell at the turn'},{id:'rise_resolve',label:'Rise & resolve'}]
                     .map(o => ({ label:o.label, set:this.setMusicDynamics(o.id),
                       bg: s.musicDynamics===o.id ? '#17325E' : '#fff', fg: s.musicDynamics===o.id ? '#fff' : '#17325E',

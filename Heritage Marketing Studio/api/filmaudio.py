@@ -484,6 +484,98 @@ def _plan_bed(plan, lines, vol: float, total: float) -> str | None:
     return f"{core},afade=t=in:st=0:d=1.2{soundplan.ending_filter(plan, total)}"
 
 
+# --- Land the music's lift on the film's turn ----------------------------------------------------------------------
+# The bed is generated before anyone knows where its biggest lift falls, so "swell at the turn" is only a request and
+# the model puts its lift wherever it likes. When the person asks for it (`music_on_turn`), the bed is measured, its
+# strongest sustained rise in energy is found, and the bed is moved so that rise lands on the turn beat's real start.
+# Deterministic -- no model, no network, only ffmpeg and arithmetic -- and bounded: a bed with no clear rise, or one that
+# would have to move more than ALIGN_MAX_SHIFT seconds, is left exactly as it is, and the note says why. ONE helper,
+# called by both the preview and the real mix, so what is approved in the preview is what is rendered.
+ALIGN_WINDOW = 0.25        # seconds per energy window
+ALIGN_SPAN = 2.0           # compare the 2 s after a point with the 2 s before it
+ALIGN_MIN_RISE_DB = 3.0    # a lift smaller than this is not a lift
+ALIGN_MIN_BEFORE_DB = -50.0  # silence before the point is a START, not a lift
+ALIGN_MIN_SHIFT = 0.4      # closer than this already counts as landing on the turn
+ALIGN_MAX_SHIFT = 4.0      # further than this would mean cutting or silencing too much of the bed
+
+
+def bed_lift_time(exe: str, path: str) -> tuple[float | None, float]:
+    """(seconds, rise in dB) of the strongest sustained rise in a music bed's energy, or (None, 0.0) when there is none.
+
+    Energy is measured in 0.25 s windows; at every point the mean power of the next 2 s is compared with the 2 s before it,
+    and the largest jump wins. Points too near either end, and jumps out of silence, are ignored."""
+    import array
+    import math
+    try:
+        res = subprocess.run([exe, "-v", "error", "-i", path, "-vn", "-ac", "1", "-ar", "8000", "-f", "s16le", "-"],
+                             capture_output=True, timeout=120)
+    except Exception:
+        return None, 0.0
+    if res.returncode != 0 or not res.stdout:
+        return None, 0.0
+    pcm = array.array("h")
+    pcm.frombytes(res.stdout[: len(res.stdout) - (len(res.stdout) % 2)])
+    step = int(8000 * ALIGN_WINDOW)
+    power = []
+    for i in range(0, len(pcm) - step + 1, step):
+        seg = pcm[i:i + step]
+        power.append(sum(x * x for x in seg) / step)
+    k = int(round(ALIGN_SPAN / ALIGN_WINDOW))
+    full = 32768.0 ** 2
+    best_t, best_rise = None, 0.0
+    for i in range(k, len(power) - k + 1):
+        before = sum(power[i - k:i]) / k
+        after = sum(power[i:i + k]) / k
+        before_db = 10 * math.log10(max(before, 1.0) / full)
+        if before_db < ALIGN_MIN_BEFORE_DB:
+            continue
+        rise = 10 * math.log10(max(after, 1.0) / max(before, 1.0))
+        if rise > best_rise:
+            best_t, best_rise = i * ALIGN_WINDOW, rise
+    if best_t is None or best_rise < ALIGN_MIN_RISE_DB:
+        return None, best_rise
+    return best_t, best_rise
+
+
+def _align_bed(exe: str, src: str, turn_at: float, total: float, tmp: str, notes: list) -> str:
+    """The bed to mix: `src` moved so its strongest lift lands on `turn_at` (seconds into the film), or `src` itself,
+    untouched, when that cannot be done well. Never raises: on any failure the original bed is used."""
+    try:
+        if not turn_at or turn_at < 1.0:
+            return src
+        lift, rise = bed_lift_time(exe, src)
+        if lift is None:
+            notes.append("Music: no clear lift found in this track, so it was left where it was.")
+            return src
+        shift = turn_at - lift                       # > 0: the lift comes early, delay the bed; < 0: it comes late, skip ahead
+        if abs(shift) < ALIGN_MIN_SHIFT:
+            notes.append(f"Music: the lift already lands on the turn (about {lift:.1f}s).")
+            return src
+        if abs(shift) > ALIGN_MAX_SHIFT:
+            notes.append(f"Music: the lift is at {lift:.1f}s and the turn at {turn_at:.1f}s — too far apart to move "
+                         f"without cutting the track, so it was left where it was.")
+            return src
+        out = os.path.join(tmp, "bed_turn.mp3")
+        if shift < 0:
+            have = probe_duration(exe, src) or 0.0
+            if total and have and have - abs(shift) < total - 0.5:
+                notes.append("Music: the track is too short to start it later, so it was left where it was.")
+                return src
+            cmd = [exe, "-y", "-ss", f"{abs(shift):.3f}", "-i", src, "-c:a", "libmp3lame", "-b:a", "192k", out]
+        else:
+            # fade the music in FIRST, then delay the whole thing — otherwise the fade would play over the silence
+            cmd = [exe, "-y", "-i", src, "-af", f"afade=t=in:st=0:d=0.8,adelay={int(shift * 1000)}:all=1",
+                   "-c:a", "libmp3lame", "-b:a", "192k", out]
+        res = subprocess.run(cmd, capture_output=True, text=True, timeout=180)
+        if res.returncode == 0 and os.path.exists(out) and os.path.getsize(out) > 0:
+            notes.append(f"Music: the lift was moved onto the turn (found at {lift:.1f}s, turn at {turn_at:.1f}s, "
+                         f"{'later' if shift > 0 else 'earlier'} by {abs(shift):.1f}s).")
+            return out
+    except Exception as e:
+        print(f"[filmaudio] bed alignment skipped: {e}", file=sys.stderr, flush=True)
+    return src
+
+
 # A spoken line RESOLVES a short breath before its scene's cut, not at the top of the shot: the brief's
 # lines should land as the beat lands and lead into the cut (owner's direction, 21 Oct — "the dialogue
 # needs to come toward the latter part of the frame, not the start"). The line still never begins before
@@ -534,14 +626,16 @@ def _lay_start(seg, cursor: float, eff: float) -> float:
 def preview_audio(exe: str, seconds: float, out_path: str, segments,
                   music: str | None = None, tmp_dir: str | None = None,
                   level=None, plan=None, ambience: str | None = None, ambience_level_name=None,
-                  spots=None) -> tuple[bool, list[str]]:
+                  spots=None, turn_at: float | None = None) -> tuple[bool, list[str]]:
     """`_preview_audio_once` with the same safety as `mix_timeline`: a preview made with a sound plan that fails is made again
     the old way (a steady bed), and says so."""
     ok, notes = _preview_audio_once(exe, seconds, out_path, segments, music=music, tmp_dir=tmp_dir, level=level, plan=plan,
-                                    ambience=ambience, ambience_level_name=ambience_level_name, spots=spots)
+                                    ambience=ambience, ambience_level_name=ambience_level_name, spots=spots,
+                                    turn_at=turn_at)
     if ok or not plan:
         return ok, notes
-    ok2, notes2 = _preview_audio_once(exe, seconds, out_path, segments, music=music, tmp_dir=tmp_dir, level=level)
+    ok2, notes2 = _preview_audio_once(exe, seconds, out_path, segments, music=music, tmp_dir=tmp_dir, level=level,
+                                      turn_at=turn_at)
     if ok2:
         return True, list(dict.fromkeys(list(notes) + list(notes2) + [_PLAN_FALLBACK_NOTE]))
     return False, notes
@@ -550,7 +644,7 @@ def preview_audio(exe: str, seconds: float, out_path: str, segments,
 def _preview_audio_once(exe: str, seconds: float, out_path: str, segments,
                         music: str | None = None, tmp_dir: str | None = None,
                         level=None, plan=None, ambience: str | None = None, ambience_level_name=None,
-                        spots=None) -> tuple[bool, list[str]]:
+                        spots=None, turn_at: float | None = None) -> tuple[bool, list[str]]:
     """The soundtrack alone, as an mp3 — so the mix can be judged without rendering any video.
 
     Same placement rules as the real mix, over silence instead of picture — including the single
@@ -586,6 +680,8 @@ def _preview_audio_once(exe: str, seconds: float, out_path: str, segments,
     if music:
         mpath = os.path.join(tmp, "bed.mp3")
         if _download(music, mpath):
+            if turn_at:                                     # optional: land the music's lift on the turn (same helper as the mix)
+                mpath = _align_bed(exe, mpath, float(turn_at), float(seconds), tmp, notes)
             inputs += ["-i", mpath]
             vol = music_level(level, has_voice=voice_labels > 1)
             bed = _plan_bed(plan, line_windows, vol, float(seconds)) if voice_labels > 1 else None
@@ -619,16 +715,18 @@ _PLAN_FALLBACK_NOTE = ("The sound plan could not be mixed on this server, so the
 
 def mix_timeline(exe: str, video: str, out_path: str, segments, music: str | None = None,
                  tmp_dir: str | None = None, level=None, ambience: str | None = None,
-                 ambience_level_name=None, spots=None, plan=None) -> tuple[bool, list[str]]:
+                 ambience_level_name=None, spots=None, plan=None,
+                 turn_at: float | None = None) -> tuple[bool, list[str]]:
     """`_mix_timeline_once`, with one safety: a mix that was asked for with a SOUND PLAN and failed is tried again exactly as
     it was mixed before sound plans existed (a steady bed, no plan extras), and says so. A plan -- or an ffmpeg build that
     cannot run its filter -- must never leave a film without its soundtrack. Calls with no plan (the editor's sound pass)
     behave exactly as before: they fail loudly rather than quietly dropping what was asked for."""
     ok, notes = _mix_timeline_once(exe, video, out_path, segments, music=music, tmp_dir=tmp_dir, level=level, ambience=ambience,
-                                   ambience_level_name=ambience_level_name, spots=spots, plan=plan)
+                                   ambience_level_name=ambience_level_name, spots=spots, plan=plan, turn_at=turn_at)
     if ok or not plan:
         return ok, notes
-    ok2, notes2 = _mix_timeline_once(exe, video, out_path, segments, music=music, tmp_dir=tmp_dir, level=level)
+    ok2, notes2 = _mix_timeline_once(exe, video, out_path, segments, music=music, tmp_dir=tmp_dir, level=level,
+                                     turn_at=turn_at)
     if ok2:
         return True, list(dict.fromkeys(list(notes) + list(notes2) + [_PLAN_FALLBACK_NOTE]))
     return False, notes
@@ -636,7 +734,8 @@ def mix_timeline(exe: str, video: str, out_path: str, segments, music: str | Non
 
 def _mix_timeline_once(exe: str, video: str, out_path: str, segments, music: str | None = None,
                        tmp_dir: str | None = None, level=None, ambience: str | None = None,
-                       ambience_level_name=None, spots=None, plan=None) -> tuple[bool, list[str]]:
+                       ambience_level_name=None, spots=None, plan=None,
+                       turn_at: float | None = None) -> tuple[bool, list[str]]:
     """Place each voice segment at its scene's timecode and mix with the music bed, an ambience bed
     and any foley spots.
 
@@ -687,6 +786,8 @@ def _mix_timeline_once(exe: str, video: str, out_path: str, segments, music: str
     if music:
         mpath = os.path.join(tmp, "bed.mp3")
         if _download(music, mpath):
+            if turn_at:                                     # optional: land the music's lift on the turn (same helper as the preview)
+                mpath = _align_bed(exe, mpath, float(turn_at), float(picture or 0.0), tmp, notes)
             inputs += ["-i", mpath]
             # `has_voice` counts VOICE labels only. Passing `bool(labels)` here would have meant a
             # film with foley and no narration got the quiet under-VO bed level, ducking the score

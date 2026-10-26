@@ -605,6 +605,29 @@ def rescore(payload: dict):
     return _rescore_do(payload)
 
 
+def _turn_at_from_rows(scenes, duration) -> float | None:
+    """Where the TURN beat starts, in seconds, for a film planned from these script rows -- or None when the film has
+    no turn (a very short one) or there is nothing to plan from.
+
+    Re-score and the soundtrack preview have no clips to measure, so they plan the beats the same way the render does
+    (`scene_seconds` -> `plan_by_scene`, which also assigns each beat its role), then add up the beat lengths in front
+    of the first `turn`. Used only when the person ticked "land the music's lift on the turn" (`music_on_turn`)."""
+    rows = [r for r in (scenes or []) if isinstance(r, dict)]
+    if len(rows) < 2:
+        return None
+    try:
+        per = filmvoice.scene_seconds(rows, target_total=filmcut.parse_seconds(duration))
+        beats = filmcut.plan_by_scene(rows, per)
+    except Exception:
+        return None
+    at = 0.0
+    for b in beats:
+        if str(b.get("role") or "") == "turn":
+            return at
+        at += float(b.get("seconds") or 0)
+    return None
+
+
 def _rescore_do(payload: dict):
     exe = filmcut.ffmpeg_exe()
     master = os.path.basename(str(payload.get("master") or ""))
@@ -625,9 +648,11 @@ def _rescore_do(payload: dict):
     # An optional sound plan (see soundplan.py); absent -> the bed mixes exactly as before.
     plan = soundplan.resolve(payload.get("sound_plan"), payload.get("scenes"), total)
     extras, extra_notes = _plan_sound_args(plan)
+    _turn_at = _turn_at_from_rows(payload.get("scenes"), payload.get("duration")) if payload.get("music_on_turn") else None
     ok, mix_notes = filmaudio.mix_timeline(exe, master_path,
                                            os.path.join(filmcut.RENDERS_DIR, out_name), segs,
-                                           music=music_url, level=payload.get("music_level"), plan=plan, **extras)
+                                           music=music_url, level=payload.get("music_level"), plan=plan,
+                                           turn_at=_turn_at, **extras)
     mix_notes = list(mix_notes) + extra_notes
     if not ok:
         return JSONResponse(status_code=500, content={
@@ -1120,10 +1145,12 @@ def voice_preview(payload: dict):
     name = f"voice-preview-{uuid.uuid4().hex[:8]}.mp3"
     plan = soundplan.resolve(payload.get("sound_plan"), payload.get("scenes"), total)
     extras, extra_notes = _plan_sound_args(plan)
+    _turn_at = _turn_at_from_rows(payload.get("scenes"), payload.get("duration")) if payload.get("music_on_turn") else None
     ok, mix_notes = filmaudio.preview_audio(exe, float(total),
                                             os.path.join(filmcut.RENDERS_DIR, name),
                                             segs, music=music_url,
-                                            level=payload.get("music_level"), plan=plan, **extras)
+                                            level=payload.get("music_level"), plan=plan,
+                                            turn_at=_turn_at, **extras)
     mix_notes = list(mix_notes) + extra_notes
     if not ok:
         return JSONResponse(status_code=500, content={
@@ -1618,10 +1645,22 @@ def _produce_video_sync(payload: dict):
         scored = os.path.join(filmcut.RENDERS_DIR, scored_name)
         plan = soundplan.resolve(payload.get("sound_plan"), scenes, total)
         extras, extra_notes = _plan_sound_args(plan)
+        # Optional (`music_on_turn`): land the music's lift on the turn beat. Measured on the shots that actually
+        # rendered -- a dropped shot takes no time -- exactly like the voice windows above.
+        _turn_at = None
+        if payload.get("music_on_turn"):
+            _t = 0.0
+            for _i, _seg in enumerate(segments):
+                if not slots[_i]:
+                    continue
+                if str(_seg.get("role") or "") == "turn":
+                    _turn_at = _t
+                    break
+                _t += float(_seg["seconds"] or 0)
         ok, mix_notes = filmaudio.mix_timeline(exe, silent, scored, voice_segments,
                                                music=music_url,
                                                level=payload.get("music_level"),
-                                               plan=plan, **extras)
+                                               plan=plan, turn_at=_turn_at, **extras)
         errors.extend(extra_notes)
         errors.extend(mix_notes)
         if ok:
