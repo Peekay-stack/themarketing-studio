@@ -1,0 +1,25 @@
+---
+name: ai-filmmaking-course-audit
+description: "26 Oct audit of the owner's AICAP \"Video Editing and FilmMaking Using AI\" handout (8-page PDF) against our video code/prompts — what we have, partly have, lack. Audit only, nothing built. Ranked gaps + one new idea for the cutdown build."
+metadata:
+  node_type: memory
+  type: project
+  originSessionId: fcd137c0-c85a-447d-9d35-c10659cecac7
+  modified: 2026-10-26T07:04:17.021Z
+---
+
+Source: `Post_read_Video_Editing_and_FilmMaking_Using_AI__AICAP_B15__B18__B22.pdf` (Hicksfield/Luma/Suno/ElevenLabs/VN course notes; extracted with pdfplumber from the project venv — `pdftoppm` is not installed so the Read tool cannot render PDFs here). Owner asked "audit only, don't build". Evidence is from code, not live renders.
+
+**HAVE:** LLM as assistant director with global rules (script writer + `VISUAL_RULES`, beat roles `_ROLE_DIRECTION`); location plate + cast reference + wardrobe lock; music "drop" asked via dynamics chips (`filmaudio._DYNAMICS`: swell at the turn / crescendo / rise_resolve) and tempo; audio ducking (`soundplan.DUCK_DB` subtle 5 / normal 8 / strong 12 dB, per-scene under/open/swell/out); VO word budget (2.2 wps, `voBudget`); captions burned with ffmpeg (so the chroma-key trick is not needed); N candidates for stills/cast (`_variation(i)`).
+
+**PARTIAL:** look reference is TEXT only (`deriveLookRef` turns notes into lens/light/grade text; optional) — no mood-board image; cinematography defaults in the no-frame shot prompt are only "cinema camera, warm natural light" (`_VID_STYLES`), no lens, no movement default (frame branch even says "restrained", the opposite of organic handheld), `movement_class` optional; character sheet = one lineup, every face visible, no side/back views (the handout warns multiple faces in one reference confuse its tool — we mitigate by text "show ONLY the people this shot's…"); wardrobe lock ~ "strong element" but no deliberate signature trait; music drop is a prompt request, never aligned to the real turn-beat time; trim-the-tail exists (`filmcut.stitch` trims each clip to its beat) but not "cut on action".
+
+**MISSING:** (1) multi-reference / element tagging — `gemini.video` sends ONE `image` (first frame) only, fal `video_from_image` one `image_url`; (2) video TAKES / single-shot re-roll — one paid roll per shot, only a full re-render; none found in main.py or the frontend; (3) shot-variety rule in script prompts; (4) VO human imperfections (breaths/pauses) — and em dash gives Chirp NO pause (measured 26 Oct, see [[cutdown-fidelity-build-plan]]); (5) voice cloning is dormant (`el-direct`, no key/UI); (6) motion reference / video-to-video ("Genjutsu"); (7) multi-angle pack/prop sheets.
+
+**BY DESIGN, NOT GAPS:** hook-first (`hook` role: "reads in under two seconds, no set-up") vs the handout's 3-4s B-roll scene buildup — right for ads; Veo 4/6/8s shots vs 10-15s.
+
+**NEW, NOT FROM THE HANDOUT, found while verifying prompts:** `gemini.video` sends `VIDEO_NEGATIVE_PROMPT = "text, typographic letters, watermark, logo, warped geometry"` on the STANDARD (Final) tier only (Lite rejects it). It may fight the pack's own printed label ("do not alter the pack's label") — UNVERIFIED hypothesis, test on a Final render before touching.
+
+**IDEA for [[cutdown-fidelity-build-plan]] (from the handout's "editing hides the flaws"):** the crafted cutdown REGENERATES every shot via `/produce-video` instead of re-cutting clips already rendered. Reusing the original clips (cut/trim/re-order, `prodClips`/cut beats `clip_url`) for scenes that survive is cheaper than generating new frames and keeps the real pack by construction; only genuinely new scenes need frames. Present this as option 0 to the owner when the build starts.
+
+**Unverified:** whether Veo 3.1's API takes multiple reference images and whether Kling/Seedance (reachable via fal per [[image-gen-engine-research]]) offer element tagging — check current docs / a trial before designing (1).
