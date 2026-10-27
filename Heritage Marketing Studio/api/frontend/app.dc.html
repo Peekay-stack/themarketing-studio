@@ -16348,6 +16348,14 @@ class Component extends DCLogic {
   // The seconds a scene will really get: a writer's timecode can say 3s, but the planner never gives a scene under 4s (it re-times
   // the whole film from the dialogue at render, with a 4s floor per scene), so coverage reads 4s as the minimum.
   sceneSecs(row){ return Math.max(4, this.cutSecsOf(row)); }
+  // How many of a scene's extra shots no longer fit: a scene holds its own shot plus extras at 2 s each, so 4 s -> 2 shots, 6 s -> 3 shots, 8 s -> 4.
+  // This happens when the film is re-timed after shots were added; the render then leaves the LAST shots out (and says so), so warn first.
+  shotsDropped(row){ return Math.max(0, this.extraShots(row).length - Math.max(0, Math.floor(this.sceneSecs(row) / 2) - 1)); }
+  dropNote(row){
+    const d = this.shotsDropped(row), secs = this.sceneSecs(row);
+    return 'This scene is ' + secs + ' s, which holds ' + Math.floor(secs / 2) + ' shots at 2 s each: the last ' + d + ' shot' + (d > 1 ? 's' : '')
+      + ' will be left out of the render. Remove ' + (d > 1 ? 'them' : 'it') + ' or lengthen the scene.';
+  }
   shotMasterSecs(row){ return Math.max(2, this.sceneSecs(row) - this.extraShots(row).reduce((a, x) => a + (parseInt(x.secs, 10) || 2), 0)); }
   // The up-front cost of coverage: every shot is generated at 3 s or more (the engine's floor) and trimmed to its length.
   coverageCostNote(){
@@ -16500,6 +16508,7 @@ class Component extends DCLogic {
     const done = cells.filter((_, k) => { const f = fr[this.frameKey(idx, k)]; return f && f.status === 'done'; }).length;
     return h('div', { style:{ padding:'0 11px 8px' } },
       h('div', { style:{ fontSize:10.5, fontWeight:800, letterSpacing:'0.06em', textTransform:'uppercase', color:'#1A8A7A', marginBottom:4 } }, cells.length + ' shots \u00b7 ' + done + '/' + cells.length + ' frames'),
+      this.shotsDropped(row) ? h('div', { style:{ fontSize:10.5, lineHeight:1.4, color:'#B07A12', fontWeight:700, marginBottom:4 } }, this.dropNote(row)) : null,
       h('div', { style:{ display:'grid', gridTemplateColumns:'repeat(' + Math.min(cells.length, 3) + ', 1fr)', gap:6 } }, ...cells));
   }
   // The whole Coverage strip for one scene card, built as elements (a loop inside the card's own loop leaves placeholder ghosts).
@@ -16536,6 +16545,7 @@ class Component extends DCLogic {
         h('span', { style:{ marginLeft:'auto', display:'flex', gap:6 } },
           missing ? btn('Render shot frames (' + missing + ')', this.renderShotFrames(idx), true) : null,
           btn('Remove shots', this.removeAllShots(idx)))),
+      this.shotsDropped(row) ? h('div', { style:{ fontSize:11, lineHeight:1.45, color:'#B07A12', fontWeight:700, marginTop:4 } }, this.dropNote(row)) : null,
       row.signoff_shots ? h('div', { style:{ fontSize:11, color:'#6B7280', marginTop:4 } }, 'Sign-off scene: the film ends on its last shot, so keep that one a clean pack shot.') : null,
       ...ex.map((_, j) => this.shotTile(idx, j + 1)));
   }
