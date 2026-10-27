@@ -2896,6 +2896,8 @@
           </div>
           <!-- Flow review: the editor's pass over the whole cut (verdict + reason per extra shot). Built in flowReviewPanel(). -->
           {{ flowReviewPanel }}
+          <!-- Frame check: a model looks at each rendered frame before it is animated (built in frameCheckPanel). -->
+          {{ frameCheckPanel }}
           <div style="font-size:13px; color:#6B7280; margin-bottom:14px;">One frame per script scene — {{ nScenes }} scenes for a {{ prodDurationLabel }} cut. Every frame is rendered with the same cast sheet and seed so the people stay the same.</div>
 
           <div class="hf-scroll" style="display:grid; grid-auto-flow:column; grid-auto-columns:minmax(220px,1fr); gap:16px; margin-bottom:16px; overflow-x:auto; padding-bottom:6px;">
@@ -2964,6 +2966,7 @@
                       <div style="margin-top:5px; font-size:11px; line-height:1.45; color:#B07A12; font-weight:700;">Check the pack: {{ sc.packShape }}. The video keeps the shape of this frame, so re-render the frame if it matters.</div>
                     </sc-if>
                   </sc-if>
+                  {{ sc.frameChecks }}
                   <!-- Coverage: cut between several camera angles of this scene (built in coverageStrip) -->
                   {{ sc.coverage }}
                   <!-- Per-frame correction: direction for THIS frame only, applied the next time it renders (the
@@ -12128,6 +12131,7 @@ class Component extends DCLogic {
     paceSuggest: null,                      // {pace, why} read from the film's tone words by POST /pace-suggest (a suggestion only, never saved)
     filmReview: null,                       // the last flow review (POST /film-review): verdicts per extra shot, beats, notes, measured stats. Advisory; not saved.
     filmReviewBusy: false,
+    frameCheckBusy: '',                     // 'n of m' while the frame check is running (POST /frame-check, one model call per frame)
     castGateHit: false,            // a frame was asked for with no cast locked
     // Real references for the cast lock — picked once here, same pattern as POSM's "Assets for this
     // piece" panel (`posmAssetOptions`/`pickPosmAsset`/`uploadPosmAsset`). Before this, `/cast-reference`
@@ -16008,6 +16012,76 @@ class Component extends DCLogic {
     if (r && r.ok && d.pace) this.setState({ paceSuggest:{ pace:d.pace, why:d.why || '' } });
     return (r && r.ok && d.pace) ? d.pace : '';
   };
+  // ---------- frame check (VIDEO_CRAFT_FRAMEWORK.md slice 3) ----------
+  // A model looks at each rendered frame beside what the shot should show, before the frame is animated and paid for. Advisory: a flag is a chip and a pre-flight line,
+  // never a block; "Accept" says "I have seen it, keep going". Results live on the frame itself (checks, checkedUrl, checkAccepted) so they save with the film, and
+  // re-rendering a frame (a new url) drops them: a check only counts for the picture it was made on.
+  checksOf(f){ return (f && f.checkedUrl && f.checkedUrl === f.url && !f.checkAccepted && Array.isArray(f.checks)) ? f.checks : []; }
+  frameIsChecked(f){ return !!(f && f.url && f.checkedUrl === f.url); }
+  // The frame slots that are rendered and in the film (a skipped shot is not): [{idx, k, key, f}]
+  renderedSlots(){ const fr = this.state.sceneFrames || {}; return this.frameSlots().map(x => ({ ...x, f:fr[x.key] })).filter(x => x.f && x.f.status === 'done' && x.f.url); }
+  checkFrame = (idx, k) => async () => {
+    const s = this.state, fk = this.frameKey(idx, k), f = (s.sceneFrames || {})[fk], row = (s.fullScript || [])[idx];
+    if (!f || f.status !== 'done' || !f.url || !row) return false;
+    const rr = k ? this.shotRow(row, k) : row;
+    const r = await this.apiCall('/frame-check', { frame_url:f.url, description:(rr && rr.visual) || '', cast:s.videoCharacters || '', wardrobe:s.videoWardrobe || '', pack_expected:!!(rr && this.packOnShot(rr)) });
+    const d = (r && r.data) || {};
+    if (!r || !r.ok) { this.showToast(d.detail || 'Couldn’t check that frame — try again.'); return false; }
+    this.setState(st => { const cur = (st.sceneFrames || {})[fk]; if (!cur || cur.url !== f.url) return {}; return { sceneFrames:{ ...st.sceneFrames, [fk]:{ ...cur, checks:d.checks || [], checkedUrl:f.url, checkAccepted:false, checkSeen:d.seen || '' } } }; });
+    return true;
+  };
+  checkAllFrames = async () => {
+    if (this.state.frameCheckBusy) return;
+    const todo = this.renderedSlots().filter(x => !this.frameIsChecked(x.f));
+    if (!todo.length) { this.showToast('Every rendered frame has already been checked.', 'info'); return; }
+    for (let n = 0; n < todo.length; n++) {
+      this.setState({ frameCheckBusy:(n + 1) + ' of ' + todo.length });
+      if (!(await this.checkFrame(todo[n].idx, todo[n].k)())) { this.setState({ frameCheckBusy:'' }); return; }
+    }
+    this.setState({ frameCheckBusy:'' });
+    const flagged = this.renderedSlots().filter(x => this.checksOf(x.f).length).length;
+    this.showToast(flagged ? flagged + ' frame' + (flagged > 1 ? 's' : '') + ' flagged — see the storyboard.' : 'Checked ' + todo.length + ' frame' + (todo.length > 1 ? 's' : '') + ' — nothing flagged.', flagged ? 'warn' : 'ok');
+  };
+  acceptFrameCheck = (idx, k) => () => {
+    const fk = this.frameKey(idx, k);
+    this.setState(st => { const cur = (st.sceneFrames || {})[fk]; return cur ? { sceneFrames:{ ...st.sceneFrames, [fk]:{ ...cur, checkAccepted:true } } } : {}; });
+  };
+  // The scene card's chip for the MASTER frame (extra shots show theirs on their own card).
+  frameChecksEl(idx){
+    const h = React.createElement, f = (this.state.sceneFrames || {})[this.frameKey(idx, 0)], cs = this.checksOf(f);
+    if (!cs.length) return null;
+    return h('div', { style:{ marginTop:6 } },
+      ...cs.map((c, i) => h('div', { key:'fc' + i, style:{ fontSize:11, lineHeight:1.45, color:'#B07A12', fontWeight:700 } }, 'Check \u2014 ' + c.label + ': ' + c.note)),
+      h('span', { onClick:this.acceptFrameCheck(idx, 0), style:{ cursor:'pointer', fontSize:11, fontWeight:700, color:'#2E5EA6', textDecoration:'underline' } }, 'Accept this frame as it is'));
+  }
+  // The pre-flight line: advisory, so it never blocks (ok stays true); the mark says what is true.
+  frameCheckPreflight(){
+    const rs = this.renderedSlots(), checked = rs.filter(x => this.frameIsChecked(x.f)).length, flagged = rs.filter(x => this.checksOf(x.f).length).length;
+    const line = { label:'Frame check', ok:true };
+    if (!rs.length) return { ...line, note:'No frames yet' };
+    if (flagged) return { ...line, note:flagged + ' flagged — look before you render', mark:'!', markBg:'#FBF1DC', markFg:'#B07A12' };
+    if (checked < rs.length) return { ...line, note:checked + ' of ' + rs.length + ' checked', mark:'–', markBg:'#F3EFE3', markFg:'#A8AEB8' };
+    return { ...line, note:'All ' + rs.length + ' checked' };
+  }
+  frameCheckPanel(){
+    const h = React.createElement, s = this.state, rs = this.renderedSlots();
+    if (!rs.length) return null;
+    const checked = rs.filter(x => this.frameIsChecked(x.f)), flagged = rs.filter(x => this.checksOf(x.f).length), todo = rs.length - checked.length;
+    const busy = s.frameCheckBusy;
+    const label = (txt) => h('span', { style:{ fontSize:11, fontWeight:800, letterSpacing:'0.06em', textTransform:'uppercase', color:'#6B7280' } }, txt);
+    const btn = h('button', { onClick:this.checkAllFrames, disabled:!!busy || !todo, style:{ border:'1px solid #C9CEDA', background:'#fff', color:'#17325E', borderRadius:8, padding:'5px 12px', fontSize:12, fontWeight:700,
+      cursor: (busy || !todo) ? 'default' : 'pointer', opacity: (busy || !todo) ? 0.55 : 1 } }, busy ? 'Checking ' + busy + '…' : (todo ? 'Check the frames (' + todo + ')' : '✓ All frames checked'));
+    const nameOf = (x) => { const row = (s.fullScript || [])[x.idx]; return 'Scene ' + this.sceneNo(row, x.idx) + (x.k ? ' · shot ' + (x.k + 1) : ''); };
+    return h('div', { style:{ margin:'0 0 14px', padding:'10px 14px', border:'1px solid #E6E3DC', borderRadius:12, background:'#FBFAF8', maxWidth:900 } },
+      h('div', { style:{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' } }, label('Frame check'),
+        h('span', { style:{ fontSize:11.5, color:'#6B7280' } }, 'Before you spend on video: pasted panels, extra or missing people, wrong bodies, unwanted text.'), h('span', { style:{ marginLeft:'auto' } }, btn)),
+      checked.length ? h('div', { style:{ fontSize:11.5, lineHeight:1.5, color:flagged.length ? '#B07A12' : '#1A8A7A', fontWeight:700, marginTop:4 } },
+        flagged.length ? flagged.length + ' of ' + checked.length + ' checked frames flagged:' : checked.length + ' frame' + (checked.length > 1 ? 's' : '') + ' checked — nothing flagged.') : null,
+      ...flagged.map((x, i) => h('div', { key:'ff' + i, style:{ fontSize:11.5, lineHeight:1.5, color:'#38414F', marginTop:3 } },
+        h('b', { style:{ color:'#17325E' } }, nameOf(x) + ': '), this.checksOf(x.f).map(c => c.label + ' — ' + c.note).join(' · '), ' ',
+        h('span', { onClick:this.generateFrame(x.idx, x.k), style:{ cursor:'pointer', fontSize:11, fontWeight:700, color:'#2E5EA6', textDecoration:'underline', marginLeft:4 } }, '↻ Re-render'), ' ',
+        h('span', { onClick:this.acceptFrameCheck(x.idx, x.k), style:{ cursor:'pointer', fontSize:11, fontWeight:700, color:'#2E5EA6', textDecoration:'underline', marginLeft:4 } }, 'Accept'))));
+  }
   // ---------- flow review (VIDEO_CRAFT_FRAMEWORK.md slice 2) ----------
   // The editor's pass over the WHOLE cut before anything is rendered. It only advises: "Skip the marked shots" switches those extra shots off (kept in the
   // script, not rendered); nothing is deleted and the person can switch any back on.
@@ -16597,6 +16671,7 @@ class Component extends DCLogic {
     if (f.angleSame) warns.push(f.angleSame);
     if (f.packShape) warns.push('Check the pack: ' + f.packShape + '.');
     if (stale) warns.push('Out of date — re-render this frame.');
+    this.checksOf(f).forEach(c => warns.push('Check — ' + c.label + ': ' + c.note));
     }
     const field = { border:'1px solid #DDD9D1', borderRadius:7, padding:'5px 7px', fontSize:11.5, color:'#38414F', background:'#fff', fontFamily:'inherit', boxSizing:'border-box' };
     const thumb = h('div', { style:{ position:'relative', width:'100%', aspectRatio:'16/9', borderRadius:8, overflow:'hidden', background:'#E6E3DC' } },
@@ -16628,7 +16703,8 @@ class Component extends DCLogic {
       thumb, sh.skip ? null : renderBtn,
       h('textarea', { value:sh.visual || '', onChange:this.editShotField(idx, k, 'visual'), rows:4, style:{ ...field, width:'100%', resize:'vertical', lineHeight:1.45 } }),
       h('input', { value:sh.camera || '', onChange:this.editShotField(idx, k, 'camera'), placeholder:'Camera movement, e.g. slow push-in', style:{ ...field, width:'100%' } }),
-      ...warns.map((w, i) => h('div', { key:'w' + i, style:{ fontSize:11, lineHeight:1.45, color:'#B07A12', fontWeight:700 } }, w)));
+      ...warns.map((w, i) => h('div', { key:'w' + i, style:{ fontSize:11, lineHeight:1.45, color:'#B07A12', fontWeight:700 } }, w)),
+      this.checksOf(f).length ? h('span', { onClick:this.acceptFrameCheck(idx, k), style:{ alignSelf:'flex-start', cursor:'pointer', fontSize:11, fontWeight:700, color:'#2E5EA6', textDecoration:'underline' } }, 'Accept this frame as it is') : null);
   }
   // The Shoot Board's view of a scene with coverage: every shot as a small frame with its place, size and seconds (read-only review;
   // the controls live on the Storyboard card). Shot 1 is the scene's own frame.
@@ -19493,6 +19569,7 @@ class Component extends DCLogic {
         packShape: f.packShape || '', hasPackShape: !!f.packShape,
         coverage: this.coverageStrip(i, r),
         shotStrip: this.shotStrip(i, r),
+        frameChecks: this.frameChecksEl(i),
         frameNote: r.frame_note || '', editFrameNote: this.editFrameNote(i),
         lines, hasLines: lines.length > 0, isSilent: lines.length === 0, willBeSilent,
         addVo: this.addSceneLine(i, 'vo'), addLine: this.addSceneLine(i, 'dialogue'),
@@ -19612,7 +19689,8 @@ class Component extends DCLogic {
         note: staleFrames>0 ? (staleFrames+' of '+nFrames+' out of date') : (doneFrames+' of '+nFrames) },
       { label:'Aspect ratio', ok: !!prod.aspect, note: prod.aspect },
       { label:'Duration / cut', ok: !!s.prodDuration, note: s.prodDuration },
-    ].map(x => ({ ...x, mark: x.ok ? '✓' : '–', markBg: x.ok ? '#EAF6EC' : '#F3EFE3', markFg: x.ok ? '#259821' : '#A8AEB8' }));
+      this.frameCheckPreflight(),
+    ].map(x => ({ ...x, mark: x.mark || (x.ok ? '✓' : '–'), markBg: x.markBg || (x.ok ? '#EAF6EC' : '#F3EFE3'), markFg: x.markFg || (x.ok ? '#259821' : '#A8AEB8') }));
     const handoverReady = approved && nFrames>0 && doneFrames===nFrames && staleFrames===0;
     const handoverNote = !approved ? 'Approve the script first.'
       : (doneFrames<nFrames ? ((nFrames-doneFrames)+' of '+nFrames+' frames still to render.')
@@ -20435,7 +20513,7 @@ class Component extends DCLogic {
       videoCharacters: s.videoCharacters, onVideoCharacters:this.onVideoCharacters,
       videoWardrobe: s.videoWardrobe || '', onVideoWardrobe: this.onVideoWardrobe,
       videoCamera: s.videoCamera || '', onVideoCamera: this.onVideoCamera, useSuggestedCamera: this.useSuggestedCamera,
-      paceBar: this.paceBar(), flowReviewPanel: this.flowReviewPanel(),
+      paceBar: this.paceBar(), flowReviewPanel: this.flowReviewPanel(), frameCheckPanel: this.frameCheckPanel(),
       deriveCharacters:this.deriveCharacters, charBusy: s.charBusy,
       charBtnLabel: s.charBusy ? 'Deriving…' : (s.videoCharacters ? '↻ Re-derive from script' : '✦ Derive from script'),
       seedLabel: s.videoSeed ? ' · seed ' + s.videoSeed : '',

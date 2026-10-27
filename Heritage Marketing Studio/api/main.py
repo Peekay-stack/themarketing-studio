@@ -54,6 +54,7 @@ import brandprofile
 import brand_suggest
 import sceneshots
 import flowreview
+import framecheck
 import selfcheck
 import briefguide
 import briefstore
@@ -2856,6 +2857,39 @@ def film_review(payload: dict):
     out = flowreview.validate(raw, shots, flowreview.budgets(rows, secs, pace, roles), pace)
     out["stats"] = st
     out["model"] = True
+    return out
+
+
+@app.post("/frame-check")
+def frame_check(payload: dict):
+    """Quality gate for ONE storyboard frame before it is animated and paid for: a model looks at the frame beside what the shot was meant to show and names real defects
+    (pasted panels, an extra or missing person, a wrong body, unwanted text, a different picture). Advisory: nothing is saved or blocked here.
+
+    Body: `frame_url` (a served /media or library path), `description` (what the shot should show), optional `cast`, `wardrobe`, `pack_expected`.
+    Returns {verdict: ok|check, checks: [{id, label, verdict, note}], seen, usage}. One paid model call per frame; 400 for a frame that cannot be read, 503 with no key.
+    """
+    url = str(payload.get("frame_url") or "")
+    path = gemini.local_path(url) if url else None
+    if not path:
+        return JSONResponse(status_code=400, content={"detail": "That frame is not a stored image on this server, so it cannot be checked."})
+    if not completion.has_key():
+        return JSONResponse(status_code=503, content={"detail": "The frame check needs the Anthropic key, which is not set on this server."})
+    try:
+        data = open(path, "rb").read()
+    except OSError:
+        return JSONResponse(status_code=400, content={"detail": "That frame could not be read from disk."})
+    prompt = framecheck.vision_prompt(description=str(payload.get("description") or ""), cast=str(payload.get("cast") or ""),
+                                      wardrobe=str(payload.get("wardrobe") or ""), pack_expected=bool(payload.get("pack_expected")))
+    try:
+        text, usage = framecheck.look(data, framecheck.media_type(path), prompt)
+    except Exception as e:
+        print(f"[main] frame-check failed: {type(e).__name__}: {e}", flush=True)
+        return JSONResponse(status_code=502, content={"detail": "The frame check could not run just now. Try again."})
+    raw = framecheck.parse(text)
+    if raw is None:
+        return JSONResponse(status_code=502, content={"detail": "The frame check's reply could not be read. Try again."})
+    out = framecheck.result(raw)
+    out["usage"] = usage
     return out
 
 
