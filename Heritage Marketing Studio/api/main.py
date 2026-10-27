@@ -101,6 +101,7 @@ import shots
 import socialplan
 import strategy
 import tenancy
+import videoprompt
 from database import SessionLocal, get_db, init_db
 import people
 from models import Brief, ChatMessage, Deliverable, User
@@ -1369,16 +1370,17 @@ def _produce_video_sync(payload: dict):
                     if camera_note else
                     "Natural, restrained camera movement that keeps the face clearly recognisable "
                     "throughout the shot — no rapid rotation or orbit around it.")
-            p = (f"Animate this storyboard frame — shot {seg['index'] + 1} of {len(segments)} of a "
-                 f"{_brand_line(brand_mode=_vid_brand_mode)} brand film. This is image-to-video: treat the image as "
-                 f"FIXED. The people, their faces and wardrobe, the set, the colour grade and ESPECIALLY the "
-                 f"product pack — its shape, size, scale, position, label, logo, colours and every printed word — "
-                 f"must stay exactly as in the image and hold constant for the whole shot: the pack must not grow, "
-                 f"shrink, stretch, warp, drift or change its proportions as the shot plays. Do not redesign, "
-                 f"re-draw, re-letter, restyle, swap or morph the pack into a different pack. {cont}"
-                 f"Add ONLY the motion of this beat: {beat}.{role_note} {camera_direction} "
-                 "Do not add any on-screen captions, subtitles, watermarks or new text or logos, and do not "
-                 "alter the pack's existing label — the soundtrack and any supers are added later in the edit.")
+            # 27 Oct 2026 -- compiled, not pasted. The old text here (the brand paragraph with its hashtags, the
+            # leftover timecode and ":." from `scene_text`, editing-language role text, a list of DON'Ts) is what
+            # made the trial's boy toast instead of drink; the shape in videoprompt.py made him drink 2 takes of 2.
+            # `beat_note`/`role` still reach it; `cont` and `camera_direction` are decided above, unchanged.
+            _row = seg["scenes"][0] if seg["scenes"] else {}
+            _action = videoprompt.visual_text(seg["scenes"]) or videoprompt.visual_text(scenes)
+            p = videoprompt.compile_frame_shot(
+                action=_action, role=str(seg.get("role") or ""),
+                beat_note=str(_row.get("beat_note") or ""), continues=bool(seg.get("continues")),
+                camera_direction=camera_direction,
+                pack_in_frame=(str(seg.get("role") or "") == "brand" or packscene.mentions_pack(_action)))
         else:
             if movement_phrase:
                 camera_direction = f"Camera: {movement_phrase}" + (f" {camera_note}. " if camera_note else ". ")

@@ -279,6 +279,16 @@ VIDEO_PACK_IN_USE = (" The pack is in use in this shot: reuse the EXACT pack fro
                      "real stream and a surface in the vessel. Do not invent new legible text anywhere on the pack.")
 
 
+_MENTIONS_PACK = re.compile(r"\b" + _PACK_NOUN_ANY + r"\b", re.IGNORECASE)
+
+
+def mentions_pack(scene_text: str) -> bool:
+    """True when the scene's own words name the pack at all (held, shown, poured from, set down). Wider than
+    video_pack_in_use, which needs the pack to be poured from or opened; used to decide whether a frame-animation
+    prompt should carry the 'keep the pack identical' sentence."""
+    return bool(_MENTIONS_PACK.search(str(scene_text or "")))
+
+
 def video_pack_in_use(scene_text: str) -> bool:
     """True when the scene's own words pour from, or open, the pack (so the front-on pack-shot wording would
     cancel the action)."""
