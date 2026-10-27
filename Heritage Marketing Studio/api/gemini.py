@@ -22,10 +22,15 @@ import base64
 import ipaddress
 import mimetypes
 import os
+import re
 import socket
+import subprocess
 import sys
+import tempfile
+import threading
 import time
 import uuid
+from collections import deque
 from urllib.parse import urlparse
 
 import library
@@ -73,51 +78,63 @@ IMAGE_MODEL_PRO = "gemini-3-pro-image"
 # through — pro tier and anything above 1K were defined and unreachable.
 IMAGE_SIZES = ("1K", "2K", "4K")
 
-# Video. Lite is the draft tier — image-to-video capable, so the storyboard frames still drive it.
-# TWO tiers, not three: the Gemini API documents only `veo-3.1-generate-preview` and the lite
-# variant. A "fast" entry was here, and `veo-3.1-fast-generate-preview` is not a model Google
-# publishes on this endpoint — every request for the middle tier 404'd and fell through to fal,
-# which is why a film quoted at Veo's price arrived on fal's bill. Veo 3.1 Fast exists on Vertex AI;
-# if it is ever exposed here, add it back with the id Google actually documents, not a guessed one.
-VIDEO_MODELS = {
-    "lite": "veo-3.1-lite-generate-preview",       # $0.05/s at 720p
-    "standard": "veo-3.1-generate-preview",        # $0.40/s at 720p
-}
-VIDEO_BEATS = (4, 6, 8)   # Veo accepts only these clip lengths
+# Video. Gemini Omni 1.1 Flash through the Interactions API. Google retired the Veo preview models from this
+# API (HTTP 404 from 23 Oct 2026) and Omni is the video model left on it. ONE model, two resolutions, so the two
+# studio tiers differ in sharpness and price and not in who draws the shot: Draft = 360p, Final = 720p.
+# Billed by token, MEASURED on 27 Oct 2026: 9,655 video tokens per 5 s at 360p and 28,960 at 720p, at $17.50 per
+# million -> about $0.034 and $0.101 per second. The keys stay "lite"/"standard" because the studio's tier names
+# (and the saved films that carry them) are older than the engine.
+OMNI_MODEL = "gemini-omni-1.1-flash"
+VIDEO_MODELS = {"lite": OMNI_MODEL, "standard": OMNI_MODEL}
+VIDEO_RESOLUTION = {"lite": "360p", "standard": "720p"}
+# There is no duration parameter: the length is steered by the words "About N seconds." in the prompt. Measured
+# 27 Oct: N = 3, 4, 5, 6, 7, 8 each came back within 0.05 s of N.
+VIDEO_SECONDS = (3, 8)
 
-# Veo's negative-prompt channel — 1 Oct, Video Phase 2. A soft probabilistic bias, not a hard rule;
-# it cannot replace a correct positive prompt and was never meant to carry content rules (those stay
-# in `segment_prompt()`'s own text, where "no on-screen text or logos" already lives). Per Gemini's
-# own follow-up on this (captured in the Image and Video Engine Playbook, 24 Sep): short, isolated
-# nouns only, never conversational sentences; capped at 4–6 items; state the stable thing positively
-# in the main prompt rather than only negating the failure here. Fixed and unconditional — every shot
-# this module renders already forbids on-screen text/logos and wants clean, undistorted motion, so
-# there is no call site that would ever want a different list.
-VIDEO_NEGATIVE_PROMPT = "text, typographic letters, watermark, logo, warped geometry"
+# The API's own 429 says: "limit: 8 requests per minute on Tier 2". The limiter keeps every render in this
+# process under that with one request to spare, so a six-shot film fires at once and a second film queues behind
+# it instead of failing. Set OMNI_RPM higher after a tier upgrade.
+OMNI_RPM = max(1, int(os.environ.get("OMNI_RPM") or 7))
+_omni_stamps: deque = deque()
+_omni_lock = threading.Lock()
+_tls = threading.local()
 
-# When Veo returns 429 twice, bench it briefly so the other shots of the SAME film skip straight to fal
-# instead of each sitting through the full backoff ladder (one film burned eight minutes of waiting and
-# still returned nothing). The bench is deliberately SHORT: Google is the preferred engine under Auto, so
-# once it is topped up again it must come back on the very next render — a long bench would trap the film
-# on fal for minutes after the balance was restored. The cost of a short bench is at most one wasted
-# Google attempt per render while it is still genuinely out of credit, which is the right trade: being
-# first back to Google matters more than saving one failed call.
+
+def _omni_slot() -> None:
+    """Block until this process may send one more Omni request without passing OMNI_RPM in any 60 s window."""
+    while True:
+        with _omni_lock:
+            now = time.time()
+            while _omni_stamps and now - _omni_stamps[0] >= 60.0:
+                _omni_stamps.popleft()
+            if len(_omni_stamps) < OMNI_RPM:
+                _omni_stamps.append(now)
+                return
+            wait = 60.0 - (now - _omni_stamps[0]) + 0.25
+        time.sleep(max(0.25, wait))
+
+
+def video_error() -> str:
+    """Why the last `video()` call on THIS thread returned None, in words fit to show a person. '' after a success."""
+    return getattr(_tls, "error", "") or ""
+
+
+# When Omni refuses on quota or billing, bench it briefly so the other shots of the SAME film skip straight to
+# the fallback instead of each making a doomed call. The bench is deliberately SHORT: once credit is restored the
+# very next render must be able to use it, so a long bench would keep a topped-up account on the fallback.
 _QUOTA_SPENT: dict[str, float] = {}
-QUOTA_COOLDOWN = 90.0     # skip this model for 90s — long enough to cover one film's remaining shots,
-                          # short enough that a top-up is picked up on the next render
+QUOTA_COOLDOWN = 90.0
 
 
 def quota_spent(tier: str = "") -> str:
-    """A human reason if this tier is known to be out of quota right now, else ''."""
+    """A human reason if this tier is known to be out of quota or credit right now, else ''."""
     model = VIDEO_MODELS.get(tier) or tier
     until = _QUOTA_SPENT.get(model, 0.0)
     if until <= time.time():
         return ""
     mins = max(1, int((until - time.time()) / 60))
-    other = "Final (Veo 3.1 Standard)" if model != VIDEO_MODELS["standard"] else "fal"
-    return (f"{model} is out of quota on this Google project. Not retrying it for another {mins} min. "
-            f"Switch the video engine to fal (Veo 3.1 Fast), or the tier to {other}, or raise the "
-            f"Veo limit at https://ai.dev/rate-limit")
+    return (f"{model} is out of quota or credit on this Google project. Not retrying it for another {mins} min. "
+            f"Top up the Gemini API balance at https://ai.studio/projects, or switch the video engine to fal")
 
 # Music. The clip model always returns 30s, which comfortably covers a 10-30s film; pro is for
 # longer cuts and takes its length from the prompt.
@@ -425,129 +442,135 @@ def music(prompt: str, seconds: int = 30) -> str | None:
 
 
 # --- video ----------------------------------------------------------------------------------
+def _silent(data: bytes) -> bytes:
+    """Omni's clip carries its own (very quiet) ambience track. The soundtrack is built separately and mixed over
+    the whole cut, so the picture must stay SILENT, as the Veo shots were asked to be. Remux without audio; if
+    ffmpeg is not available, the original bytes go through unchanged and the mix simply ignores that track."""
+    try:
+        import imageio_ffmpeg
+        exe = imageio_ffmpeg.get_ffmpeg_exe()
+    except Exception:
+        return data
+    tmp = tempfile.mkdtemp(prefix="omni-")
+    try:
+        src, dst = os.path.join(tmp, "in.mp4"), os.path.join(tmp, "out.mp4")
+        with open(src, "wb") as fh:
+            fh.write(data)
+        res = subprocess.run([exe, "-y", "-i", src, "-an", "-c:v", "copy", "-movflags", "+faststart", dst],
+                             capture_output=True, text=True)
+        if res.returncode == 0 and os.path.exists(dst) and os.path.getsize(dst) > 0:
+            with open(dst, "rb") as fh:
+                return fh.read()
+        print(f"[gemini] could not strip the clip's audio: {res.stderr[-200:]}", file=sys.stderr, flush=True)
+        return data
+    finally:
+        import shutil
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
+def _video_bytes(data) -> bytes | None:
+    """The mp4 out of an Interactions response: inline base64 when small, otherwise a file URI to download."""
+    inter = data.get("interaction") if isinstance(data, dict) and isinstance(data.get("interaction"), dict) else data
+    blocks = []
+    for step in (inter.get("steps") or []) if isinstance(inter, dict) else []:
+        for block in (step.get("content") or []) if isinstance(step, dict) else []:
+            if isinstance(block, dict) and str(block.get("type")) == "video":
+                blocks.append(block)
+    for block in blocks:
+        if block.get("data"):
+            return base64.b64decode(block["data"])
+        uri = block.get("uri") or block.get("url") or block.get("file_uri")
+        if uri:
+            import httpx
+            try:
+                v = httpx.get(uri, headers={"x-goog-api-key": api_key()}, timeout=600.0, follow_redirects=True)
+                v.raise_for_status()
+                return v.content
+            except Exception as e:
+                print(f"[gemini] video download failed: {e}", file=sys.stderr, flush=True)
+                return None
+    keys = [list(b.keys()) for b in blocks] or (list(inter.keys()) if isinstance(inter, dict) else type(inter).__name__)
+    print(f"[gemini] no video in the response; shape={keys}", file=sys.stderr, flush=True)
+    return None
+
+
 def video(prompt: str, *, image_ref: str = "", seconds: int = 8, ratio: str = "16:9",
           tier: str = "lite", poll_seconds: float = 10.0, timeout: float = 900.0) -> str | None:
-    """Generate one shot. Animates `image_ref` when given, which is what keeps the cast identical.
+    """Generate one SILENT shot with Gemini Omni. Animates `image_ref` when given, which is what keeps the cast
+    and the pack identical to the approved frame. Returns a served '/media/...' path, or None.
 
-    Veo is a long-running operation: submit, poll until done, then download the returned URI.
+    On None, `video_error()` says why. One synchronous call (Omni returns the clip in the response, ~20-60 s), so
+    `poll_seconds` is kept only for the caller's signature. The length is steered by a closing "About N seconds."
+    sentence that this function owns, so a prompt compiler must not write one.
     """
+    _tls.error = ""
     if not available():
+        _tls.error = "no Google API key is set"
         return None
     import httpx
-    # An unknown tier resolves to the cheapest one on purpose: guessing upwards would bill 8x for a
-    # typo, and the caller is told which model actually ran.
-    model = VIDEO_MODELS.get(tier) or VIDEO_MODELS["lite"]
-    inst: dict = {"prompt": prompt}
+    res = VIDEO_RESOLUTION.get(tier) or VIDEO_RESOLUTION["lite"]
+    secs = max(VIDEO_SECONDS[0], min(VIDEO_SECONDS[1], int(round(float(seconds or 5)))))
+    reason = quota_spent(tier)
+    if reason:
+        print(f"[gemini] skipping {OMNI_MODEL}: {reason}", file=sys.stderr, flush=True)
+        _tls.error = reason
+        return None
+    blocks: list = []
     ref = _as_base64(image_ref) if image_ref else None
     if ref:
-        # `bytesBase64Encoded`, not `inlineData`. Google's own Gemini API example shows inlineData,
-        # but that is the STANDARD model: Lite rejects it outright with "`inlineData` isn't supported
-        # by this model", which silently cost us the character lock on every draft. Verified live
-        # against veo-3.1-lite-generate-preview. If a model ever wants the documented shape instead,
-        # _IMAGE_SHAPES retries with it rather than dropping to text-to-video and reinventing the cast.
-        inst["image"] = {"bytesBase64Encoded": ref[1], "mimeType": ref[0]}
+        blocks.append({"type": "image", "data": ref[1], "mime_type": ref[0]})
     elif image_ref:
-        print("[gemini] reference frame unusable, falling back to text-to-video",
-              file=sys.stderr, flush=True)
-    # `durationSeconds` was missing, so every Google shot came back at Veo's default length however
-    # long the beat was — the film would neither add up to the chosen duration nor stay in sync with
-    # the soundtrack, which is placed on the planned timecodes. Snap to a beat Veo accepts.
-    beat = min(VIDEO_BEATS, key=lambda b: (abs(b - int(seconds or 8)), b))
-    params = {"aspectRatio": ratio if ratio in ("16:9", "9:16") else "16:9",
-              "resolution": "720p", "durationSeconds": beat}
-    # veo-3.1-LITE rejects `negativePrompt` outright ("isn't supported by this model", HTTP 400) — the
-    # same way it rejects inlineData. Sending it 400'd EVERY draft-tier frame-animation shot, which then
-    # retried the unsupported encoding, fell to fal, failed there too and dropped to text-to-video (losing
-    # the cast lock) — ~2x the time, enough to blow the proxy's request timeout. Only the standard model
-    # takes a negative prompt; Lite goes without one.
-    if model != VIDEO_MODELS["lite"]:
-        params["negativePrompt"] = VIDEO_NEGATIVE_PROMPT
-    # Two different retries, kept apart on purpose. Conflating them cost us two shots of a film:
-    #   * a QUOTA error (429) is transient — Veo's per-minute allowance. Wait and ask again.
-    #   * an "isn't supported" error is about the request shape — asking again is pointless, but the
-    #     other image encoding is worth one try.
-    # Previously any failure consumed the shape retry, so a 429 was followed by an inlineData attempt
-    # that returned a misleading 400 and the shot was abandoned after ~2 seconds.
-    if quota_spent(tier):
-        print(f"[gemini] skipping {model}: {quota_spent(tier)}", file=sys.stderr, flush=True)
-        return None
-    # The inlineData encoding is only worth retrying on a model that accepts it — Lite never does, so for
-    # Lite there is no alternate shape to try (bytesBase64Encoded above is the one it takes).
-    alt = ({**inst, "image": {"inlineData": {"mimeType": ref[0], "data": ref[1]}}}
-           if ref and model != VIDEO_MODELS["lite"] else None)
-    # One short wait for a genuine burst, then stop. Riding out three long waits only helps when the
-    # limit is per-minute; when the daily allowance is gone every wait is dead time.
-    body, op, waits, quota_hits = inst, None, [20.0, 45.0], 0
+        print("[gemini] reference frame unusable, falling back to text-to-video", file=sys.stderr, flush=True)
+    text = re.sub(r"\s*About\s+\d+\s+seconds?\.?\s*$", "", str(prompt or "").strip(), flags=re.I)
+    blocks.append({"type": "text", "text": f"{text} About {secs} seconds."})
+    body = {"model": OMNI_MODEL, "input": blocks,
+            "response_format": {"type": "video", "aspect_ratio": ratio if ratio in ("16:9", "9:16") else "16:9",
+                                "resolution": res}}
+    attempts, server_waits = 0, [10.0, 25.0]
     while True:
+        attempts += 1
+        _omni_slot()
         try:
-            r = httpx.post(f"{BASE}/models/{model}:predictLongRunning", headers=_headers(),
-                           json={"instances": [body], "parameters": params}, timeout=180.0)
+            r = httpx.post(INTERACTIONS, headers=_headers(), json=body, timeout=timeout)
         except Exception as e:
-            print(f"[gemini] {model} submit failed: {e}", file=sys.stderr, flush=True)
+            _tls.error = f"the request to Google failed: {type(e).__name__}"
+            print(f"[gemini] {OMNI_MODEL} submit failed: {e}", file=sys.stderr, flush=True)
             return None
         if r.status_code < 400:
-            op = (r.json() or {}).get("name")
             break
-        text = r.text or ""
-        print(f"[gemini] {model} HTTP {r.status_code}: {text[:300]}", file=sys.stderr, flush=True)
+        text_err = r.text or ""
+        print(f"[gemini] {OMNI_MODEL} HTTP {r.status_code}: {text_err[:300]}", file=sys.stderr, flush=True)
         if r.status_code == 429:
-            quota_hits += 1
-            # Twice in a row means the allowance is gone, not that we were briefly too quick.
-            if quota_hits >= 2 or not waits:
-                _QUOTA_SPENT[model] = time.time() + QUOTA_COOLDOWN
-                print(f"[gemini] {model} is out of quota — giving up on it for "
-                      f"{QUOTA_COOLDOWN / 60:.0f} min rather than waiting per shot",
+            m = re.search(r"retry in (\d+)\s*s", text_err, re.I)
+            if attempts <= 3:
+                pause = min(70.0, float(m.group(1)) + 1.0 if m else 20.0)
+                print(f"[gemini] rate limited, waiting {pause:.0f}s then retrying this shot",
                       file=sys.stderr, flush=True)
-                return None
-            pause = waits.pop(0)
-            print(f"[gemini] rate limited — waiting {pause:.0f}s then retrying this shot once",
-                  file=sys.stderr, flush=True)
-            time.sleep(pause)
+                time.sleep(pause)
+                continue
+            _QUOTA_SPENT[OMNI_MODEL] = time.time() + QUOTA_COOLDOWN
+            _tls.error = "Google's per-minute video limit was still hit after waiting; try again in a minute"
+            return None
+        if r.status_code in (402, 403) and ("credit" in text_err.lower() or "billing" in text_err.lower()
+                                            or "prepay" in text_err.lower() or r.status_code == 402):
+            _QUOTA_SPENT[OMNI_MODEL] = time.time() + QUOTA_COOLDOWN
+            _tls.error = ("the Gemini API prepayment credits are depleted: top up at https://ai.studio/projects "
+                          "(out of credit)")
+            return None
+        if r.status_code == 400 and "safety" in text_err.lower():
+            _tls.error = "Google's safety filter blocked this shot (no video returned)"
+            return None
+        if r.status_code in (500, 503) and server_waits:
+            time.sleep(server_waits.pop(0))
             continue
-        if r.status_code in (500, 503) and waits:
-            pause = waits.pop(0)
-            print(f"[gemini] {r.status_code} — waiting {pause:.0f}s then retrying this shot",
-                  file=sys.stderr, flush=True)
-            time.sleep(pause)
-            continue
-        if alt is not None and "supported" in text:
-            print("[gemini] retrying the reference frame in the other encoding",
-                  file=sys.stderr, flush=True)
-            body, alt = alt, None
-            continue
+        _tls.error = f"Google returned HTTP {r.status_code}"
         return None
-    if not op:
-        print(f"[gemini] {model} returned no operation name", file=sys.stderr, flush=True)
+    try:
+        got = _video_bytes(r.json())
+    except Exception as e:
+        _tls.error = f"unreadable response from Google ({type(e).__name__})"
         return None
-
-    deadline = time.time() + timeout
-    while time.time() < deadline:
-        time.sleep(poll_seconds)
-        try:
-            s = httpx.get(f"{BASE}/{op}", headers=_headers(), timeout=90.0)
-            done = s.json() if s.status_code < 400 else {}
-        except Exception as e:
-            print(f"[gemini] poll failed: {e}", file=sys.stderr, flush=True)
-            continue
-        if not done.get("done"):
-            continue
-        if done.get("error"):
-            print(f"[gemini] {model} error: {str(done['error'])[:250]}", file=sys.stderr, flush=True)
-            return None
-        uri = ""
-        try:
-            samples = done["response"]["generateVideoResponse"]["generatedSamples"]
-            uri = samples[0]["video"]["uri"]
-        except Exception:
-            print(f"[gemini] unexpected result shape: {str(done)[:250]}", file=sys.stderr, flush=True)
-            return None
-        try:
-            v = httpx.get(uri, headers={"x-goog-api-key": api_key()}, timeout=600.0,
-                          follow_redirects=True)
-            v.raise_for_status()
-            return _store(v.content, ".mp4", "shot")
-        except Exception as e:
-            print(f"[gemini] video download failed: {e}", file=sys.stderr, flush=True)
-            return None
-    print(f"[gemini] {model} timed out after {timeout:.0f}s", file=sys.stderr, flush=True)
-    return None
+    if not got:
+        _tls.error = "Google returned no video"
+        return None
+    return _store(_silent(got), ".mp4", "shot")

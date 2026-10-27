@@ -244,7 +244,11 @@ def run_endpoint(ref: str, args: dict) -> str | None:
 # the description or how fixed the seed, so a character has to be carried as an IMAGE.
 REF_IMAGE_MODEL = "fal-ai/nano-banana-2/edit"        # edits/regenerates from reference images
 REF_CHARACTER_MODEL = "fal-ai/ideogram/character"    # purpose-built character reference (1 image)
-I2V_MODELS = {"veo-3.1-fast": "fal-ai/veo3.1/fast/image-to-video",
+# Kling 3.0 is the fal-side engine now: fal's Veo 3.1 endpoints carry "will be deprecated on November 17, 2026" and
+# Google's own Veo preview models already 404. The Veo ids stay in the table so a stored film that names one still
+# resolves (until fal removes them); anything unknown goes to Kling, not to a model that is about to disappear.
+I2V_MODELS = {"kling-3.0": "fal-ai/kling-video/v3/standard/image-to-video",
+              "veo-3.1-fast": "fal-ai/veo3.1/fast/image-to-video",
               "veo-3.1": "fal-ai/veo3.1/image-to-video"}
 
 
@@ -308,7 +312,7 @@ def image_from_reference(prompt: str, reference_urls: list[str], ratio: str = "1
 def video_from_image(model_id: str, prompt: str, image_url: str, *, seconds: int = 8,
                      ratio: str = "16:9") -> str | None:
     """Animate an approved storyboard frame, so the shot matches the board it was signed off from."""
-    ref = I2V_MODELS.get(model_id) or I2V_MODELS["veo-3.1-fast"]
+    ref = I2V_MODELS.get(model_id) or I2V_MODELS["kling-3.0"]
     # fal fetches the image itself, and a `/media/...` frame is both relative AND behind this app's login,
     # so a bare path fails with "Failed to download the file" on every frame-animation shot (found live,
     # 21 Oct). `_fal_ref` turns a local frame into a `data:` URI fal can read directly — the same fix the
@@ -317,6 +321,12 @@ def video_from_image(model_id: str, prompt: str, image_url: str, *, seconds: int
     if not img:
         print(f"[creative] frame unusable for image-to-video: {image_url!r}", file=sys.stderr, flush=True)
         return None
+    if "kling-video" in ref:
+        # Kling takes any whole second from 3 to 15, reads its aspect ratio from the frame, and generates audio
+        # unless told not to (the soundtrack is built separately, so the picture must be silent).
+        return run_endpoint(ref, {
+            "prompt": prompt, "start_image_url": img,
+            "duration": str(min(15, max(3, int(seconds)))), "generate_audio": False})
     secs = min(8, max(4, int(seconds)))
     return run_endpoint(ref, {
         "prompt": prompt, "image_url": img,

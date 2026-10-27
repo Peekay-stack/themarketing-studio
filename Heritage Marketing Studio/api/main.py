@@ -478,7 +478,7 @@ def engines():
                 {"id": "google", "label": kinds[0], "ready": have_google},
                 {"id": "fal", "label": kinds[1], "ready": have_fal}]
     return {"image": opts(["Google · Imagen / Nano Banana", "fal.ai"]),
-            "video": opts(["Google · Veo 3.1", "fal.ai · Veo 3.1"]),
+            "video": opts(["Google · Gemini Omni", "fal.ai · Kling 3.0"]),
             "music": opts(["Google · Lyria 3", "fal.ai · ElevenLabs Music"]),
             "voice": [{"id": "fal", "label": "fal.ai · ElevenLabs", "ready": have_fal}],
             "google_ready": have_google, "fal_ready": have_fal}
@@ -1173,16 +1173,17 @@ def _produce_video_sync(payload: dict):
     # New frontend sends {scenes, aspect, duration, music, voice, note} and reads {video_url};
     # the legacy caller sent {script, board, ...} and read {url}. Support both.
     aspect = payload.get("aspect") or "16:9"
-    if not os.environ.get("FAL_KEY"):
+    if not (os.environ.get("FAL_KEY") or gemini.available()):
         # no provider -> 501 so the new UI runs its own simulated render
-        return JSONResponse(status_code=501, content={"detail": "No video provider configured (set FAL_KEY)."})
+        return JSONResponse(status_code=501, content={"detail": "No video provider configured (set GOOGLE_API_KEY or FAL_KEY)."})
     script = payload.get("script") or {}
     board = payload.get("board") or {}
     # See _brand_line's own note — a General-mode film should render its endframe/brand-film beats
     # with the honest neutral phrase, not whatever brand happens to be active.
     _vid_brand_mode = "general" if str(payload.get("brand_mode") or "").strip().lower() == "general" else "grounded"
-    # Fast tier by default: a full film is several clips, so the standard tier gets expensive quickly.
-    model_id = payload.get("model") or "veo-3.1-fast"
+    # The fal-side model (the fallback, or the engine when fal is pinned). Kling 3.0 because fal's Veo 3.1 endpoints
+    # are deprecated on 17 Nov 2026; a stored payload that still names a Veo id keeps resolving until then.
+    model_id = payload.get("model") or "kling-3.0"
     revise = str(payload.get("revise") or payload.get("note") or "").strip()
     scenes = payload.get("scenes") or script.get("scenes") or []
     # COST GUARD (round-83 audit): every other generation route in this file caps its own fan-out
@@ -1408,19 +1409,16 @@ def _produce_video_sync(payload: dict):
     slots: list[str | None] = [None] * len(segments)
     used_providers: set[str] = set()
 
-    # Draft -> Veo 3.1 Lite (image-to-video capable, ~half the price of Fast at the same speed);
-    # Final -> Standard. An explicit `tier` wins if the UI sends one.
-    tier = str(payload.get("tier") or
-               ("standard" if str(payload.get("model") or "").strip() == "veo-3.1" else "lite"))
+    # Draft -> Gemini Omni at 360p; Final -> Omni at 720p (see gemini.VIDEO_RESOLUTION). An explicit `tier` wins if
+    # the UI sends one.
+    tier = str(payload.get("tier") or "lite")
     video_engine = _engine(payload, "video")
-    # Google publishes Lite and Standard on this API and nothing in between. Resolve a middle tier
-    # DOWN to Lite rather than up: fal has a Fast model, Google does not, and quietly promoting to
-    # Standard would bill 8x what was quoted.
+    # Google has two tiers on this API and nothing in between. Resolve an unknown tier DOWN to Draft rather than
+    # up: quietly promoting to Final would bill about 3x what was quoted.
     if tier not in gemini.VIDEO_MODELS:
         if _use(video_engine, "google"):
-            errors.append(f"Google has no '{tier}' Veo tier on this API — rendering the Google shots "
-                          f"on Veo 3.1 Lite. Pick Final for Standard, or switch the engine to fal, "
-                          f"which does have a Fast model")
+            errors.append(f"Google has no '{tier}' video tier — rendering the Google shots as a "
+                          f"Draft (Gemini Omni 360p). Pick Final for 720p")
         tier = "lite"
 
     def render(seg):
@@ -1456,6 +1454,10 @@ def _produce_video_sync(payload: dict):
             if url:
                 return seg["index"], {"url": url, "provider": "google", "model": tier,
                                       "kind": "video", "from_frame": bool(frame)}
+            # Say WHY (out of credit, safety block, rate limit): without it the person sees only "no URL returned".
+            _why = gemini.video_error()
+            if _why:
+                errors.append(f"shot {seg['index'] + 1} on Google: {_why}")
             if not _use(video_engine, "fal"):
                 return seg["index"], {"url": "", "provider": "google", "kind": "video"}
             print(f"[main] Google video failed for shot {seg['index'] + 1}; trying fal",
@@ -1473,10 +1475,10 @@ def _produce_video_sync(payload: dict):
         return seg["index"], creative.generate_creative(
             model_id, segment_prompt(seg), ratio=aspect, duration=seg["seconds"], with_audio=False)
 
-    # Veo's per-minute allowance is small, and four shots in flight blew straight through it: two of
-    # six came back 429 and the film shipped 14 seconds short. Google gets two at a time and each
-    # shot retries with backoff (see gemini.video); fal has no such limit.
-    lanes = 2 if _use(video_engine, "google") else 4
+    # Google's per-minute allowance is small (Omni: 8 requests/minute on our tier) and a burst over it came back 429
+    # and shipped a film seconds short. gemini.video() now queues every request behind a shared limiter and retries
+    # a 429 after the wait the API names, so the lanes here only bound how many shots are in flight.
+    lanes = 4
     with ThreadPoolExecutor(max_workers=max(1, min(lanes, len(segments)))) as pool:
         for fut in as_completed([pool.submit(render, s) for s in segments]):
             try:
@@ -1505,11 +1507,13 @@ def _produce_video_sync(payload: dict):
     # instead of the quota hint (which sent people to re-render over and over against a locked account).
     _err_blob = " ".join(str(e) for e in errors).lower()
     _billing_wall = any(k in _err_blob for k in
-                        ("exhausted balance", "user is locked", "top up", "/billing", "insufficient", "out of credit"))
+                        ("exhausted balance", "user is locked", "top up", "/billing", "insufficient", "out of credit",
+                         "credits are depleted", "prepayment"))
     if incomplete:
         _cause = ("The video engine is out of credit — top up before re-rendering, re-rendering cannot "
                   "fix an exhausted balance" if _billing_wall
-                  else "The usual cause is Veo's per-minute quota; re-render to complete it")
+                  else "The usual cause is the video engine's per-minute limit or a blocked shot (see the notes); "
+                       "re-render to complete it")
         errors.insert(0, f"INCOMPLETE CUT — {len(slots) - len(clips)} of {len(slots)} shots did not "
                          f"render, so scene(s) {', '.join(str(n) for n in missing)} are missing and "
                          f"this film is {sum(beats)}s of the {chosen}s you asked for. {_cause}")
@@ -1520,16 +1524,16 @@ def _produce_video_sync(payload: dict):
     if used_providers == {"live-action"}:
         real_model = "live-action (composited, not generated)"
     elif used_providers == {"google"}:
-        real_model = f"Veo 3.1 {tier}"
+        real_model = f"Gemini Omni {gemini.VIDEO_RESOLUTION.get(tier, '')}".strip()
     elif "google" in used_providers:
-        real_model = f"Veo 3.1 {tier} + fal {model_id}"
+        real_model = f"Gemini Omni {gemini.VIDEO_RESOLUTION.get(tier, '')} + fal {model_id}".replace("  ", " ")
     else:
         real_model = f"fal {model_id}"
     if "fal" in used_providers and _use(video_engine, "google"):
         errors.append(f"Google was unavailable, so {'some shots' if len(used_providers) > 1 else 'this film'} "
-                      f"rendered on fal ({model_id}) and is billed at fal's rate, not the Veo 3.1 "
-                      f"{tier} price quoted. Pin the video engine to Google to make that fail "
-                      f"instead of falling back")
+                      f"rendered on fal ({model_id}) and is billed at fal's rate, not the Gemini Omni "
+                      f"{gemini.VIDEO_RESOLUTION.get(tier, '')} price quoted. Pin the video engine to Google to "
+                      f"make that fail instead of falling back")
 
     # A shot that failed shortens the film, so the length the soundtrack and the response quote has
     # to be the length that was actually rendered — not the length that was ordered.

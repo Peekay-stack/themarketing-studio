@@ -11887,7 +11887,7 @@
         <p style="font-size:13.5px; color:#41505F; line-height:1.6; margin:0 0 14px; text-wrap:pretty;">Nothing rendered because the engine’s balance is exhausted. Top up and render again — re-rendering on its own cannot fix an empty balance.</p>
         <div style="display:flex; flex-direction:column; gap:7px; margin-bottom:16px;">
           <a href="https://fal.ai/dashboard/billing" target="_blank" rel="noopener" style="font-size:13px; font-weight:700; color:#2E5EA6; text-decoration:none;">→ Top up fal.ai (fal.ai/dashboard/billing)</a>
-          <span style="font-size:12px; color:#6B7280;">or restore credit on your Google / Gemini-Veo billing account, then re-render.</span>
+          <a href="https://ai.studio/projects" target="_blank" rel="noopener" style="font-size:13px; font-weight:700; color:#2E5EA6; text-decoration:none;">→ or top up the Google / Gemini API balance (ai.studio/projects), then re-render.</a>
         </div>
         <sc-if value="{{ hasCreditsDetail }}" hint-placeholder-val="{{ false }}">
           <div style="font-size:11.5px; color:#9AA1AC; line-height:1.5; margin-bottom:16px; max-height:96px; overflow:auto; background:#F7F6F3; border-radius:9px; padding:9px 11px;">{{ creditsAlertDetail }}</div>
@@ -12049,7 +12049,7 @@ class Component extends DCLogic {
     scriptVersions: [],
     prodPrompt: '',
     reworkConfirmOpen: false,      // the sound-only "re-score instead of re-render?" confirm
-    prodQuality: 'lite',           // lite | fast | standard (Veo 3.1 tiers)
+    prodQuality: 'lite',           // lite | standard (Gemini Omni 360p | 720p); fal has the single tier standard
     renderInfo: null,              // { shots, seconds, audio, model }
     voicePlan: null,               // { cast, lines, words } from /voice-plan
     voiceChoices: {},              // speaker -> chosen voice (overrides auto-casting)
@@ -17393,18 +17393,18 @@ class Component extends DCLogic {
 
   // ---------- video production (iterative render) ----------
   // B5 — 10/20/30 only for now: a 60s+ film outlives a single fetch (needs job endpoints).
-  // Published 720p rates per second of output. Billed seconds equal the film length, because the
-  // beat planner sums exactly to the chosen duration (10s -> 6+4, 30s -> 8+8+8+6).
-  //   Google:  Lite $0.05  ·  Standard $0.40      — Veo 3.1 Fast is a Vertex model, not on this API
-  //   fal.ai:  Fast $0.10  ·  Standard $0.20      — silent renders, which is what we ask for
-  // The tiers on offer differ per engine because the MODELS differ. Offering Google a middle tier
-  // meant asking for a model id Google doesn't publish: every one of those renders 404'd and fell
-  // through to fal, so a film quoted at Veo's price arrived on fal's bill.
+  // Rates per second of output. Billed seconds equal the film length, because the beat planner sums
+  // exactly to the chosen duration (10s -> 6+4, 30s -> 8+8+8+6).
+  //   Google (Gemini Omni, MEASURED 27 Oct 2026 from the tokens a clip used): Draft 360p $0.034 · Final 720p $0.101
+  //   fal.ai (Kling 3.0): $0.112 is the figure verified for Kling v3; the Standard endpoint's own rate is not
+  //   published on its page, so treat this as an upper estimate.
+  // Google's Veo preview models were removed from the API on 23 Oct 2026 and fal's Veo 3.1 endpoints are
+  // deprecated on 17 Nov 2026, which is why neither is offered any more. fal has ONE model, so one tier.
   // ===== VIDEO: cost tiers & render =====
-  RATE = { google:{ lite:0.05, standard:0.40 },
-           fal:   { fast:0.10, standard:0.20 } };
+  RATE = { google:{ lite:0.034, standard:0.101 },
+           fal:   { standard:0.112 } };
   TIERS = { google:[{ id:'lite', label:'Draft' }, { id:'standard', label:'Final' }],
-            fal:   [{ id:'fast', label:'Draft' }, { id:'standard', label:'Final' }] };
+            fal:   [{ id:'standard', label:'Kling 3.0' }] };
   costEngine(){ return this.state.engines.video === 'fal' ? 'fal' : 'google'; }
   tiers(){ return this.TIERS[this.costEngine()]; }
   // Switching engine can leave a tier selected that the new engine doesn't have.
@@ -17424,9 +17424,8 @@ class Component extends DCLogic {
     return 'about $' + (usd < 10 ? usd.toFixed(2) : usd.toFixed(0));
   }
   tierLabel(tier){
-    if (tier === 'standard') return 'Veo 3.1 Standard';
-    if (tier === 'fast') return 'Veo 3.1 Fast';
-    return 'Veo 3.1 Lite';
+    if (this.costEngine() === 'fal') return 'Kling 3.0';
+    return tier === 'standard' ? 'Gemini Omni 720p' : 'Gemini Omni 360p';
   }
   audioLabel(a){ return { 'vo+music':'VO + music', vo:'VO only', music:'Music only', none:'No audio' }[a] || a || 'Audio unknown'; }
   renderSummary(i){
@@ -17463,7 +17462,7 @@ class Component extends DCLogic {
     if (this.state.scriptStatus !== 'approved') { this.showToast('Approve the full script before producing.'); return; }
     const isRevise = this.state.production.versions.length > 0;
     const note = isRevise ? (this.state.prodPrompt.trim() || 'Revision') : 'First cut';
-    const isFinal = this.tierNow() === 'standard';
+    const isFinal = this.tierNow() === 'standard' && this.costEngine() !== 'fal';   // fal has one model: neither Draft nor Final
     this.setState(s => ({ production:{ ...s.production, status:'rendering' } }));
     const p0 = this.state.production;
     // Attach each scene's approved storyboard frame: the backend animates the frame instead of
@@ -17482,7 +17481,7 @@ class Component extends DCLogic {
     // `tier` drives Google (lite | standard); `model` drives fal (fast | standard). Send the
     // RESOLVED tier — the raw state can hold a tier the current engine has no model for.
     body.tier = this.tierNow();
-    body.model = body.tier === 'standard' ? 'veo-3.1' : 'veo-3.1-fast';
+    body.model = 'kling-3.0';
     // The look reference also reaches the video prompt (it matters most for shots with no storyboard frame).
     const lookRef = (this.state.videoLookRef || '').trim();
     if (lookRef) body.look_note = lookRef;
@@ -17504,7 +17503,7 @@ class Component extends DCLogic {
     this.setState(s => {
       const p = s.production;
       const v = { v: p.versions.length + 1, note, aspect:p.aspect, music:p.music, ts: this.state.prodDuration, url,
-        quality: isFinal ? 'Final' : 'Draft', audio: info ? this.audioLabel(info.audio) : '' };
+        quality: this.costEngine() === 'fal' ? 'Kling 3.0' : (isFinal ? 'Final' : 'Draft'), audio: info ? this.audioLabel(info.audio) : '' };
       return { production:{ ...p, status:'ready', versions:[...p.versions, v] }, prodPrompt:'',
         producedUrl: url || s.producedUrl, renderInfo: info || s.renderInfo,
         providers: d.providers || s.providers,
@@ -17853,7 +17852,7 @@ class Component extends DCLogic {
       characters:this.state.videoCharacters, accent:this.state.voiceAccent, style:this.state.videoStyle,
       music_url:this.state.musicUrl || '', music_level:this.state.musicLevel,
       tempo:this.state.musicTempo || '', dynamics:this.state.musicDynamics || '', engines:this.state.engines,
-      tier:this.tierNow(), model: this.tierNow()==='standard' ? 'veo-3.1' : 'veo-3.1-fast' };
+      tier:this.tierNow(), model:'kling-3.0' };
     const lookRef = (this.state.videoLookRef || '').trim(); if (lookRef) body.look_note = lookRef;
     const wardrobe = (this.state.videoWardrobe || '').trim(); if (wardrobe) body.wardrobe = wardrobe;
     const camera = (this.state.videoCamera || '').trim(); if (camera) body.camera_notes = camera;
@@ -20322,19 +20321,19 @@ class Component extends DCLogic {
         const who = this.costEngine() === 'fal' ? 'fal.ai' : 'Google';
         const tier = this.tierNow();
         const price = this.costFor(s.prodDuration, tier);
-        const advice = tier === 'standard'
-          ? (this.costEngine() === 'fal'
-             ? ' Twice the draft price on fal \u2014 worth it for the delivery cut.'
-             : ' Eight times the Lite price on Google \u2014 worth it only for the delivery cut.')
-          : ' The draft tier: same speed, a fraction of the cost. Step up to Final for delivery.';
+        const advice = this.costEngine() === 'fal'
+          ? ' One model on fal, so there is no cheaper draft \u2014 use Google (Auto) for drafts.'
+          : (tier === 'standard'
+             ? ' About three times the Draft price \u2014 worth it for the delivery cut.'
+             : ' The draft tier: 360p, same speed, a third of the cost. Step up to Final for delivery.');
         const auto = s.engines.video === 'auto'
           ? ' Engine is on Auto, so a Google failure falls back to fal at fal\u2019s rate \u2014 pin the engine to be certain what you pay.'
           : '';
         // The length holds, so normally there is nothing to explain. Only say something when the
-        // scene count cannot fit the slot at Veo's 4s floor and the cut genuinely runs longer.
+        // scene count cannot fit the slot at the 4s shortest shot and the cut genuinely runs longer.
         const planned = (s.plannedSeconds && s.plannedSeconds !== parseInt(s.prodDuration, 10))
           ? (s.plannedSeconds + 's film — too many scenes to fit ' + s.prodDuration
-             + ' at Veo’s 4s minimum; merge two to hold the length')
+             + ' at the 4s shortest shot; merge two to hold the length')
           : (s.prodDuration + ' film');
         return who + ' \u00b7 ' + this.tierLabel(tier) + ' \u2014 ' + price
           + ' for a ' + planned + '.' + advice + auto;
@@ -20345,8 +20344,8 @@ class Component extends DCLogic {
       hasCut: prod.versions.length > 0,
       renderInfo: s.renderInfo, hasRenderInfo: !!s.renderInfo,
       renderSummaryText: this.renderSummary(s.renderInfo),
-      renderModelLabel: s.renderInfo ? ({ standard:'Final · Veo 3.1 Standard', fast:'Veo 3.1 Fast',
-        lite:'Draft · Veo 3.1 Lite' }[s.renderInfo.model] || String(s.renderInfo.model)) : '',
+      renderModelLabel: s.renderInfo ? ({ standard:'Final · Gemini Omni 720p', fast:'Veo 3.1 Fast',
+        lite:'Draft · Gemini Omni 360p' }[s.renderInfo.model] || String(s.renderInfo.model)) : '',
       prodPrompt: s.prodPrompt, onProdPrompt:this.onProdPrompt,
       reworkCut:this.reworkCut, reworkConfirmOpen: s.reworkConfirmOpen,
       confirmReworkRescore:this.confirmReworkRescore, confirmReworkRender:this.confirmReworkRender, closeReworkConfirm:this.closeReworkConfirm,
