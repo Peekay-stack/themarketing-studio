@@ -16314,6 +16314,13 @@ class Component extends DCLogic {
   // seconds never change: coverage only subdivides them (the server plans it; see filmcut.plan_by_scene).
   SHOT_SIZE_LABELS = { wide:'Wide', medium:'Medium', close:'Close-up', detail:'Detail', over:'Over-the-shoulder', product:'Product hero' };
   frameKey(idx, k){ return k ? idx + '.' + k : idx; }
+  // A frame that was MID-RENDER when the page saved (or reloaded) has no request behind it any more: restored as "rendering" it
+  // would spin forever with no Retry. Only settled frames (done / error) are kept; an in-flight one comes back as an empty slot.
+  settledFrames(frames){
+    const out = {};
+    Object.keys(frames || {}).forEach(k => { const f = frames[k]; if (f && f.status !== 'rendering') out[k] = f; });
+    return out;
+  }
   extraShots(row){ return (row && Array.isArray(row.shots)) ? row.shots.filter(x => x && typeof x === 'object') : []; }
   // The row the frame code sees for extra shot k (1-based): the scene's own fields (number, role, beat direction) with the
   // SHOT's picture fields on top. The master's camera / size / description are never inherited.
@@ -16340,7 +16347,10 @@ class Component extends DCLogic {
   packOnShot(row){ return typeof row.include_pack === 'boolean' ? row.include_pack : (this.packAvailable() && this.sceneNamesPack(row.visual)); }
   // Identifies a scene by its number and words, so a proposal made for one version of a scene never shows on a reworked one.
   shotKey(row){ return String(row && row.no != null ? row.no : '') + '|' + String((row && row.visual) || ''); }
-  shotMasterSecs(row){ return Math.max(2, this.cutSecsOf(row) - this.extraShots(row).reduce((a, x) => a + (parseInt(x.secs, 10) || 2), 0)); }
+  // The seconds a scene will really get: a writer's timecode can say 3s, but the planner never gives a scene under 4s (it re-times
+  // the whole film from the dialogue at render, with a 4s floor per scene), so coverage reads 4s as the minimum.
+  sceneSecs(row){ return Math.max(4, this.cutSecsOf(row)); }
+  shotMasterSecs(row){ return Math.max(2, this.sceneSecs(row) - this.extraShots(row).reduce((a, x) => a + (parseInt(x.secs, 10) || 2), 0)); }
   // The up-front cost of coverage: every shot is generated at 3 s or more (the engine's floor) and trimmed to its length.
   coverageCostNote(){
     const rows = this.state.fullScript || [];
@@ -16349,11 +16359,11 @@ class Component extends DCLogic {
       const ex = this.extraShots(r);
       if (!ex.length) return;
       n += ex.length;
-      gen += ex.reduce((a, x) => a + Math.max(3, parseInt(x.secs, 10) || 2), 0) + Math.max(3, this.shotMasterSecs(r)) - Math.max(3, this.cutSecsOf(r));
+      gen += ex.reduce((a, x) => a + Math.max(3, parseInt(x.secs, 10) || 2), 0) + Math.max(3, this.shotMasterSecs(r)) - this.sceneSecs(r);
     });
     if (!n) return '';
     const rate = (this.RATE[this.costEngine()] || this.RATE.google)[this.tierNow()] || 0;
-    const total = rows.reduce((a, r) => a + this.cutSecsOf(r), 0) + gen;
+    const total = rows.reduce((a, r) => a + this.sceneSecs(r), 0) + gen;
     const usd = rate * total, shots = rows.length + n;
     return ' Coverage adds ' + n + ' shot' + (n > 1 ? 's' : '') + ' (' + shots + ' in all, each generated at 3s or more and trimmed): about $' + (usd < 10 ? usd.toFixed(2) : usd.toFixed(0)) + ' and about ' + Math.max(1, Math.ceil(shots / 7)) + ' min to render.';
   }
@@ -16361,7 +16371,7 @@ class Component extends DCLogic {
     const row = (this.state.fullScript || [])[idx];
     if (!row) return { ok:false, why:'' };
     if (this.isBrandScene(idx)) return { ok:false, why:'The sign-off scene is always one shot.' };
-    if (this.cutSecsOf(row) < 4) return { ok:false, why:'Under 4 s: too short for a second shot.' };
+    // (no "too short" case: a scene is never planned under 4s, which holds a master and one extra shot at 2s each)
     return { ok:true, why:'' };
   }
   breakIntoShots = (idx) => async () => {
@@ -16370,7 +16380,7 @@ class Component extends DCLogic {
     const key = this.shotKey(row), vc = s.videoConcept;
     this.setState({ shotsBusy:key });
     const { shots: _drop, ...scene } = row;
-    const body = { scene, scene_seconds:this.cutSecsOf(row), is_signoff:this.isBrandScene(idx), plate_locked:!!s.videoPlateChoice,
+    const body = { scene, scene_seconds:this.sceneSecs(row), is_signoff:this.isBrandScene(idx), plate_locked:!!s.videoPlateChoice,
       logline: vc ? (vc.logline || '') : '', characters:s.videoCharacters || '', location_line:this.locationText() || '', wardrobe:s.videoWardrobe || '',
       camera_notes:s.videoCamera || '', look_note:s.videoLookRef || '', prev_visual: idx ? (rows[idx - 1].visual || '') : '',
       next_visual: rows[idx + 1] ? (rows[idx + 1].visual || '') : '', brand_mode:s.producerBrandMode, ...this.videoExtra() };
@@ -23179,7 +23189,7 @@ class Component extends DCLogic {
     const cleaned = this.cleanShootDrafts(d.shoot || {});
     this.setState({ videoObjective: d.video_objective, videoConcept: d.video_concept,
       scriptStatus: d.script_status || 'none', scriptPhase: d.script_phase || 'concept',
-      fullScript: d.full_script, sceneFrames: d.scene_frames || {}, shoot: cleaned.shoot,
+      fullScript: d.full_script, sceneFrames: this.settledFrames(d.scene_frames), shoot: cleaned.shoot,
       videoCharacters: d.video_characters || '', videoLocationLine: d.video_location_line || '',
       videoLookRef: d.video_look_ref || '', videoWardrobe: d.video_wardrobe || '', videoCamera: d.video_camera || '', videoLocationSrc: d.video_location_src || '',
       soundPlan: d.sound_plan || {},
@@ -23209,7 +23219,7 @@ class Component extends DCLogic {
     const s = this.state, houseId = (s.house || {}).id; if (!houseId) return;
     await this.apiCall('/video-script', { house: houseId, video_objective: s.videoObjective,
       video_concept: s.videoConcept, script_status: s.scriptStatus, script_phase: s.scriptPhase,
-      full_script: s.fullScript, scene_frames: s.sceneFrames, shoot: s.shoot,
+      full_script: s.fullScript, scene_frames: this.settledFrames(s.sceneFrames), shoot: s.shoot,
       video_characters: s.videoCharacters, video_location_line: s.videoLocationLine,
       video_look_ref: s.videoLookRef, video_wardrobe: s.videoWardrobe || '', video_camera: s.videoCamera || '', video_location_src: s.videoLocationSrc, sound_plan: s.soundPlan || {},
       provocation_id: s.videoProvId || '', provocation_on: s.videoProvOn !== false,
