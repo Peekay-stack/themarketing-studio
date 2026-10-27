@@ -1316,8 +1316,15 @@ def _produce_video_sync(payload: dict):
         # The beat's job, from `filmcut.assign_roles`. Briefing a shot as "shot 3 of 4" tells the model
         # nothing about what the shot is for; the role grammar existed and nothing read it, which is
         # the same shape `plate` was in before it was wired up.
-        _extra_shot = bool((seg["scenes"][0] if seg["scenes"] else {}).get("shot"))     # coverage shot 2, 3, 4
-        role_note = "" if _extra_shot else _ROLE_DIRECTION.get(str(seg.get("role") or ""), "")
+        _r0 = (seg["scenes"][0] if seg["scenes"] else {}) or {}
+        _extra_shot = bool(_r0.get("shot"))                                  # coverage shot 2, 3, 4
+        _cov = bool(seg.get("shots_n"))                                      # the planner really expanded this scene into shots
+        # The shot the scene (and, for the sign-off, the film) ENDS on. Without coverage every shot counts as "the last", so a film with
+        # no shots (or a sign-off collapsed to one shot) is unchanged.
+        _last = (not _cov) or bool(seg.get("scene_last"))
+        # The role sentence goes on a scene's FIRST shot, except the sign-off's pack-hero role, which goes on its LAST.
+        _role_here = _last if (_cov and str(seg.get("role") or "") == "brand") else not _extra_shot
+        role_note = _ROLE_DIRECTION.get(str(seg.get("role") or ""), "") if _role_here else ""
         # The person's own words for this beat (the script's Beat direction cell). Absent -> nothing added.
         beat_note = str((seg["scenes"][0] if seg["scenes"] else {}).get("beat_note") or "").strip()
         if beat_note:
@@ -1369,7 +1376,7 @@ def _produce_video_sync(payload: dict):
                     f"Camera: {movement_phrase}" + (f" {camera_note}." if camera_note else ".") +
                     " Whatever this movement does, keep the face clearly recognisable and matching "
                     "the reference image throughout.")
-            elif str(seg.get("role") or "") == "brand":
+            elif str(seg.get("role") or "") == "brand" and _last:
                 # The ENDFRAME pack hero, with no movement explicitly chosen. The generic
                 # "restrained movement" default below reads to the model as a slow push-in, and a
                 # push-in on a pack scales it up through the clip — the owner's "pack starts fine
@@ -1406,7 +1413,7 @@ def _produce_video_sync(payload: dict):
             _row = seg["scenes"][0] if seg["scenes"] else {}
             _action = videoprompt.visual_text(seg["scenes"]) or videoprompt.visual_text(scenes)
             p = videoprompt.compile_frame_shot(
-                action=_action, role="" if _extra_shot else str(seg.get("role") or ""),
+                action=_action, role=str(seg.get("role") or "") if _role_here else "",
                 beat_note=str(_row.get("beat_note") or ""), continues=bool(seg.get("continues")),
                 camera_direction=camera_direction,
                 pack_in_frame=(str(seg.get("role") or "") == "brand" or packscene.mentions_pack(_action)))
@@ -2734,9 +2741,10 @@ def scene_shots(payload: dict):
         secs = 0
     if not row or not str(row.get("visual") or row.get("title") or row.get("desc") or "").strip():
         return JSONResponse(status_code=400, content={"detail": "Send the scene (its row, with its visual) to break into shots."})
-    if payload.get("is_signoff") or str(row.get("beat_role") or "").strip().lower() == "brand":
+    signoff = bool(payload.get("is_signoff")) or str(row.get("beat_role") or "").strip().lower() == "brand"
+    if signoff and not payload.get("allow_signoff"):
         return {"shots": [], "master_secs": secs, "notes": [], "scene_seconds": secs,
-                "reason": "The sign-off scene is always one shot: the pack held clean and still, with room for the line and the logo."}
+                "reason": "The sign-off scene is one shot unless you allow shots on it: the pack held clean and still, with room for the line and the logo."}
     limit = sceneshots.max_extras(secs)
     if limit < 1:
         return {"shots": [], "master_secs": secs, "notes": [], "scene_seconds": secs,
@@ -2752,7 +2760,7 @@ def scene_shots(payload: dict):
         location_line=str(payload.get("location_line") or ""), wardrobe=str(payload.get("wardrobe") or ""),
         camera_notes=str(payload.get("camera_notes") or ""), look_note=str(payload.get("look_note") or ""),
         plate_locked=bool(payload.get("plate_locked")), pack_in_scene=pack_in,
-        prev_visual=str(payload.get("prev_visual") or ""), next_visual=str(payload.get("next_visual") or ""))
+        prev_visual=str(payload.get("prev_visual") or ""), next_visual=str(payload.get("next_visual") or ""), signoff=signoff)
     flags = {k: payload[k] for k in ("house_id", "execution", "brand_mode", "provocation_id", "use_provocation", "use_house",
                                      "use_platform", "use_plan", "skip_mandatories", "force_typed") if k in payload}
     r = complete_endpoint({**flags, "messages": [{"role": "user", "content": prompt}], "film": True})
@@ -2761,8 +2769,8 @@ def scene_shots(payload: dict):
     proposed = sceneshots.parse(r.get("completion") if isinstance(r, dict) else "")
     if proposed is None:
         return JSONResponse(status_code=502, content={"detail": "The model's reply could not be read as a list of shots. Try again."})
-    out = sceneshots.validate(proposed, secs=secs, plate_locked=bool(payload.get("plate_locked")), pack_in_scene=pack_in,
-                              master_size=str(row.get("shot_size") or ""), want=want)
+    out = sceneshots.validate(proposed, secs=secs, plate_locked=bool(payload.get("plate_locked")), pack_in_scene=pack_in or signoff,
+                              master_size=str(row.get("shot_size") or ""), want=want, signoff=signoff)
     if not out["shots"]:
         return JSONResponse(status_code=502, content={"detail": "None of the proposed shots could be used"
                                                       + (": " + "; ".join(out["notes"]) if out["notes"] else "") + ". Try again."})

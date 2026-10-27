@@ -116,6 +116,22 @@ main.completion.has_key = lambda: False
 check("route: no Anthropic key is the same 503 every generator gives", call().get("status") == 503)
 main.completion.has_key = lambda: True
 
+seen["reply"] = json.dumps(GOOD)
+r_no = call(is_signoff=True)
+check("route: a sign-off is refused unless shots are allowed, and the reason says how", r_no["shots"] == [] and "unless you allow" in r_no["reason"], str(r_no))
+r_so = call(is_signoff=True, allow_signoff=True, scene={**row, "visual": "The Heritage pouch beside a glass; a boy's hand lifts the glass."})
+check("route: with shots allowed on the sign-off a proposal comes back", len(r_so.get("shots", [])) == 3, str(r_so)[:200])
+sp = seen["messages"][0]["content"]
+check("route: the sign-off prompt says the film ends on the last shot, the pack clean, and offers the product hero size",
+      "CLOSING SIGN-OFF SCENE" in sp and "LAST extra shot size `product`" in sp and "product" in sp.split("SIZES: choose from")[1].split(".")[0], sp[-900:])
+check("route: a normal scene's prompt has no sign-off section", "CLOSING SIGN-OFF SCENE" not in ss.build_prompt(row=row, secs=8, n_extras=2))
+vso = ss.validate(GOOD["shots"], secs=8, master_size="medium", signoff=True)
+check("validate: a sign-off whose LAST shot is not a product hero is warned that the film ends on it", any("Sign-off scene" in w for w in vso["shots"][-1]["warnings"]) and not any("Sign-off scene" in w for w in vso["shots"][0]["warnings"]), str(vso["shots"][-1]["warnings"]))
+good_so = [dict(GOOD["shots"][0]), dict(GOOD["shots"][1], shot_size="product", camera_position="Square on.", action="The pack, clean.")]
+vso2 = ss.validate(good_so, secs=6, master_size="medium", signoff=True, pack_in_scene=True)
+check("validate: ... and not warned when the last shot is the product hero", vso2["shots"][-1]["shot_size"] == "product" and not any("Sign-off scene" in w for w in vso2["shots"][-1]["warnings"]), str(vso2["shots"][-1]))
+check("validate: a normal scene is never given the sign-off warning", not any("Sign-off scene" in w for s_ in ss.validate(GOOD["shots"], secs=8, master_size="medium")["shots"] for w in s_["warnings"]))
+
 # ---- anglecheck ------------------------------------------------------------------------------------------------------------------
 def png(arr):
     b = io.BytesIO(); Image.fromarray(arr.astype("uint8")).save(b, "PNG"); return b.getvalue()

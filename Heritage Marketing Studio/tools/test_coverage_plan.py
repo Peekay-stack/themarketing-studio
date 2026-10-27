@@ -201,5 +201,34 @@ if line:
     check("voice: the line spans the scene's WHOLE window (all three shots), not just shot 1", abs(line[0].start - win_start) < 0.01 and abs(line[0].end - win_end) < 0.01,
           f"line {line[0].start}-{line[0].end} vs window {win_start}-{win_end}")
 
+# ---- 8. OPT-IN shots on the sign-off scene ----------------------------------------------------------------------------------------
+def so_film(opt_in):
+    f = film()
+    f[5] = {**f[5], "visual": "The Heritage pouch beside a glass; a boy's hand enters frame to lift the glass.", "frame_url": "/media/so0.jpg",
+            "audio": [vo("Heritage. Health and happiness, in every glass, every morning, for every family that trusts us with the start of their day.")],
+            "shots": [{"visual": "Close on the boy's hand lifting the glass.", "shot_size": "close", "camera": "slow push-in", "secs": 2, "frame_url": "/media/so1.jpg"},
+                      {"visual": "The pouch square to camera, nothing in front of it.", "shot_size": "product", "camera": "locked-off", "secs": 2, "frame_url": "/media/so2.jpg"}]}
+    if opt_in: f[5]["signoff_shots"] = True
+    return f
+HOLD = "Hold the shot locked and still"; CLOSING = "closing product shot"
+rows_so = so_film(True); filmvoice.retime(rows_so, target_total=30); per_so = filmvoice.scene_seconds(rows_so, target_total=30)
+seg_so = [s for s in filmcut.plan_by_scene(rows_so, per_so) if (s["scenes"][0] or {}).get("no") == 6]
+check("sign-off OPT-IN: the scene is expanded into 3 shots, still one role (brand), total seconds unchanged",
+      len(seg_so) == 3 and {s["role"] for s in seg_so} == {"brand"} and sum(s["seconds"] for s in seg_so) == per_so[5], str(seg_so))
+check("sign-off OPT-IN: only the LAST segment is marked as the scene's end", [bool(s.get("scene_last")) for s in seg_so] == [False, False, True])
+rows_no = so_film(False); filmvoice.retime(rows_no, target_total=30); per_no = filmvoice.scene_seconds(rows_no, target_total=30)
+seg_no = [s for s in filmcut.plan_by_scene(rows_no, per_no) if (s["scenes"][0] or {}).get("no") == 6]
+check("sign-off NOT opted in: still collapsed to one shot (default unchanged)", len(seg_no) == 1 and seg_no[0].get("collapsed_shots") == 2 and not seg_no[0].get("scene_last"))
+run(so_film(True), duration="30s")
+p_master = [c for c in calls if "boy's hand enters frame" in c["prompt"]][0]["prompt"]
+p_mid = [c for c in calls if "Close on the boy's hand" in c["prompt"]][0]["prompt"]
+p_last = [c for c in calls if "pouch square to camera" in c["prompt"]][0]["prompt"]
+check("sign-off OPT-IN: the locked-still pack hold and the 'closing product shot' sentence are on the LAST shot only",
+      HOLD in p_last and CLOSING in p_last and HOLD not in p_master and CLOSING not in p_master and HOLD not in p_mid and CLOSING not in p_mid, p_last[:300])
+check("sign-off OPT-IN: the middle shot keeps its own camera movement", "slow push-in" in p_mid and HOLD not in p_mid)
+run(so_film(False), duration="30s")
+p_single = [c for c in calls if "boy's hand enters frame" in c["prompt"]][0]["prompt"]
+check("sign-off NOT opted in: the single sign-off shot keeps the pack hold and the closing sentence exactly as before", HOLD in p_single and CLOSING in p_single and len([c for c in calls if "boy's hand enters frame" in c["prompt"]]) == 1)
+
 print("\n%d failed" % len(fails) if fails else "\nALL PASS")
 sys.exit(1 if fails else 0)

@@ -366,7 +366,7 @@ def plan_by_scene(scenes: list, per_scene: list) -> list[dict]:
     angles). The scene's total seconds are unchanged: they are only subdivided (filmvoice.split_shot_seconds), and every
     shot after the first is marked `continues`, so `assign_roles` still gives the whole scene one role, and the render's
     voice re-windowing (which merges a scene's segments by its number) still lays the scene's words across all its shots.
-    The sign-off (`brand`) scene is never split. A scene with no `shots` is planned exactly as before.
+    The sign-off (`brand`) scene is not split unless it has opted in (`signoff_shots`). A scene with no `shots` is planned exactly as before.
     """
     import filmvoice
     pairs = list(zip(scenes, per_scene))
@@ -390,7 +390,7 @@ def plan_by_scene(scenes: list, per_scene: list) -> list[dict]:
     for i, (row, secs) in enumerate(pairs):
         extras = extra_shots(row)
         first = len(out)
-        if not extras or role_of.get(i) == "brand":
+        if not extras or (role_of.get(i) == "brand" and not row.get("signoff_shots")):
             for n, b in enumerate(filmvoice.beats_for(secs)):
                 out.append({"index": len(out), "seconds": b, "scenes": [row], "continues": n > 0})
             if extras:
@@ -402,7 +402,8 @@ def plan_by_scene(scenes: list, per_scene: list) -> list[dict]:
             view = row if k == 0 else shot_view(row, used[k - 1], k, len(lens))
             beats = [shot_secs] if shot_secs <= filmvoice.SHOT_CEILING else filmvoice.beats_for(shot_secs)
             for n, b in enumerate(beats):
-                out.append({"index": len(out), "seconds": b, "scenes": [view], "continues": k > 0 or n > 0})
+                out.append({"index": len(out), "seconds": b, "scenes": [view], "continues": k > 0 or n > 0, "shot_k": k, "shots_n": len(lens)})
+        out[-1]["scene_last"] = True      # the segment the scene (and, for a sign-off, the film) ENDS on
         if dropped:
             out[first]["dropped_shots"] = dropped
     return assign_roles(out or [{"index": 0, "seconds": 4, "scenes": [], "continues": False}])

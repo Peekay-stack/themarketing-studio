@@ -58,7 +58,7 @@ def _spoken(row: dict) -> str:
 
 def build_prompt(*, row: dict, secs: int, n_extras: int, logline: str = "", characters: str = "", location_line: str = "",
                  wardrobe: str = "", camera_notes: str = "", look_note: str = "", plate_locked: bool = False,
-                 pack_in_scene: bool = False, prev_visual: str = "", next_visual: str = "") -> str:
+                 pack_in_scene: bool = False, prev_visual: str = "", next_visual: str = "", signoff: bool = False) -> str:
     master = videoprompt.visual_text([row]) or _clip(row.get("visual"), 300)
     cam = _clip(row.get("camera"), 120)
     size = str(row.get("shot_size") or "").strip().lower()
@@ -77,7 +77,13 @@ def build_prompt(*, row: dict, secs: int, n_extras: int, logline: str = "", char
         near.append("the scene before shows: " + _clip(prev_visual, 200))
     if next_visual:
         near.append("the scene after shows: " + _clip(next_visual, 200))
+    pack_in_scene = pack_in_scene or signoff
     sizes_ok = [s for s in SIZES if s != "product" or pack_in_scene]
+    signoff_rule = (
+        "\nTHIS IS THE CLOSING SIGN-OFF SCENE. The film ends on its LAST shot, and that must be the pack: clean, readable, front-facing, with "
+        "calm uncluttered space around it for the line and the logo. The extra shots add life AROUND the pack (the hands, the glass, the table) "
+        "and must never hide, redraw or crowd it. Make the LAST extra shot size `product`, locked-off, the pack square to the camera and "
+        "nothing moving in front of it.\n" if signoff else "")
     wide_rule = ("A wide shot is allowed." if plate_locked else
                  "AVOID wide shots: the location is NOT locked, so a wide shot would show parts of the room the master frame never "
                  "showed and the room would be invented. Prefer close, over, detail and medium.")
@@ -91,6 +97,7 @@ def build_prompt(*, row: dict, secs: int, n_extras: int, logline: str = "", char
         + (f"  Spoken over this scene (for rhythm only; never put words in a shot): \"{spoken}\"\n" if spoken else "")
         + ("\n".join(ctx) + "\n" if ctx else "")
         + ("NEIGHBOURING SCENES (do not repeat their pictures): " + "; ".join(near) + "\n" if near else "")
+        + signoff_rule
         + f"\nWrite {n_extras} EXTRA shot{'s' if n_extras != 1 else ''} for this scene (shot 2" + (f" to shot {n_extras + 1}" if n_extras > 1 else "") + ").\n\n"
         "RULES\n"
         "1. SAME MOMENT, SAME PLACE, SAME PEOPLE. Each extra shot is one camera view of one moment of this scene (no split screens, no "
@@ -163,7 +170,7 @@ def _master_longest(lens: list[int]) -> list[int]:
 
 
 def validate(raw_shots, *, secs: int, plate_locked: bool = False, pack_in_scene: bool = False, master_size: str = "",
-             want: int | None = None) -> dict:
+             want: int | None = None, signoff: bool = False) -> dict:
     """The proposal after the deterministic backstops: {shots, master_secs, notes}. Never raises on a bad model reply: unusable shots are
     dropped and said so. Each kept shot is {id, visual, shot_size, camera, movement_class, secs, warnings}."""
     notes: list[str] = []
@@ -201,6 +208,9 @@ def validate(raw_shots, *, secs: int, plate_locked: bool = False, pack_in_scene:
         notes.append(f"{len(shots) - limit} shot(s) left out: a {secs}s scene holds {limit + 1} shots at 2s each" if limit
                      else f"a {secs}s scene is too short to cover")
         shots = shots[:limit]
+    if signoff and shots and shots[-1]["shot_size"] != "product":
+        shots[-1]["warnings"].append("Sign-off scene: the film ends on this shot, so it should show the pack clean and front-on "
+                                     "(set the size to Product hero).")
     prev = str(master_size or "").strip().lower()
     for k, sh in enumerate(shots, start=2):
         if prev and sh["shot_size"] == prev:

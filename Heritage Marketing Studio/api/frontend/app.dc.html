@@ -16370,7 +16370,8 @@ class Component extends DCLogic {
   canCover(idx){
     const row = (this.state.fullScript || [])[idx];
     if (!row) return { ok:false, why:'' };
-    if (this.isBrandScene(idx)) return { ok:false, why:'The sign-off scene is always one shot.' };
+    // The sign-off is one clean pack shot by default; a person can allow shots on it (e.g. when the closing scene has action in it).
+    if (this.isBrandScene(idx) && !row.signoff_shots) return { ok:false, why:'The sign-off scene is one clean pack shot unless you allow shots on it.', allowable:true };
     // (no "too short" case: a scene is never planned under 4s, which holds a master and one extra shot at 2s each)
     return { ok:true, why:'' };
   }
@@ -16380,7 +16381,7 @@ class Component extends DCLogic {
     const key = this.shotKey(row), vc = s.videoConcept;
     this.setState({ shotsBusy:key });
     const { shots: _drop, ...scene } = row;
-    const body = { scene, scene_seconds:this.sceneSecs(row), is_signoff:this.isBrandScene(idx), plate_locked:!!s.videoPlateChoice,
+    const body = { scene, scene_seconds:this.sceneSecs(row), is_signoff:this.isBrandScene(idx), allow_signoff:!!row.signoff_shots, plate_locked:!!s.videoPlateChoice,
       logline: vc ? (vc.logline || '') : '', characters:s.videoCharacters || '', location_line:this.locationText() || '', wardrobe:s.videoWardrobe || '',
       camera_notes:s.videoCamera || '', look_note:s.videoLookRef || '', prev_visual: idx ? (rows[idx - 1].visual || '') : '',
       next_visual: rows[idx + 1] ? (rows[idx + 1].visual || '') : '', brand_mode:s.producerBrandMode, ...this.videoExtra() };
@@ -16389,6 +16390,9 @@ class Component extends DCLogic {
     if (!r || !r.ok) { this.setState({ shotsBusy:'' }); this.showToast(d.detail || 'Couldn’t propose shots — try again.'); return; }
     if (!(d.shots || []).length) { this.setState({ shotsBusy:'' }); this.showToast(d.reason || 'No extra shots for this scene.', 'info'); return; }
     this.setState(st => ({ shotsBusy:'', shotsProposal:{ ...(st.shotsProposal || {}), [key]:{ shots:d.shots, notes:d.notes || [], master_secs:d.master_secs } } }));
+  };
+  allowSignoffShots = (idx) => () => {
+    this.setState(st => ({ fullScript:(st.fullScript || []).map((r, i) => i === idx ? { ...r, signoff_shots:true } : r) }));
   };
   discardShotProposal = (idx) => () => {
     const key = this.shotKey((this.state.fullScript || [])[idx]);
@@ -16427,7 +16431,7 @@ class Component extends DCLogic {
     this.setState(st => {
       const f = { ...(st.sceneFrames || {}) };
       Object.keys(f).forEach(key => { if (key.indexOf(idx + '.') === 0) delete f[key]; });
-      return { sceneFrames:f, fullScript:(st.fullScript || []).map((r, i) => { if (i !== idx) return r; const o = { ...r }; delete o.shots; return o; }) };
+      return { sceneFrames:f, fullScript:(st.fullScript || []).map((r, i) => { if (i !== idx) return r; const o = { ...r }; delete o.shots; delete o.signoff_shots; return o; }) };
     });
   };
   renderShotFrames = (idx) => async () => {
@@ -16458,7 +16462,7 @@ class Component extends DCLogic {
       title: masterDone ? 'Draw this angle from shot 1’s frame' : 'Render shot 1 of this scene first',
       style:{ alignSelf:'flex-start', border:'1px solid #C9CEDA', background:'#fff', color:'#17325E', borderRadius:8, padding:'3px 9px', fontSize:11, fontWeight:700, cursor:'pointer', opacity: masterDone ? 1 : 0.55 } },
       f.status === 'done' ? '↻ Re-render' : 'Render frame');
-    const sizes = Object.keys(this.SHOT_SIZE_LABELS).filter(v => v !== 'product' || this.sceneNamesPack(row.visual) || sh.shot_size === 'product');
+    const sizes = Object.keys(this.SHOT_SIZE_LABELS).filter(v => v !== 'product' || this.sceneNamesPack(row.visual) || sh.shot_size === 'product' || !!row.signoff_shots);
     // Stacked, not side by side: a storyboard card is a narrow column.
     return h('div', { key:'shot' + k, style:{ display:'flex', flexDirection:'column', gap:6, padding:'8px 0', borderTop:'1px solid #ECE8DE' } },
       h('div', { style:{ display:'flex', alignItems:'center', gap:6, flexWrap:'wrap' } },
@@ -16482,6 +16486,8 @@ class Component extends DCLogic {
     const wrap = (...kids) => h('div', { style:{ marginTop:8, padding:'8px 10px', border:'1px solid #E6E3DC', borderRadius:10, background:'#FBFAF8' } }, ...kids);
     const label = (txt) => h('span', { style:{ fontSize:11, fontWeight:800, letterSpacing:'0.06em', textTransform:'uppercase', color:'#6B7280' } }, txt);
     if (!ex.length && !prop) {
+      if (!can.ok && can.allowable) return wrap(h('div', { style:{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' } }, label('Coverage'),
+        h('span', { style:{ fontSize:11.5, color:'#6B7280' } }, can.why), btn('Allow shots on the sign-off', this.allowSignoffShots(idx), false)));
       if (!can.ok) return can.why ? h('div', { style:{ marginTop:8, fontSize:11, color:'#9AA1AD' } }, 'Coverage: ' + can.why) : null;
       return wrap(h('div', { style:{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' } }, label('Coverage'),
         h('span', { style:{ fontSize:11.5, color:'#6B7280' } }, 'One shot today. Cut between camera angles?'),
@@ -16505,6 +16511,7 @@ class Component extends DCLogic {
         h('span', { style:{ marginLeft:'auto', display:'flex', gap:6 } },
           missing ? btn('Render shot frames (' + missing + ')', this.renderShotFrames(idx), true) : null,
           btn('Remove shots', this.removeAllShots(idx)))),
+      row.signoff_shots ? h('div', { style:{ fontSize:11, color:'#6B7280', marginTop:4 } }, 'Sign-off scene: the film ends on its last shot, so keep that one a clean pack shot.') : null,
       ...ex.map((_, j) => this.shotTile(idx, j + 1)));
   }
   // What a frame was rendered AGAINST. If the scene's words or its length change afterwards, the
@@ -24520,7 +24527,7 @@ class Component extends DCLogic {
   // or reworked script starts without the old script's choices (before, a tick on frame 3 followed you into the next
   // script in the same session and vanished on reload). None of these edits drop an approved script back to
   // "drafted" -- they change how a still is drawn, not what the script says.
-  SCENE_EXTRAS = ['frame_note', 'movement_class', 'shot_size', 'include_pack', 'match_no', 'beat_role', 'beat_note', 'shots'];
+  SCENE_EXTRAS = ['frame_note', 'movement_class', 'shot_size', 'include_pack', 'match_no', 'beat_role', 'beat_note', 'shots', 'signoff_shots'];
   sceneNo(row, i){ return String(row && row.no != null ? row.no : i + 1); }
   // The script's Beat role cell: Auto ('') or one of these. Anything else counts as Auto, as on the server.
   BEAT_ROLE_IDS = ['hook', 'world', 'mechanism', 'turn', 'brand', 'button'];
@@ -24571,6 +24578,7 @@ class Component extends DCLogic {
           if (k === 'frame_note' && String(old.visual || '').trim() !== String(r.visual || '').trim()) return;
           // Extra camera angles belong to the scene's picture: carried only while that picture is unchanged.
           if (k === 'shots' && (!Array.isArray(old[k]) || !old[k].length || String(old.visual || '').trim() !== String(r.visual || '').trim())) return;
+          if (k === 'signoff_shots' && (old[k] !== true || String(old.visual || '').trim() !== String(r.visual || '').trim())) return;
           out[k] = old[k];
         });
       }
