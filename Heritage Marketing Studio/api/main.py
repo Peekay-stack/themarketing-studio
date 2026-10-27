@@ -608,6 +608,23 @@ def rescore(payload: dict):
     return _rescore_do(payload)
 
 
+def _rows_for_planning(scenes):
+    """The scene rows the render PLANS from. A scene with a signed live-action shot is one real take, trimmed to the scene,
+    so its coverage `shots` are ignored (otherwise every angle would be handed the same footage). Everything else, and every
+    film with no `shots`, is returned exactly as given."""
+    out = []
+    for r in scenes or []:
+        if isinstance(r, dict) and filmcut.extra_shots(r):
+            try:
+                live = shots.for_scene(int(r.get("no") or 0))
+            except Exception:
+                live = None
+            if live:
+                r = {k: v for k, v in r.items() if k != "shots"}
+        out.append(r)
+    return out
+
+
 def _turn_at_from_rows(scenes, duration) -> float | None:
     """Where the TURN beat starts, in seconds, for a film planned from these script rows -- or None when the film has
     no turn (a very short one) or there is nothing to plan from.
@@ -1198,6 +1215,13 @@ def _produce_video_sync(payload: dict):
         return JSONResponse(status_code=400, content={
             "detail": f"{len(scenes)} scenes is more than one film needs — capped at {_MAX_SCENES} to "
                       "avoid an unbounded paid render. Split this into more than one film."})
+    # Coverage multiplies clips (every extra shot is a paid generation of at least 3s), so shots are capped as well.
+    _MAX_SHOTS = 48
+    _n_shots = sum(1 + len(filmcut.extra_shots(r)) for r in scenes if isinstance(r, dict))
+    if _n_shots > _MAX_SHOTS:
+        return JSONResponse(status_code=400, content={
+            "detail": f"{_n_shots} shots is more than one film needs — capped at {_MAX_SHOTS} to avoid an unbounded "
+                      "paid render. Use fewer shots per scene, or split this into more than one film."})
 
     def scene_text(items) -> str:
         # What the CAMERA sees. The spoken line used to ride along here (`desc or dialogue`), so every video
@@ -1242,7 +1266,7 @@ def _produce_video_sync(payload: dict):
     # ones cut away sooner, and the beats still add up to `chosen`.
     total, retime_notes = filmvoice.retime(scenes, target_total=chosen)
     per_scene = filmvoice.scene_seconds(scenes, target_total=chosen)
-    segments = filmcut.plan_by_scene(scenes, per_scene)
+    segments = filmcut.plan_by_scene(_rows_for_planning(scenes), per_scene)
 
     style = str(payload.get("style") or "real").lower()
     look = _VID_STYLES.get(style, _VID_STYLES["real"])
@@ -1290,7 +1314,8 @@ def _produce_video_sync(payload: dict):
         # The beat's job, from `filmcut.assign_roles`. Briefing a shot as "shot 3 of 4" tells the model
         # nothing about what the shot is for; the role grammar existed and nothing read it, which is
         # the same shape `plate` was in before it was wired up.
-        role_note = _ROLE_DIRECTION.get(str(seg.get("role") or ""), "")
+        _extra_shot = bool((seg["scenes"][0] if seg["scenes"] else {}).get("shot"))     # coverage shot 2, 3, 4
+        role_note = "" if _extra_shot else _ROLE_DIRECTION.get(str(seg.get("role") or ""), "")
         # The person's own words for this beat (the script's Beat direction cell). Absent -> nothing added.
         beat_note = str((seg["scenes"][0] if seg["scenes"] else {}).get("beat_note") or "").strip()
         if beat_note:
@@ -1379,7 +1404,7 @@ def _produce_video_sync(payload: dict):
             _row = seg["scenes"][0] if seg["scenes"] else {}
             _action = videoprompt.visual_text(seg["scenes"]) or videoprompt.visual_text(scenes)
             p = videoprompt.compile_frame_shot(
-                action=_action, role=str(seg.get("role") or ""),
+                action=_action, role="" if _extra_shot else str(seg.get("role") or ""),
                 beat_note=str(_row.get("beat_note") or ""), continues=bool(seg.get("continues")),
                 camera_direction=camera_direction,
                 pack_in_frame=(str(seg.get("role") or "") == "brand" or packscene.mentions_pack(_action)))
@@ -1410,6 +1435,13 @@ def _produce_video_sync(payload: dict):
     # Render the picture SILENT and in parallel: a 2-minute film is 15 shots, which would take far
     # too long one at a time. Audio is added once, over the whole cut, so it stays continuous.
     errors: list[str] = list(retime_notes)
+    for _sg in segments:
+        _sno = int(((_sg["scenes"] or [{}])[0] or {}).get("no") or 0)
+        if _sg.get("dropped_shots"):
+            errors.append(f"scene {_sno}: {_sg['dropped_shots']} extra shot(s) left out — the scene is too short to hold "
+                          "that many shots of at least 2s each")
+        if _sg.get("collapsed_shots"):
+            errors.append(f"scene {_sno} is the sign-off, so it is shown as one shot (its extra shots were not used)")
     slots: list[str | None] = [None] * len(segments)
     used_providers: set[str] = set()
 
@@ -1999,6 +2031,8 @@ _SHOT_SIZES = {
     "medium": "Framing: a MEDIUM shot — the subject from roughly the waist up, some of the surroundings visible.",
     "close": "Framing: a CLOSE-UP — tight on the subject (a face, or the hands and what they hold), very little background.",
     "product": "Framing: a PRODUCT HERO — the pack fills the frame, its front label square to camera, on a clean uncluttered background; a tight, product-forward composition, not a wide room with people.",
+    "detail": "Framing: a DETAIL INSERT — an extreme close-up of one thing (the hands, the pour, the label), filling the frame, the rest of the scene soft and out of focus behind it.",
+    "over": "Framing: an OVER-THE-SHOULDER shot — the camera sits just behind one person's shoulder, that shoulder and the back of their head in soft foreground, looking past them at what or who they are facing.",
 }
 
 
