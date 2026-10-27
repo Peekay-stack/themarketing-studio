@@ -3,7 +3,7 @@
 Branch: **`coverage`** (already checked out in this folder). Nothing here is on `master` or the portal. Plan: `VIDEO_COVERAGE_PLAN.md`.
 
 ## Start it
-1. Double-click `run-local.bat` (project root) — the studio opens at http://localhost:8000. **Restart it if it was already running** (backend edits do not hot-reload), then **hard-reload the page** (Ctrl+Shift+R).
+1. Double-click **`C:\Users\punie\Heritage-Marketing-Studio-OPUS\Heritage Marketing Studio\run-local.bat`** — the studio opens at http://localhost:8000. **Use exactly this folder: the machine also holds older copies of the project (`Heritage-Marketing-Studio-FULL297`, `...FULL-297v2`, `Heritage_Marketing_Studio_FULL_*`) whose `run-local.bat` starts an OLD version with no coverage.** Only one server can use port 8000, so close any other studio console window first. **Restart it if it was already running** (backend edits do not hot-reload), then **hard-reload the page** (Ctrl+Shift+R).
 2. Sign in yourself; pick the Heritage brand. Local keys in `api/.env` are used (Google for images/video/voice, Claude for the shot proposals).
 3. Spend while testing (Draft, 360p): proposals a few cents; each extra frame one image; a 30 s film with ~6 extra shots ≈ $1.5-2 of video.
 
