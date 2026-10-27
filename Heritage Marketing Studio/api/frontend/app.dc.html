@@ -2955,6 +2955,9 @@
                     <sc-if value="{{ sc.packMissing }}" hint-placeholder-val="{{ false }}">
                       <div style="margin-top:5px; font-size:11px; line-height:1.45; color:#B07A12; font-weight:700;">The pack was not attached to this frame — check it is signed off in Memory, then re-render.</div>
                     </sc-if>
+                    <sc-if value="{{ sc.hasPackShape }}" hint-placeholder-val="{{ false }}">
+                      <div style="margin-top:5px; font-size:11px; line-height:1.45; color:#B07A12; font-weight:700;">Check the pack: {{ sc.packShape }}. The video keeps the shape of this frame, so re-render the frame if it matters.</div>
+                    </sc-if>
                   </sc-if>
                   <!-- Per-frame correction: direction for THIS frame only, applied the next time it renders (the
                        ↻ on the frame). The box under "Rework the frames" still applies to every frame. -->
@@ -16546,8 +16549,12 @@ class Component extends DCLogic {
     // The pack was asked for (ticked) but not attached -- say so on the card instead of letting a pack-less frame
     // look like a pack frame. `pack_used` is "attached", not "drawn"; the server cannot see the picture.
     const packMissing = !!(body.include_pack && res && res.image_url && (res.from_reference === false || res.pack_used === false));
+    // An advisory measure of the pouch's proportions against the real pack photo (packqa.py). Only a confident
+    // "elongated"/"squashed" is shown; "ok" and "unclear" say nothing, so the card never claims what it cannot measure.
+    const pc = res && res.pack_check;
+    const packShape = (pc && (pc.verdict === 'elongated' || pc.verdict === 'squashed')) ? String(pc.note || '') : '';
     if (res && res.image_url) this.setState(s => ({ framesProvider: res.provider || s.framesProvider,
-      sceneFrames:{ ...s.sceneFrames, [idx]:{ status:'done', url:res.image_url, provider:res.provider||'', sig, packMissing, look:lookRef, recipe } } }));
+      sceneFrames:{ ...s.sceneFrames, [idx]:{ status:'done', url:res.image_url, provider:res.provider||'', sig, packMissing, packShape, look:lookRef, recipe } } }));
     else this.setState(s => ({ sceneFrames:{ ...s.sceneFrames, [idx]:{ status:'error', url:null } } }));
   };
   generateAllFrames = async () => {
@@ -19048,6 +19055,7 @@ class Component extends DCLogic {
         setSibling: this.setSceneSibling(i),
         includePack: this.packOnFrame(i), toggleIncludePack: this.toggleSceneIncludePack(i),
         hasPackLocked: this.packAvailable(s), packMissing: !!f.packMissing,
+        packShape: f.packShape || '', hasPackShape: !!f.packShape,
         frameNote: r.frame_note || '', editFrameNote: this.editFrameNote(i),
         lines, hasLines: lines.length > 0, isSilent: lines.length === 0, willBeSilent,
         addVo: this.addSceneLine(i, 'vo'), addLine: this.addSceneLine(i, 'dialogue'),

@@ -5,6 +5,7 @@ Docs: http://localhost:8000/docs
 """
 from __future__ import annotations
 
+import base64
 import json
 import os
 import re
@@ -81,6 +82,7 @@ import keyvisual
 import learning
 import library
 import made
+import packqa
 import packscene
 import media
 import mediaplan
@@ -2171,6 +2173,21 @@ def cast_reference(payload: dict):
             "provider": candidates[0]["provider"], "tier": tier, "from_reference": False}
 
 
+def _pack_shape_check(frame_url: str, pack_ref: str) -> dict | None:
+    """Does the pack in this generated frame have the real pack's proportions? None when it cannot be checked.
+
+    Advisory only: it never blocks, retries or changes a frame (see packqa.py for what it can and cannot measure).
+    Wrapped so that a failure here can never cost a frame that was already paid for."""
+    try:
+        f, r = gemini._as_base64(frame_url), gemini._as_base64(pack_ref)
+        if not f or not r:
+            return None
+        return packqa.check(base64.b64decode(f[1]), base64.b64decode(r[1]))
+    except Exception as e:  # noqa: BLE001
+        print(f"[main] pack shape check skipped: {type(e).__name__}: {e}", file=sys.stderr, flush=True)
+        return None
+
+
 @app.post("/scene-still")
 def scene_still(payload: dict):
     if not _have_image():
@@ -2564,7 +2581,10 @@ def scene_still(payload: dict):
                     # This is "attached", not "shown" -- nothing here can see the picture.
                     "pack_source": "library" if pack_used else ("reference" if _pack_ref_used else ""),
                     "pack_role": _pack_role if _scene_wording else "",
-                    "scene_cleaned": _scene_cleaned}
+                    "scene_cleaned": _scene_cleaned,
+                    # Advisory read of the pack's proportions against the real pack photo (see packqa.py).
+                    "pack_check": (_pack_shape_check(url, _pack_ref if _pack_ref_used else lib_refs["pack"])
+                                   if (pack_used or _pack_ref_used) else None)}
         print("[main] reference frame failed on both providers; falling back to text-to-image",
               file=sys.stderr, flush=True)
     parts = [f"Marketing image for {_brand_line(_scene_brand_prof or None, brand_mode=_scene_mode)}."]
