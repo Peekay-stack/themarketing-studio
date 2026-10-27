@@ -521,6 +521,45 @@ def _make_exact(exe: str, path: str, seconds: float) -> None:
               file=sys.stderr, flush=True)
 
 
+def _frame_signature(exe: str, path: str, t: float):
+    """A tiny grey fingerprint (64x36) of the frame at `t` seconds, or None when it cannot be read. Two different pictures never share one; a frozen picture always does."""
+    r = subprocess.run([exe, "-y", "-ss", f"{max(0.0, t):.3f}", "-i", path, "-frames:v", "1", "-vf", "scale=64:36,format=gray", "-f", "rawvideo", "-"],
+                       capture_output=True)
+    return r.stdout if (r.returncode == 0 and r.stdout) else None
+
+
+def frozen_join(exe: str, path: str, lengths: list[int]) -> bool:
+    """True when a joined film shows the SAME frame in two neighbouring clips' windows, which is what a bad join looks like (a mixed re-encoded / original stream copy froze ten seconds
+    of the 28 Oct film on one picture while every clip on its own moved). The middle of each clip's window is compared with the middle of the next; two different clips never match.
+    A check that cannot read a frame says nothing (False): the join is kept as it is."""
+    sigs, at = [], 0.0
+    for n in lengths or []:
+        n = float(n or 0)
+        if n >= 1.0:
+            sigs.append(_frame_signature(exe, path, at + n / 2))
+        at += n
+    return any(a is not None and a == b for a, b in zip(sigs, sigs[1:]))
+
+
+def _join_filter(exe: str, parts: list[str], out_path: str, planned: float) -> bool:
+    """Join clips with the concat FILTER: every clip is decoded, its timestamps reset and its frame rate and size made equal, so no stream-copy or demuxer timestamp quirk can freeze a
+    picture. Re-encodes (cheap at Draft size, the same cost as the trim already paid). The result keeps a silent audio stream, as the demuxer join did, so what runs after it is unchanged."""
+    w, h = _video_dims(exe, parts[0])
+    args: list[str] = []
+    for p in parts:
+        args += ["-i", p]
+    args += ["-f", "lavfi", "-i", "anullsrc=r=24000:cl=stereo"]
+    flt = "".join(f"[{i}:v]setpts=PTS-STARTPTS,fps=24,scale={w}:{h},setsar=1,format=yuv420p[v{i}];" for i in range(len(parts))) \
+        + "".join(f"[v{i}]" for i in range(len(parts))) + f"concat=n={len(parts)}:v=1:a=0[v]"
+    cmd = [exe, "-y", *args, "-filter_complex", flt, "-map", "[v]", "-map", f"{len(parts)}:a", "-c:v", "libx264", "-preset", "veryfast", "-crf", "20", "-c:a", "aac", "-b:a", "64k",
+           "-movflags", "+faststart"] + (["-t", f"{planned:.3f}"] if planned > 0 else ["-shortest"]) + [out_path]
+    res = subprocess.run(cmd, capture_output=True, text=True)
+    if res.returncode == 0 and os.path.exists(out_path) and os.path.getsize(out_path) > 0:
+        return True
+    print(f"[filmcut] filter join failed ({res.returncode}): {res.stderr[-300:]}", file=sys.stderr, flush=True)
+    return False
+
+
 def stitch(urls: list[str], lengths: list[int] | None = None) -> str | None:
     """Download the clips and concatenate them into one MP4 under renders/.
 
@@ -572,6 +611,13 @@ def stitch(urls: list[str], lengths: list[int] | None = None) -> str | None:
             if res.returncode == 0 and os.path.exists(out_path) and os.path.getsize(out_path) > 0:
                 print(f"[filmcut] joined {len(parts)} clip(s) -> {name}", file=sys.stderr, flush=True)
                 _make_exact(exe, out_path, planned)
+                # A join can come out FROZEN (the same frame for seconds) although every clip moves. Look, and rebuild with the concat filter if so.
+                if len(parts) > 1 and lengths and len(parts) == len(lengths) and frozen_join(exe, out_path, [int(x) for x in lengths]):
+                    print(f"[filmcut] the join of {len(parts)} clips came out frozen; rebuilding it with the concat filter", file=sys.stderr, flush=True)
+                    if _join_filter(exe, parts, out_path, planned):
+                        _make_exact(exe, out_path, planned)
+                        if frozen_join(exe, out_path, [int(x) for x in lengths]):
+                            print("[filmcut] WARNING: the rebuilt join still looks frozen; keeping it", file=sys.stderr, flush=True)
                 return name
             print(f"[filmcut] ffmpeg failed ({res.returncode}): {res.stderr[-400:]}",
                   file=sys.stderr, flush=True)
