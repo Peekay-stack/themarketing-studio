@@ -40,6 +40,12 @@ v4 = ss.validate(GOOD["shots"], secs=4, master_size="medium")
 check("validate: a 4s scene keeps ONE extra shot and says the rest were left out", len(v4["shots"]) == 1 and any("left out" in n for n in v4["notes"]) and v4["master_secs"] + v4["shots"][0]["secs"] == 4, str(v4))
 vw = ss.validate(GOOD["shots"], secs=8, master_size="medium", want=1)
 check("validate: want=1 keeps one", len(vw["shots"]) == 1)
+vm = ss.validate([{"action": "a.", "camera_position": "b.", "shot_size": "detail", "secs": 3}, {"action": "c.", "camera_position": "d.", "shot_size": "over", "secs": 3},
+                  {"action": "e.", "camera_position": "f.", "shot_size": "close", "secs": 2}], secs=10, master_size="medium")
+check("validate: the master stays at least as long as any extra (10s proposed 3+3+2 -> master 3), total unchanged",
+      vm["master_secs"] >= max(s["secs"] for s in vm["shots"]) and vm["master_secs"] + sum(s["secs"] for s in vm["shots"]) == 10 and all(s["secs"] >= 2 for s in vm["shots"]), str(vm))
+check("master-longest helper: [2,3,3,2] -> [3,2,3,2]; an already-fine split is untouched; extras never go under 2s",
+      ss._master_longest([2, 3, 3, 2]) == [3, 2, 3, 2] and ss._master_longest([4, 2, 2]) == [4, 2, 2] and ss._master_longest([2, 2, 2]) == [2, 2, 2] and min(ss._master_longest([2, 8, 8])[1:]) >= 2 and sum(ss._master_longest([2, 8, 8])) == 18)
 vz = ss.validate([{"action": "A wide view of the kitchen.", "camera_position": "From the doorway.", "shot_size": "wide", "secs": 2}], secs=6, plate_locked=False, master_size="close")
 check("validate: a WIDE shot with no locked location carries the warning", any("not locked" in w for w in vz["shots"][0]["warnings"]), str(vz))
 vz2 = ss.validate([{"action": "A wide view of the kitchen.", "camera_position": "From the doorway.", "shot_size": "wide", "secs": 2}], secs=6, plate_locked=True, master_size="close")

@@ -106,7 +106,7 @@ def build_prompt(*, row: dict, secs: int, n_extras: int, logline: str = "", char
         "what the camera sees.\n"
         f"5. SIZES: choose from {', '.join(sizes_ok)}. `detail` is an extreme close-up of one thing (the hands, the pour, the label); "
         "`over` is over-the-shoulder. " + wide_rule + " Do not give two neighbouring shots the same size.\n"
-        f"6. SECONDS: `secs` is whole seconds for each extra shot, between 2 and 4. The master keeps the rest; all shots together fill "
+        f"6. SECONDS: `secs` is whole seconds for each extra shot, between 2 and 4. The master keeps the rest and stays the longest shot; all shots together fill "
         f"the scene's {secs} seconds.\n"
         "7. MOVEMENT: give `camera` (a short plain phrase, e.g. \"slow push-in\", \"handheld drift\", \"locked-off\") and `movement_class`, one of "
         + ", ".join(MOVES) + " (or \"\" if none). Keep movement gentle; the people's faces must stay recognisable.\n\n"
@@ -149,6 +149,17 @@ def _clean(text: str, notes: list, who: str) -> str:
     if len(kept) != len(sentences):
         notes.append(f"{who}: a sentence about on-screen text was removed")
     return videoprompt.clean_visual(" ".join(kept))
+
+
+def _master_longest(lens: list[int]) -> list[int]:
+    """The master carries the scene's action, so it stays at least as long as any extra angle: seconds move from the longest extra to the
+    master until it is (a 10s scene proposed as 2 + 3 + 3 + 2 becomes 3 + 2 + 3 + 2). The total never changes; extras stay >= 2s."""
+    out = list(lens)
+    while len(out) > 1 and out[0] < max(out[1:]) and max(out[1:]) > filmvoice.SHOT_FLOOR:
+        i = max(range(1, len(out)), key=lambda j: out[j])
+        out[i] -= 1
+        out[0] += 1
+    return out
 
 
 def validate(raw_shots, *, secs: int, plate_locked: bool = False, pack_in_scene: bool = False, master_size: str = "",
@@ -196,6 +207,7 @@ def validate(raw_shots, *, secs: int, plate_locked: bool = False, pack_in_scene:
             sh["warnings"].append(f"Same size as shot {k - 1} ({prev}) — check the angle really differs.")
         prev = sh["shot_size"]
     lens, dropped = filmvoice.split_shot_seconds(secs, [sh["secs"] for sh in shots])
+    lens = _master_longest(lens)
     if dropped:
         notes.append(f"{dropped} shot(s) left out: the scene is too short for that many shots")
         shots = shots[:len(lens) - 1]
