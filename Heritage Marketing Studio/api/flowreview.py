@@ -66,7 +66,7 @@ def film_shots(rows, seconds, roles=None) -> list[dict]:
     return out
 
 
-def budgets(rows, seconds, pace="", roles=None) -> dict:
+def budgets(rows, seconds, pace="", roles=None, no_cover=None) -> dict:
     """{scene number: how many EXTRA shots that scene may have} under the film's pace (sceneshots.budget: what fits its seconds, held to the pace, with the
     opening and an opted-in sign-off treated as in the proposer)."""
     out: dict[int, int] = {}
@@ -75,11 +75,11 @@ def budgets(rows, seconds, pace="", roles=None) -> dict:
             continue
         secs = _int((seconds or [])[i] if i < len(seconds or []) else 0, 4)
         role = str((roles or {}).get(scene_no(row, i)) or row.get("beat_role") or "")
-        out[scene_no(row, i)] = sceneshots.budget(secs, pace, role, bool(row.get("signoff_shots")))
+        out[scene_no(row, i)] = 0 if scene_no(row, i) in (no_cover or {}) else sceneshots.budget(secs, pace, role, bool(row.get("signoff_shots")))
     return out
 
 
-def stats(rows, seconds, pace="", roles=None) -> dict:
+def stats(rows, seconds, pace="", roles=None, no_cover=None) -> dict:
     """Facts measured from the plan, no model: shot count, average length, cut rate against the pace's band, the longest run of one shot size, extras with no job,
     scenes over their pace budget, and a list of plain-language `findings` ({kind, scene, note})."""
     pk = sceneshots.normalise_pace(pace) or "standard"
@@ -121,7 +121,7 @@ def stats(rows, seconds, pace="", roles=None) -> dict:
     for s in no_job:
         findings.append({"kind": "no-job", "scene": s["scene"], "note": f"Scene {s['scene']} shot {s['shot']} has no job (what it is for), so nothing says why it should be rendered."})
     over = []
-    allowed_by_scene = budgets(rows, seconds, pace, roles)
+    allowed_by_scene = budgets(rows, seconds, pace, roles, no_cover)
     for i, row in enumerate(rows or []):
         if not isinstance(row, dict):
             continue
@@ -134,7 +134,10 @@ def stats(rows, seconds, pace="", roles=None) -> dict:
             findings.append({"kind": "does-not-fit", "scene": scene_no(row, i), "note": f"Scene {scene_no(row, i)} is {secs} s, which holds {sceneshots.max_extras(secs)} extra shot(s) at 2 s each "
                                                                                        f"but has {len(extras)}: the last will be left out of the render."})
     for no, have, allowed in over:
-        findings.append({"kind": "over-budget", "scene": no, "note": f"Scene {no} has {have} extra shot{'s' if have != 1 else ''}; {pt['label']} pace allows {allowed} for a scene this long."})
+        if no in (no_cover or {}):
+            findings.append({"kind": "no-coverage", "scene": no, "note": f"Scene {no} has {have} extra shot{'s' if have != 1 else ''}, but {no_cover[no]}."})
+        else:
+            findings.append({"kind": "over-budget", "scene": no, "note": f"Scene {no} has {have} extra shot{'s' if have != 1 else ''}; {pt['label']} pace allows {allowed} for a scene this long."})
     for row_i, row in enumerate(rows or []):
         if isinstance(row, dict) and str((roles or {}).get(scene_no(row, row_i)) or row.get("beat_role") or "") == "brand" and row.get("signoff_shots"):
             last = [s for s in shots if s["scene_i"] == row_i][-1]
@@ -149,7 +152,7 @@ def facts_text(st: dict) -> str:
             f"{st['band'][0]}-{st['band'][1]}); longest run of one shot size: {st['longest_same_size_run']}.")
 
 
-def build_prompt(*, rows, seconds, shots, st, logline="", message="", tone="", pace="standard", characters="", roles=None) -> str:
+def build_prompt(*, rows, seconds, shots, st, logline="", message="", tone="", pace="standard", characters="", roles=None, beat_note="") -> str:
     """The editor's brief: the whole cut in order (every shot a viewer will see), the facts measured from it, and what to decide."""
     pk = sceneshots.normalise_pace(pace) or "standard"
     pt = sceneshots.PACE_TABLE[pk]
@@ -183,7 +186,7 @@ def build_prompt(*, rows, seconds, shots, st, logline="", message="", tone="", p
         "You are the director and the editor of a brand film, reviewing the finished script and shot plan BEFORE anything is rendered. Every shot costs real money and "
         "a viewer's attention. Extra shots exist for a cinematic feel and must NOT take away from the story, the film's entertainment value or its core message. "
         "Judge the film as a viewer watches it, in order, not scene by scene.\n\n"
-        + "\n".join(film) + "\n\nTHE CUT, IN ORDER (shot 1 of a scene is its master; later shots are extra camera angles):\n" + "\n".join(lines)
+        + "\n".join(film) + ("\n\n" + beat_note if beat_note else "") + "\n\nTHE CUT, IN ORDER (shot 1 of a scene is its master; later shots are extra camera angles):\n" + "\n".join(lines)
         + "\n\nMEASURED FACTS: " + facts_text(st) + "\n\n"
         "DECIDE:\n"
         "1. BEATS. Group the scenes into beats. Scenes whose main action is the same (same subject, same verb, same object) are ONE beat shown at two scales, not two beats. "
@@ -231,7 +234,7 @@ def _scenes_list(v) -> list[int]:
 _JOB_RANK = ("payoff-hold", "reaction", "insert", "reveal", "pov", "establish", "match", "")
 
 
-def validate(raw: dict, shots: list[dict], budget_by_scene: dict | None = None, pace: str = "") -> dict:
+def validate(raw: dict, shots: list[dict], budget_by_scene: dict | None = None, pace: str = "", no_cover: dict | None = None) -> dict:
     """The review after the backstops: {summary, time_passing, turn_scene, carrier_scene, beats, verdicts, notes, skips, notes_out}.
     Every EXTRA shot (place not None) ends with exactly one verdict (a shot the model did not mention is kept, and says so); verdicts for shots that do
     not exist are dropped; a verdict with no reason is kept as `keep`; a cut on the film's closing shot when it is the product hero is refused; `skips` is the list
@@ -287,7 +290,10 @@ def validate(raw: dict, shots: list[dict], budget_by_scene: dict | None = None, 
             room = max(0, allowed - len(protected))
             for v in order[room:]:
                 v["verdict"], v["by"] = "cut", "pace"
-                v["reason"] = f"Over the {label} pace budget: a scene this long holds {allowed} extra shot{'s' if allowed != 1 else ''}." + (f" (Review said: {v['reason']})" if v["reason"] else "")
+                if no in (no_cover or {}):
+                    v["reason"] = f"No extra angles here: {no_cover[no]}." + (f" (Review said: {v['reason']})" if v["reason"] else "")
+                else:
+                    v["reason"] = f"Over the {label} pace budget: a scene this long holds {allowed} extra shot{'s' if allowed != 1 else ''}." + (f" (Review said: {v['reason']})" if v["reason"] else "")
     beats = []
     for b in raw.get("beats") if isinstance(raw.get("beats"), list) else []:
         if isinstance(b, dict) and _scenes_list(b.get("scenes")):

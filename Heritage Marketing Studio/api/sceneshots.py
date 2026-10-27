@@ -146,7 +146,7 @@ def outline_text(outline, this_index=None) -> str:
 def build_prompt(*, row: dict, secs: int, n_extras: int, pace: str = "standard", role: str = "", logline: str = "", message: str = "",
                  tone: str = "", outline=None, scene_index=None, characters: str = "", location_line: str = "", wardrobe: str = "",
                  camera_notes: str = "", look_note: str = "", plate_locked: bool = False, pack_in_scene: bool = False,
-                 prev_visual: str = "", next_visual: str = "", signoff: bool = False) -> str:
+                 prev_visual: str = "", next_visual: str = "", signoff: bool = False, beat_note: str = "") -> str:
     master = videoprompt.visual_text([row]) or _clip(row.get("visual"), 300)
     cam = _clip(row.get("camera"), 120)
     size = str(row.get("shot_size") or "").strip().lower()
@@ -192,6 +192,7 @@ def build_prompt(*, row: dict, secs: int, n_extras: int, pace: str = "standard",
         "Extra shots exist to give the film a cinematic feel WITHOUT taking anything away from the story, the entertainment value or the core message.\n\n"
         + "\n".join(film) + "\n"
         + ("\nTHE WHOLE SCRIPT (so you judge this scene against the film, not on its own):\n" + outline_text(outline, scene_index) + "\n" if outline else "")
+        + ("\n" + beat_note + "\n" if beat_note else "")
         + f"\nTHE SCENE ({secs} seconds in total). Shot 1, the master, is already fixed and is NOT yours to change:\n"
         f"  Master shot: {_clip(master, 400)}"
         + (f"\n  Master camera: {cam}" if cam else "") + (f"\n  Master size: {size}" if size else "")

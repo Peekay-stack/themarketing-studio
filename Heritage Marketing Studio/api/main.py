@@ -55,6 +55,7 @@ import brand_suggest
 import sceneshots
 import flowreview
 import framecheck
+import filmdirect
 import selfcheck
 import briefguide
 import briefstore
@@ -2751,6 +2752,15 @@ def scene_shots(payload: dict):
                 "reason": "The sign-off scene is one shot unless you allow shots on it: the pack held clean and still, with room for the line and the logo."}
     pace = sceneshots.normalise_pace(payload.get("pace")) or "standard"
     role = str(payload.get("role") or row.get("beat_role") or "").strip().lower()
+    beat_map = payload.get("beat_map") if isinstance(payload.get("beat_map"), dict) else None
+    try:
+        scene_n = int(row.get("no")) if row.get("no") is not None else (int(payload.get("scene_index")) + 1 if payload.get("scene_index") not in (None, "") else None)
+    except (TypeError, ValueError):
+        scene_n = None
+    hold = filmdirect.no_coverage(beat_map).get(scene_n) if scene_n is not None else None
+    if hold:
+        return {"shots": [], "master_secs": secs, "notes": [], "scene_seconds": secs, "pace": pace, "budget": 0, "needs_coverage": False,
+                "why": hold[:1].upper() + hold[1:] + ".", "reason": "No extra angles: " + hold + "."}
     limit = sceneshots.max_extras(secs)
     if limit < 1:
         return {"shots": [], "master_secs": secs, "notes": [], "scene_seconds": secs, "pace": pace, "budget": 0,
@@ -2778,7 +2788,8 @@ def scene_shots(payload: dict):
         location_line=str(payload.get("location_line") or ""), wardrobe=str(payload.get("wardrobe") or ""),
         camera_notes=str(payload.get("camera_notes") or ""), look_note=str(payload.get("look_note") or ""),
         plate_locked=bool(payload.get("plate_locked")), pack_in_scene=pack_in,
-        prev_visual=str(payload.get("prev_visual") or ""), next_visual=str(payload.get("next_visual") or ""), signoff=signoff)
+        prev_visual=str(payload.get("prev_visual") or ""), next_visual=str(payload.get("next_visual") or ""), signoff=signoff,
+        beat_note=filmdirect.read_text(beat_map, scene_n))
     flags = {k: payload[k] for k in ("house_id", "execution", "brand_mode", "provocation_id", "use_provocation", "use_house",
                                      "use_platform", "use_plan", "skip_mandatories", "force_typed") if k in payload}
     r = complete_endpoint({**flags, "messages": [{"role": "user", "content": prompt}], "film": True})
@@ -2812,6 +2823,61 @@ def pace_suggest(payload: dict):
     return {"pace": pace, "why": why, "table": sceneshots.PACE_TABLE}
 
 
+def _scene_roles(rows, secs) -> dict:
+    """{scene number: the planner's role for it (hook / world / mechanism / turn / brand / button)}, so a review knows the sign-off and the turn without the page saying so."""
+    roles: dict[int, str] = {}
+    try:
+        for seg in filmcut.plan_by_scene(rows, secs):
+            row0 = (seg.get("scenes") or [{}])[0] or {}
+            roles.setdefault(flowreview.scene_no(row0, seg["index"]), seg.get("role") or "")
+    except Exception as e:
+        print(f"[main] scene roles unavailable ({type(e).__name__}: {e})", flush=True)
+    return roles
+
+
+def _seconds_for(rows, payload) -> list:
+    """Per-scene seconds for a review: as the board shows them when the page sent them, else worked out from the words."""
+    try:
+        secs = [int(x) for x in (payload.get("seconds") or [])]
+    except (TypeError, ValueError):
+        secs = []
+    if len(secs) != len(rows):
+        try:
+            secs = filmvoice.scene_seconds(rows, int(payload.get("target_total") or 0))
+        except Exception:
+            secs = [4] * len(rows)
+    return secs
+
+
+@app.post("/film-direct")
+def film_direct(payload: dict):
+    """The director's read of the film: a BEAT MAP (per scene: purpose, intensity 0-3, time mode, marker, beat group, hero object; the turn and the message carrier) and the
+    checks a program can make on it (unmarked time jumps, a flat film, a weak turn, a message scene without the hero object, one beat shown at two scales). Advice only: nothing
+    is saved here (the page keeps the map with the film). Two of its findings are enforced elsewhere as rules: no extra angles inside a montage or on the second scene of a beat.
+
+    Body: `scenes` (the script rows), `seconds`, `logline`, `message`, `tone`, `characters`, `hero` (the hero object, optional), and the model flags /complete takes. Returns the
+    map plus {model: true}; 502 when the reply cannot be read (a map with no model has nothing to say).
+    """
+    rows = [r for r in (payload.get("scenes") or []) if isinstance(r, dict)]
+    if not rows:
+        return JSONResponse(status_code=400, content={"detail": "Send the script (its scene rows) to map."})
+    secs = _seconds_for(rows, payload)
+    roles = _scene_roles(rows, secs)
+    prompt = filmdirect.build_prompt(rows=rows, seconds=secs, logline=str(payload.get("logline") or ""), message=str(payload.get("message") or ""), tone=str(payload.get("tone") or ""),
+                                     characters=str(payload.get("characters") or ""), hero=str(payload.get("hero") or ""), roles=roles)
+    flags = {k: payload[k] for k in ("house_id", "execution", "brand_mode", "provocation_id", "use_provocation", "use_house",
+                                     "use_platform", "use_plan", "skip_mandatories", "force_typed") if k in payload}
+    r = complete_endpoint({**flags, "messages": [{"role": "user", "content": prompt}], "film": True})
+    if isinstance(r, JSONResponse):
+        return r
+    raw = filmdirect.parse(r.get("completion") if isinstance(r, dict) else "")
+    if raw is None:
+        return JSONResponse(status_code=502, content={"detail": "The director's read could not be understood. Try again."})
+    out = filmdirect.validate(raw, rows, roles)
+    out["model"] = True
+    return out
+
+
 @app.post("/film-review")
 def film_review(payload: dict):
     """The editor's pass over the WHOLE film before anything is rendered: beats, a keep / cut / merge verdict with a reason for every extra shot, notes on
@@ -2824,27 +2890,16 @@ def film_review(payload: dict):
     rows = [r for r in (payload.get("scenes") or []) if isinstance(r, dict)]
     if not rows:
         return JSONResponse(status_code=400, content={"detail": "Send the script (its scene rows) to review."})
-    try:
-        secs = [int(x) for x in (payload.get("seconds") or [])]
-    except (TypeError, ValueError):
-        secs = []
-    if len(secs) != len(rows):
-        try:
-            secs = filmvoice.scene_seconds(rows, int(payload.get("target_total") or 0))
-        except Exception:
-            secs = [4] * len(rows)
+    secs = _seconds_for(rows, payload)
     pace = sceneshots.normalise_pace(payload.get("pace")) or "standard"
-    roles: dict[int, str] = {}
-    try:
-        for seg in filmcut.plan_by_scene(rows, secs):
-            row0 = (seg.get("scenes") or [{}])[0] or {}
-            roles.setdefault(flowreview.scene_no(row0, seg["index"]), seg.get("role") or "")
-    except Exception as e:
-        print(f"[main] film-review: roles unavailable ({type(e).__name__}: {e})", flush=True)
+    roles = _scene_roles(rows, secs)
+    beat_map = payload.get("beat_map") if isinstance(payload.get("beat_map"), dict) else None
+    no_cover = filmdirect.no_coverage(beat_map)
     shots = flowreview.film_shots(rows, secs, roles)
-    st = flowreview.stats(rows, secs, pace, roles)
+    st = flowreview.stats(rows, secs, pace, roles, no_cover)
     prompt = flowreview.build_prompt(rows=rows, seconds=secs, shots=shots, st=st, logline=str(payload.get("logline") or ""), message=str(payload.get("message") or ""),
-                                     tone=str(payload.get("tone") or ""), pace=pace, characters=str(payload.get("characters") or ""), roles=roles)
+                                     tone=str(payload.get("tone") or ""), pace=pace, characters=str(payload.get("characters") or ""), roles=roles,
+                                     beat_note=filmdirect.read_text(beat_map))
     flags = {k: payload[k] for k in ("house_id", "execution", "brand_mode", "provocation_id", "use_provocation", "use_house",
                                      "use_platform", "use_plan", "skip_mandatories", "force_typed") if k in payload}
     r = complete_endpoint({**flags, "messages": [{"role": "user", "content": prompt}], "film": True})
@@ -2854,7 +2909,7 @@ def film_review(payload: dict):
     if raw is None:
         return {"summary": "", "time_passing": False, "turn_scene": None, "carrier_scene": None, "beats": [], "verdicts": [], "notes": [], "skips": [], "stats": st, "model": False,
                 "notes_out": ["The model's review could not be read, so only the measured checks are shown. Try again for the full review."]}
-    out = flowreview.validate(raw, shots, flowreview.budgets(rows, secs, pace, roles), pace)
+    out = flowreview.validate(raw, shots, flowreview.budgets(rows, secs, pace, roles, no_cover), pace, no_cover)
     out["stats"] = st
     out["model"] = True
     return out
