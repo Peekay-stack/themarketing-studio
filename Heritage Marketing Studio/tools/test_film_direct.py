@@ -126,6 +126,12 @@ check("/scene-shots: with no beat map nothing changes (no director's read in the
 rm = main.scene_shots({"scene": {k: x for k, x in ROWS[1].items() if k != "shots"}, "scene_seconds": 8, "pace": "fast", "beat_map": mont})
 check("rule D5 in /scene-shots: a scene inside a montage returns none and says why", rm["shots"] == [] and "montage" in rm["reason"])
 
+# the turn the director found may be covered even in a short scene (the same exemption the flow review gives it)
+seen["reply"] = json.dumps(GOODSHOTS)
+short_turn = main.scene_shots({"scene": {k: x for k, x in ROWS[3].items() if k != "shots"}, "scene_seconds": 4, "pace": "calm", "beat_map": v, "scene_index": 3})
+short_other = main.scene_shots({"scene": {k: x for k, x in ROWS[4].items() if k != "shots"}, "scene_seconds": 4, "pace": "calm", "beat_map": v, "scene_index": 4})
+check("/scene-shots: a 4 s scene on Calm pace is held as one shot ... unless it is the turn the director found", short_other["shots"] == [] and "one shot" in short_other["reason"] and len(short_turn["shots"]) == 1, str(short_turn)[:200])
+
 # ---- /film-review honours them too --------------------------------------------------------------------------------------------------------------------
 ANS = {"summary": "ok", "time_passing": True, "turn_scene": 4, "carrier_scene": 6, "beats": [], "notes": [],
        "verdicts": [{"scene": 2, "shot": 2, "verdict": "keep", "reason": "the sip landing"}, {"scene": 3, "shot": 2, "verdict": "keep", "reason": "the glass is the object"}, {"scene": 4, "shot": 2, "verdict": "keep", "reason": "her face"}]}

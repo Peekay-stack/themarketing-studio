@@ -66,7 +66,7 @@ def film_shots(rows, seconds, roles=None) -> list[dict]:
     return out
 
 
-def budgets(rows, seconds, pace="", roles=None, no_cover=None) -> dict:
+def budgets(rows, seconds, pace="", roles=None, no_cover=None, turn=None) -> dict:
     """{scene number: how many EXTRA shots that scene may have} under the film's pace (sceneshots.budget: what fits its seconds, held to the pace, with the
     opening and an opted-in sign-off treated as in the proposer)."""
     out: dict[int, int] = {}
@@ -75,11 +75,13 @@ def budgets(rows, seconds, pace="", roles=None, no_cover=None) -> dict:
             continue
         secs = _int((seconds or [])[i] if i < len(seconds or []) else 0, 4)
         role = str((roles or {}).get(scene_no(row, i)) or row.get("beat_role") or "")
+        if turn is not None and scene_no(row, i) == turn and role != "hook":
+            role = "turn"          # the turn the director found may be covered even in a short scene
         out[scene_no(row, i)] = 0 if scene_no(row, i) in (no_cover or {}) else sceneshots.budget(secs, pace, role, bool(row.get("signoff_shots")))
     return out
 
 
-def stats(rows, seconds, pace="", roles=None, no_cover=None) -> dict:
+def stats(rows, seconds, pace="", roles=None, no_cover=None, turn=None) -> dict:
     """Facts measured from the plan, no model: shot count, average length, cut rate against the pace's band, the longest run of one shot size, extras with no job,
     scenes over their pace budget, and a list of plain-language `findings` ({kind, scene, note})."""
     pk = sceneshots.normalise_pace(pace) or "standard"
@@ -121,7 +123,7 @@ def stats(rows, seconds, pace="", roles=None, no_cover=None) -> dict:
     for s in no_job:
         findings.append({"kind": "no-job", "scene": s["scene"], "note": f"Scene {s['scene']} shot {s['shot']} has no job (what it is for), so nothing says why it should be rendered."})
     over = []
-    allowed_by_scene = budgets(rows, seconds, pace, roles, no_cover)
+    allowed_by_scene = budgets(rows, seconds, pace, roles, no_cover, turn)
     for i, row in enumerate(rows or []):
         if not isinstance(row, dict):
             continue

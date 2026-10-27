@@ -71,6 +71,11 @@ clean = fr.stats([{"no": 1, "visual": "a", "shot_size": "wide"}, {"no": 2, "visu
 check("stats: a short, calm, varied film has no findings", clean["findings"] == [], str(clean))
 check("stats: empty film is safe", fr.stats([], [], "calm", {})["shots"] == 0 and fr.stats(None, None, "", None)["shots"] == 0)
 
+# the director's turn may be covered in a short scene, in the facts and in the budgets (same exemption as the proposer)
+short = [{"no": 1, "visual": "a", "shot_size": "wide"}, {"no": 2, "visual": "b", "shot_size": "medium", "shots": [S("Her face.", "close", 2, "reaction", "the realisation")]}]
+check("stats: a 4 s scene with one extra is over the Calm budget ...", any(f["kind"] == "over-budget" and f["scene"] == 2 for f in fr.stats(short, [6, 4], "calm", {})["findings"]))
+check("stats: ... unless it is the turn the director found", not any(f["kind"] == "over-budget" for f in fr.stats(short, [6, 4], "calm", {}, None, 2)["findings"]) and fr.budgets(short, [6, 4], "calm", {}, None, 2)[2] == 1)
+
 # ---- build_prompt -----------------------------------------------------------------------------------------------------------------------
 pr = fr.build_prompt(rows=ROWS, seconds=SECS, shots=sh, st=st, logline="A mother lets a hem down, glass by glass.", message="One glass at a time.", tone="tender, unhurried", pace="calm",
                      characters="Mother, boy", roles=ROLES)

@@ -2759,6 +2759,9 @@ def scene_shots(payload: dict):
     except (TypeError, ValueError):
         scene_n = None
     hold = filmdirect.no_coverage(beat_map).get(scene_n) if scene_n is not None else None
+    # The turn the director found may be covered even in a short scene (framework section 6), the same exemption the flow review gives it.
+    if beat_map and scene_n is not None and scene_n == beat_map.get("turn_scene") and role not in ("hook", "turn"):
+        role = "turn"
     if hold:
         return {"shots": [], "master_secs": secs, "notes": [], "scene_seconds": secs, "pace": pace, "budget": 0, "needs_coverage": False,
                 "why": hold[:1].upper() + hold[1:] + ".", "reason": "No extra angles: " + hold + "."}
@@ -2912,8 +2915,9 @@ def film_review(payload: dict):
     roles = _scene_roles(rows, secs)
     beat_map = payload.get("beat_map") if isinstance(payload.get("beat_map"), dict) else None
     no_cover = filmdirect.no_coverage(beat_map)
+    turn_scene = (beat_map or {}).get("turn_scene")
     shots = flowreview.film_shots(rows, secs, roles)
-    st = flowreview.stats(rows, secs, pace, roles, no_cover)
+    st = flowreview.stats(rows, secs, pace, roles, no_cover, turn_scene)
     prompt = flowreview.build_prompt(rows=rows, seconds=secs, shots=shots, st=st, logline=str(payload.get("logline") or ""), message=str(payload.get("message") or ""),
                                      tone=str(payload.get("tone") or ""), pace=pace, characters=str(payload.get("characters") or ""), roles=roles,
                                      beat_note=filmdirect.read_text(beat_map))
@@ -2926,7 +2930,7 @@ def film_review(payload: dict):
     if raw is None:
         return {"summary": "", "time_passing": False, "turn_scene": None, "carrier_scene": None, "beats": [], "verdicts": [], "notes": [], "skips": [], "stats": st, "model": False,
                 "notes_out": ["The model's review could not be read, so only the measured checks are shown. Try again for the full review."]}
-    out = flowreview.validate(raw, shots, flowreview.budgets(rows, secs, pace, roles, no_cover), pace, no_cover)
+    out = flowreview.validate(raw, shots, flowreview.budgets(rows, secs, pace, roles, no_cover, turn_scene), pace, no_cover)
     out["stats"] = st
     out["model"] = True
     return out
