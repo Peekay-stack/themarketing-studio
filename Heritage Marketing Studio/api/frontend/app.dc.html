@@ -3069,9 +3069,7 @@
               </span>
             </div>
             <div style="padding:0 11px 8px; font-size:11.5px; line-height:1.5; color:#6B7280;">{{ sc.desc }}</div>
-            <sc-if value="{{ sc.hasShotsChip }}" hint-placeholder-val="{{ false }}">
-              <div style="padding:0 11px 8px; font-size:11px; font-weight:700; color:#1A8A7A;">{{ sc.shotsChip }}</div>
-            </sc-if>
+            {{ sc.shotStrip }}
             <!-- The spoken words live with the frame they play over: edit here and the scene's
                  length re-times immediately, so picture and sound can't drift apart. -->
             <div style="border-top:1px solid #E6E3DC; padding:8px 11px 10px; background:#FBFAF8;">
@@ -16477,6 +16475,33 @@ class Component extends DCLogic {
       h('input', { value:sh.camera || '', onChange:this.editShotField(idx, k, 'camera'), placeholder:'Camera movement, e.g. slow push-in', style:{ ...field, width:'100%' } }),
       ...warns.map((w, i) => h('div', { key:'w' + i, style:{ fontSize:11, lineHeight:1.45, color:'#B07A12', fontWeight:700 } }, w)));
   }
+  // The Shoot Board's view of a scene with coverage: every shot as a small frame with its place, size and seconds (read-only review;
+  // the controls live on the Storyboard card). Shot 1 is the scene's own frame.
+  shotStrip(idx, row){
+    const ex = this.extraShots(row);
+    if (!ex.length) return null;
+    const h = React.createElement, s = this.state, fr = s.sceneFrames || {};
+    const cell = (k, label, sub) => {
+      const f = fr[this.frameKey(idx, k)] || {};
+      const stale = f.status === 'done' && this.frameIsStale(idx, f, k);
+      return h('div', { key:'sc' + k, style:{ minWidth:0 } },
+        h('div', { onClick: f.url ? this.openLightbox(f.url) : undefined, style:{ position:'relative', aspectRatio:'16/9', borderRadius:6, overflow:'hidden', background:'#E6E3DC', cursor: f.url ? 'zoom-in' : 'default' } },
+          f.url ? h('img', { src:f.url, style:{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' } }) : null,
+          f.status === 'rendering' ? h('div', { style:{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', background:'rgba(23,50,94,0.55)', color:'#fff', fontSize:9, fontWeight:700 } }, '…') : null,
+          !f.url && f.status !== 'rendering' ? h('div', { style:{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', color:'#9AA1AD', fontSize:9, fontWeight:700 } }, 'no frame') : null,
+          f.status === 'done' ? h('span', { style:{ position:'absolute', left:4, bottom:4, width:7, height:7, borderRadius:'50%', background: stale ? '#C8860F' : '#259821', boxShadow:'0 0 0 2px rgba(0,0,0,0.15)' } }) : null),
+        h('div', { style:{ fontSize:10.5, fontWeight:700, color:'#17325E', marginTop:2, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' } }, label),
+        h('div', { style:{ fontSize:10, color:'#6B7280', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' } }, sub),
+        k ? h('div', { onClick:this.generateFrame(idx, k), style:{ fontSize:10, fontWeight:700, color:'#2E5EA6', cursor:'pointer', marginTop:1 } }, f.status === 'done' ? '\u21bb Re-render' : 'Render') : null);
+    };
+    // Short size names so a narrow card never clips them ("Over-the-shoulder" is too long for a third of a card).
+    const SHORT = { wide:'Wide', medium:'Medium', close:'Close-up', detail:'Detail', over:'Over-shoulder', product:'Product' };
+    const cells = [cell(0, 'Shot 1 \u00b7 ' + this.shotMasterSecs(row) + ' s', 'Scene frame')].concat(ex.map((sh, j) => cell(j + 1, 'Shot ' + (j + 2) + ' \u00b7 ' + (parseInt(sh.secs, 10) || 2) + ' s', SHORT[sh.shot_size] || sh.shot_size || '')));
+    const done = cells.filter((_, k) => { const f = fr[this.frameKey(idx, k)]; return f && f.status === 'done'; }).length;
+    return h('div', { style:{ padding:'0 11px 8px' } },
+      h('div', { style:{ fontSize:10.5, fontWeight:800, letterSpacing:'0.06em', textTransform:'uppercase', color:'#1A8A7A', marginBottom:4 } }, cells.length + ' shots \u00b7 ' + done + '/' + cells.length + ' frames'),
+      h('div', { style:{ display:'grid', gridTemplateColumns:'repeat(' + Math.min(cells.length, 3) + ', 1fr)', gap:6 } }, ...cells));
+  }
   // The whole Coverage strip for one scene card, built as elements (a loop inside the card's own loop leaves placeholder ghosts).
   coverageStrip(idx, row){
     const h = React.createElement, s = this.state, ex = this.extraShots(row), key = this.shotKey(row);
@@ -19302,8 +19327,7 @@ class Component extends DCLogic {
         hasPackLocked: this.packAvailable(s), packMissing: !!f.packMissing,
         packShape: f.packShape || '', hasPackShape: !!f.packShape,
         coverage: this.coverageStrip(i, r),
-        shotsChip: this.extraShots(r).length ? '+' + this.extraShots(r).length + ' shot' + (this.extraShots(r).length > 1 ? 's' : '') + ' \u00b7 ' + this.extraShots(r).filter((_, j) => { const ff = s.sceneFrames[this.frameKey(i, j + 1)]; return ff && ff.status === 'done'; }).length + '/' + this.extraShots(r).length + ' frames' : '',
-        hasShotsChip: this.extraShots(r).length > 0,
+        shotStrip: this.shotStrip(i, r),
         frameNote: r.frame_note || '', editFrameNote: this.editFrameNote(i),
         lines, hasLines: lines.length > 0, isSilent: lines.length === 0, willBeSilent,
         addVo: this.addSceneLine(i, 'vo'), addLine: this.addSceneLine(i, 'dialogue'),
