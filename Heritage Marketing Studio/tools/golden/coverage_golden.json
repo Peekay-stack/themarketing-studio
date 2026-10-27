@@ -1,0 +1,1800 @@
+{
+ "plans": {
+  "f1_six_scenes@0": [
+   {
+    "continues": false,
+    "index": 0,
+    "no": 1,
+    "role": "hook",
+    "role_what": "The first two or three seconds. One image that earns the next five.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 1,
+    "no": 2,
+    "role": "world",
+    "role_what": "Where and who. Establishes the place and the person the film is about.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 2,
+    "no": 3,
+    "role": "mechanism",
+    "role_what": "The thing being shown — the proof, the demonstration, the routine. The middle, and where extra length goes.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 3,
+    "no": 4,
+    "role": "mechanism",
+    "role_what": "The thing being shown — the proof, the demonstration, the routine. The middle, and where extra length goes.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 4,
+    "no": 5,
+    "role": "turn",
+    "role_what": "What changes. The reason the film is a film and not a montage.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 5,
+    "no": 6,
+    "role": "brand",
+    "role_what": "The endframe: pack, logo, mnemonic, the line as real type.",
+    "seconds": 4
+   }
+  ],
+  "f1_six_scenes@10": [
+   {
+    "continues": false,
+    "index": 0,
+    "no": 1,
+    "role": "hook",
+    "role_what": "The first two or three seconds. One image that earns the next five.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 1,
+    "no": 2,
+    "role": "world",
+    "role_what": "Where and who. Establishes the place and the person the film is about.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 2,
+    "no": 3,
+    "role": "mechanism",
+    "role_what": "The thing being shown — the proof, the demonstration, the routine. The middle, and where extra length goes.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 3,
+    "no": 4,
+    "role": "mechanism",
+    "role_what": "The thing being shown — the proof, the demonstration, the routine. The middle, and where extra length goes.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 4,
+    "no": 5,
+    "role": "turn",
+    "role_what": "What changes. The reason the film is a film and not a montage.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 5,
+    "no": 6,
+    "role": "brand",
+    "role_what": "The endframe: pack, logo, mnemonic, the line as real type.",
+    "seconds": 4
+   }
+  ],
+  "f1_six_scenes@20": [
+   {
+    "continues": false,
+    "index": 0,
+    "no": 1,
+    "role": "hook",
+    "role_what": "The first two or three seconds. One image that earns the next five.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 1,
+    "no": 2,
+    "role": "world",
+    "role_what": "Where and who. Establishes the place and the person the film is about.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 2,
+    "no": 3,
+    "role": "mechanism",
+    "role_what": "The thing being shown — the proof, the demonstration, the routine. The middle, and where extra length goes.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 3,
+    "no": 4,
+    "role": "mechanism",
+    "role_what": "The thing being shown — the proof, the demonstration, the routine. The middle, and where extra length goes.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 4,
+    "no": 5,
+    "role": "turn",
+    "role_what": "What changes. The reason the film is a film and not a montage.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 5,
+    "no": 6,
+    "role": "brand",
+    "role_what": "The endframe: pack, logo, mnemonic, the line as real type.",
+    "seconds": 4
+   }
+  ],
+  "f1_six_scenes@30": [
+   {
+    "continues": false,
+    "index": 0,
+    "no": 1,
+    "role": "hook",
+    "role_what": "The first two or three seconds. One image that earns the next five.",
+    "seconds": 6
+   },
+   {
+    "continues": false,
+    "index": 1,
+    "no": 2,
+    "role": "world",
+    "role_what": "Where and who. Establishes the place and the person the film is about.",
+    "seconds": 6
+   },
+   {
+    "continues": false,
+    "index": 2,
+    "no": 3,
+    "role": "mechanism",
+    "role_what": "The thing being shown — the proof, the demonstration, the routine. The middle, and where extra length goes.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 3,
+    "no": 4,
+    "role": "mechanism",
+    "role_what": "The thing being shown — the proof, the demonstration, the routine. The middle, and where extra length goes.",
+    "seconds": 6
+   },
+   {
+    "continues": false,
+    "index": 4,
+    "no": 5,
+    "role": "turn",
+    "role_what": "What changes. The reason the film is a film and not a montage.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 5,
+    "no": 6,
+    "role": "brand",
+    "role_what": "The endframe: pack, logo, mnemonic, the line as real type.",
+    "seconds": 4
+   }
+  ],
+  "f2_four_scenes@0": [
+   {
+    "continues": false,
+    "index": 0,
+    "no": 1,
+    "role": "hook",
+    "role_what": "The first two or three seconds. One image that earns the next five.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 1,
+    "no": 2,
+    "role": "mechanism",
+    "role_what": "The thing being shown — the proof, the demonstration, the routine. The middle, and where extra length goes.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 2,
+    "no": 3,
+    "role": "turn",
+    "role_what": "What changes. The reason the film is a film and not a montage.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 3,
+    "no": 4,
+    "role": "brand",
+    "role_what": "The endframe: pack, logo, mnemonic, the line as real type.",
+    "seconds": 4
+   }
+  ],
+  "f2_four_scenes@10": [
+   {
+    "continues": false,
+    "index": 0,
+    "no": 1,
+    "role": "hook",
+    "role_what": "The first two or three seconds. One image that earns the next five.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 1,
+    "no": 2,
+    "role": "mechanism",
+    "role_what": "The thing being shown — the proof, the demonstration, the routine. The middle, and where extra length goes.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 2,
+    "no": 3,
+    "role": "turn",
+    "role_what": "What changes. The reason the film is a film and not a montage.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 3,
+    "no": 4,
+    "role": "brand",
+    "role_what": "The endframe: pack, logo, mnemonic, the line as real type.",
+    "seconds": 4
+   }
+  ],
+  "f2_four_scenes@20": [
+   {
+    "continues": false,
+    "index": 0,
+    "no": 1,
+    "role": "hook",
+    "role_what": "The first two or three seconds. One image that earns the next five.",
+    "seconds": 6
+   },
+   {
+    "continues": false,
+    "index": 1,
+    "no": 2,
+    "role": "mechanism",
+    "role_what": "The thing being shown — the proof, the demonstration, the routine. The middle, and where extra length goes.",
+    "seconds": 6
+   },
+   {
+    "continues": false,
+    "index": 2,
+    "no": 3,
+    "role": "turn",
+    "role_what": "What changes. The reason the film is a film and not a montage.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 3,
+    "no": 4,
+    "role": "brand",
+    "role_what": "The endframe: pack, logo, mnemonic, the line as real type.",
+    "seconds": 4
+   }
+  ],
+  "f2_four_scenes@30": [
+   {
+    "continues": false,
+    "index": 0,
+    "no": 1,
+    "role": "hook",
+    "role_what": "The first two or three seconds. One image that earns the next five.",
+    "seconds": 8
+   },
+   {
+    "continues": false,
+    "index": 1,
+    "no": 2,
+    "role": "mechanism",
+    "role_what": "The thing being shown — the proof, the demonstration, the routine. The middle, and where extra length goes.",
+    "seconds": 8
+   },
+   {
+    "continues": false,
+    "index": 2,
+    "no": 3,
+    "role": "turn",
+    "role_what": "What changes. The reason the film is a film and not a montage.",
+    "seconds": 8
+   },
+   {
+    "continues": false,
+    "index": 3,
+    "no": 4,
+    "role": "brand",
+    "role_what": "The endframe: pack, logo, mnemonic, the line as real type.",
+    "seconds": 6
+   }
+  ],
+  "f3_three_silent@0": [
+   {
+    "continues": false,
+    "index": 0,
+    "no": 1,
+    "role": "hook",
+    "role_what": "The first two or three seconds. One image that earns the next five.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 1,
+    "no": 2,
+    "role": "turn",
+    "role_what": "What changes. The reason the film is a film and not a montage.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 2,
+    "no": 3,
+    "role": "brand",
+    "role_what": "The endframe: pack, logo, mnemonic, the line as real type.",
+    "seconds": 4
+   }
+  ],
+  "f3_three_silent@10": [
+   {
+    "continues": false,
+    "index": 0,
+    "no": 1,
+    "role": "hook",
+    "role_what": "The first two or three seconds. One image that earns the next five.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 1,
+    "no": 2,
+    "role": "turn",
+    "role_what": "What changes. The reason the film is a film and not a montage.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 2,
+    "no": 3,
+    "role": "brand",
+    "role_what": "The endframe: pack, logo, mnemonic, the line as real type.",
+    "seconds": 4
+   }
+  ],
+  "f3_three_silent@20": [
+   {
+    "continues": false,
+    "index": 0,
+    "no": 1,
+    "role": "hook",
+    "role_what": "The first two or three seconds. One image that earns the next five.",
+    "seconds": 8
+   },
+   {
+    "continues": false,
+    "index": 1,
+    "no": 2,
+    "role": "turn",
+    "role_what": "What changes. The reason the film is a film and not a montage.",
+    "seconds": 6
+   },
+   {
+    "continues": false,
+    "index": 2,
+    "no": 3,
+    "role": "brand",
+    "role_what": "The endframe: pack, logo, mnemonic, the line as real type.",
+    "seconds": 6
+   }
+  ],
+  "f3_three_silent@30": [
+   {
+    "continues": false,
+    "index": 0,
+    "no": 1,
+    "role": "hook",
+    "role_what": "The first two or three seconds. One image that earns the next five.",
+    "seconds": 6
+   },
+   {
+    "continues": true,
+    "index": 1,
+    "no": 1,
+    "role": "hook",
+    "role_what": "The first two or three seconds. One image that earns the next five.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 2,
+    "no": 2,
+    "role": "turn",
+    "role_what": "What changes. The reason the film is a film and not a montage.",
+    "seconds": 6
+   },
+   {
+    "continues": true,
+    "index": 3,
+    "no": 2,
+    "role": "turn",
+    "role_what": "What changes. The reason the film is a film and not a montage.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 4,
+    "no": 3,
+    "role": "brand",
+    "role_what": "The endframe: pack, logo, mnemonic, the line as real type.",
+    "seconds": 6
+   },
+   {
+    "continues": true,
+    "index": 5,
+    "no": 3,
+    "role": "brand",
+    "role_what": "The endframe: pack, logo, mnemonic, the line as real type.",
+    "seconds": 4
+   }
+  ],
+  "f4_long_dialogue@0": [
+   {
+    "continues": false,
+    "index": 0,
+    "no": 1,
+    "role": "hook",
+    "role_what": "The first two or three seconds. One image that earns the next five.",
+    "seconds": 8
+   },
+   {
+    "continues": true,
+    "index": 1,
+    "no": 1,
+    "role": "hook",
+    "role_what": "The first two or three seconds. One image that earns the next five.",
+    "seconds": 8
+   },
+   {
+    "continues": true,
+    "index": 2,
+    "no": 1,
+    "role": "hook",
+    "role_what": "The first two or three seconds. One image that earns the next five.",
+    "seconds": 6
+   },
+   {
+    "continues": true,
+    "index": 3,
+    "no": 1,
+    "role": "hook",
+    "role_what": "The first two or three seconds. One image that earns the next five.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 4,
+    "no": 2,
+    "role": "brand",
+    "role_what": "The endframe: pack, logo, mnemonic, the line as real type.",
+    "seconds": 8
+   },
+   {
+    "continues": true,
+    "index": 5,
+    "no": 2,
+    "role": "brand",
+    "role_what": "The endframe: pack, logo, mnemonic, the line as real type.",
+    "seconds": 6
+   }
+  ],
+  "f4_long_dialogue@10": [
+   {
+    "continues": false,
+    "index": 0,
+    "no": 1,
+    "role": "hook",
+    "role_what": "The first two or three seconds. One image that earns the next five.",
+    "seconds": 6
+   },
+   {
+    "continues": false,
+    "index": 1,
+    "no": 2,
+    "role": "brand",
+    "role_what": "The endframe: pack, logo, mnemonic, the line as real type.",
+    "seconds": 4
+   }
+  ],
+  "f4_long_dialogue@20": [
+   {
+    "continues": false,
+    "index": 0,
+    "no": 1,
+    "role": "hook",
+    "role_what": "The first two or three seconds. One image that earns the next five.",
+    "seconds": 8
+   },
+   {
+    "continues": true,
+    "index": 1,
+    "no": 1,
+    "role": "hook",
+    "role_what": "The first two or three seconds. One image that earns the next five.",
+    "seconds": 8
+   },
+   {
+    "continues": false,
+    "index": 2,
+    "no": 2,
+    "role": "brand",
+    "role_what": "The endframe: pack, logo, mnemonic, the line as real type.",
+    "seconds": 4
+   }
+  ],
+  "f4_long_dialogue@30": [
+   {
+    "continues": false,
+    "index": 0,
+    "no": 1,
+    "role": "hook",
+    "role_what": "The first two or three seconds. One image that earns the next five.",
+    "seconds": 8
+   },
+   {
+    "continues": true,
+    "index": 1,
+    "no": 1,
+    "role": "hook",
+    "role_what": "The first two or three seconds. One image that earns the next five.",
+    "seconds": 8
+   },
+   {
+    "continues": true,
+    "index": 2,
+    "no": 1,
+    "role": "hook",
+    "role_what": "The first two or three seconds. One image that earns the next five.",
+    "seconds": 6
+   },
+   {
+    "continues": false,
+    "index": 3,
+    "no": 2,
+    "role": "brand",
+    "role_what": "The endframe: pack, logo, mnemonic, the line as real type.",
+    "seconds": 8
+   }
+  ],
+  "f5_explicit_roles@0": [
+   {
+    "continues": false,
+    "index": 0,
+    "no": 1,
+    "role": "hook",
+    "role_what": "The first two or three seconds. One image that earns the next five.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 1,
+    "no": 2,
+    "role": "hook",
+    "role_what": "The first two or three seconds. One image that earns the next five.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 2,
+    "no": 3,
+    "role": "brand",
+    "role_what": "The endframe: pack, logo, mnemonic, the line as real type.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 3,
+    "no": 4,
+    "role": "turn",
+    "role_what": "What changes. The reason the film is a film and not a montage.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 4,
+    "no": 5,
+    "role": "button",
+    "role_what": "A short closing beat after the sign-off: the last human moment, a joke, a sting. Not a second endframe.",
+    "seconds": 4
+   }
+  ],
+  "f5_explicit_roles@10": [
+   {
+    "continues": false,
+    "index": 0,
+    "no": 1,
+    "role": "hook",
+    "role_what": "The first two or three seconds. One image that earns the next five.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 1,
+    "no": 2,
+    "role": "hook",
+    "role_what": "The first two or three seconds. One image that earns the next five.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 2,
+    "no": 3,
+    "role": "brand",
+    "role_what": "The endframe: pack, logo, mnemonic, the line as real type.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 3,
+    "no": 4,
+    "role": "turn",
+    "role_what": "What changes. The reason the film is a film and not a montage.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 4,
+    "no": 5,
+    "role": "button",
+    "role_what": "A short closing beat after the sign-off: the last human moment, a joke, a sting. Not a second endframe.",
+    "seconds": 4
+   }
+  ],
+  "f5_explicit_roles@20": [
+   {
+    "continues": false,
+    "index": 0,
+    "no": 1,
+    "role": "hook",
+    "role_what": "The first two or three seconds. One image that earns the next five.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 1,
+    "no": 2,
+    "role": "hook",
+    "role_what": "The first two or three seconds. One image that earns the next five.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 2,
+    "no": 3,
+    "role": "brand",
+    "role_what": "The endframe: pack, logo, mnemonic, the line as real type.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 3,
+    "no": 4,
+    "role": "turn",
+    "role_what": "What changes. The reason the film is a film and not a montage.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 4,
+    "no": 5,
+    "role": "button",
+    "role_what": "A short closing beat after the sign-off: the last human moment, a joke, a sting. Not a second endframe.",
+    "seconds": 4
+   }
+  ],
+  "f5_explicit_roles@30": [
+   {
+    "continues": false,
+    "index": 0,
+    "no": 1,
+    "role": "hook",
+    "role_what": "The first two or three seconds. One image that earns the next five.",
+    "seconds": 6
+   },
+   {
+    "continues": false,
+    "index": 1,
+    "no": 2,
+    "role": "hook",
+    "role_what": "The first two or three seconds. One image that earns the next five.",
+    "seconds": 6
+   },
+   {
+    "continues": false,
+    "index": 2,
+    "no": 3,
+    "role": "brand",
+    "role_what": "The endframe: pack, logo, mnemonic, the line as real type.",
+    "seconds": 6
+   },
+   {
+    "continues": false,
+    "index": 3,
+    "no": 4,
+    "role": "turn",
+    "role_what": "What changes. The reason the film is a film and not a montage.",
+    "seconds": 6
+   },
+   {
+    "continues": false,
+    "index": 4,
+    "no": 5,
+    "role": "button",
+    "role_what": "A short closing beat after the sign-off: the last human moment, a joke, a sting. Not a second endframe.",
+    "seconds": 6
+   }
+  ],
+  "f6_prompt_fields@0": [
+   {
+    "continues": false,
+    "index": 0,
+    "no": 1,
+    "role": "hook",
+    "role_what": "The first two or three seconds. One image that earns the next five.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 1,
+    "no": 2,
+    "role": "world",
+    "role_what": "Where and who. Establishes the place and the person the film is about.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 2,
+    "no": 3,
+    "role": "mechanism",
+    "role_what": "The thing being shown — the proof, the demonstration, the routine. The middle, and where extra length goes.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 3,
+    "no": 4,
+    "role": "turn",
+    "role_what": "What changes. The reason the film is a film and not a montage.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 4,
+    "no": 5,
+    "role": "brand",
+    "role_what": "The endframe: pack, logo, mnemonic, the line as real type.",
+    "seconds": 4
+   }
+  ],
+  "f6_prompt_fields@10": [
+   {
+    "continues": false,
+    "index": 0,
+    "no": 1,
+    "role": "hook",
+    "role_what": "The first two or three seconds. One image that earns the next five.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 1,
+    "no": 2,
+    "role": "world",
+    "role_what": "Where and who. Establishes the place and the person the film is about.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 2,
+    "no": 3,
+    "role": "mechanism",
+    "role_what": "The thing being shown — the proof, the demonstration, the routine. The middle, and where extra length goes.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 3,
+    "no": 4,
+    "role": "turn",
+    "role_what": "What changes. The reason the film is a film and not a montage.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 4,
+    "no": 5,
+    "role": "brand",
+    "role_what": "The endframe: pack, logo, mnemonic, the line as real type.",
+    "seconds": 4
+   }
+  ],
+  "f6_prompt_fields@20": [
+   {
+    "continues": false,
+    "index": 0,
+    "no": 1,
+    "role": "hook",
+    "role_what": "The first two or three seconds. One image that earns the next five.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 1,
+    "no": 2,
+    "role": "world",
+    "role_what": "Where and who. Establishes the place and the person the film is about.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 2,
+    "no": 3,
+    "role": "mechanism",
+    "role_what": "The thing being shown — the proof, the demonstration, the routine. The middle, and where extra length goes.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 3,
+    "no": 4,
+    "role": "turn",
+    "role_what": "What changes. The reason the film is a film and not a montage.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 4,
+    "no": 5,
+    "role": "brand",
+    "role_what": "The endframe: pack, logo, mnemonic, the line as real type.",
+    "seconds": 4
+   }
+  ],
+  "f6_prompt_fields@30": [
+   {
+    "continues": false,
+    "index": 0,
+    "no": 1,
+    "role": "hook",
+    "role_what": "The first two or three seconds. One image that earns the next five.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 1,
+    "no": 2,
+    "role": "world",
+    "role_what": "Where and who. Establishes the place and the person the film is about.",
+    "seconds": 8
+   },
+   {
+    "continues": false,
+    "index": 2,
+    "no": 3,
+    "role": "mechanism",
+    "role_what": "The thing being shown — the proof, the demonstration, the routine. The middle, and where extra length goes.",
+    "seconds": 6
+   },
+   {
+    "continues": false,
+    "index": 3,
+    "no": 4,
+    "role": "turn",
+    "role_what": "What changes. The reason the film is a film and not a montage.",
+    "seconds": 6
+   },
+   {
+    "continues": false,
+    "index": 4,
+    "no": 5,
+    "role": "brand",
+    "role_what": "The endframe: pack, logo, mnemonic, the line as real type.",
+    "seconds": 6
+   }
+  ],
+  "f7_single@0": [
+   {
+    "continues": false,
+    "index": 0,
+    "no": 1,
+    "role": "brand",
+    "role_what": "The endframe: pack, logo, mnemonic, the line as real type.",
+    "seconds": 4
+   }
+  ],
+  "f7_single@10": [
+   {
+    "continues": false,
+    "index": 0,
+    "no": 1,
+    "role": "brand",
+    "role_what": "The endframe: pack, logo, mnemonic, the line as real type.",
+    "seconds": 6
+   },
+   {
+    "continues": true,
+    "index": 1,
+    "no": 1,
+    "role": "brand",
+    "role_what": "The endframe: pack, logo, mnemonic, the line as real type.",
+    "seconds": 4
+   }
+  ],
+  "f7_single@20": [
+   {
+    "continues": false,
+    "index": 0,
+    "no": 1,
+    "role": "brand",
+    "role_what": "The endframe: pack, logo, mnemonic, the line as real type.",
+    "seconds": 8
+   },
+   {
+    "continues": true,
+    "index": 1,
+    "no": 1,
+    "role": "brand",
+    "role_what": "The endframe: pack, logo, mnemonic, the line as real type.",
+    "seconds": 8
+   },
+   {
+    "continues": true,
+    "index": 2,
+    "no": 1,
+    "role": "brand",
+    "role_what": "The endframe: pack, logo, mnemonic, the line as real type.",
+    "seconds": 4
+   }
+  ],
+  "f7_single@30": [
+   {
+    "continues": false,
+    "index": 0,
+    "no": 1,
+    "role": "brand",
+    "role_what": "The endframe: pack, logo, mnemonic, the line as real type.",
+    "seconds": 8
+   },
+   {
+    "continues": true,
+    "index": 1,
+    "no": 1,
+    "role": "brand",
+    "role_what": "The endframe: pack, logo, mnemonic, the line as real type.",
+    "seconds": 8
+   },
+   {
+    "continues": true,
+    "index": 2,
+    "no": 1,
+    "role": "brand",
+    "role_what": "The endframe: pack, logo, mnemonic, the line as real type.",
+    "seconds": 8
+   },
+   {
+    "continues": true,
+    "index": 3,
+    "no": 1,
+    "role": "brand",
+    "role_what": "The endframe: pack, logo, mnemonic, the line as real type.",
+    "seconds": 6
+   }
+  ],
+  "f8_overflow_seven@0": [
+   {
+    "continues": false,
+    "index": 0,
+    "no": 1,
+    "role": "hook",
+    "role_what": "The first two or three seconds. One image that earns the next five.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 1,
+    "no": 2,
+    "role": "world",
+    "role_what": "Where and who. Establishes the place and the person the film is about.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 2,
+    "no": 3,
+    "role": "mechanism",
+    "role_what": "The thing being shown — the proof, the demonstration, the routine. The middle, and where extra length goes.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 3,
+    "no": 4,
+    "role": "mechanism",
+    "role_what": "The thing being shown — the proof, the demonstration, the routine. The middle, and where extra length goes.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 4,
+    "no": 5,
+    "role": "mechanism",
+    "role_what": "The thing being shown — the proof, the demonstration, the routine. The middle, and where extra length goes.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 5,
+    "no": 6,
+    "role": "turn",
+    "role_what": "What changes. The reason the film is a film and not a montage.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 6,
+    "no": 7,
+    "role": "brand",
+    "role_what": "The endframe: pack, logo, mnemonic, the line as real type.",
+    "seconds": 4
+   }
+  ],
+  "f8_overflow_seven@10": [
+   {
+    "continues": false,
+    "index": 0,
+    "no": 1,
+    "role": "hook",
+    "role_what": "The first two or three seconds. One image that earns the next five.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 1,
+    "no": 2,
+    "role": "world",
+    "role_what": "Where and who. Establishes the place and the person the film is about.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 2,
+    "no": 3,
+    "role": "mechanism",
+    "role_what": "The thing being shown — the proof, the demonstration, the routine. The middle, and where extra length goes.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 3,
+    "no": 4,
+    "role": "mechanism",
+    "role_what": "The thing being shown — the proof, the demonstration, the routine. The middle, and where extra length goes.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 4,
+    "no": 5,
+    "role": "mechanism",
+    "role_what": "The thing being shown — the proof, the demonstration, the routine. The middle, and where extra length goes.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 5,
+    "no": 6,
+    "role": "turn",
+    "role_what": "What changes. The reason the film is a film and not a montage.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 6,
+    "no": 7,
+    "role": "brand",
+    "role_what": "The endframe: pack, logo, mnemonic, the line as real type.",
+    "seconds": 4
+   }
+  ],
+  "f8_overflow_seven@20": [
+   {
+    "continues": false,
+    "index": 0,
+    "no": 1,
+    "role": "hook",
+    "role_what": "The first two or three seconds. One image that earns the next five.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 1,
+    "no": 2,
+    "role": "world",
+    "role_what": "Where and who. Establishes the place and the person the film is about.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 2,
+    "no": 3,
+    "role": "mechanism",
+    "role_what": "The thing being shown — the proof, the demonstration, the routine. The middle, and where extra length goes.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 3,
+    "no": 4,
+    "role": "mechanism",
+    "role_what": "The thing being shown — the proof, the demonstration, the routine. The middle, and where extra length goes.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 4,
+    "no": 5,
+    "role": "mechanism",
+    "role_what": "The thing being shown — the proof, the demonstration, the routine. The middle, and where extra length goes.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 5,
+    "no": 6,
+    "role": "turn",
+    "role_what": "What changes. The reason the film is a film and not a montage.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 6,
+    "no": 7,
+    "role": "brand",
+    "role_what": "The endframe: pack, logo, mnemonic, the line as real type.",
+    "seconds": 4
+   }
+  ],
+  "f8_overflow_seven@30": [
+   {
+    "continues": false,
+    "index": 0,
+    "no": 1,
+    "role": "hook",
+    "role_what": "The first two or three seconds. One image that earns the next five.",
+    "seconds": 6
+   },
+   {
+    "continues": false,
+    "index": 1,
+    "no": 2,
+    "role": "world",
+    "role_what": "Where and who. Establishes the place and the person the film is about.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 2,
+    "no": 3,
+    "role": "mechanism",
+    "role_what": "The thing being shown — the proof, the demonstration, the routine. The middle, and where extra length goes.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 3,
+    "no": 4,
+    "role": "mechanism",
+    "role_what": "The thing being shown — the proof, the demonstration, the routine. The middle, and where extra length goes.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 4,
+    "no": 5,
+    "role": "mechanism",
+    "role_what": "The thing being shown — the proof, the demonstration, the routine. The middle, and where extra length goes.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 5,
+    "no": 6,
+    "role": "turn",
+    "role_what": "What changes. The reason the film is a film and not a montage.",
+    "seconds": 4
+   },
+   {
+    "continues": false,
+    "index": 6,
+    "no": 7,
+    "role": "brand",
+    "role_what": "The endframe: pack, logo, mnemonic, the line as real type.",
+    "seconds": 4
+   }
+  ]
+ },
+ "prompts": {
+  "f1_six_scenes/lite": [
+   {
+    "frame": false,
+    "prompt": "Cinematic 16:9 brand film for Heritage Pure Milk (Dairy — milk, curd, and value-added dairy, India, strongest across South India (Telangana, Andhra Pradesh, Karnataka, Tamil Nadu), expanding nationally. #PureDoodhKiShakti #HeritageFoods). This is shot 1 of 6 in one continuous film — keep the characters, wardrobe, location and grade IDENTICAL to the other shots so the parts cut together seamlessly. Film logline: A morning.. Depict ONLY this beat: 0–6s A mother pours milk into a steel vessel.:. This is the HOOK — the opening shot. One arresting image that reads in under two seconds and earns the rest of the film. Simple, high contrast, no set-up. The scene's own description decides what is shown; this sets the emphasis. Live-action photoreal cinematography, shot on a cinema camera with warm natural light. Camera: slow push in.  No on-screen captions, subtitles, watermarks or logos. No spoken dialogue and no musicians or instruments in the picture — the soundtrack is added separately in the edit.",
+    "seconds": 6,
+    "tier": "lite"
+   },
+   {
+    "frame": false,
+    "prompt": "Cinematic 16:9 brand film for Heritage Pure Milk (Dairy — milk, curd, and value-added dairy, India, strongest across South India (Telangana, Andhra Pradesh, Karnataka, Tamil Nadu), expanding nationally. #PureDoodhKiShakti #HeritageFoods). This is shot 2 of 6 in one continuous film — keep the characters, wardrobe, location and grade IDENTICAL to the other shots so the parts cut together seamlessly. Film logline: A morning.. Depict ONLY this beat: 6–12s The boy steps closer with his glass.:. This beat ESTABLISHES the place and the person: where we are and whose story this is. Wider, unhurried, legible. The scene's own description decides what is shown; this sets the emphasis. Live-action photoreal cinematography, shot on a cinema camera with warm natural light.  No on-screen captions, subtitles, watermarks or logos. No spoken dialogue and no musicians or instruments in the picture — the soundtrack is added separately in the edit.",
+    "seconds": 6,
+    "tier": "lite"
+   },
+   {
+    "frame": false,
+    "prompt": "Cinematic 16:9 brand film for Heritage Pure Milk (Dairy — milk, curd, and value-added dairy, India, strongest across South India (Telangana, Andhra Pradesh, Karnataka, Tamil Nadu), expanding nationally. #PureDoodhKiShakti #HeritageFoods). This is shot 3 of 6 in one continuous film — keep the characters, wardrobe, location and grade IDENTICAL to the other shots so the parts cut together seamlessly. Film logline: A morning.. Depict ONLY this beat: 12–16s A technician lowers a pipette into a sample.:. This beat SHOWS the mechanism — the process, the proof, the routine actually happening. The thing being demonstrated has to be visible, not implied. The scene's own description decides what is shown; this sets the emphasis. Live-action photoreal cinematography, shot on a cinema camera with warm natural light. Camera: handheld.  No on-screen captions, subtitles, watermarks or logos. No spoken dialogue and no musicians or instruments in the picture — the soundtrack is added separately in the edit.",
+    "seconds": 4,
+    "tier": "lite"
+   },
+   {
+    "frame": false,
+    "prompt": "Cinematic 16:9 brand film for Heritage Pure Milk (Dairy — milk, curd, and value-added dairy, India, strongest across South India (Telangana, Andhra Pradesh, Karnataka, Tamil Nadu), expanding nationally. #PureDoodhKiShakti #HeritageFoods). This is shot 4 of 6 in one continuous film — keep the characters, wardrobe, location and grade IDENTICAL to the other shots so the parts cut together seamlessly. Film logline: A morning.. Depict ONLY this beat: 16–22s Two colleagues check a clipboard.:. This beat SHOWS the mechanism — the process, the proof, the routine actually happening. The thing being demonstrated has to be visible, not implied. The scene's own description decides what is shown; this sets the emphasis. Live-action photoreal cinematography, shot on a cinema camera with warm natural light.  No on-screen captions, subtitles, watermarks or logos. No spoken dialogue and no musicians or instruments in the picture — the soundtrack is added separately in the edit.",
+    "seconds": 6,
+    "tier": "lite"
+   },
+   {
+    "frame": false,
+    "prompt": "Cinematic 16:9 brand film for Heritage Pure Milk (Dairy — milk, curd, and value-added dairy, India, strongest across South India (Telangana, Andhra Pradesh, Karnataka, Tamil Nadu), expanding nationally. #PureDoodhKiShakti #HeritageFoods). This is shot 5 of 6 in one continuous film — keep the characters, wardrobe, location and grade IDENTICAL to the other shots so the parts cut together seamlessly. Film logline: A morning.. Depict ONLY this beat: 22–26s The boy drinks and smiles.:. This is the TURN — the moment something changes. The shot the whole film exists to deliver, so it carries the recognition rather than more information. The scene's own description decides what is shown; this sets the emphasis. Live-action photoreal cinematography, shot on a cinema camera with warm natural light.  No on-screen captions, subtitles, watermarks or logos. No spoken dialogue and no musicians or instruments in the picture — the soundtrack is added separately in the edit.",
+    "seconds": 4,
+    "tier": "lite"
+   },
+   {
+    "frame": false,
+    "prompt": "Cinematic 16:9 brand film for Heritage Pure Milk (Dairy — milk, curd, and value-added dairy, India, strongest across South India (Telangana, Andhra Pradesh, Karnataka, Tamil Nadu), expanding nationally. #PureDoodhKiShakti #HeritageFoods). This is shot 6 of 6 in one continuous film — keep the characters, wardrobe, location and grade IDENTICAL to the other shots so the parts cut together seamlessly. Film logline: A morning.. Depict ONLY this beat: 26–30s The Heritage pouch, front-on, on the counter.:. This is the ENDFRAME beat: the pack, presented clean and front-facing, with calm uncluttered space around it for the line and the logo to be set in artwork afterwards. Leave that space empty — put no lettering, logo or type in the frame. Live-action photoreal cinematography, shot on a cinema camera with warm natural light.  No on-screen captions, subtitles, watermarks or logos. No spoken dialogue and no musicians or instruments in the picture — the soundtrack is added separately in the edit.",
+    "seconds": 4,
+    "tier": "lite"
+   }
+  ],
+  "f1_six_scenes/standard": [
+   {
+    "frame": false,
+    "prompt": "Cinematic 16:9 brand film for Heritage Pure Milk (Dairy — milk, curd, and value-added dairy, India, strongest across South India (Telangana, Andhra Pradesh, Karnataka, Tamil Nadu), expanding nationally. #PureDoodhKiShakti #HeritageFoods). This is shot 1 of 6 in one continuous film — keep the characters, wardrobe, location and grade IDENTICAL to the other shots so the parts cut together seamlessly. WARDROBE — the exact clothing each person wears, identical to every other shot of this film: boy: white school shirt. Film logline: A morning.. Depict ONLY this beat: 0–6s A mother pours milk into a steel vessel.:. This is the HOOK — the opening shot. One arresting image that reads in under two seconds and earns the rest of the film. Simple, high contrast, no set-up. The scene's own description decides what is shown; this sets the emphasis. Live-action photoreal cinematography, shot on a cinema camera with warm natural light. Camera: slow push in.  No on-screen captions, subtitles, watermarks or logos. No spoken dialogue and no musicians or instruments in the picture — the soundtrack is added separately in the edit. Revision note: make it warmer.",
+    "seconds": 6,
+    "tier": "standard"
+   },
+   {
+    "frame": false,
+    "prompt": "Cinematic 16:9 brand film for Heritage Pure Milk (Dairy — milk, curd, and value-added dairy, India, strongest across South India (Telangana, Andhra Pradesh, Karnataka, Tamil Nadu), expanding nationally. #PureDoodhKiShakti #HeritageFoods). This is shot 2 of 6 in one continuous film — keep the characters, wardrobe, location and grade IDENTICAL to the other shots so the parts cut together seamlessly. WARDROBE — the exact clothing each person wears, identical to every other shot of this film: boy: white school shirt. Film logline: A morning.. Depict ONLY this beat: 6–12s The boy steps closer with his glass.:. This beat ESTABLISHES the place and the person: where we are and whose story this is. Wider, unhurried, legible. The scene's own description decides what is shown; this sets the emphasis. Live-action photoreal cinematography, shot on a cinema camera with warm natural light.  No on-screen captions, subtitles, watermarks or logos. No spoken dialogue and no musicians or instruments in the picture — the soundtrack is added separately in the edit. Revision note: make it warmer.",
+    "seconds": 6,
+    "tier": "standard"
+   },
+   {
+    "frame": false,
+    "prompt": "Cinematic 16:9 brand film for Heritage Pure Milk (Dairy — milk, curd, and value-added dairy, India, strongest across South India (Telangana, Andhra Pradesh, Karnataka, Tamil Nadu), expanding nationally. #PureDoodhKiShakti #HeritageFoods). This is shot 3 of 6 in one continuous film — keep the characters, wardrobe, location and grade IDENTICAL to the other shots so the parts cut together seamlessly. WARDROBE — the exact clothing each person wears, identical to every other shot of this film: boy: white school shirt. Film logline: A morning.. Depict ONLY this beat: 12–16s A technician lowers a pipette into a sample.:. This beat SHOWS the mechanism — the process, the proof, the routine actually happening. The thing being demonstrated has to be visible, not implied. The scene's own description decides what is shown; this sets the emphasis. Live-action photoreal cinematography, shot on a cinema camera with warm natural light. Camera: handheld.  No on-screen captions, subtitles, watermarks or logos. No spoken dialogue and no musicians or instruments in the picture — the soundtrack is added separately in the edit. Revision note: make it warmer.",
+    "seconds": 4,
+    "tier": "standard"
+   },
+   {
+    "frame": false,
+    "prompt": "Cinematic 16:9 brand film for Heritage Pure Milk (Dairy — milk, curd, and value-added dairy, India, strongest across South India (Telangana, Andhra Pradesh, Karnataka, Tamil Nadu), expanding nationally. #PureDoodhKiShakti #HeritageFoods). This is shot 4 of 6 in one continuous film — keep the characters, wardrobe, location and grade IDENTICAL to the other shots so the parts cut together seamlessly. WARDROBE — the exact clothing each person wears, identical to every other shot of this film: boy: white school shirt. Film logline: A morning.. Depict ONLY this beat: 16–22s Two colleagues check a clipboard.:. This beat SHOWS the mechanism — the process, the proof, the routine actually happening. The thing being demonstrated has to be visible, not implied. The scene's own description decides what is shown; this sets the emphasis. Live-action photoreal cinematography, shot on a cinema camera with warm natural light.  No on-screen captions, subtitles, watermarks or logos. No spoken dialogue and no musicians or instruments in the picture — the soundtrack is added separately in the edit. Revision note: make it warmer.",
+    "seconds": 6,
+    "tier": "standard"
+   },
+   {
+    "frame": false,
+    "prompt": "Cinematic 16:9 brand film for Heritage Pure Milk (Dairy — milk, curd, and value-added dairy, India, strongest across South India (Telangana, Andhra Pradesh, Karnataka, Tamil Nadu), expanding nationally. #PureDoodhKiShakti #HeritageFoods). This is shot 5 of 6 in one continuous film — keep the characters, wardrobe, location and grade IDENTICAL to the other shots so the parts cut together seamlessly. WARDROBE — the exact clothing each person wears, identical to every other shot of this film: boy: white school shirt. Film logline: A morning.. Depict ONLY this beat: 22–26s The boy drinks and smiles.:. This is the TURN — the moment something changes. The shot the whole film exists to deliver, so it carries the recognition rather than more information. The scene's own description decides what is shown; this sets the emphasis. Live-action photoreal cinematography, shot on a cinema camera with warm natural light.  No on-screen captions, subtitles, watermarks or logos. No spoken dialogue and no musicians or instruments in the picture — the soundtrack is added separately in the edit. Revision note: make it warmer.",
+    "seconds": 4,
+    "tier": "standard"
+   },
+   {
+    "frame": false,
+    "prompt": "Cinematic 16:9 brand film for Heritage Pure Milk (Dairy — milk, curd, and value-added dairy, India, strongest across South India (Telangana, Andhra Pradesh, Karnataka, Tamil Nadu), expanding nationally. #PureDoodhKiShakti #HeritageFoods). This is shot 6 of 6 in one continuous film — keep the characters, wardrobe, location and grade IDENTICAL to the other shots so the parts cut together seamlessly. WARDROBE — the exact clothing each person wears, identical to every other shot of this film: boy: white school shirt. Film logline: A morning.. Depict ONLY this beat: 26–30s The Heritage pouch, front-on, on the counter.:. This is the ENDFRAME beat: the pack, presented clean and front-facing, with calm uncluttered space around it for the line and the logo to be set in artwork afterwards. Leave that space empty — put no lettering, logo or type in the frame. Live-action photoreal cinematography, shot on a cinema camera with warm natural light.  No on-screen captions, subtitles, watermarks or logos. No spoken dialogue and no musicians or instruments in the picture — the soundtrack is added separately in the edit. Revision note: make it warmer.",
+    "seconds": 4,
+    "tier": "standard"
+   }
+  ],
+  "f4_long_dialogue/lite": [
+   {
+    "frame": false,
+    "prompt": "Cinematic 16:9 brand film for Heritage Pure Milk (Dairy — milk, curd, and value-added dairy, India, strongest across South India (Telangana, Andhra Pradesh, Karnataka, Tamil Nadu), expanding nationally. #PureDoodhKiShakti #HeritageFoods). This is shot 1 of 4 in one continuous film — keep the characters, wardrobe, location and grade IDENTICAL to the other shots so the parts cut together seamlessly. Film logline: A morning.. Depict ONLY this beat: 0–22s A long talking scene in the kitchen.:. This is the HOOK — the opening shot. One arresting image that reads in under two seconds and earns the rest of the film. Simple, high contrast, no set-up. The scene's own description decides what is shown; this sets the emphasis. Live-action photoreal cinematography, shot on a cinema camera with warm natural light.  No on-screen captions, subtitles, watermarks or logos. No spoken dialogue and no musicians or instruments in the picture — the soundtrack is added separately in the edit.",
+    "seconds": 8,
+    "tier": "lite"
+   },
+   {
+    "frame": false,
+    "prompt": "Cinematic 16:9 brand film for Heritage Pure Milk (Dairy — milk, curd, and value-added dairy, India, strongest across South India (Telangana, Andhra Pradesh, Karnataka, Tamil Nadu), expanding nationally. #PureDoodhKiShakti #HeritageFoods). This is shot 2 of 4 in one continuous film — keep the characters, wardrobe, location and grade IDENTICAL to the other shots so the parts cut together seamlessly. This shot CONTINUES the same beat as the previous shot — carry the action forward with a fresh camera angle rather than repeating it. Film logline: A morning.. Depict ONLY this beat: 0–22s A long talking scene in the kitchen.:. This is the HOOK — the opening shot. One arresting image that reads in under two seconds and earns the rest of the film. Simple, high contrast, no set-up. The scene's own description decides what is shown; this sets the emphasis. Live-action photoreal cinematography, shot on a cinema camera with warm natural light.  No on-screen captions, subtitles, watermarks or logos. No spoken dialogue and no musicians or instruments in the picture — the soundtrack is added separately in the edit.",
+    "seconds": 8,
+    "tier": "lite"
+   },
+   {
+    "frame": false,
+    "prompt": "Cinematic 16:9 brand film for Heritage Pure Milk (Dairy — milk, curd, and value-added dairy, India, strongest across South India (Telangana, Andhra Pradesh, Karnataka, Tamil Nadu), expanding nationally. #PureDoodhKiShakti #HeritageFoods). This is shot 3 of 4 in one continuous film — keep the characters, wardrobe, location and grade IDENTICAL to the other shots so the parts cut together seamlessly. This shot CONTINUES the same beat as the previous shot — carry the action forward with a fresh camera angle rather than repeating it. Film logline: A morning.. Depict ONLY this beat: 0–22s A long talking scene in the kitchen.:. This is the HOOK — the opening shot. One arresting image that reads in under two seconds and earns the rest of the film. Simple, high contrast, no set-up. The scene's own description decides what is shown; this sets the emphasis. Live-action photoreal cinematography, shot on a cinema camera with warm natural light.  No on-screen captions, subtitles, watermarks or logos. No spoken dialogue and no musicians or instruments in the picture — the soundtrack is added separately in the edit.",
+    "seconds": 6,
+    "tier": "lite"
+   },
+   {
+    "frame": false,
+    "prompt": "Cinematic 16:9 brand film for Heritage Pure Milk (Dairy — milk, curd, and value-added dairy, India, strongest across South India (Telangana, Andhra Pradesh, Karnataka, Tamil Nadu), expanding nationally. #PureDoodhKiShakti #HeritageFoods). This is shot 4 of 4 in one continuous film — keep the characters, wardrobe, location and grade IDENTICAL to the other shots so the parts cut together seamlessly. Film logline: A morning.. Depict ONLY this beat: 22–30s A second talking scene.:. This is the ENDFRAME beat: the pack, presented clean and front-facing, with calm uncluttered space around it for the line and the logo to be set in artwork afterwards. Leave that space empty — put no lettering, logo or type in the frame. Live-action photoreal cinematography, shot on a cinema camera with warm natural light.  No on-screen captions, subtitles, watermarks or logos. No spoken dialogue and no musicians or instruments in the picture — the soundtrack is added separately in the edit.",
+    "seconds": 8,
+    "tier": "lite"
+   }
+  ],
+  "f4_long_dialogue/standard": [
+   {
+    "frame": false,
+    "prompt": "Cinematic 16:9 brand film for Heritage Pure Milk (Dairy — milk, curd, and value-added dairy, India, strongest across South India (Telangana, Andhra Pradesh, Karnataka, Tamil Nadu), expanding nationally. #PureDoodhKiShakti #HeritageFoods). This is shot 1 of 4 in one continuous film — keep the characters, wardrobe, location and grade IDENTICAL to the other shots so the parts cut together seamlessly. WARDROBE — the exact clothing each person wears, identical to every other shot of this film: boy: white school shirt. Film logline: A morning.. Depict ONLY this beat: 0–22s A long talking scene in the kitchen.:. This is the HOOK — the opening shot. One arresting image that reads in under two seconds and earns the rest of the film. Simple, high contrast, no set-up. The scene's own description decides what is shown; this sets the emphasis. Live-action photoreal cinematography, shot on a cinema camera with warm natural light.  No on-screen captions, subtitles, watermarks or logos. No spoken dialogue and no musicians or instruments in the picture — the soundtrack is added separately in the edit. Revision note: make it warmer.",
+    "seconds": 8,
+    "tier": "standard"
+   },
+   {
+    "frame": false,
+    "prompt": "Cinematic 16:9 brand film for Heritage Pure Milk (Dairy — milk, curd, and value-added dairy, India, strongest across South India (Telangana, Andhra Pradesh, Karnataka, Tamil Nadu), expanding nationally. #PureDoodhKiShakti #HeritageFoods). This is shot 2 of 4 in one continuous film — keep the characters, wardrobe, location and grade IDENTICAL to the other shots so the parts cut together seamlessly. WARDROBE — the exact clothing each person wears, identical to every other shot of this film: boy: white school shirt. This shot CONTINUES the same beat as the previous shot — carry the action forward with a fresh camera angle rather than repeating it. Film logline: A morning.. Depict ONLY this beat: 0–22s A long talking scene in the kitchen.:. This is the HOOK — the opening shot. One arresting image that reads in under two seconds and earns the rest of the film. Simple, high contrast, no set-up. The scene's own description decides what is shown; this sets the emphasis. Live-action photoreal cinematography, shot on a cinema camera with warm natural light.  No on-screen captions, subtitles, watermarks or logos. No spoken dialogue and no musicians or instruments in the picture — the soundtrack is added separately in the edit. Revision note: make it warmer.",
+    "seconds": 8,
+    "tier": "standard"
+   },
+   {
+    "frame": false,
+    "prompt": "Cinematic 16:9 brand film for Heritage Pure Milk (Dairy — milk, curd, and value-added dairy, India, strongest across South India (Telangana, Andhra Pradesh, Karnataka, Tamil Nadu), expanding nationally. #PureDoodhKiShakti #HeritageFoods). This is shot 3 of 4 in one continuous film — keep the characters, wardrobe, location and grade IDENTICAL to the other shots so the parts cut together seamlessly. WARDROBE — the exact clothing each person wears, identical to every other shot of this film: boy: white school shirt. This shot CONTINUES the same beat as the previous shot — carry the action forward with a fresh camera angle rather than repeating it. Film logline: A morning.. Depict ONLY this beat: 0–22s A long talking scene in the kitchen.:. This is the HOOK — the opening shot. One arresting image that reads in under two seconds and earns the rest of the film. Simple, high contrast, no set-up. The scene's own description decides what is shown; this sets the emphasis. Live-action photoreal cinematography, shot on a cinema camera with warm natural light.  No on-screen captions, subtitles, watermarks or logos. No spoken dialogue and no musicians or instruments in the picture — the soundtrack is added separately in the edit. Revision note: make it warmer.",
+    "seconds": 6,
+    "tier": "standard"
+   },
+   {
+    "frame": false,
+    "prompt": "Cinematic 16:9 brand film for Heritage Pure Milk (Dairy — milk, curd, and value-added dairy, India, strongest across South India (Telangana, Andhra Pradesh, Karnataka, Tamil Nadu), expanding nationally. #PureDoodhKiShakti #HeritageFoods). This is shot 4 of 4 in one continuous film — keep the characters, wardrobe, location and grade IDENTICAL to the other shots so the parts cut together seamlessly. WARDROBE — the exact clothing each person wears, identical to every other shot of this film: boy: white school shirt. Film logline: A morning.. Depict ONLY this beat: 22–30s A second talking scene.:. This is the ENDFRAME beat: the pack, presented clean and front-facing, with calm uncluttered space around it for the line and the logo to be set in artwork afterwards. Leave that space empty — put no lettering, logo or type in the frame. Live-action photoreal cinematography, shot on a cinema camera with warm natural light.  No on-screen captions, subtitles, watermarks or logos. No spoken dialogue and no musicians or instruments in the picture — the soundtrack is added separately in the edit. Revision note: make it warmer.",
+    "seconds": 8,
+    "tier": "standard"
+   }
+  ],
+  "f6_prompt_fields/lite": [
+   {
+    "frame": false,
+    "prompt": "Cinematic 16:9 brand film for Heritage Pure Milk (Dairy — milk, curd, and value-added dairy, India, strongest across South India (Telangana, Andhra Pradesh, Karnataka, Tamil Nadu), expanding nationally. #PureDoodhKiShakti #HeritageFoods). This is shot 4 of 5 in one continuous film — keep the characters, wardrobe, location and grade IDENTICAL to the other shots so the parts cut together seamlessly. Film logline: A morning.. Depict ONLY this beat: 18–24s No frame on this one.:. This is the TURN — the moment something changes. The shot the whole film exists to deliver, so it carries the recognition rather than more information. The scene's own description decides what is shown; this sets the emphasis. Live-action photoreal cinematography, shot on a cinema camera with warm natural light. Camera: static.  CAMERA AND LENS FOR THIS FILM, the same in every shot: handheld, shallow depth of field. No on-screen captions, subtitles, watermarks or logos. No spoken dialogue and no musicians or instruments in the picture — the soundtrack is added separately in the edit.",
+    "seconds": 6,
+    "tier": "lite"
+   },
+   {
+    "frame": true,
+    "prompt": "Animate this frame as one continuous shot, no cuts. ACTION: A lab technician studies the sample. This shot shows the process actually happening; the thing being demonstrated must be visible. EXPRESSION: natural and exactly as the action describes; no smile, toast, pose or glance at the camera that the action does not call for. CAMERA: Handheld, naturalistic camera movement. handheld. Whatever this movement does, keep the face clearly recognisable and matching the reference image throughout. KEEP IDENTICAL TO THE IMAGE: every face, hairstyle and body; the clothing exactly as it is, adding no badge, crest, logo or text to any garment; the set, the objects in it, the light and the colour grade. Audio: quiet room sound only; no speech, no singing, no music. No on-screen text, captions, subtitles, logos or watermarks.",
+    "seconds": 6,
+    "tier": "lite"
+   },
+   {
+    "frame": true,
+    "prompt": "Animate this frame as one continuous shot, no cuts. ACTION: Mother pours milk from the pouch into a steel glass. Direction: tender, unhurried. This is the opening shot: one simple, striking image, with no set-up. EXPRESSION: natural and exactly as the action describes; no smile, toast, pose or glance at the camera that the action does not call for. CAMERA: A slow, steady push-in toward the subject. slow push in. Whatever this movement does, keep the face clearly recognisable and matching the reference image throughout. KEEP IDENTICAL TO THE IMAGE: every face, hairstyle and body; the clothing exactly as it is, adding no badge, crest, logo or text to any garment; the set, the objects in it, the light and the colour grade; the product pack exactly as in the image: its shape and proportions, label, logo, colours and every printed word, at the same size and position in frame throughout, never stretched, redrawn, relabelled or swapped for another pack. Audio: quiet room sound only; no speech, no singing, no music. No on-screen text, captions, subtitles, logos or watermarks.",
+    "seconds": 4,
+    "tier": "lite"
+   },
+   {
+    "frame": true,
+    "prompt": "Animate this frame as one continuous shot, no cuts. ACTION: The boy drinks. Kitchen morning light. This shot establishes the place and the person, wide enough to read, unhurried. EXPRESSION: natural and exactly as the action describes; no smile, toast, pose or glance at the camera that the action does not call for. CAMERA: Camera behaviour for this whole film: handheld, shallow depth of field. Whatever the camera does, keep the face clearly recognisable and matching the reference image throughout. KEEP IDENTICAL TO THE IMAGE: every face, hairstyle and body; the clothing exactly as it is, adding no badge, crest, logo or text to any garment; the set, the objects in it, the light and the colour grade. Audio: quiet room sound only; no speech, no singing, no music. No on-screen text, captions, subtitles, logos or watermarks.",
+    "seconds": 8,
+    "tier": "lite"
+   },
+   {
+    "frame": true,
+    "prompt": "Animate this frame as one continuous shot, no cuts. ACTION: The pack, clean and front-facing. This is the closing product shot: the pack presented clean and front-facing, with calm uncluttered space around it; leave that space empty. EXPRESSION: natural and exactly as the action describes; no smile, toast, pose or glance at the camera that the action does not call for. CAMERA: Hold the shot locked and still — a steady product hero. Keep the pack at the exact same size, scale and position in frame from the first frame to the last; the camera does not push in, pull out, zoom or drift, and the pack does not move toward or away from the lens. KEEP IDENTICAL TO THE IMAGE: every face, hairstyle and body; the clothing exactly as it is, adding no badge, crest, logo or text to any garment; the set, the objects in it, the light and the colour grade; the product pack exactly as in the image: its shape and proportions, label, logo, colours and every printed word, at the same size and position in frame throughout, never stretched, redrawn, relabelled or swapped for another pack. Audio: quiet room sound only; no speech, no singing, no music. No on-screen text, captions, subtitles, logos or watermarks.",
+    "seconds": 6,
+    "tier": "lite"
+   }
+  ],
+  "f6_prompt_fields/standard": [
+   {
+    "frame": false,
+    "prompt": "Cinematic 16:9 brand film for Heritage Pure Milk (Dairy — milk, curd, and value-added dairy, India, strongest across South India (Telangana, Andhra Pradesh, Karnataka, Tamil Nadu), expanding nationally. #PureDoodhKiShakti #HeritageFoods). This is shot 4 of 5 in one continuous film — keep the characters, wardrobe, location and grade IDENTICAL to the other shots so the parts cut together seamlessly. WARDROBE — the exact clothing each person wears, identical to every other shot of this film: boy: white school shirt. Film logline: A morning.. Depict ONLY this beat: 18–24s No frame on this one.:. This is the TURN — the moment something changes. The shot the whole film exists to deliver, so it carries the recognition rather than more information. The scene's own description decides what is shown; this sets the emphasis. Live-action photoreal cinematography, shot on a cinema camera with warm natural light. Camera: static.  CAMERA AND LENS FOR THIS FILM, the same in every shot: handheld, shallow depth of field. No on-screen captions, subtitles, watermarks or logos. No spoken dialogue and no musicians or instruments in the picture — the soundtrack is added separately in the edit. Revision note: make it warmer.",
+    "seconds": 6,
+    "tier": "standard"
+   },
+   {
+    "frame": true,
+    "prompt": "Animate this frame as one continuous shot, no cuts. ACTION: A lab technician studies the sample. This shot shows the process actually happening; the thing being demonstrated must be visible. EXPRESSION: natural and exactly as the action describes; no smile, toast, pose or glance at the camera that the action does not call for. CAMERA: Handheld, naturalistic camera movement. handheld. Whatever this movement does, keep the face clearly recognisable and matching the reference image throughout. KEEP IDENTICAL TO THE IMAGE: every face, hairstyle and body; the clothing exactly as it is, adding no badge, crest, logo or text to any garment; the set, the objects in it, the light and the colour grade. Audio: quiet room sound only; no speech, no singing, no music. No on-screen text, captions, subtitles, logos or watermarks. Revision note: make it warmer.",
+    "seconds": 6,
+    "tier": "standard"
+   },
+   {
+    "frame": true,
+    "prompt": "Animate this frame as one continuous shot, no cuts. ACTION: Mother pours milk from the pouch into a steel glass. Direction: tender, unhurried. This is the opening shot: one simple, striking image, with no set-up. EXPRESSION: natural and exactly as the action describes; no smile, toast, pose or glance at the camera that the action does not call for. CAMERA: A slow, steady push-in toward the subject. slow push in. Whatever this movement does, keep the face clearly recognisable and matching the reference image throughout. KEEP IDENTICAL TO THE IMAGE: every face, hairstyle and body; the clothing exactly as it is, adding no badge, crest, logo or text to any garment; the set, the objects in it, the light and the colour grade; the product pack exactly as in the image: its shape and proportions, label, logo, colours and every printed word, at the same size and position in frame throughout, never stretched, redrawn, relabelled or swapped for another pack. Audio: quiet room sound only; no speech, no singing, no music. No on-screen text, captions, subtitles, logos or watermarks. Revision note: make it warmer.",
+    "seconds": 4,
+    "tier": "standard"
+   },
+   {
+    "frame": true,
+    "prompt": "Animate this frame as one continuous shot, no cuts. ACTION: The boy drinks. Kitchen morning light. This shot establishes the place and the person, wide enough to read, unhurried. EXPRESSION: natural and exactly as the action describes; no smile, toast, pose or glance at the camera that the action does not call for. CAMERA: Camera behaviour for this whole film: handheld, shallow depth of field. Whatever the camera does, keep the face clearly recognisable and matching the reference image throughout. KEEP IDENTICAL TO THE IMAGE: every face, hairstyle and body; the clothing exactly as it is, adding no badge, crest, logo or text to any garment; the set, the objects in it, the light and the colour grade. Audio: quiet room sound only; no speech, no singing, no music. No on-screen text, captions, subtitles, logos or watermarks. Revision note: make it warmer.",
+    "seconds": 8,
+    "tier": "standard"
+   },
+   {
+    "frame": true,
+    "prompt": "Animate this frame as one continuous shot, no cuts. ACTION: The pack, clean and front-facing. This is the closing product shot: the pack presented clean and front-facing, with calm uncluttered space around it; leave that space empty. EXPRESSION: natural and exactly as the action describes; no smile, toast, pose or glance at the camera that the action does not call for. CAMERA: Hold the shot locked and still — a steady product hero. Keep the pack at the exact same size, scale and position in frame from the first frame to the last; the camera does not push in, pull out, zoom or drift, and the pack does not move toward or away from the lens. KEEP IDENTICAL TO THE IMAGE: every face, hairstyle and body; the clothing exactly as it is, adding no badge, crest, logo or text to any garment; the set, the objects in it, the light and the colour grade; the product pack exactly as in the image: its shape and proportions, label, logo, colours and every printed word, at the same size and position in frame throughout, never stretched, redrawn, relabelled or swapped for another pack. Audio: quiet room sound only; no speech, no singing, no music. No on-screen text, captions, subtitles, logos or watermarks. Revision note: make it warmer.",
+    "seconds": 6,
+    "tier": "standard"
+   }
+  ]
+ },
+ "retime": {
+  "f1_six_scenes@0": {
+   "notes": [],
+   "tc": [
+    "0–4s",
+    "4–8s",
+    "8–12s",
+    "12–16s",
+    "16–20s",
+    "20–24s"
+   ],
+   "total": 24
+  },
+  "f1_six_scenes@10": {
+   "notes": [
+    "6 scenes can't fit 10s — Veo's shortest shot is 4s, so this cut runs 24s. Merge two scenes to hold the 10s length"
+   ],
+   "tc": [
+    "0–4s",
+    "4–8s",
+    "8–12s",
+    "12–16s",
+    "16–20s",
+    "20–24s"
+   ],
+   "total": 24
+  },
+  "f1_six_scenes@20": {
+   "notes": [
+    "6 scenes can't fit 20s — Veo's shortest shot is 4s, so this cut runs 24s. Merge two scenes to hold the 20s length"
+   ],
+   "tc": [
+    "0–4s",
+    "4–8s",
+    "8–12s",
+    "12–16s",
+    "16–20s",
+    "20–24s"
+   ],
+   "total": 24
+  },
+  "f1_six_scenes@30": {
+   "notes": [],
+   "tc": [
+    "0–6s",
+    "6–12s",
+    "12–16s",
+    "16–22s",
+    "22–26s",
+    "26–30s"
+   ],
+   "total": 30
+  },
+  "f2_four_scenes@0": {
+   "notes": [],
+   "tc": [
+    "0–4s",
+    "4–8s",
+    "8–12s",
+    "12–16s"
+   ],
+   "total": 16
+  },
+  "f2_four_scenes@10": {
+   "notes": [
+    "4 scenes can't fit 10s — Veo's shortest shot is 4s, so this cut runs 16s. Merge two scenes to hold the 10s length"
+   ],
+   "tc": [
+    "0–4s",
+    "4–8s",
+    "8–12s",
+    "12–16s"
+   ],
+   "total": 16
+  },
+  "f2_four_scenes@20": {
+   "notes": [],
+   "tc": [
+    "0–6s",
+    "6–12s",
+    "12–16s",
+    "16–20s"
+   ],
+   "total": 20
+  },
+  "f2_four_scenes@30": {
+   "notes": [],
+   "tc": [
+    "0–8s",
+    "8–16s",
+    "16–24s",
+    "24–30s"
+   ],
+   "total": 30
+  },
+  "f3_three_silent@0": {
+   "notes": [],
+   "tc": [
+    "0–4s",
+    "4–8s",
+    "8–12s"
+   ],
+   "total": 12
+  },
+  "f3_three_silent@10": {
+   "notes": [
+    "3 scenes can't fit 10s — Veo's shortest shot is 4s, so this cut runs 12s. Merge two scenes to hold the 10s length"
+   ],
+   "tc": [
+    "0–4s",
+    "4–8s",
+    "8–12s"
+   ],
+   "total": 12
+  },
+  "f3_three_silent@20": {
+   "notes": [],
+   "tc": [
+    "0–8s",
+    "8–14s",
+    "14–20s"
+   ],
+   "total": 20
+  },
+  "f3_three_silent@30": {
+   "notes": [],
+   "tc": [
+    "0–10s",
+    "10–20s",
+    "20–30s"
+   ],
+   "total": 30
+  },
+  "f4_long_dialogue@0": {
+   "notes": [],
+   "tc": [
+    "0–26s",
+    "26–40s"
+   ],
+   "total": 40
+  },
+  "f4_long_dialogue@10": {
+   "notes": [
+    "dialogue runs long for 10s — delivered 1.20x faster across the whole film (one speed everywhere, so it doesn't lurch at the cuts)"
+   ],
+   "tc": [
+    "0–6s",
+    "6–10s"
+   ],
+   "total": 10
+  },
+  "f4_long_dialogue@20": {
+   "notes": [
+    "dialogue runs long for 20s — delivered 1.20x faster across the whole film (one speed everywhere, so it doesn't lurch at the cuts)"
+   ],
+   "tc": [
+    "0–16s",
+    "16–20s"
+   ],
+   "total": 20
+  },
+  "f4_long_dialogue@30": {
+   "notes": [
+    "dialogue runs long for 30s — delivered 1.20x faster across the whole film (one speed everywhere, so it doesn't lurch at the cuts)"
+   ],
+   "tc": [
+    "0–22s",
+    "22–30s"
+   ],
+   "total": 30
+  },
+  "f5_explicit_roles@0": {
+   "notes": [],
+   "tc": [
+    "0–4s",
+    "4–8s",
+    "8–12s",
+    "12–16s",
+    "16–20s"
+   ],
+   "total": 20
+  },
+  "f5_explicit_roles@10": {
+   "notes": [
+    "5 scenes can't fit 10s — Veo's shortest shot is 4s, so this cut runs 20s. Merge two scenes to hold the 10s length"
+   ],
+   "tc": [
+    "0–4s",
+    "4–8s",
+    "8–12s",
+    "12–16s",
+    "16–20s"
+   ],
+   "total": 20
+  },
+  "f5_explicit_roles@20": {
+   "notes": [],
+   "tc": [
+    "0–4s",
+    "4–8s",
+    "8–12s",
+    "12–16s",
+    "16–20s"
+   ],
+   "total": 20
+  },
+  "f5_explicit_roles@30": {
+   "notes": [],
+   "tc": [
+    "0–6s",
+    "6–12s",
+    "12–18s",
+    "18–24s",
+    "24–30s"
+   ],
+   "total": 30
+  },
+  "f6_prompt_fields@0": {
+   "notes": [],
+   "tc": [
+    "0–4s",
+    "4–8s",
+    "8–12s",
+    "12–16s",
+    "16–20s"
+   ],
+   "total": 20
+  },
+  "f6_prompt_fields@10": {
+   "notes": [
+    "5 scenes can't fit 10s — Veo's shortest shot is 4s, so this cut runs 20s. Merge two scenes to hold the 10s length"
+   ],
+   "tc": [
+    "0–4s",
+    "4–8s",
+    "8–12s",
+    "12–16s",
+    "16–20s"
+   ],
+   "total": 20
+  },
+  "f6_prompt_fields@20": {
+   "notes": [],
+   "tc": [
+    "0–4s",
+    "4–8s",
+    "8–12s",
+    "12–16s",
+    "16–20s"
+   ],
+   "total": 20
+  },
+  "f6_prompt_fields@30": {
+   "notes": [],
+   "tc": [
+    "0–4s",
+    "4–12s",
+    "12–18s",
+    "18–24s",
+    "24–30s"
+   ],
+   "total": 30
+  },
+  "f7_single@0": {
+   "notes": [],
+   "tc": [
+    "0–4s"
+   ],
+   "total": 4
+  },
+  "f7_single@10": {
+   "notes": [],
+   "tc": [
+    "0–10s"
+   ],
+   "total": 10
+  },
+  "f7_single@20": {
+   "notes": [],
+   "tc": [
+    "0–20s"
+   ],
+   "total": 20
+  },
+  "f7_single@30": {
+   "notes": [],
+   "tc": [
+    "0–30s"
+   ],
+   "total": 30
+  },
+  "f8_overflow_seven@0": {
+   "notes": [],
+   "tc": [
+    "0–4s",
+    "4–8s",
+    "8–12s",
+    "12–16s",
+    "16–20s",
+    "20–24s",
+    "24–28s"
+   ],
+   "total": 28
+  },
+  "f8_overflow_seven@10": {
+   "notes": [
+    "7 scenes can't fit 10s — Veo's shortest shot is 4s, so this cut runs 28s. Merge two scenes to hold the 10s length"
+   ],
+   "tc": [
+    "0–4s",
+    "4–8s",
+    "8–12s",
+    "12–16s",
+    "16–20s",
+    "20–24s",
+    "24–28s"
+   ],
+   "total": 28
+  },
+  "f8_overflow_seven@20": {
+   "notes": [
+    "7 scenes can't fit 20s — Veo's shortest shot is 4s, so this cut runs 28s. Merge two scenes to hold the 20s length"
+   ],
+   "tc": [
+    "0–4s",
+    "4–8s",
+    "8–12s",
+    "12–16s",
+    "16–20s",
+    "20–24s",
+    "24–28s"
+   ],
+   "total": 28
+  },
+  "f8_overflow_seven@30": {
+   "notes": [],
+   "tc": [
+    "0–6s",
+    "6–10s",
+    "10–14s",
+    "14–18s",
+    "18–22s",
+    "22–26s",
+    "26–30s"
+   ],
+   "total": 30
+  }
+ },
+ "turn_at": {
+  "f1_six_scenes/False": 22.0,
+  "f1_six_scenes/True": 22.0,
+  "f5_explicit_roles/False": 18.0,
+  "f5_explicit_roles/True": 18.0
+ }
+}
