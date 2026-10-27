@@ -2885,7 +2885,7 @@
             <div style="background:{{ castNeedsLockBg }}; border:1px solid {{ castNeedsLockLine }}; border-radius:12px; padding:12px 15px; margin-bottom:12px; font-size:12.5px; line-height:1.6; color:{{ castNeedsLockFg }}; max-width:760px; text-wrap:pretty;">{{ castNeedsLockText }}</div>
           </sc-if>
           <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:6px; flex-wrap:wrap;">
-            <h2 style="font-family:'Epilogue',sans-serif; font-size:20px; font-weight:700; color:#17325E; margin:0;">Storyboard <span style="font-size:14px; font-weight:600; color:#6B7280;">· {{ doneFrames }} / {{ nScenes }} frames</span></h2>
+            <h2 style="font-family:'Epilogue',sans-serif; font-size:20px; font-weight:700; color:#17325E; margin:0;">Storyboard <span style="font-size:14px; font-weight:600; color:#6B7280;">· {{ doneFrames }} / {{ nFrames }} frames</span></h2>
             <button onClick="{{ generateAllFrames }}" style="background:#259821; color:#fff; border:none; border-radius:11px; padding:10px 18px; font-weight:700; font-size:13.5px; cursor:pointer; display:flex; align-items:center; gap:8px;">
               <sc-if value="{{ framesBatch }}" hint-placeholder-val="{{ false }}"><span style="width:14px; height:14px; border:2px solid rgba(255,255,255,0.4); border-top-color:#fff; border-radius:50%; display:inline-block; animation:hf-spin 0.7s linear infinite;"></span></sc-if>
               {{ allFramesLabel }}
@@ -2959,6 +2959,8 @@
                       <div style="margin-top:5px; font-size:11px; line-height:1.45; color:#B07A12; font-weight:700;">Check the pack: {{ sc.packShape }}. The video keeps the shape of this frame, so re-render the frame if it matters.</div>
                     </sc-if>
                   </sc-if>
+                  <!-- Coverage: cut between several camera angles of this scene (built in coverageStrip) -->
+                  {{ sc.coverage }}
                   <!-- Per-frame correction: direction for THIS frame only, applied the next time it renders (the
                        ↻ on the frame). The box under "Rework the frames" still applies to every frame. -->
                   <textarea value="{{ sc.frameNote }}" onChange="{{ sc.editFrameNote }}" rows="2" placeholder="Fix this frame only — e.g. 'pack front-on, orange'" style="width:100%; box-sizing:border-box; margin-top:7px; border:1px solid #E6E3DC; border-radius:7px; padding:6px 8px; font-size:11.5px; line-height:1.45; color:#38414F; background:#fff; resize:vertical; font-family:inherit;"></textarea>
@@ -3029,7 +3031,7 @@
 
       <!-- key shots filmstrip -->
       <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; flex-wrap:wrap;">
-        <h2 style="font-family:'Epilogue',sans-serif; font-size:19px; font-weight:700; color:#17325E; margin:0;">Key Shots <span style="font-size:13px; font-weight:600; color:#6B7280;">· {{ doneFrames }} / {{ nScenes }} frames</span></h2>
+        <h2 style="font-family:'Epilogue',sans-serif; font-size:19px; font-weight:700; color:#17325E; margin:0;">Key Shots <span style="font-size:13px; font-weight:600; color:#6B7280;">· {{ doneFrames }} / {{ nFrames }} frames</span></h2>
         <button onClick="{{ generateAllFrames }}" style="background:#259821; color:#fff; border:none; border-radius:11px; padding:10px 18px; font-weight:700; font-size:13.5px; cursor:pointer; display:flex; align-items:center; gap:8px;">
           <sc-if value="{{ framesBatch }}" hint-placeholder-val="{{ false }}"><span style="width:14px; height:14px; border:2px solid rgba(255,255,255,0.4); border-top-color:#fff; border-radius:50%; display:inline-block; animation:hf-spin 0.7s linear infinite;"></span></sc-if>
           {{ allFramesLabel }}
@@ -3067,6 +3069,9 @@
               </span>
             </div>
             <div style="padding:0 11px 8px; font-size:11.5px; line-height:1.5; color:#6B7280;">{{ sc.desc }}</div>
+            <sc-if value="{{ sc.hasShotsChip }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:0 11px 8px; font-size:11px; font-weight:700; color:#1A8A7A;">{{ sc.shotsChip }}</div>
+            </sc-if>
             <!-- The spoken words live with the frame they play over: edit here and the scene's
                  length re-times immediately, so picture and sound can't drift apart. -->
             <div style="border-top:1px solid #E6E3DC; padding:8px 11px 10px; background:#FBFAF8;">
@@ -3108,7 +3113,7 @@
               </div>
             </div>
             <sc-if value="{{ d.isKeyshots }}" hint-placeholder-val="{{ false }}">
-              <div style="font-size:13px; line-height:1.55; color:#41505F; flex:1;">{{ doneFrames }} of {{ nScenes }} key frames rendered above. Regenerate any frame from the filmstrip.</div>
+              <div style="font-size:13px; line-height:1.55; color:#41505F; flex:1;">{{ doneFrames }} of {{ nFrames }} key frames rendered above. Regenerate any frame from the filmstrip.</div>
             </sc-if>
             <sc-if value="{{ d.hasText }}" hint-placeholder-val="{{ false }}">
               <textarea value="{{ d.text }}" onChange="{{ d.edit }}" rows="7" style="width:100%; box-sizing:border-box; flex:none; field-sizing:content; min-height:116px; font-size:13px; line-height:1.55; color:#38414F; border:1px solid #E6E3DC; border-radius:10px; padding:10px 11px; background:#FBFAF8; resize:vertical; font-family:inherit;"></textarea>
@@ -12084,6 +12089,9 @@ class Component extends DCLogic {
     musicBusy: false,
     silentMaster: null,            // silent cut kept so music can change with no video spend
     prodClips: null,               // the produced film's per-shot clip URLs, to seed the cut manifest's beats
+    prodShotClips: null,           // the render's one-record-per-shot list ({no, shot, seconds, url, ok, ...}); coverage + the Edit room read it
+    shotsBusy: '',                 // the scene (shotKey) a "Break into shots" call is running for
+    shotsProposal: {},             // { [shotKey]: {shots, notes, master_secs} } -- proposals waiting for Accept; keyed by scene text so a reworked scene never shows a stale one
     // Importing a film into the Edit room — a remembered film (from /made) or one uploaded from a drive.
     // These have no generated script or silent stem behind them, so only the pixel ops apply.
     directFilm: null,              // { url, name, seconds } — the film loaded for direct (pixel-ops) editing
@@ -16257,11 +16265,13 @@ class Component extends DCLogic {
     this.setState({ docBusy:'bible' });
     const vc = this.state.videoConcept;
     const rows = this.state.fullScript || [];
-    const frames = rows.map((r,i) => {
+    const frames = rows.flatMap((r,i) => {
       const f = this.state.sceneFrames[i];
-      return (f && f.status==='done' && f.url)
-        ? { scene:r.no||i+1, tc:r.tc||'', visual:r.visual||'', url:f.url } : null;
-    }).filter(Boolean);
+      const own = (f && f.status==='done' && f.url) ? [{ scene:r.no||i+1, tc:r.tc||'', visual:r.visual||'', url:f.url }] : [];
+      const more = this.extraShots(r).map((sh, j) => { const sf = this.state.sceneFrames[this.frameKey(i, j + 1)];
+        return (sf && sf.status==='done' && sf.url) ? { scene:(r.no||i+1) + ' \u00b7 shot ' + (j + 2), tc:r.tc||'', visual:sh.visual||'', url:sf.url } : null; }).filter(Boolean);
+      return own.concat(more);
+    });
     const departments = this.DEPTS.map(d => ({ label:d.label, text:this.plainDept((this.state.shoot[d.id]||{}).text) }))
                                   .filter(d => d.text.trim());
     const blob = await this.apiBlob('/production-bible-docx', {
@@ -16298,6 +16308,195 @@ class Component extends DCLogic {
 
   // ---------- storyboard frames (POST /scene-still) ----------
   frameState(idx){ return this.state.sceneFrames[idx] || { status:'idle', url:null }; }
+  // ---------- coverage: shots within a scene (VIDEO_COVERAGE_PLAN.md) ----------
+  // A scene row IS shot 1 (the master); `row.shots` holds the EXTRA camera angles. The master's frame stays at sceneFrames[idx]
+  // and shot k's at sceneFrames["<idx>.<k>"] (k = 1..), so nothing about a film with no `shots` changes. The scene's total
+  // seconds never change: coverage only subdivides them (the server plans it; see filmcut.plan_by_scene).
+  SHOT_SIZE_LABELS = { wide:'Wide', medium:'Medium', close:'Close-up', detail:'Detail', over:'Over-the-shoulder', product:'Product hero' };
+  frameKey(idx, k){ return k ? idx + '.' + k : idx; }
+  extraShots(row){ return (row && Array.isArray(row.shots)) ? row.shots.filter(x => x && typeof x === 'object') : []; }
+  // The row the frame code sees for extra shot k (1-based): the scene's own fields (number, role, beat direction) with the
+  // SHOT's picture fields on top. The master's camera / size / description are never inherited.
+  shotRow(row, k){
+    const sh = this.extraShots(row)[k - 1];
+    if (!sh) return null;
+    const out = { ...row };
+    ['title', 'desc', 'visual', 'camera', 'shot_size', 'movement_class', 'frame_note', 'include_pack', 'match_no', 'shots'].forEach(x => { delete out[x]; });
+    ['visual', 'camera', 'shot_size', 'movement_class', 'frame_note', 'include_pack'].forEach(x => { if (sh[x] !== undefined && sh[x] !== '') out[x] = sh[x]; });
+    return out;
+  }
+  // Every frame the film needs: one per scene, then one per extra shot. Counters, the hand-over gate and "generate all" read this.
+  frameSlots(){
+    const out = [];
+    (this.state.fullScript || []).forEach((r, i) => {
+      out.push({ idx:i, k:0, key:this.frameKey(i, 0) });
+      this.extraShots(r).forEach((_, j) => out.push({ idx:i, k:j + 1, key:this.frameKey(i, j + 1) }));
+    });
+    return out;
+  }
+  frameTotal(){ return this.frameSlots().length; }
+  framesDoneCount(){ const f = this.state.sceneFrames || {}; return this.frameSlots().filter(x => f[x.key] && f[x.key].status === 'done').length; }
+  // Pack on a shot's frame: an explicit tick on the shot wins; otherwise only when the shot's own words name the pack.
+  packOnShot(row){ return typeof row.include_pack === 'boolean' ? row.include_pack : (this.packAvailable() && this.sceneNamesPack(row.visual)); }
+  // Identifies a scene by its number and words, so a proposal made for one version of a scene never shows on a reworked one.
+  shotKey(row){ return String(row && row.no != null ? row.no : '') + '|' + String((row && row.visual) || ''); }
+  shotMasterSecs(row){ return Math.max(2, this.cutSecsOf(row) - this.extraShots(row).reduce((a, x) => a + (parseInt(x.secs, 10) || 2), 0)); }
+  // The up-front cost of coverage: every shot is generated at 3 s or more (the engine's floor) and trimmed to its length.
+  coverageCostNote(){
+    const rows = this.state.fullScript || [];
+    let n = 0, gen = 0;
+    rows.forEach(r => {
+      const ex = this.extraShots(r);
+      if (!ex.length) return;
+      n += ex.length;
+      gen += ex.reduce((a, x) => a + Math.max(3, parseInt(x.secs, 10) || 2), 0) + Math.max(3, this.shotMasterSecs(r)) - Math.max(3, this.cutSecsOf(r));
+    });
+    if (!n) return '';
+    const rate = (this.RATE[this.costEngine()] || this.RATE.google)[this.tierNow()] || 0;
+    const total = rows.reduce((a, r) => a + this.cutSecsOf(r), 0) + gen;
+    const usd = rate * total, shots = rows.length + n;
+    return ' Coverage adds ' + n + ' shot' + (n > 1 ? 's' : '') + ' (' + shots + ' in all, each generated at 3s or more and trimmed): about $' + (usd < 10 ? usd.toFixed(2) : usd.toFixed(0)) + ' and about ' + Math.max(1, Math.ceil(shots / 7)) + ' min to render.';
+  }
+  canCover(idx){
+    const row = (this.state.fullScript || [])[idx];
+    if (!row) return { ok:false, why:'' };
+    if (this.isBrandScene(idx)) return { ok:false, why:'The sign-off scene is always one shot.' };
+    if (this.cutSecsOf(row) < 4) return { ok:false, why:'Under 4 s: too short for a second shot.' };
+    return { ok:true, why:'' };
+  }
+  breakIntoShots = (idx) => async () => {
+    const s = this.state, rows = s.fullScript || [], row = rows[idx];
+    if (!row || s.shotsBusy) return;
+    const key = this.shotKey(row), vc = s.videoConcept;
+    this.setState({ shotsBusy:key });
+    const { shots: _drop, ...scene } = row;
+    const body = { scene, scene_seconds:this.cutSecsOf(row), is_signoff:this.isBrandScene(idx), plate_locked:!!s.videoPlateChoice,
+      logline: vc ? (vc.logline || '') : '', characters:s.videoCharacters || '', location_line:this.locationText() || '', wardrobe:s.videoWardrobe || '',
+      camera_notes:s.videoCamera || '', look_note:s.videoLookRef || '', prev_visual: idx ? (rows[idx - 1].visual || '') : '',
+      next_visual: rows[idx + 1] ? (rows[idx + 1].visual || '') : '', brand_mode:s.producerBrandMode, ...this.videoExtra() };
+    const r = await this.apiCall('/scene-shots', body);
+    const d = (r && r.data) || {};
+    if (!r || !r.ok) { this.setState({ shotsBusy:'' }); this.showToast(d.detail || 'Couldn’t propose shots — try again.'); return; }
+    if (!(d.shots || []).length) { this.setState({ shotsBusy:'' }); this.showToast(d.reason || 'No extra shots for this scene.', 'info'); return; }
+    this.setState(st => ({ shotsBusy:'', shotsProposal:{ ...(st.shotsProposal || {}), [key]:{ shots:d.shots, notes:d.notes || [], master_secs:d.master_secs } } }));
+  };
+  discardShotProposal = (idx) => () => {
+    const key = this.shotKey((this.state.fullScript || [])[idx]);
+    this.setState(st => { const p = { ...(st.shotsProposal || {}) }; delete p[key]; return { shotsProposal:p }; });
+  };
+  // Accepting writes the shots onto the scene row (kept with the script, like a frame note: it changes how pictures are drawn, not what
+  // the script says, so it does not drop an approved script back to "drafted").
+  acceptShotProposal = (idx) => () => {
+    const key = this.shotKey((this.state.fullScript || [])[idx]);
+    const prop = (this.state.shotsProposal || {})[key];
+    if (!prop) return;
+    const shots = (prop.shots || []).map(x => ({ id:x.id, visual:x.visual, shot_size:x.shot_size, camera:x.camera || '', movement_class:x.movement_class || '', secs:x.secs }));
+    this.setState(st => { const p = { ...(st.shotsProposal || {}) }; delete p[key];
+      return { shotsProposal:p, fullScript:(st.fullScript || []).map((r, i) => i === idx ? { ...r, shots } : r) }; });
+    this.showToast(shots.length + ' extra shot' + (shots.length > 1 ? 's' : '') + ' added — render their frames, then edit anything you like.', 'ok');
+  };
+  editShotField = (idx, k, field) => (e) => {
+    const val = e.target.value;
+    this.setState(st => ({ fullScript:(st.fullScript || []).map((r, i) => i !== idx ? r : { ...r, shots:this.extraShots(r).map((x, j) => j === k - 1 ? { ...x, [field]:val } : x) }) }));
+  };
+  setShotSecs = (idx, k) => (e) => {
+    const n = Math.max(2, Math.min(8, parseInt(e.target.value, 10) || 2));
+    this.setState(st => ({ fullScript:(st.fullScript || []).map((r, i) => i !== idx ? r : { ...r, shots:this.extraShots(r).map((x, j) => j === k - 1 ? { ...x, secs:n } : x) }) }));
+  };
+  // Removing shot k closes the gap in the frame keys too, so each remaining shot keeps ITS OWN frame.
+  removeShot = (idx, k) => () => {
+    this.setState(st => {
+      const row = (st.fullScript || [])[idx], ex = this.extraShots(row), f = { ...(st.sceneFrames || {}) };
+      for (let j = k; j < ex.length; j++) { const nxt = f[idx + '.' + (j + 1)]; if (nxt) f[idx + '.' + j] = nxt; else delete f[idx + '.' + j]; }
+      delete f[idx + '.' + ex.length];
+      const left = ex.filter((_, j) => j !== k - 1);
+      return { sceneFrames:f, fullScript:(st.fullScript || []).map((r, i) => { if (i !== idx) return r; const o = { ...r }; if (left.length) o.shots = left; else delete o.shots; return o; }) };
+    });
+  };
+  removeAllShots = (idx) => () => {
+    this.setState(st => {
+      const f = { ...(st.sceneFrames || {}) };
+      Object.keys(f).forEach(key => { if (key.indexOf(idx + '.') === 0) delete f[key]; });
+      return { sceneFrames:f, fullScript:(st.fullScript || []).map((r, i) => { if (i !== idx) return r; const o = { ...r }; delete o.shots; return o; }) };
+    });
+  };
+  renderShotFrames = (idx) => async () => {
+    const mf = (this.state.sceneFrames || {})[idx];
+    if (!(mf && mf.status === 'done')) { this.showToast('Render shot 1 of this scene first — the other angles are matched to it.', 'warn'); return; }
+    const n = this.extraShots((this.state.fullScript || [])[idx]).length;
+    for (let k = 1; k <= n; k++) await this.generateFrame(idx, k)();
+  };
+  // One extra shot's tile on the Storyboard card.
+  shotTile(idx, k){
+    const h = React.createElement, s = this.state, row = (s.fullScript || [])[idx], sh = this.extraShots(row)[k - 1];
+    if (!sh) return null;
+    const f = (s.sceneFrames || {})[this.frameKey(idx, k)] || { status:'idle', url:null };
+    const stale = this.frameIsStale(idx, f, k);
+    const masterDone = !!((s.sceneFrames || {})[idx] && (s.sceneFrames || {})[idx].url);
+    const warns = [];
+    if (sh.shot_size === 'wide' && !s.videoPlateChoice) warns.push('Location is not locked — the room may differ from shot 1.');
+    if (f.angleSame) warns.push(f.angleSame);
+    if (f.packShape) warns.push('Check the pack: ' + f.packShape + '.');
+    if (stale) warns.push('Out of date — re-render this frame.');
+    const field = { border:'1px solid #DDD9D1', borderRadius:7, padding:'5px 7px', fontSize:11.5, color:'#38414F', background:'#fff', fontFamily:'inherit', boxSizing:'border-box' };
+    const thumb = h('div', { style:{ position:'relative', width:'100%', aspectRatio:'16/9', borderRadius:8, overflow:'hidden', background:'#E6E3DC' } },
+      f.url ? h('img', { src:f.url, onClick:this.openLightbox(f.url), style:{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', cursor:'zoom-in' } }) : null,
+      f.status === 'rendering' ? h('div', { style:{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', background:'rgba(23,50,94,0.55)', color:'#fff', fontSize:11, fontWeight:700 } }, 'Rendering…') : null,
+      f.status === 'error' ? h('div', { style:{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', color:'#C0392B', fontSize:11, fontWeight:700, background:'rgba(255,255,255,0.8)' } }, 'Failed — try again') : null,
+      f.status === 'done' ? h('span', { style:{ position:'absolute', left:6, bottom:6, width:8, height:8, borderRadius:'50%', background: stale ? '#C8860F' : '#259821', boxShadow:'0 0 0 2px rgba(0,0,0,0.15)' } }) : null);
+    const renderBtn = h('button', { onClick:this.generateFrame(idx, k), disabled:f.status === 'rendering',
+      title: masterDone ? 'Draw this angle from shot 1’s frame' : 'Render shot 1 of this scene first',
+      style:{ alignSelf:'flex-start', border:'1px solid #C9CEDA', background:'#fff', color:'#17325E', borderRadius:8, padding:'3px 9px', fontSize:11, fontWeight:700, cursor:'pointer', opacity: masterDone ? 1 : 0.55 } },
+      f.status === 'done' ? '↻ Re-render' : 'Render frame');
+    const sizes = Object.keys(this.SHOT_SIZE_LABELS).filter(v => v !== 'product' || this.sceneNamesPack(row.visual) || sh.shot_size === 'product');
+    // Stacked, not side by side: a storyboard card is a narrow column.
+    return h('div', { key:'shot' + k, style:{ display:'flex', flexDirection:'column', gap:6, padding:'8px 0', borderTop:'1px solid #ECE8DE' } },
+      h('div', { style:{ display:'flex', alignItems:'center', gap:6, flexWrap:'wrap' } },
+        h('span', { style:{ fontWeight:800, fontSize:12, color:'#17325E' } }, 'Shot ' + (k + 1)),
+        h('select', { value:sh.shot_size || 'medium', onChange:this.editShotField(idx, k, 'shot_size'), style:{ ...field, padding:'3px 5px', minWidth:0, maxWidth:'100%' } },
+          sizes.map(v => h('option', { key:v, value:v }, this.SHOT_SIZE_LABELS[v]))),
+        h('input', { type:'number', min:2, max:8, value:parseInt(sh.secs, 10) || 2, onChange:this.setShotSecs(idx, k), title:'Seconds this shot holds', style:{ ...field, width:48, padding:'3px 5px' } }),
+        h('span', { style:{ fontSize:11, color:'#6B7280' } }, 's'),
+        h('span', { onClick:this.removeShot(idx, k), title:'Remove this shot', style:{ marginLeft:'auto', cursor:'pointer', color:'#9AA1AD', fontSize:14, lineHeight:1 } }, '✕')),
+      thumb, renderBtn,
+      h('textarea', { value:sh.visual || '', onChange:this.editShotField(idx, k, 'visual'), rows:4, style:{ ...field, width:'100%', resize:'vertical', lineHeight:1.45 } }),
+      h('input', { value:sh.camera || '', onChange:this.editShotField(idx, k, 'camera'), placeholder:'Camera movement, e.g. slow push-in', style:{ ...field, width:'100%' } }),
+      ...warns.map((w, i) => h('div', { key:'w' + i, style:{ fontSize:11, lineHeight:1.45, color:'#B07A12', fontWeight:700 } }, w)));
+  }
+  // The whole Coverage strip for one scene card, built as elements (a loop inside the card's own loop leaves placeholder ghosts).
+  coverageStrip(idx, row){
+    const h = React.createElement, s = this.state, ex = this.extraShots(row), key = this.shotKey(row);
+    const prop = (s.shotsProposal || {})[key], busy = s.shotsBusy === key, can = this.canCover(idx);
+    const btn = (label, onClick, go, disabled) => h('button', { onClick, disabled:!!disabled, style:{ border:'1px solid ' + (go ? '#259821' : '#C9CEDA'), background: go ? '#259821' : '#fff',
+      color: go ? '#fff' : '#17325E', borderRadius:8, padding:'4px 10px', fontSize:11.5, fontWeight:700, cursor: disabled ? 'default' : 'pointer', opacity: disabled ? 0.55 : 1 } }, label);
+    const wrap = (...kids) => h('div', { style:{ marginTop:8, padding:'8px 10px', border:'1px solid #E6E3DC', borderRadius:10, background:'#FBFAF8' } }, ...kids);
+    const label = (txt) => h('span', { style:{ fontSize:11, fontWeight:800, letterSpacing:'0.06em', textTransform:'uppercase', color:'#6B7280' } }, txt);
+    if (!ex.length && !prop) {
+      if (!can.ok) return can.why ? h('div', { style:{ marginTop:8, fontSize:11, color:'#9AA1AD' } }, 'Coverage: ' + can.why) : null;
+      return wrap(h('div', { style:{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' } }, label('Coverage'),
+        h('span', { style:{ fontSize:11.5, color:'#6B7280' } }, 'One shot today. Cut between camera angles?'),
+        btn(busy ? 'Proposing…' : '＋ Break into shots', this.breakIntoShots(idx), false, busy || !!s.shotsBusy)));
+    }
+    if (!ex.length && prop) {
+      return wrap(
+        h('div', { style:{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap', marginBottom:4 } }, label('Proposed coverage'),
+          h('span', { style:{ fontSize:11.5, color:'#6B7280' } }, 'Shot 1 (the frame above) keeps ' + prop.master_secs + ' s.')),
+        ...(prop.shots || []).map((x, j) => h('div', { key:'p' + j, style:{ padding:'6px 0', borderTop:'1px solid #ECE8DE' } },
+          h('div', { style:{ fontWeight:800, fontSize:12, color:'#17325E' } }, 'Shot ' + (j + 2) + ' · ' + (this.SHOT_SIZE_LABELS[x.shot_size] || x.shot_size) + ' · ' + x.secs + ' s' + (x.camera ? ' · ' + x.camera : '')),
+          h('div', { style:{ fontSize:11.5, lineHeight:1.5, color:'#38414F' } }, x.visual),
+          ...(x.warnings || []).map((w, i) => h('div', { key:'pw' + i, style:{ fontSize:11, color:'#B07A12', fontWeight:700 } }, w)))),
+        ...(prop.notes || []).map((n, i) => h('div', { key:'pn' + i, style:{ fontSize:11, color:'#6B7280' } }, n)),
+        h('div', { style:{ display:'flex', gap:8, marginTop:6 } }, btn('Accept', this.acceptShotProposal(idx), true), btn(busy ? 'Proposing…' : 'Ask again', this.breakIntoShots(idx), false, busy), btn('Discard', this.discardShotProposal(idx))));
+    }
+    const missing = ex.filter((_, j) => { const f = (s.sceneFrames || {})[this.frameKey(idx, j + 1)]; return !(f && f.status === 'done'); }).length;
+    return wrap(
+      h('div', { style:{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' } }, label('Coverage'),
+        h('span', { style:{ fontSize:11.5, color:'#41505F' } }, (ex.length + 1) + ' shots · shot 1 holds ' + this.shotMasterSecs(row) + ' s'),
+        h('span', { style:{ marginLeft:'auto', display:'flex', gap:6 } },
+          missing ? btn('Render shot frames (' + missing + ')', this.renderShotFrames(idx), true) : null,
+          btn('Remove shots', this.removeAllShots(idx)))),
+      ...ex.map((_, j) => this.shotTile(idx, j + 1)));
+  }
   // What a frame was rendered AGAINST. If the scene's words or its length change afterwards, the
   // frame is for a different shot than the one now in the script — a still cut for a 4s beat sitting
   // in an 8s slot. Recording this is what lets the card admit it is out of date.
@@ -16412,10 +16611,14 @@ class Component extends DCLogic {
     return this.clipText(kept.join(' '), 400);
   }
   // The request ONE frame sends (no seed -- the film's seed is set when it renders). Pure: reads state, changes nothing.
-  frameBody(idx){
+  frameBody(idx, k = 0){
     const s = this.state;
-    const row = (s.fullScript || [])[idx];
+    const baseRow = (s.fullScript || [])[idx];
+    if (!baseRow) return null;
+    // k > 0: an extra camera angle of this scene. It is drawn from ITS OWN text and size, matched to shot 1's frame.
+    const row = k ? this.shotRow(baseRow, k) : baseRow;
     if (!row) return null;
+    const masterUrl = k ? (((s.sceneFrames || {})[idx] || {}).url || null) : null;
     const no = Number(row.no != null ? row.no : idx + 1);
     const note = (s.frameNote || '').trim();
     // The place comes from the short Location line (or the cleaned, clipped note) -- the whole location plan is a
@@ -16455,13 +16658,15 @@ class Component extends DCLogic {
     // Match this frame's blocking/orientation to an already-approved sibling frame: send BOTH the cast ref and the chosen
     // sibling, so continuity is asked for explicitly rather than hoped for.
     const siblingIdx = this.matchIdx(s.fullScript, row);
-    const siblingUrl = siblingIdx >= 0 ? (((s.sceneFrames || {})[siblingIdx] || {}).url) : null;
+    const siblingUrl = k ? masterUrl : (siblingIdx >= 0 ? (((s.sceneFrames || {})[siblingIdx] || {}).url) : null);
     if (siblingUrl) {
       delete body.reference_url;
       body.reference_urls = [s.castRefUrl, siblingUrl].filter(Boolean);
     }
+    // A coverage shot also names its master, so the server can say when the angle did not change (anglecheck.py).
+    if (k && masterUrl) body.compare_to = masterUrl;
     // The checkbox is the whole truth about the pack: ticked = the real pack photo, unticked = none.
-    const packOn = this.packOnFrame(idx);
+    const packOn = k ? this.packOnShot(row) : this.packOnFrame(idx);
     if (packOn) {
       body.include_pack = true;
       // Which specific pack, picked once in the assets panel -- otherwise the server uses the newest signed-off.
@@ -16477,13 +16682,14 @@ class Component extends DCLogic {
     if (s.videoPlateChoice) body.plate_id = s.videoPlateChoice;
     else body.use_plate = false;
     body.brand_mode = s.producerBrandMode;
-    return { body, lookRef, matchNo: row.match_no == null ? null : String(row.match_no) };
+    // For a shot the "match" is its master's frame itself: re-rendering shot 1 flags its other angles out of date.
+    return { body, lookRef, matchNo: k ? (masterUrl ? 'm:' + masterUrl : null) : (row.match_no == null ? null : String(row.match_no)) };
   }
   // A short fingerprint of everything a frame is drawn from. null while the Memory list has not loaded (the pack decision
   // depends on it), so a restored film never flashes "out of date" before its pickers are there.
-  frameRecipe(idx){
+  frameRecipe(idx, k = 0){
     if (!this.state.videoAssetsLoaded) return null;
-    const fb = this.frameBody(idx);
+    const fb = this.frameBody(idx, k);
     if (!fb) return null;
     const b = fb.body;
     // The provocation's visual language is applied server-side (P3a), so it never reaches b.prompt. Include it
@@ -16503,10 +16709,10 @@ class Component extends DCLogic {
   }
   // Is the frame at `idx` out of date? Frames drawn with a recipe compare recipes; frames from before that compare the
   // scene's VISUAL and the look (the timecode and the spoken words no longer count — the picture is drawn from the visual).
-  frameIsStale(idx, f){
+  frameIsStale(idx, f, k = 0){
     if (!f || f.status !== 'done') return false;
-    if (f.recipe) { const now = this.frameRecipe(idx); return now !== null && now !== f.recipe; }
-    const row = (this.state.fullScript || [])[idx] || {};
+    if (f.recipe) { const now = this.frameRecipe(idx, k); return now !== null && now !== f.recipe; }
+    const row = (k ? this.shotRow((this.state.fullScript || [])[idx], k) : (this.state.fullScript || [])[idx]) || {};
     // Only the VISUAL reflags a frame — the picture is drawn from the visual, not from the spoken words.
     // f.sig is stored as `tc ~ visual ~ said`; slice(1,-1) keeps just the visual (even if it contains ' ~ '),
     // dropping both the timecode and the spoken text, so re-timing the VO, re-wording it or changing a line's
@@ -16514,7 +16720,7 @@ class Component extends DCLogic {
     const visualMoved = !!f.sig && f.sig.split(' ~ ').slice(1, -1).join(' ~ ') !== ((row && row.visual) || '');
     return visualMoved || (f.look || '') !== (this.state.videoLookRef || '').trim();
   }
-  generateFrame = (idx) => async () => {
+  generateFrame = (idx, k = 0) => async () => {
     // A frame without a cast reference is where the drift came from, and the machinery to stop it was
     // already here: the seed is fixed per film and `reference_url` is sent when a cast exists. Nothing
     // REQUIRED the cast first, so the ordinary path was a fixed seed plus a text description and no
@@ -16532,12 +16738,17 @@ class Component extends DCLogic {
     if (this.state.castGateHit) this.setState({ castGateHit: false });
     const row = (this.state.fullScript || [])[idx];
     if (!row) return;
-    this.setState(s => ({ sceneFrames:{ ...s.sceneFrames, [idx]:{ status:'rendering', url:null } } }));
+    const fk = this.frameKey(idx, k);
+    if (k) {
+      if (!this.extraShots(row)[k - 1]) return;
+      if (!(((this.state.sceneFrames || {})[idx] || {}).url)) { this.showToast('Render shot 1 of this scene first \u2014 the other angles are matched to it.', 'warn'); return; }
+    }
+    this.setState(s => ({ sceneFrames:{ ...s.sceneFrames, [fk]:{ status:'rendering', url:null } } }));
     // The request comes from the same builder the "out of date" check uses (frameBody), so what a frame is drawn from and
     // what it is later compared against cannot drift apart.
-    const fb = this.frameBody(idx);
+    const fb = this.frameBody(idx, k);
     const body = fb.body, lookRef = fb.lookRef;
-    const recipe = this.frameRecipe(idx);
+    const recipe = this.frameRecipe(idx, k);
     // one fixed seed per film — every frame reuses it so the look stays consistent
     let seed = this.state.videoSeed;
     if (!seed) { seed = Math.floor(Math.random()*900000) + 100000; this.setState({ videoSeed: seed }); }
@@ -16545,7 +16756,7 @@ class Component extends DCLogic {
     const res = await this.apiJson('/scene-still', body);
     // Stamp the frame with the scene it was rendered from, so a later dialogue or timing change can
     // be seen for what it is rather than silently leaving a mismatched still on the board.
-    const sig = this.sceneSig((this.state.fullScript || [])[idx] || row);
+    const sig = this.sceneSig(k ? this.shotRow(row, k) : ((this.state.fullScript || [])[idx] || row));
     // The pack was asked for (ticked) but not attached -- say so on the card instead of letting a pack-less frame
     // look like a pack frame. `pack_used` is "attached", not "drawn"; the server cannot see the picture.
     const packMissing = !!(body.include_pack && res && res.image_url && (res.from_reference === false || res.pack_used === false));
@@ -16553,9 +16764,12 @@ class Component extends DCLogic {
     // "elongated"/"squashed" is shown; "ok" and "unclear" say nothing, so the card never claims what it cannot measure.
     const pc = res && res.pack_check;
     const packShape = (pc && (pc.verdict === 'elongated' || pc.verdict === 'squashed')) ? String(pc.note || '') : '';
+    // Coverage: the server says when an extra angle came back as a near-copy of shot 1 (anglecheck.py). Only "same" is shown.
+    const ac = res && res.angle_check;
+    const angleSame = (k && ac && ac.verdict === 'same') ? String(ac.note || 'This looks the same as shot 1 \u2014 the angle did not change.') : '';
     if (res && res.image_url) this.setState(s => ({ framesProvider: res.provider || s.framesProvider,
-      sceneFrames:{ ...s.sceneFrames, [idx]:{ status:'done', url:res.image_url, provider:res.provider||'', sig, packMissing, packShape, look:lookRef, recipe } } }));
-    else this.setState(s => ({ sceneFrames:{ ...s.sceneFrames, [idx]:{ status:'error', url:null } } }));
+      sceneFrames:{ ...s.sceneFrames, [fk]:{ status:'done', url:res.image_url, provider:res.provider||'', sig, packMissing, packShape, angleSame, look:lookRef, recipe } } }));
+    else this.setState(s => ({ sceneFrames:{ ...s.sceneFrames, [fk]:{ status:'error', url:null } } }));
   };
   generateAllFrames = async () => {
     const rows = this.state.fullScript || [];
@@ -16569,7 +16783,12 @@ class Component extends DCLogic {
       return;
     }
     this.setState({ framesBatch:true });
-    for (let i=0;i<rows.length;i++){ await this.generateFrame(i)(); }
+    for (let i=0;i<rows.length;i++){
+      await this.generateFrame(i)();
+      // the extra angles of this scene, once shot 1 exists (they are matched to it)
+      const mf = this.state.sceneFrames[i], nEx = this.extraShots((this.state.fullScript || [])[i] || rows[i]).length;
+      if (mf && mf.status === 'done') for (let k = 1; k <= nEx; k++) await this.generateFrame(i, k)();
+    }
     this.setState({ framesBatch:false });
     const done = Object.values(this.state.sceneFrames).filter(f=>f.status==='done').length;
     if (!done) this.showToast('No image service available — keeping the branded placeholders.');
@@ -16851,14 +17070,14 @@ class Component extends DCLogic {
   // when the scene's words, the look, a department note or the cast changed after it was rendered.
   framesStaleCount(){
     const s = this.state;
-    return (s.fullScript || []).filter((r, i) => { const f = s.sceneFrames[i]; return f && f.status === 'done' && this.frameIsStale(i, f); }).length;
+    return this.frameSlots().filter(x => { const f = s.sceneFrames[x.key]; return f && f.status === 'done' && this.frameIsStale(x.idx, f, x.k); }).length;
   }
   handToProduction = () => {
     const s = this.state;
     if (s.scriptStatus !== 'approved') { this.showToast('Approve the full script first.'); return; }
-    const n = (s.fullScript || []).length;
+    const n = this.frameTotal();
     if (!n) { this.showToast('Write and approve the script first.'); return; }
-    const done = Object.values(s.sceneFrames).filter(f => f.status === 'done').length;
+    const done = this.framesDoneCount();
     if (done < n) { this.showToast('Render all ' + n + ' storyboard frames first — ' + done + ' of ' + n + ' done.'); return; }
     const stale = this.framesStaleCount();
     if (stale > 0) { this.showToast(stale + (stale > 1 ? ' frames are' : ' frame is') + ' out of date — re-render ' + (stale > 1 ? 'them' : 'it') + ' so Production uses the current script and cast.'); return; }
@@ -17476,7 +17695,11 @@ class Component extends DCLogic {
     // generating from text, so the film matches the board and the cast stays identical.
     const rows = (this.state.fullScript||[]).map((r,i) => {
       const f = this.state.sceneFrames[i];
-      return (f && f.status==='done' && f.url) ? { ...r, frame_url:f.url } : r;
+      let out = (f && f.status==='done' && f.url) ? { ...r, frame_url:f.url } : r;
+      // Coverage: each extra shot carries ITS OWN frame. A shot with no frame is held back by the server, never drawn from words.
+      const ex = this.extraShots(r);
+      if (ex.length) out = { ...out, shots: ex.map((sh, j) => { const sf = this.state.sceneFrames[this.frameKey(i, j + 1)]; return (sf && sf.status==='done' && sf.url) ? { ...sh, frame_url:sf.url } : sh; }) };
+      return out;
     });
     const body = { scenes:rows, aspect:p0.aspect, duration:this.state.prodDuration, music:p0.music, voice:p0.voice, note, brand_mode:this.state.producerBrandMode,
                    voices:this.state.voiceChoices, characters:this.state.videoCharacters,
@@ -17515,13 +17738,13 @@ class Component extends DCLogic {
         producedUrl: url || s.producedUrl, renderInfo: info || s.renderInfo,
         providers: d.providers || s.providers,
         // the silent cut stays on the server, so music can be swapped with no video spend
-        silentMaster: d.master || s.silentMaster, prodClips: d.clips || s.prodClips,
+        silentMaster: d.master || s.silentMaster, prodClips: d.clips || s.prodClips, prodShotClips: d.shot_clips || s.prodShotClips,
         musicUrl: d.music_url || s.musicUrl, loudnessInfo: d.loudness || s.loudnessInfo };
     });
     if (!isRevise) this.addCreated({ type:'Video', title:(this.state.linkedBrief ? this.state.linkedBrief.title.replace(/ brief.*/i,'').trim()+' — produced film' : 'Produced film'), format:this.state.production.aspect+' · '+this.state.prodDuration, status:'Draft' });
     // Forward wiring: a produced film gets its cut manifest started here, so the Edit room opens straight
     // onto it instead of "No cut yet". Runs on the fresh render data (state may not have flushed yet).
-    if (url) this.startCutFromFilm(d.clips, d.master);
+    if (url) this.startCutFromFilm(d.clips, d.master, d.shot_clips);
     // B4 — surface the server's `detail` on failure AND on a 200 that carries a warning.
     if (url) {
       if (d.detail && !this.flagCredits(d.detail)) this.showToast(d.detail);
@@ -17854,7 +18077,8 @@ class Component extends DCLogic {
     if (!cr || !cr.rows.length || this.state.cutRenderBusy) return;
     this.setState({ cutRenderBusy:true });
     const p0 = this.state.production;
-    const body = { scenes:cr.rows, aspect:p0.aspect, duration:cr.target + 's', music:p0.music, voice:p0.voice,
+    // v1: a cutdown is scene-level and has no frames, so any coverage shots are left out (they would have no frame to draw from).
+    const body = { scenes:cr.rows.map(r => { const { shots: _s, ...rest } = r; return rest; }), aspect:p0.aspect, duration:cr.target + 's', music:p0.music, voice:p0.voice,
       note:cr.target + 's cut', brand_mode:this.state.producerBrandMode, voices:this.state.voiceChoices,
       characters:this.state.videoCharacters, accent:this.state.voiceAccent, style:this.state.videoStyle,
       music_url:this.state.musicUrl || '', music_level:this.state.musicLevel,
@@ -18011,7 +18235,7 @@ class Component extends DCLogic {
   // carrying its role, its on-screen super and its length, with the rendered clip URL where we still have
   // it. `/cut` refuses a second start, so on a re-render this simply 400s and we load the existing cut —
   // the crafted cutdown re-derives from the script anyway, and rescore/renderCut use the live silentMaster.
-  startCutFromFilm = async (clips, master) => {
+  startCutFromFilm = async (clips, master, shotClips) => {
     const e = this.cutExec(); if (!e || !e.id) return false;
     const rows = this.state.fullScript || [];
     // This film has actually been rendered: a fresh master from the render call, or producedUrl (which is
@@ -18021,8 +18245,12 @@ class Component extends DCLogic {
     if (!rows.length || !hasFilm) return false;
     const m = master || this.state.silentMaster || '';
     const cl = clips || this.state.prodClips || [];
+    // One clip per SCENE: the render returns one record per SHOT (a scene can be several -- a long scene, or coverage), so the
+    // old `clips[i]` <-> scene i pairing slid out of step. The beat takes its scene's first rendered shot.
+    const sc = shotClips || this.state.prodShotClips || null, firstOf = {};
+    (sc || []).forEach(c => { if (c && c.ok && c.url && firstOf[c.no] === undefined) firstOf[c.no] = c.url; });
     const beats = rows.map((r, i) => ({ n:i + 1, role:this.beatRoleOf(r), shot_id:'',
-      clip_url: cl[i] || '', seconds: this.cutSecsOf(r), super:(r.supr || '').trim() }));
+      clip_url: sc ? (firstOf[this.sceneNo(r, i)] || '') : (cl[i] || ''), seconds: this.cutSecsOf(r), super:(r.supr || '').trim() }));
     await this.apiCall('/cut', { execution:e.id, beats, master_url:m });
     await this.loadCut(false);
     return true;
@@ -19056,6 +19284,9 @@ class Component extends DCLogic {
         includePack: this.packOnFrame(i), toggleIncludePack: this.toggleSceneIncludePack(i),
         hasPackLocked: this.packAvailable(s), packMissing: !!f.packMissing,
         packShape: f.packShape || '', hasPackShape: !!f.packShape,
+        coverage: this.coverageStrip(i, r),
+        shotsChip: this.extraShots(r).length ? '+' + this.extraShots(r).length + ' shot' + (this.extraShots(r).length > 1 ? 's' : '') + ' \u00b7 ' + this.extraShots(r).filter((_, j) => { const ff = s.sceneFrames[this.frameKey(i, j + 1)]; return ff && ff.status === 'done'; }).length + '/' + this.extraShots(r).length + ' frames' : '',
+        hasShotsChip: this.extraShots(r).length > 0,
         frameNote: r.frame_note || '', editFrameNote: this.editFrameNote(i),
         lines, hasLines: lines.length > 0, isSilent: lines.length === 0, willBeSilent,
         addVo: this.addSceneLine(i, 'vo'), addLine: this.addSceneLine(i, 'dialogue'),
@@ -19117,7 +19348,8 @@ class Component extends DCLogic {
 
     const approved = s.scriptStatus==='approved';
     const nScenes = (s.fullScript || []).length;
-    const doneFrames = Object.values(s.sceneFrames).filter(f=>f.status==='done').length;
+    const nFrames = this.frameTotal();           // scene frames + one per extra shot (== nScenes for a film with no shots)
+    const doneFrames = this.framesDoneCount();
     const staleFrames = this.framesStaleCount();   // done frames the script/cast/look has outrun
     const statusLabel = { none:'Not started', concept:'Concept ready', drafted:'Script drafted', approved:'Approved' }[s.scriptStatus] || 'Not started';
     const stepDefs = [ {key:'brief',label:'Brief'}, {key:'scripting',label:'Scripting'}, {key:'shootboard',label:'Shoot Board'}, {key:'production',label:'Production'} ];
@@ -19127,7 +19359,7 @@ class Component extends DCLogic {
       let badge = '';
       if (d.key==='brief') badge = s.linkedBrief ? s.linkedBrief.format : (s.videoObjective || 'Optional');
       else if (d.key==='scripting') badge = statusLabel;
-      else if (d.key==='shootboard') badge = locked ? 'Locked' : (nScenes ? doneFrames+' / '+nScenes+' frames' : 'Ready');
+      else if (d.key==='shootboard') badge = locked ? 'Locked' : (nFrames ? doneFrames+' / '+nFrames+' frames' : 'Ready');
       else badge = locked ? 'Locked' : (prod.versions.length ? 'v'+prod.versions.length+' rendered' : 'Ready');
       return { num:i+1, label:d.label, badge, active, locked,
         go: this.setVideoStep(d.key==='brief' ? 'scripting' : d.key),
@@ -19170,16 +19402,16 @@ class Component extends DCLogic {
       border: s.socialStyle===v.id ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.28)' }));
     const preflight = [
       { label:'Full script approved', ok: approved, note: approved ? 'Approved' : 'Pending' },
-      { label:'Storyboard frames', ok: nScenes>0 && doneFrames===nScenes && staleFrames===0,
-        note: staleFrames>0 ? (staleFrames+' of '+nScenes+' out of date') : (doneFrames+' of '+nScenes) },
+      { label:'Storyboard frames', ok: nFrames>0 && doneFrames===nFrames && staleFrames===0,
+        note: staleFrames>0 ? (staleFrames+' of '+nFrames+' out of date') : (doneFrames+' of '+nFrames) },
       { label:'Aspect ratio', ok: !!prod.aspect, note: prod.aspect },
       { label:'Duration / cut', ok: !!s.prodDuration, note: s.prodDuration },
     ].map(x => ({ ...x, mark: x.ok ? '✓' : '–', markBg: x.ok ? '#EAF6EC' : '#F3EFE3', markFg: x.ok ? '#259821' : '#A8AEB8' }));
-    const handoverReady = approved && nScenes>0 && doneFrames===nScenes && staleFrames===0;
+    const handoverReady = approved && nFrames>0 && doneFrames===nFrames && staleFrames===0;
     const handoverNote = !approved ? 'Approve the script first.'
-      : (doneFrames<nScenes ? ((nScenes-doneFrames)+' of '+nScenes+' frames still to render.')
-      : (staleFrames>0 ? (staleFrames+' of '+nScenes+' frames out of date — re-render so the film matches the current script & cast.')
-      : ('All '+nScenes+' frames rendered and current.')));
+      : (doneFrames<nFrames ? ((nFrames-doneFrames)+' of '+nFrames+' frames still to render.')
+      : (staleFrames>0 ? (staleFrames+' of '+nFrames+' frames out of date — re-render so the film matches the current script & cast.')
+      : ('All '+nFrames+' frames rendered and current.')));
 
     const isEditor = s.screen==='editor';
 
@@ -19986,7 +20218,7 @@ class Component extends DCLogic {
       castNeedsLockBg: s.castGateHit ? '#FDF3F2' : '#FFF9EC',
       castNeedsLockLine: s.castGateHit ? '#F1C9C4' : '#F0DFB4',
       allFramesLabel: s.framesBatch ? 'Rendering frames…' : '✦ Generate all frames',
-      doneFrames, nScenes,
+      doneFrames, nScenes, nFrames,
       handToProduction: this.handToProduction, handoverNote,
       handoverBg: handoverReady ? '#259821' : '#B07A12',
       // script / frame rework + character continuity
@@ -20344,7 +20576,7 @@ class Component extends DCLogic {
              + ' at the 4s shortest shot; merge two to hold the length')
           : (s.prodDuration + ' film');
         return who + ' \u00b7 ' + this.tierLabel(tier) + ' \u2014 ' + price
-          + ' for a ' + planned + '.' + advice + auto;
+          + ' for a ' + planned + '.' + advice + auto + this.coverageCostNote();
       })(),
       produceCostNote: (prod.versions.length ? 'Re-render' : 'This render') + ': ' + s.prodDuration
         + ' · ' + ((this.tiers().find(t => t.id === this.tierNow()) || {}).label || '') + ' · '
@@ -24278,7 +24510,7 @@ class Component extends DCLogic {
   // or reworked script starts without the old script's choices (before, a tick on frame 3 followed you into the next
   // script in the same session and vanished on reload). None of these edits drop an approved script back to
   // "drafted" -- they change how a still is drawn, not what the script says.
-  SCENE_EXTRAS = ['frame_note', 'movement_class', 'shot_size', 'include_pack', 'match_no', 'beat_role', 'beat_note'];
+  SCENE_EXTRAS = ['frame_note', 'movement_class', 'shot_size', 'include_pack', 'match_no', 'beat_role', 'beat_note', 'shots'];
   sceneNo(row, i){ return String(row && row.no != null ? row.no : i + 1); }
   // The script's Beat role cell: Auto ('') or one of these. Anything else counts as Auto, as on the server.
   BEAT_ROLE_IDS = ['hook', 'world', 'mechanism', 'turn', 'brand', 'button'];
@@ -24327,6 +24559,8 @@ class Component extends DCLogic {
           if (BEAT.indexOf(k) >= 0) return;
           if (old[k] === undefined || old[k] === '' || out[k] !== undefined) return;
           if (k === 'frame_note' && String(old.visual || '').trim() !== String(r.visual || '').trim()) return;
+          // Extra camera angles belong to the scene's picture: carried only while that picture is unchanged.
+          if (k === 'shots' && (!Array.isArray(old[k]) || !old[k].length || String(old.visual || '').trim() !== String(r.visual || '').trim())) return;
           out[k] = old[k];
         });
       }
