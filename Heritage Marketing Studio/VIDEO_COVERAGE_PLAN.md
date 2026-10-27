@@ -179,3 +179,25 @@ except the named real-credit runs in Steps 0, 2, 3.
 5. **Dialogue:** a cut may fall mid-line (the scene's words play across its shots). OK?
 6. **Branch workflow:** build on branch `coverage`; merge to master only after your localhost sign-off. OK?
 7. **Step 0 first:** I run the three cheap trials (~$2) before any code, and stop if close-ups do not hold the pack/cast.
+
+## 11. STEP 0 RESULTS (27 Oct 2026, local, real credit; scripts `tools/engine_trials/coverage_step0.py`, media in `Downloads\engine-trial\coverage_step0\`)
+
+**Gate verdict: PASS with four plan changes.** Close-ups and detail inserts made from a master frame hold the pack, faces, outfit and kitchen.
+
+| Trial | Result |
+|---|---|
+| (a) Omni "About 2 seconds" | **Not obeyed: asking for 2 s or 1 s returned 3.01 s.** Floor is 3 s. As planned: generate 3 s, trim to the shot's length (the stitch trimmed each to exactly 2.0 s; two 3-shot cuts = 6.00 s). Every shot costs >= 3 s of generation. |
+| (b) six angle frames via the real `/scene-still` (master as sibling reference + real Heritage pack photo) | **Close-up (B) and detail (A, B): hold** — same boy/woman, same clothes, same kitchen counter, real label legible, pack ratio ok (0.88-1.24 vs 1.46 on the master). **"Over-the-shoulder" (B) and "medium" (A): returned a near-copy of the master** (correlation 1.00). **Wide (A): different kitchen** (window on the other side, new layout) because the master never showed the rest of the room. |
+| (c) three shots stitched into one 6 s scene | Reads as cutting between angles. Scene B (master -> close-up -> pouch detail) is convincing and the pack holds in all three. Scene A (master -> pour detail -> wide) cuts well until the wide, where the room changes. Small action drift (glass on the counter in shot 1, in the boy's hands in shot 2, back on the counter in shot 3). |
+| Side finding | When a frame is missing, `gemini.video` falls back to text-to-video silently and the film gets a different pack ("Aligya", green "Heritage fabel" pouch). It only logs "reference frame unusable". That is the failure the whole frame-first design exists to prevent, so coverage must never render a shot without its frame (see change 5). |
+| Timings | frame ~15 s each; clip 17-42 s each; image cost per frame not measured. |
+
+**Plan changes forced by the results**
+
+1. **Near-copy angle check (new, deterministic).** New small module (`anglecheck.py`): a 96x54 greyscale correlation between a shot frame and its master. Measured: near-copies 1.00 (mean diff ~3), genuine angles 0.80 or lower (0.02-0.80). Rule: correlation >= 0.95 => the shot tile says "This looks the same as shot 1 — the angle did not change" and offers one-click regenerate. Never blocks.
+2. **Angles must be stated as camera POSITION, not only size.** `/scene-shots` must return a `camera_position` sentence per shot ("camera behind the mother's right shoulder, her shoulder fills the left foreground, the boy facing us"), merged into the shot's visual for the frame prompt. Sizes alone ("medium", "over") produced near-copies. Add the same sentence to the shot's tile so a person can edit it.
+3. **Wide / establishing shots need a locked location.** Without a signed wide location plate the room is invented (scene A wide). Rule: a `wide` shot on a film with no signed plate shows "Location is not locked — the room may differ" and `/scene-shots` prefers close / medium / over / detail unless a plate exists. **B4 (wide + tight plates) moves up: build it right after coverage, not last.**
+4. **Action state.** `/scene-shots` prompt: "keep every object in the same state as shot 1 unless this shot's action moves it" (the glass drifted). Accept the residual: continuity of action across angles is approximate (stated limit 1, now evidenced).
+5. **Never render a shot without its frame.** In coverage, a shot with no frame is not sent to the engine; the render stops it with a visible note ("shot 2 has no frame — generate it first"), instead of the silent text-to-video fallback seen in trial (c). (Existing scenes keep today's behaviour.)
+
+Unchanged: design B, the data model, the invariant (scene seconds never change), the step order. The 2-4 shots and 2 s limits stand (2 s shots are generated at 3 s and trimmed).
