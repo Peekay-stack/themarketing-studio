@@ -331,17 +331,24 @@ _SHOT_OWN_KEYS = ("title", "desc", "visual", "camera", "shot_size", "movement_cl
                   "include_pack", "match_no")
 
 
-def extra_shots(row) -> list[dict]:
-    """The usable extra shots a scene row carries (`row["shots"]`): dicts with a non-empty `visual`, at most
-    filmvoice.MAX_EXTRA_SHOTS of them. A row with none is planned exactly as it always was."""
+def extra_shots_indexed(row) -> list[tuple[int, dict]]:
+    """(place, shot) for the usable extra shots a scene row carries (`row["shots"]`): dicts with a non-empty `visual` that
+    the person has not SKIPPED, at most filmvoice.MAX_EXTRA_SHOTS of them. `place` is the shot's position in the row's own
+    list, so a skipped shot keeps the numbers of the others steady on the board. A row with none is planned as it always was."""
     raw = row.get("shots") if isinstance(row, dict) else None
     if not isinstance(raw, list):
         return []
     import filmvoice
-    return [s for s in raw if isinstance(s, dict) and str(s.get("visual") or "").strip()][:filmvoice.MAX_EXTRA_SHOTS]
+    return [(i, s) for i, s in enumerate(raw)
+            if isinstance(s, dict) and str(s.get("visual") or "").strip() and not s.get("skip")][:filmvoice.MAX_EXTRA_SHOTS]
 
 
-def shot_view(row: dict, shot: dict, k: int, n: int) -> dict:
+def extra_shots(row) -> list[dict]:
+    """The usable extra shots of a scene row, skipped ones left out (see extra_shots_indexed)."""
+    return [s for _, s in extra_shots_indexed(row)]
+
+
+def shot_view(row: dict, shot: dict, k: int, n: int, place: int | None = None) -> dict:
     """The row a segment sees for extra shot `k` (1-based among `n` shots): the scene's own fields (number, role, beat
     direction, supers) with the SHOT's own picture fields on top. The scene's spoken words stay with the scene, so the
     view carries none (the voice is built from the scene rows, never from segments)."""
@@ -353,6 +360,7 @@ def shot_view(row: dict, shot: dict, k: int, n: int) -> dict:
     view["audio"] = []
     view["shot"] = k
     view["shots_total"] = n
+    view["shot_no"] = (place + 2) if place is not None else k + 1     # the number the person sees on the board (the master is shot 1)
     return view
 
 
@@ -388,7 +396,8 @@ def plan_by_scene(scenes: list, per_scene: list) -> list[dict]:
         role_of.setdefault(seg["_scene"], seg.get("role") or "")
     out = []
     for i, (row, secs) in enumerate(pairs):
-        extras = extra_shots(row)
+        indexed = extra_shots_indexed(row)
+        extras = [s for _, s in indexed]
         first = len(out)
         if not extras or (role_of.get(i) == "brand" and not row.get("signoff_shots")):
             for n, b in enumerate(filmvoice.beats_for(secs)):
@@ -399,7 +408,7 @@ def plan_by_scene(scenes: list, per_scene: list) -> list[dict]:
         lens, dropped = filmvoice.split_shot_seconds(secs, [s.get("secs") for s in extras])
         used = extras[:len(lens) - 1]
         for k, shot_secs in enumerate(lens):
-            view = row if k == 0 else shot_view(row, used[k - 1], k, len(lens))
+            view = row if k == 0 else shot_view(row, used[k - 1], k, len(lens), indexed[k - 1][0])
             beats = [shot_secs] if shot_secs <= filmvoice.SHOT_CEILING else filmvoice.beats_for(shot_secs)
             for n, b in enumerate(beats):
                 out.append({"index": len(out), "seconds": b, "scenes": [view], "continues": k > 0 or n > 0, "shot_k": k, "shots_n": len(lens)})

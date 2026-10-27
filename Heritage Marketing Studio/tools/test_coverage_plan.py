@@ -86,6 +86,23 @@ check("a row with no shots reports none", filmcut.extra_shots({"visual": "x"}) =
 check("the two new shot sizes exist beside the four old ones", all(k in main._SHOT_SIZES for k in ("wide", "medium", "close", "product", "detail", "over")))
 check("the old shot-size sentences are unchanged", main._SHOT_SIZES["wide"].startswith("Framing: a WIDE shot") and main._SHOT_SIZES["product"].startswith("Framing: a PRODUCT HERO"))
 
+# ---- 3b. SKIP: a shot the person switched off is kept in the script but never planned, rendered or counted -----------------------
+sk = film(); sk[1]["shots"][0]["skip"] = True
+psk = filmcut.plan_by_scene(sk, per)
+check("SKIP: a skipped extra shot is not planned (scene 2: 3 segments -> 2)", len(by_no(psk, 2)) == 2, str([len(by_no(psk, n)) for n in range(1, 7)]))
+check("SKIP: INVARIANT the scene's seconds are unchanged and the film total too", sum(s["seconds"] for s in by_no(psk, 2)) == sum(s["seconds"] for s in by_no(segs, 2)) and sum(s["seconds"] for s in psk) == total)
+check("SKIP: the shot that stays keeps its own picture and the board number it had (shot 3, not 2)", by_no(psk, 2)[1]["scenes"][0]["visual"].startswith("Detail") and by_no(psk, 2)[1]["scenes"][0]["shot_no"] == 3 and by_no(psk, 2)[1]["scenes"][0]["frame_url"] == "/media/m2_2.jpg")
+check("SKIP: unskipped shots report their own board number (2 and 3)", [s["scenes"][0].get("shot_no") for s in by_no(segs, 2)[1:]] == [2, 3])
+check("SKIP: the skipped shot stays in the row (nothing is deleted)", sk[1]["shots"][0]["visual"] == "Close-up of the boy's face." and len(sk[1]["shots"]) == 2)
+allskip = film()
+for r_ in allskip:
+    for s_ in r_.get("shots") or []:
+        s_["skip"] = True
+check("SKIP: INVARIANT every extra skipped -> planned exactly as a film with no shots", [(s["seconds"], s["continues"], s.get("role")) for s in filmcut.plan_by_scene(allskip, per)] == [(s["seconds"], s["continues"], s.get("role")) for s in bare])
+check("SKIP: extra_shots leaves skipped ones out; extra_shots_indexed keeps each one's place",
+      [s["visual"] for s in filmcut.extra_shots(sk[1])] == ["Detail: his hand on the glass."] and [i for i, _ in filmcut.extra_shots_indexed(sk[1])] == [1])
+check("SKIP: the 3-extra cap is applied AFTER skipping", len(filmcut.extra_shots({"shots": [{"visual": "a", "skip": True}] + [{"visual": str(i)} for i in range(4)]})) == 3)
+
 # ---- 4. the turn position does not move with coverage --------------------------------------------------------------------
 check("INVARIANT: music_on_turn position is the same with and without shots", main._turn_at_from_rows(film(), "30s") == main._turn_at_from_rows([{k: v for k, v in r.items() if k != "shots"} for r in film()], "30s"))
 

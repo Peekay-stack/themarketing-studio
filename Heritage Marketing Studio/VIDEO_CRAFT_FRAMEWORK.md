@@ -95,6 +95,8 @@ Gates are **advisory by default** (a person decides), and the Production pre-fli
 
 Chosen from the brief's tone with a visible default, changeable in one click. (The Heritage film is **Calm**: "tender, unhurried" — it got Fast.)
 
+**As built (slice 1, 28 Oct 2026):** `sceneshots.PACE_TABLE` / `budget(secs, pace, role, signoff)`. The "(or the turn)" exception is applied to the **hook and the turn** (the opening and the turning point may be covered even when short); the frontend can only name the hook (scene 1) and any scene the writer tagged, so an untagged turn is not yet exempt. An opted-in sign-off is judged by its seconds, not the pace minimum. Pace is stored per film (`video_pace`); with none chosen the server's tone read (`POST /pace-suggest`) is the default, and with neither it is Standard. A shot must carry a **job** and a one-line **why** or it is left out; zero extra shots is a valid answer. A person can **Skip** any shot: it stays in the script but is neither rendered nor counted.
+
 ## 7. Brand- and category-agnostic by construction
 - **Inputs only from the film's own data:** logline, scenes, spoken lines, the brief's proposition / core message, brand profile (hero object, "pack in scene"), cast/location/look notes, sound plan, duration, aspect, tone. **No brand words in any prompt or rule.**
 - **Language-agnostic:** judgements use meaning, not keywords; the deterministic repetition check compares normalised subject/verb/object from the model's own beat map, not English regex.

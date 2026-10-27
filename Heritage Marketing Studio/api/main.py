@@ -1471,7 +1471,7 @@ def _produce_video_sync(payload: dict):
         named by its scene and the shot's place in it, which is what a person looks for on the board."""
         row = (seg["scenes"] or [{}])[0] or {}
         if row.get("shot") or filmcut.extra_shots(row):
-            return f"scene {row.get('no') or seg['index'] + 1}, shot {int(row.get('shot') or 0) + 1}"
+            return f"scene {row.get('no') or seg['index'] + 1}, shot {int(row.get('shot_no') or (int(row.get('shot') or 0) + 1))}"
         return f"shot {seg['index'] + 1}"
 
     def render(seg):
@@ -2728,11 +2728,13 @@ def scene_still(payload: dict):
 def scene_shots(payload: dict):
     """Propose the EXTRA camera angles for one scene ("Break into shots"). A proposal only: nothing is saved here.
 
-    Body: `scene` (the row), `scene_seconds`, optional `n_shots` (extras wanted), `is_signoff`, `plate_locked`, `logline`, `characters`,
-    `location_line`, `wardrobe`, `camera_notes`, `look_note`, `prev_visual`, `next_visual`, and the same model flags /complete takes
-    (`house_id`, `brand_mode`, `provocation_id`, ...). Returns {shots, master_secs, notes, scene_seconds}; each shot is
-    {id, visual, shot_size, camera, movement_class, secs, warnings}. Shot lengths add up to the scene's seconds (the master keeps the rest);
-    the sign-off scene and scenes under 4s return no shots and a `reason`. See sceneshots.py for the rules and the backstops.
+    Body: `scene` (the row), `scene_seconds`, optional `n_shots` (a ceiling on extras), `pace` (calm / standard / fast), `role` (the
+    scene's job in the film), `message`, `tone`, `outline` (the whole script: [{no, secs, visual, says, shots}]), `scene_index`, `is_signoff`,
+    `plate_locked`, `logline`, `characters`, `location_line`, `wardrobe`, `camera_notes`, `look_note`, `prev_visual`, `next_visual`, and the
+    same model flags /complete takes (`house_id`, `brand_mode`, `provocation_id`, ...). Returns {shots, master_secs, notes, scene_seconds,
+    needs_coverage, why, pace, budget}; each shot is {id, job, why, visual, shot_size, camera, movement_class, secs, warnings}. ZERO shots is
+    a valid answer (`needs_coverage` false, `why` says why). The number is held to the film's pace; lengths add up to the scene's seconds.
+    The sign-off scene and scenes under 4s return no shots and a `reason`. See sceneshots.py for the rules and the backstops.
     """
     row = payload.get("scene") if isinstance(payload.get("scene"), dict) else {}
     try:
@@ -2745,18 +2747,32 @@ def scene_shots(payload: dict):
     if signoff and not payload.get("allow_signoff"):
         return {"shots": [], "master_secs": secs, "notes": [], "scene_seconds": secs,
                 "reason": "The sign-off scene is one shot unless you allow shots on it: the pack held clean and still, with room for the line and the logo."}
+    pace = sceneshots.normalise_pace(payload.get("pace")) or "standard"
+    role = str(payload.get("role") or row.get("beat_role") or "").strip().lower()
     limit = sceneshots.max_extras(secs)
     if limit < 1:
-        return {"shots": [], "master_secs": secs, "notes": [], "scene_seconds": secs,
+        return {"shots": [], "master_secs": secs, "notes": [], "scene_seconds": secs, "pace": pace, "budget": 0,
                 "reason": f"A {secs}s scene is too short for a second shot (every shot needs at least 2 seconds)."}
+    allowed = sceneshots.budget(secs, pace, role, signoff)
+    if allowed < 1:
+        return {"shots": [], "master_secs": secs, "notes": [], "scene_seconds": secs, "pace": pace, "budget": 0, "needs_coverage": False,
+                "why": f"At {sceneshots.PACE_TABLE[pace]['label']} pace a {secs}s scene is held as one shot.",
+                "reason": f"At {sceneshots.PACE_TABLE[pace]['label']} pace a {secs}s scene is held as one shot (switch to Fast for more cuts)."}
     try:
-        want = int(payload.get("n_shots")) if payload.get("n_shots") not in (None, "") else limit
+        want = int(payload.get("n_shots")) if payload.get("n_shots") not in (None, "") else allowed
     except (TypeError, ValueError):
-        want = limit
-    want = max(1, min(limit, want))
+        want = allowed
+    want = max(1, min(allowed, want))
     pack_in = packscene.mentions_pack(videoprompt.visual_text([row]))
+    outline = payload.get("outline") if isinstance(payload.get("outline"), list) else None
+    try:
+        scene_index = int(payload.get("scene_index")) if payload.get("scene_index") not in (None, "") else None
+    except (TypeError, ValueError):
+        scene_index = None
     prompt = sceneshots.build_prompt(
-        row=row, secs=secs, n_extras=want, logline=str(payload.get("logline") or ""), characters=str(payload.get("characters") or ""),
+        row=row, secs=secs, n_extras=want, pace=pace, role=role, message=str(payload.get("message") or ""), tone=str(payload.get("tone") or ""),
+        outline=outline, scene_index=scene_index,
+        logline=str(payload.get("logline") or ""), characters=str(payload.get("characters") or ""),
         location_line=str(payload.get("location_line") or ""), wardrobe=str(payload.get("wardrobe") or ""),
         camera_notes=str(payload.get("camera_notes") or ""), look_note=str(payload.get("look_note") or ""),
         plate_locked=bool(payload.get("plate_locked")), pack_in_scene=pack_in,
@@ -2769,13 +2785,29 @@ def scene_shots(payload: dict):
     proposed = sceneshots.parse(r.get("completion") if isinstance(r, dict) else "")
     if proposed is None:
         return JSONResponse(status_code=502, content={"detail": "The model's reply could not be read as a list of shots. Try again."})
-    out = sceneshots.validate(proposed, secs=secs, plate_locked=bool(payload.get("plate_locked")), pack_in_scene=pack_in or signoff,
-                              master_size=str(row.get("shot_size") or ""), want=want, signoff=signoff)
-    if not out["shots"]:
-        return JSONResponse(status_code=502, content={"detail": "None of the proposed shots could be used"
-                                                      + (": " + "; ".join(out["notes"]) if out["notes"] else "") + ". Try again."})
+    out = sceneshots.validate(proposed["shots"], secs=secs, plate_locked=bool(payload.get("plate_locked")), pack_in_scene=pack_in or signoff,
+                              master_size=str(row.get("shot_size") or ""), want=want, signoff=signoff, pace=pace, role=role)
     out["scene_seconds"] = secs
+    out["pace"] = pace
+    out["why"] = proposed.get("why") or ""
+    if not out["shots"]:
+        # Zero extra shots is a valid answer when the model itself said so (or every proposal failed the job/why test): report it, not an error.
+        if proposed["shots"] and proposed.get("needs_coverage") is not False:
+            return JSONResponse(status_code=502, content={"detail": "None of the proposed shots could be used"
+                                                          + (": " + "; ".join(out["notes"]) if out["notes"] else "") + ". Try again."})
+        out["needs_coverage"] = False
+        out["reason"] = out["why"] or "This scene reads best as one shot."
+    else:
+        out["needs_coverage"] = True
     return out
+
+
+@app.post("/pace-suggest")
+def pace_suggest(payload: dict):
+    """A default film pace (calm / standard / fast) read from the film's tone words (`text`: brief tone, sound mood, logline...). A
+    suggestion only: the person overrides it with one click. Returns {pace, why, table}."""
+    pace, why = sceneshots.suggest_pace(payload.get("text") or "")
+    return {"pace": pace, "why": why, "table": sceneshots.PACE_TABLE}
 
 
 @app.post("/production-bible-docx")
