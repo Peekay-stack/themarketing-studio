@@ -53,6 +53,7 @@ import auth as auth_mod
 import brandprofile
 import brand_suggest
 import sceneshots
+import flowreview
 import selfcheck
 import briefguide
 import briefstore
@@ -2808,6 +2809,54 @@ def pace_suggest(payload: dict):
     suggestion only: the person overrides it with one click. Returns {pace, why, table}."""
     pace, why = sceneshots.suggest_pace(payload.get("text") or "")
     return {"pace": pace, "why": why, "table": sceneshots.PACE_TABLE}
+
+
+@app.post("/film-review")
+def film_review(payload: dict):
+    """The editor's pass over the WHOLE film before anything is rendered: beats, a keep / cut / merge verdict with a reason for every extra shot, notes on
+    flow, and the facts measured from the plan. A review only: nothing is saved or changed here (the page's Apply button skips the shots marked cut/merge).
+
+    Body: `scenes` (the script rows, extra shots in `row.shots`), `seconds` (per scene, as the board shows them; else worked out from the words), `pace`,
+    `logline`, `message`, `tone`, `characters`, and the model flags /complete takes (`house_id`, `brand_mode`, ...). Returns {summary, time_passing, turn_scene,
+    carrier_scene, beats, verdicts, notes, skips, notes_out, stats, model}. If the model's reply cannot be read the measured facts still come back (`model: false`).
+    """
+    rows = [r for r in (payload.get("scenes") or []) if isinstance(r, dict)]
+    if not rows:
+        return JSONResponse(status_code=400, content={"detail": "Send the script (its scene rows) to review."})
+    try:
+        secs = [int(x) for x in (payload.get("seconds") or [])]
+    except (TypeError, ValueError):
+        secs = []
+    if len(secs) != len(rows):
+        try:
+            secs = filmvoice.scene_seconds(rows, int(payload.get("target_total") or 0))
+        except Exception:
+            secs = [4] * len(rows)
+    pace = sceneshots.normalise_pace(payload.get("pace")) or "standard"
+    roles: dict[int, str] = {}
+    try:
+        for seg in filmcut.plan_by_scene(rows, secs):
+            row0 = (seg.get("scenes") or [{}])[0] or {}
+            roles.setdefault(flowreview.scene_no(row0, seg["index"]), seg.get("role") or "")
+    except Exception as e:
+        print(f"[main] film-review: roles unavailable ({type(e).__name__}: {e})", flush=True)
+    shots = flowreview.film_shots(rows, secs, roles)
+    st = flowreview.stats(rows, secs, pace, roles)
+    prompt = flowreview.build_prompt(rows=rows, seconds=secs, shots=shots, st=st, logline=str(payload.get("logline") or ""), message=str(payload.get("message") or ""),
+                                     tone=str(payload.get("tone") or ""), pace=pace, characters=str(payload.get("characters") or ""), roles=roles)
+    flags = {k: payload[k] for k in ("house_id", "execution", "brand_mode", "provocation_id", "use_provocation", "use_house",
+                                     "use_platform", "use_plan", "skip_mandatories", "force_typed") if k in payload}
+    r = complete_endpoint({**flags, "messages": [{"role": "user", "content": prompt}], "film": True})
+    if isinstance(r, JSONResponse):
+        return r                               # no key (503) or an empty reply (502), with the same wording as every other generator
+    raw = flowreview.parse(r.get("completion") if isinstance(r, dict) else "")
+    if raw is None:
+        return {"summary": "", "time_passing": False, "turn_scene": None, "carrier_scene": None, "beats": [], "verdicts": [], "notes": [], "skips": [], "stats": st, "model": False,
+                "notes_out": ["The model's review could not be read, so only the measured checks are shown. Try again for the full review."]}
+    out = flowreview.validate(raw, shots, flowreview.budgets(rows, secs, pace, roles), pace)
+    out["stats"] = st
+    out["model"] = True
+    return out
 
 
 @app.post("/production-bible-docx")

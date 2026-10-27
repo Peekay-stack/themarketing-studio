@@ -58,11 +58,11 @@ _JOB_WORDS = {"cutaway": "insert", "detail": "insert", "reveal-detail": "reveal"
 # PACE: how many extra shots a film's tone can carry. (VIDEO_CRAFT_FRAMEWORK.md section 6; starting numbers, tuned on real films.)
 PACES = ("calm", "standard", "fast")
 PACE_TABLE = {
-    "calm": {"label": "Calm", "max_extras": 1, "min_scene": 6, "avg_shot": "4-5 s", "per10": "2-2.5",
+    "calm": {"label": "Calm", "max_extras": 1, "min_scene": 6, "avg_shot": "4-5 s", "per10": "2-2.5", "band": (2.0, 2.5),
              "feel": "tender, emotional, unhurried: fewer, longer shots; hold on what matters"},
-    "standard": {"label": "Standard", "max_extras": 2, "min_scene": 6, "avg_shot": "3-4 s", "per10": "2.5-3.5",
+    "standard": {"label": "Standard", "max_extras": 2, "min_scene": 6, "avg_shot": "3-4 s", "per10": "2.5-3.5", "band": (2.5, 3.5),
                  "feel": "a balanced brand story: steady, clear rhythm"},
-    "fast": {"label": "Fast", "max_extras": 3, "min_scene": 4, "avg_shot": "2-3 s", "per10": "3.5-5",
+    "fast": {"label": "Fast", "max_extras": 3, "min_scene": 4, "avg_shot": "2-3 s", "per10": "3.5-5", "band": (3.5, 5.0),
              "feel": "energetic and quick: more cuts, shorter holds"},
 }
 # The opening (hook) and the turn may be covered even in a short scene: a reveal there is worth the cut.

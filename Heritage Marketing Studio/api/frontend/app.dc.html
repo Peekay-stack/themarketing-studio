@@ -2894,6 +2894,8 @@
               {{ allFramesLabel }}
             </button>
           </div>
+          <!-- Flow review: the editor's pass over the whole cut (verdict + reason per extra shot). Built in flowReviewPanel(). -->
+          {{ flowReviewPanel }}
           <div style="font-size:13px; color:#6B7280; margin-bottom:14px;">One frame per script scene — {{ nScenes }} scenes for a {{ prodDurationLabel }} cut. Every frame is rendered with the same cast sheet and seed so the people stay the same.</div>
 
           <div class="hf-scroll" style="display:grid; grid-auto-flow:column; grid-auto-columns:minmax(220px,1fr); gap:16px; margin-bottom:16px; overflow-x:auto; padding-bottom:6px;">
@@ -12124,6 +12126,8 @@ class Component extends DCLogic {
     videoCamera: '',                        // camera & lens notes: the film's technical spine (lens, DOF, handheld feel, grain, grade)
     videoPace: '',                          // film pace: calm | standard | fast ('' = use the tone suggestion); caps the extra camera angles per scene
     paceSuggest: null,                      // {pace, why} read from the film's tone words by POST /pace-suggest (a suggestion only, never saved)
+    filmReview: null,                       // the last flow review (POST /film-review): verdicts per extra shot, beats, notes, measured stats. Advisory; not saved.
+    filmReviewBusy: false,
     castGateHit: false,            // a frame was asked for with no cast locked
     // Real references for the cast lock — picked once here, same pattern as POSM's "Assets for this
     // piece" panel (`posmAssetOptions`/`pickPosmAsset`/`uploadPosmAsset`). Before this, `/cast-reference`
@@ -15713,7 +15717,7 @@ class Component extends DCLogic {
 
   // ---------- video generation ----------
   pickVideoObjective = (name) => () => {
-    this.setState({ videoObjective:name, videoConcept:null, provConcept:null, videoRefusal:'', scriptVersions:[], scriptStatus:'none', fullScript:null, sceneFrames:{}, shoot:{}, producedUrl:null, scriptPhase:'concept', videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', videoCamera:'', videoPace:'', paceSuggest:null, castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null, renderInfo:null, castRefUrl:null, videoCastChoice:'', videoPlateChoice:'', videoPackChoice:'', frameNote:'', scriptRefine:'', soundPlan:{}, soundBase:[], musicStyle:'warm-strings', musicTempo:'', musicDynamics:'', musicOnTurn:false, musicLockMood:null, production:{ aspect:'16:9', music:'Warm strings', voice:'', status:'idle', versions:[] } });
+    this.setState({ videoObjective:name, videoConcept:null, provConcept:null, videoRefusal:'', scriptVersions:[], scriptStatus:'none', fullScript:null, sceneFrames:{}, shoot:{}, producedUrl:null, scriptPhase:'concept', videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', videoCamera:'', videoPace:'', paceSuggest:null, filmReview:null, castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null, renderInfo:null, castRefUrl:null, videoCastChoice:'', videoPlateChoice:'', videoPackChoice:'', frameNote:'', scriptRefine:'', soundPlan:{}, soundBase:[], musicStyle:'warm-strings', musicTempo:'', musicDynamics:'', musicOnTurn:false, musicLockMood:null, production:{ aspect:'16:9', music:'Warm strings', voice:'', status:'idle', versions:[] } });
     // Same "surfaced up front" reasoning as POSM's loadPosmAssetLib: a real reference picker with
     // nothing loaded to pick from is just a slower text box.
     if (!this.state.videoAssets.length) this.loadVideoAssetLib();
@@ -16004,6 +16008,87 @@ class Component extends DCLogic {
     if (r && r.ok && d.pace) this.setState({ paceSuggest:{ pace:d.pace, why:d.why || '' } });
     return (r && r.ok && d.pace) ? d.pace : '';
   };
+  // ---------- flow review (VIDEO_CRAFT_FRAMEWORK.md slice 2) ----------
+  // The editor's pass over the WHOLE cut before anything is rendered. It only advises: "Skip the marked shots" switches those extra shots off (kept in the
+  // script, not rendered); nothing is deleted and the person can switch any back on.
+  sceneNoInt(row, i){ return parseInt(this.sceneNo(row, i), 10) || (i + 1); }
+  flowReviewSig(){
+    return JSON.stringify((this.state.fullScript || []).map((r, i) => [this.sceneNoInt(r, i), r.visual || '', this.extraShots(r).map(x => [x.visual || '', x.skip ? 1 : 0, x.secs || 2])]));
+  }
+  // The review's verdict for extra shot k (1-based place in the row's list) of scene idx, or null.
+  reviewFor(idx, k){
+    const fr = this.state.filmReview, row = (this.state.fullScript || [])[idx];
+    if (!fr || !row) return null;
+    const no = this.sceneNoInt(row, idx);
+    return (fr.verdicts || []).find(v => v.scene === no && v.shot === k + 1) || null;
+  }
+  runFlowReview = async () => {
+    const s = this.state, rows = s.fullScript || [];
+    if (!rows.length || s.filmReviewBusy) return;
+    this.setState({ filmReviewBusy:true });
+    if (!s.videoPace && !s.paceSuggest) await this.suggestPace();
+    const vc = s.videoConcept;
+    const body = { scenes:rows, seconds:rows.map(r => this.sceneSecs(r)), pace:this.paceNow(), logline: vc ? (vc.logline || '') : '',
+      message:(vc && vc.proposition) || s.videoObjective || '', tone:this.paceText().slice(0, 300), characters:s.videoCharacters || '', brand_mode:s.producerBrandMode, ...this.videoExtra() };
+    const r = await this.apiCall('/film-review', body);
+    const d = (r && r.data) || {};
+    if (!r || !r.ok) { this.setState({ filmReviewBusy:false }); this.showToast(d.detail || 'Couldn’t review the flow — try again.'); return; }
+    this.setState({ filmReviewBusy:false, filmReview:{ ...d, sig:this.flowReviewSig() } });
+  };
+  applyFlowReview = () => {
+    const fr = this.state.filmReview;
+    if (!fr || !(fr.skips || []).length) return;
+    const n = fr.skips.length;
+    this.setState(st => ({ fullScript:(st.fullScript || []).map((r, i) => {
+      const no = this.sceneNoInt(r, i), hit = fr.skips.filter(x => x.scene === no);
+      if (!hit.length || !Array.isArray(r.shots)) return r;
+      return { ...r, shots:r.shots.map((x, j) => (x && typeof x === 'object' && hit.some(h => h.place === j)) ? { ...x, skip:true } : x) };
+    }) }));
+    this.showToast(n + ' shot' + (n > 1 ? 's' : '') + ' skipped — they stay in the script; switch any back on from its card.', 'ok');
+  };
+  dismissFlowReview = () => this.setState({ filmReview:null });
+  // How many of the review's cut / merge verdicts are still switched on (so "Skip the marked shots" counts only what it would change).
+  reviewPending(){
+    const fr = this.state.filmReview, rows = this.state.fullScript || [];
+    if (!fr) return 0;
+    return (fr.skips || []).filter(x => { const r = rows.find((q, i) => this.sceneNoInt(q, i) === x.scene); const sh = r && Array.isArray(r.shots) ? r.shots[x.place] : null; return sh && !sh.skip; }).length;
+  }
+  flowReviewPanel(){
+    const h = React.createElement, s = this.state, fr = s.filmReview, rows = s.fullScript || [];
+    if (!rows.length) return null;
+    const btn = (label, onClick, go, disabled) => h('button', { onClick, disabled:!!disabled, style:{ border:'1px solid ' + (go ? '#259821' : '#C9CEDA'), background: go ? '#259821' : '#fff',
+      color: go ? '#fff' : '#17325E', borderRadius:8, padding:'5px 12px', fontSize:12, fontWeight:700, cursor: disabled ? 'default' : 'pointer', opacity: disabled ? 0.55 : 1 } }, label);
+    const label = (txt) => h('span', { style:{ fontSize:11, fontWeight:800, letterSpacing:'0.06em', textTransform:'uppercase', color:'#6B7280' } }, txt);
+    const wrap = (...kids) => h('div', { style:{ margin:'8px 0 14px', padding:'10px 14px', border:'1px solid #E6E3DC', borderRadius:12, background:'#FBFAF8', maxWidth:900 } }, ...kids);
+    const nExtra = rows.reduce((a, r) => a + this.activeShots(r).length, 0);
+    const head = (...right) => h('div', { style:{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' } }, label('Flow review'),
+      h('span', { style:{ fontSize:11.5, color:'#6B7280' } }, fr ? '' : 'An editor’s read of the whole cut before you render: what to keep, cut or merge, and why.'), h('span', { style:{ marginLeft:'auto', display:'flex', gap:6, flexWrap:'wrap' } }, ...right));
+    const runBtn = btn(s.filmReviewBusy ? 'Reviewing…' : (fr ? '↻ Review again' : 'Review the flow'), this.runFlowReview, !fr, s.filmReviewBusy);
+    if (!fr) return wrap(head(runBtn));
+    const st = fr.stats || {}, pending = this.reviewPending();
+    const stale = fr.sig !== this.flowReviewSig();
+    const line = (txt, color, extra, key) => h('div', { key, style:{ fontSize:11.5, lineHeight:1.5, color:color || '#41505F', marginTop:4, ...(extra || {}) } }, txt);
+    const cuts = (fr.verdicts || []).filter(v => v.verdict !== 'keep');
+    const kept = (fr.verdicts || []).length - cuts.length;
+    return wrap(
+      head(pending ? btn('Skip the ' + pending + ' marked shot' + (pending > 1 ? 's' : ''), this.applyFlowReview, true) : null, runBtn, btn('Dismiss', this.dismissFlowReview)),
+      stale ? line('The script or its shots changed since this review — review again for a current read.', '#B07A12', { fontWeight:700 }) : null,
+      fr.summary ? line(fr.summary, '#17325E', { fontWeight:600, fontSize:12.5 }) : null,
+      line((st.shots || 0) + ' shots · ' + (st.seconds || 0) + ' s · ' + (st.per10 || 0) + ' per 10 s (' + ((this.PACE_INFO[st.pace] || {}).label || '') + ' pace is ' + ((st.band || [])[0]) + '–' + ((st.band || [])[1]) + ')'
+        + (fr.turn_scene ? ' · turn: scene ' + fr.turn_scene : '') + (fr.carrier_scene ? ' · message: scene ' + fr.carrier_scene : '') + (fr.time_passing ? ' · time passes by repetition' : '')),
+      ...((st.findings || []).map((f, i) => line('• ' + f.note, '#B07A12', { fontWeight:700 }, 'sf' + i))),
+      ...((fr.beats || []).filter(b => b.repetition).map((b, i) => line('• Scenes ' + (b.scenes || []).join(' + ') + ' are one beat (' + (b.purpose || 'the same moment') + ') — it needs one coverage budget, not one each.', '#41505F', {}, 'rb' + i))),
+      ...((fr.notes || []).map((n, i) => line('• ' + (n.scenes && n.scenes.length ? 'Scene ' + n.scenes.join(', ') + ': ' : '') + n.note + (n.suggestion ? ' → ' + n.suggestion : ''), '#41505F', {}, 'rn' + i))),
+      cuts.length ? h('div', { style:{ marginTop:8, borderTop:'1px solid #ECE8DE', paddingTop:6 } },
+        label('Shots the review would leave out'),
+        ...cuts.map((v, i) => { const sk = (() => { const r = rows.find((q, j) => this.sceneNoInt(q, j) === v.scene); const x = r && Array.isArray(r.shots) ? r.shots[v.place] : null; return !!(x && x.skip); })();
+          return h('div', { key:'cv' + i, style:{ fontSize:11.5, lineHeight:1.5, color:'#38414F', marginTop:3, opacity: sk ? 0.55 : 1 } },
+            h('b', { style:{ color:'#17325E' } }, 'Scene ' + v.scene + ' · shot ' + v.shot + ' — ' + (v.verdict === 'merge' ? 'merge' : 'cut') + (sk ? ' (skipped)' : '') + ': '),
+            v.reason + (v.merge_with ? ' (same as ' + v.merge_with + ')' : '')); })) : null,
+      nExtra && !cuts.length && fr.model !== false ? line('The review would keep all ' + nExtra + ' extra shot' + (nExtra > 1 ? 's' : '') + '.', '#1A8A7A', { fontWeight:700 }) : null,
+      kept && cuts.length ? line(kept + ' extra shot' + (kept > 1 ? 's' : '') + ' kept.', '#6B7280') : null,
+      ...((fr.notes_out || []).map((n, i) => line(n, '#6B7280', {}, 'no' + i))));
+  }
   paceBar(){
     const h = React.createElement, s = this.state, cur = this.paceNow(), chosen = !!s.videoPace, sug = s.paceSuggest;
     const chip = (p) => h('span', { key:p, onClick:this.setPace(p), style:{ cursor:'pointer', border:'1px solid ' + (cur === p ? '#17325E' : '#C9CEDA'), background: cur === p ? '#17325E' : '#fff',
@@ -16539,6 +16624,7 @@ class Component extends DCLogic {
           style:{ marginLeft:'auto', cursor:'pointer', fontSize:11, fontWeight:700, color:'#2E5EA6', textDecoration:'underline' } }, sh.skip ? 'Use' : 'Skip'),
         h('span', { onClick:this.removeShot(idx, k), title:'Remove this shot', style:{ cursor:'pointer', color:'#9AA1AD', fontSize:14, lineHeight:1 } }, '✕')),
       sh.why ? h('div', { style:{ fontSize:11, lineHeight:1.45, color:'#41505F', fontStyle:'italic' } }, sh.why) : null,
+      (() => { const rv = this.reviewFor(idx, k); return (rv && rv.verdict !== 'keep' && !sh.skip) ? h('div', { style:{ fontSize:11, lineHeight:1.45, color:'#B07A12', fontWeight:700 } }, 'Review: ' + (rv.verdict === 'merge' ? 'merge' : 'cut') + ' — ' + rv.reason) : null; })(),
       thumb, sh.skip ? null : renderBtn,
       h('textarea', { value:sh.visual || '', onChange:this.editShotField(idx, k, 'visual'), rows:4, style:{ ...field, width:'100%', resize:'vertical', lineHeight:1.45 } }),
       h('input', { value:sh.camera || '', onChange:this.editShotField(idx, k, 'camera'), placeholder:'Camera movement, e.g. slow push-in', style:{ ...field, width:'100%' } }),
@@ -17304,7 +17390,7 @@ class Component extends DCLogic {
       this.setState({ conceptRoutes: routes.length > 1 ? routes : [], conceptRoute:0 });
       if (!isRefine) this.addCreated(this.videoItem(obj, data));
       this.setState(s => ({ videoGenerating:false, videoConcept:data, refinePrompt:'', videoRefusal:'',
-        scriptStatus:'concept', fullScript:null, sceneFrames:{}, scriptPhase:'concept', videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', videoCamera:'', videoPace:'', paceSuggest:null, castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null,
+        scriptStatus:'concept', fullScript:null, sceneFrames:{}, scriptPhase:'concept', videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', videoCamera:'', videoPace:'', paceSuggest:null, filmReview:null, castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null,
         scriptVersions: [...s.scriptVersions, { v:s.scriptVersions.length+1, logline:data.logline, note: isRefine ? s.refinePrompt.trim() : 'Initial draft', duration:data.duration }],
         videoCheck: this.runCreativeCheck([data.logline, (data.scenes||[]).map(x=>x.title+' '+x.desc).join(' ')]) }));
     } catch (err) {
@@ -17326,7 +17412,7 @@ class Component extends DCLogic {
     if (!r || this.state.conceptRoute === i) return;
     // Switching route invalidates everything downstream — script, frames, cast, cut.
     this.setState({ conceptRoute:i, videoConcept:r, scriptStatus:'concept', fullScript:null,
-                    sceneFrames:{}, castRefUrl:null, videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', videoCamera:'', videoPace:'', paceSuggest:null, castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null,
+                    sceneFrames:{}, castRefUrl:null, videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', videoCamera:'', videoPace:'', paceSuggest:null, filmReview:null, castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null,
                     producedUrl:null, renderInfo:null, scriptPhase:'concept', voicePlan:null });
     this.showToast('Route ' + (i+1) + ' loaded — ' + (r.name || 'concept') + '.', 'ok');
   };
@@ -18729,7 +18815,7 @@ class Component extends DCLogic {
       no: r.no || String(i + 1), tc: r.tc || '', visual: r.visual || '', supr: r.supr || '' })) });
     this.showToast(rows.length + ' board row' + (rows.length === 1 ? '' : 's') + ' pulled \u2014 each take can be keyed against the frame it is for.', 'ok');
   };
-  openVideoFromCampaign = () => { const c = this.state.campaign; this.setState({ screen:'video', videoConcept: c ? c.video : null, linkedBrief: c ? c.brief : null, videoObjective:'Campaign film', scriptStatus: (c && c.video) ? 'concept' : 'none', scriptPhase:'concept', videoStep:'scripting', fullScript:null, sceneFrames:{}, videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', videoCamera:'', videoPace:'', paceSuggest:null, castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null, renderInfo:null, castRefUrl:null });
+  openVideoFromCampaign = () => { const c = this.state.campaign; this.setState({ screen:'video', videoConcept: c ? c.video : null, linkedBrief: c ? c.brief : null, videoObjective:'Campaign film', scriptStatus: (c && c.video) ? 'concept' : 'none', scriptPhase:'concept', videoStep:'scripting', fullScript:null, sceneFrames:{}, videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', videoCamera:'', videoPace:'', paceSuggest:null, filmReview:null, castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null, renderInfo:null, castRefUrl:null });
     this.loadGrounding(); this.loadVideoStandsOn(); }; // round 92: video's own six-entry-point audit
 
   // ---------- campaign analysis ----------
@@ -20349,7 +20435,7 @@ class Component extends DCLogic {
       videoCharacters: s.videoCharacters, onVideoCharacters:this.onVideoCharacters,
       videoWardrobe: s.videoWardrobe || '', onVideoWardrobe: this.onVideoWardrobe,
       videoCamera: s.videoCamera || '', onVideoCamera: this.onVideoCamera, useSuggestedCamera: this.useSuggestedCamera,
-      paceBar: this.paceBar(),
+      paceBar: this.paceBar(), flowReviewPanel: this.flowReviewPanel(),
       deriveCharacters:this.deriveCharacters, charBusy: s.charBusy,
       charBtnLabel: s.charBusy ? 'Deriving…' : (s.videoCharacters ? '↻ Re-derive from script' : '✦ Derive from script'),
       seedLabel: s.videoSeed ? ' · seed ' + s.videoSeed : '',
@@ -22941,7 +23027,7 @@ class Component extends DCLogic {
       if (!data0 || !data0.scenes || !data0.scenes.length) throw new Error('bad');
       const data = { ...data0, from_provocation: prov.id, provocation_name: prov.name || '' };
       this.setState(s2 => ({ provRouteBusy:false, provConcept:data, conceptRoute:-1, videoConcept:data, refinePrompt:'', videoRefusal:'',
-        scriptStatus:'concept', fullScript:null, sceneFrames:{}, castRefUrl:null, videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', videoCamera:'', videoPace:'', paceSuggest:null, castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null,
+        scriptStatus:'concept', fullScript:null, sceneFrames:{}, castRefUrl:null, videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', videoCamera:'', videoPace:'', paceSuggest:null, filmReview:null, castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null,
         producedUrl:null, renderInfo:null, scriptPhase:'concept', voicePlan:null,
         scriptVersions: [...s2.scriptVersions, { v:s2.scriptVersions.length + 1, logline:data.logline, note: refine || ('From the provocation: ' + (prov.name || '')), duration:data.duration }],
         videoCheck: this.runCreativeCheck([data.logline, (data.scenes || []).map(x => x.title + ' ' + x.desc).join(' ')]) }));
@@ -22961,7 +23047,7 @@ class Component extends DCLogic {
     if (st.videoConcept && st.videoConcept.from_provocation === p.id) return;
     if (st.provConcept && st.provConcept.from_provocation === p.id) {
       this.setState({ conceptRoute:-1, videoConcept:st.provConcept, scriptStatus:'concept', fullScript:null,
-        sceneFrames:{}, castRefUrl:null, videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', videoCamera:'', videoPace:'', paceSuggest:null, castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null,
+        sceneFrames:{}, castRefUrl:null, videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', videoCamera:'', videoPace:'', paceSuggest:null, filmReview:null, castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null,
         producedUrl:null, renderInfo:null, scriptPhase:'concept', voicePlan:null });
       this.showToast('The provocation route loaded \u2014 ' + (st.provConcept.name || 'concept') + '.', 'ok');
       return;
