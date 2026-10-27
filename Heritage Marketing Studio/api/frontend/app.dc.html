@@ -2898,6 +2898,8 @@
           {{ beatMapPanel }}
           <!-- Flow review: the editor's pass over the whole cut (verdict + reason per extra shot). Built in flowReviewPanel(). -->
           {{ flowReviewPanel }}
+          <!-- Editor's notes: where the sound lands and how the cut breathes (built in editorNotesPanel; no model). -->
+          {{ editorNotesPanel }}
           <!-- Frame check: a model looks at each rendered frame before it is animated (built in frameCheckPanel). -->
           {{ frameCheckPanel }}
           <div style="font-size:13px; color:#6B7280; margin-bottom:14px;">One frame per script scene — {{ nScenes }} scenes for a {{ prodDurationLabel }} cut. Every frame is rendered with the same cast sheet and seed so the people stay the same.</div>
@@ -12135,6 +12137,8 @@ class Component extends DCLogic {
     filmReviewBusy: false,
     videoBeatMap: null,                     // the director's read (POST /film-direct): per-scene purpose / intensity / time-mode / beat, the turn and the message carrier. Saved with the film.
     beatMapBusy: false,
+    editorNotes: null,                      // the last editor's read of sound and rhythm (POST /editor-notes, no model): notes with one-click fixes. Not saved.
+    editorNotesBusy: false,
     frameCheckBusy: '',                     // 'n of m' while the frame check is running (POST /frame-check, one model call per frame)
     castGateHit: false,            // a frame was asked for with no cast locked
     // Real references for the cast lock — picked once here, same pattern as POSM's "Assets for this
@@ -15725,7 +15729,7 @@ class Component extends DCLogic {
 
   // ---------- video generation ----------
   pickVideoObjective = (name) => () => {
-    this.setState({ videoObjective:name, videoConcept:null, provConcept:null, videoRefusal:'', scriptVersions:[], scriptStatus:'none', fullScript:null, sceneFrames:{}, shoot:{}, producedUrl:null, scriptPhase:'concept', videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', videoCamera:'', videoPace:'', paceSuggest:null, filmReview:null, videoBeatMap:null, castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null, renderInfo:null, castRefUrl:null, videoCastChoice:'', videoPlateChoice:'', videoPackChoice:'', frameNote:'', scriptRefine:'', soundPlan:{}, soundBase:[], musicStyle:'warm-strings', musicTempo:'', musicDynamics:'', musicOnTurn:false, musicLockMood:null, production:{ aspect:'16:9', music:'Warm strings', voice:'', status:'idle', versions:[] } });
+    this.setState({ videoObjective:name, videoConcept:null, provConcept:null, videoRefusal:'', scriptVersions:[], scriptStatus:'none', fullScript:null, sceneFrames:{}, shoot:{}, producedUrl:null, scriptPhase:'concept', videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', videoCamera:'', videoPace:'', paceSuggest:null, filmReview:null, videoBeatMap:null, editorNotes:null, castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null, renderInfo:null, castRefUrl:null, videoCastChoice:'', videoPlateChoice:'', videoPackChoice:'', frameNote:'', scriptRefine:'', soundPlan:{}, soundBase:[], musicStyle:'warm-strings', musicTempo:'', musicDynamics:'', musicOnTurn:false, musicLockMood:null, production:{ aspect:'16:9', music:'Warm strings', voice:'', status:'idle', versions:[] } });
     // Same "surfaced up front" reasoning as POSM's loadPosmAssetLib: a real reference picker with
     // nothing loaded to pick from is just a slower text box.
     if (!this.state.videoAssets.length) this.loadVideoAssetLib();
@@ -16016,6 +16020,62 @@ class Component extends DCLogic {
     if (r && r.ok && d.pace) this.setState({ paceSuggest:{ pace:d.pace, why:d.why || '' } });
     return (r && r.ok && d.pace) ? d.pace : '';
   };
+  // ---------- the editor's notes on sound and rhythm (VIDEO_CRAFT_FRAMEWORK.md slice 5) ----------
+  // Worked out on the server with no model and no cost: does the music lift on the film's real turn, does the message line get a beat of silence, does each line fit its scene, do the turn and the
+  // message get the time they deserve, does the film end on its message. A note with a fix applies it to the sound plan or to a line's timing in one click, then re-reads.
+  editorSig(){
+    const s = this.state, sp = s.soundPlan || {};
+    return JSON.stringify([(s.fullScript || []).map((r, i) => [this.sceneNoInt(r, i), this.sceneSecs(r), (Array.isArray(r.audio) ? r.audio : []).map(a => [(a && a.text) || '', a && a.timing, a && a.timing_at])]), sp.scenes || {}, !!sp.off,
+      s.videoBeatMap ? [s.videoBeatMap.turn_scene, s.videoBeatMap.carrier_scene] : null]);
+  }
+  runEditorNotes = async () => {
+    const s = this.state, rows = s.fullScript || [];
+    if (!rows.length || s.editorNotesBusy) return;
+    this.setState({ editorNotesBusy:true });
+    const sp = s.soundPlan || {};
+    const r = await this.apiCall('/editor-notes', { scenes:rows, seconds:rows.map(x => this.sceneSecs(x)), ...(s.videoBeatMap ? { beat_map:s.videoBeatMap } : {}), sound_plan:this.soundPlanPayload(), sound_off:!!sp.off });
+    const d = (r && r.data) || {};
+    if (!r || !r.ok) { this.setState({ editorNotesBusy:false }); this.showToast(d.detail || 'Couldn’t read the cut — try again.'); return; }
+    this.setState({ editorNotesBusy:false, editorNotes:{ ...d, sig:this.editorSig() } });
+  };
+  dismissEditorNotes = () => this.setState({ editorNotes:null });
+  // Apply one note's fix. {type:'music', scene, value} sets that scene's music state in the Sound design plan; {type:'line_lead', scene, value} starts the scene's first spoken line `value` seconds in.
+  applyEditorFix = (fix) => async () => {
+    if (!fix) return;
+    if (fix.type === 'music') {
+      const sp = this.state.soundPlan || {};
+      this.setSoundPlan({ scenes:{ ...(sp.scenes || {}), [String(fix.scene)]:fix.value } });
+    } else if (fix.type === 'line_lead') {
+      this.setState(st => ({ fullScript:(st.fullScript || []).map((r, i) => {
+        if (this.sceneNoInt(r, i) !== fix.scene || !Array.isArray(r.audio)) return r;
+        const j = r.audio.findIndex(a => a && String(a.text || '').trim());
+        return j < 0 ? r : { ...r, audio:r.audio.map((a, k) => k === j ? { ...a, timing:'', timing_at:fix.value } : a) };
+      }) }));
+    }
+    await this.runEditorNotes();
+  };
+  editorNotesPanel(){
+    const h = React.createElement, s = this.state, en = s.editorNotes, rows = s.fullScript || [];
+    if (!rows.length) return null;
+    const btn = (label, onClick, go, disabled) => h('button', { onClick, disabled:!!disabled, style:{ border:'1px solid ' + (go ? '#259821' : '#C9CEDA'), background: go ? '#259821' : '#fff',
+      color: go ? '#fff' : '#17325E', borderRadius:8, padding:'5px 12px', fontSize:12, fontWeight:700, cursor: disabled ? 'default' : 'pointer', opacity: disabled ? 0.55 : 1 } }, label);
+    const label = (txt) => h('span', { style:{ fontSize:11, fontWeight:800, letterSpacing:'0.06em', textTransform:'uppercase', color:'#6B7280' } }, txt);
+    const wrap = (...kids) => h('div', { style:{ margin:'0 0 14px', padding:'10px 14px', border:'1px solid #E6E3DC', borderRadius:12, background:'#FBFAF8', maxWidth:900 } }, ...kids);
+    const runBtn = btn(s.editorNotesBusy ? 'Reading the cut…' : (en ? '↻ Check again' : 'Check sound & rhythm'), this.runEditorNotes, !en, s.editorNotesBusy);
+    const head = (...right) => h('div', { style:{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' } }, label('Editor’s notes'),
+      h('span', { style:{ fontSize:11.5, color:'#6B7280' } }, en ? '' : 'Where the music lifts, where the message gets its silence, whether each line fits its scene. No model, no cost.'),
+      h('span', { style:{ marginLeft:'auto', display:'flex', gap:6, flexWrap:'wrap' } }, ...right));
+    if (!en) return wrap(head(runBtn));
+    const stale = en.sig !== this.editorSig();
+    const notes = en.notes || [];
+    return wrap(head(runBtn, btn('Dismiss', this.dismissEditorNotes)),
+      stale ? h('div', { style:{ fontSize:11.5, lineHeight:1.5, color:'#B07A12', fontWeight:700, marginTop:4 } }, 'The script or the sound plan changed since this read — check again for a current one.') : null,
+      notes.length ? null : h('div', { style:{ fontSize:11.5, lineHeight:1.5, color:'#1A8A7A', fontWeight:700, marginTop:4 } }, 'Nothing to fix: the music, the silence and the timing all sit where they should.'),
+      ...notes.map((n, i) => h('div', { key:'en' + i, style:{ display:'flex', gap:8, alignItems:'flex-start', marginTop:6, fontSize:11.5, lineHeight:1.5, color:'#38414F' } },
+        h('span', { style:{ fontSize:10.5, fontWeight:800, textTransform:'uppercase', letterSpacing:'0.04em', color:'#1A8A7A', minWidth:62, paddingTop:1 } }, n.kind),
+        h('span', { style:{ flex:1 } }, n.note),
+        n.fix ? btn(n.fix.label || 'Apply', this.applyEditorFix(n.fix), true, s.editorNotesBusy) : null)));
+  }
   // ---------- the director's read (VIDEO_CRAFT_FRAMEWORK.md slice 4) ----------
   // What each scene is FOR, before anyone decides how many angles it needs: purpose, intensity 0-3, time mode (continuous / flashback / flash-forward / montage), the turn and the
   // message carrier, and which neighbouring scenes are ONE beat shown twice. Saved with the film. Two of its findings are RULES applied elsewhere with no model: no extra angles inside a
@@ -17538,7 +17598,7 @@ class Component extends DCLogic {
       this.setState({ conceptRoutes: routes.length > 1 ? routes : [], conceptRoute:0 });
       if (!isRefine) this.addCreated(this.videoItem(obj, data));
       this.setState(s => ({ videoGenerating:false, videoConcept:data, refinePrompt:'', videoRefusal:'',
-        scriptStatus:'concept', fullScript:null, sceneFrames:{}, scriptPhase:'concept', videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', videoCamera:'', videoPace:'', paceSuggest:null, filmReview:null, videoBeatMap:null, castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null,
+        scriptStatus:'concept', fullScript:null, sceneFrames:{}, scriptPhase:'concept', videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', videoCamera:'', videoPace:'', paceSuggest:null, filmReview:null, videoBeatMap:null, editorNotes:null, castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null,
         scriptVersions: [...s.scriptVersions, { v:s.scriptVersions.length+1, logline:data.logline, note: isRefine ? s.refinePrompt.trim() : 'Initial draft', duration:data.duration }],
         videoCheck: this.runCreativeCheck([data.logline, (data.scenes||[]).map(x=>x.title+' '+x.desc).join(' ')]) }));
     } catch (err) {
@@ -17560,7 +17620,7 @@ class Component extends DCLogic {
     if (!r || this.state.conceptRoute === i) return;
     // Switching route invalidates everything downstream — script, frames, cast, cut.
     this.setState({ conceptRoute:i, videoConcept:r, scriptStatus:'concept', fullScript:null,
-                    sceneFrames:{}, castRefUrl:null, videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', videoCamera:'', videoPace:'', paceSuggest:null, filmReview:null, videoBeatMap:null, castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null,
+                    sceneFrames:{}, castRefUrl:null, videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', videoCamera:'', videoPace:'', paceSuggest:null, filmReview:null, videoBeatMap:null, editorNotes:null, castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null,
                     producedUrl:null, renderInfo:null, scriptPhase:'concept', voicePlan:null });
     this.showToast('Route ' + (i+1) + ' loaded — ' + (r.name || 'concept') + '.', 'ok');
   };
@@ -18963,7 +19023,7 @@ class Component extends DCLogic {
       no: r.no || String(i + 1), tc: r.tc || '', visual: r.visual || '', supr: r.supr || '' })) });
     this.showToast(rows.length + ' board row' + (rows.length === 1 ? '' : 's') + ' pulled \u2014 each take can be keyed against the frame it is for.', 'ok');
   };
-  openVideoFromCampaign = () => { const c = this.state.campaign; this.setState({ screen:'video', videoConcept: c ? c.video : null, linkedBrief: c ? c.brief : null, videoObjective:'Campaign film', scriptStatus: (c && c.video) ? 'concept' : 'none', scriptPhase:'concept', videoStep:'scripting', fullScript:null, sceneFrames:{}, videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', videoCamera:'', videoPace:'', paceSuggest:null, filmReview:null, videoBeatMap:null, castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null, renderInfo:null, castRefUrl:null });
+  openVideoFromCampaign = () => { const c = this.state.campaign; this.setState({ screen:'video', videoConcept: c ? c.video : null, linkedBrief: c ? c.brief : null, videoObjective:'Campaign film', scriptStatus: (c && c.video) ? 'concept' : 'none', scriptPhase:'concept', videoStep:'scripting', fullScript:null, sceneFrames:{}, videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', videoCamera:'', videoPace:'', paceSuggest:null, filmReview:null, videoBeatMap:null, editorNotes:null, castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null, renderInfo:null, castRefUrl:null });
     this.loadGrounding(); this.loadVideoStandsOn(); }; // round 92: video's own six-entry-point audit
 
   // ---------- campaign analysis ----------
@@ -20585,7 +20645,7 @@ class Component extends DCLogic {
       videoCharacters: s.videoCharacters, onVideoCharacters:this.onVideoCharacters,
       videoWardrobe: s.videoWardrobe || '', onVideoWardrobe: this.onVideoWardrobe,
       videoCamera: s.videoCamera || '', onVideoCamera: this.onVideoCamera, useSuggestedCamera: this.useSuggestedCamera,
-      paceBar: this.paceBar(), beatMapPanel: this.beatMapPanel(), flowReviewPanel: this.flowReviewPanel(), frameCheckPanel: this.frameCheckPanel(),
+      paceBar: this.paceBar(), beatMapPanel: this.beatMapPanel(), editorNotesPanel: this.editorNotesPanel(), flowReviewPanel: this.flowReviewPanel(), frameCheckPanel: this.frameCheckPanel(),
       deriveCharacters:this.deriveCharacters, charBusy: s.charBusy,
       charBtnLabel: s.charBusy ? 'Deriving…' : (s.videoCharacters ? '↻ Re-derive from script' : '✦ Derive from script'),
       seedLabel: s.videoSeed ? ' · seed ' + s.videoSeed : '',
@@ -23177,7 +23237,7 @@ class Component extends DCLogic {
       if (!data0 || !data0.scenes || !data0.scenes.length) throw new Error('bad');
       const data = { ...data0, from_provocation: prov.id, provocation_name: prov.name || '' };
       this.setState(s2 => ({ provRouteBusy:false, provConcept:data, conceptRoute:-1, videoConcept:data, refinePrompt:'', videoRefusal:'',
-        scriptStatus:'concept', fullScript:null, sceneFrames:{}, castRefUrl:null, videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', videoCamera:'', videoPace:'', paceSuggest:null, filmReview:null, videoBeatMap:null, castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null,
+        scriptStatus:'concept', fullScript:null, sceneFrames:{}, castRefUrl:null, videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', videoCamera:'', videoPace:'', paceSuggest:null, filmReview:null, videoBeatMap:null, editorNotes:null, castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null,
         producedUrl:null, renderInfo:null, scriptPhase:'concept', voicePlan:null,
         scriptVersions: [...s2.scriptVersions, { v:s2.scriptVersions.length + 1, logline:data.logline, note: refine || ('From the provocation: ' + (prov.name || '')), duration:data.duration }],
         videoCheck: this.runCreativeCheck([data.logline, (data.scenes || []).map(x => x.title + ' ' + x.desc).join(' ')]) }));
@@ -23197,7 +23257,7 @@ class Component extends DCLogic {
     if (st.videoConcept && st.videoConcept.from_provocation === p.id) return;
     if (st.provConcept && st.provConcept.from_provocation === p.id) {
       this.setState({ conceptRoute:-1, videoConcept:st.provConcept, scriptStatus:'concept', fullScript:null,
-        sceneFrames:{}, castRefUrl:null, videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', videoCamera:'', videoPace:'', paceSuggest:null, filmReview:null, videoBeatMap:null, castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null,
+        sceneFrames:{}, castRefUrl:null, videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', videoCamera:'', videoPace:'', paceSuggest:null, filmReview:null, videoBeatMap:null, editorNotes:null, castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null,
         producedUrl:null, renderInfo:null, scriptPhase:'concept', voicePlan:null });
       this.showToast('The provocation route loaded \u2014 ' + (st.provConcept.name || 'concept') + '.', 'ok');
       return;

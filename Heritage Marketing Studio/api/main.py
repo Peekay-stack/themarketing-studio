@@ -56,6 +56,7 @@ import sceneshots
 import flowreview
 import framecheck
 import filmdirect
+import filmedit
 import selfcheck
 import briefguide
 import briefstore
@@ -2876,6 +2877,22 @@ def film_direct(payload: dict):
     out = filmdirect.validate(raw, rows, roles)
     out["model"] = True
     return out
+
+
+@app.post("/editor-notes")
+def editor_notes(payload: dict):
+    """The editor's notes on SOUND and RHYTHM, worked out with no model and no cost: does the music lift on the film's real turn, does the message line get a beat of silence, does each
+    spoken line fit its scene, do the turn and the message get the time they deserve, does the film end on its message, are cuts inside one beat made on the action. A note that can be fixed
+    in one move carries a `fix` ({type: music | line_lead, scene, value, label}) for the page to apply. Nothing is saved here.
+
+    Body: `scenes`, `seconds`, `beat_map` (the director's read, optional), `sound_plan` (as the page sends it to a render, optional), `sound_off`. Returns {notes, turn_scene, carrier_scene, music, facts}.
+    """
+    rows = [r for r in (payload.get("scenes") or []) if isinstance(r, dict)]
+    if not rows:
+        return JSONResponse(status_code=400, content={"detail": "Send the script (its scene rows) to review."})
+    secs = _seconds_for(rows, payload)
+    beat_map = payload.get("beat_map") if isinstance(payload.get("beat_map"), dict) else None
+    return filmedit.notes(rows, secs, beat_map, payload.get("sound_plan"), bool(payload.get("sound_off")))
 
 
 @app.post("/film-review")
