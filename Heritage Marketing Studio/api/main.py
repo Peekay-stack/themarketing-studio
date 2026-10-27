@@ -47,10 +47,12 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 import activation
+import anglecheck
 import actuals
 import auth as auth_mod
 import brandprofile
 import brand_suggest
+import sceneshots
 import selfcheck
 import briefguide
 import briefstore
@@ -2245,6 +2247,19 @@ def cast_reference(payload: dict):
             "provider": candidates[0]["provider"], "tier": tier, "from_reference": False}
 
 
+def _angle_check(frame_url: str, master_ref: str) -> dict | None:
+    """Is this coverage frame a near-copy of its master (shot 1)? None when it cannot be checked. Advisory only (see anglecheck.py);
+    wrapped so a failure here can never cost a frame that was already paid for."""
+    try:
+        f, m = gemini._as_base64(frame_url), gemini._as_base64(master_ref)
+        if not f or not m:
+            return None
+        return anglecheck.check(base64.b64decode(f[1]), base64.b64decode(m[1]))
+    except Exception as e:  # noqa: BLE001
+        print(f"[main] angle check skipped: {type(e).__name__}: {e}", file=sys.stderr, flush=True)
+        return None
+
+
 def _pack_shape_check(frame_url: str, pack_ref: str) -> dict | None:
     """Does the pack in this generated frame have the real pack's proportions? None when it cannot be checked.
 
@@ -2656,7 +2671,10 @@ def scene_still(payload: dict):
                     "scene_cleaned": _scene_cleaned,
                     # Advisory read of the pack's proportions against the real pack photo (see packqa.py).
                     "pack_check": (_pack_shape_check(url, _pack_ref if _pack_ref_used else lib_refs["pack"])
-                                   if (pack_used or _pack_ref_used) else None)}
+                                   if (pack_used or _pack_ref_used) else None),
+                    # A coverage shot sends `compare_to` (its master frame): is this a near-copy of it? (anglecheck.py)
+                    "angle_check": (_angle_check(url, str(payload.get("compare_to")))
+                                    if payload.get("compare_to") else None)}
         print("[main] reference frame failed on both providers; falling back to text-to-image",
               file=sys.stderr, flush=True)
     parts = [f"Marketing image for {_brand_line(_scene_brand_prof or None, brand_mode=_scene_mode)}."]
@@ -2697,6 +2715,59 @@ def scene_still(payload: dict):
                  route="/scene-still")
     return {"image_url": res["url"], "from_reference": False, "provider": "fal",
             "pack_generated": _pack_generate, "pack_source": "", "pack_failed": _pack_shown}
+
+
+@app.post("/scene-shots")
+def scene_shots(payload: dict):
+    """Propose the EXTRA camera angles for one scene ("Break into shots"). A proposal only: nothing is saved here.
+
+    Body: `scene` (the row), `scene_seconds`, optional `n_shots` (extras wanted), `is_signoff`, `plate_locked`, `logline`, `characters`,
+    `location_line`, `wardrobe`, `camera_notes`, `look_note`, `prev_visual`, `next_visual`, and the same model flags /complete takes
+    (`house_id`, `brand_mode`, `provocation_id`, ...). Returns {shots, master_secs, notes, scene_seconds}; each shot is
+    {id, visual, shot_size, camera, movement_class, secs, warnings}. Shot lengths add up to the scene's seconds (the master keeps the rest);
+    the sign-off scene and scenes under 4s return no shots and a `reason`. See sceneshots.py for the rules and the backstops.
+    """
+    row = payload.get("scene") if isinstance(payload.get("scene"), dict) else {}
+    try:
+        secs = int(payload.get("scene_seconds") or 0)
+    except (TypeError, ValueError):
+        secs = 0
+    if not row or not str(row.get("visual") or row.get("title") or row.get("desc") or "").strip():
+        return JSONResponse(status_code=400, content={"detail": "Send the scene (its row, with its visual) to break into shots."})
+    if payload.get("is_signoff") or str(row.get("beat_role") or "").strip().lower() == "brand":
+        return {"shots": [], "master_secs": secs, "notes": [], "scene_seconds": secs,
+                "reason": "The sign-off scene is always one shot: the pack held clean and still, with room for the line and the logo."}
+    limit = sceneshots.max_extras(secs)
+    if limit < 1:
+        return {"shots": [], "master_secs": secs, "notes": [], "scene_seconds": secs,
+                "reason": f"A {secs}s scene is too short for a second shot (every shot needs at least 2 seconds)."}
+    try:
+        want = int(payload.get("n_shots")) if payload.get("n_shots") not in (None, "") else limit
+    except (TypeError, ValueError):
+        want = limit
+    want = max(1, min(limit, want))
+    pack_in = packscene.mentions_pack(videoprompt.visual_text([row]))
+    prompt = sceneshots.build_prompt(
+        row=row, secs=secs, n_extras=want, logline=str(payload.get("logline") or ""), characters=str(payload.get("characters") or ""),
+        location_line=str(payload.get("location_line") or ""), wardrobe=str(payload.get("wardrobe") or ""),
+        camera_notes=str(payload.get("camera_notes") or ""), look_note=str(payload.get("look_note") or ""),
+        plate_locked=bool(payload.get("plate_locked")), pack_in_scene=pack_in,
+        prev_visual=str(payload.get("prev_visual") or ""), next_visual=str(payload.get("next_visual") or ""))
+    flags = {k: payload[k] for k in ("house_id", "execution", "brand_mode", "provocation_id", "use_provocation", "use_house",
+                                     "use_platform", "use_plan", "skip_mandatories", "force_typed") if k in payload}
+    r = complete_endpoint({**flags, "messages": [{"role": "user", "content": prompt}], "film": True})
+    if isinstance(r, JSONResponse):
+        return r                               # no key (503) or an empty reply (502), with the same wording as every other generator
+    proposed = sceneshots.parse(r.get("completion") if isinstance(r, dict) else "")
+    if proposed is None:
+        return JSONResponse(status_code=502, content={"detail": "The model's reply could not be read as a list of shots. Try again."})
+    out = sceneshots.validate(proposed, secs=secs, plate_locked=bool(payload.get("plate_locked")), pack_in_scene=pack_in,
+                              master_size=str(row.get("shot_size") or ""), want=want)
+    if not out["shots"]:
+        return JSONResponse(status_code=502, content={"detail": "None of the proposed shots could be used"
+                                                      + (": " + "; ".join(out["notes"]) if out["notes"] else "") + ". Try again."})
+    out["scene_seconds"] = secs
+    return out
 
 
 @app.post("/production-bible-docx")
