@@ -131,11 +131,53 @@ detail = str(res.get("detail", ""))
 check("route: the sign-off's ignored shots are reported", "scene 6 is the sign-off" in detail, detail[:300])
 # the sign-off scene was one shot: exactly one call mentions it
 check("route: the sign-off scene was generated once", len([c for c in calls if "pack, front-on" in c["prompt"]]) == 1 and not [c for c in calls if "second angle of the pack" in c["prompt"]])
-# no-frame branch uses the new shot sizes
-nf = film(); nf[1]["shots"][1].pop("frame_url"); nf[1]["shots"][1]["visual"] = "Detail: his hand on the glass."
-run(nf)
-c_nf = [c for c in calls if "Detail: his hand" in c["prompt"]][0]
-check("route: a shot without a frame uses the text-to-video branch and the new 'detail' framing sentence", not c_nf["image_ref"] and "DETAIL INSERT" in c_nf["prompt"], c_nf["prompt"][:300])
+# ---- step 2: a coverage shot is NEVER rendered without its frame ------------------------------------------------------------
+nf = film(); nf[1]["shots"][1].pop("frame_url")
+r_nf = run(nf)
+check("route: a coverage shot with no frame is held back, not drawn from words (7 generations, not 8)", len(calls) == 7 and not [c for c in calls if "Detail: his hand" in c["prompt"]], str(len(calls)))
+check("route: the held-back shot says why, by scene and shot", "scene 2, shot 3: no frame, so this shot was not rendered" in str(r_nf.get("detail")), str(r_nf.get("detail"))[:300])
+check("route: the cut is reported incomplete with the 'missing a shot' wording (the scene still has two shots)", "INCOMPLETE CUT" in str(r_nf.get("detail")) and "scene(s) 2 are missing a shot" in str(r_nf.get("detail")), str(r_nf.get("detail"))[:400])
+sc_nf = [c for c in r_nf["shot_clips"] if c["no"] == 2]
+check("route: shot_clips still lists the held-back shot, marked not ok", [c["ok"] for c in sc_nf] == [True, True, False] and sc_nf[2]["url"] == "", str(sc_nf))
+# a master scene (no coverage) without a frame keeps today's behaviour: the text-to-video branch, which also uses the new shot sizes
+plain_nf = film(); plain_nf[2].pop("frame_url"); plain_nf[2]["shot_size"] = "detail"
+run(plain_nf)
+c_pl = [c for c in calls if "pipette" in c["prompt"]][0]
+check("route: an ordinary scene with no frame still goes through the text-to-video branch, and the new 'detail' size reaches it", not c_pl["image_ref"] and "DETAIL INSERT" in c_pl["prompt"], c_pl["prompt"][:300])
+
+# ---- step 2: one record per shot in the response -------------------------------------------------------------------------------
+res = run(film(), stitch="film-fake.mp4")
+sc = res["shot_clips"]
+check("shot_clips: one record per planned shot, in film order", [(c["no"], c["shot"]) for c in sc] == [(1, 1), (2, 1), (2, 2), (2, 3), (3, 1), (4, 1), (5, 1), (6, 1)], str([(c["no"], c["shot"]) for c in sc]))
+check("shot_clips: a scene's shots add up to the scene's seconds and the film's to the total", sum(c["seconds"] for c in sc if c["no"] == 2) == per[1] and sum(c["seconds"] for c in sc) == total)
+check("shot_clips: urls, provider, from_frame and role are filled in", all(c["ok"] and c["url"] and c["provider"] == "google" and c["from_frame"] and c["role"] for c in sc), str(sc[1]))
+check("shot_clips: later shots are marked continues, the first of a scene is not", [c["continues"] for c in sc if c["no"] == 2] == [False, True, True])
+check("shot_clips: the old `clips` list is unchanged (bare urls of the shots that rendered, in order)", res["clips"] == [c["url"] for c in sc if c["ok"]])
+check("shot_clips: also present on the unstitched fallback response", "shot_clips" in run(film()))
+
+# ---- step 2: a shot that fails is named by scene and shot, the rest of the film still ships -----------------------------------------
+real_video, real_err = gemini.video, gemini.video_error
+def flaky(prompt, **kw):
+    if "Detail: his hand" in prompt:
+        calls.append({"prompt": prompt, **{k: kw.get(k) for k in ("seconds", "image_ref", "tier")}}); return None
+    return real_video(prompt, **kw)
+gemini.video, gemini.video_error = flaky, (lambda: "Google's safety filter blocked this shot (no video returned)")
+r_fail = run(film())
+d = str(r_fail.get("detail"))
+check("failure: the log names the shot by scene and place", "scene 2, shot 3 on Google: Google's safety filter blocked this shot" in d, d[:400])
+check("failure: the cut is incomplete and says the scene lost a shot", "INCOMPLETE CUT" in d and "scene(s) 2 are missing a shot" in d and "1 of 8 shots did not render" in d, d[:400])
+check("failure: seven shots still rendered", len([c for c in r_fail["shot_clips"] if c["ok"]]) == 7)
+# an ordinary film keeps the old wording exactly
+plain = [{"no": i + 1, "visual": f"scene {i + 1}", "frame_url": f"/media/p{i}.jpg"} for i in range(4)]
+def flaky2(prompt, **kw):
+    if "scene 3" in prompt:
+        return None
+    return real_video(prompt, **kw)
+gemini.video = flaky2
+d2 = str(run(plain).get("detail"))
+check("failure on an ordinary film: the old wording, byte for byte ('scene(s) 3 are missing and this film is')", "so scene(s) 3 are missing and this film is" in d2 and "shot 3: no URL returned" in d2, d2[:400])
+gemini.video, gemini.video_error = real_video, real_err
+
 # dropped shots are reported
 tiny = [{"no": 1, "visual": "a", "frame_url": "/media/a.jpg", "shots": [{"visual": "b", "secs": 2, "frame_url": "/media/b.jpg"}] * 3},
         {"no": 2, "visual": "b", "frame_url": "/media/c.jpg"}, {"no": 3, "visual": "c", "frame_url": "/media/d.jpg"}, {"no": 4, "visual": "d", "frame_url": "/media/e.jpg"}]

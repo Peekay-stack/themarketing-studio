@@ -1457,6 +1457,14 @@ def _produce_video_sync(payload: dict):
                           f"Draft (Gemini Omni 360p). Pick Final for 720p")
         tier = "lite"
 
+    def _seg_label(seg) -> str:
+        """How a shot is named in messages. Films with no coverage keep the old "shot N"; a scene with coverage is
+        named by its scene and the shot's place in it, which is what a person looks for on the board."""
+        row = (seg["scenes"] or [{}])[0] or {}
+        if row.get("shot") or filmcut.extra_shots(row):
+            return f"scene {row.get('no') or seg['index'] + 1}, shot {int(row.get('shot') or 0) + 1}"
+        return f"shot {seg['index'] + 1}"
+
     def render(seg):
         # A scene with a signed-off live-action shot is NOT generated. Real footage of real people
         # beats anything a model can invent about a specific face, so the shot is trimmed to the
@@ -1484,6 +1492,14 @@ def _produce_video_sync(payload: dict):
         # Animating the approved frame is what makes the film match the board AND keeps the cast
         # identical from shot to shot; text-to-video reinvents people every call.
         frame = frame_for(seg)
+        _row0 = (seg["scenes"] or [{}])[0] or {}
+        if _row0.get("shot") and not frame:
+            # Seen in the 27 Oct trial: with no frame the engine draws the pack and the people from words alone, and the
+            # film got a different pack. A coverage shot is only ever an angle of a frame we have, so it is held back.
+            return seg["index"], {"url": "", "provider": "none", "kind": "video",
+                                  "note": f"{_seg_label(seg)}: no frame, so this shot was not rendered. Generate its frame "
+                                          "first — drawn from words alone the pack and the people would not match the "
+                                          "other shots"}
         if _use(video_engine, "google") and gemini.available():
             url = gemini.video(segment_prompt(seg, from_frame=bool(frame)), image_ref=frame,
                                seconds=seg["seconds"], ratio=aspect, tier=tier)
@@ -1493,10 +1509,10 @@ def _produce_video_sync(payload: dict):
             # Say WHY (out of credit, safety block, rate limit): without it the person sees only "no URL returned".
             _why = gemini.video_error()
             if _why:
-                errors.append(f"shot {seg['index'] + 1} on Google: {_why}")
+                errors.append(f"{_seg_label(seg)} on Google: {_why}")
             if not _use(video_engine, "fal"):
                 return seg["index"], {"url": "", "provider": "google", "kind": "video"}
-            print(f"[main] Google video failed for shot {seg['index'] + 1}; trying fal",
+            print(f"[main] Google video failed for {_seg_label(seg)}; trying fal",
                   file=sys.stderr, flush=True)
         if not _use(video_engine, "fal"):
             return seg["index"], {"url": "", "provider": "google", "kind": "video"}
@@ -1515,6 +1531,7 @@ def _produce_video_sync(payload: dict):
     # and shipped a film seconds short. gemini.video() now queues every request behind a shared limiter and retries
     # a 429 after the wait the API names, so the lanes here only bound how many shots are in flight.
     lanes = 4
+    results: dict[int, dict] = {}
     with ThreadPoolExecutor(max_workers=max(1, min(lanes, len(segments)))) as pool:
         for fut in as_completed([pool.submit(render, s) for s in segments]):
             try:
@@ -1522,13 +1539,14 @@ def _produce_video_sync(payload: dict):
             except Exception as e:
                 errors.append(str(e))
                 continue
+            results[idx] = res
             if res.get("url"):
                 slots[idx] = res["url"]
                 used_providers.add(str(res.get("provider") or "fal"))
                 if res.get("note"):          # e.g. a live-action take shorter than its beat
                     errors.append(res["note"])
             else:
-                errors.append(f"shot {idx + 1}: no URL returned")
+                errors.append(res.get("note") or f"{_seg_label(segments[idx])}: no URL returned")
     clips = [u for u in slots if u]          # keep script order, drop failed shots
     beats = [segments[i]["seconds"] for i, u in enumerate(slots) if u]
     # Which SCENES survived. A dropped shot used to vanish quietly: the film was joined from what came
@@ -1538,6 +1556,16 @@ def _produce_video_sync(payload: dict):
     missing = sorted({int((segments[i]["scenes"] or [{}])[0].get("no") or (i + 1))
                       for i, u in enumerate(slots) if not u})
     incomplete = bool(missing)
+    _cov = {int((sg["scenes"][0] or {}).get("no") or 0) for sg in segments
+            if sg["scenes"] and ((sg["scenes"][0] or {}).get("shot") or filmcut.extra_shots(sg["scenes"][0]))}
+    _alive = {int(((segments[i]["scenes"] or [{}])[0] or {}).get("no") or (i + 1)) for i, u in enumerate(slots) if u}
+    _part = [n for n in missing if n in _cov and n in _alive]
+    _gone = [n for n in missing if n not in _part]
+    _what = []
+    if _gone:
+        _what.append(f"scene(s) {', '.join(str(n) for n in _gone)} are missing")
+    if _part:
+        _what.append(f"scene(s) {', '.join(str(n) for n in _part)} are missing a shot")
     # A provider that is out of credit or locked is a different wall from a transient per-minute quota:
     # re-rendering cannot fix an exhausted balance, so detect it and say the true cause and the action
     # instead of the quota hint (which sent people to re-render over and over against a locked account).
@@ -1551,8 +1579,18 @@ def _produce_video_sync(payload: dict):
                   else "The usual cause is the video engine's per-minute limit or a blocked shot (see the notes); "
                        "re-render to complete it")
         errors.insert(0, f"INCOMPLETE CUT — {len(slots) - len(clips)} of {len(slots)} shots did not "
-                         f"render, so scene(s) {', '.join(str(n) for n in missing)} are missing and "
+                         f"render, so {' and '.join(_what)} and "
                          f"this film is {sum(beats)}s of the {chosen}s you asked for. {_cause}")
+    shot_clips: list[dict] = []
+    _ordinal: dict[int, int] = {}
+    for _i, _sg in enumerate(segments):
+        _no = int(((_sg["scenes"] or [{}])[0] or {}).get("no") or (_i + 1))
+        _ordinal[_no] = _ordinal.get(_no, 0) + 1
+        _res = results.get(_i) or {}
+        shot_clips.append({"no": _no, "shot": _ordinal[_no], "seconds": _sg["seconds"], "url": slots[_i] or "",
+                           "ok": bool(slots[_i]), "provider": str(_res.get("provider") or ""),
+                           "from_frame": bool(_res.get("from_frame")), "role": _sg.get("role") or "",
+                           "continues": bool(_sg.get("continues"))})
     video_provider = "+".join(sorted(used_providers)) if used_providers else ""
     # Say who actually rendered it. Reporting the requested model meant the UI could show "Veo 3.1
     # Lite" while fal had quietly done the work at its own rate — the exact thing that made the
@@ -1602,7 +1640,7 @@ def _produce_video_sync(payload: dict):
         url = clips[0]
         if len(clips) > 1:
             errors.append("clips could not be joined into one file — showing the first shot only")
-        out = {"video_url": url, "url": url, "live": True, "model": real_model, "clips": clips,
+        out = {"video_url": url, "url": url, "live": True, "model": real_model, "clips": clips, "shot_clips": shot_clips,
                "shots": len(segments), "seconds": total, "audio": "none"}
         out["detail"] = "; ".join(errors)
         _record_made("produced_film", "Produced film (unstitched)", url=url, payload=payload,
@@ -1713,7 +1751,7 @@ def _produce_video_sync(payload: dict):
             audio_kinds = []
 
     url = f"/renders/{rendered}"
-    out = {"video_url": url, "url": url, "live": True, "model": real_model, "clips": clips,
+    out = {"video_url": url, "url": url, "live": True, "model": real_model, "clips": clips, "shot_clips": shot_clips,
            "shots": len(segments), "seconds": total, "chosen_seconds": chosen,
            "timecodes": [{"no": r.get("no"), "tc": r.get("tc")}
                          for r in scenes if isinstance(r, dict)],
