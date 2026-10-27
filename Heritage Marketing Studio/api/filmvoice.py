@@ -507,6 +507,48 @@ def beats_for(seconds: float) -> list[int]:
     return [hi] * max(1, (need + hi - 1) // hi)
 
 
+# --- coverage: one scene as several shots (VIDEO_COVERAGE_PLAN.md) ---------------------------------------------
+# A scene's TOTAL seconds are decided exactly as before (dialogue-weighted `allocate`, 4s floor per scene). Coverage only
+# subdivides them. Omni and Kling generate any whole second from 3 up, and a clip longer than its shot is trimmed to it, so
+# the shot floor is 2s (generated at 3s and cut), not the 4s Veo needed.
+SHOT_FLOOR = 2
+SHOT_CEILING = 8          # one generated clip is at most 8s; a longer shot becomes continuing beats, as a long scene does
+MAX_EXTRA_SHOTS = 3       # the scene's own row is shot 1, so a scene has at most 4 shots
+
+
+def split_shot_seconds(total, weights, floor: int = SHOT_FLOOR, ceiling: int = SHOT_CEILING) -> tuple[list[int], int]:
+    """Whole seconds for a scene's shots, MASTER FIRST: ([master, extra1, extra2, ...], dropped).
+
+    `weights` are the extra shots' wanted seconds (a person's or the writer's). The scene's `total` never changes: the
+    extras are held to [floor, ceiling] and the master takes the remainder. When the scene is too short for every shot at
+    the floor, the LAST extras are dropped (and counted, so the caller can say so); when the remainder would leave the
+    master under the floor, the longest extra gives seconds back. The result always sums to `total` (when total >= floor).
+    """
+    try:
+        total = int(total)
+    except (TypeError, ValueError):
+        total = 0
+    ws: list[int] = []
+    for w in (weights or []):
+        try:
+            v = int(round(float(w)))
+        except (TypeError, ValueError):
+            v = floor
+        ws.append(max(floor, min(ceiling, v if v > 0 else floor)))
+    if total < floor:
+        return [max(0, total)], len(ws)
+    dropped = 0
+    while ws and floor * (len(ws) + 1) > total:
+        ws.pop()
+        dropped += 1
+    while ws and total - sum(ws) < floor:
+        i = max(range(len(ws)), key=lambda j: ws[j])
+        if ws[i] <= floor:
+            break
+        ws[i] -= 1
+    return [total - sum(ws)] + ws, dropped
+
+
 def scene_needs(rows) -> list[float]:
     """Seconds each scene's dialogue wants at natural pace — unsnapped, and only a demand, not a
     promise. A silent scene asks for the 4s minimum."""

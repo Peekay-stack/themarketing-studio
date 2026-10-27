@@ -325,17 +325,86 @@ def assign_roles(segments: list[dict]) -> list[dict]:
     return segs
 
 
+# The keys that belong to ONE SHOT, not to the scene: a shot never inherits them from the scene's own row. (The scene's row is
+# shot 1, the master; extra shots are `row["shots"]`, each with its own visual, camera, size, movement, frame.)
+_SHOT_OWN_KEYS = ("title", "desc", "visual", "camera", "shot_size", "movement_class", "frame_url", "frame_note",
+                  "include_pack", "match_no")
+
+
+def extra_shots(row) -> list[dict]:
+    """The usable extra shots a scene row carries (`row["shots"]`): dicts with a non-empty `visual`, at most
+    filmvoice.MAX_EXTRA_SHOTS of them. A row with none is planned exactly as it always was."""
+    raw = row.get("shots") if isinstance(row, dict) else None
+    if not isinstance(raw, list):
+        return []
+    import filmvoice
+    return [s for s in raw if isinstance(s, dict) and str(s.get("visual") or "").strip()][:filmvoice.MAX_EXTRA_SHOTS]
+
+
+def shot_view(row: dict, shot: dict, k: int, n: int) -> dict:
+    """The row a segment sees for extra shot `k` (1-based among `n` shots): the scene's own fields (number, role, beat
+    direction, supers) with the SHOT's own picture fields on top. The scene's spoken words stay with the scene, so the
+    view carries none (the voice is built from the scene rows, never from segments)."""
+    view = {k2: v for k2, v in row.items() if k2 != "shots" and k2 not in _SHOT_OWN_KEYS}
+    for key in _SHOT_OWN_KEYS:
+        if shot.get(key) not in (None, ""):
+            view[key] = shot[key]
+    view["dialogue"] = ""
+    view["audio"] = []
+    view["shot"] = k
+    view["shots_total"] = n
+    return view
+
+
 def plan_by_scene(scenes: list, per_scene: list) -> list[dict]:
     """One shot per scene, each as long as that scene's dialogue needs.
 
     A scene needing more than Veo's 8s ceiling becomes several beats continuing the same action, so
     the writing sets the pace rather than being cut to fit a fixed grid.
+
+    COVERAGE: a scene row with `shots` becomes one segment per shot (the row itself is shot 1, `shots` are the extra
+    angles). The scene's total seconds are unchanged: they are only subdivided (filmvoice.split_shot_seconds), and every
+    shot after the first is marked `continues`, so `assign_roles` still gives the whole scene one role, and the render's
+    voice re-windowing (which merges a scene's segments by its number) still lays the scene's words across all its shots.
+    The sign-off (`brand`) scene is never split. A scene with no `shots` is planned exactly as before.
     """
     import filmvoice
-    out: list[dict] = []
-    for row, secs in zip(scenes, per_scene):
+    pairs = list(zip(scenes, per_scene))
+    if not any(extra_shots(r) for r, _ in pairs):
+        out: list[dict] = []
+        for row, secs in pairs:
+            for n, b in enumerate(filmvoice.beats_for(secs)):
+                out.append({"index": len(out), "seconds": b, "scenes": [row], "continues": n > 0})
+        return assign_roles(out or [{"index": 0, "seconds": 4, "scenes": [], "continues": False}])
+    # Which scene is the sign-off is only known once roles are assigned, and roles attach to scenes (moments), so they
+    # are worked out on the UNSPLIT plan first.
+    plain: list[dict] = []
+    for i, (row, secs) in enumerate(pairs):
         for n, b in enumerate(filmvoice.beats_for(secs)):
-            out.append({"index": len(out), "seconds": b, "scenes": [row], "continues": n > 0})
+            plain.append({"index": len(plain), "seconds": b, "scenes": [row], "continues": n > 0, "_scene": i})
+    assign_roles(plain)
+    role_of: dict[int, str] = {}
+    for seg in plain:
+        role_of.setdefault(seg["_scene"], seg.get("role") or "")
+    out = []
+    for i, (row, secs) in enumerate(pairs):
+        extras = extra_shots(row)
+        first = len(out)
+        if not extras or role_of.get(i) == "brand":
+            for n, b in enumerate(filmvoice.beats_for(secs)):
+                out.append({"index": len(out), "seconds": b, "scenes": [row], "continues": n > 0})
+            if extras:
+                out[first]["collapsed_shots"] = len(extras)
+            continue
+        lens, dropped = filmvoice.split_shot_seconds(secs, [s.get("secs") for s in extras])
+        used = extras[:len(lens) - 1]
+        for k, shot_secs in enumerate(lens):
+            view = row if k == 0 else shot_view(row, used[k - 1], k, len(lens))
+            beats = [shot_secs] if shot_secs <= filmvoice.SHOT_CEILING else filmvoice.beats_for(shot_secs)
+            for n, b in enumerate(beats):
+                out.append({"index": len(out), "seconds": b, "scenes": [view], "continues": k > 0 or n > 0})
+        if dropped:
+            out[first]["dropped_shots"] = dropped
     return assign_roles(out or [{"index": 0, "seconds": 4, "scenes": [], "continues": False}])
 
 
