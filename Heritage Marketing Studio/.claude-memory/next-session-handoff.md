@@ -13,6 +13,9 @@ metadata:
 ## Where we stopped
 The owner reviewed the engine trial and concluded: **pick ONE video engine and optimise the prompt for it** (the engines converge on a good starting frame; the differences are in how the prompt is read). I recommended **Gemini Omni 1.1 Flash**; the owner asked "is Omni good to go" and I answered **yes, to build for, with 3 conditions** (below). **Nothing was built for the engine switch.** The owner said "we stop now" — no open question in flight except the go-ahead for step 1.
 
+## UPDATE 27 Oct — STEP 1 IS DONE (results in the master list, "27 Oct — STEP 1 RESULTS")
+Prompt = the lever for ACTION (new-style prompt made the boy DRINK 2/2; old prompt = toast); pouch SHAPE is NOT fixed by prompting (aspect unchanged: real 1.30 vs frame 1.76) so it needs a FRAME-stage gate. Six parallel varied shots all followed their actions. **Omni rate limit = 8 requests/minute per model on our Tier 2** (API told us; 429 returned in 1.4 s, retry works) → the adapter needs a limiter + backoff + queue. Could NOT reproduce 'Omni speaks' (audio near-silent, no voice found in 14 clips; ask which clip). Cost of step 1 ≈ $1.86. **NEXT = THE BUILD, awaiting the owner's go-ahead:** Omni path + rate limiter, the video-prompt compiler (shape proven), the frame QA gate, Draft→360p/Final→720p mapping, a second engine behind the adapter. The older "NEXT STEP" section below is now partly done (step 1).
+
 ## The deadline that matters
 - **Google's Veo preview models are gone from the Gemini API** (HTTP 404 since 23 Oct 04:48 UTC, verified in Render logs; the 20s cutdown on 26 Oct 04:34 UTC was rendered on the fal fallback). So ALL renders since 23 Oct ran on **fal-hosted Veo 3.1**, whose endpoints carry **"will be deprecated on November 17, 2026"** (no replacement named). Both of our video routes can be gone in ~3 weeks. The studio UI still labels tiers "Veo 3.1 Lite/Standard" with stale Google cost estimates.
 
