@@ -1,6 +1,6 @@
 ---
 name: next-session-handoff
-description: "START HERE (rewritten 28 Oct 2026 evening after the whole-branch wiring audit). Exact state: what is LIVE on master, what is built-but-UNMERGED on branch `coverage` (coverage + craft + the whole film builder S0-S7 + take QC + chain + retention + engagement levers), what the owner must still decide, the ordered next actions, constraints, gotchas, where everything is."
+description: "START HERE (updated 28 Oct 2026 late evening, after the owner's first localhost test). TOMORROW MORNING section first. Exact state: what is LIVE on master, what is built-but-UNMERGED on branch `coverage` (coverage + craft + the whole film builder S0-S7 + take QC + chain + retention + engagement levers), what the owner must still decide, the ordered next actions, constraints, gotchas, where everything is."
 metadata:
   node_type: memory
   type: project
@@ -9,6 +9,13 @@ metadata:
 ---
 
 **Read this first, then [[flow-higgsfield-research-and-trials]] (the dated BUILD LOG of the film builder, newest at the bottom), `FILM_WIRING_AUDIT.md` in the app folder (the audit of the whole branch), [[change-discipline-working-agreement]], and the lessons [[judge-the-film-not-the-pipeline]], [[git-add-explicit-files-never-directories]], [[project-copies-use-the-opus-folder]].** TODAY'S DATE comes from `date` (it was 28 Oct 2026); earlier notes wrongly said "29 Oct" and were corrected.
+
+## TOMORROW MORNING (29 Oct) — do this first
+1. **The owner ran their first localhost test tonight** (16 screenshots + a rendered film). Read [[localhost-test-findings-28-oct]] and `FILM_LOCALHOST_FINDINGS.md` (repo, app folder): what worked, what went wrong (an arm that stretches and loses its hand in scene 1 shot 2; the pack smearing on the scene 6 master; EVERY frame going "out of date" after the department notes with no bulk fix; scene timings silently re-timed; the concept's split-screen turn undeliverable), and the **consolidated change list A1-A8 / B1-B5, NOT built**.
+2. **Open with the list, not with code.** I gave the owner the list and asked three things; they have NOT answered: (a) go-ahead on the order (Batch 1 = A1-A4 stale-frame fixes, front end; Batch 2 = B1+B2 motion check + QC after a normal render; Batch 3 = prompt rules A5/B3/B4; Batch 4 = polish A6-A8); (b) OK for 2-3 small vision calls (cents) to CALIBRATE B1 on the two bad clips cut from `C:\Users\punie\Downloads\film-275783e0e9-scored.mp4` (2-4 s and 26-28 s) vs good ones; (c) whether B3/B4 also apply to the provocation writer (recommended no). **Ask before any paid call; quote any engine run first.**
+3. Then, per the working agreement even for 'small' items: sweep blast radius (backend + frontend + siblings), plan, minimal diff, verify on the real page with the network stubbed, ask the owner to click through, explicit `git add`, mirror memory. Start with Batch 1 (the owner's own complaint, and it saves money).
+4. Things NOT yet verified that matter: A7's trigger (which click re-timed the scenes was not traced: read `loadVoicePlan` callers, `approveScript`, `setVideoStep`), and A8 (the "Lock location and cast in Live action first" wording).
+5. The owner is mid-test on localhost (their own `run-local.bat`, branch `coverage` checked out; do NOT switch branches; after any backend change they must restart the server). They may send more screenshots; the same plan applies (judge as an audience first).
 
 ## State in one paragraph
 **LIVE = master `b1519e6`**: the video engine switch (Omni) + the stitch freeze hotfix (a frozen join). **Everything else is on branch `coverage` (pushed, NOT merged, NOT live; owner rule: localhost first, merge only after their sign-off):** shot coverage + the five film-craft slices (27 Oct); the Film pipeline map; the **film builder** = a new Film step **Shots** (frame variants, clip takes, choose, assemble from chosen clips, Promote to Final, trim, reorder shots/scenes, picture-only preview, take QC, chain continuity, budget cap, x3 + compare, storage retention); and the **engagement levers**: a "Before you approve" panel and the concept routes' hook/surprise/turn/memorable fields. ~65 commits, +11k lines. Local server serves the working tree, so `coverage` must stay checked out.

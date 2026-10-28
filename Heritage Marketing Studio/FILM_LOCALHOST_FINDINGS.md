@@ -1,0 +1,57 @@
+# Film tab — the owner's first localhost test (28 Oct 2026): findings and the consolidated change list
+
+Source: the owner ran the whole Film flow on localhost on branch `coverage` (head `bb9aa48`), on the Heritage Foods film, and sent 16 screenshots plus the rendered film `C:\Users\punie\Downloads\film-275783e0e9-scored.mp4`. This file records what was seen, what was read from the code, and the changes proposed. **Nothing in sections 3-4 is built yet.** Evidence level is stated per item: *seen* (in a picture or the film), *code* (read in the source), *inferred* (a reasoned cause, not traced).
+
+## 1. What the test confirmed works
+| Area | Evidence |
+|---|---|
+| Concept routes carry Hook / Surprise / Turn / Remember (lever #2) | Seen: all three routes + the chosen concept under its logline; specific and Hyderabad-grounded |
+| The script writer delivered the concept | Seen: scene 1 = the hook (boy drains the glass, milk moustache), scene 2 = the surprise (hard cut to the lab) |
+| Craft panels | Seen: director's read (turn = scene 5, message = scene 6), flow review ("would a viewer stay? medium"; pace 1.9 shots / 10 s below the Calm band), editor's notes (start the line 0.5 s in; scenes 5 and 6 hold 4 s) |
+| Shot coverage | Seen: extra shots for scenes 1, 2, 4, 6; none for the montage (scene 3); scene 5 declined with a reason |
+| Render + voice controls | Film = 30.0 s, 640x360 Draft, 24 fps, picture + audio; **no frozen stretch** (the stitch fix held); Slow / Steady / Fast and the line-landing controls work |
+| "Before you approve" panel | Not visible in the pictures **because the script was already approved** (the panel shows only on a draft) |
+
+## 2. What went wrong, with evidence
+| Where | What | Level |
+|---|---|---|
+| Scene 1 shot 2 (about 2-4 s) | The forearm stretches across the face and ends in a stump at the mouth, no hand. It is the scene's SECOND shot (Insert / Detail, "isolates the white film on his lip and sleeve"), not the opening gulp. The storyboard frame was fine: it only breaks in motion. | Seen (enlarged frames at 2.3 / 3.3 / 3.9 s); cause inferred (an arm crossing a face at close range is a known weak spot) |
+| Scene 6 master (about 27 s) | The pack sits in the near foreground, defocuses, looks soft and swollen while the camera drifts; the boy walks away from camera (that part is SCRIPTED: "sends him toward the door"); then a clean pack hero shot (correct). The label smears for a moment on the sign-off scene. | Seen (frames at 26.2 / 27.4 / 28.4 / 29.4 s); cause inferred (focus drift) |
+| Every frame "out of date" after the department notes were drafted | The frame prompt includes "Supporting direction from the departments" (DoP, lighting, props, wardrobe), so writing them AFTER frames exist changes every recipe. By design, but there is no bulk fix and no warning. | Code (`frameBody`, `frameRecipe`); the page text itself says departments "fold into every rendered frame, once written" |
+| Scene timings changed between screens (0-5s, 5-11s, 11-18s... became 0-4s, 4-10s, 10-16s...); scene 6 3 s -> 6 s; scene 1 master hold 3 s -> 2 s | The free voice-plan step re-times scenes by dialogue and copies the timecodes back into the script rows (`loadVoicePlan`, run on approve and on entering the Shoot Board / Production). Nothing tells the person. | Code for the mechanism; **which click triggered it was not traced** (inferred) |
+| The concept's turn could not be delivered | Route 1's turn = "a split screen snaps the two rooms together"; the script writer's rules forbid a split screen (one scene = one frame), so the director's read put the turn elsewhere (scene 5). | Seen + code (`VISUAL_RULES`) |
+| The one-button render ran no take checks | The take checks run only on clips made in the Shots step, and they never check anatomy. The film came from the Production render. | Code |
+| Scene 5 reason vanished | The shot planner's reason for declining ("hold the one crane") was a toast; the card goes back to "One shot today, Cut between camera angles?". | Seen |
+| Cast-lock warning wording | "Lock location and cast in **Live action** first" may point at the wrong place. | **Unverified** |
+
+## 3. The consolidated change list (NOT built)
+### A. Frames, shoot board, script flow
+| # | Change | Layer | Size |
+|---|---|---|---|
+| A1 | **"Re-render out-of-date (n)"** button that re-renders only the stale frames (today the only bulk button, "Generate all frames", re-renders ALL), on the Storyboard and the Shoot Board | Front end | Small |
+| A2 | A **banner** on the Storyboard and the Shoot Board: "n frames out of date" (the count today appears only in the Production pre-flight / hand-over gate) | Front end | Small |
+| A3 | Show **why** a frame is stale (department notes, look, cast, script words) on the banner and chip | Front end | Small |
+| A4 | A **nudge** before drawing frames while DoP / lighting / props / wardrobe notes are empty, and a **confirm before drafting those notes when frames exist** ("10 frames will go out of date") | Front end | Small |
+| A5 | **Concept prompt:** all four moments (hook, surprise, turn, memorable) must be single-camera, single-frame filmable: no split screens, montages, overlays | Prompt | Small |
+| A6 | Keep the shot-plan "declined because..." reason on the scene card | Front end | Small |
+| A7 | **Say so when scenes are re-timed** by the voice plan (before / after) | Front end | Small |
+| A8 | Verify the "Lock location and cast in Live action first" wording against where the lock actually is | Front end | Tiny |
+
+### B. Rendered-film quality
+| # | Change | Layer | Size |
+|---|---|---|---|
+| B1 | **Motion check on a clip:** extend Look (`/take-look`) to read THREE frames (25 / 50 / 75 %) for stretched or missing limbs and a smeared pack; one model call per clip | Backend + front end | Medium |
+| B2 | **QC after a normal render:** run the free checks + the motion check on every shot clip of a one-button render and list problems beside the version (the "render-stage limb check" owed since 28 Oct) | Backend + front end | Medium |
+| B3 | **Risky-action rule** in the writer, the shot planner AND the concept prompt: no arm or hand crossing a face, no hands near the lens on key shots; use a wider framing or a different action. (My own lever-#2 "hook = a visible action" rule pushes toward exactly this kind of action.) | Prompt | Small |
+| B4 | **Pack lock on the sign-off master:** keep the pack sharp and out of a defocused foreground | Prompt | Small |
+| B5 | This film's two bad clips: **no build**. Shots step -> x3 on scene 1 shot 2 and on the scene 6 master (about $0.10 per Draft clip) -> Compare -> choose -> Look -> Assemble | Owner | — |
+
+## 4. Suggested order and what I need
+1. **A1-A4** (one batch): the shortest path to the owner's complaint, and it saves money.
+2. **B1 + B2** (one batch): catches the whole class of defect. **Calibrate on this film first**: 2-3 small vision calls (cents) on the two bad clips (cut from the delivered film at 2-4 s and 26-28 s) against good ones, so the check does not cry wolf. Ask before running.
+3. **A5, B3, B4** prompt rules: check each with one real model call before shipping (the model key loads only after `import main`).
+4. **A6, A7, A8** polish.
+
+Open owner decisions: go-ahead on the order; OK for the 2-3 vision calls; whether B3 / B4 also apply to the provocation writer (recommended: no, for now).
+
+Working-agreement reminders: plan + blast radius first even for "small" items (full sweep of backend + frontend + siblings); minimal diff; verify on the real page with the network stubbed, then ask the owner to click through; commit explicit files only; mirror memory.
