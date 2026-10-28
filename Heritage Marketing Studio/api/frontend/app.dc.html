@@ -2992,6 +2992,7 @@
             </div>
           </div>
 
+          {{ preApprovePanel }}
           <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
             <sc-if value="{{ scriptApproved }}" hint-placeholder-val="{{ false }}">
               <span style="display:inline-flex; align-items:center; gap:8px; background:#EAF6EC; color:#1E7E34; border:1px solid #C9E7CE; border-radius:11px; padding:12px 18px; font-weight:700; font-size:14px;">✓ Script approved — Shoot Board &amp; Production unlocked</span>
@@ -16124,6 +16125,34 @@ class Component extends DCLogic {
     this.setState({ beatMapBusy:false, videoBeatMap:{ ...d, sig:this.beatSig() } });
   };
   dismissBeatMap = () => this.setState({ videoBeatMap:null });
+  // "Before you approve" (the film-engagement levers #3 / #5): the director's read, the shot plan and the flow review all work on a DRAFTED script, while the film is still words and nothing has been drawn or
+  // paid for, but nothing used to say so at the point of approving. This brings what they found next to the Approve button, with a button to run each. Advisory only: approving is never blocked.
+  preApprovePanel(){
+    const s = this.state, rows = s.fullScript || [];
+    if (!rows.length || s.scriptStatus === 'approved') return null;
+    const h = React.createElement, bm = s.videoBeatMap, fr = s.filmReview;
+    const bmFresh = !!(bm && bm.sig === this.beatSig()), frFresh = !!(fr && fr.sig === this.flowReviewSig());
+    const planned = rows.filter(r => this.activeShots(r).length).length;
+    const btn = (text, onClick, disabled) => h('button', { onClick, disabled:!!disabled, style:{ border:'1px solid #C9CEDA', background:'#fff', color:'#17325E', borderRadius:8, padding:'4px 11px', fontSize:12, fontWeight:700, cursor:disabled ? 'default' : 'pointer', opacity:disabled ? 0.55 : 1 } }, text);
+    const row = (label, body, action) => h('div', { style:{ display:'flex', alignItems:'baseline', gap:10, flexWrap:'wrap', padding:'5px 0', borderTop:'1px solid #ECE8DE' } },
+      h('span', { style:{ width:128, flex:'none', fontSize:12, fontWeight:800, color:'#17325E' } }, label), h('span', { style:{ flex:1, minWidth:200, fontSize:12.5, lineHeight:1.5, color:'#41505F' } }, body), action || null);
+    const risk = bm && bm.engagement && bm.engagement.risk, first = (bm && bm.engagement && bm.engagement.findings || [])[0];
+    const riskColor = risk === 'high' ? '#C0392B' : (risk === 'medium' ? '#B07A12' : '#1A8A7A');
+    const directors = !bm ? 'Not read yet. It says what each scene is for, where the film turns, and whether it risks being boring.'
+      : [h('b', { key:'r', style:{ color:riskColor } }, 'Boredom risk: ' + (risk || 'unknown')), (!bmFresh ? ' · the script has changed since this read' : ''),
+         (first && first.note) ? (' — ' + first.note) : '', ((bm.engagement && bm.engagement.findings || []).length > 1) ? ' (+' + ((bm.engagement.findings || []).length - 1) + ' more in the Director’s read below)' : ''];
+    const flow = !fr ? 'Not run yet. An editor’s pass: would a viewer stay, and which extra angles earn their place.'
+      : [h('b', { key:'f', style:{ color:(fr.engagement && fr.engagement.risk === 'high') ? '#C0392B' : '#B07A12' } }, 'Would a viewer stay? ' + ((fr.engagement && fr.engagement.risk) ? '(' + fr.engagement.risk + ' risk)' : '')), (!frFresh ? ' · the script has changed since this review' : ''),
+         (fr.engagement && fr.engagement.why) ? (' — ' + String(fr.engagement.why).slice(0, 240)) : ''];
+    return h('div', { style:{ margin:'0 0 14px', padding:'10px 14px', border:'1px solid #E6E3DC', borderRadius:12, background:'#FBFAF8', maxWidth:900 } },
+      h('div', { style:{ display:'flex', alignItems:'baseline', gap:10, flexWrap:'wrap', marginBottom:4 } },
+        h('span', { style:{ fontSize:11, fontWeight:800, letterSpacing:'0.06em', textTransform:'uppercase', color:'#6B7280' } }, 'Before you approve'),
+        h('span', { style:{ fontSize:12, color:'#6B7280' } }, 'Optional. Judge how the film will play while it is still words: nothing is drawn or paid for yet.')),
+      row('Director’s read', directors, btn(s.beatMapBusy ? 'Reading…' : (bm ? '↻ Read again' : 'Read the film'), this.runBeatMap, s.beatMapBusy)),
+      row('Shot plan', planned ? (planned + ' of ' + rows.length + ' scenes have extra camera angles planned.') : 'No extra camera angles planned. A scene reads best as one shot unless an angle has a job; use Break into shots on a scene card below. Angles planned now cost nothing until frames are drawn.', null),
+      row('Flow review', flow, btn(s.filmReviewBusy ? 'Reviewing…' : (fr ? '↻ Review again' : 'Review the flow'), this.runFlowReview, s.filmReviewBusy)),
+      h('div', { style:{ fontSize:11, color:'#9AA1AD', marginTop:4 } }, 'Each read is one model call. Approving is never blocked by what they find.'));
+  }
   beatMapPanel(){
     const h = React.createElement, s = this.state, bm = s.videoBeatMap, rows = s.fullScript || [];
     if (!rows.length) return null;
@@ -21549,7 +21578,7 @@ class Component extends DCLogic {
       videoCharacters: s.videoCharacters, onVideoCharacters:this.onVideoCharacters,
       videoWardrobe: s.videoWardrobe || '', onVideoWardrobe: this.onVideoWardrobe,
       videoCamera: s.videoCamera || '', onVideoCamera: this.onVideoCamera, useSuggestedCamera: this.useSuggestedCamera,
-      paceBar: this.paceBar(), beatMapPanel: this.beatMapPanel(), editorNotesPanel: this.editorNotesPanel(), flowReviewPanel: this.flowReviewPanel(), frameCheckPanel: this.frameCheckPanel(),
+      paceBar: this.paceBar(), beatMapPanel: this.beatMapPanel(), preApprovePanel: this.preApprovePanel(), editorNotesPanel: this.editorNotesPanel(), flowReviewPanel: this.flowReviewPanel(), frameCheckPanel: this.frameCheckPanel(),
       deriveCharacters:this.deriveCharacters, charBusy: s.charBusy,
       charBtnLabel: s.charBusy ? 'Deriving…' : (s.videoCharacters ? '↻ Re-derive from script' : '✦ Derive from script'),
       seedLabel: s.videoSeed ? ' · seed ' + s.videoSeed : '',
