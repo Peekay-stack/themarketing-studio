@@ -1199,8 +1199,8 @@ def _produce_video_sync(payload: dict):
     # New frontend sends {scenes, aspect, duration, music, voice, note} and reads {video_url};
     # the legacy caller sent {script, board, ...} and read {url}. Support both.
     aspect = payload.get("aspect") or "16:9"
-    if not (os.environ.get("FAL_KEY") or gemini.available()):
-        # no provider -> 501 so the new UI runs its own simulated render
+    if not (os.environ.get("FAL_KEY") or gemini.available()) and not isinstance(payload.get("use_clips"), dict):
+        # no provider -> 501 so the new UI runs its own simulated render (assembling from chosen clips generates nothing, so it needs none)
         return JSONResponse(status_code=501, content={"detail": "No video provider configured (set GOOGLE_API_KEY or FAL_KEY)."})
     script = payload.get("script") or {}
     board = payload.get("board") or {}
@@ -1458,6 +1458,42 @@ def _produce_video_sync(payload: dict):
     slots: list[str | None] = [None] * len(segments)
     used_providers: set[str] = set()
 
+    # FILM BUILDER (FILM_BUILDER_PLAN.md, slice S0). Two optional payload keys, both INERT when absent, so every existing film renders exactly as before:
+    #   only_shot  "<position>.<k>"  render just that shot (all its beats) and return its clip records BEFORE the stitch: per-shot generation, through the very same
+    #              render(seg) -- prompts, frames, engines, limiter and error messages cannot drift from the full render.
+    #   use_clips  {"<key>": [{url, seconds, ...}]}  ASSEMBLE from chosen clips: render(seg) hands back the chosen clip instead of generating; everything after it
+    #              (stitch with the frozen check, voice windows on the real picture, music, mix) is unchanged. Assembling never generates: a shot with no chosen clip is reported missing.
+    # The key is the film's own frame key: the scene's 0-based position in `scenes` for its master shot, "<position>.<k>" for its k-th extra shot.
+    _only = str(payload.get("only_shot") or "").strip()
+    _chosen_clips = payload.get("use_clips") if isinstance(payload.get("use_clips"), dict) else None
+    if _only and _chosen_clips is not None:
+        return JSONResponse(status_code=400, content={"detail": "Send either only_shot (render one shot) or use_clips (assemble from chosen clips), not both."})
+    _pos_of_no: dict[int, int] = {}
+    for _p, _r in enumerate(scenes):
+        if isinstance(_r, dict):
+            try:
+                _pos_of_no.setdefault(int(_r.get("no") or (_p + 1)), _p)
+            except (TypeError, ValueError):
+                pass
+
+    def shot_key(seg) -> str:
+        _row = (seg["scenes"] or [{}])[0] or {}
+        try:
+            _no = int(_row.get("no") or (seg["index"] + 1))
+        except (TypeError, ValueError):
+            _no = seg["index"] + 1
+        _pos, _k = _pos_of_no.get(_no, seg["index"]), int(_row.get("shot") or 0)
+        return f"{_pos}.{_k}" if _k else str(_pos)
+
+    _seg_keys = [shot_key(_sg) for _sg in segments]
+    _beat_of: dict[int, int] = {}
+    _seen_keys: dict[str, int] = {}
+    for _i, _kk in enumerate(_seg_keys):
+        _beat_of[_i] = _seen_keys.get(_kk, 0)
+        _seen_keys[_kk] = _beat_of[_i] + 1
+    if _only and _only not in _seen_keys:
+        return JSONResponse(status_code=404, content={"detail": f"Shot {_only} is not in the plan (it may be skipped, or the script has changed since)."})
+
     # Draft -> Gemini Omni at 360p; Final -> Omni at 720p (see gemini.VIDEO_RESOLUTION). An explicit `tier` wins if
     # the UI sends one.
     tier = str(payload.get("tier") or "lite")
@@ -1479,6 +1515,15 @@ def _produce_video_sync(payload: dict):
         return f"shot {seg['index'] + 1}"
 
     def render(seg):
+        if _chosen_clips is not None:
+            _lst = _chosen_clips.get(_seg_keys[seg["index"]])
+            _lst = [_lst] if isinstance(_lst, dict) else _lst
+            _c = _lst[_beat_of[seg["index"]]] if isinstance(_lst, list) and _beat_of[seg["index"]] < len(_lst) and isinstance(_lst[_beat_of[seg["index"]]], dict) else None
+            if _c and str(_c.get("url") or "").strip():
+                return seg["index"], {"url": str(_c["url"]), "provider": str(_c.get("provider") or "chosen"), "model": "chosen take", "kind": "video",
+                                      "from_frame": str(_c.get("mode") or "frame") != "text"}
+            return seg["index"], {"url": "", "provider": "none", "kind": "video",
+                                  "note": f"{_seg_label(seg)}: no chosen clip, so nothing was rendered (assembling never generates)"}
         # A scene with a signed-off live-action shot is NOT generated. Real footage of real people
         # beats anything a model can invent about a specific face, so the shot is trimmed to the
         # beat and dropped straight into the timeline. One timeline, one approval, and the voice and
@@ -1546,7 +1591,7 @@ def _produce_video_sync(payload: dict):
     lanes = 4
     results: dict[int, dict] = {}
     with ThreadPoolExecutor(max_workers=max(1, min(lanes, len(segments)))) as pool:
-        for fut in as_completed([pool.submit(render, s) for s in segments]):
+        for fut in as_completed([pool.submit(render, s) for s in segments if not _only or _seg_keys[s["index"]] == _only]):
             try:
                 idx, res = fut.result()
             except Exception as e:
@@ -1560,6 +1605,14 @@ def _produce_video_sync(payload: dict):
                     errors.append(res["note"])
             else:
                 errors.append(res.get("note") or f"{_seg_label(segments[idx])}: no URL returned")
+    if _only:
+        _recs = [{"beat": _beat_of[_i] + 1, "seconds": segments[_i]["seconds"], "url": slots[_i] or "", "ok": bool(slots[_i]),
+                  "provider": str((results.get(_i) or {}).get("provider") or ""), "from_frame": bool((results.get(_i) or {}).get("from_frame"))}
+                 for _i, _kk in enumerate(_seg_keys) if _kk == _only]
+        _prov = {r["provider"] for r in _recs if r["ok"]}
+        return {"shot": _only, "clips": _recs, "ok": all(r["ok"] for r in _recs), "tier": tier,
+                "model": (f"Gemini Omni {gemini.VIDEO_RESOLUTION.get(tier, '')}".strip() if _prov == {"google"} else ("fal " + model_id if _prov else "")),
+                "errors": list(dict.fromkeys(str(e) for e in errors))}
     clips = [u for u in slots if u]          # keep script order, drop failed shots
     beats = [segments[i]["seconds"] for i, u in enumerate(slots) if u]
     # Which SCENES survived. A dropped shot used to vanish quietly: the film was joined from what came
