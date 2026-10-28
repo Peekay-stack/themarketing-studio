@@ -97,23 +97,65 @@ long_ = [{"no": 1, "visual": "A long quiet scene.", "frame_url": "/media/f0.jpg"
 r = run(long_, only_shot="0", duration="20s")
 check("only_shot: a long scene (several continuing beats) renders ALL its beats for that one shot, numbered", len(r["clips"]) >= 2 and [c["beat"] for c in r["clips"]] == list(range(1, len(r["clips"]) + 1)) and len(calls) == len(r["clips"]), str(r)[:300])
 
-chosen = {"0": [{"url": "/media/chosen0.mp4", "seconds": 4}], "1": [{"url": "/media/chosen1.mp4", "seconds": 6}], "1.1": [{"url": "/media/chosen11.mp4", "seconds": 3}], "2": [{"url": "/media/chosen2.mp4", "seconds": 4}]}
+import shutil
+tmpd = tempfile.mkdtemp()
+def plan_keys(rows):
+    """[(key, beat ordinal)] for every planned segment, the way the render keys them."""
+    segs = filmcut.plan_by_scene(main._rows_for_planning(rows), filmvoice.scene_seconds(rows, target_total=30))
+    out, seen = [], {}
+    for sg in segs:
+        row = (sg["scenes"] or [{}])[0]
+        pos = next(i for i, r in enumerate(rows) if int(r.get("no")) == int(row.get("no")))
+        k = int(row.get("shot") or 0); key = f"{pos}.{k}" if k else str(pos)
+        out.append((key, seen.get(key, 0), sg["seconds"])); seen[key] = seen.get(key, 0) + 1
+    return out
+files = {}
+def make_clips(rows):
+    chosen = {}
+    for key, beat, secs in plan_keys(rows):
+        name = f"/media/chosen-{key}-{beat}.mp4"; path = os.path.join(tmpd, f"c-{key}-{beat}.mp4"); open(path, "wb").write(b"x"); files[name] = path
+        chosen.setdefault(key, []).append({"url": name, "seconds": secs})
+    return chosen
+real_local = gemini.local_path
+gemini.local_path = lambda u: files.get(str(u)) or real_local(u)
+durs = {}
+filmcut.ffmpeg_exe = lambda: "ffmpeg"
+filmcut.probe_seconds = lambda exe, p: durs.get(p, 0.0)
+chosen = make_clips(film())
+check("assembly fixture: every planned beat of every ACTIVE shot has a chosen clip, the skipped extra has none", len(chosen) == 4 and "1.2" not in chosen, str(sorted(chosen)))
 gemini.available = lambda: False
 saved_fal = os.environ.pop("FAL_KEY", None)
 r = run(film(), use_clips=chosen)
 check("use_clips: assembling NEVER generates (zero engine calls) and needs no video provider", not calls and r.get("status") != 501, str(r)[:200])
+flat = [c["url"] for k in ("0", "1", "1.1", "2") for c in chosen.get(k, [])]
 check("use_clips: the stitch gets the chosen clips in script order (master, its extra, next scene) with the planned beat lengths",
-      len(stitched) == 1 and stitched[0][0] == ["/media/chosen0.mp4", "/media/chosen1.mp4", "/media/chosen11.mp4", "/media/chosen2.mp4"] and len(stitched[0][1]) == 4 and all(x > 0 for x in stitched[0][1]), str(stitched))
-check("use_clips: a skipped shot is simply absent (no key needed for it)", len(stitched[0][0]) == 4)
-partial = dict(chosen); partial.pop("1.1")
+      len(stitched) == 1 and stitched[0][0] == flat and len(stitched[0][1]) == len(flat) and all(x > 0 for x in stitched[0][1]), str(stitched)[:300])
+check("use_clips: a skipped shot is simply absent (no key needed for it)", len(stitched[0][0]) == len(flat))
+partial = {k: v for k, v in chosen.items() if k != "1.1"}
 r = run(film(), use_clips=partial)
-check("use_clips: a shot with no chosen clip is reported MISSING (INCOMPLETE CUT, scene named) and is NOT generated", not calls and "INCOMPLETE CUT" in str(r.get("detail")) and "no chosen clip" in str(r.get("detail")), str(r.get("detail"))[:300])
+check("use_clips: a shot with no chosen clip REFUSES the assembly (400) and names the shot; nothing is generated, stitched or voiced",
+      r.get("status") == 400 and "scene 2, shot 2: no chosen clip" in r["detail"] and "Can't assemble yet" in r["detail"] and not calls and not stitched and not synthed, str(r)[:300])
 r = run(film(), use_clips={})
-check("use_clips: an empty set means 'assemble from nothing': no generation, a clear failure", not calls and r.get("status") in (500, 501) and "No shots rendered" in str(r.get("detail", "")) or (not calls and r.get("status") is not None), str(r)[:200])
+check("use_clips: an empty set is a 400 naming every shot (never a short film)", r.get("status") == 400 and "no chosen clip" in r["detail"] and not calls, str(r)[:200])
+gone = {k: [dict(c) for c in v] for k, v in chosen.items()}
+os.remove(files[gone["1.1"][0]["url"]])
+r = run(film(), use_clips=gone)
+check("use_clips: a chosen clip whose FILE is gone is refused (400) with the shot named", r.get("status") == 400 and "scene 2, shot 2: the chosen clip's file is missing" in r["detail"] and not stitched, str(r)[:300])
+chosen = make_clips(film())
+short = {k: [dict(c) for c in v] for k, v in chosen.items()}
+victim = short["2"][0]["url"]; plan_secs = [s for key, _, s in plan_keys(film()) if key == "2"][0]
+r = run(film(), use_clips=chosen)
+check("use_clips: an exactly-as-long clip changes nothing (no note)", "shorter there" not in str(r.get("detail", "")) and stitched and not any(abs(x - round(x)) > 0.01 for x in stitched[-1][1]), str(stitched[-1:]))
+durs[files[victim]] = plan_secs - 2.0
+r = run(film(), use_clips=short)
+lens = stitched[-1][1]
+check("use_clips: a chosen clip SHORTER than its planned beat shrinks that beat to the real length (the film and the voice follow the real picture) and says so",
+      any(abs(x - (plan_secs - 2.0)) < 0.01 for x in lens) and "the chosen clip is" in str(r.get("detail", "")) and "shorter there" in str(r.get("detail", "")), f"{lens} {str(r.get('detail'))[:300]}")
+durs.clear()
 r = run(film(), use_clips=chosen, only_shot="0")
 check("only_shot and use_clips together is a 400", r.get("status") == 400 and "not both" in r["detail"])
-shot_clip_nos = run(film(), use_clips=chosen)
-check("use_clips: the result still reports every shot (shot_clips) when the join worked or not", True)
+gemini.local_path = real_local
+shutil.rmtree(tmpd, ignore_errors=True)
 gemini.available = lambda: True
 if saved_fal is not None: os.environ["FAL_KEY"] = saved_fal
 

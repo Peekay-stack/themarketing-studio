@@ -1498,6 +1498,29 @@ def _produce_video_sync(payload: dict):
     if _only and _only not in _seen_keys:
         return JSONResponse(status_code=404, content={"detail": f"Shot {_only} is not in the plan (it may be skipped, or the script has changed since)."})
 
+    def _asm_label(_i: int) -> str:
+        _row = (segments[_i]["scenes"] or [{}])[0] or {}
+        return f"scene {_row.get('no') or _i + 1}, shot {int(_row.get('shot_no') or (int(_row.get('shot') or 0) + 1))}"
+
+    def _asm_chosen(_i: int):
+        _lst = _chosen_clips.get(_seg_keys[_i])
+        _lst = [_lst] if isinstance(_lst, dict) else _lst
+        return _lst[_beat_of[_i]] if isinstance(_lst, list) and _beat_of[_i] < len(_lst) and isinstance(_lst[_beat_of[_i]], dict) else None
+
+    if _chosen_clips is not None:
+        # ASSEMBLING is strict: it hands over a complete film or it refuses and says which shots are missing. (A normal render may ship an "INCOMPLETE CUT" with a warning because
+        # generation can fail halfway; assembling has nothing to fail at, so an incomplete set is a mistake to fix, not a result to ship.)
+        _missing = []
+        for _i in range(len(segments)):
+            _u = str((_asm_chosen(_i) or {}).get("url") or "").strip()
+            if not _u:
+                _missing.append(f"{_asm_label(_i)}: no chosen clip")
+            elif _u.startswith("/") and not any(os.path.exists(p) for p in (gemini.local_path(_u), _resolve_media(_u)) if p):
+                _missing.append(f"{_asm_label(_i)}: the chosen clip's file is missing")
+        if _missing:
+            return JSONResponse(status_code=400, content={"detail": "Can't assemble yet \u2014 " + "; ".join(_missing[:8]) + (f"; and {len(_missing) - 8} more" if len(_missing) > 8 else "")
+                                                          + ". Choose a clip for every shot (or skip the shot) first."})
+
     # Draft -> Gemini Omni at 360p; Final -> Omni at 720p (see gemini.VIDEO_RESOLUTION). An explicit `tier` wins if
     # the UI sends one.
     tier = str(payload.get("tier") or "lite")
@@ -1520,9 +1543,7 @@ def _produce_video_sync(payload: dict):
 
     def render(seg):
         if _chosen_clips is not None:
-            _lst = _chosen_clips.get(_seg_keys[seg["index"]])
-            _lst = [_lst] if isinstance(_lst, dict) else _lst
-            _c = _lst[_beat_of[seg["index"]]] if isinstance(_lst, list) and _beat_of[seg["index"]] < len(_lst) and isinstance(_lst[_beat_of[seg["index"]]], dict) else None
+            _c = _asm_chosen(seg["index"])
             if _c and str(_c.get("url") or "").strip():
                 return seg["index"], {"url": str(_c["url"]), "provider": str(_c.get("provider") or "chosen"), "model": "chosen take", "kind": "video",
                                       "from_frame": str(_c.get("mode") or "frame") != "text"}
@@ -1609,6 +1630,20 @@ def _produce_video_sync(payload: dict):
                     errors.append(res["note"])
             else:
                 errors.append(res.get("note") or f"{_seg_label(segments[idx])}: no URL returned")
+    if _chosen_clips is not None:
+        # The film is as long as the pictures REALLY are. A chosen clip shorter than the beat the plan gives its shot (the script's seconds changed after the take was made) would otherwise
+        # leave the film short while the voice was laid on the planned length: shrink the beat to the real clip, say so, and the voice follows the real picture.
+        _exe_a = filmcut.ffmpeg_exe()
+        if _exe_a:
+            for _i, _u in enumerate(slots):
+                if not _u:
+                    continue
+                _p = gemini.local_path(_u) or _resolve_media(_u)
+                _d = filmcut.probe_seconds(_exe_a, _p) if _p and os.path.exists(_p) else 0.0
+                _plan_s = float(segments[_i]["seconds"] or 0)
+                if _d > 0 and _d < _plan_s - 0.25:
+                    errors.append(f"{_asm_label(_i)}: the chosen clip is {_d:.1f} s but the plan gives that shot {_plan_s:g} s, so the film is {_plan_s - _d:.1f} s shorter there (the voice follows the real picture)")
+                    segments[_i]["seconds"] = round(_d, 2)
     if _only:
         _recs = [{"beat": _beat_of[_i] + 1, "seconds": segments[_i]["seconds"], "url": slots[_i] or "", "ok": bool(slots[_i]),
                   "provider": str((results.get(_i) or {}).get("provider") or ""), "from_frame": bool((results.get(_i) or {}).get("from_frame"))}

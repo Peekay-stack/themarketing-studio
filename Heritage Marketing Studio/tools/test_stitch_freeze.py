@@ -56,6 +56,17 @@ check("stitch: the result moves in every clip's window", bool(name) and filmcut.
 if name: os.remove(joined)
 filmcut._download = real_dl
 
+# ---- Draft (360p) and Final (720p) takes in ONE film: the demuxer cannot join different sizes, so the concat filter does, at the largest size --------------------------------
+mix = {"m0": make("m0.mp4", 4, size="320x180"), "m1": make("m1.mp4", 4, size="640x360"), "m2": make("m2.mp4", 3, size="320x180")}
+filmcut._download = lambda url, dest: shutil.copyfile(mix[url], dest)
+name = filmcut.stitch(["m0", "m1", "m2"], [4, 4, 3])
+joined = os.path.join(filmcut.RENDERS_DIR, name) if name else ""
+dims = filmcut._video_dims(exe, joined) if name else None
+check("stitch: clips of DIFFERENT sizes (a 320x180 and a 640x360 take) join into one film at the LARGEST size, the full length", bool(name) and dims == (640, 360) and abs(filmcut.probe_seconds(exe, joined) - 11.0) < 0.1, f"{name} {dims}")
+check("stitch: ... and the mixed-size film moves in every clip's window", bool(name) and filmcut.frozen_join(exe, joined, [4, 4, 3]) is False)
+if name: os.remove(joined)
+filmcut._download = real_dl
+
 # ---- regression on the REAL clips of the frozen render (when this machine has them) ----------------------------------------------------------------------
 plan_path = r"C:\\Users\\punie\\Downloads\\engine-trial\\heritage_redirect\\plan.json"
 if os.path.exists(plan_path):

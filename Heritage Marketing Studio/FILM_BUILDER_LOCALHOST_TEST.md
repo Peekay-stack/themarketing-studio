@@ -55,3 +55,30 @@ Anything slow, confusing or wrong; whether the estimate matches what your Google
 
 ## Not in this slice
 Assembling the chosen clips into a film, trims, reorder and preview (S3 / S2); continuity between shots (S4); budget cap, retention (S7).
+
+
+---
+
+# Slice S3: assemble from your chosen clips, and Promote to Final
+
+Same set-up as before (run `run-local.bat` from the exact folder, hard-reload, sign in). **Assembling spends no video credit**: it only joins the clips you chose and lays the voice and music on them (the voice and music calls are the same ones a normal render makes). **Promote to Final** DOES spend: it re-renders every chosen clip at 720p (about $0.101 per output second at the measured Omni rate, shown before you confirm).
+
+## What S3 is
+At the top of **Shots** there is now an assemble strip: how many shots have a chosen clip, whether the chosen ones are Draft, Final or Mixed, a **Promote to Final** button and an **Assemble film** button. Assembling builds the film from exactly the clips you chose, in script order, and adds it to Production as a normal version (it opens in the Edit room like any other). The Film tab's one-button render is unchanged.
+
+## Click-through (about 10 minutes; assembling is free, promoting is about a few dollars for a 30 s film)
+1. Open **Shots** on a film where some shots have no chosen clip. The strip says "n of N shots have a chosen clip". Press **Assemble film**. Expected: nothing is sent; a message names the shots still missing a clip.
+2. Choose a clip for every shot (Generate all missing, or choose by hand). Press **Assemble film**. Expected: a progress state, then "Assembled from your takes" and a player with the film right under the strip; it also appears in Production's versions.
+3. Check the film: right length, voice and music present, clips in script order, no frozen stretch.
+4. Change one shot's frame so its chosen clip becomes "older frame", then press **Assemble film**. Expected: a confirm that names how many clips were animated from an earlier frame. Cancel sends nothing; OK assembles anyway.
+5. Press **Promote to Final**. Expected: a confirm with the number of clips and the estimated total. Cancel spends nothing. OK: each chosen clip is re-rendered at Final one after another; each new Final take becomes the chosen one, the Draft takes stay in the list. The strip then says Final. An out-of-credit message stops the batch and keeps what finished.
+6. Mix on purpose: leave one shot Draft, the rest Final. The strip says **Mixed**; assemble still works (the film is made at the largest size).
+7. Assemble again after Promote: the new film is labelled Final.
+8. If a chosen clip is shorter than its planned beat (the script's seconds changed after the take was made) the result says which shot is shorter and by how much; the film and the voice follow the real picture.
+9. Open the assembled film in the **Edit room**.
+
+## What to tell me
+Anything confusing in the strip or the wording of the confirms; whether the assembled film matches what you expected from the chosen clips; and whether the Final estimate matches your Google billing after a promote.
+
+## Not in this slice
+Trimming, reordering and a preview timeline (S2); take QC (S5); continuity between shots (S4); budget cap and retention (S7). The assembled film is joined with the existing stitch, including its frozen-picture check.

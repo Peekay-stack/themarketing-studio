@@ -17371,14 +17371,14 @@ class Component extends DCLogic {
     const why = (d.errors && d.errors[0]) || d.detail || (r && r.status === 501 ? 'No video provider is configured on this server.' : 'The engine returned no clip.');
     return { status:'error', error:String(why).slice(0, 280) };
   }
-  generateClipTake = (idx, k = 0) => async () => {
+  generateClipTake = (idx, k = 0, opts = {}) => async () => {
     const s0 = this.state, fk = this.frameKey(idx, k), row = (s0.fullScript || [])[idx];
     if (!row || (s0.clipBusy || {})[fk]) return false;
     if (s0.scriptStatus !== 'approved') { this.showToast('Approve the full script first.'); return false; }
     if (k) { const sh = this.extraShots(row)[k - 1]; if (!sh || sh.skip) return false; }
     const frame = (s0.sceneFrames || {})[fk];
     if (!(frame && frame.status === 'done' && frame.url)) { this.showToast('Choose a frame for this shot first \u2014 the clip is animated from it, never drawn from words.', 'warn'); return false; }
-    const tier = this.builderTierNow(), engine = this.clipEngine(), secs = this.clipSecs(idx, k);
+    const tier = opts.tier || this.builderTierNow(), engine = this.clipEngine(), secs = this.clipSecs(idx, k);
     const take = { id:this.newTakeId('tk'), url:'', beats:[], tier, engine, seconds:secs, mode:'frame', frame:frame.url, sig:'', job_id:'', status:'rendering', error:'', note:'',
       checks:[], est_usd:this.clipEstimate(idx, k, tier), created:new Date().toISOString().slice(0, 19) + 'Z' };
     this.setState(s => ({ clipBusy:{ ...s.clipBusy, [fk]:take.id }, videoBuilder:this.addClipTake(s.videoBuilder, fk, take) }));
@@ -17392,7 +17392,7 @@ class Component extends DCLogic {
       if (!(b.takes[fk] || []).some(x => x.id === take.id)) return { clipBusy:cb };           // the take was discarded while it ran
       const takes = { ...b.takes, [fk]:b.takes[fk].map(x => x.id === take.id ? { ...x, ...patch } : x) };
       // the first good clip of a shot becomes its chosen one (you can always choose another)
-      const chosen = (patch.status === 'done' && !b.chosen[fk]) ? { ...b.chosen, [fk]:take.id } : b.chosen;
+      const chosen = (patch.status === 'done' && (!b.chosen[fk] || opts.choose)) ? { ...b.chosen, [fk]:take.id } : b.chosen;
       return { clipBusy:cb, videoBuilder:{ ...b, takes, chosen } };
     });
     this._lastWasBilling = false;
@@ -17465,6 +17465,76 @@ class Component extends DCLogic {
     this.setState({ clipBatch:false });
     this.showToast(done + ' of ' + todo.length + ' clip' + (todo.length > 1 ? 's' : '') + ' made.', done === todo.length ? 'ok' : 'warn');
   };
+  // ---------- the film builder, slice S3: assemble the chosen clips, promote them to Final ----------
+  // Every ACTIVE shot (skipped ones are not in the film) and whether it has a chosen, finished clip. `quality` is what the assembled film is labelled: Draft, Final or Mixed.
+  assembleStatus(){
+    const s = this.state, b = this.builderOf(s.videoBuilder), missing = [], older = [], draft = [], final = [];
+    let total = 0;
+    (s.fullScript || []).forEach((r, i) => {
+      [{ k:0 }].concat(this.extraShots(r).map((sh, j) => ({ k:j + 1, sh }))).forEach(({ k, sh }) => {
+        if (sh && sh.skip) return;
+        total++;
+        const key = this.frameKey(i, k), label = 'scene ' + this.sceneNo(r, i) + ', shot ' + (k + 1);
+        const tk = (b.takes[key] || []).find(x => x.id === b.chosen[key]);
+        if (!tk || tk.status !== 'done' || !tk.url) { missing.push({ idx:i, k, key, label }); return; }
+        const f = (s.sceneFrames || {})[key];
+        if (tk.frame && f && f.url && tk.frame !== f.url) older.push({ idx:i, k, key, label });
+        (tk.tier === 'final' ? final : draft).push({ idx:i, k, key, label, secs:tk.seconds });
+      });
+    });
+    return { total, missing, older, draft, final, complete:total > 0 && !missing.length, quality:(draft.length && final.length) ? 'Mixed' : (final.length ? 'Final' : 'Draft') };
+  }
+  // The `use_clips` payload: {key: [{url, seconds, mode}]} for every chosen finished take (a multi-beat shot sends one clip per beat, in order).
+  chosenClipsPayload(){
+    const b = this.builderOf(this.state.videoBuilder), out = {};
+    Object.keys(b.chosen || {}).forEach(key => {
+      const tk = (b.takes[key] || []).find(x => x.id === b.chosen[key]);
+      if (!tk || tk.status !== 'done' || !tk.url) return;
+      out[key] = (tk.beats && tk.beats.length) ? tk.beats.map(c => ({ url:c.url, seconds:c.seconds, mode:tk.mode || 'frame' })) : [{ url:tk.url, seconds:tk.seconds, mode:tk.mode || 'frame' }];
+    });
+    return out;
+  }
+  assembleFilm = async () => {
+    const st = this.assembleStatus();
+    if (this.state.production.status === 'rendering') return;
+    if (!st.complete) { this.showToast('Choose a clip for every shot first: ' + st.missing.slice(0, 4).map(x => x.label).join(', ') + (st.missing.length > 4 ? ' and ' + (st.missing.length - 4) + ' more' : '') + '.', 'warn'); return; }
+    if (st.older.length && typeof window !== 'undefined' && window.confirm
+        && !window.confirm(st.older.length + ' chosen clip' + (st.older.length > 1 ? 's were' : ' was') + ' animated from an earlier frame than the one now chosen (' + st.older.slice(0, 3).map(x => x.label).join(', ') + (st.older.length > 3 ? '\u2026' : '') + '). Assemble anyway?')) return;
+    await this.produceVideo({ assemble:true });
+  };
+  // Re-render ONLY the chosen Draft clips at Final (new takes, chosen when done); the Draft takes stay in the list.
+  promoteToFinal = async () => {
+    const st = this.assembleStatus();
+    if (!st.draft.length || this.state.clipBatch || this.clipEngine() !== 'omni') return;
+    const est = st.draft.reduce((a, x) => a + this.clipEstimate(x.idx, x.k, 'final'), 0);
+    if (typeof window !== 'undefined' && window.confirm && !window.confirm('Re-render ' + st.draft.length + ' chosen clip' + (st.draft.length > 1 ? 's' : '') + ' at Final (720p) for about ' + this.usd(est) + '? The Draft takes are kept; each Final take becomes the chosen one when it is done. They run one after another.')) return;
+    this.setState({ clipBatch:true });
+    let done = 0;
+    for (const x of st.draft) { const ok = await this.generateClipTake(x.idx, x.k, { tier:'final', choose:true })(); if (ok) done++; else if (this._lastWasBilling) break; }
+    this.setState({ clipBatch:false });
+    this.showToast(done + ' of ' + st.draft.length + ' clip' + (st.draft.length > 1 ? 's' : '') + ' promoted to Final.', done === st.draft.length ? 'ok' : 'warn');
+  };
+  // The strip under the clip header: how many shots have a chosen clip, Promote to Final, Assemble, and the latest assembled film.
+  assembleStrip(){
+    const h = React.createElement, s = this.state, st = this.assembleStatus(), assembling = s.production.status === 'rendering';
+    const omni = this.clipEngine() === 'omni', est = omni ? st.draft.reduce((a, x) => a + this.clipEstimate(x.idx, x.k, 'final'), 0) : null;
+    const btn = (text, onClick, o = {}) => h('button', { onClick, disabled:!!o.disabled, title:o.title || '', style:{ border:'1px solid ' + (o.go ? '#259821' : '#C9CEDA'), background:o.go ? '#259821' : '#fff', color:o.go ? '#fff' : '#17325E',
+      borderRadius:8, padding:'5px 12px', fontSize:12, fontWeight:700, cursor:o.disabled ? 'default' : 'pointer', opacity:o.disabled ? 0.55 : 1 } }, text);
+    const latest = s.production.versions.length ? s.production.versions[s.production.versions.length - 1] : null;
+    return h('div', { style:{ margin:'0 0 16px', padding:'10px 12px', border:'1px solid #E6E3DC', borderRadius:10, background:'#FBFAF8', maxWidth:900 } },
+      h('div', { style:{ display:'flex', alignItems:'center', gap:10, flexWrap:'wrap' } },
+        h('span', { style:{ fontSize:11, fontWeight:800, letterSpacing:'0.06em', textTransform:'uppercase', color:'#6B7280' } }, 'Assemble'),
+        h('span', { style:{ fontSize:12, color:st.complete ? '#1A8A7A' : '#41505F', fontWeight:st.complete ? 700 : 400 } },
+          (st.total - st.missing.length) + ' of ' + st.total + ' shots have a chosen clip' + (st.complete ? ' \u2014 ready' : '') + (st.draft.length || st.final.length ? ' \u00b7 ' + st.draft.length + ' Draft, ' + st.final.length + ' Final' : '')),
+        h('span', { style:{ marginLeft:'auto', display:'flex', gap:8, flexWrap:'wrap' } },
+          omni && st.draft.length ? btn('Promote chosen to Final (' + st.draft.length + ') \u00b7 about ' + this.usd(est), this.promoteToFinal, { disabled:!!s.clipBatch || assembling, title:'Re-renders only the chosen Draft clips at 720p; the Drafts are kept' }) : null,
+          btn(assembling ? 'Assembling\u2026' : 'Assemble film', this.assembleFilm, { go:true, disabled:!st.complete || assembling || !!s.clipBatch, title:st.complete ? 'Joins your chosen clips and adds voice and music: no new video is generated' : 'Choose a clip for every shot first' }))),
+      !st.complete ? h('div', { style:{ fontSize:11.5, color:'#B07A12', marginTop:4 } }, 'Still to choose: ' + st.missing.slice(0, 6).map(x => x.label).join(', ') + (st.missing.length > 6 ? ' and ' + (st.missing.length - 6) + ' more' : '')) : null,
+      st.older.length ? h('div', { style:{ fontSize:11.5, color:'#B07A12', marginTop:4 } }, st.older.length + ' chosen clip' + (st.older.length > 1 ? 's were' : ' was') + ' animated from an earlier frame: ' + st.older.slice(0, 4).map(x => x.label).join(', ')) : null,
+      h('div', { style:{ fontSize:11, color:'#9AA1AD', marginTop:4 } }, 'Assembling makes no new video: it joins your chosen clips and adds the voice and music (a small cost). The film appears below and in Production, and opens in the Edit room.'),
+      (latest && s.producedUrl) ? h('div', { style:{ marginTop:8 } }, h('div', { style:{ fontSize:11.5, color:'#41505F', marginBottom:4 } }, 'Latest film: version ' + latest.v + ' \u00b7 ' + (latest.quality || '') + ' \u00b7 ' + (latest.note || '')),
+        h('video', { src:s.producedUrl, controls:true, preload:'metadata', style:{ width:'100%', maxWidth:560, borderRadius:8, background:'#1B2433' } })) : null);
+  }
   // ---------- the Shots step: choose the frame each shot is animated from ----------
   // The CLIP layer of a shot card: its takes (a playable clip, or what went wrong), choose / discard, and Generate / Re-roll with the estimate on the button.
   // The strip above the shots: the tier new clips are made at, what the clips made so far were estimated to cost, and "generate all missing".
@@ -17576,6 +17646,7 @@ class Component extends DCLogic {
       h('div', { style:{ fontSize:13, color:'#6B7280', marginBottom:12, maxWidth:760 } }, 'Choose the frame each shot is animated from. Generate variants, check them (a model looks for pasted panels, wrong anatomy, extra people), and pick one. '
         + 'Frames are cheap and the video is not, so this is the place to get the picture right. The Storyboard in Scripting shows the same chosen frames.'),
       this.clipHeader(),
+      this.assembleStrip(),
       needLock ? h('div', { style:{ background:'#FBF1DC', border:'1px solid #F0D9A6', borderRadius:10, padding:'8px 12px', fontSize:12.5, color:'#7A5B12', marginBottom:12, maxWidth:760 } }, 'Lock the cast and location first (Scripting step): every frame is generated from that one image.') : null,
       ...groups);
   }
@@ -18492,14 +18563,19 @@ class Component extends DCLogic {
   closeReworkConfirm = () => this.setState({ reworkConfirmOpen:false });
   confirmReworkRescore = () => { this.setState({ reworkConfirmOpen:false }); this.rescoreCut(); };
   confirmReworkRender = () => { this.setState({ reworkConfirmOpen:false }); this.produceVideo(); };
-  produceVideo = async () => {
+  // `arg` is the click event when called from a button; {assemble:true} (see assembleFilm) joins the CHOSEN clips instead of generating any.
+  produceVideo = async (arg) => {
     if (this.state.production.status === 'rendering') return;
     if (this.state.scriptStatus !== 'approved') { this.showToast('Approve the full script before producing.'); return; }
+    const assemble = !!(arg && arg.assemble === true);
+    const asm = assemble ? this.assembleStatus() : null;
+    if (assemble && !asm.complete) { this.showToast('Choose a clip for every shot first: ' + asm.missing.slice(0, 4).map(x => x.label).join(', ') + (asm.missing.length > 4 ? ' and ' + (asm.missing.length - 4) + ' more' : '') + '.', 'warn'); return; }
     const isRevise = this.state.production.versions.length > 0;
-    const note = isRevise ? (this.state.prodPrompt.trim() || 'Revision') : 'First cut';
+    const note = assemble ? 'Assembled from your takes' : (isRevise ? (this.state.prodPrompt.trim() || 'Revision') : 'First cut');
     const isFinal = this.tierNow() === 'standard' && this.costEngine() !== 'fal';   // fal has one model: neither Draft nor Final
     this.setState(s => ({ production:{ ...s.production, status:'rendering' } }));
     const body = this.filmRenderBody(note);
+    if (assemble) body.use_clips = this.chosenClipsPayload();     // no generation: the server joins exactly these clips, then voice, music and mix as always
     const r = await this.renderViaJob(body);   // background job + poll — a full render runs minutes
     const d = (r && r.data) || {};
     const url = (r && r.ok && d.video_url) ? d.video_url : null;
@@ -18508,7 +18584,7 @@ class Component extends DCLogic {
     this.setState(s => {
       const p = s.production;
       const v = { v: p.versions.length + 1, note, aspect:p.aspect, music:p.music, ts: this.state.prodDuration, url,
-        quality: this.costEngine() === 'fal' ? 'Kling 3.0' : (isFinal ? 'Final' : 'Draft'), audio: info ? this.audioLabel(info.audio) : '' };
+        quality: assemble ? asm.quality : (this.costEngine() === 'fal' ? 'Kling 3.0' : (isFinal ? 'Final' : 'Draft')), audio: info ? this.audioLabel(info.audio) : '' };
       return { production:{ ...p, status:'ready', versions:[...p.versions, v] }, prodPrompt:'',
         producedUrl: url || s.producedUrl, renderInfo: info || s.renderInfo,
         providers: d.providers || s.providers,

@@ -541,10 +541,10 @@ def frozen_join(exe: str, path: str, lengths: list[int]) -> bool:
     return any(a is not None and a == b for a, b in zip(sigs, sigs[1:]))
 
 
-def _join_filter(exe: str, parts: list[str], out_path: str, planned: float) -> bool:
+def _join_filter(exe: str, parts: list[str], out_path: str, planned: float, size: tuple[int, int] | None = None) -> bool:
     """Join clips with the concat FILTER: every clip is decoded, its timestamps reset and its frame rate and size made equal, so no stream-copy or demuxer timestamp quirk can freeze a
     picture. Re-encodes (cheap at Draft size, the same cost as the trim already paid). The result keeps a silent audio stream, as the demuxer join did, so what runs after it is unchanged."""
-    w, h = _video_dims(exe, parts[0])
+    w, h = size or _video_dims(exe, parts[0])
     args: list[str] = []
     for p in parts:
         args += ["-i", p]
@@ -593,6 +593,16 @@ def stitch(urls: list[str], lengths: list[int] | None = None) -> str | None:
             parts.append(_trim(exe, p, float(want)))
         if not parts:
             return None
+        # Clips of DIFFERENT sizes (a Draft 360p take beside a Final 720p one, as the film builder allows) cannot be joined by the demuxer at all: go straight to the concat filter, at the largest size.
+        if len(parts) > 1:
+            _dims = [_video_dims(exe, p) for p in parts]
+            if len(set(_dims)) > 1:
+                _big = max(_dims, key=lambda d: d[0] * d[1])
+                planned_m = float(sum(lengths)) if lengths else 0.0
+                if _join_filter(exe, parts, out_path, planned_m, _big):
+                    print(f"[filmcut] joined {len(parts)} clip(s) of different sizes at {_big[0]}x{_big[1]} -> {name}", file=sys.stderr, flush=True)
+                    _make_exact(exe, out_path, planned_m)
+                    return name
         listing = os.path.join(tmp, "parts.txt")
         with open(listing, "w", encoding="utf-8") as fh:
             for p in parts:
