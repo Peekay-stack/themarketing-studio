@@ -168,3 +168,31 @@ The Film tab's one-button render, every existing film (no builder data = identic
 2. Should the Shots step *replace* the Storyboard section in Scripting (one place for frames) or sit beside it and mirror it (my recommendation: mirror, then retire the old section once Shots is proven)?
 3. Preview: picture only (my recommendation) or also a "with voice" preview (costs TTS)?
 4. Everything else in `FILM_BUILDER_PLAN.md` §12 still stands (scope of the first release, branch, scene reorder, cost model, hotfix to master).
+
+---
+
+## Part 4 — The proposed process (what changes, stage by stage)
+
+Principle: **decide on cheap things before paying for expensive ones, and put a choosing point in front of every spend.** The spend ladder is free text → images → Draft clips → Final clips; the proposed process makes sure everything that can be judged at one rung is judged before climbing to the next.
+
+| # | Proposed stage | vs today | What happens |
+|---|---|---|---|
+| 1 | Brief | same | objective + plan brief / idea platform / provocation |
+| 2 | Concept routes | **changed** | each route must also state its **hook** (the first 3 seconds), its **surprise**, its **turn** and one **moment worth remembering**, so entertainment is chosen at the idea, not rescued later |
+| 3 | Full script | **changed** | writer rules include "be entertaining" (done); **Film pace** is chosen here; the **director's read runs on the draft** and shows boredom risk *before* approval (advisory, never blocking) |
+| 4 | Approve + derive | same | cast sheet, location line, voice plan |
+| 5 | **Plan the shots (text only)** | **moved earlier** | shot plan + flow review run on the *words*, before any frame is drawn; cuts are applied as Skip. "Plan before pixels": no image or clip is ever spent on a shot that will be cut |
+| 6 | Shoot Board | same + **editor's notes** | departments, locks, look/wardrobe/camera; sound and rhythm notes (music on the real turn, silence before the message) need no pictures, so they are fixed here |
+| 7 | Cast lock | **changed (to trial first)** | today the lock is one multi-panel character sheet, which is why panels leak into frames (the scene-5 collage). Proposal: one **single-person reference per character** (plus a place plate), fed to frames as separate references. A small trial decides it; the frame check is the backstop meanwhile |
+| 8 | **Shots tab — frames** | **new** | per shot: 2–3 **frame variants**, frame check on each, choose one. The chosen frame is mirrored into `sceneFrames`, so everything that reads it today is untouched |
+| 9 | **Shots tab — clips** | **new** | per shot: **Draft takes**, take checks (frozen / black / short / near-copy), re-roll, choose; continuity per shot (from frame, chain from previous, extend for adults) |
+| 10 | **Shots tab — timeline + preview** | **new** | chosen clips on a timeline with trims, VO lines and music states shown over their scenes; picture-only preview; the engagement and flow notes are read against what you can now *see*; skip/reorder |
+| 11 | Hand-over gate | same | script approved, chosen frames current, a chosen clip for every active shot (or a deliberate skip) |
+| 12 | Production settings | same | aspect, duration, voices, music, sound plan, loudness; pre-flight with the frame-check and take-check lines |
+| 13 | **Assemble** | **changed** | the existing render path fed the *chosen* clips (no generation): stitch with the frozen check, voice on the real picture, music, mix. The Film tab's one-button render still exists for people who want it |
+| 14 | **Promote to Final** | **new** | re-render only the chosen shots at 720p as new takes, then assemble again |
+| 15 | Edit room | same (later reuses chosen takes) | cutdowns, re-score, captions, reframe |
+
+What this fixes in one line each: **boring** (hook and surprise at the idea; boredom risk at the draft; engagement read against the real picture), **repetitive / over-cut** (shots are planned and cut as text before any spend), **bad frames reaching a render** (variants + frame check + choose), **one bad clip re-renders everything** (takes and per-shot re-roll), **frozen or corrupt joins** (join guard + take checks), **spend surprises** (an estimate and a choosing point before every rung of the ladder).
+
+What does not change: approval gates, Grounded/Independent modes, the department notes, the voice and sound design layers, the silent master, the Edit room contract, the Film tab's one-button render, and every existing film (no builder data = identical behaviour).
