@@ -2938,6 +2938,7 @@
                        often sits, and the button was covering it (5 Oct live test). -->
                   <div style="display:flex; align-items:center; justify-content:space-between; gap:6px 8px; flex-wrap:wrap; margin-bottom:3px;">
                     <span style="font-weight:700; font-size:13px; color:#17325E; white-space:nowrap;">{{ sc.title }}</span>
+                    {{ sc.reorder }}
                     <span style="display:inline-flex; align-items:center; gap:6px; white-space:nowrap;">
                       <sc-if value="{{ sc.isStale }}" hint-placeholder-val="{{ false }}">
                         <span onClick="{{ sc.genFrame }}" title="Something this frame was drawn from has changed since it was rendered: the scene's words, a department note, the look, the Location line, the cast sheet or the pack tick" style="cursor:pointer; background:#FDEEDA; color:#8A5B0F; border-radius:20px; padding:2px 8px; font-size:10px; font-weight:800;">↻ out of date</span>
@@ -16839,6 +16840,7 @@ class Component extends DCLogic {
           sizes.map(v => h('option', { key:v, value:v }, this.SHOT_SIZE_LABELS[v]))),
         h('input', { type:'number', min:2, max:8, value:parseInt(sh.secs, 10) || 2, onChange:this.setShotSecs(idx, k), title:'Seconds this shot holds', style:{ ...field, width:48, padding:'3px 5px' } }),
         h('span', { style:{ fontSize:11, color:'#6B7280' } }, 's'),
+        this.shotArrowsEl(idx, k, this.extraShots(row).length),
         h('span', { onClick:this.toggleSkipShot(idx, k), title: sh.skip ? 'Put this shot back in the film' : 'Leave this shot out of the film (keeps it in the script)',
           style:{ marginLeft:'auto', cursor:'pointer', fontSize:11, fontWeight:700, color:'#2E5EA6', textDecoration:'underline' } }, sh.skip ? 'Use' : 'Skip'),
         h('span', { onClick:this.removeShot(idx, k), title:'Remove this shot', style:{ cursor:'pointer', color:'#9AA1AD', fontSize:14, lineHeight:1 } }, '✕')),
@@ -17526,6 +17528,94 @@ class Component extends DCLogic {
     const fk = this.frameKey(idx, k);
     this.setState(s => { const b = this.builderOf(s.videoBuilder), trim = { ...b.trim }; delete trim[fk]; return { videoBuilder:{ ...b, trim } }; });
   };
+  // ---------- the film builder, slices S2b + S2c: reorder shots inside a scene, and scenes ----------
+  // A shot's frames, takes, chosen take and trim are all keyed by its PLACE ("<scene position>" or "<scene position>.<shot place>"), so a reorder must rename those keys together with the script
+  // order, in ONE state update (the same job removeShot does for a removal). `rename` maps an old place key to its new one; renamed entries are set after the others are copied, so a swap never
+  // overwrites half-way.
+  rekeyPlaces(map, rename){
+    const out = {}, moved = [];
+    Object.keys(map || {}).forEach(key => { const nk = rename(key); if (nk === key) out[key] = map[key]; else moved.push([nk, map[key]]); });
+    moved.forEach(([nk, v]) => { out[nk] = v; });
+    return out;
+  }
+  builderRekeyed(builder, rename){
+    if (!builder) return builder;
+    const out = { ...builder };
+    ['frames', 'frame_chosen', 'takes', 'chosen', 'trim'].forEach(name => { out[name] = this.rekeyPlaces(builder[name], rename); });
+    return out;
+  }
+  // Is a frame, a frame variant or a clip being made for any of these places (or a batch / a render running)? A reorder then would file the result under the wrong shot, so it waits.
+  placesBusy(inPlaces){
+    const s = this.state, b = this.builderOf(s.videoBuilder);
+    if (s.clipBatch || (s.production && s.production.status === 'rendering')) return true;
+    const keys = new Set([...Object.keys(s.sceneFrames || {}), ...Object.keys(s.variantBusy || {}), ...Object.keys(s.clipBusy || {}), ...Object.keys(b.takes || {})]);
+    return [...keys].some(key => inPlaces(key) && (((s.sceneFrames || {})[key] || {}).status === 'rendering' || (s.variantBusy || {})[key] || (s.clipBusy || {})[key]
+      || (b.takes[key] || []).some(x => x.status === 'rendering')));
+  }
+  // Swap extra shot k with its neighbour (dir -1 up, +1 down). Shot 1 (the scene's own shot) stays first.
+  moveShot = (idx, k, dir) => () => {
+    const row = (this.state.fullScript || [])[idx], ex = this.extraShots(row), j = k + dir;
+    if (!row || k < 1 || k > ex.length || j < 1 || j > ex.length) return;
+    const a = idx + '.' + k, b2 = idx + '.' + j;
+    if (this.placesBusy(key => key === a || key === b2)) { this.showToast('A frame or clip for these shots is still being made. Wait for it to finish, then move them.', 'warn'); return; }
+    const rename = key => key === a ? b2 : (key === b2 ? a : key);
+    this.setState(s => {
+      const r = (s.fullScript || [])[idx]; if (!r) return {};
+      const list = this.extraShots(r).slice(); const t = list[k - 1]; list[k - 1] = list[j - 1]; list[j - 1] = t;
+      return { sceneFrames:this.rekeyPlaces(s.sceneFrames, rename), videoBuilder:this.builderRekeyed(s.videoBuilder, rename), filmReview:null,
+        fullScript:(s.fullScript || []).map((x, i) => i === idx ? { ...x, shots:list } : x) };
+    });
+  };
+  tcSpan(row){
+    const m = String((row && row.tc) || '').match(/(\d+(?:\.\d+)?)\s*[-–—]+\s*(\d+(?:\.\d+)?)/);
+    return m ? { s:parseFloat(m[1]), e:parseFloat(m[2]) } : null;
+  }
+  // Swap scene idx with its neighbour (dir -1 up, +1 down). Scenes keep numbering 1..N in order (the two swapped rows exchange their numbers), and everything keyed by a scene NUMBER follows
+  // its scene: the sound choices, the "match another scene's frame" link, and a signed live-action shot (which makes the move refuse, since that store is global and keyed by number).
+  // What is derived from the order (the director's read, the flow review, editor's notes, the voice plan) is cleared, the way a script rewrite clears it: it is advisory and re-read in a click.
+  moveScene = (idx, dir) => async () => {
+    const st = this.state, rows = st.fullScript || [], j = idx + dir;
+    if (j < 0 || j >= rows.length) return;
+    const lo = Math.min(idx, j), hi = Math.max(idx, j), A = rows[lo], B = rows[hi];
+    const noA = String(this.sceneNo(A, lo)), noB = String(this.sceneNo(B, hi));
+    const grp = key => String(key).split('.')[0];
+    if (this.placesBusy(key => grp(key) === String(lo) || grp(key) === String(hi))) { this.showToast('A frame or clip for one of these scenes is still being made. Wait for it to finish, then move the scene.', 'warn'); return; }
+    for (const n of [noA, noB]) {
+      if (!/^\d+$/.test(n)) continue;
+      const d = await this.apiGet('/shots?all=true&scene=' + n);
+      if (!d || !Array.isArray(d.shots)) { this.showToast('Could not check for live-action footage tied to scene ' + n + ', so the scene was not moved.', 'warn'); return; }
+      if (d.shots.some(x => x && x.signed)) { this.showToast('Scene ' + n + ' has signed live-action footage standing in for it, and that is tied to the scene number. Move it after the footage is detached.', 'warn'); return; }
+    }
+    this.setState(s => {
+      const rs = (s.fullScript || []).slice(), a = rs[lo], b = rs[hi];
+      if (!a || !b || String(this.sceneNo(a, lo)) !== noA || String(this.sceneNo(b, hi)) !== noB) return {};       // the script changed while the check ran
+      const map = { [noA]:noB, [noB]:noA }, again = v => (v != null && map[String(v)] !== undefined) ? (typeof v === 'number' ? Number(map[String(v)]) : map[String(v)]) : v;
+      const sa = this.tcSpan(a), sb = this.tcSpan(b), da = sa ? sa.e - sa.s : 0, db = sb ? sb.e - sb.s : 0;
+      const place = (row, no, tc) => { const o = { ...row }; if (no != null) o.no = no; else delete o.no; if (tc) o.tc = tc; return o; };
+      const t0 = sa ? sa.s : 0;
+      rs[lo] = place(b, a.no, (sa && sb) ? (t0 + '–' + (t0 + db) + 's') : '');
+      rs[hi] = place(a, b.no, (sa && sb) ? ((t0 + db) + '–' + (t0 + db + da) + 's') : '');
+      const fixed = rs.map(r => (r && r.match_no != null && map[String(r.match_no)] !== undefined) ? { ...r, match_no:again(r.match_no) } : r);
+      const rename = key => { const g = grp(key), rest = String(key).slice(g.length); return g === String(lo) ? hi + rest : (g === String(hi) ? lo + rest : key); };
+      const sp = s.soundPlan || {}, spOut = { ...sp };
+      if (sp.scenes) { const sc = {}; Object.keys(sp.scenes).forEach(n => { sc[map[n] !== undefined ? map[n] : n] = sp.scenes[n]; }); spOut.scenes = sc; }
+      if (Array.isArray(sp.sounds)) spOut.sounds = sp.sounds.map(x => (x && x.scene != null && map[String(x.scene)] !== undefined) ? { ...x, scene:again(x.scene) } : x);
+      return { fullScript:fixed, sceneFrames:this.rekeyPlaces(s.sceneFrames, rename), videoBuilder:this.builderRekeyed(s.videoBuilder, rename), soundPlan:spOut,
+        videoBeatMap:null, filmReview:null, editorNotes:null, voicePlan:null, plannedSeconds:0 };
+    });
+    this.showToast('Scenes ' + noA + ' and ' + noB + ' swapped. Frames, clips and trims moved with them. The director’s read, flow review, editor’s notes and voice plan were cleared: run them again.', 'ok');
+  };
+  // The up/down pair for an extra shot k of scene idx (n extras): shot 1 stays first, so only the extras move among themselves.
+  shotArrowsEl(idx, k, n){
+    const h = React.createElement, arrow = (txt, on, title) => h('span', { onClick:on, title, style:{ cursor:'pointer', userSelect:'none', fontSize:13, lineHeight:1, color:'#2E5EA6', padding:'1px 5px', border:'1px solid #C9CEDA', borderRadius:5, background:'#fff' } }, txt);
+    if (k < 1) return null;
+    return h('span', { style:{ display:'inline-flex', gap:4 } }, k > 1 ? arrow('↑', this.moveShot(idx, k, -1), 'Move this shot earlier in the scene') : null, k < n ? arrow('↓', this.moveShot(idx, k, 1), 'Move this shot later in the scene') : null);
+  }
+  // The up/down pair for a scene (Storyboard card and Shots step).
+  reorderEl(i, n){
+    const h = React.createElement, arrow = (txt, on, title) => h('span', { onClick:on, title, style:{ cursor:'pointer', userSelect:'none', fontSize:13, lineHeight:1, color:'#2E5EA6', padding:'1px 5px', border:'1px solid #C9CEDA', borderRadius:5, background:'#fff' } }, txt);
+    return h('span', { style:{ display:'inline-flex', gap:4 } }, i > 0 ? arrow('↑', this.moveScene(i, -1), 'Move this scene earlier') : null, i < n - 1 ? arrow('↓', this.moveScene(i, 1), 'Move this scene later') : null);
+  }
   assembleFilm = async () => {
     const st = this.assembleStatus();
     if (this.state.production.status === 'rendering') return;
@@ -17677,7 +17767,7 @@ class Component extends DCLogic {
           h('div', { style:{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap', marginBottom:6 } },
             h('span', { style:{ fontWeight:800, fontSize:13, color:'#17325E' } }, 'Shot ' + (k + 1)),
             size ? label(this.SHOT_SIZE_LABELS[size] || size) : null, sh && sh.job ? label(sh.job, '#1A8A7A') : null, label(secs + ' s'),
-            skipped ? label('Skipped', '#9AA1AD') : null, stale ? label('Out of date', '#B07A12') : null,
+            skipped ? label('Skipped', '#9AA1AD') : null, stale ? label('Out of date', '#B07A12') : null, this.shotArrowsEl(i, k, slots.length - 1),
             sh && sh.visual ? h('span', { style:{ fontSize:11.5, color:'#6B7280', flex:1, minWidth:160 } }, this.clipText(sh.visual, 110)) : null),
           list.length ? h('div', { style:{ display:'flex', gap:10, flexWrap:'wrap' } }, thumbs)
             : h('div', { style:{ fontSize:12, color:'#9AA1AD', padding:'8px 0' } }, skipped ? 'Skipped \u2014 no frame needed.' : 'No frame yet.'),
@@ -17690,7 +17780,7 @@ class Component extends DCLogic {
       const role = this.beatRoleOf(r) || '';
       return h('div', { key:'sc' + i, style:{ marginBottom:18 } },
         h('div', { style:{ display:'flex', alignItems:'baseline', gap:8, flexWrap:'wrap', marginBottom:6 } },
-          h('span', { style:{ fontFamily:"'Epilogue',sans-serif", fontWeight:700, fontSize:15, color:'#17325E' } }, 'Scene ' + this.sceneNo(r, i)),
+          h('span', { style:{ fontFamily:"'Epilogue',sans-serif", fontWeight:700, fontSize:15, color:'#17325E' } }, 'Scene ' + this.sceneNo(r, i)), this.reorderEl(i, rows.length),
           role ? label(this.BEAT_ROLE_LABELS[role] || role) : null, bm.purpose ? h('span', { style:{ fontSize:12, color:'#41505F' } }, bm.purpose) : null),
         spoken ? h('div', { style:{ fontSize:11.5, color:'#6B7280', fontStyle:'italic', marginBottom:6 } }, '\u201c' + this.clipText(spoken, 140) + '\u201d') : null,
         h('div', { style:{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(300px, 1fr))', gap:10 } }, ...cards));
@@ -20234,6 +20324,7 @@ class Component extends DCLogic {
         coverage: this.coverageStrip(i, r),
         shotStrip: this.shotStrip(i, r),
         frameChecks: this.frameChecksEl(i),
+        reorder: this.reorderEl(i, (s.fullScript || []).length),
         frameNote: r.frame_note || '', editFrameNote: this.editFrameNote(i),
         lines, hasLines: lines.length > 0, isSilent: lines.length === 0, willBeSilent,
         addVo: this.addSceneLine(i, 'vo'), addLine: this.addSceneLine(i, 'dialogue'),

@@ -100,3 +100,24 @@ Under a shot's clip cards, once a clip is chosen, there is a **Trim** row: a Sta
 
 ## What to tell me
 Whether the sliders feel right (or you want exact-second boxes), whether the preview player is clear, and whether the Timeline wording makes sense.
+
+# Slice S2b + S2c — Reorder shots and scenes (28 Oct 2026)
+
+Same set-up as before. Reordering spends nothing. **Know this before you try it:** moving a scene clears the director's read, flow review, editor's notes and voice plan (they depend on the order); your frames, clips, trims and sound choices move WITH their scene.
+
+## What it is
+- **Shots inside a scene:** each extra shot (shot 2 onward) has small up/down arrows on its Storyboard tile and on its Shots card. Shot 1 (the scene's own shot) stays first.
+- **Scenes:** each scene has up/down arrows next to its name, on the Storyboard card and on the Shots step.
+
+## Click-through (about 8 minutes, no spend)
+1. On a film with frames and some chosen clips, open **Shots**. Click the **down arrow** beside Scene 2. Expected: Scene 2 and Scene 3 swap; the numbers stay 1, 2, 3 in order; each scene still shows ITS OWN frames and clips (check by eye: the picture under "Scene 2" is now the old Scene 3's).
+2. Trim a clip in the scene you are about to move, move the scene, then look at its clip again. Expected: the trim moved with the clip.
+3. In a scene with extra shots, click a shot's **down arrow**. Expected: the shots swap, and each keeps its own frame, clips and trim.
+4. Look at the assemble strip's **Timeline** line: a reorder does not change the total. Then assemble the film: the scenes play in the NEW order, with the voice following.
+5. Try to move a scene while a frame is rendering. Expected: a message says to wait.
+6. If you have signed live-action footage for a scene, try to move it. Expected: a message says the footage is tied to the scene number and to detach it first.
+7. After a scene move, the Storyboard's Director's read / Flow review / Editor's notes panels are empty; run them again when you want them.
+8. Move a scene down and back up: everything is exactly as before (except the cleared panels).
+
+## What to tell me
+Whether swap-with-neighbour feels right or you want drag-and-drop; whether you want to be able to move shot 1 (the scene's own shot) too; and anything that looked attached to the wrong scene after a move.

@@ -65,3 +65,17 @@ Run on `coverage` @ `b89c102`, `api/.venv/Scripts/python.exe`, `PYTHONUTF8=1`.
 | Size of the change | - | +47/-3 in `main.py` + `filmcut.py` (CRLF kept), +63/-6 in `app.dc.html`, +1 test file |
 
 Acceptance targets met so far: 1 (baseline holds), 2 (no trims = same request: pinned in `test_builder_s2`), 3 (source file untouched, length = window within a frame or two). Targets 4 and 5 (reorder invariants; timeline = preview = assembled film) wait for S2b-S2d.
+
+## 6. After S2b + S2c (reorder) — measured against the baseline
+
+| Check | Baseline | After S2a | After S2b+S2c |
+|---|---|---|---|
+| Python suites (s0, s2, coverage_plan, scene_shots, omni, videoprompt, packqa, stitch_freeze) | 45 / - / 79 / 101 / 24 / 33 / 19 / 13 | + s2 = 20 | unchanged (backend not touched) |
+| `test_surfaces_wiring`, `test_tools` | behave, 18/0 | same | same |
+| `checkfe`, `partials verify` | pass, 2,549,195 B | pass, 2,554,606 B | pass, 2,562,979 B |
+| `selfcheck` | 1,473 / 0 | 1,476 / 0 | 1,476 / 0 |
+| `app.dc.html` CRLF | 0 | 0 | 0 |
+| Page invariants (`tools/page_checks/builder_reorder_invariants.js`) | - | - | **18 / 18 pass** |
+| Size of the change | - | +47/-3 backend, +63/-6 frontend | +93/-2 frontend only, +1 page-check file |
+
+Acceptance target 4 (reorder invariants: frames, takes, trims, notes and captions follow their scenes, atomically, with an invariants test) is MET by the page test (and the exact round trip). Captions: they are derived from each row's timecode at render, and the two swapped rows' timecodes are re-laid. Target 5 (timeline = preview = assembled film) waits for S2d.
