@@ -3235,6 +3235,11 @@
       </div>
     </sc-if>
 
+    <!-- ============ STEP: SHOTS (film builder S1a: choose the frame each shot is animated from; built in shotsBoard) ============ -->
+    <sc-if value="{{ videoStepShots }}" hint-placeholder-val="{{ false }}">
+      {{ shotsBoard }}
+    </sc-if>
+
     <!-- ============ STEP: PRODUCTION ============ -->
     <sc-if value="{{ videoStepProduction }}" hint-placeholder-val="{{ false }}">
       <!-- pre-flight checklist -->
@@ -12135,6 +12140,9 @@ class Component extends DCLogic {
     paceSuggest: null,                      // {pace, why} read from the film's tone words by POST /pace-suggest (a suggestion only, never saved)
     filmReview: null,                       // the last flow review (POST /film-review): verdicts per extra shot, beats, notes, measured stats. Advisory; not saved.
     filmReviewBusy: false,
+    videoBuilder: null,                     // the film builder's saved state (takes.py): frame variants + which is chosen (S1a); clip takes, trims, budget come later. Saved with the film.
+    variantBusy: {},                        // { [frameKey]: true } while a frame VARIANT is being generated
+    takeChecking: {},                       // { [takeId]: true } while a frame take is being checked
     videoBeatMap: null,                     // the director's read (POST /film-direct): per-scene purpose / intensity / time-mode / beat, the turn and the message carrier. Saved with the film.
     beatMapBusy: false,
     editorNotes: null,                      // the last editor's read of sound and rhythm (POST /editor-notes, no model): notes with one-click fixes. Not saved.
@@ -13543,7 +13551,7 @@ class Component extends DCLogic {
       // The per-scene card choices (camera movement, pack tick, matched shot, frame note) are not in the Word file, so
       // they are carried over from the script being replaced, by scene number, instead of being lost.
       const oldScriptRows = this.state.fullScript;
-      this.setState(st => ({ fullScript: this.keepSceneExtras(d.rows, st.fullScript), scriptStatus:'drafted', sceneFrames:{},
+      this.setState(st => ({ fullScript: this.keepSceneExtras(d.rows, st.fullScript), scriptStatus:'drafted', sceneFrames:{}, videoBuilder:null,
                       plannedSeconds:0, voicePlan:null, videoStep:'scripting', scriptPhase:'script' }));
       this.reconcileSoundPlan(oldScriptRows, d.rows);
     } else {
@@ -15729,7 +15737,7 @@ class Component extends DCLogic {
 
   // ---------- video generation ----------
   pickVideoObjective = (name) => () => {
-    this.setState({ videoObjective:name, videoConcept:null, provConcept:null, videoRefusal:'', scriptVersions:[], scriptStatus:'none', fullScript:null, sceneFrames:{}, shoot:{}, producedUrl:null, scriptPhase:'concept', videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', videoCamera:'', videoPace:'', paceSuggest:null, filmReview:null, videoBeatMap:null, editorNotes:null, castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null, renderInfo:null, castRefUrl:null, videoCastChoice:'', videoPlateChoice:'', videoPackChoice:'', frameNote:'', scriptRefine:'', soundPlan:{}, soundBase:[], musicStyle:'warm-strings', musicTempo:'', musicDynamics:'', musicOnTurn:false, musicLockMood:null, production:{ aspect:'16:9', music:'Warm strings', voice:'', status:'idle', versions:[] } });
+    this.setState({ videoObjective:name, videoConcept:null, provConcept:null, videoRefusal:'', scriptVersions:[], scriptStatus:'none', fullScript:null, sceneFrames:{}, videoBuilder:null, shoot:{}, producedUrl:null, scriptPhase:'concept', videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', videoCamera:'', videoPace:'', paceSuggest:null, filmReview:null, videoBeatMap:null, editorNotes:null, castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null, renderInfo:null, castRefUrl:null, videoCastChoice:'', videoPlateChoice:'', videoPackChoice:'', frameNote:'', scriptRefine:'', soundPlan:{}, soundBase:[], musicStyle:'warm-strings', musicTempo:'', musicDynamics:'', musicOnTurn:false, musicLockMood:null, production:{ aspect:'16:9', music:'Warm strings', voice:'', status:'idle', versions:[] } });
     // Same "surfaced up front" reasoning as POSM's loadPosmAssetLib: a real reference picker with
     // nothing loaded to pick from is just a slower text box.
     if (!this.state.videoAssets.length) this.loadVideoAssetLib();
@@ -15748,8 +15756,8 @@ class Component extends DCLogic {
   // ---------- video pipeline: steps, phases, scripting ----------
   // ===== VIDEO STUDIO: steps & timing =====
   setVideoStep = (step) => () => {
-    if ((step==='shootboard' || step==='production') && this.state.scriptStatus!=='approved') {
-      this.showToast('Approve the full script to unlock ' + (step==='shootboard'?'Shoot Board':'Production') + '.');
+    if ((step==='shootboard' || step==='shots' || step==='production') && this.state.scriptStatus!=='approved') {
+      this.showToast('Approve the full script to unlock ' + (step==='shootboard'?'Shoot Board':(step==='shots'?'Shots':'Production')) + '.');
       return;
     }
     this.setState({ videoStep: step });
@@ -15990,7 +15998,7 @@ class Component extends DCLogic {
     }
     if (!rows) rows = this.fallbackFullScript(vc);
     this.setState({ scriptWriting:false, fullScript:rows, scriptStatus:'drafted', scriptPhase:'script',
-                    sceneFrames:{}, plannedSeconds:0, voicePlan:null, soundPlan:this.soundPlanWithoutSceneChoices() });
+                    sceneFrames:{}, videoBuilder:null, plannedSeconds:0, voicePlan:null, soundPlan:this.soundPlanWithoutSceneChoices() });
   };
 
   onScriptRefine = (e) => this.setState({ scriptRefine: e.target.value });
@@ -16157,7 +16165,8 @@ class Component extends DCLogic {
     const r = await this.apiCall('/frame-check', { frame_url:f.url, description:(rr && rr.visual) || '', cast:s.videoCharacters || '', wardrobe:s.videoWardrobe || '', pack_expected:!!(rr && this.packOnShot(rr)) });
     const d = (r && r.data) || {};
     if (!r || !r.ok) { this.showToast(d.detail || 'Couldn’t check that frame — try again.'); return false; }
-    this.setState(st => { const cur = (st.sceneFrames || {})[fk]; if (!cur || cur.url !== f.url) return {}; return { sceneFrames:{ ...st.sceneFrames, [fk]:{ ...cur, checks:d.checks || [], checkedUrl:f.url, checkAccepted:false, checkSeen:d.seen || '' } } }; });
+    this.setState(st => { const cur = (st.sceneFrames || {})[fk]; if (!cur || cur.url !== f.url) return {}; return { sceneFrames:{ ...st.sceneFrames, [fk]:{ ...cur, checks:d.checks || [], checkedUrl:f.url, checkAccepted:false, checkSeen:d.seen || '' } },
+      videoBuilder:this.builderPatchByUrl(st.videoBuilder, fk, f.url, { checks:d.checks || [], checkedUrl:f.url, checkAccepted:false, checkSeen:d.seen || '' }) }; });
     return true;
   };
   checkAllFrames = async () => {
@@ -16174,7 +16183,7 @@ class Component extends DCLogic {
   };
   acceptFrameCheck = (idx, k) => () => {
     const fk = this.frameKey(idx, k);
-    this.setState(st => { const cur = (st.sceneFrames || {})[fk]; return cur ? { sceneFrames:{ ...st.sceneFrames, [fk]:{ ...cur, checkAccepted:true } } } : {}; });
+    this.setState(st => { const cur = (st.sceneFrames || {})[fk]; return cur ? { sceneFrames:{ ...st.sceneFrames, [fk]:{ ...cur, checkAccepted:true } }, videoBuilder:this.builderPatchByUrl(st.videoBuilder, fk, cur.url, { checkAccepted:true }) } : {}; });
   };
   // The scene card's chip for the MASTER frame (extra shots show theirs on their own card).
   frameChecksEl(idx){
@@ -16329,7 +16338,7 @@ class Component extends DCLogic {
     if (!rows) { this.setState({ scriptReworking:false }); this.showToast('Couldn\u2019t rework the script — nothing changed.'); return; }
     const oldScriptRows = this.state.fullScript;
     this.setState(s => ({
-      scriptReworking:false, scriptRefine:'', fullScript:this.keepSceneExtras(rows, s.fullScript), sceneFrames:{},
+      scriptReworking:false, scriptRefine:'', fullScript:this.keepSceneExtras(rows, s.fullScript), sceneFrames:{}, videoBuilder:null,
       scriptStatus: s.scriptStatus==='approved' ? 'drafted' : s.scriptStatus,
       videoStep: 'scripting',
       scriptVersions: [...s.scriptVersions, { v:s.scriptVersions.length+1, logline:(s.videoConcept&&s.videoConcept.logline)||'', note, duration:s.prodDuration }],
@@ -16768,7 +16777,7 @@ class Component extends DCLogic {
       for (let j = k; j < ex.length; j++) { const nxt = f[idx + '.' + (j + 1)]; if (nxt) f[idx + '.' + j] = nxt; else delete f[idx + '.' + j]; }
       delete f[idx + '.' + ex.length];
       const left = ex.filter((_, j) => j !== k - 1);
-      return { sceneFrames:f, fullScript:(st.fullScript || []).map((r, i) => { if (i !== idx) return r; const o = { ...r }; if (left.length) o.shots = left; else delete o.shots; return o; }) };
+      return { sceneFrames:f, videoBuilder:this.builderAfterRemoveShot(st.videoBuilder, idx, k, ex.length), fullScript:(st.fullScript || []).map((r, i) => { if (i !== idx) return r; const o = { ...r }; if (left.length) o.shots = left; else delete o.shots; return o; }) };
     });
   };
   // Skip: keep the shot in the script (words, frame, place) but leave it out of the film -- no frame to render, no clip to pay for.
@@ -16781,7 +16790,7 @@ class Component extends DCLogic {
     this.setState(st => {
       const f = { ...(st.sceneFrames || {}) };
       Object.keys(f).forEach(key => { if (key.indexOf(idx + '.') === 0) delete f[key]; });
-      return { sceneFrames:f, fullScript:(st.fullScript || []).map((r, i) => { if (i !== idx) return r; const o = { ...r }; delete o.shots; delete o.signoff_shots; return o; }) };
+      return { sceneFrames:f, videoBuilder:this.builderAfterRemoveAll(st.videoBuilder, idx), fullScript:(st.fullScript || []).map((r, i) => { if (i !== idx) return r; const o = { ...r }; delete o.shots; delete o.signoff_shots; return o; }) };
     });
   };
   renderShotFrames = (idx) => async () => {
@@ -17162,16 +17171,30 @@ class Component extends DCLogic {
       if (!this.extraShots(row)[k - 1] || this.extraShots(row)[k - 1].skip) return;
       if (!(((this.state.sceneFrames || {})[idx] || {}).url)) { this.showToast('Render shot 1 of this scene first \u2014 the other angles are matched to it.', 'warn'); return; }
     }
+    const prevEntry = (this.state.sceneFrames || {})[fk];
     this.setState(s => ({ sceneFrames:{ ...s.sceneFrames, [fk]:{ status:'rendering', url:null } } }));
+    const r = await this.renderFrameResult(idx, k);
+    // A re-render is now a new TAKE that becomes the frame: the previous frame is kept in the builder's history instead of being overwritten.
+    if (r.ok) this.setState(s => ({ framesProvider: r.provider || s.framesProvider, sceneFrames:{ ...s.sceneFrames, [fk]:r.entry },
+      videoBuilder:this.withFrameTake(s.videoBuilder, fk, prevEntry, r.entry, true) }));
+    else this.setState(s => ({ sceneFrames:{ ...s.sceneFrames, [fk]:{ status:'error', url:null } } }));
+  };
+  // ---------- the film builder, slice S1a: frame VARIANTS (FILM_BUILDER_PLAN.md, FILM_PIPELINE_MAP.md Part 3) ----------
+  // A shot's frame used to be overwritten by every re-render. Now each render is kept as a TAKE; the CHOSEN take is mirrored into sceneFrames[key] (the one place
+  // everything else reads the frame from), so nothing downstream changes. History is append-only; only "discard" removes a take (never the chosen one), and no file is deleted.
+  // Frame keys are the film's own: the scene's 0-based position for its master shot, "<position>.<k>" for extras (the same keys sceneFrames uses).
+  // The request, the call and the entry for ONE frame. Changes no state except the film seed, so "Render" and "Generate variant" share it exactly.
+  renderFrameResult = async (idx, k, opts = {}) => {
+    const row = (this.state.fullScript || [])[idx];
     // The request comes from the same builder the "out of date" check uses (frameBody), so what a frame is drawn from and
     // what it is later compared against cannot drift apart.
     const fb = this.frameBody(idx, k);
     const body = fb.body, lookRef = fb.lookRef;
     const recipe = this.frameRecipe(idx, k);
-    // one fixed seed per film — every frame reuses it so the look stays consistent
+    // one fixed seed per film — every frame reuses it so the look stays consistent (a VARIANT passes its own seed, or it would repeat the same picture)
     let seed = this.state.videoSeed;
     if (!seed) { seed = Math.floor(Math.random()*900000) + 100000; this.setState({ videoSeed: seed }); }
-    body.seed = seed;
+    body.seed = opts.seed != null ? opts.seed : seed;
     const res = await this.apiJson('/scene-still', body);
     // Stamp the frame with the scene it was rendered from, so a later dialogue or timing change can
     // be seen for what it is rather than silently leaving a mismatched still on the board.
@@ -17186,10 +17209,200 @@ class Component extends DCLogic {
     // Coverage: the server says when an extra angle came back as a near-copy of shot 1 (anglecheck.py). Only "same" is shown.
     const ac = res && res.angle_check;
     const angleSame = (k && ac && ac.verdict === 'same') ? String(ac.note || 'This looks the same as shot 1 \u2014 the angle did not change.') : '';
-    if (res && res.image_url) this.setState(s => ({ framesProvider: res.provider || s.framesProvider,
-      sceneFrames:{ ...s.sceneFrames, [fk]:{ status:'done', url:res.image_url, provider:res.provider||'', sig, packMissing, packShape, angleSame, look:lookRef, recipe } } }));
-    else this.setState(s => ({ sceneFrames:{ ...s.sceneFrames, [fk]:{ status:'error', url:null } } }));
+    if (res && res.image_url) return { ok:true, provider:res.provider || '', entry:{ status:'done', url:res.image_url, provider:res.provider || '', sig, packMissing, packShape, angleSame, look:lookRef, recipe } };
+    return { ok:false };
   };
+  builderOf(b){ return b || { version:1, frames:{}, frame_chosen:{}, takes:{}, chosen:{}, trim:{}, budget:{ cap_usd:0, spent_usd:0 } }; }
+  newTakeId(prefix){ return prefix + '_' + Math.random().toString(36).slice(2, 10); }
+  // The fields of a rendered frame that a take keeps (the same entry the page keeps in sceneFrames, minus its transient state).
+  entryOfTake(t){ const { id, created, ...e } = t || {}; return { ...e, status:'done' }; }
+  takeOfEntry(e){ const { status, ...rest } = e || {}; return { ...rest, status:'done', id:this.newTakeId('fr'), created:new Date().toISOString().slice(0, 19) + 'Z' }; }
+  // The builder after `entry` joins a shot's history. `prev` (the frame the shot had until now) is adopted into the history first if it is not there yet, so nothing is ever lost.
+  // `choose`: the new take becomes the frame. At most 12 takes per shot: the oldest unchosen go first.
+  withFrameTake(builder, key, prev, entry, choose){
+    const b = this.builderOf(builder), list = (b.frames[key] || []).slice();
+    let chosen = b.frame_chosen[key] || '';
+    if (prev && prev.status === 'done' && prev.url && !list.some(x => x.url === prev.url)) {
+      const adopted = this.takeOfEntry(prev); list.push(adopted); if (!chosen) chosen = adopted.id;
+    }
+    const take = this.takeOfEntry(entry); list.push(take);
+    if (choose) chosen = take.id;
+    while (list.length > 12) { const i = list.findIndex(x => x.id !== chosen && x.id !== take.id); if (i < 0) break; list.splice(i, 1); }
+    return { ...b, frames:{ ...b.frames, [key]:list }, frame_chosen:{ ...b.frame_chosen, ...(chosen ? { [key]:chosen } : {}) } };
+  }
+  // A take found by its url (the check results live on the frame entry too, and the two must agree).
+  builderPatchByUrl(builder, key, url, patch){
+    if (!builder || !(builder.frames || {})[key]) return builder;
+    return { ...builder, frames:{ ...builder.frames, [key]:builder.frames[key].map(x => x.url === url ? { ...x, ...patch } : x) } };
+  }
+  // Removing shot k closes the gap in EVERY builder map, the way removeShot already does for sceneFrames.
+  builderAfterRemoveShot(builder, idx, k, n){
+    if (!builder) return builder;
+    const out = { ...builder };
+    ['frames', 'frame_chosen', 'takes', 'chosen', 'trim'].forEach(name => {
+      const m = { ...(builder[name] || {}) };
+      for (let j = k; j < n; j++) { const nxt = m[idx + '.' + (j + 1)]; if (nxt !== undefined) m[idx + '.' + j] = nxt; else delete m[idx + '.' + j]; }
+      delete m[idx + '.' + n];
+      out[name] = m;
+    });
+    return out;
+  }
+  builderAfterRemoveAll(builder, idx){
+    if (!builder) return builder;
+    const out = { ...builder };
+    ['frames', 'frame_chosen', 'takes', 'chosen', 'trim'].forEach(name => { const m = { ...(builder[name] || {}) }; Object.keys(m).forEach(key => { if (key.indexOf(idx + '.') === 0) delete m[key]; }); out[name] = m; });
+    return out;
+  }
+  // The takes a shot has, in order. A frame made before the builder existed has no history yet: it shows as one chosen take ("current"), and joins the history on the first change.
+  frameTakesOf(key){
+    const b = this.builderOf(this.state.videoBuilder), cur = (this.state.sceneFrames || {})[key];
+    const list = (b.frames[key] || []).slice();
+    if (cur && cur.status === 'done' && cur.url && !list.some(x => x.url === cur.url)) list.unshift({ ...this.takeOfEntry(cur), id:'__current', virtual:true });
+    const chosenId = b.frame_chosen[key] || ((list.find(x => cur && x.url === cur.url) || {}).id || '');
+    return { list, chosenId };
+  }
+  // Same gates as Render: the cast lock first, and an extra angle needs shot 1's frame (it is drawn from it).
+  frameGate(idx, k){
+    if (!this.state.castRefUrl && !this.provNoPeople()) {
+      this.setState({ castGateHit:true });
+      this.showToast('Lock location and cast first \u2014 frames are generated from that one image, and without it every frame invents its own faces.', 'warn');
+      return false;
+    }
+    const row = (this.state.fullScript || [])[idx];
+    if (!row) return false;
+    if (k) {
+      const sh = this.extraShots(row)[k - 1];
+      if (!sh || sh.skip) return false;
+      if (!(((this.state.sceneFrames || {})[idx] || {}).url)) { this.showToast('Choose a frame for shot 1 of this scene first \u2014 the other angles are matched to it.', 'warn'); return false; }
+    }
+    return true;
+  }
+  // One more candidate for a shot. It does NOT replace the frame: it joins the history for you to choose (unless the shot has no frame yet, when it becomes the frame).
+  generateFrameVariant = (idx, k = 0) => async () => {
+    const fk = this.frameKey(idx, k);
+    if ((this.state.variantBusy || {})[fk] || ((this.state.sceneFrames || {})[fk] || {}).status === 'rendering') return;
+    if (!this.frameGate(idx, k)) return;
+    this.setState(s => ({ variantBusy:{ ...s.variantBusy, [fk]:true } }));
+    const seed = Math.floor(Math.random() * 900000) + 100000;      // its own seed: with the film's fixed one it would draw the same picture again
+    const r = await this.renderFrameResult(idx, k, { seed });
+    this.setState(s => {
+      const vb = { ...s.variantBusy }; delete vb[fk];
+      if (!r.ok) return { variantBusy:vb };
+      const cur = (s.sceneFrames || {})[fk], hasFrame = !!(cur && cur.status === 'done' && cur.url);
+      const patch = { variantBusy:vb, videoBuilder:this.withFrameTake(s.videoBuilder, fk, cur, r.entry, !hasFrame) };
+      if (!hasFrame) { patch.sceneFrames = { ...s.sceneFrames, [fk]:r.entry }; patch.framesProvider = r.provider || s.framesProvider; }
+      return patch;
+    });
+    if (!r.ok) this.showToast('Couldn\u2019t render a variant \u2014 try again.', 'warn');
+  };
+  generateFrameVariants = (idx, k, n) => async () => { for (let i = 0; i < n; i++) await this.generateFrameVariant(idx, k)(); };
+  chooseFrameTake = (idx, k, id) => () => {
+    const fk = this.frameKey(idx, k);
+    this.setState(s => {
+      const b = this.builderOf(s.videoBuilder);
+      let list = (b.frames[fk] || []).slice(), t = list.find(x => x.id === id);
+      if (!t && id === '__current') return {};                    // the frame that is already current: nothing to do
+      if (!t || t.status !== 'done') return {};
+      return { videoBuilder:{ ...b, frame_chosen:{ ...b.frame_chosen, [fk]:id } }, sceneFrames:{ ...s.sceneFrames, [fk]:this.entryOfTake(t) } };
+    });
+  };
+  discardFrameTake = (idx, k, id) => () => {
+    const fk = this.frameKey(idx, k);
+    this.setState(s => {
+      const b = this.builderOf(s.videoBuilder);
+      if (!b.frames[fk] || b.frame_chosen[fk] === id) return {};   // the chosen take is never discarded
+      return { videoBuilder:{ ...b, frames:{ ...b.frames, [fk]:b.frames[fk].filter(x => x.id !== id) } } };
+    });
+  };
+  // The frame check on any take (not only the chosen one). Results live on the take; if it is the chosen one the frame entry gets them too.
+  checkFrameTake = (idx, k, id) => async () => {
+    const s = this.state, fk = this.frameKey(idx, k), row = (s.fullScript || [])[idx];
+    const t = this.frameTakesOf(fk).list.find(x => x.id === id);
+    if (!t || !t.url || !row || (s.takeChecking || {})[id]) return;
+    const rr = k ? this.shotRow(row, k) : row;
+    this.setState(st => ({ takeChecking:{ ...st.takeChecking, [id]:true } }));
+    const r = await this.apiCall('/frame-check', { frame_url:t.url, description:(rr && rr.visual) || '', cast:s.videoCharacters || '', wardrobe:s.videoWardrobe || '', pack_expected:!!(rr && this.packOnShot(rr)) });
+    const d = (r && r.data) || {};
+    this.setState(st => {
+      const tc = { ...st.takeChecking }; delete tc[id];
+      if (!r || !r.ok) return { takeChecking:tc };
+      const patch = { checks:d.checks || [], checkedUrl:t.url, checkAccepted:false, checkSeen:d.seen || '' };
+      const b = this.builderOf(st.videoBuilder);
+      let frames = (b.frames[fk] || []).slice();
+      if (t.virtual && !frames.some(x => x.url === t.url)) frames = [{ ...this.takeOfEntry(t), ...patch }, ...frames];      // adopt the current frame so its result is kept
+      else frames = frames.map(x => x.url === t.url ? { ...x, ...patch } : x);
+      const cur = (st.sceneFrames || {})[fk];
+      return { takeChecking:tc, videoBuilder:{ ...b, frames:{ ...b.frames, [fk]:frames }, frame_chosen:{ ...b.frame_chosen, ...((t.virtual && !(b.frame_chosen || {})[fk]) ? { [fk]:frames[0].id } : {}) } },
+        ...((cur && cur.url === t.url) ? { sceneFrames:{ ...st.sceneFrames, [fk]:{ ...cur, ...patch } } } : {}) };
+    });
+    if (!r || !r.ok) this.showToast(d.detail || 'Couldn\u2019t check that frame \u2014 try again.');
+  };
+  // ---------- the Shots step: choose the frame each shot is animated from ----------
+  shotsBoard(){
+    if (this.state.videoStep !== 'shots') return null;
+    const h = React.createElement, s = this.state, rows = s.fullScript || [], fr = s.sceneFrames || {};
+    if (!rows.length) return h('div', { style:{ fontSize:13, color:'#6B7280' } }, 'Write and approve the script first.');
+    const label = (txt, color) => h('span', { style:{ fontSize:10.5, fontWeight:800, letterSpacing:'0.05em', textTransform:'uppercase', color:color || '#6B7280' } }, txt);
+    const btn = (text, onClick, o = {}) => h('button', { onClick, disabled:!!o.disabled, title:o.title || '', style:{ border:'1px solid ' + (o.go ? '#259821' : '#C9CEDA'), background:o.go ? '#259821' : '#fff',
+      color:o.go ? '#fff' : '#17325E', borderRadius:7, padding:'3px 9px', fontSize:11, fontWeight:700, cursor:o.disabled ? 'default' : 'pointer', opacity:o.disabled ? 0.55 : 1 } }, text);
+    let nShots = 0, nWith = 0, nVariants = 0;
+    const groups = rows.map((r, i) => {
+      const slots = [{ k:0, sh:null }].concat(this.extraShots(r).map((sh, j) => ({ k:j + 1, sh })));
+      const bm = ((s.videoBeatMap || {}).scenes || []).find(x => x.no === this.sceneNoInt(r, i)) || {};
+      const spoken = (Array.isArray(r.audio) ? r.audio : []).map(a => (a && a.text) || '').join(' ').trim();
+      const cards = slots.map(({ k, sh }) => {
+        const key = this.frameKey(i, k), skipped = !!(sh && sh.skip), cur = fr[key] || {};
+        const { list, chosenId } = this.frameTakesOf(key);
+        if (!skipped) { nShots++; if (cur.status === 'done' && cur.url) nWith++; nVariants += list.filter(x => !x.virtual).length; }
+        const busy = !!(s.variantBusy || {})[key] || cur.status === 'rendering';
+        const stale = !skipped && cur.status === 'done' && this.frameIsStale(i, cur, k);
+        const secs = k ? (parseInt(sh.secs, 10) || 2) : this.shotMasterSecs(r);
+        const size = k ? sh.shot_size : r.shot_size;
+        const thumbs = list.map(tk => {
+          const isChosen = tk.id === chosenId, cs = this.checksOf(tk);
+          const checking = !!(s.takeChecking || {})[tk.id];
+          return h('div', { key:tk.id, style:{ width:128, flex:'none' } },
+            h('div', { onClick:() => this.openLightbox(tk.url)(), style:{ position:'relative', aspectRatio:'16/9', borderRadius:7, overflow:'hidden', background:'#E6E3DC', cursor:'zoom-in', outline:isChosen ? '3px solid #259821' : '1px solid #DDD9D1', outlineOffset:isChosen ? 0 : -1 } },
+              h('img', { src:tk.url, style:{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' } }),
+              isChosen ? h('span', { style:{ position:'absolute', left:4, top:4, background:'#259821', color:'#fff', fontSize:9.5, fontWeight:800, borderRadius:4, padding:'1px 5px' } }, 'CHOSEN') : null,
+              cs.length ? h('span', { title:cs.map(c => c.label + ': ' + c.note).join(' \u00b7 '), style:{ position:'absolute', right:4, top:4, background:'#B07A12', color:'#fff', fontSize:9.5, fontWeight:800, borderRadius:4, padding:'1px 5px' } }, '! ' + cs.length) : null),
+            h('div', { style:{ display:'flex', gap:4, marginTop:3, flexWrap:'wrap' } },
+              isChosen ? null : btn('Use', this.chooseFrameTake(i, k, tk.id), { go:true, disabled:skipped }),
+              btn(checking ? '\u2026' : (this.frameIsChecked(tk) ? '\u2713 Checked' : 'Check'), this.checkFrameTake(i, k, tk.id), { disabled:checking || skipped, title:'A model looks at this frame for pasted panels, extra or missing people, wrong anatomy, unwanted text' }),
+              (isChosen || tk.virtual) ? null : btn('\u2715', this.discardFrameTake(i, k, tk.id), { title:'Remove this variant from the list (the file is kept)' })),
+            cs.length ? h('div', { style:{ fontSize:10.5, lineHeight:1.4, color:'#B07A12', fontWeight:700, marginTop:2 } }, cs.map(c => c.label + ': ' + c.note).join(' \u00b7 ')) : null);
+        });
+        return h('div', { key:'sh' + key, style:{ border:'1px solid #E6E3DC', borderRadius:12, background:skipped ? '#F7F5F0' : '#fff', padding:'10px 12px', opacity:skipped ? 0.6 : 1 } },
+          h('div', { style:{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap', marginBottom:6 } },
+            h('span', { style:{ fontWeight:800, fontSize:13, color:'#17325E' } }, 'Shot ' + (k + 1)),
+            size ? label(this.SHOT_SIZE_LABELS[size] || size) : null, sh && sh.job ? label(sh.job, '#1A8A7A') : null, label(secs + ' s'),
+            skipped ? label('Skipped', '#9AA1AD') : null, stale ? label('Out of date', '#B07A12') : null,
+            sh && sh.visual ? h('span', { style:{ fontSize:11.5, color:'#6B7280', flex:1, minWidth:160 } }, this.clipText(sh.visual, 110)) : null),
+          list.length ? h('div', { style:{ display:'flex', gap:10, flexWrap:'wrap' } }, thumbs)
+            : h('div', { style:{ fontSize:12, color:'#9AA1AD', padding:'8px 0' } }, skipped ? 'Skipped \u2014 no frame needed.' : 'No frame yet.'),
+          skipped ? null : h('div', { style:{ display:'flex', gap:6, alignItems:'center', marginTop:8, flexWrap:'wrap' } },
+            btn(busy ? 'Rendering\u2026' : (list.length ? '\uff0b Generate variant' : 'Generate frame'), this.generateFrameVariant(i, k), { go:!list.length, disabled:busy }),
+            list.length ? btn('\u00d73', this.generateFrameVariants(i, k, 3), { disabled:busy, title:'Three more variants, one after another' }) : null,
+            h('span', { style:{ fontSize:10.5, color:'#9AA1AD' } }, '1 image each \u00b7 the shot keeps its current frame until you choose another')));
+      });
+      const role = this.beatRoleOf(r) || '';
+      return h('div', { key:'sc' + i, style:{ marginBottom:18 } },
+        h('div', { style:{ display:'flex', alignItems:'baseline', gap:8, flexWrap:'wrap', marginBottom:6 } },
+          h('span', { style:{ fontFamily:"'Epilogue',sans-serif", fontWeight:700, fontSize:15, color:'#17325E' } }, 'Scene ' + this.sceneNo(r, i)),
+          role ? label(this.BEAT_ROLE_LABELS[role] || role) : null, bm.purpose ? h('span', { style:{ fontSize:12, color:'#41505F' } }, bm.purpose) : null),
+        spoken ? h('div', { style:{ fontSize:11.5, color:'#6B7280', fontStyle:'italic', marginBottom:6 } }, '\u201c' + this.clipText(spoken, 140) + '\u201d') : null,
+        h('div', { style:{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(300px, 1fr))', gap:10 } }, ...cards));
+    });
+    const needLock = !s.castRefUrl && !this.provNoPeople();
+    return h('div', null,
+      h('div', { style:{ display:'flex', alignItems:'baseline', gap:10, flexWrap:'wrap', marginBottom:4 } },
+        h('h2', { style:{ fontFamily:"'Epilogue',sans-serif", fontSize:20, fontWeight:700, color:'#17325E', margin:0 } }, 'Shots'),
+        h('span', { style:{ fontSize:14, fontWeight:600, color:'#6B7280' } }, '\u00b7 ' + nWith + ' / ' + nShots + ' have a frame \u00b7 ' + nVariants + ' kept variant' + (nVariants === 1 ? '' : 's'))),
+      h('div', { style:{ fontSize:13, color:'#6B7280', marginBottom:12, maxWidth:760 } }, 'Choose the frame each shot is animated from. Generate variants, check them (a model looks for pasted panels, wrong anatomy, extra people), and pick one. '
+        + 'Frames are cheap and the video is not, so this is the place to get the picture right. The Storyboard in Scripting shows the same chosen frames.'),
+      needLock ? h('div', { style:{ background:'#FBF1DC', border:'1px solid #F0D9A6', borderRadius:10, padding:'8px 12px', fontSize:12.5, color:'#7A5B12', marginBottom:12, maxWidth:760 } }, 'Lock the cast and location first (Scripting step): every frame is generated from that one image.') : null,
+      ...groups);
+  }
   generateAllFrames = async () => {
     const rows = this.state.fullScript || [];
     if (this.state.framesBatch) return;
@@ -17602,7 +17815,7 @@ class Component extends DCLogic {
       this.setState({ conceptRoutes: routes.length > 1 ? routes : [], conceptRoute:0 });
       if (!isRefine) this.addCreated(this.videoItem(obj, data));
       this.setState(s => ({ videoGenerating:false, videoConcept:data, refinePrompt:'', videoRefusal:'',
-        scriptStatus:'concept', fullScript:null, sceneFrames:{}, scriptPhase:'concept', videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', videoCamera:'', videoPace:'', paceSuggest:null, filmReview:null, videoBeatMap:null, editorNotes:null, castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null,
+        scriptStatus:'concept', fullScript:null, sceneFrames:{}, videoBuilder:null, scriptPhase:'concept', videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', videoCamera:'', videoPace:'', paceSuggest:null, filmReview:null, videoBeatMap:null, editorNotes:null, castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null,
         scriptVersions: [...s.scriptVersions, { v:s.scriptVersions.length+1, logline:data.logline, note: isRefine ? s.refinePrompt.trim() : 'Initial draft', duration:data.duration }],
         videoCheck: this.runCreativeCheck([data.logline, (data.scenes||[]).map(x=>x.title+' '+x.desc).join(' ')]) }));
     } catch (err) {
@@ -17612,7 +17825,7 @@ class Component extends DCLogic {
       if (isRefine && prev) { this.setState({ videoGenerating:false, refinePrompt:'',
         videoRefusal:'The refine came back empty, so the concept on screen is unchanged.' }); return; }
       this.setState({ videoGenerating:false, videoConcept:null, refinePrompt:'', videoCheck:null,
-        scriptStatus:'none', fullScript:null, sceneFrames:{}, scriptPhase:'concept',
+        scriptStatus:'none', fullScript:null, sceneFrames:{}, videoBuilder:null, scriptPhase:'concept',
         videoRefusal: err && err.message === 'timeout'
           ? 'Nothing came back within ' + Math.round(this.MODEL_TIMEOUT_MS/1000) + ' seconds, so the concept is empty rather than invented. Run it again.'
           : this.fallbackVideo(obj, brief).refusal });
@@ -17624,7 +17837,7 @@ class Component extends DCLogic {
     if (!r || this.state.conceptRoute === i) return;
     // Switching route invalidates everything downstream — script, frames, cast, cut.
     this.setState({ conceptRoute:i, videoConcept:r, scriptStatus:'concept', fullScript:null,
-                    sceneFrames:{}, castRefUrl:null, videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', videoCamera:'', videoPace:'', paceSuggest:null, filmReview:null, videoBeatMap:null, editorNotes:null, castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null,
+                    sceneFrames:{}, videoBuilder:null, castRefUrl:null, videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', videoCamera:'', videoPace:'', paceSuggest:null, filmReview:null, videoBeatMap:null, editorNotes:null, castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null,
                     producedUrl:null, renderInfo:null, scriptPhase:'concept', voicePlan:null });
     this.showToast('Route ' + (i+1) + ' loaded — ' + (r.name || 'concept') + '.', 'ok');
   };
@@ -17640,7 +17853,7 @@ class Component extends DCLogic {
     // Changing the image engine invalidates the locked cast and rendered frames, since a different
     // model draws different people.
     const patch = { engines:{ ...this.state.engines, [kind]:id } };
-    if (kind === 'image') Object.assign(patch, { castRefUrl:null, castOptions:[], sceneFrames:{} });
+    if (kind === 'image') Object.assign(patch, { castRefUrl:null, castOptions:[], sceneFrames:{}, videoBuilder:null });
     if (kind === 'music') Object.assign(patch, { musicOptions:[], musicUrl:null, voiceAudioUrl:null });
     this.setState(patch);
   };
@@ -17757,7 +17970,7 @@ class Component extends DCLogic {
     this.setState({ castOptionsBusy:false, castOptions:urls, castOptionsSig:sig, castProvider:d.provider || '' });
   };
   pickCastOption = (url) => () => {
-    this.setState(s => ({ castRefUrl:url, castLockSig:s.castOptionsSig || this.castSig(s), castOptions:[], sceneFrames:{} }));
+    this.setState(s => ({ castRefUrl:url, castLockSig:s.castOptionsSig || this.castSig(s), castOptions:[], sceneFrames:{}, videoBuilder:null }));
     this.showToast('Cast locked — frames will now match these people.', 'ok');
   };
   // Optional: keep the locked image in Memory as a signed-off cast, so Social/POSM can pick it too.
@@ -17784,7 +17997,7 @@ class Component extends DCLogic {
       this.showToast(d.detail || 'Couldn’t render the cast reference — see heritage-log.txt.');
       return;
     }
-    this.setState({ castRefBusy:false, castRefUrl:d.image_url, sceneFrames:{}, castLockSig:sig,
+    this.setState({ castRefBusy:false, castRefUrl:d.image_url, sceneFrames:{}, videoBuilder:null, castLockSig:sig,
                     castProvider: d.provider || '' });
     this.showToast('Cast locked — frames will now match these people.', 'ok');
   };
@@ -17826,7 +18039,7 @@ class Component extends DCLogic {
   };
   setVideoStyle = (id) => () => {
     // A new look means the cast reference and any rendered frames no longer match it.
-    this.setState({ videoStyle:id, castRefUrl:null, castOptions:[], sceneFrames:{} });
+    this.setState({ videoStyle:id, castRefUrl:null, castOptions:[], sceneFrames:{}, videoBuilder:null });
   };
   onDeptText = (id) => (e) => {
     const text = e.target.value;
@@ -19027,7 +19240,7 @@ class Component extends DCLogic {
       no: r.no || String(i + 1), tc: r.tc || '', visual: r.visual || '', supr: r.supr || '' })) });
     this.showToast(rows.length + ' board row' + (rows.length === 1 ? '' : 's') + ' pulled \u2014 each take can be keyed against the frame it is for.', 'ok');
   };
-  openVideoFromCampaign = () => { const c = this.state.campaign; this.setState({ screen:'video', videoConcept: c ? c.video : null, linkedBrief: c ? c.brief : null, videoObjective:'Campaign film', scriptStatus: (c && c.video) ? 'concept' : 'none', scriptPhase:'concept', videoStep:'scripting', fullScript:null, sceneFrames:{}, videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', videoCamera:'', videoPace:'', paceSuggest:null, filmReview:null, videoBeatMap:null, editorNotes:null, castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null, renderInfo:null, castRefUrl:null });
+  openVideoFromCampaign = () => { const c = this.state.campaign; this.setState({ screen:'video', videoConcept: c ? c.video : null, linkedBrief: c ? c.brief : null, videoObjective:'Campaign film', scriptStatus: (c && c.video) ? 'concept' : 'none', scriptPhase:'concept', videoStep:'scripting', fullScript:null, sceneFrames:{}, videoBuilder:null, videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', videoCamera:'', videoPace:'', paceSuggest:null, filmReview:null, videoBeatMap:null, editorNotes:null, castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null, renderInfo:null, castRefUrl:null });
     this.loadGrounding(); this.loadVideoStandsOn(); }; // round 92: video's own six-entry-point audit
 
   // ---------- campaign analysis ----------
@@ -19771,14 +19984,15 @@ class Component extends DCLogic {
     const doneFrames = this.framesDoneCount();
     const staleFrames = this.framesStaleCount();   // done frames the script/cast/look has outrun
     const statusLabel = { none:'Not started', concept:'Concept ready', drafted:'Script drafted', approved:'Approved' }[s.scriptStatus] || 'Not started';
-    const stepDefs = [ {key:'brief',label:'Brief'}, {key:'scripting',label:'Scripting'}, {key:'shootboard',label:'Shoot Board'}, {key:'production',label:'Production'} ];
+    const stepDefs = [ {key:'brief',label:'Brief'}, {key:'scripting',label:'Scripting'}, {key:'shootboard',label:'Shoot Board'}, {key:'shots',label:'Shots'}, {key:'production',label:'Production'} ];
     const videoSteps = stepDefs.map((d,i) => {
       const active = d.key!=='brief' && s.videoStep===d.key;
-      const locked = (d.key==='shootboard'||d.key==='production') && !approved;
+      const locked = (d.key==='shootboard'||d.key==='shots'||d.key==='production') && !approved;
       let badge = '';
       if (d.key==='brief') badge = s.linkedBrief ? s.linkedBrief.format : (s.videoObjective || 'Optional');
       else if (d.key==='scripting') badge = statusLabel;
       else if (d.key==='shootboard') badge = locked ? 'Locked' : (nFrames ? doneFrames+' / '+nFrames+' frames' : 'Ready');
+      else if (d.key==='shots') badge = locked ? 'Locked' : (nFrames ? doneFrames+' / '+nFrames+' frames' : 'Ready');
       else badge = locked ? 'Locked' : (prod.versions.length ? 'v'+prod.versions.length+' rendered' : 'Ready');
       return { num:i+1, label:d.label, badge, active, locked,
         go: this.setVideoStep(d.key==='brief' ? 'scripting' : d.key),
@@ -20605,7 +20819,7 @@ class Component extends DCLogic {
       vRefFg: approved ? '#1E7E34' : '#8A6410',
       // video pipeline steps + phases
       videoSteps,
-      videoStepScripting: s.videoStep==='scripting', videoStepShoot: s.videoStep==='shootboard', videoStepProduction: s.videoStep==='production',
+      videoStepScripting: s.videoStep==='scripting', videoStepShoot: s.videoStep==='shootboard', videoStepProduction: s.videoStep==='production', videoStepShots: s.videoStep==='shots', shotsBoard: this.shotsBoard(),
       phaseConcept: s.scriptPhase==='concept', phaseScript: s.scriptPhase==='script',
       setPhaseConcept:this.setScriptPhase('concept'), setPhaseScript:this.setScriptPhase('script'),
       conceptTabBg: s.scriptPhase==='concept' ? '#17325E' : '#fff', conceptTabFg: s.scriptPhase==='concept' ? '#fff' : '#6B7280',
@@ -21501,7 +21715,7 @@ class Component extends DCLogic {
       // Video \u2014 concept, script, every department's drafted card, key frames and the cast reference
       // image are each their own "already generated" state with no idea the mode just changed.
       videoConcept:null, provConcept:null, conceptRoutes:[], conceptRoute:0, videoRefusal:'',
-      fullScript:null, scriptStatus:'none', scriptPhase:'concept', shoot:{}, sceneFrames:{}, framesBatch:false, soundPlan:{}, soundBase:[],
+      fullScript:null, scriptStatus:'none', scriptPhase:'concept', shoot:{}, sceneFrames:{}, videoBuilder:null, framesBatch:false, soundPlan:{}, soundBase:[],
       castRefUrl:null, castOptions:[], castLockSig:'', castGateHit:false, producedUrl:null,
       // POSM \u2014 the rendered/drafted pieces (routes, sketches, isolated elements, recompositions) and
       // the brand-fetched mandatories checklist; every typed override (subject, line, location brief,
@@ -23241,7 +23455,7 @@ class Component extends DCLogic {
       if (!data0 || !data0.scenes || !data0.scenes.length) throw new Error('bad');
       const data = { ...data0, from_provocation: prov.id, provocation_name: prov.name || '' };
       this.setState(s2 => ({ provRouteBusy:false, provConcept:data, conceptRoute:-1, videoConcept:data, refinePrompt:'', videoRefusal:'',
-        scriptStatus:'concept', fullScript:null, sceneFrames:{}, castRefUrl:null, videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', videoCamera:'', videoPace:'', paceSuggest:null, filmReview:null, videoBeatMap:null, editorNotes:null, castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null,
+        scriptStatus:'concept', fullScript:null, sceneFrames:{}, videoBuilder:null, castRefUrl:null, videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', videoCamera:'', videoPace:'', paceSuggest:null, filmReview:null, videoBeatMap:null, editorNotes:null, castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null,
         producedUrl:null, renderInfo:null, scriptPhase:'concept', voicePlan:null,
         scriptVersions: [...s2.scriptVersions, { v:s2.scriptVersions.length + 1, logline:data.logline, note: refine || ('From the provocation: ' + (prov.name || '')), duration:data.duration }],
         videoCheck: this.runCreativeCheck([data.logline, (data.scenes || []).map(x => x.title + ' ' + x.desc).join(' ')]) }));
@@ -23261,7 +23475,7 @@ class Component extends DCLogic {
     if (st.videoConcept && st.videoConcept.from_provocation === p.id) return;
     if (st.provConcept && st.provConcept.from_provocation === p.id) {
       this.setState({ conceptRoute:-1, videoConcept:st.provConcept, scriptStatus:'concept', fullScript:null,
-        sceneFrames:{}, castRefUrl:null, videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', videoCamera:'', videoPace:'', paceSuggest:null, filmReview:null, videoBeatMap:null, editorNotes:null, castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null,
+        sceneFrames:{}, videoBuilder:null, castRefUrl:null, videoCharacters:'', videoLocationLine:'', videoLocationSrc:'', videoLookRef:'', videoWardrobe:'', videoCamera:'', videoPace:'', paceSuggest:null, filmReview:null, videoBeatMap:null, editorNotes:null, castOptions:[], castLockSig:'', castSavedUrl:'', videoSeed:null,
         producedUrl:null, renderInfo:null, scriptPhase:'concept', voicePlan:null });
       this.showToast('The provocation route loaded \u2014 ' + (st.provConcept.name || 'concept') + '.', 'ok');
       return;
@@ -23600,7 +23814,7 @@ class Component extends DCLogic {
     const cleaned = this.cleanShootDrafts(d.shoot || {});
     this.setState({ videoObjective: d.video_objective, videoConcept: d.video_concept,
       scriptStatus: d.script_status || 'none', scriptPhase: d.script_phase || 'concept',
-      fullScript: d.full_script, sceneFrames: this.settledFrames(d.scene_frames), shoot: cleaned.shoot,
+      fullScript: d.full_script, sceneFrames: this.settledFrames(d.scene_frames), videoBuilder: d.video_builder || null, shoot: cleaned.shoot,
       videoCharacters: d.video_characters || '', videoLocationLine: d.video_location_line || '',
       videoLookRef: d.video_look_ref || '', videoWardrobe: d.video_wardrobe || '', videoCamera: d.video_camera || '', videoPace: d.video_pace || '', videoBeatMap: d.video_beat_map || null, videoLocationSrc: d.video_location_src || '',
       soundPlan: d.sound_plan || {},
@@ -23632,7 +23846,7 @@ class Component extends DCLogic {
       video_concept: s.videoConcept, script_status: s.scriptStatus, script_phase: s.scriptPhase,
       full_script: s.fullScript, scene_frames: this.settledFrames(s.sceneFrames), shoot: s.shoot,
       video_characters: s.videoCharacters, video_location_line: s.videoLocationLine,
-      video_look_ref: s.videoLookRef, video_wardrobe: s.videoWardrobe || '', video_camera: s.videoCamera || '', video_pace: s.videoPace || '', video_beat_map: s.videoBeatMap || null, video_location_src: s.videoLocationSrc, sound_plan: s.soundPlan || {},
+      video_look_ref: s.videoLookRef, video_wardrobe: s.videoWardrobe || '', video_camera: s.videoCamera || '', video_pace: s.videoPace || '', video_beat_map: s.videoBeatMap || null, video_builder: s.videoBuilder || null, video_location_src: s.videoLocationSrc, sound_plan: s.soundPlan || {},
       provocation_id: s.videoProvId || '', provocation_on: s.videoProvOn !== false,
       // The locked cast/location image (and its lock signature + saved-to-library marker) so a reload keeps the
       // lock instead of dropping back to "Lock location and cast" and forcing a costly re-render (#10).
@@ -23698,7 +23912,7 @@ class Component extends DCLogic {
     const vsig = { fullScript: s.fullScript, videoCharacters: s.videoCharacters, sceneFrames: s.sceneFrames,
                    shoot: s.shoot, videoConcept: s.videoConcept, scriptStatus: s.scriptStatus,
                    scriptPhase: s.scriptPhase, videoObjective: s.videoObjective, videoLocationLine: s.videoLocationLine,
-                   videoLookRef: s.videoLookRef, videoWardrobe: s.videoWardrobe, videoCamera: s.videoCamera, videoPace: s.videoPace, videoBeatMap: s.videoBeatMap, videoLocationSrc: s.videoLocationSrc, soundPlan: s.soundPlan,
+                   videoLookRef: s.videoLookRef, videoWardrobe: s.videoWardrobe, videoCamera: s.videoCamera, videoPace: s.videoPace, videoBeatMap: s.videoBeatMap, videoBuilder: s.videoBuilder, videoLocationSrc: s.videoLocationSrc, soundPlan: s.soundPlan,
                    videoProvId: s.videoProvId, videoProvOn: s.videoProvOn,
                    castRefUrl: s.castRefUrl, castLockSig: s.castLockSig, castSavedUrl: s.castSavedUrl,
                    videoCastChoice: s.videoCastChoice, videoPlateChoice: s.videoPlateChoice };

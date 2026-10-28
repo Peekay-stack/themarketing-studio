@@ -147,6 +147,13 @@ Sizes are relative (S/M/L), not time promises. Each slice: scope → backend →
 
 **Suggested order:** S0 → S1 → S3 → S2 → S5 → S4 → S7 → S6 → S8 (a working build-from-takes loop as early as possible; trimming and reordering after the loop proves itself; extend and presets last because they are the least certain).
 
+### Build log
+
+**S0 (29 Oct 2026, commit `26e8624`):** `takes.py`, the `video_builder` film field (normalised at the store), and the two inert render keys. Decisions made while building: (1) **keys are the film's own frame keys** (`"<position>"` for a scene's master shot, `"<position>.<k>"` for extras, position = 0-based place in the script), not scene numbers — the same keys `sceneFrames` already uses, so the existing re-keying logic covers both; (2) `use_clips` means **assembling never generates**: a shot with no chosen clip is reported missing, and no video provider is needed; (3) trims (`in`/`out`) are carried in the payload but applied in S2/S3; (4) a shot's chosen clip is a list (one clip per beat) because a scene longer than 8 s is several continuing beats.
+
+**S1a (29 Oct 2026):** frame variants + choose + the Shots step. Decisions made while building: (1) **a re-render in the Storyboard is now a take too** (the new frame becomes the frame, the previous one is kept in history) — one code path, so the two screens cannot disagree; (2) `sceneFrames[key]` always mirrors the chosen take, so nothing downstream changed; (3) a frame made before the builder existed shows as one chosen "current" take and joins the history on its first change; (4) history is capped at 12 takes per shot (oldest unchosen first, never the chosen), discard removes a take from the list but **never deletes a file**; (5) every place that wipes `sceneFrames` (new concept, cast re-lock, style/engine change, script rework — 15 sites) now also clears the builder, and `removeShot` / `removeAllShots` re-key every builder map; (6) the film's own seed is not reused for variants.
+**Trial result that matters (29 Oct, 3 image calls, `tools/engine_trials/frame_variant_trial.py`):** the Google image model **does not honour the seed** — the same seed twice gave two different pictures (mean pixel difference 41.7, as large as seed A vs seed B at 30.4) — so variants differ by themselves (same boy, different framing and pose) and the "fixed seed per film" has never been what keeps the cast consistent on Google: the reference image does that. Variants are therefore a genuine choice, not near-duplicates; if a *small* variation around one composition is ever wanted it needs a different mechanism (edit-from-frame), which is not part of this slice.
+
 ## 8. Blast radius summary
 
 | Touches | Slices | Notes |
