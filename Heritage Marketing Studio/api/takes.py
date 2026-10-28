@@ -91,9 +91,16 @@ def clip_take(raw) -> dict | None:
     if status == "rendering":
         status = "interrupted"       # nothing is rendering when a saved film is read back: the job died with its server or page
     url = _url(raw.get("url"))
+    # A scene longer than 8 s is several continuing beats: the take then holds one clip per beat ("beats"), and `url` is the first of them.
+    beats = []
+    for b in (raw.get("beats") if isinstance(raw.get("beats"), list) else [])[:8]:
+        if isinstance(b, dict) and _url(b.get("url")):
+            beats.append({"url": _url(b.get("url")), "seconds": _num(b.get("seconds"), 0.0, 0.0, 60.0)})
+    if beats and not url:
+        url = beats[0]["url"]
     if status == "done" and not url:
         status = "error"
-    return {"id": _s(raw.get("id"), 24) or new_id("tk"), "url": url, "tier": raw.get("tier") if raw.get("tier") in TIERS else "draft", "engine": raw.get("engine") if raw.get("engine") in ENGINES else "omni",
+    return {"id": _s(raw.get("id"), 24) or new_id("tk"), "url": url, "beats": beats, "job_id": _s(raw.get("job_id"), 40), "tier": raw.get("tier") if raw.get("tier") in TIERS else "draft", "engine": raw.get("engine") if raw.get("engine") in ENGINES else "omni",
             "seconds": _num(raw.get("seconds"), 0.0, 0.0, 60.0), "mode": raw.get("mode") if raw.get("mode") in MODES else "frame", "frame": _url(raw.get("frame")), "sig": _s(raw.get("sig"), 600),
             "interaction_id": _s(raw.get("interaction_id"), 200), "status": status, "error": _s(raw.get("error"), 300), "note": _s(raw.get("note"), 200), "checks": _checks(raw.get("checks")),
             "est_usd": (None if raw.get("est_usd") is None else _num(raw.get("est_usd"), 0.0, 0.0, 1000.0)), "created": _s(raw.get("created"), 24) or _now()}
@@ -198,6 +205,9 @@ def use_clips_for(doc, trims: bool = True) -> dict:
     for key in (doc.get("chosen") or {}) if isinstance(doc, dict) else {}:
         t = chosen_clip(doc, key)
         if t and t["status"] == "done" and t["url"]:
+            if t.get("beats"):                      # one clip per beat, in order (trims apply to single-clip shots only)
+                out[key] = [{"url": b["url"], "seconds": b["seconds"], "mode": t["mode"]} for b in t["beats"]]
+                continue
             item = {"url": t["url"], "seconds": t["seconds"], "mode": t["mode"]}
             tr = (doc.get("trim") or {}).get(key)
             if trims and tr:

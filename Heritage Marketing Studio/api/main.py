@@ -1464,7 +1464,11 @@ def _produce_video_sync(payload: dict):
     #   use_clips  {"<key>": [{url, seconds, ...}]}  ASSEMBLE from chosen clips: render(seg) hands back the chosen clip instead of generating; everything after it
     #              (stitch with the frozen check, voice windows on the real picture, music, mix) is unchanged. Assembling never generates: a shot with no chosen clip is reported missing.
     # The key is the film's own frame key: the scene's 0-based position in `scenes` for its master shot, "<position>.<k>" for its k-th extra shot.
-    _only = str(payload.get("only_shot") or "").strip()
+    # `only_shot` is ALWAYS a string key ("0", "1.2"). A JSON number 0 is falsy and must never fall through to a FULL paid render, so presence is tested with `is not None`.
+    _only_raw = payload.get("only_shot")
+    _only = "" if _only_raw is None else str(_only_raw).strip()
+    if _only_raw is not None and not _only:
+        return JSONResponse(status_code=400, content={"detail": "only_shot is empty: name the shot to render (\"0\" for the first scene's master shot, \"1.2\" for its second extra shot)."})
     _chosen_clips = payload.get("use_clips") if isinstance(payload.get("use_clips"), dict) else None
     if _only and _chosen_clips is not None:
         return JSONResponse(status_code=400, content={"detail": "Send either only_shot (render one shot) or use_clips (assemble from chosen clips), not both."})
@@ -1846,6 +1850,7 @@ def _produce_video_sync(payload: dict):
 # process, so this is enough; a job is lost only if the instance restarts mid-render (the poll then
 # reports it unknown and the person re-renders).
 _RENDER_JOBS: dict = {}
+_SHOT_JOBS: dict = {}          # request fingerprint -> job id, for single-shot renders still running (see produce_video)
 _RENDER_JOBS_LOCK = threading.Lock()
 
 
@@ -1875,8 +1880,23 @@ def produce_video(payload: dict):
     if payload.get("sync"):
         return _produce_video_sync(payload)
     _render_jobs_gc()
+    # A single-shot render (the film builder's per-shot clips) is paid per call, so an identical request made while the first is still running (a double click,
+    # a second tab) JOINS that job instead of spending twice. After it finishes the same request starts a new job: that is a deliberate re-roll.
+    _lock_key = ""
+    if payload.get("only_shot") is not None:
+        import hashlib
+        _lock_key = hashlib.sha1(json.dumps(payload, sort_keys=True, default=str).encode("utf-8")).hexdigest()
+        with _RENDER_JOBS_LOCK:
+            _j0 = _SHOT_JOBS.get(_lock_key)
+            if _j0 and (_RENDER_JOBS.get(_j0) or {}).get("status") == "rendering":
+                return {"job_id": _j0, "status": "rendering", "joined": True}
     job_id = uuid.uuid4().hex[:12]
     _render_job_set(job_id, status="rendering", at=time.time())
+    if _lock_key:
+        with _RENDER_JOBS_LOCK:
+            for _k in [k for k, j in _SHOT_JOBS.items() if (_RENDER_JOBS.get(j) or {}).get("status") != "rendering"]:
+                _SHOT_JOBS.pop(_k, None)
+            _SHOT_JOBS[_lock_key] = job_id
 
     def _run():
         try:

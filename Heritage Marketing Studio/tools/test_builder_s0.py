@@ -122,5 +122,40 @@ r = run(film())
 _rows = film(); _per = filmvoice.scene_seconds(_rows, target_total=30); _segs = filmcut.plan_by_scene(main._rows_for_planning(_rows), _per)
 check("inert: with neither key a normal render generates exactly one clip per planned segment (the skipped extra is not planned, so not drawn)", len(calls) == len(_segs) and len(_segs) > 3 and not any("Detail: his hand" in c["prompt"] for c in calls), f"{len(calls)} vs {len(_segs)}")
 
+# ---- the master shot's key is "0": a JSON number 0 must NEVER fall through to a full paid render ----------------------------------------------------------------
+r = run(film(), only_shot=0)
+check("only_shot as the NUMBER 0 means shot '0' (only that scene's beats, all from its own frame), not 'no key' (which would render the whole film)",
+      r.get("shot") == "0" and r["ok"] is True and len(calls) == len(r["clips"]) and all(c["image_ref"] == "/media/f0.jpg" for c in calls) and len(calls) < 6, f"{len(calls)} calls; {str(r)[:200]}")
+r = run(film(), only_shot="")
+check("only_shot as an empty string is a 400 (it does not mean 'render everything'), nothing generated", r.get("status") == 400 and "empty" in r["detail"] and not calls, str(r)[:200])
+
+# ---- S1b: multi-beat takes, job id, and the single-shot render is idempotent while it runs ------------------------------------------------------------------
+mb = takes.normalise({"takes": {"0": [{"id": "tk_m", "status": "done", "url": "", "beats": [{"url": "/media/b1.mp4", "seconds": 8}, {"url": "/media/b2.mp4", "seconds": 4}, {"url": "data:x", "seconds": 1}, "junk"], "job_id": "abc123", "seconds": 12}]},
+                      "chosen": {"0": "tk_m"}})
+check("clip take: a multi-beat shot keeps one clip per beat (junk and data: URIs dropped), `url` is the first, the job id is kept", mb["takes"]["0"][0]["url"] == "/media/b1.mp4" and len(mb["takes"]["0"][0]["beats"]) == 2 and mb["takes"]["0"][0]["job_id"] == "abc123" and mb["chosen"] == {"0": "tk_m"}, str(mb))
+check("use_clips_for: a multi-beat take hands the server ALL its clips in order", takes.use_clips_for(mb) == {"0": [{"url": "/media/b1.mp4", "seconds": 8.0, "mode": "frame"}, {"url": "/media/b2.mp4", "seconds": 4.0, "mode": "frame"}]})
+ir = takes.normalise({"takes": {"0": [{"id": "tk_r", "status": "rendering", "url": "", "job_id": "j1"}]}})
+check("clip take: a render that was in flight when the film was saved restores as 'interrupted' WITH its job id (so the page can recover the finished clip)", ir["takes"]["0"][0]["status"] == "interrupted" and ir["takes"]["0"][0]["job_id"] == "j1")
+
+import threading, time
+started, release, runs = threading.Event(), threading.Event(), []
+def slow_sync(payload):
+    runs.append(payload.get("only_shot")); started.set(); release.wait(5)
+    return {"shot": payload.get("only_shot"), "clips": [], "ok": True}
+real_sync = main._produce_video_sync
+main._produce_video_sync = slow_sync
+p1 = {"only_shot": "1", "scenes": [{"no": 1}], "tier": "lite"}
+r1 = main.produce_video(dict(p1)); started.wait(5)
+r2 = main.produce_video(dict(p1))
+n_after_join = len(runs)
+r3 = main.produce_video({**p1, "tier": "standard"})
+check("single-shot render: an identical request while the first is still running JOINS that job (no second paid call)", r2["job_id"] == r1["job_id"] and r2.get("joined") is True and n_after_join == 1, str((r1, r2, runs)))
+check("single-shot render: a different request (another tier) is its own job", r3["job_id"] != r1["job_id"])
+release.set(); time.sleep(0.6)
+st = main.render_status(r1["job_id"])
+release.clear(); r4 = main.produce_video(dict(p1)); release.set(); time.sleep(0.3)
+check("single-shot render: after it finishes the same request starts a NEW job (a deliberate re-roll); the finished job reports its clips", st["status"] == "done" and st["shot"] == "1" and r4["job_id"] != r1["job_id"] and not r4.get("joined"), str((st, r4)))
+main._produce_video_sync = real_sync
+
 print("\n%d failed" % len(fails) if fails else "\nALL PASS")
 sys.exit(1 if fails else 0)

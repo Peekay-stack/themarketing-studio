@@ -12142,6 +12142,8 @@ class Component extends DCLogic {
     filmReviewBusy: false,
     videoBuilder: null,                     // the film builder's saved state (takes.py): frame variants + which is chosen (S1a); clip takes, trims, budget come later. Saved with the film.
     variantBusy: {},                        // { [frameKey]: true } while a frame VARIANT is being generated
+    clipBusy: {},                           // { [frameKey]: takeId } while a clip take is rendering
+    builderTier: 'draft',                   // the tier new clip takes are made at: 'draft' (Omni 360p) or 'final' (720p)
     takeChecking: {},                       // { [takeId]: true } while a frame take is being checked
     videoBeatMap: null,                     // the director's read (POST /film-direct): per-scene purpose / intensity / time-mode / beat, the turn and the message carrier. Saved with the film.
     beatMapBusy: false,
@@ -15761,6 +15763,7 @@ class Component extends DCLogic {
       return;
     }
     this.setState({ videoStep: step });
+    if (step==='shots') this.recoverClipTakes();
     // Both of these screens are timed off the spoken script, so make sure we have a current one.
     // Free — /voice-plan generates nothing.
     if (step==='shootboard' || step==='production') {
@@ -17337,7 +17340,178 @@ class Component extends DCLogic {
     });
     if (!r || !r.ok) this.showToast(d.detail || 'Couldn\u2019t check that frame \u2014 try again.');
   };
+  // ---------- the film builder, slice S1b: clip TAKES ----------
+  // One shot's video generated ON ITS OWN through the same render the whole film uses (POST /produce-video with `only_shot`), so prompts, frames, engines, the limiter and the error messages are
+  // the full render's. Each attempt is a take with its status, tier, seconds and estimated cost; you re-roll, choose and discard. Nothing is stitched here (that is S3), and a take is
+  // never deleted from disk.
+  clipEngine(){ return this.costEngine() === 'fal' ? 'kling' : 'omni'; }
+  builderTierNow(){ return this.state.builderTier === 'final' ? 'final' : 'draft'; }
+  setBuilderTier = (t) => () => this.setState({ builderTier:t });
+  clipSecs(idx, k){ const r = (this.state.fullScript || [])[idx]; if (!r) return 0; return k ? (parseInt((this.extraShots(r)[k - 1] || {}).secs, 10) || 2) : this.shotMasterSecs(r); }
+  // Dollars for one clip at the MEASURED Omni rate (3 s floor); null when the engine's rate is not measured (Kling via fal): the page then says so instead of guessing.
+  clipEstimate(idx, k, tier){
+    if (this.clipEngine() !== 'omni') return null;
+    return Math.round(this.RATE.google[tier === 'final' ? 'standard' : 'lite'] * Math.max(3, this.clipSecs(idx, k)) * 1000) / 1000;
+  }
+  usd(n){ return n == null ? '' : '$' + (n < 10 ? n.toFixed(2) : n.toFixed(0)); }
+  addClipTake(builder, key, take){
+    const b = this.builderOf(builder), list = (b.takes[key] || []).concat([take]), chosen = b.chosen[key] || '';
+    while (list.length > 12) { const i = list.findIndex(x => x.id !== chosen && x.id !== take.id); if (i < 0) break; list.splice(i, 1); }
+    return { ...b, takes:{ ...b.takes, [key]:list } };
+  }
+  patchClipTake(key, id, patch){
+    this.setState(s => { const b = this.builderOf(s.videoBuilder); if (!(b.takes[key] || []).some(x => x.id === id)) return {};
+      return { videoBuilder:{ ...b, takes:{ ...b.takes, [key]:b.takes[key].map(x => x.id === id ? { ...x, ...patch } : x) } } }; });
+  }
+  // What a finished single-shot job says, as the fields a take keeps. A shot longer than 8 s is several continuing beats: the take holds one clip per beat.
+  takePatchFromResult(r){
+    const d = (r && r.data) || {}, clips = d.clips || [];
+    if (r && r.ok && d.ok && clips.length && clips.every(c => c.ok && c.url))
+      return { status:'done', url:clips[0].url, beats:clips.length > 1 ? clips.map(c => ({ url:c.url, seconds:c.seconds })) : [], seconds:clips.reduce((a, c) => a + (c.seconds || 0), 0), error:'' };
+    const why = (d.errors && d.errors[0]) || d.detail || (r && r.status === 501 ? 'No video provider is configured on this server.' : 'The engine returned no clip.');
+    return { status:'error', error:String(why).slice(0, 280) };
+  }
+  generateClipTake = (idx, k = 0) => async () => {
+    const s0 = this.state, fk = this.frameKey(idx, k), row = (s0.fullScript || [])[idx];
+    if (!row || (s0.clipBusy || {})[fk]) return false;
+    if (s0.scriptStatus !== 'approved') { this.showToast('Approve the full script first.'); return false; }
+    if (k) { const sh = this.extraShots(row)[k - 1]; if (!sh || sh.skip) return false; }
+    const frame = (s0.sceneFrames || {})[fk];
+    if (!(frame && frame.status === 'done' && frame.url)) { this.showToast('Choose a frame for this shot first \u2014 the clip is animated from it, never drawn from words.', 'warn'); return false; }
+    const tier = this.builderTierNow(), engine = this.clipEngine(), secs = this.clipSecs(idx, k);
+    const take = { id:this.newTakeId('tk'), url:'', beats:[], tier, engine, seconds:secs, mode:'frame', frame:frame.url, sig:'', job_id:'', status:'rendering', error:'', note:'',
+      checks:[], est_usd:this.clipEstimate(idx, k, tier), created:new Date().toISOString().slice(0, 19) + 'Z' };
+    this.setState(s => ({ clipBusy:{ ...s.clipBusy, [fk]:take.id }, videoBuilder:this.addClipTake(s.videoBuilder, fk, take) }));
+    const body = { ...this.filmRenderBody('Shot take'), only_shot:String(fk) };       // ALWAYS a string: the number 0 is falsy and would mean a full render
+    if (engine === 'omni') body.tier = tier === 'final' ? 'standard' : 'lite';
+    const r = await this.renderViaJob(body, jid => this.patchClipTake(fk, take.id, { job_id:jid }));
+    const patch = this.takePatchFromResult(r);
+    this.setState(s => {
+      const cb = { ...s.clipBusy }; delete cb[fk];
+      const b = this.builderOf(s.videoBuilder);
+      if (!(b.takes[fk] || []).some(x => x.id === take.id)) return { clipBusy:cb };           // the take was discarded while it ran
+      const takes = { ...b.takes, [fk]:b.takes[fk].map(x => x.id === take.id ? { ...x, ...patch } : x) };
+      // the first good clip of a shot becomes its chosen one (you can always choose another)
+      const chosen = (patch.status === 'done' && !b.chosen[fk]) ? { ...b.chosen, [fk]:take.id } : b.chosen;
+      return { clipBusy:cb, videoBuilder:{ ...b, takes, chosen } };
+    });
+    this._lastWasBilling = false;
+    if (patch.status === 'error') {
+      this._lastWasBilling = !!this.flagCredits(patch.error);          // out of credit: a batch stops here, re-trying cannot fix a balance
+      if (!this._lastWasBilling) this.showToast('Shot ' + (k + 1) + ' of scene ' + this.sceneNo(row, idx) + ': ' + patch.error, 'warn');
+      return false;
+    }
+    return true;
+  };
+  chooseClipTake = (idx, k, id) => () => {
+    const fk = this.frameKey(idx, k);
+    this.setState(s => { const b = this.builderOf(s.videoBuilder), t = (b.takes[fk] || []).find(x => x.id === id);
+      if (!t || t.status !== 'done') return {}; return { videoBuilder:{ ...b, chosen:{ ...b.chosen, [fk]:id } } }; });
+  };
+  discardClipTake = (idx, k, id) => () => {
+    const fk = this.frameKey(idx, k);
+    this.setState(s => { const b = this.builderOf(s.videoBuilder);
+      if (!(b.takes[fk] || []).length || b.chosen[fk] === id || (s.clipBusy || {})[fk] === id) return {};      // never the chosen take, never one that is rendering
+      return { videoBuilder:{ ...b, takes:{ ...b.takes, [fk]:b.takes[fk].filter(x => x.id !== id) } } }; });
+  };
+  async awaitRenderJob(jid, polls = 200){
+    for (let i = 0; i < polls; i++) {
+      const st = await this.apiGet('/render-status/' + jid);
+      if (st && st.status === 'done') return { ok:true, status:200, data:st };
+      if (st && st.status === 'error') return { ok:false, status:st.status_code || 500, data:st };
+      if (st && st.status === 'unknown') return { ok:false, status:404, data:{ detail:st.detail || 'That render is no longer tracked.' } };
+      await new Promise(r => setTimeout(r, 5000));
+    }
+    return { ok:false, status:504, data:{ detail:'The render is taking unusually long.' } };
+  }
+  // A take that was mid-render when the page closed or reloaded comes back as "interrupted" WITH its job id. The server may have finished it (the clip is paid for and on disk), so ask once:
+  // finished -> the take is filled in; still running -> wait for it; unknown (the server restarted) -> it stays interrupted and can be discarded.
+  recoverClipTakes = async () => {
+    const b = this.builderOf(this.state.videoBuilder), todo = [];
+    Object.keys(b.takes || {}).forEach(key => (b.takes[key] || []).forEach(tk => { if (tk.status === 'interrupted' && tk.job_id && !(this._recovered || {})[tk.id]) todo.push([key, tk]); }));
+    this._recovered = this._recovered || {};
+    for (const [key, tk] of todo) {
+      this._recovered[tk.id] = true;
+      this.patchClipTake(key, tk.id, { status:'rendering', error:'' });
+      const r = await this.awaitRenderJob(tk.job_id);
+      const p = this.takePatchFromResult(r);
+      if (r && r.status === 404) this.patchClipTake(key, tk.id, { status:'interrupted', error:'The server restarted while this was rendering, so the clip could not be recovered.' });
+      else this.patchClipTake(key, tk.id, p);
+    }
+  };
+  // Every shot that has a chosen frame, is not skipped and has no chosen clip yet: what "Generate all missing" would do.
+  missingClipShots(){
+    const s = this.state, out = [];
+    (s.fullScript || []).forEach((r, i) => {
+      [{ k:0 }].concat(this.extraShots(r).map((sh, j) => ({ k:j + 1, sh }))).forEach(({ k, sh }) => {
+        const key = this.frameKey(i, k), f = (s.sceneFrames || {})[key];
+        if (sh && sh.skip) return;
+        if (!(f && f.status === 'done' && f.url)) return;
+        if (this.builderOf(s.videoBuilder).chosen[key]) return;
+        out.push({ idx:i, k });
+      });
+    });
+    return out;
+  }
+  generateMissingClips = async () => {
+    const todo = this.missingClipShots(), tier = this.builderTierNow();
+    if (!todo.length || this.state.clipBatch) return;
+    const est = this.clipEngine() === 'omni' ? todo.reduce((a, x) => a + this.clipEstimate(x.idx, x.k, tier), 0) : null;
+    const msg = 'Generate ' + todo.length + ' clip' + (todo.length > 1 ? 's' : '') + ' at ' + (tier === 'final' ? 'Final (720p)' : 'Draft (360p)') + (est != null ? ' for about ' + this.usd(est) : ' (billed by fal; no estimate)') + '? They run one after another.';
+    if (typeof window !== 'undefined' && window.confirm && !window.confirm(msg)) return;
+    this.setState({ clipBatch:true });
+    let done = 0;
+    for (const x of todo) { const ok = await this.generateClipTake(x.idx, x.k)(); if (ok) done++; else if (this._lastWasBilling) break; }
+    this.setState({ clipBatch:false });
+    this.showToast(done + ' of ' + todo.length + ' clip' + (todo.length > 1 ? 's' : '') + ' made.', done === todo.length ? 'ok' : 'warn');
+  };
   // ---------- the Shots step: choose the frame each shot is animated from ----------
+  // The CLIP layer of a shot card: its takes (a playable clip, or what went wrong), choose / discard, and Generate / Re-roll with the estimate on the button.
+  // The strip above the shots: the tier new clips are made at, what the clips made so far were estimated to cost, and "generate all missing".
+  clipHeader(){
+    const h = React.createElement, s = this.state, b = this.builderOf(s.videoBuilder), tier = this.builderTierNow();
+    const all = Object.keys(b.takes || {}).reduce((a, key) => a.concat((b.takes[key] || []).filter(x => x.status === 'done')), []);
+    const spent = all.reduce((a, x) => a + (x.est_usd || 0), 0), chosen = Object.keys(b.chosen || {}).length;
+    const todo = this.missingClipShots(), est = this.clipEngine() === 'omni' ? todo.reduce((a, x) => a + this.clipEstimate(x.idx, x.k, tier), 0) : null;
+    const seg = (id, text) => h('span', { onClick:this.setBuilderTier(id), style:{ cursor:'pointer', padding:'4px 12px', fontSize:12, fontWeight:700, background:tier === id ? '#17325E' : '#fff', color:tier === id ? '#fff' : '#17325E', border:'1px solid #C9CEDA' } }, text);
+    return h('div', { style:{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap', margin:'0 0 14px', padding:'8px 12px', border:'1px solid #E6E3DC', borderRadius:10, background:'#FBFAF8', maxWidth:900 } },
+      h('span', { style:{ fontSize:11, fontWeight:800, letterSpacing:'0.06em', textTransform:'uppercase', color:'#6B7280' } }, 'Clips'),
+      h('span', { style:{ display:'inline-flex', borderRadius:8, overflow:'hidden' } }, seg('draft', 'Draft 360p'), seg('final', 'Final 720p')),
+      h('span', { style:{ fontSize:12, color:'#41505F' } }, all.length + ' take' + (all.length === 1 ? '' : 's') + ' made · ' + chosen + ' chosen' + (this.clipEngine() === 'omni' ? ' · about ' + this.usd(spent) + ' estimated so far' : '')),
+      h('span', { style:{ marginLeft:'auto' } }, h('button', { onClick:this.generateMissingClips, disabled:!todo.length || !!s.clipBatch, style:{ border:'1px solid #259821', background:'#259821', color:'#fff', borderRadius:8, padding:'5px 12px', fontSize:12, fontWeight:700,
+        cursor:(!todo.length || s.clipBatch) ? 'default' : 'pointer', opacity:(!todo.length || s.clipBatch) ? 0.55 : 1 } }, s.clipBatch ? 'Generating…' : 'Generate all missing (' + todo.length + ')' + (est != null && todo.length ? ' · about ' + this.usd(est) : ''))));
+  }
+  clipLayer(idx, k, key, frame){
+    const h = React.createElement, s = this.state, b = this.builderOf(s.videoBuilder), list = b.takes[key] || [], chosenId = b.chosen[key] || '';
+    const tier = this.builderTierNow(), est = this.clipEstimate(idx, k, tier), busy = !!(s.clipBusy || {})[key] || !!s.clipBatch && false;
+    const hasFrame = !!(frame && frame.status === 'done' && frame.url);
+    const btn = (text, onClick, o = {}) => h('button', { onClick, disabled:!!o.disabled, title:o.title || '', style:{ border:'1px solid ' + (o.go ? '#259821' : '#C9CEDA'), background:o.go ? '#259821' : '#fff',
+      color:o.go ? '#fff' : '#17325E', borderRadius:7, padding:'3px 9px', fontSize:11, fontWeight:700, cursor:o.disabled ? 'default' : 'pointer', opacity:o.disabled ? 0.55 : 1 } }, text);
+    const chip = (txt, color) => h('span', { style:{ fontSize:9.5, fontWeight:800, letterSpacing:'0.04em', textTransform:'uppercase', color:color || '#6B7280', border:'1px solid #E6E3DC', borderRadius:4, padding:'0 5px' } }, txt);
+    const cards = list.map(tk => {
+      const isChosen = tk.id === chosenId, running = tk.status === 'rendering', older = tk.status === 'done' && tk.frame && hasFrame && tk.frame !== frame.url;
+      return h('div', { key:tk.id, style:{ width:176, flex:'none' } },
+        h('div', { style:{ position:'relative', aspectRatio:'16/9', borderRadius:7, overflow:'hidden', background:'#1B2433', outline:isChosen ? '3px solid #259821' : '1px solid #DDD9D1' } },
+          tk.status === 'done' ? h('video', { src:tk.url, controls:true, preload:'metadata', muted:true, playsInline:true, style:{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' } }) : null,
+          running ? h('div', { style:{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:11, fontWeight:700 } }, 'Rendering…') : null,
+          (tk.status === 'error' || tk.status === 'interrupted') ? h('div', { style:{ position:'absolute', inset:0, padding:6, color:'#F7D9A0', fontSize:10.5, lineHeight:1.35, overflow:'hidden' } }, (tk.status === 'interrupted' ? 'Interrupted. ' : '') + (tk.error || (tk.status === 'interrupted' ? 'The page closed while this rendered; it may have finished.' : 'Failed.'))) : null,
+          isChosen ? h('span', { style:{ position:'absolute', left:4, top:4, background:'#259821', color:'#fff', fontSize:9.5, fontWeight:800, borderRadius:4, padding:'1px 5px' } }, 'CHOSEN') : null),
+        h('div', { style:{ display:'flex', gap:4, marginTop:3, flexWrap:'wrap', alignItems:'center' } },
+          chip(tk.tier === 'final' ? 'Final' : 'Draft', tk.tier === 'final' ? '#17325E' : '#6B7280'), chip((Math.round((tk.seconds || 0) * 10) / 10) + ' s'),
+          tk.est_usd != null ? chip(this.usd(tk.est_usd), '#6B7280') : null, older ? chip('older frame', '#B07A12') : null,
+          (!isChosen && tk.status === 'done') ? btn('Use', this.chooseClipTake(idx, k, tk.id), { go:true }) : null,
+          (tk.status === 'interrupted' && tk.job_id) ? btn('Recover', () => { delete (this._recovered || {})[tk.id]; this.recoverClipTakes(); }, { title:'Ask the server whether this clip finished' }) : null,
+          (!isChosen && !running) ? btn('✕', this.discardClipTake(idx, k, tk.id), { title:'Remove this take from the list (the file is kept)' }) : null));
+    });
+    return h('div', { style:{ marginTop:10, paddingTop:8, borderTop:'1px solid #ECE8DE' } },
+      h('div', { style:{ display:'flex', alignItems:'baseline', gap:8, marginBottom:6 } }, h('span', { style:{ fontSize:10.5, fontWeight:800, letterSpacing:'0.05em', textTransform:'uppercase', color:'#6B7280' } }, 'Clip'),
+        h('span', { style:{ fontSize:10.5, color:'#9AA1AD' } }, list.length ? list.length + ' take' + (list.length > 1 ? 's' : '') : 'none yet')),
+      list.length ? h('div', { style:{ display:'flex', gap:10, flexWrap:'wrap', marginBottom:8 } }, cards) : null,
+      h('div', { style:{ display:'flex', gap:6, alignItems:'center', flexWrap:'wrap' } },
+        btn(busy ? 'Rendering…' : (list.length ? '↻ Re-roll' : 'Generate clip') + ' (' + (tier === 'final' ? 'Final' : 'Draft') + ')' + (est != null ? ' · about ' + this.usd(est) : ''), this.generateClipTake(idx, k),
+          { go:!list.length, disabled:busy || !hasFrame, title:hasFrame ? (est == null ? 'Billed by fal; no estimate available' : 'Estimated at the measured Omni rate; the engine makes at least 3 s') : 'Choose a frame first' }),
+        !hasFrame ? h('span', { style:{ fontSize:10.5, color:'#9AA1AD' } }, 'Choose a frame first') : null));
+  }
   shotsBoard(){
     if (this.state.videoStep !== 'shots') return null;
     const h = React.createElement, s = this.state, rows = s.fullScript || [], fr = s.sceneFrames || {};
@@ -17383,7 +17557,8 @@ class Component extends DCLogic {
           skipped ? null : h('div', { style:{ display:'flex', gap:6, alignItems:'center', marginTop:8, flexWrap:'wrap' } },
             btn(busy ? 'Rendering\u2026' : (list.length ? '\uff0b Generate variant' : 'Generate frame'), this.generateFrameVariant(i, k), { go:!list.length, disabled:busy }),
             list.length ? btn('\u00d73', this.generateFrameVariants(i, k, 3), { disabled:busy, title:'Three more variants, one after another' }) : null,
-            h('span', { style:{ fontSize:10.5, color:'#9AA1AD' } }, '1 image each \u00b7 the shot keeps its current frame until you choose another')));
+            h('span', { style:{ fontSize:10.5, color:'#9AA1AD' } }, '1 image each \u00b7 the shot keeps its current frame until you choose another')),
+          skipped ? null : this.clipLayer(i, k, key, cur));
       });
       const role = this.beatRoleOf(r) || '';
       return h('div', { key:'sc' + i, style:{ marginBottom:18 } },
@@ -17400,6 +17575,7 @@ class Component extends DCLogic {
         h('span', { style:{ fontSize:14, fontWeight:600, color:'#6B7280' } }, '\u00b7 ' + nWith + ' / ' + nShots + ' have a frame \u00b7 ' + nVariants + ' kept variant' + (nVariants === 1 ? '' : 's'))),
       h('div', { style:{ fontSize:13, color:'#6B7280', marginBottom:12, maxWidth:760 } }, 'Choose the frame each shot is animated from. Generate variants, check them (a model looks for pasted panels, wrong anatomy, extra people), and pick one. '
         + 'Frames are cheap and the video is not, so this is the place to get the picture right. The Storyboard in Scripting shows the same chosen frames.'),
+      this.clipHeader(),
       needLock ? h('div', { style:{ background:'#FBF1DC', border:'1px solid #F0D9A6', borderRadius:10, padding:'8px 12px', fontSize:12.5, color:'#7A5B12', marginBottom:12, maxWidth:760 } }, 'Lock the cast and location first (Scripting step): every frame is generated from that one image.') : null,
       ...groups);
   }
@@ -18059,11 +18235,12 @@ class Component extends DCLogic {
   // behind the proxy, which used to cut them off as "render failed"). POST /produce-video starts a job
   // and returns a job_id; we poll /render-status until it's done, then hand back a result shaped exactly
   // like the old synchronous apiCall response, so every caller processes it unchanged.
-  async renderViaJob(body){
+  async renderViaJob(body, onJob){
     const start = await this.apiCall('/produce-video', body);
     const sd = (start && start.data) || {};
     if (!start || !start.ok || !sd.job_id) return start;   // error, or a server still answering synchronously
     const jid = sd.job_id;
+    if (typeof onJob === 'function') onJob(jid);
     for (let i = 0; i < 200; i++){                           // ~16 min ceiling at 5s between polls
       await new Promise(r => setTimeout(r, 5000));
       const s = await this.apiGet('/render-status/' + jid);
@@ -18322,6 +18499,42 @@ class Component extends DCLogic {
     const note = isRevise ? (this.state.prodPrompt.trim() || 'Revision') : 'First cut';
     const isFinal = this.tierNow() === 'standard' && this.costEngine() !== 'fal';   // fal has one model: neither Draft nor Final
     this.setState(s => ({ production:{ ...s.production, status:'rendering' } }));
+    const body = this.filmRenderBody(note);
+    const r = await this.renderViaJob(body);   // background job + poll — a full render runs minutes
+    const d = (r && r.data) || {};
+    const url = (r && r.ok && d.video_url) ? d.video_url : null;
+    const info = url ? { shots:d.shots || null, seconds:d.seconds || null, audio:d.audio || 'none',
+                         model:d.model || this.tierNow() } : null;
+    this.setState(s => {
+      const p = s.production;
+      const v = { v: p.versions.length + 1, note, aspect:p.aspect, music:p.music, ts: this.state.prodDuration, url,
+        quality: this.costEngine() === 'fal' ? 'Kling 3.0' : (isFinal ? 'Final' : 'Draft'), audio: info ? this.audioLabel(info.audio) : '' };
+      return { production:{ ...p, status:'ready', versions:[...p.versions, v] }, prodPrompt:'',
+        producedUrl: url || s.producedUrl, renderInfo: info || s.renderInfo,
+        providers: d.providers || s.providers,
+        // the silent cut stays on the server, so music can be swapped with no video spend
+        silentMaster: d.master || s.silentMaster, prodClips: d.clips || s.prodClips, prodShotClips: d.shot_clips || s.prodShotClips,
+        musicUrl: d.music_url || s.musicUrl, loudnessInfo: d.loudness || s.loudnessInfo };
+    });
+    if (!isRevise) this.addCreated({ type:'Video', title:(this.state.linkedBrief ? this.state.linkedBrief.title.replace(/ brief.*/i,'').trim()+' — produced film' : 'Produced film'), format:this.state.production.aspect+' · '+this.state.prodDuration, status:'Draft' });
+    // Forward wiring: a produced film gets its cut manifest started here, so the Edit room opens straight
+    // onto it instead of "No cut yet". Runs on the fresh render data (state may not have flushed yet).
+    if (url) this.startCutFromFilm(d.clips, d.master, d.shot_clips);
+    // B4 — surface the server's `detail` on failure AND on a 200 that carries a warning.
+    if (url) {
+      if (d.detail && !this.flagCredits(d.detail)) this.showToast(d.detail);
+      else if (!d.detail) this.showToast('Cut ready — ' + this.renderSummary(info) + '.', 'ok');
+    } else if (d && d.detail) {
+      if (!this.flagCredits(d.detail)) this.showToast(d.detail);
+    } else if (r && r.status === 501) {
+      this.showToast('Video rendering isn\u2019t configured on this server — showing the preview placeholder.');
+    } else {
+      this.showToast('Render failed' + (r && r.status ? ' (' + r.status + ')' : '') + ' — showing the preview placeholder.');
+    }
+  };
+
+  // The request a film render is made from (every frame attached, every setting). Shared by the full render and by the builder's single-shot clips, so the two cannot drift.
+  filmRenderBody(note){
     const p0 = this.state.production;
     // Attach each scene's approved storyboard frame: the backend animates the frame instead of
     // generating from text, so the film matches the board and the cast stays identical.
@@ -18357,39 +18570,8 @@ class Component extends DCLogic {
     const soundPlan = this.soundPlanPayload();
     if (soundPlan) body.sound_plan = soundPlan;
     Object.assign(body, this.loudnessParam());
-    const r = await this.renderViaJob(body);   // background job + poll — a full render runs minutes
-    const d = (r && r.data) || {};
-    const url = (r && r.ok && d.video_url) ? d.video_url : null;
-    const info = url ? { shots:d.shots || null, seconds:d.seconds || null, audio:d.audio || 'none',
-                         model:d.model || this.tierNow() } : null;
-    this.setState(s => {
-      const p = s.production;
-      const v = { v: p.versions.length + 1, note, aspect:p.aspect, music:p.music, ts: this.state.prodDuration, url,
-        quality: this.costEngine() === 'fal' ? 'Kling 3.0' : (isFinal ? 'Final' : 'Draft'), audio: info ? this.audioLabel(info.audio) : '' };
-      return { production:{ ...p, status:'ready', versions:[...p.versions, v] }, prodPrompt:'',
-        producedUrl: url || s.producedUrl, renderInfo: info || s.renderInfo,
-        providers: d.providers || s.providers,
-        // the silent cut stays on the server, so music can be swapped with no video spend
-        silentMaster: d.master || s.silentMaster, prodClips: d.clips || s.prodClips, prodShotClips: d.shot_clips || s.prodShotClips,
-        musicUrl: d.music_url || s.musicUrl, loudnessInfo: d.loudness || s.loudnessInfo };
-    });
-    if (!isRevise) this.addCreated({ type:'Video', title:(this.state.linkedBrief ? this.state.linkedBrief.title.replace(/ brief.*/i,'').trim()+' — produced film' : 'Produced film'), format:this.state.production.aspect+' · '+this.state.prodDuration, status:'Draft' });
-    // Forward wiring: a produced film gets its cut manifest started here, so the Edit room opens straight
-    // onto it instead of "No cut yet". Runs on the fresh render data (state may not have flushed yet).
-    if (url) this.startCutFromFilm(d.clips, d.master, d.shot_clips);
-    // B4 — surface the server's `detail` on failure AND on a 200 that carries a warning.
-    if (url) {
-      if (d.detail && !this.flagCredits(d.detail)) this.showToast(d.detail);
-      else if (!d.detail) this.showToast('Cut ready — ' + this.renderSummary(info) + '.', 'ok');
-    } else if (d && d.detail) {
-      if (!this.flagCredits(d.detail)) this.showToast(d.detail);
-    } else if (r && r.status === 501) {
-      this.showToast('Video rendering isn\u2019t configured on this server — showing the preview placeholder.');
-    } else {
-      this.showToast('Render failed' + (r && r.status ? ' (' + r.status + ')' : '') + ' — showing the preview placeholder.');
-    }
-  };
-
+    return body;
+  }
   downloadMp4 = () => {
     if (this.state.producedUrl) { const a=document.createElement('a'); a.href=this.state.producedUrl; a.download=this.brandFile()+'_Film_'+this.today()+'.mp4'; document.body.appendChild(a); a.click(); a.remove(); }
     else this.showToast('No rendered file yet — produce a cut and the MP4 downloads straight from the render.');
