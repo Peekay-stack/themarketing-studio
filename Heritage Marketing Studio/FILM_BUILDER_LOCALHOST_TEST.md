@@ -178,3 +178,24 @@ On a shot's clip layer there is a tick box: **Continue from the previous shot** 
 
 ## What to tell me
 Whether a chained join looks better than a cut between two separately animated frames; whether identity (face, wardrobe) or the pack drifts when a clip starts from a video's last frame; and whether you want Continue ON by default for the extra angles of a scene. If you want extend (adult shots only), say so and I will add it as its own slice.
+
+# Slice S7 - Budget, batches, storage (29 Oct 2026)
+
+Same set-up as before. **The storage purge DELETES FILES and cannot be undone. Try it on your local dev tenant only, never live.** The budget cap and compare spend nothing; x3 and batches spend at the measured rate (shown before you confirm).
+
+## What it is
+- **Cap** (Clips header, "Cap $"): your own limit on clip spending. "x% used" shows how much of it the estimated spend is. A batch (Generate all missing, Promote to Final, x3) STOPS at the cap and says so; a single clip asks first and lets you go over on purpose. Spend is an estimate (the measured Omni rate x the ordered seconds, over every finished take, unchosen ones included). It is not checked against Google billing. Kling has no estimate, so the cap does not apply to it.
+- **x3** next to Re-roll: three more takes of that shot, one after another, with the total in the confirm. **Compare takes**: plays all the finished takes of a shot together, muted and looping.
+- **Storage** strip: how big the media folder is (and what the biggest kinds are), how much disk is free, and how many unchosen frame variants and clip takes this film has. **Remove unchosen...** deletes only those, after telling you the size.
+
+## Click-through (about 10 minutes)
+1. Type a small cap (for example 0.30) in the Clips header. Press **Generate all missing** on a film with several shots missing clips. Expected: the confirm mentions the cap; the batch makes clips until the next one would pass the cap, then stops with "Stopped at your $0.30 cap".
+2. With the cap used up, press **Re-roll** on one shot. Expected: it asks "...over your cap. Make it anyway?" Say No: nothing is made. Say Yes: it is made.
+3. Press **x3** on a shot. Expected: a confirm with the total; with a cap it stops early.
+4. On a shot with two or more finished takes press **Compare takes**: they play together, silent, looping. **Stop compare** returns to normal.
+5. Press **Check storage**. Expected: the media folder size by kind and the free disk. Make a few frame variants and clip takes you do NOT choose, then look at the line "This film: n unchosen ... can be removed".
+6. Press **Remove unchosen...** Expected: a confirm with the number of files and the size, "cannot be undone", and the note about the Made list. Press **Cancel**: nothing is removed. Press OK on a throwaway film: those variants and takes disappear from the page and the folder shrinks (press Refresh).
+7. Check that nothing you chose went: your chosen frames and clips, the storyboard, the cast lock and any produced film still play.
+
+## What to tell me
+Whether the cap behaves the way you expect (stop vs ask), whether the estimate matches what Google bills you (compare the billing page after a few clips: that is the one thing I could not check), and whether you want an automatic reminder when the media folder passes a size you choose.

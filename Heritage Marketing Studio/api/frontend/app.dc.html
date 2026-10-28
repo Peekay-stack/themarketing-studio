@@ -12144,6 +12144,8 @@ class Component extends DCLogic {
     videoBuilder: null,                     // the film builder's saved state (takes.py): frame variants + which is chosen (S1a); clip takes, trims, budget come later. Saved with the film.
     variantBusy: {},                        // { [frameKey]: true } while a frame VARIANT is being generated
     clipBusy: {},                           // { [frameKey]: takeId } while a clip take is rendering
+    storage: null,                          // the last GET /media-usage reading (S7): {files, bytes, by_kind, disk_free_bytes}. Not saved.
+    cmpTakes: null,                         // null or {key, run}: the shot whose finished takes are playing together for comparison (S7). Not saved.
     chainOn: {},                            // { [frameKey]: bool } the person's "Continue from the previous shot" switch per shot (S4). Not saved: the take records how it was made.
     seqPreview: null,                       // the picture-only preview of the chosen, trimmed clips in script order: null (closed) or { i: the item playing, done }. Not saved.
     builderTier: 'draft',                   // the tier new clip takes are made at: 'draft' (Omni 360p) or 'final' (720p)
@@ -17384,6 +17386,9 @@ class Component extends DCLogic {
     const frame = (s0.sceneFrames || {})[fk];
     if (!(frame && frame.status === 'done' && frame.url)) { this.showToast('Choose a frame for this shot first \u2014 the clip is animated from it, never drawn from words.', 'warn'); return false; }
     const tier = opts.tier || this.builderTierNow(), engine = this.clipEngine(), secs = this.clipSecs(idx, k);
+    // One clip on its own may go past the cap if you say so; a BATCH never does (it stops, see generateMissingClips / promoteToFinal / generateClipTakes).
+    if (!opts.batch && engine === 'omni' && this.capWouldExceed(this.clipEstimate(idx, k, tier)) && typeof window !== 'undefined' && window.confirm
+        && !window.confirm('This clip is about ' + this.usd(this.clipEstimate(idx, k, tier)) + ' and would take the clips to about ' + this.usd(this.clipSpent() + this.clipEstimate(idx, k, tier)) + ', over your ' + this.usd(this.budgetCap()) + ' cap. Make it anyway?')) return false;
     const chain = this.chainWanted(idx, k), cfrom = chain ? this.chainSource(idx, k) : '', cbeats = chain && this.chainBeatsPossible(idx, k);      // continuity (S4): decided now, recorded on the take
     const take = { id:this.newTakeId('tk'), url:'', beats:[], tier, engine, seconds:secs, mode:chain ? 'chain' : 'frame', frame:frame.url, chain_from:cfrom, sig:'', job_id:'', status:'rendering', error:'', note:'',
       checks:[], est_usd:this.clipEstimate(idx, k, tier), created:new Date().toISOString().slice(0, 19) + 'Z' };
@@ -17516,6 +17521,101 @@ class Component extends DCLogic {
     if (tk.mode === 'chain' && tk.chain_from) return this.chainSource(idx, k) !== tk.chain_from;
     return !!(tk.frame && frame && frame.url && tk.frame !== frame.url);
   }
+  // ---------- the film builder, slice S7: budget, batches, retention ----------
+  // BUDGET. The cap is the person's own number (saved with the film, 0 = none). "Spent" is ESTIMATED: the measured Omni rate x the seconds each finished take was ordered at, over EVERY finished take (unchosen
+  // ones were paid for too). It is not reconciled against Google's billing (the API's usage block reports tokens, not dollars; the billing page is the only ground truth) and Kling (billed by fal) has no
+  // estimate, so the cap cannot apply to it. A single clip asks before going over the cap; a batch STOPS at it.
+  budgetCap(){ return ((this.builderOf(this.state.videoBuilder).budget || {}).cap_usd) || 0; }
+  clipSpent(){
+    const b = this.builderOf(this.state.videoBuilder);
+    return Object.keys(b.takes || {}).reduce((a, key) => a + (b.takes[key] || []).filter(x => x.status === 'done').reduce((z, x) => z + (x.est_usd || 0), 0), 0);
+  }
+  capWouldExceed(extra){ const cap = this.budgetCap(); return cap > 0 && extra != null && this.clipSpent() + extra > cap + 1e-9; }
+  capText(){ const cap = this.budgetCap(); return cap > 0 ? ' Your cap is ' + this.usd(cap) + '; about ' + this.usd(this.clipSpent()) + ' is spent. The batch stops at the cap.' : ''; }
+  setBudgetCap = (v) => {
+    const n = Math.max(0, Math.round((parseFloat(v) || 0) * 100) / 100);
+    this.setState(st => { const b = this.builderOf(st.videoBuilder); return { videoBuilder:{ ...b, budget:{ ...(b.budget || {}), cap_usd:n } } }; });
+  };
+  // N takes of ONE shot, one after another (a batch: it stops at the cap).
+  generateClipTakes = (idx, k, n) => async () => {
+    const s0 = this.state, tier = this.builderTierNow(), one = this.clipEstimate(idx, k, tier);
+    if (s0.clipBatch || (s0.clipBusy || {})[this.frameKey(idx, k)]) return;
+    const msg = 'Make ' + n + ' more takes of this shot at ' + (tier === 'final' ? 'Final (720p)' : 'Draft (360p)') + (one != null ? ' for about ' + this.usd(one * n) : ' (billed by fal; no estimate)') + '? They run one after another, and you pick the best.' + this.capText();
+    if (typeof window !== 'undefined' && window.confirm && !window.confirm(msg)) return;
+    this.setState({ clipBatch:true });
+    let done = 0, capStop = false;
+    for (let i = 0; i < n; i++) {
+      if (this.capWouldExceed(one)) { capStop = true; break; }
+      const ok = await this.generateClipTake(idx, k, { batch:true })(); if (ok) done++; else if (this._lastWasBilling) break;
+    }
+    this.setState({ clipBatch:false });
+    this.showToast(done + ' of ' + n + ' takes made.' + (capStop ? ' Stopped at your ' + this.usd(this.budgetCap()) + ' cap.' : ''), done === n ? 'ok' : 'warn');
+  };
+  // COMPARE: play every finished take of a shot together (muted, looping) so the differences are seen side by side.
+  toggleCompare = (key) => () => this.setState(st => (st.cmpTakes && st.cmpTakes.key === key) ? { cmpTakes:null } : { cmpTakes:{ key, run:((st.cmpTakes || {}).run || 0) + 1 } });
+  // RETENTION. Files are removed only when you ask and only for takes nobody chose. The server independently keeps anything a saved film uses and refuses everything that is not a generated frame or clip.
+  fmtBytes(n){ n = n || 0; return n >= 1e9 ? (n / 1e9).toFixed(1) + ' GB' : (n >= 1e6 ? (n / 1e6).toFixed(n >= 1e7 ? 0 : 1) + ' MB' : Math.max(1, Math.round(n / 1e3)) + ' KB'); }
+  // The /media files this film still needs: anything in the current storyboard, in a produced version, the silent master, the cast lock, or any chosen take (and the frame it was animated from).
+  mediaInUse(){
+    const s = this.state, b = this.builderOf(s.videoBuilder), keep = new Set();
+    const scan = (v) => { const m = JSON.stringify(v === undefined ? null : v).match(/\/media\/[A-Za-z0-9._-]+/g); (m || []).forEach(x => keep.add(x)); };
+    scan(s.sceneFrames); scan(s.production); scan(s.prodShotClips); scan(s.prodClips); scan(s.silentMaster); scan(s.producedUrl); scan(s.castRefUrl);
+    Object.keys(b.frame_chosen || {}).forEach(k => (b.frames[k] || []).filter(x => x.id === b.frame_chosen[k]).forEach(scan));
+    Object.keys(b.chosen || {}).forEach(k => (b.takes[k] || []).filter(x => x.id === b.chosen[k]).forEach(scan));
+    return keep;
+  }
+  // The files of this film's frame variants and clip takes that are not chosen and not otherwise in use: { urls, frames, clips }.
+  purgeCandidates(){
+    const b = this.builderOf(this.state.videoBuilder), keep = this.mediaInUse(), urls = new Set(); let frames = 0, clips = 0;
+    const take = (list, chosenId, kind) => (list || []).forEach(t => {
+      if (!t || t.id === chosenId || t.virtual || !(t.status === undefined || t.status === 'done')) return;
+      const mine = [t.url].concat((t.beats || []).map(x => x.url)).filter(u => u && /^\/media\//.test(u) && !keep.has(u));
+      if (mine.length && mine.every(u => !urls.has(u))) { mine.forEach(u => urls.add(u)); if (kind === 'frame') frames++; else clips++; }
+    });
+    Object.keys(b.frames || {}).forEach(k => take(b.frames[k], (b.frame_chosen || {})[k], 'frame'));
+    Object.keys(b.takes || {}).forEach(k => take(b.takes[k], (b.chosen || {})[k], 'clip'));
+    return { urls:[...urls], frames, clips };
+  }
+  checkStorage = async () => {
+    const u = await this.apiGet('/media-usage');
+    if (!u || typeof u.bytes !== 'number') { this.showToast('Couldn’t read the storage figures — try again.', 'warn'); return; }
+    this.setState({ storage:u });
+  };
+  purgeUnchosen = async () => {
+    const c = this.purgeCandidates();
+    if (!c.urls.length || this.state.clipBatch) return;
+    const dry = await this.apiCall('/media-purge', { urls:c.urls, dry_run:true });
+    if (!dry || !dry.ok) { this.showToast((dry && dry.data && dry.data.detail) || 'Couldn’t measure what can be removed — nothing was removed.', 'warn'); return; }
+    const d = dry.data, n = (d.deleted || []).length;
+    if (!n) { this.showToast('Nothing can be removed: ' + (((d.skipped || [])[0] || {}).reason || 'nothing is left over') + '.', 'info'); return; }
+    const msg = 'Remove ' + n + ' file' + (n > 1 ? 's' : '') + ' (' + this.fmtBytes(d.freed_bytes) + ') of frame variants and clip takes you did not choose?\n\nThis cannot be undone. Your chosen frames and clips, the storyboard, the cast lock and produced films are kept. '
+      + 'An item already listed under Made keeps its entry, but its picture or clip file will be gone.';
+    if (typeof window !== 'undefined' && window.confirm && !window.confirm(msg)) return;
+    const r = await this.apiCall('/media-purge', { urls:c.urls, dry_run:false });
+    if (!r || !r.ok) { this.showToast((r && r.data && r.data.detail) || 'The removal failed — nothing was changed.', 'warn'); return; }
+    const gone = new Set((r.data.deleted || []).map(x => x.url));
+    this.setState(st => {
+      const b = this.builderOf(st.videoBuilder), drop = (list, chosenId) => (list || []).filter(t => t.id === chosenId || t.virtual || !([t.url].concat((t.beats || []).map(x => x.url)).some(u => gone.has(u))));
+      const frames = {}, takes = {};
+      Object.keys(b.frames || {}).forEach(k => { frames[k] = drop(b.frames[k], (b.frame_chosen || {})[k]); });
+      Object.keys(b.takes || {}).forEach(k => { takes[k] = drop(b.takes[k], (b.chosen || {})[k]); });
+      return { videoBuilder:{ ...b, frames, takes } };
+    });
+    this.checkStorage();
+    this.showToast('Removed ' + (r.data.deleted || []).length + ' file' + ((r.data.deleted || []).length > 1 ? 's' : '') + ', freeing ' + this.fmtBytes(r.data.freed_bytes) + '.' + ((r.data.skipped || []).length ? ' ' + r.data.skipped.length + ' kept (still in use).' : ''), 'ok');
+  };
+  storageStrip(){
+    const h = React.createElement, s = this.state, c = this.purgeCandidates(), u = s.storage;
+    const btn = (text, onClick, o = {}) => h('button', { onClick, disabled:!!o.disabled, title:o.title || '', style:{ border:'1px solid #C9CEDA', background:'#fff', color:'#17325E', borderRadius:7, padding:'3px 10px', fontSize:11.5, fontWeight:700, cursor:o.disabled ? 'default' : 'pointer', opacity:o.disabled ? 0.55 : 1 } }, text);
+    const kinds = u ? Object.keys(u.by_kind || {}).sort((a, b) => u.by_kind[b].bytes - u.by_kind[a].bytes).slice(0, 3).map(k => k + ' ' + this.fmtBytes(u.by_kind[k].bytes)).join(', ') : '';
+    return h('div', { style:{ display:'flex', alignItems:'center', gap:10, flexWrap:'wrap', margin:'0 0 14px', padding:'8px 12px', border:'1px solid #E6E3DC', borderRadius:10, background:'#FBFAF8', maxWidth:900 } },
+      h('span', { style:{ fontSize:11, fontWeight:800, letterSpacing:'0.06em', textTransform:'uppercase', color:'#6B7280' } }, 'Storage'),
+      u ? h('span', { style:{ fontSize:12, color:'#41505F' } }, 'Media folder ' + this.fmtBytes(u.bytes) + ' in ' + u.files + ' files (' + kinds + ') · disk free ' + this.fmtBytes(u.disk_free_bytes)) : h('span', { style:{ fontSize:12, color:'#9AA1AD' } }, 'Not checked yet'),
+      h('span', { style:{ fontSize:12, color:c.urls.length ? '#B07A12' : '#41505F', fontWeight:c.urls.length ? 700 : 400 } },
+        c.urls.length ? ('This film: ' + c.frames + ' unchosen frame variant' + (c.frames === 1 ? '' : 's') + ' and ' + c.clips + ' unchosen clip take' + (c.clips === 1 ? '' : 's') + ' can be removed') : 'This film: nothing unchosen to remove'),
+      h('span', { style:{ marginLeft:'auto', display:'inline-flex', gap:8 } }, btn(u ? 'Refresh' : 'Check storage', this.checkStorage),
+        btn('Remove unchosen…', this.purgeUnchosen, { disabled:!c.urls.length || !!s.clipBatch, title:'Asks first. Removes only frame variants and clip takes you did not choose, never a chosen one, never the storyboard, cast lock or a produced film' })));
+  }
   async awaitRenderJob(jid, polls = 200){
     for (let i = 0; i < polls; i++) {
       const st = await this.apiGet('/render-status/' + jid);
@@ -17559,13 +17659,16 @@ class Component extends DCLogic {
     const todo = this.missingClipShots(), tier = this.builderTierNow();
     if (!todo.length || this.state.clipBatch) return;
     const est = this.clipEngine() === 'omni' ? todo.reduce((a, x) => a + this.clipEstimate(x.idx, x.k, tier), 0) : null;
-    const msg = 'Generate ' + todo.length + ' clip' + (todo.length > 1 ? 's' : '') + ' at ' + (tier === 'final' ? 'Final (720p)' : 'Draft (360p)') + (est != null ? ' for about ' + this.usd(est) : ' (billed by fal; no estimate)') + '? They run one after another.';
+    const msg = 'Generate ' + todo.length + ' clip' + (todo.length > 1 ? 's' : '') + ' at ' + (tier === 'final' ? 'Final (720p)' : 'Draft (360p)') + (est != null ? ' for about ' + this.usd(est) : ' (billed by fal; no estimate)') + '? They run one after another.' + this.capText();
     if (typeof window !== 'undefined' && window.confirm && !window.confirm(msg)) return;
     this.setState({ clipBatch:true });
-    let done = 0;
-    for (const x of todo) { const ok = await this.generateClipTake(x.idx, x.k)(); if (ok) done++; else if (this._lastWasBilling) break; }
+    let done = 0, capStop = false;
+    for (const x of todo) {
+      if (this.capWouldExceed(this.clipEstimate(x.idx, x.k, tier))) { capStop = true; break; }         // a batch STOPS at the cap, it does not ask
+      const ok = await this.generateClipTake(x.idx, x.k, { batch:true })(); if (ok) done++; else if (this._lastWasBilling) break;
+    }
     this.setState({ clipBatch:false });
-    this.showToast(done + ' of ' + todo.length + ' clip' + (todo.length > 1 ? 's' : '') + ' made.', done === todo.length ? 'ok' : 'warn');
+    this.showToast(done + ' of ' + todo.length + ' clip' + (todo.length > 1 ? 's' : '') + ' made.' + (capStop ? ' Stopped at your ' + this.usd(this.budgetCap()) + ' cap.' : ''), (done === todo.length) ? 'ok' : 'warn');
   };
   // ---------- the film builder, slice S3: assemble the chosen clips, promote them to Final ----------
   // Every ACTIVE shot (skipped ones are not in the film) and whether it has a chosen, finished clip. `quality` is what the assembled film is labelled: Draft, Final or Mixed.
@@ -17782,10 +17885,13 @@ class Component extends DCLogic {
     const est = st.draft.reduce((a, x) => a + this.clipEstimate(x.idx, x.k, 'final'), 0);
     if (typeof window !== 'undefined' && window.confirm && !window.confirm('Re-render ' + st.draft.length + ' chosen clip' + (st.draft.length > 1 ? 's' : '') + ' at Final (720p) for about ' + this.usd(est) + '? The Draft takes are kept; each Final take becomes the chosen one when it is done. They run one after another.')) return;
     this.setState({ clipBatch:true });
-    let done = 0;
-    for (const x of st.draft) { const ok = await this.generateClipTake(x.idx, x.k, { tier:'final', choose:true })(); if (ok) done++; else if (this._lastWasBilling) break; }
+    let done = 0, capStop = false;
+    for (const x of st.draft) {
+      if (this.capWouldExceed(this.clipEstimate(x.idx, x.k, 'final'))) { capStop = true; break; }
+      const ok = await this.generateClipTake(x.idx, x.k, { tier:'final', choose:true, batch:true })(); if (ok) done++; else if (this._lastWasBilling) break;
+    }
     this.setState({ clipBatch:false });
-    this.showToast(done + ' of ' + st.draft.length + ' clip' + (st.draft.length > 1 ? 's' : '') + ' promoted to Final.', done === st.draft.length ? 'ok' : 'warn');
+    this.showToast(done + ' of ' + st.draft.length + ' clip' + (st.draft.length > 1 ? 's' : '') + ' promoted to Final.' + (capStop ? ' Stopped at your ' + this.usd(this.budgetCap()) + ' cap.' : ''), done === st.draft.length ? 'ok' : 'warn');
   };
   // The strip under the clip header: how many shots have a chosen clip, Promote to Final, Assemble, and the latest assembled film.
   assembleStrip(){
@@ -17826,6 +17932,12 @@ class Component extends DCLogic {
       h('span', { style:{ fontSize:11, fontWeight:800, letterSpacing:'0.06em', textTransform:'uppercase', color:'#6B7280' } }, 'Clips'),
       h('span', { style:{ display:'inline-flex', borderRadius:8, overflow:'hidden' } }, seg('draft', 'Draft 360p'), seg('final', 'Final 720p')),
       h('span', { style:{ fontSize:12, color:'#41505F' } }, all.length + ' take' + (all.length === 1 ? '' : 's') + ' made · ' + chosen + ' chosen' + (this.clipEngine() === 'omni' ? ' · about ' + this.usd(spent) + ' estimated so far' : '')),
+      this.clipEngine() === 'omni' ? h('label', { title:'Your own limit on clip spending (estimated). A batch stops at it; a single clip asks first. 0 or empty = no cap. Kling is billed by fal and has no estimate, so the cap does not apply to it.',
+        style:{ display:'inline-flex', alignItems:'center', gap:5, fontSize:12, color:'#41505F' } }, 'Cap $',
+        h('input', { type:'number', min:0, step:1, value:this.budgetCap() || '', placeholder:'none', onChange:ev => this.setBudgetCap(ev.target.value),
+          style:{ width:64, border:'1px solid #C9CEDA', borderRadius:6, padding:'3px 6px', fontSize:12 } }),
+        this.budgetCap() > 0 ? h('span', { style:{ fontWeight:700, color:spent > this.budgetCap() ? '#C0392B' : (spent >= 0.8 * this.budgetCap() ? '#B07A12' : '#1A8A7A') } },
+          Math.round(spent / this.budgetCap() * 100) + '% used' + (spent > this.budgetCap() ? ' — over' : '')) : null) : null,
       h('span', { style:{ marginLeft:'auto' } }, h('button', { onClick:this.generateMissingClips, disabled:!todo.length || !!s.clipBatch, style:{ border:'1px solid #259821', background:'#259821', color:'#fff', borderRadius:8, padding:'5px 12px', fontSize:12, fontWeight:700,
         cursor:(!todo.length || s.clipBatch) ? 'default' : 'pointer', opacity:(!todo.length || s.clipBatch) ? 0.55 : 1 } }, s.clipBatch ? 'Generating…' : 'Generate all missing (' + todo.length + ')' + (est != null && todo.length ? ' · about ' + this.usd(est) : ''))));
   }
@@ -17858,12 +17970,13 @@ class Component extends DCLogic {
     const btn = (text, onClick, o = {}) => h('button', { onClick, disabled:!!o.disabled, title:o.title || '', style:{ border:'1px solid ' + (o.go ? '#259821' : '#C9CEDA'), background:o.go ? '#259821' : '#fff',
       color:o.go ? '#fff' : '#17325E', borderRadius:7, padding:'3px 9px', fontSize:11, fontWeight:700, cursor:o.disabled ? 'default' : 'pointer', opacity:o.disabled ? 0.55 : 1 } }, text);
     const chip = (txt, color) => h('span', { style:{ fontSize:9.5, fontWeight:800, letterSpacing:'0.04em', textTransform:'uppercase', color:color || '#6B7280', border:'1px solid #E6E3DC', borderRadius:4, padding:'0 5px' } }, txt);
+    const cmp = (s.cmpTakes && s.cmpTakes.key === key) ? s.cmpTakes : null, nDone = list.filter(x => x.status === 'done').length;
     const cards = list.map(tk => {
       const isChosen = tk.id === chosenId, running = tk.status === 'rendering', older = tk.status === 'done' && hasFrame && this.clipIsOlder(idx, k, tk, frame);
       const flags = this.clipChecksOf(tk), checking = !!(s.takeChecking || {})[tk.id];
       return h('div', { key:tk.id, style:{ width:176, flex:'none' } },
         h('div', { style:{ position:'relative', aspectRatio:'16/9', borderRadius:7, overflow:'hidden', background:'#1B2433', outline:isChosen ? '3px solid #259821' : '1px solid #DDD9D1' } },
-          tk.status === 'done' ? h('video', { src:tk.url, controls:true, preload:'metadata', muted:true, playsInline:true, style:{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' } }) : null,
+          tk.status === 'done' ? h('video', { key:tk.id + (cmp ? '-c' + cmp.run : ''), src:tk.url, controls:true, preload:cmp ? 'auto' : 'metadata', muted:true, playsInline:true, autoPlay:!!cmp, loop:!!cmp, style:{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' } }) : null,
           running ? h('div', { style:{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:11, fontWeight:700 } }, 'Rendering…') : null,
           (tk.status === 'error' || tk.status === 'interrupted') ? h('div', { style:{ position:'absolute', inset:0, padding:6, color:'#F7D9A0', fontSize:10.5, lineHeight:1.35, overflow:'hidden' } }, (tk.status === 'interrupted' ? 'Interrupted. ' : '') + (tk.error || (tk.status === 'interrupted' ? 'The page closed while this rendered; it may have finished.' : 'Failed.'))) : null,
           isChosen ? h('span', { style:{ position:'absolute', left:4, top:4, background:'#259821', color:'#fff', fontSize:9.5, fontWeight:800, borderRadius:4, padding:'1px 5px' } }, 'CHOSEN') : null),
@@ -17891,6 +18004,8 @@ class Component extends DCLogic {
       h('div', { style:{ display:'flex', gap:6, alignItems:'center', flexWrap:'wrap' } },
         btn(busy ? 'Rendering…' : (list.length ? '↻ Re-roll' : 'Generate clip') + ' (' + (tier === 'final' ? 'Final' : 'Draft') + ')' + (est != null ? ' · about ' + this.usd(est) : ''), this.generateClipTake(idx, k),
           { go:!list.length, disabled:busy || !hasFrame, title:hasFrame ? (est == null ? 'Billed by fal; no estimate available' : 'Estimated at the measured Omni rate; the engine makes at least 3 s') : 'Choose a frame first' }),
+        (list.length && hasFrame) ? btn('×3', this.generateClipTakes(idx, k, 3), { disabled:busy || !!s.clipBatch, title:'Three more takes of this shot, one after another (asks first with the total; a batch stops at your cap)' }) : null,
+        nDone >= 2 ? btn(cmp ? 'Stop compare' : 'Compare takes', this.toggleCompare(key), { title:'Plays every finished take of this shot together, muted and looping, to compare them side by side' }) : null,
         !hasFrame ? h('span', { style:{ fontSize:10.5, color:'#9AA1AD' } }, 'Choose a frame first') : null));
   }
   shotsBoard(){
@@ -17958,6 +18073,7 @@ class Component extends DCLogic {
         + 'Frames are cheap and the video is not, so this is the place to get the picture right. The Storyboard in Scripting shows the same chosen frames.'),
       this.clipHeader(),
       this.assembleStrip(),
+      this.storageStrip(),
       needLock ? h('div', { style:{ background:'#FBF1DC', border:'1px solid #F0D9A6', borderRadius:10, padding:'8px 12px', fontSize:12.5, color:'#7A5B12', marginBottom:12, maxWidth:760 } }, 'Lock the cast and location first (Scripting step): every frame is generated from that one image.') : null,
       ...groups);
   }

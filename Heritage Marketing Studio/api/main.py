@@ -56,6 +56,7 @@ import sceneshots
 import flowreview
 import framecheck
 import takeqa
+import mediapurge
 import filmdirect
 import filmedit
 import selfcheck
@@ -3218,6 +3219,26 @@ def take_look(payload: dict):
     out = framecheck.result(raw)
     out["usage"] = usage
     return out
+
+
+@app.get("/media-usage")
+def media_usage():
+    """How much the media folder holds (film builder S7, retention): {files, bytes, by_kind, disk_free_bytes}. Read-only."""
+    return mediapurge.usage(gemini.MEDIA_DIR)
+
+
+@app.post("/media-purge")
+def media_purge(payload: dict):
+    """Remove the files of takes nobody chose, ON REQUEST ONLY (film builder S7). Body: `urls` (served /media paths) and `dry_run` (default TRUE: only measure; send false to delete).
+
+    Only generated frames and clips (`frame-`, `shot-`, `chain-` files) can ever be removed, and anything a saved film still uses (the chosen frame and clip of every shot, current storyboard
+    frames, the cast reference) is kept even if it is named. Returns {dry_run, deleted: [{url, bytes}], skipped: [{url, reason}], freed_bytes}."""
+    urls = payload.get("urls")
+    if not isinstance(urls, list):
+        return JSONResponse(status_code=400, content={"detail": "Send `urls`: a list of /media paths."})
+    if len(urls) > mediapurge.MAX_URLS:
+        return JSONResponse(status_code=400, content={"detail": f"At most {mediapurge.MAX_URLS} files per request."})
+    return mediapurge.purge(gemini.MEDIA_DIR, filmscript.DIR, urls, dry_run=payload.get("dry_run") is not False)
 
 
 @app.post("/production-bible-docx")

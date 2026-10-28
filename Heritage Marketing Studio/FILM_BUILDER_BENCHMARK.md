@@ -122,3 +122,19 @@ Acceptance target 4 (reorder invariants: frames, takes, trims, notes and caption
 | Size of the change | - | +74/-2 frontend, +86 takeqa | +43/-7 frontend, +62/-6 `main.py`, +14 `filmcut.py`, +1 `takes.py`, 2 test files |
 
 **Not measured yet (needs a paid run):** whether a chained clip from the real engine is a smoother join than two separately animated frames, and whether identity and the pack hold when a clip starts from a video's last frame. The code paths are proven; the visual result is not.
+
+## 10. After S7 (budget, batches, retention)
+
+| Check | Baseline | After S4a | After S7 |
+|---|---|---|---|
+| Python suites (s0, s2, s4, takeqa, coverage_plan, scene_shots, omni, videoprompt, packqa, stitch_freeze) | 45 / - / - / - / 79 / 101 / 24 / 33 / 19 / 13 | + s2 20, s4 18, takeqa 26 | unchanged; **+ mediapurge = 20** |
+| `test_surfaces_wiring`, `test_tools` | behave, 18/0 | same | same |
+| `checkfe`, `partials verify` (bytes) | pass, 2,549,195 | 2,580,391 | pass, 2,593,060 |
+| `selfcheck` | 1,473 / 0 | 1,496 / 0 | 1,498 / 0 |
+| `app.dc.html` CRLF | 0 | 0 | 0 (`main.py` CRLF kept, `mediapurge.py` LF) |
+| Page checks | - | reorder 18, preview 14, take QC 19, chain 21 | + budget/storage 29 |
+| Size of the change | - | +43/-7 frontend | +124/-8 frontend, +21 `main.py`, +129 `mediapurge.py`, 2 test files |
+
+**Disk benchmark (local tenant, measured before building):** media folder 648 MB in 665 files: frame 404 MB (418), still 141 MB (148), kv 122 MB (31), shot 6.7 MB (21 clips), bed 3.0 MB, vo 0.9 MB. A video clip averages about 0.3 MB; a frame about 1 MB. At that rate the 10 GB live disk holds roughly 10,000 frames, so frame variants (up to three per press, files never deleted before S7) are the thing to watch.
+
+**Safety benchmark (retention):** 20 checks including hostile names (traversal, other folders, full URLs, voice/music/key-visual/trim/cast files), everything a saved film uses kept even when named, dry run by default, a string "false" is still a dry run, the 500-file cap. Nothing in the real tenant was deleted during testing.
