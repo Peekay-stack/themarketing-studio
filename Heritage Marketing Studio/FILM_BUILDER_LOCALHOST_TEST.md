@@ -140,3 +140,22 @@ In the assemble strip (top of **Shots**) there is a **Preview sequence** button.
 
 ## What to tell me
 Whether the preview is clear enough to judge pace and order without assembling, and whether you want the voice line shown as text over each segment.
+
+# Slice S5 - Take QC (29 Oct 2026)
+
+Same set-up as before. The automatic checks are free (a second or two of ffmpeg). **Look** is the only paid part: one model call per press.
+
+## What it is
+Every clip take now gets looked at the moment it finishes. A chip on the take says "checked" (nothing found) or "! n" (n things to look at), with the notes underneath in amber. The checks: does the clip play; does the picture move (a frozen or near-still clip is flagged); is it black (or does it fade in from black); is it as long as ordered; does it start from almost the same picture as the previous shot's clip (a repeat). **Look** asks a model to look at the clip's middle frame for pasted panels, extra or missing people, wrong anatomy or unwanted text. Nothing is ever blocked: you decide.
+
+## Click-through (about 8 minutes)
+1. Generate a clip (Draft) on a shot. Expected: when it appears, a chip shows within a couple of seconds. On a normal clip: "checked". Press **Re-check** to run it again.
+2. Make two clips from the SAME frame on two neighbouring shots (or re-roll one shot, choose it, and look at the next). Expected: the second one is flagged "Repeats the previous shot".
+3. If you have an old or odd clip (a still image made into video, a black clip), press **Check** on it. Expected: "Barely moves" or "Black".
+4. Press **Look** on a clip. Expected: after a few seconds either a note naming a real defect (for example "Anatomy: ...") or nothing new; the chip says checked. Press **Re-check** afterwards: the model's note is still there.
+5. Press **Accept** on a flagged take. Expected: its chip and note go, and the line in the assemble strip ("Checks on chosen clips (advisory, you decide): ...") no longer lists it. **Re-check** puts the notes back.
+6. With a flagged clip chosen, try **Assemble film**. Expected: it still works (checks never block).
+7. A shot longer than 8 s (several continuing beats): the notes say which part ("Part 2: ...").
+
+## What to tell me
+Any clip that was flagged and was fine (a false alarm), and any clip with a real problem that no check caught. The second kind is what Look is for; if Look misses it too, send me the clip and I will see what else can be measured.

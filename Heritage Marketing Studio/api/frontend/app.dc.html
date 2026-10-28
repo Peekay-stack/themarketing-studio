@@ -17406,6 +17406,7 @@ class Component extends DCLogic {
       if (!this._lastWasBilling) this.showToast('Shot ' + (k + 1) + ' of scene ' + this.sceneNo(row, idx) + ': ' + patch.error, 'warn');
       return false;
     }
+    this.checkClipTake(idx, k, take.id)().catch(() => {});       // look at the new clip at once (free, a second or two); the result is a chip on the take
     return true;
   };
   chooseClipTake = (idx, k, id) => () => {
@@ -17421,6 +17422,68 @@ class Component extends DCLogic {
       if (!(b.takes[fk] || []).length || b.chosen[fk] === id || (s.clipBusy || {})[fk] === id) return {};      // never the chosen take, never one that is rendering
       return { videoBuilder:{ ...b, takes:{ ...b.takes, [fk]:b.takes[fk].filter(x => x.id !== id) } } }; });
   };
+  // ---------- the film builder, slice S5: take QC ----------
+  // Cheap, deterministic checks on a finished clip (POST /take-check: does it play, does the picture move, is it black, as long as ordered, a repeat of the previous shot), run on its own when a take
+  // finishes, plus an optional model look at the middle frame (POST /take-look). Advisory chips on the take: nothing here blocks Use, assemble or Promote.
+  CLIP_LOOK_IDS = ['collage', 'extra-people', 'missing-people', 'anatomy', 'text', 'mismatch', 'other', 'look'];
+  // The notes still standing on a take: flagged checks the person has not accepted.
+  clipChecksOf(tk){ return (tk && !tk.check_accepted && Array.isArray(tk.checks)) ? tk.checks.filter(c => c && c.verdict === 'check') : []; }
+  // Every shot that is in the film, in script order: [{idx, k, key}].
+  activeShotKeys(){
+    const out = [];
+    (this.state.fullScript || []).forEach((r, i) => [{ k:0 }].concat(this.extraShots(r).map((sh, j) => ({ k:j + 1, sh }))).forEach(({ k, sh }) => { if (!(sh && sh.skip)) out.push({ idx:i, k, key:this.frameKey(i, k) }); }));
+    return out;
+  }
+  // The url of the PREVIOUS shot's chosen clip (for the repeat check), or ''.
+  prevChosenUrl(idx, k){
+    const keys = this.activeShotKeys(), n = keys.findIndex(x => x.idx === idx && x.k === k);
+    if (n < 1) return '';
+    const b = this.builderOf(this.state.videoBuilder), pk = keys[n - 1].key, tk = (b.takes[pk] || []).find(x => x.id === b.chosen[pk]);
+    return (tk && tk.status === 'done' && tk.url) ? tk.url : '';
+  }
+  checkClipTake = (idx, k, id) => async () => {
+    const s = this.state, fk = this.frameKey(idx, k), tk = (this.builderOf(s.videoBuilder).takes[fk] || []).find(x => x.id === id);
+    if (!tk || tk.status !== 'done' || !tk.url || (s.takeChecking || {})[id]) return;
+    this.setState(st => ({ takeChecking:{ ...st.takeChecking, [id]:true } }));
+    const parts = (tk.beats && tk.beats.length) ? tk.beats : [{ url:tk.url, seconds:tk.seconds }], prev = this.prevChosenUrl(idx, k), merged = {};
+    let failed = '';
+    for (let n = 0; n < parts.length; n++) {
+      const r = await this.apiCall('/take-check', { url:parts[n].url, seconds:parts[n].seconds || 0, ...((n === 0 && prev) ? { prev_url:prev } : {}) });
+      const d = (r && r.data) || {};
+      if (!r || !r.ok) { failed = d.detail || 'Couldn’t check that clip.'; break; }
+      (d.checks || []).forEach(c => {
+        const note = c.note ? (parts.length > 1 ? 'Part ' + (n + 1) + ': ' + c.note : c.note) : '', m = merged[c.id];
+        if (!m) merged[c.id] = { ...c, note }; else if (c.verdict === 'check') merged[c.id] = { ...m, verdict:'check', note:[m.note, note].filter(Boolean).join(' ') };
+      });
+    }
+    this.setState(st => {
+      const tc = { ...st.takeChecking }; delete tc[id];
+      const b = this.builderOf(st.videoBuilder), cur = (b.takes[fk] || []).find(x => x.id === id);
+      if (failed || !cur) return { takeChecking:tc };
+      const kept = (cur.checks || []).filter(c => this.CLIP_LOOK_IDS.indexOf(c.id) >= 0);          // an earlier model look stays
+      return { takeChecking:tc, videoBuilder:{ ...b, takes:{ ...b.takes, [fk]:b.takes[fk].map(x => x.id === id ? { ...x, checks:Object.values(merged).concat(kept), check_accepted:false } : x) } } };
+    });
+    if (failed) this.showToast(failed, 'warn');
+  };
+  // The optional model look at the clip's middle frame: one model call, the same look a storyboard frame gets.
+  lookClipTake = (idx, k, id) => async () => {
+    const s = this.state, fk = this.frameKey(idx, k), row = (s.fullScript || [])[idx], tk = (this.builderOf(s.videoBuilder).takes[fk] || []).find(x => x.id === id);
+    if (!tk || tk.status !== 'done' || !tk.url || !row || (s.takeChecking || {})[id]) return;
+    const rr = k ? this.shotRow(row, k) : row;
+    this.setState(st => ({ takeChecking:{ ...st.takeChecking, [id]:true } }));
+    const r = await this.apiCall('/take-look', { url:tk.url, description:(rr && rr.visual) || '', cast:s.videoCharacters || '', wardrobe:s.videoWardrobe || '', pack_expected:!!(rr && this.packOnShot(rr)) });
+    const d = (r && r.data) || {};
+    this.setState(st => {
+      const tc = { ...st.takeChecking }; delete tc[id];
+      const b = this.builderOf(st.videoBuilder), cur = (b.takes[fk] || []).find(x => x.id === id);
+      if (!r || !r.ok || !cur) return { takeChecking:tc };
+      const rest = (cur.checks || []).filter(c => this.CLIP_LOOK_IDS.indexOf(c.id) < 0);
+      const looked = (d.checks && d.checks.length) ? d.checks : [{ id:'look', label:'Model look', verdict:'ok', note:d.seen || '' }];
+      return { takeChecking:tc, videoBuilder:{ ...b, takes:{ ...b.takes, [fk]:b.takes[fk].map(x => x.id === id ? { ...x, checks:rest.concat(looked), check_accepted:false } : x) } } };
+    });
+    if (!r || !r.ok) this.showToast(d.detail || 'Couldn’t look at that clip — try again.', 'warn');
+  };
+  acceptClipChecks = (idx, k, id) => () => this.patchClipTake(this.frameKey(idx, k), id, { check_accepted:true });
   async awaitRenderJob(jid, polls = 200){
     for (let i = 0; i < polls; i++) {
       const st = await this.apiGet('/render-status/' + jid);
@@ -17476,6 +17539,7 @@ class Component extends DCLogic {
   // Every ACTIVE shot (skipped ones are not in the film) and whether it has a chosen, finished clip. `quality` is what the assembled film is labelled: Draft, Final or Mixed.
   assembleStatus(){
     const s = this.state, b = this.builderOf(s.videoBuilder), missing = [], older = [], draft = [], final = [];
+    const flagged = [];                                       // chosen clips with checks standing (advisory)
     let total = 0, planned = 0, kept = 0, trimmedN = 0;       // seconds: what the script plans for the shots, and what the chosen (trimmed) clips will give
     (s.fullScript || []).forEach((r, i) => {
       [{ k:0 }].concat(this.extraShots(r).map((sh, j) => ({ k:j + 1, sh }))).forEach(({ k, sh }) => {
@@ -17491,11 +17555,12 @@ class Component extends DCLogic {
         (tk.tier === 'final' ? final : draft).push({ idx:i, k, key, label, secs:tk.seconds });
         const tr = this.trimOf(b, key, tk);
         if (tr.out != null) trimmedN++;
+        const fl = this.clipChecksOf(tk); if (fl.length) flagged.push({ idx:i, k, key, label, notes:fl.map(c => c.label).join(', ') });
         const have = tr.out != null ? tr.out - tr.in : ((tk.beats && tk.beats.length) ? tk.beats.reduce((x, c) => x + (c.seconds || 0), 0) : (tk.seconds || 0));
         kept += Math.min(have, want);                       // a longer clip is cut to its beat; a shorter one shrinks the beat
       });
     });
-    return { total, missing, older, draft, final, planned, kept, trimmedN, complete:total > 0 && !missing.length, quality:(draft.length && final.length) ? 'Mixed' : (final.length ? 'Final' : 'Draft') };
+    return { total, missing, older, draft, final, planned, kept, trimmedN, flagged, complete:total > 0 && !missing.length, quality:(draft.length && final.length) ? 'Mixed' : (final.length ? 'Final' : 'Draft') };
   }
   // The `use_clips` payload: {key: [{url, seconds, mode}]} for every chosen finished take (a multi-beat shot sends one clip per beat, in order).
   chosenClipsPayload(){
@@ -17709,6 +17774,7 @@ class Component extends DCLogic {
       st.total ? h('div', { style:{ fontSize:11.5, color:'#41505F', marginTop:4 } }, 'Timeline: ' + (Math.round(st.kept * 10) / 10) + ' s of the ' + st.planned + ' s planned' + (st.complete ? '' : ' (so far)')
         + (st.trimmedN ? ' · ' + st.trimmedN + ' clip' + (st.trimmedN > 1 ? 's' : '') + ' trimmed' : '')) : null,
       this.seqPlayer(),
+      st.flagged.length ? h('div', { style:{ fontSize:11.5, color:'#B07A12', marginTop:4 } }, 'Checks on chosen clips (advisory, you decide): ' + st.flagged.slice(0, 5).map(x => x.label + ' — ' + x.notes).join('; ') + (st.flagged.length > 5 ? '; and ' + (st.flagged.length - 5) + ' more' : '')) : null,
       !st.complete ? h('div', { style:{ fontSize:11.5, color:'#B07A12', marginTop:4 } }, 'Still to choose: ' + st.missing.slice(0, 6).map(x => x.label).join(', ') + (st.missing.length > 6 ? ' and ' + (st.missing.length - 6) + ' more' : '')) : null,
       st.older.length ? h('div', { style:{ fontSize:11.5, color:'#B07A12', marginTop:4 } }, st.older.length + ' chosen clip' + (st.older.length > 1 ? 's were' : ' was') + ' animated from an earlier frame: ' + st.older.slice(0, 4).map(x => x.label).join(', ')) : null,
       h('div', { style:{ fontSize:11, color:'#9AA1AD', marginTop:4 } }, 'Assembling makes no new video: it joins your chosen clips and adds the voice and music (a small cost). The film appears below and in Production, and opens in the Edit room.'),
@@ -17762,6 +17828,7 @@ class Component extends DCLogic {
     const chip = (txt, color) => h('span', { style:{ fontSize:9.5, fontWeight:800, letterSpacing:'0.04em', textTransform:'uppercase', color:color || '#6B7280', border:'1px solid #E6E3DC', borderRadius:4, padding:'0 5px' } }, txt);
     const cards = list.map(tk => {
       const isChosen = tk.id === chosenId, running = tk.status === 'rendering', older = tk.status === 'done' && tk.frame && hasFrame && tk.frame !== frame.url;
+      const flags = this.clipChecksOf(tk), checking = !!(s.takeChecking || {})[tk.id];
       return h('div', { key:tk.id, style:{ width:176, flex:'none' } },
         h('div', { style:{ position:'relative', aspectRatio:'16/9', borderRadius:7, overflow:'hidden', background:'#1B2433', outline:isChosen ? '3px solid #259821' : '1px solid #DDD9D1' } },
           tk.status === 'done' ? h('video', { src:tk.url, controls:true, preload:'metadata', muted:true, playsInline:true, style:{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' } }) : null,
@@ -17771,9 +17838,14 @@ class Component extends DCLogic {
         h('div', { style:{ display:'flex', gap:4, marginTop:3, flexWrap:'wrap', alignItems:'center' } },
           chip(tk.tier === 'final' ? 'Final' : 'Draft', tk.tier === 'final' ? '#17325E' : '#6B7280'), chip((Math.round((tk.seconds || 0) * 10) / 10) + ' s'),
           tk.est_usd != null ? chip(this.usd(tk.est_usd), '#6B7280') : null, older ? chip('older frame', '#B07A12') : null,
+          (tk.status === 'done' && tk.checks && tk.checks.length) ? (flags.length ? chip('! ' + flags.length, '#B07A12') : chip('✓ checked', '#1A8A7A')) : null,
           (!isChosen && tk.status === 'done') ? btn('Use', this.chooseClipTake(idx, k, tk.id), { go:true }) : null,
+          tk.status === 'done' ? btn(checking ? '…' : ((tk.checks && tk.checks.length) ? 'Re-check' : 'Check'), this.checkClipTake(idx, k, tk.id), { disabled:checking, title:'Free: does it play, does the picture move, is it black, as long as ordered, a repeat of the previous shot' }) : null,
+          tk.status === 'done' ? btn('Look', this.lookClipTake(idx, k, tk.id), { disabled:checking, title:'One model call: it looks at the clip’s middle frame for pasted panels, extra or missing people, wrong anatomy, unwanted text' }) : null,
+          flags.length ? btn('Accept', this.acceptClipChecks(idx, k, tk.id), { title:'Dismiss these notes for this clip' }) : null,
           (tk.status === 'interrupted' && tk.job_id) ? btn('Recover', () => { delete (this._recovered || {})[tk.id]; this.recoverClipTakes(); }, { title:'Ask the server whether this clip finished' }) : null,
-          (!isChosen && !running) ? btn('✕', this.discardClipTake(idx, k, tk.id), { title:'Remove this take from the list (the file is kept)' }) : null));
+          (!isChosen && !running) ? btn('✕', this.discardClipTake(idx, k, tk.id), { title:'Remove this take from the list (the file is kept)' }) : null),
+        flags.length ? h('div', { style:{ fontSize:10.5, lineHeight:1.4, color:'#B07A12', fontWeight:700, marginTop:3 } }, flags.map(c => c.label + ': ' + c.note).join(' · ')) : null);
     });
     return h('div', { style:{ marginTop:10, paddingTop:8, borderTop:'1px solid #ECE8DE' } },
       h('div', { style:{ display:'flex', alignItems:'baseline', gap:8, marginBottom:6 } }, h('span', { style:{ fontSize:10.5, fontWeight:800, letterSpacing:'0.05em', textTransform:'uppercase', color:'#6B7280' } }, 'Clip'),

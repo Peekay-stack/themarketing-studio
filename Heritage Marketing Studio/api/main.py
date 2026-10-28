@@ -55,6 +55,7 @@ import brand_suggest
 import sceneshots
 import flowreview
 import framecheck
+import takeqa
 import filmdirect
 import filmedit
 import selfcheck
@@ -3101,6 +3102,61 @@ def frame_check(payload: dict):
     raw = framecheck.parse(text)
     if raw is None:
         return JSONResponse(status_code=502, content={"detail": "The frame check's reply could not be read. Try again."})
+    out = framecheck.result(raw)
+    out["usage"] = usage
+    return out
+
+
+def _take_path(url: str):
+    """A stored clip's file on disk (a served /media path), or None."""
+    u = str(url or "").strip()
+    p = (gemini.local_path(u) or _resolve_media(u)) if u else None
+    return p if (p and os.path.exists(p)) else None
+
+
+@app.post("/take-check")
+def take_check(payload: dict):
+    """Cheap, deterministic checks on ONE generated clip (film builder S5; no model, no cost, a second or two of ffmpeg): does it play, does the picture move, is it black, is it as long as
+    ordered, does it start from the same picture as the previous shot's clip. Advisory: nothing is saved or blocked here.
+
+    Body: `url` (a stored clip), optional `seconds` (what was ordered) and `prev_url` (the previous shot's chosen clip). Returns {checks: [{id, label, verdict: ok|check, note}], measured}."""
+    path = _take_path(payload.get("url"))
+    if not path:
+        return JSONResponse(status_code=400, content={"detail": "That clip is not a stored file on this server, so it cannot be checked."})
+    exe = filmcut.ffmpeg_exe()
+    if not exe:
+        return JSONResponse(status_code=503, content={"detail": "No video tool (ffmpeg) is available on this server, so clips cannot be checked."})
+    try:
+        ordered = float(payload.get("seconds") or 0)
+    except (TypeError, ValueError):
+        ordered = 0.0
+    return takeqa.check_clip(exe, path, ordered, _take_path(payload.get("prev_url")))
+
+
+@app.post("/take-look")
+def take_look(payload: dict):
+    """The optional model look at ONE clip's middle frame (film builder S5), the same look a storyboard frame gets: pasted panels, an extra or missing person, a wrong body, unwanted text, a
+    different picture. One paid model call; advisory. Body: `url` (a stored clip), `description`, optional `cast`, `wardrobe`, `pack_expected`.
+    Returns {verdict, checks: [{id, label, verdict, note}], seen, usage}; `checks` is empty when nothing was wrong."""
+    path = _take_path(payload.get("url"))
+    if not path:
+        return JSONResponse(status_code=400, content={"detail": "That clip is not a stored file on this server, so it cannot be looked at."})
+    if not completion.has_key():
+        return JSONResponse(status_code=503, content={"detail": "The look needs the Anthropic key, which is not set on this server."})
+    exe = filmcut.ffmpeg_exe()
+    data = takeqa.middle_frame_jpeg(exe, path) if exe else None
+    if not data:
+        return JSONResponse(status_code=400, content={"detail": "A frame could not be taken from that clip."})
+    prompt = framecheck.vision_prompt(description=str(payload.get("description") or ""), cast=str(payload.get("cast") or ""),
+                                      wardrobe=str(payload.get("wardrobe") or ""), pack_expected=bool(payload.get("pack_expected")))
+    try:
+        text, usage = framecheck.look(data, "image/jpeg", prompt)
+    except Exception as e:
+        print(f"[main] take-look failed: {type(e).__name__}: {e}", flush=True)
+        return JSONResponse(status_code=502, content={"detail": "The look could not run just now. Try again."})
+    raw = framecheck.parse(text)
+    if raw is None:
+        return JSONResponse(status_code=502, content={"detail": "The look's reply could not be read. Try again."})
     out = framecheck.result(raw)
     out["usage"] = usage
     return out

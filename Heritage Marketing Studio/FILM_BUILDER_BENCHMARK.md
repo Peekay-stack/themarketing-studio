@@ -93,3 +93,17 @@ Acceptance target 4 (reorder invariants: frames, takes, trims, notes and caption
 | Size of the change | - | +47/-3 backend, +63/-6 frontend | +93/-2 frontend | +57/-1 frontend, +1 page-check file |
 
 **S2 acceptance targets:** 1 baseline holds: MET. 2 no trims and no reorder = the same request: MET (pinned in `test_builder_s2`). 3 trim leaves the take untouched and the length is the window: MET. 4 reorder invariants: MET (page test, exact round trip). 5 timeline = preview = assembled film: preview = Timeline is MET and asserted; preview = assembled film is MET by the same length rule and by one real playback of the preview, but a real signed-in assemble has NOT been compared (the server can re-time scenes by dialogue at render).
+
+## 8. After S5 (take QC)
+
+| Check | Baseline | After S2d | After S5 |
+|---|---|---|---|
+| Python suites (s0, s2, coverage_plan, scene_shots, omni, videoprompt, packqa, stitch_freeze) | 45 / - / 79 / 101 / 24 / 33 / 19 / 13 | + s2 = 20 | unchanged; **+ takeqa = 26** |
+| `test_surfaces_wiring`, `test_tools` | behave, 18/0 | same | same |
+| `checkfe`, `partials verify` (bytes) | pass, 2,549,195 | 2,569,574 | pass, 2,576,404 |
+| `selfcheck` | 1,473 / 0 | 1,476 / 0 | 1,492 / 0 (the new routes' calls) |
+| `app.dc.html` CRLF | 0 | 0 | 0 (`main.py` CRLF kept; `takes.py`, `takeqa.py` LF) |
+| Page checks | - | reorder 18, preview 14 | + take QC 19 |
+| Size of the change | - | +57/-1 frontend | +74/-2 frontend, +56 `main.py`, +2/-2 `takes.py`, +86 `takeqa.py`, 2 test files, 1 calibration script |
+
+**Detection benchmark (the new one):** 37 real clips from 6 engines measured (29 of them are the test's regression set): **0 false alarms** on still / black / unreadable; synthetic known-bad: frozen 4/4 flagged, black flagged, fade-in-from-black flagged as a dark frame, short flagged; repeats: same-frame pairs flagged (first-frame difference 1-8), different angles/scenes not flagged (56+). Thresholds and the evidence are in the plan's S5 entry and `tools/engine_trials/takeqa_calibration.py`.

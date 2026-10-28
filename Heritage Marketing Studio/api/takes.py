@@ -63,7 +63,7 @@ def _url(v) -> str:
 
 def _checks(v) -> list[dict]:
     out = []
-    for c in (v if isinstance(v, list) else [])[:8]:
+    for c in (v if isinstance(v, list) else [])[:12]:
         if isinstance(c, dict) and str(c.get("id") or "").strip():
             out.append({"id": _s(c.get("id"), 30), "label": _s(c.get("label"), 40), "verdict": "check" if c.get("verdict") == "check" else "ok", "note": _s(c.get("note"), 240)})
     return out
@@ -102,7 +102,7 @@ def clip_take(raw) -> dict | None:
         status = "error"
     return {"id": _s(raw.get("id"), 24) or new_id("tk"), "url": url, "beats": beats, "job_id": _s(raw.get("job_id"), 40), "tier": raw.get("tier") if raw.get("tier") in TIERS else "draft", "engine": raw.get("engine") if raw.get("engine") in ENGINES else "omni",
             "seconds": _num(raw.get("seconds"), 0.0, 0.0, 60.0), "mode": raw.get("mode") if raw.get("mode") in MODES else "frame", "frame": _url(raw.get("frame")), "sig": _s(raw.get("sig"), 600),
-            "interaction_id": _s(raw.get("interaction_id"), 200), "status": status, "error": _s(raw.get("error"), 300), "note": _s(raw.get("note"), 200), "checks": _checks(raw.get("checks")),
+            "interaction_id": _s(raw.get("interaction_id"), 200), "status": status, "error": _s(raw.get("error"), 300), "note": _s(raw.get("note"), 200), "checks": _checks(raw.get("checks")), "check_accepted": bool(raw.get("check_accepted")),
             "est_usd": (None if raw.get("est_usd") is None else _num(raw.get("est_usd"), 0.0, 0.0, 1000.0)), "created": _s(raw.get("created"), 24) or _now()}
 
 
