@@ -12144,6 +12144,7 @@ class Component extends DCLogic {
     videoBuilder: null,                     // the film builder's saved state (takes.py): frame variants + which is chosen (S1a); clip takes, trims, budget come later. Saved with the film.
     variantBusy: {},                        // { [frameKey]: true } while a frame VARIANT is being generated
     clipBusy: {},                           // { [frameKey]: takeId } while a clip take is rendering
+    chainOn: {},                            // { [frameKey]: bool } the person's "Continue from the previous shot" switch per shot (S4). Not saved: the take records how it was made.
     seqPreview: null,                       // the picture-only preview of the chosen, trimmed clips in script order: null (closed) or { i: the item playing, done }. Not saved.
     builderTier: 'draft',                   // the tier new clip takes are made at: 'draft' (Omni 360p) or 'final' (720p)
     takeChecking: {},                       // { [takeId]: true } while a frame take is being checked
@@ -17370,7 +17371,8 @@ class Component extends DCLogic {
   takePatchFromResult(r){
     const d = (r && r.data) || {}, clips = d.clips || [];
     if (r && r.ok && d.ok && clips.length && clips.every(c => c.ok && c.url))
-      return { status:'done', url:clips[0].url, beats:clips.length > 1 ? clips.map(c => ({ url:c.url, seconds:c.seconds })) : [], seconds:clips.reduce((a, c) => a + (c.seconds || 0), 0), error:'' };
+      return { status:'done', url:clips[0].url, beats:clips.length > 1 ? clips.map(c => ({ url:c.url, seconds:c.seconds })) : [], seconds:clips.reduce((a, c) => a + (c.seconds || 0), 0), error:'',
+        ...(clips[0].frame_url ? { frame:clips[0].frame_url } : {}) };          // a chained clip's start picture is the extracted last frame, not the storyboard frame
     const why = (d.errors && d.errors[0]) || d.detail || (r && r.status === 501 ? 'No video provider is configured on this server.' : 'The engine returned no clip.');
     return { status:'error', error:String(why).slice(0, 280) };
   }
@@ -17382,10 +17384,13 @@ class Component extends DCLogic {
     const frame = (s0.sceneFrames || {})[fk];
     if (!(frame && frame.status === 'done' && frame.url)) { this.showToast('Choose a frame for this shot first \u2014 the clip is animated from it, never drawn from words.', 'warn'); return false; }
     const tier = opts.tier || this.builderTierNow(), engine = this.clipEngine(), secs = this.clipSecs(idx, k);
-    const take = { id:this.newTakeId('tk'), url:'', beats:[], tier, engine, seconds:secs, mode:'frame', frame:frame.url, sig:'', job_id:'', status:'rendering', error:'', note:'',
+    const chain = this.chainWanted(idx, k), cfrom = chain ? this.chainSource(idx, k) : '', cbeats = chain && this.chainBeatsPossible(idx, k);      // continuity (S4): decided now, recorded on the take
+    const take = { id:this.newTakeId('tk'), url:'', beats:[], tier, engine, seconds:secs, mode:chain ? 'chain' : 'frame', frame:frame.url, chain_from:cfrom, sig:'', job_id:'', status:'rendering', error:'', note:'',
       checks:[], est_usd:this.clipEstimate(idx, k, tier), created:new Date().toISOString().slice(0, 19) + 'Z' };
     this.setState(s => ({ clipBusy:{ ...s.clipBusy, [fk]:take.id }, videoBuilder:this.addClipTake(s.videoBuilder, fk, take) }));
     const body = { ...this.filmRenderBody('Shot take'), only_shot:String(fk) };       // ALWAYS a string: the number 0 is falsy and would mean a full render
+    if (cfrom) body.chain_from = cfrom;              // the first piece starts from the LAST frame of the previous shot's chosen clip
+    if (cbeats) body.chain_beats = true;             // each later piece of a long shot starts from the last frame of the piece before it
     if (engine === 'omni') body.tier = tier === 'final' ? 'standard' : 'lite';
     const r = await this.renderViaJob(body, jid => this.patchClipTake(fk, take.id, { job_id:jid }));
     const patch = this.takePatchFromResult(r);
@@ -17484,6 +17489,33 @@ class Component extends DCLogic {
     if (!r || !r.ok) this.showToast(d.detail || 'Couldn’t look at that clip — try again.', 'warn');
   };
   acceptClipChecks = (idx, k, id) => () => this.patchClipTake(this.frameKey(idx, k), id, { check_accepted:true });
+  // ---------- the film builder, slice S4: CONTINUITY (chain) ----------
+  // "Continue" makes a shot start from where the clip before it ENDED instead of from its own storyboard frame: the last picture of the previous shot's chosen clip (same scene only: a new scene is a new
+  // place), and, for a long shot made of several pieces, the last picture of the piece before each. Off by default (a shot is made from its approved frame, as always); the take records how it was made.
+  // The previous shot's chosen clip, in the SAME scene, as the url to continue from (its last piece for a multi-piece shot); '' when there is none.
+  chainSource(idx, k){
+    const keys = this.activeShotKeys(), n = keys.findIndex(x => x.idx === idx && x.k === k);
+    if (n < 1 || keys[n - 1].idx !== idx) return '';
+    const b = this.builderOf(this.state.videoBuilder), pk = keys[n - 1].key, tk = (b.takes[pk] || []).find(x => x.id === b.chosen[pk]);
+    if (!tk || tk.status !== 'done' || !tk.url) return '';
+    return (tk.beats && tk.beats.length) ? tk.beats[tk.beats.length - 1].url : tk.url;
+  }
+  chainBeatsPossible(idx, k){ return this.clipSecs(idx, k) > 8; }                 // a shot over 8 s is several continuing pieces
+  chainEligible(idx, k){ return !!this.chainSource(idx, k) || this.chainBeatsPossible(idx, k); }
+  // Is "Continue" on for this shot? The person's switch wins; otherwise a re-roll keeps the way the latest take was made.
+  chainWanted(idx, k){
+    if (!this.chainEligible(idx, k)) return false;
+    const s = this.state, fk = this.frameKey(idx, k);
+    if (s.chainOn && s.chainOn[fk] !== undefined) return !!s.chainOn[fk];
+    const list = this.builderOf(s.videoBuilder).takes[fk] || [], last = list[list.length - 1];
+    return !!(last && last.mode === 'chain');
+  }
+  setChain = (idx, k, on) => this.setState(st => ({ chainOn:{ ...st.chainOn, [this.frameKey(idx, k)]:!!on } }));
+  // Was this take made from something that has since changed? A normal take: its frame is no longer the chosen frame. A chained take: the clip it continued from is no longer the previous shot's chosen clip.
+  clipIsOlder(idx, k, tk, frame){
+    if (tk.mode === 'chain' && tk.chain_from) return this.chainSource(idx, k) !== tk.chain_from;
+    return !!(tk.frame && frame && frame.url && tk.frame !== frame.url);
+  }
   async awaitRenderJob(jid, polls = 200){
     for (let i = 0; i < polls; i++) {
       const st = await this.apiGet('/render-status/' + jid);
@@ -17551,7 +17583,7 @@ class Component extends DCLogic {
         const tk = (b.takes[key] || []).find(x => x.id === b.chosen[key]);
         if (!tk || tk.status !== 'done' || !tk.url) { missing.push({ idx:i, k, key, label }); return; }
         const f = (s.sceneFrames || {})[key];
-        if (tk.frame && f && f.url && tk.frame !== f.url) older.push({ idx:i, k, key, label });
+        if (f && f.url && this.clipIsOlder(i, k, tk, f)) older.push({ idx:i, k, key, label });
         (tk.tier === 'final' ? final : draft).push({ idx:i, k, key, label, secs:tk.seconds });
         const tr = this.trimOf(b, key, tk);
         if (tr.out != null) trimmedN++;
@@ -17628,7 +17660,7 @@ class Component extends DCLogic {
     this.setState(s => {
       const r = (s.fullScript || [])[idx]; if (!r) return {};
       const list = this.extraShots(r).slice(); const t = list[k - 1]; list[k - 1] = list[j - 1]; list[j - 1] = t;
-      return { sceneFrames:this.rekeyPlaces(s.sceneFrames, rename), videoBuilder:this.builderRekeyed(s.videoBuilder, rename), filmReview:null,
+      return { sceneFrames:this.rekeyPlaces(s.sceneFrames, rename), videoBuilder:this.builderRekeyed(s.videoBuilder, rename), filmReview:null, chainOn:{},
         fullScript:(s.fullScript || []).map((x, i) => i === idx ? { ...x, shots:list } : x) };
     });
   };
@@ -17667,7 +17699,7 @@ class Component extends DCLogic {
       if (sp.scenes) { const sc = {}; Object.keys(sp.scenes).forEach(n => { sc[map[n] !== undefined ? map[n] : n] = sp.scenes[n]; }); spOut.scenes = sc; }
       if (Array.isArray(sp.sounds)) spOut.sounds = sp.sounds.map(x => (x && x.scene != null && map[String(x.scene)] !== undefined) ? { ...x, scene:again(x.scene) } : x);
       return { fullScript:fixed, sceneFrames:this.rekeyPlaces(s.sceneFrames, rename), videoBuilder:this.builderRekeyed(s.videoBuilder, rename), soundPlan:spOut,
-        videoBeatMap:null, filmReview:null, editorNotes:null, voicePlan:null, plannedSeconds:0 };
+        videoBeatMap:null, filmReview:null, editorNotes:null, voicePlan:null, plannedSeconds:0, chainOn:{} };
     });
     this.showToast('Scenes ' + noA + ' and ' + noB + ' swapped. Frames, clips and trims moved with them. The director’s read, flow review, editor’s notes and voice plan were cleared: run them again.', 'ok');
   };
@@ -17827,7 +17859,7 @@ class Component extends DCLogic {
       color:o.go ? '#fff' : '#17325E', borderRadius:7, padding:'3px 9px', fontSize:11, fontWeight:700, cursor:o.disabled ? 'default' : 'pointer', opacity:o.disabled ? 0.55 : 1 } }, text);
     const chip = (txt, color) => h('span', { style:{ fontSize:9.5, fontWeight:800, letterSpacing:'0.04em', textTransform:'uppercase', color:color || '#6B7280', border:'1px solid #E6E3DC', borderRadius:4, padding:'0 5px' } }, txt);
     const cards = list.map(tk => {
-      const isChosen = tk.id === chosenId, running = tk.status === 'rendering', older = tk.status === 'done' && tk.frame && hasFrame && tk.frame !== frame.url;
+      const isChosen = tk.id === chosenId, running = tk.status === 'rendering', older = tk.status === 'done' && hasFrame && this.clipIsOlder(idx, k, tk, frame);
       const flags = this.clipChecksOf(tk), checking = !!(s.takeChecking || {})[tk.id];
       return h('div', { key:tk.id, style:{ width:176, flex:'none' } },
         h('div', { style:{ position:'relative', aspectRatio:'16/9', borderRadius:7, overflow:'hidden', background:'#1B2433', outline:isChosen ? '3px solid #259821' : '1px solid #DDD9D1' } },
@@ -17837,7 +17869,7 @@ class Component extends DCLogic {
           isChosen ? h('span', { style:{ position:'absolute', left:4, top:4, background:'#259821', color:'#fff', fontSize:9.5, fontWeight:800, borderRadius:4, padding:'1px 5px' } }, 'CHOSEN') : null),
         h('div', { style:{ display:'flex', gap:4, marginTop:3, flexWrap:'wrap', alignItems:'center' } },
           chip(tk.tier === 'final' ? 'Final' : 'Draft', tk.tier === 'final' ? '#17325E' : '#6B7280'), chip((Math.round((tk.seconds || 0) * 10) / 10) + ' s'),
-          tk.est_usd != null ? chip(this.usd(tk.est_usd), '#6B7280') : null, older ? chip('older frame', '#B07A12') : null,
+          tk.est_usd != null ? chip(this.usd(tk.est_usd), '#6B7280') : null, tk.mode === 'chain' ? chip('chained', '#17325E') : null, older ? chip(tk.mode === 'chain' && tk.chain_from ? 'older clip' : 'older frame', '#B07A12') : null,
           (tk.status === 'done' && tk.checks && tk.checks.length) ? (flags.length ? chip('! ' + flags.length, '#B07A12') : chip('✓ checked', '#1A8A7A')) : null,
           (!isChosen && tk.status === 'done') ? btn('Use', this.chooseClipTake(idx, k, tk.id), { go:true }) : null,
           tk.status === 'done' ? btn(checking ? '…' : ((tk.checks && tk.checks.length) ? 'Re-check' : 'Check'), this.checkClipTake(idx, k, tk.id), { disabled:checking, title:'Free: does it play, does the picture move, is it black, as long as ordered, a repeat of the previous shot' }) : null,
@@ -17852,6 +17884,10 @@ class Component extends DCLogic {
         h('span', { style:{ fontSize:10.5, color:'#9AA1AD' } }, list.length ? list.length + ' take' + (list.length > 1 ? 's' : '') : 'none yet')),
       list.length ? h('div', { style:{ display:'flex', gap:10, flexWrap:'wrap', marginBottom:8 } }, cards) : null,
       this.trimRow(idx, k, key, b),
+      this.chainEligible(idx, k) ? h('label', { title:'Starts the clip from the last picture of the clip before it, so the action carries on. One clip, the same cost. If the join jumps, re-roll or switch it off.',
+        style:{ display:'inline-flex', alignItems:'center', gap:6, fontSize:11.5, color:'#41505F', margin:'0 0 6px', cursor:'pointer' } },
+        h('input', { type:'checkbox', checked:this.chainWanted(idx, k), onChange:ev => this.setChain(idx, k, ev.target.checked) }),
+        this.chainSource(idx, k) ? ('Continue from the previous shot' + (this.chainBeatsPossible(idx, k) ? ' and between this shot’s parts' : '')) : 'Continue between this shot’s parts') : null,
       h('div', { style:{ display:'flex', gap:6, alignItems:'center', flexWrap:'wrap' } },
         btn(busy ? 'Rendering…' : (list.length ? '↻ Re-roll' : 'Generate clip') + ' (' + (tier === 'final' ? 'Final' : 'Draft') + ')' + (est != null ? ' · about ' + this.usd(est) : ''), this.generateClipTake(idx, k),
           { go:!list.length, disabled:busy || !hasFrame, title:hasFrame ? (est == null ? 'Billed by fal; no estimate available' : 'Estimated at the measured Omni rate; the engine makes at least 3 s') : 'Choose a frame first' }),

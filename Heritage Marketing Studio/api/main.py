@@ -1473,6 +1473,17 @@ def _produce_video_sync(payload: dict):
     _chosen_clips = payload.get("use_clips") if isinstance(payload.get("use_clips"), dict) else None
     if _only and _chosen_clips is not None:
         return JSONResponse(status_code=400, content={"detail": "Send either only_shot (render one shot) or use_clips (assemble from chosen clips), not both."})
+    # CONTINUITY (S4, chain). Both keys are INERT when absent and only mean something with only_shot: `chain_from` is the previous shot's chosen clip (a stored file): the shot's FIRST piece starts from that
+    # clip's LAST frame instead of the shot's own storyboard frame; `chain_beats` makes each later piece of a long shot (a scene over 8 s is several continuing pieces) start from the last frame of the piece before it.
+    _chain_from = str(payload.get("chain_from") or "").strip()
+    _chain_beats = bool(payload.get("chain_beats"))
+    _chained = bool(_chain_from or _chain_beats)
+    if _chained and not _only:
+        return JSONResponse(status_code=400, content={"detail": "chain_from and chain_beats apply to a single-shot render (only_shot) only."})
+    if _chain_from:
+        _cf_path = gemini.local_path(_chain_from) or _resolve_media(_chain_from)
+        if not (_cf_path and os.path.exists(_cf_path)):
+            return JSONResponse(status_code=400, content={"detail": "The previous clip is not a stored file on this server, so this shot cannot continue from it."})
     _pos_of_no: dict[int, int] = {}
     for _p, _r in enumerate(scenes):
         if isinstance(_r, dict):
@@ -1565,7 +1576,17 @@ def _produce_video_sync(payload: dict):
             return f"/media/{_name}", ""
         return _url, f"{_asm_label(_i)}: the trim could not be cut, so the whole clip is used"
 
-    def render(seg):
+    def _chain_frame(src_url: str) -> str:
+        """The last frame of a clip we hold, saved as a new image in the media folder (where the next piece of a continuing shot starts). "" when it cannot be taken."""
+        _exe_c = filmcut.ffmpeg_exe()
+        _src_c = gemini.local_path(src_url) or _resolve_media(src_url)
+        if not _exe_c or not _src_c or not os.path.exists(_src_c):
+            return ""
+        os.makedirs(gemini.MEDIA_DIR, exist_ok=True)
+        _nm = f"chain-{uuid.uuid4().hex[:10]}.jpg"
+        return f"/media/{_nm}" if filmcut.last_frame(_exe_c, _src_c, os.path.join(gemini.MEDIA_DIR, _nm)) else ""
+
+    def render(seg, _frame=""):
         if _chosen_clips is not None:
             _c = _asm_chosen(seg["index"])
             if _c and str(_c.get("url") or "").strip():
@@ -1599,7 +1620,7 @@ def _produce_video_sync(payload: dict):
                       file=sys.stderr, flush=True)
         # Animating the approved frame is what makes the film match the board AND keeps the cast
         # identical from shot to shot; text-to-video reinvents people every call.
-        frame = frame_for(seg)
+        frame = _frame or frame_for(seg)            # `_frame` is a CHAIN frame (the last picture of the piece before); empty = the shot's own storyboard frame, as always
         _row0 = (seg["scenes"] or [{}])[0] or {}
         if _row0.get("shot") and not frame:
             # Seen in the 27 Oct trial: with no frame the engine draws the pack and the people from words alone, and the
@@ -1640,8 +1661,44 @@ def _produce_video_sync(payload: dict):
     # a 429 after the wait the API names, so the lanes here only bound how many shots are in flight.
     lanes = 4
     results: dict[int, dict] = {}
+    _chain_used: dict[int, str] = {}
+    if _chained:
+        # The pieces of ONE shot, one after another: a piece that starts from the last frame of the one before it cannot start until that one exists. Asking for a chain and not getting one is a REFUSAL of that
+        # piece, never a quiet fall back to the storyboard frame (the film would then jump where the person asked for continuity).
+        _prev_url, _stop = _chain_from, ""
+        for _s in [x for x in segments if _seg_keys[x["index"]] == _only]:
+            _i = _s["index"]
+            _fr = ""
+            if not _stop and (_chain_from if _beat_of[_i] == 0 else _chain_beats):
+                if not _prev_url:
+                    _stop = f"{_seg_label(_s)}: the piece before it did not render, so there is no last frame to continue from"
+                else:
+                    _fr = _chain_frame(_prev_url)
+                    if not _fr:
+                        _stop = f"{_seg_label(_s)}: could not take the last frame of the previous clip, so this shot was not rendered (a chained shot never falls back to its own frame)"
+            if _stop:
+                results[_i] = {"url": "", "provider": "none", "kind": "video", "note": _stop}
+                errors.append(_stop)
+                _prev_url = ""
+                continue
+            try:
+                _idx, _res = render(_s, _fr)
+            except Exception as e:
+                errors.append(str(e))
+                _prev_url = ""
+                continue
+            results[_idx] = _res
+            if _fr:
+                _chain_used[_idx] = _fr
+            if _res.get("url"):
+                slots[_idx] = _res["url"]
+                used_providers.add(str(_res.get("provider") or "fal"))
+                _prev_url = _res["url"]
+            else:
+                errors.append(_res.get("note") or f"{_seg_label(segments[_idx])}: no URL returned")
+                _prev_url = ""
     with ThreadPoolExecutor(max_workers=max(1, min(lanes, len(segments)))) as pool:
-        for fut in as_completed([pool.submit(render, s) for s in segments if not _only or _seg_keys[s["index"]] == _only]):
+        for fut in as_completed([pool.submit(render, s) for s in segments if (not _only or _seg_keys[s["index"]] == _only) and not _chained]):
             try:
                 idx, res = fut.result()
             except Exception as e:
@@ -1676,10 +1733,11 @@ def _produce_video_sync(payload: dict):
                     errors.append(f"{_asm_label(_i)}: your trimmed window is {_d:.1f} s but the plan gives that shot {_plan_s:g} s, so only the first {_plan_s:g} s of the window is used")
     if _only:
         _recs = [{"beat": _beat_of[_i] + 1, "seconds": segments[_i]["seconds"], "url": slots[_i] or "", "ok": bool(slots[_i]),
-                  "provider": str((results.get(_i) or {}).get("provider") or ""), "from_frame": bool((results.get(_i) or {}).get("from_frame"))}
+                  "provider": str((results.get(_i) or {}).get("provider") or ""), "from_frame": bool((results.get(_i) or {}).get("from_frame")),
+                  "frame_url": _chain_used.get(_i, "")}
                  for _i, _kk in enumerate(_seg_keys) if _kk == _only]
         _prov = {r["provider"] for r in _recs if r["ok"]}
-        return {"shot": _only, "clips": _recs, "ok": all(r["ok"] for r in _recs), "tier": tier,
+        return {"shot": _only, "clips": _recs, "ok": all(r["ok"] for r in _recs), "tier": tier, "mode": "chain" if _chain_used else "frame",
                 "model": (f"Gemini Omni {gemini.VIDEO_RESOLUTION.get(tier, '')}".strip() if _prov == {"google"} else ("fal " + model_id if _prov else "")),
                 "errors": list(dict.fromkeys(str(e) for e in errors))}
     clips = [u for u in slots if u]          # keep script order, drop failed shots

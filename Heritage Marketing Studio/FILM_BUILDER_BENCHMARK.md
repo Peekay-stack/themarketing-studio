@@ -107,3 +107,18 @@ Acceptance target 4 (reorder invariants: frames, takes, trims, notes and caption
 | Size of the change | - | +57/-1 frontend | +74/-2 frontend, +56 `main.py`, +2/-2 `takes.py`, +86 `takeqa.py`, 2 test files, 1 calibration script |
 
 **Detection benchmark (the new one):** 37 real clips from 6 engines measured (29 of them are the test's regression set): **0 false alarms** on still / black / unreadable; synthetic known-bad: frozen 4/4 flagged, black flagged, fade-in-from-black flagged as a dark frame, short flagged; repeats: same-frame pairs flagged (first-frame difference 1-8), different angles/scenes not flagged (56+). Thresholds and the evidence are in the plan's S5 entry and `tools/engine_trials/takeqa_calibration.py`.
+
+## 9. After S4a (chain continuity)
+
+| Check | Baseline | After S5 | After S4a |
+|---|---|---|---|
+| Python suites (s0, s2, takeqa, coverage_plan, scene_shots, omni, videoprompt, packqa, stitch_freeze) | 45 / - / - / 79 / 101 / 24 / 33 / 19 / 13 | + s2 20, takeqa 26 | unchanged; **+ builder_s4 = 18** |
+| `test_surfaces_wiring`, `test_tools` | behave, 18/0 | same | same |
+| `checkfe`, `partials verify` (bytes) | pass, 2,549,195 | 2,576,404 | pass, 2,580,391 |
+| `selfcheck` | 1,473 / 0 | 1,492 / 0 | 1,496 / 0 |
+| `app.dc.html` CRLF | 0 | 0 | 0 (`main.py`, `filmcut.py` CRLF kept) |
+| Page checks | - | reorder 18, preview 14, take QC 19 | + chain 21 |
+| Golden / inert | golden snapshot | identical | identical (`test_coverage_plan` unchanged; a single-shot render with no chain keys is pinned as before in `test_builder_s4`) |
+| Size of the change | - | +74/-2 frontend, +86 takeqa | +43/-7 frontend, +62/-6 `main.py`, +14 `filmcut.py`, +1 `takes.py`, 2 test files |
+
+**Not measured yet (needs a paid run):** whether a chained clip from the real engine is a smoother join than two separately animated frames, and whether identity and the pack hold when a clip starts from a video's last frame. The code paths are proven; the visual result is not.

@@ -101,7 +101,7 @@ def clip_take(raw) -> dict | None:
     if status == "done" and not url:
         status = "error"
     return {"id": _s(raw.get("id"), 24) or new_id("tk"), "url": url, "beats": beats, "job_id": _s(raw.get("job_id"), 40), "tier": raw.get("tier") if raw.get("tier") in TIERS else "draft", "engine": raw.get("engine") if raw.get("engine") in ENGINES else "omni",
-            "seconds": _num(raw.get("seconds"), 0.0, 0.0, 60.0), "mode": raw.get("mode") if raw.get("mode") in MODES else "frame", "frame": _url(raw.get("frame")), "sig": _s(raw.get("sig"), 600),
+            "seconds": _num(raw.get("seconds"), 0.0, 0.0, 60.0), "mode": raw.get("mode") if raw.get("mode") in MODES else "frame", "frame": _url(raw.get("frame")), "chain_from": _url(raw.get("chain_from")), "sig": _s(raw.get("sig"), 600),
             "interaction_id": _s(raw.get("interaction_id"), 200), "status": status, "error": _s(raw.get("error"), 300), "note": _s(raw.get("note"), 200), "checks": _checks(raw.get("checks")), "check_accepted": bool(raw.get("check_accepted")),
             "est_usd": (None if raw.get("est_usd") is None else _num(raw.get("est_usd"), 0.0, 0.0, 1000.0)), "created": _s(raw.get("created"), 24) or _now()}
 

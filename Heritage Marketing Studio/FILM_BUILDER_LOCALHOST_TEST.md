@@ -159,3 +159,22 @@ Every clip take now gets looked at the moment it finishes. A chip on the take sa
 
 ## What to tell me
 Any clip that was flagged and was fine (a false alarm), and any clip with a real problem that no check caught. The second kind is what Look is for; if Look misses it too, send me the clip and I will see what else can be measured.
+
+# Slice S4a - Continue (chain) (29 Oct 2026)
+
+Same set-up as before. A chained take costs the same as an ordinary one (one clip at the measured rate; the last-frame extraction is free). **Extend is not part of this slice.**
+
+## What it is
+On a shot's clip layer there is a tick box: **Continue from the previous shot** (for the extra angles of a scene, once the shot before it has a chosen clip) and/or **Continue between this shot's parts** (for a shot longer than 8 seconds, which is made of several pieces). Ticked, the clip starts from the LAST picture of the clip before it instead of from its own storyboard frame, so the action carries on across the cut. It is OFF by default; a re-roll keeps the way the latest take was made. It is never offered across scenes (a new scene is a new place).
+
+## Click-through (about 10 minutes; two or three Draft clips, well under $1)
+1. Pick a scene that has an extra shot (shot 2). Make sure shot 1 has a chosen clip. On shot 2's Clip layer you should see **Continue from the previous shot** (unticked). Shot 1 of a scene, and any shot whose previous shot has no chosen clip, does not show it (unless it is longer than 8 s).
+2. Generate shot 2 WITHOUT ticking it. Expected: exactly as before (made from its own frame). Then tick it and press **Re-roll**. Expected: a take with a **chained** chip; play it: it should start where shot 1's clip ended.
+3. Compare the two takes of shot 2 and choose the one you prefer; **Preview sequence** the pair. Tell me whether the chained join is smoother, and whether the cast and the pack held.
+4. Choose a different clip for shot 1. Expected: shot 2's chained take shows **older clip** (it continued from a clip that is no longer chosen), and the assemble strip says so.
+5. A shot longer than 8 s (a long scene): tick **Continue between this shot's parts**, generate. Expected: the parts follow each other without restarting from the same still (compare with an unticked take).
+6. Reorder a scene or a shot: the ticks reset (they belong to a place).
+7. If a chain cannot be built (for example the previous clip's file is gone) the clip is NOT made and the reason is shown; it never quietly uses the storyboard frame.
+
+## What to tell me
+Whether a chained join looks better than a cut between two separately animated frames; whether identity (face, wardrobe) or the pack drifts when a clip starts from a video's last frame; and whether you want Continue ON by default for the extra angles of a scene. If you want extend (adult shots only), say so and I will add it as its own slice.
