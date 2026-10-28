@@ -36,6 +36,7 @@ print(f"\nMEASURED: {st['shots']} shots in {st['seconds']} s, {st['per10']} per 
 for f in st["findings"]:
     print("  finding:", f["note"])
 print("\nSUMMARY:", r["summary"])
+eg = r["engagement"]; print("ENGAGEMENT:", eg["risk"], "-", eg["why"]); [print("   fix:", f) for f in eg["fixes"]]
 print("turn scene", r["turn_scene"], "| message carrier", r["carrier_scene"], "| time passing", r["time_passing"])
 for b in r["beats"]:
     print("  beat", b["scenes"], "repetition" if b["repetition"] else "", "-", b["purpose"])

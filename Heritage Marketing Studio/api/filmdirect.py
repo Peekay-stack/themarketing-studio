@@ -88,11 +88,16 @@ def build_prompt(*, rows, seconds, logline="", message="", tone="", pace="", cha
         "5. `beat` — a short id. Scenes whose main action is the SAME (same subject, same verb, same object, even at a different scale) are ONE beat shown twice: give them the SAME id. "
         "Different moments get different ids. Only neighbouring scenes may share an id.\n"
         "6. `hero` — true when the hero object (the pack, product or key prop) is visible in the scene.\n"
+        "7. `place` — a short tag for WHERE the scene is (\"kitchen\", \"school gate\", \"street\"); the same place gets the same tag. Judge by the picture the script describes, not the story's setting alone.\n"
+        "8. `energy` — 0 a held still, 1 small gestures, 2 clear action or a camera that moves with it, 3 big action or a reveal. How much HAPPENS on screen, not how important the beat is.\n"
+        "9. `change` — one line: what is different at the END of the scene from its START (something learned, an object changed, a decision made, a mood turned). Empty when nothing changes.\n"
+        "ENGAGEMENT. A film must be ENTERTAINING, not only clear and not repeated. Read it as a viewer who would swipe away: does the first scene earn the next five seconds with something unexpected or a question; does every scene change something; "
+        "does the place, scale or energy change from one scene to the next; does it escalate towards the turn; is there at least one scene a viewer would remember? Judge this honestly in the fields above; do not describe a dull scene as lively.\n"
         "Then name the TURN (`turn_scene`: the one scene where the change or realisation lands) and the MESSAGE CARRIER (`carrier_scene`: where the core line or the hero object lands, usually the last), "
         "say whether the film as a whole is about `time_passing`, and give a one-sentence `summary` of the film's shape as a viewer would feel it.\n\n"
         "Return ONLY JSON, no prose and no markdown: "
         "{\"summary\":\"...\",\"time_passing\":false,\"hero_object\":\"\",\"turn_scene\":4,\"carrier_scene\":6,"
-        "\"scenes\":[{\"no\":1,\"purpose\":\"...\",\"intensity\":1,\"time_mode\":\"continuous\",\"marker\":\"\",\"beat\":\"a\",\"hero\":false}]}")
+        "\"scenes\":[{\"no\":1,\"purpose\":\"...\",\"intensity\":1,\"time_mode\":\"continuous\",\"marker\":\"\",\"beat\":\"a\",\"hero\":false,\"place\":\"kitchen\",\"energy\":1,\"change\":\"...\"}]}")
 
 
 def parse(raw: str):
@@ -131,7 +136,8 @@ def validate(raw: dict, rows, roles=None) -> dict:
             s = {}
         mode = (mode_of(s.get("time_mode")) or prev_mode) if s else "continuous"
         out.append({"no": n, "purpose": _clip(s.get("purpose"), 160), "intensity": max(0, min(3, _int(s.get("intensity"), 1))), "time_mode": mode,
-                    "marker": _clip(s.get("marker"), 140), "beat": str(s.get("beat") if s.get("beat") is not None else "").strip()[:12] or f"n{n}", "hero": bool(s.get("hero"))})
+                    "marker": _clip(s.get("marker"), 140), "beat": str(s.get("beat") if s.get("beat") is not None else "").strip()[:12] or f"n{n}", "hero": bool(s.get("hero")),
+                    "place": _clip(s.get("place"), 40).lower(), "energy": max(0, min(3, _int(s.get("energy"), 1))), "change": _clip(s.get("change"), 160)})
         prev_mode = mode
     # beats: re-number; only neighbouring scenes share one
     k, last_raw = 0, None
@@ -167,6 +173,8 @@ def validate(raw: dict, rows, roles=None) -> dict:
     hero = _clip(raw.get("hero_object"), 120)
     if hero and carrier in nos and not next(sc["hero"] for sc in out if sc["no"] == carrier):
         findings.append({"kind": "carrier-without-hero", "scene": carrier, "note": f"Scene {carrier} carries the message but does not show {hero}."})
+    eng = engagement(out)
+    findings += eng["findings"]
     groups: dict[str, list[int]] = {}
     for sc in out:
         groups.setdefault(sc["beat"], []).append(sc["no"])
@@ -175,7 +183,52 @@ def validate(raw: dict, rows, roles=None) -> dict:
             findings.append({"kind": "one-beat", "scene": members[1], "note": f"Scenes {', '.join(str(m) for m in members)} are ONE beat shown at more than one scale; the first holds the beat and the "
                                                                               f"{'others are its closer ' + ('views' if len(members) > 2 else 'view')} (no extra angles on them)."})
     return {"summary": _clip(raw.get("summary"), 400), "time_passing": bool(raw.get("time_passing")), "hero_object": hero, "turn_scene": turn if turn in nos else None,
-            "carrier_scene": carrier if carrier in nos else None, "scenes": out, "transitions": transitions, "findings": findings, "notes": notes}
+            "carrier_scene": carrier if carrier in nos else None, "scenes": out, "transitions": transitions, "findings": findings, "notes": notes, "engagement": {"risk": eng["risk"]}}
+
+
+SAME_PLACE_RUN = 4        # this many neighbouring scenes in one place reads as one long scene
+FLAT_RUN = 3              # this many neighbouring scenes at energy 0-1 is a stretch where nothing happens
+LATE_PEAK = 0.4           # the first scene of real intensity should come by this share of the film
+
+
+def engagement(scenes: list) -> dict:
+    """Is this film ENTERTAINING, from the director's own per-scene fields (place, energy, change, intensity)? {risk: low|medium|high, findings: [{kind, scene, note}]}. These are checks a
+    program can make; the model supplies the fields and is told to judge honestly. Kinds: slow-hook (the first scene is quiet), same-place (a long run in one place), flat-energy (a run of
+    scenes where almost nothing happens), no-change (scenes that change nothing), late-peak (nothing builds until late). Added after the 28 Oct film: less repetitive, but one kitchen, six passive
+    scenes, nothing changing until scene 4, and 'boring as hell'."""
+    out: list[dict] = []
+    n = len(scenes)
+    if n < 3:
+        return {"risk": "low", "findings": []}
+    first = scenes[0]
+    if first["energy"] <= 1 and first["intensity"] <= 1:
+        out.append({"kind": "slow-hook", "scene": first["no"], "note": f"The film opens quietly (scene {first['no']}: energy {first['energy']}, intensity {first['intensity']}). The first seconds must earn the next five with something unexpected, a question or a visible action."})
+    run, start = 1, 0
+    for i in range(1, n + 1):
+        if i < n and scenes[i]["place"] and scenes[i]["place"] == scenes[i - 1]["place"]:
+            run += 1
+            continue
+        if run >= SAME_PLACE_RUN:
+            out.append({"kind": "same-place", "scene": scenes[start]["no"], "note": f"{run} neighbouring scenes (scene {scenes[start]['no']} to {scenes[i - 1]['no']}) happen in the same place ('{scenes[start]['place']}'). A viewer sees one room for as long as it lasts: change the place, the time of day or the scale, or cut one."})
+        run, start = 1, i
+    run, start = 0, 0
+    for i, sc in enumerate(scenes + [None]):
+        if sc is not None and sc["energy"] <= 1:
+            if run == 0:
+                start = i
+            run += 1
+            continue
+        if run >= FLAT_RUN:
+            out.append({"kind": "flat-energy", "scene": scenes[start]["no"], "note": f"Scenes {scenes[start]['no']} to {scenes[i - 1]['no']} are all held stills or small gestures: nothing happens on screen for {run} scenes in a row. Give at least one of them an action, a reveal or a moving camera."})
+        run = 0
+    idle = [sc["no"] for sc in scenes if not sc["change"]]
+    if len(idle) >= max(2, n // 3):
+        out.append({"kind": "no-change", "scene": idle[0], "note": f"Scenes {', '.join(str(x) for x in idle)} change nothing: the story, an object or the mood is the same at their end as at their start. A scene that changes nothing is a cut candidate or needs something to happen."})
+    peak = next((i for i, sc in enumerate(scenes) if sc["intensity"] >= 2), None)
+    if peak is not None and peak > 0 and peak / n > LATE_PEAK:
+        out.append({"kind": "late-peak", "scene": scenes[peak]["no"], "note": f"Nothing builds until scene {scenes[peak]['no']} ({peak} of {n} scenes in). Escalate earlier, or give the opening scenes a stake of their own."})
+    risk = "high" if len(out) >= 3 else ("medium" if out else "low")
+    return {"risk": risk, "findings": out}
 
 
 def no_coverage(beat_map) -> dict:
@@ -210,6 +263,10 @@ def read_text(beat_map, scene: int | None = None) -> str:
             continue
         n = _int(sc.get("no"), -1)
         bits = [f"{INTENSITY_LABELS[max(0, min(3, _int(sc.get('intensity'), 1)))]}", str(sc.get("time_mode") or "continuous")]
+        if sc.get("place"):
+            bits.append(f"in {sc['place']}")
+        if sc.get("energy") is not None:
+            bits.append(f"energy {max(0, min(3, _int(sc.get('energy'), 1)))}/3")
         if n == beat_map.get("turn_scene"):
             bits.append("THE TURN")
         if n == beat_map.get("carrier_scene"):

@@ -201,9 +201,12 @@ def build_prompt(*, rows, seconds, shots, st, logline="", message="", tone="", p
         "Never cut the shot the film ends on if it carries the message. Give a one-line `reason` a viewer would agree with.\n"
         "3. NOTES. Only real problems across scenes: repetition, length not following intensity (hold longest on the turn and the message carrier), a flashback or "
         "time jump with no marker, a spoken line with no picture that carries it, a run of one size. Skip anything that is fine.\n"
-        "4. SUMMARY. Two sentences, as a viewer: does it flow, and what is the one thing to fix first.\n\n"
+        "4. ENGAGEMENT. Be honest as a viewer who would swipe away: is this film ENTERTAINING, or only clear and not repeated? A Calm pace means fewer shots, never passive ones: every shot still needs "
+        "something to watch (a subject in action, a camera that moves, a reveal). Name what would bore a viewer (one place for too long, nothing happening, the same energy throughout, no surprise, no "
+        "moment worth remembering) and up to three concrete fixes a director could make (change the place, add an action, open on a surprise, move the camera, cut a scene).\n"
+        "5. SUMMARY. Two sentences, as a viewer: does it flow, and what is the one thing to fix first.\n\n"
         "Return ONLY JSON, no prose and no markdown: "
-        "{\"summary\":\"...\",\"time_passing\":false,\"turn_scene\":4,\"carrier_scene\":6,"
+        "{\"summary\":\"...\",\"engagement\":{\"risk\":\"high\",\"why\":\"what would bore a viewer\",\"fixes\":[\"one concrete fix\"]},\"time_passing\":false,\"turn_scene\":4,\"carrier_scene\":6,"
         "\"beats\":[{\"scenes\":[2,3],\"purpose\":\"one line\",\"repetition\":true}],"
         "\"verdicts\":[{\"scene\":2,\"shot\":2,\"verdict\":\"cut\",\"merge_with\":\"\",\"reason\":\"one line\"}],"
         "\"notes\":[{\"scenes\":[2,3],\"kind\":\"repetition\",\"note\":\"one line\",\"suggestion\":\"one line\"}]}")
@@ -304,7 +307,11 @@ def validate(raw: dict, shots: list[dict], budget_by_scene: dict | None = None, 
     for n in raw.get("notes") if isinstance(raw.get("notes"), list) else []:
         if isinstance(n, dict) and len(_clip(n.get("note"), 300)) >= 6:
             notes.append({"scenes": _scenes_list(n.get("scenes")), "kind": _clip(n.get("kind"), 30), "note": _clip(n.get("note"), 300), "suggestion": _clip(n.get("suggestion"), 240)})
-    return {"summary": _clip(raw.get("summary"), 500), "time_passing": bool(raw.get("time_passing")),
+    eg = raw.get("engagement") if isinstance(raw.get("engagement"), dict) else {}
+    risk = str(eg.get("risk") or "").strip().lower()
+    engagement = {"risk": risk if risk in ("low", "medium", "high") else "", "why": _clip(eg.get("why"), 400),
+                  "fixes": [_clip(f, 200) for f in (eg.get("fixes") if isinstance(eg.get("fixes"), list) else []) if len(_clip(f, 200)) >= 8][:4]}
+    return {"summary": _clip(raw.get("summary"), 500), "engagement": engagement, "time_passing": bool(raw.get("time_passing")),
             "turn_scene": turn if turn in scenes_present else None, "carrier_scene": carrier if carrier in scenes_present else None,
             "beats": beats[:12], "verdicts": verdicts, "notes": notes[:12],
             "skips": [{"scene": v["scene"], "shot": v["shot"], "place": v["place"]} for v in verdicts if v["verdict"] != "keep"],

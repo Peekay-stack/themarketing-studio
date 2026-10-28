@@ -125,6 +125,10 @@ check("validate: a cut with no reason, or an unknown verdict, is kept (never sil
 check("validate: a turn scene that is not in the film is dropped", bad["turn_scene"] is None)
 check("validate: garbage never raises", fr.validate(None, sh)["skips"] == [] and len(fr.validate({"verdicts": "x", "beats": 3, "notes": [None]}, sh)["verdicts"]) == 10 and fr.validate({}, [])["verdicts"] == [])
 
+vE = fr.validate({**ANS, "engagement": {"risk": "HIGH", "why": "One kitchen for the whole film and nothing happens.", "fixes": ["Open on a surprise.", "short", "Move the camera in scene 2."]}}, sh)
+check("validate: the engagement verdict is read (risk normalised, junk fixes dropped)", vE["engagement"]["risk"] == "high" and "nothing happens" in vE["engagement"]["why"] and vE["engagement"]["fixes"] == ["Open on a surprise.", "Move the camera in scene 2."], str(vE["engagement"]))
+check("validate: no engagement in the reply -> an empty verdict, never an error", fr.validate(ANS, sh)["engagement"] == {"risk": "", "why": "", "fixes": []} and fr.validate({"engagement": "x"}, sh)["engagement"]["risk"] == "")
+
 # ---- the pace budget is a RULE: the surplus is cut however many the model kept ------------------------------------------------------------------
 ALLKEEP = {"verdicts": [{"scene": s["scene"], "shot": s["shot"], "verdict": "keep", "reason": "it is fine"} for s in sh if s["place"] is not None]}
 bud = fr.budgets(ROWS, SECS, "calm", ROLES)

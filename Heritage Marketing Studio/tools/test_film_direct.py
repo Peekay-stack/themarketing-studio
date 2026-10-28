@@ -73,6 +73,23 @@ check("validate: only NEIGHBOURING scenes may share a beat (a, b, a -> three bea
 check("validate: garbage never raises", fd.validate(None, ROWS)["scenes"] != [] and fd.validate({}, [])["scenes"] == [] and fd.validate({"scenes": "x"}, None)["scenes"] == [])
 check("mode_of: synonyms and junk", [fd.mode_of(x) for x in ("memory", "Flash-forward", "time passing", "present", "banana", None)] == ["flashback", "flash-forward", "montage", "continuous", "", ""])
 
+# ---- ENGAGEMENT: "less repetitive but boring" is a finding, not a pass --------------------------------------------------------------------------------
+def sc(no, **k): return {"no": no, "intensity": 1, "energy": 1, "place": "kitchen", "change": "something shifts", **k}
+dull = [sc(1), sc(2, energy=0), sc(3, energy=1), sc(4, intensity=3, energy=1), sc(5, intensity=2), sc(6, intensity=2, change="")]
+e = fd.engagement(dull); kinds = [f["kind"] for f in e["findings"]]
+check("engagement: the 28 Oct shape (one kitchen, quiet opening, passive scenes, nothing builds until late) is HIGH risk with named findings",
+      e["risk"] == "high" and {"slow-hook", "same-place", "flat-energy", "late-peak"} <= set(kinds), str(e))
+check("engagement: the findings say what to do, in plain words", all(len(f["note"]) > 40 for f in e["findings"]) and any("change the place" in f["note"] for f in e["findings"]))
+lively = [sc(1, intensity=2, energy=3, place="school gate"), sc(2, energy=2, place="street"), sc(3, energy=1, place="kitchen", intensity=2), sc(4, energy=3, place="roof", intensity=3), sc(5, energy=2, place="kitchen")]
+check("engagement: a film with a strong open, changing places, action and an early build has no findings", fd.engagement(lively) == {"risk": "low", "findings": []}, str(fd.engagement(lively)))
+check("engagement: scenes that change nothing are named (a third of the film or more)", any(f["kind"] == "no-change" for f in fd.engagement([sc(1, intensity=2, energy=2, change=""), sc(2, place="a", change=""), sc(3, place="b", energy=2), sc(4, place="c", energy=3, intensity=3)])["findings"]))
+check("engagement: a short film (under 3 scenes) is never flagged; a missing place never makes a run", fd.engagement([sc(1), sc(2)])["risk"] == "low" and not any(f["kind"] == "same-place" for f in fd.engagement([sc(i, place="") for i in range(1, 7)])["findings"]))
+KEY2 = {**KEY, "scenes": [{**s, "place": "kitchen", "energy": 1, "change": "x"} for s in KEY["scenes"]]}
+v2 = fd.validate(KEY2, ROWS, ROLES)
+check("validate: place, energy and change are read and clamped; engagement findings join the findings and the risk is reported", v2["scenes"][0]["place"] == "kitchen" and v2["engagement"]["risk"] in ("medium", "high") and any(f["kind"] == "same-place" for f in v2["findings"]))
+check("validate: energy outside 0-3 is clamped; place is lower-cased and clipped", fd.validate({"scenes": [{"no": 1, "energy": 9, "place": "  KITCHEN  "}]}, ROWS, ROLES)["scenes"][0]["energy"] == 3 and fd.validate({"scenes": [{"no": 1, "place": "  KITCHEN  "}]}, ROWS, ROLES)["scenes"][0]["place"] == "kitchen")
+check("prompt: asks for place, energy and change, and has the ENGAGEMENT instruction (entertaining, not only clear)", all(w in pr for w in ("`place`", "`energy`", "`change`", "ENGAGEMENT", "swipe away")))
+
 # ---- the two RULES (no model) -------------------------------------------------------------------------------------------------------------------
 nc = fd.no_coverage(v)
 check("rule D3: the second scene of a one-beat group may carry no extra angles; the first may", 3 in nc and 2 not in nc and "closer view" in nc[3], str(nc))
@@ -81,7 +98,7 @@ ncm = fd.no_coverage(mont)
 check("rule D5: every scene inside a MONTAGE may carry no extra angles", 2 in ncm and 3 in ncm and "montage" in ncm[2] and 1 not in ncm and 4 not in ncm, str(ncm))
 check("rules: no map / junk map -> no restrictions", fd.no_coverage(None) == {} and fd.no_coverage({}) == {} and fd.no_coverage({"scenes": "x"}) == {} and fd.no_coverage({"scenes": [None, {"no": "a"}]}) == {})
 rt = fd.read_text(v, 3)
-check("read_text: the director's read as lines, this scene marked, the turn and the carrier named", "Scene 3 (building, flashback)" in rt and "<== THIS SCENE" in rt and "THE TURN" in rt and "THE MESSAGE CARRIER" in rt and "given; do not redo it" in rt, rt)
+check("read_text: the director's read as lines, this scene marked, the turn and the carrier named", "Scene 3 (building, flashback" in rt and "<== THIS SCENE" in rt and "THE TURN" in rt and "THE MESSAGE CARRIER" in rt and "given; do not redo it" in rt, rt)
 check("read_text: no map -> empty", fd.read_text(None) == "" and fd.read_text({"scenes": []}) == "")
 
 # ---- /film-direct, stubbed model -------------------------------------------------------------------------------------------------------------------
