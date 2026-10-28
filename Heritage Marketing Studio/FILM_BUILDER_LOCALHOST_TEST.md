@@ -121,3 +121,22 @@ Same set-up as before. Reordering spends nothing. **Know this before you try it:
 
 ## What to tell me
 Whether swap-with-neighbour feels right or you want drag-and-drop; whether you want to be able to move shot 1 (the scene's own shot) too; and anything that looked attached to the wrong scene after a move.
+
+# Slice S2d — Preview the sequence (28 Oct 2026)
+
+Same set-up as before. Previewing spends nothing and makes no file.
+
+## What it is
+In the assemble strip (top of **Shots**) there is a **Preview sequence** button. It plays your chosen clips one after another in script order, from each clip's trim start, as the assembled film will join them. **Pictures only**: no voice, music or sound (those are laid when you assemble).
+
+## Click-through (about 5 minutes, no spend)
+1. With some chosen clips (and a trim or two), press **Preview sequence**. Expected: a player appears under the Timeline line and starts playing the first clip; at its end the next clip starts by itself.
+2. Watch the **segment bar** under the player: one segment per clip, as wide as its seconds; trimmed clips are lighter; the playing one is dark with a green outline. Click a segment to jump to it. Use **Previous / Next**.
+3. A trimmed clip starts at its trim's start and stops at its end (compare with its Trim row).
+4. The readout says "x s of y s"; y should equal the **Timeline** line above. After the last clip the player stops; **Replay** starts again.
+5. Reorder a scene (S2c) with the preview open: the bar follows the new order.
+6. With a shot that has no chosen clip, the preview skips it and says which. With no chosen clips at all, the button is disabled.
+7. Compare with **Assemble film**: the film should run in the same order and about the same length. The seams in the preview are accurate to about a quarter of a second; the assembled film is frame-exact. If the assembled film is a different length from the preview, tell me which shot: the server can re-time scenes by dialogue at render.
+
+## What to tell me
+Whether the preview is clear enough to judge pace and order without assembling, and whether you want the voice line shown as text over each segment.

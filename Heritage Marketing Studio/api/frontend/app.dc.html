@@ -12144,6 +12144,7 @@ class Component extends DCLogic {
     videoBuilder: null,                     // the film builder's saved state (takes.py): frame variants + which is chosen (S1a); clip takes, trims, budget come later. Saved with the film.
     variantBusy: {},                        // { [frameKey]: true } while a frame VARIANT is being generated
     clipBusy: {},                           // { [frameKey]: takeId } while a clip take is rendering
+    seqPreview: null,                       // the picture-only preview of the chosen, trimmed clips in script order: null (closed) or { i: the item playing, done }. Not saved.
     builderTier: 'draft',                   // the tier new clip takes are made at: 'draft' (Omni 360p) or 'final' (720p)
     takeChecking: {},                       // { [takeId]: true } while a frame take is being checked
     videoBeatMap: null,                     // the director's read (POST /film-direct): per-scene purpose / intensity / time-mode / beat, the turn and the message carrier. Saved with the film.
@@ -17616,6 +17617,59 @@ class Component extends DCLogic {
     const h = React.createElement, arrow = (txt, on, title) => h('span', { onClick:on, title, style:{ cursor:'pointer', userSelect:'none', fontSize:13, lineHeight:1, color:'#2E5EA6', padding:'1px 5px', border:'1px solid #C9CEDA', borderRadius:5, background:'#fff' } }, txt);
     return h('span', { style:{ display:'inline-flex', gap:4 } }, i > 0 ? arrow('↑', this.moveScene(i, -1), 'Move this scene earlier') : null, i < n - 1 ? arrow('↓', this.moveScene(i, 1), 'Move this scene later') : null);
   }
+  // ---------- the film builder, slice S2d: preview the sequence (pictures only, no render, no cost) ----------
+  // The chosen, trimmed clips in script order, as the assembled film will join them: each clip plays from its trim's start for as long as the film will use it (the shot's planned seconds at most; a
+  // shorter clip shrinks the beat), with the same rule `assembleStatus` totals, so the preview, the Timeline line and the assembled film agree. A shot with no chosen clip is listed as skipped.
+  seqItems(){
+    const s = this.state, b = this.builderOf(s.videoBuilder), items = [], skipped = [];
+    (s.fullScript || []).forEach((r, i) => {
+      [{ k:0 }].concat(this.extraShots(r).map((sh, j) => ({ k:j + 1, sh }))).forEach(({ k, sh }) => {
+        if (sh && sh.skip) return;
+        const key = this.frameKey(i, k), label = 'Scene ' + this.sceneNo(r, i) + (k ? ', shot ' + (k + 1) : '');
+        const tk = (b.takes[key] || []).find(x => x.id === b.chosen[key]);
+        if (!tk || tk.status !== 'done' || !tk.url) { skipped.push(label); return; }
+        let left = k ? (parseInt(sh.secs, 10) || 2) : this.shotMasterSecs(r);       // the shot's planned seconds: a longer clip is cut to it
+        const tr = this.trimOf(b, key, tk);
+        const parts = (tk.beats && tk.beats.length) ? tk.beats.map(c => ({ url:c.url, a:0, e:c.seconds || 0 })) : [{ url:tk.url, a:tr.out != null ? tr.in : 0, e:tr.out != null ? tr.out : (tk.seconds || 0) }];
+        parts.forEach((p, n) => {
+          const len = Math.min(p.e - p.a, left); if (!(len > 0.05)) return;
+          left -= len; items.push({ label:label + (parts.length > 1 ? ' (part ' + (n + 1) + ')' : ''), url:p.url, start:p.a, end:p.a + len, len, trimmed:tr.out != null, scene:i });
+        });
+      });
+    });
+    return { items, skipped, total:items.reduce((a, x) => a + x.len, 0) };
+  }
+  openSeqPreview = () => this.setState({ seqPreview:{ i:0, done:false, run:(((this.state.seqPreview || {}).run) || 0) + 1 } });
+  closeSeqPreview = () => this.setState({ seqPreview:null });
+  seqGo = (i) => () => this.setState(st => st.seqPreview ? { seqPreview:{ ...st.seqPreview, i, done:false, run:(st.seqPreview.run || 0) + 1 } } : {});
+  // The playing clip reached its end (or its trim's end): the next one, or stop on the last.
+  seqNext = (i, n) => () => this.setState(st => (!st.seqPreview || st.seqPreview.i !== i) ? {} : (i + 1 < n ? { seqPreview:{ ...st.seqPreview, i:i + 1 } } : { seqPreview:{ ...st.seqPreview, done:true } }));
+  seqPlayer(){
+    const sp = this.state.seqPreview; if (!sp) return null;
+    const h = React.createElement, { items, skipped, total } = this.seqItems();
+    const box = { marginTop:8, padding:'10px 12px', border:'1px solid #C9CEDA', borderRadius:10, background:'#fff', maxWidth:620 };
+    if (!items.length) return h('div', { style:box }, h('div', { style:{ fontSize:12, color:'#41505F' } }, 'No chosen clips yet, so there is nothing to preview. Choose a clip for a shot first.'),
+      h('button', { onClick:this.closeSeqPreview, style:{ marginTop:6, border:'1px solid #C9CEDA', background:'#fff', color:'#17325E', borderRadius:7, padding:'3px 10px', fontSize:11, fontWeight:700, cursor:'pointer' } }, 'Close'));
+    const i = Math.min(sp.i || 0, items.length - 1), it = items[i], n = items.length;
+    const before = items.slice(0, i).reduce((a, x) => a + x.len, 0);
+    const seg = (x, j) => h('div', { key:'sq' + j, onClick:this.seqGo(j), title:x.label + ' · ' + (Math.round(x.len * 10) / 10) + ' s' + (x.trimmed ? ' · trimmed' : ''),
+      style:{ flex:x.len + ' 1 0', minWidth:3, height:14, cursor:'pointer', borderRadius:3, background:j === i ? '#17325E' : (x.trimmed ? '#8FB4D9' : '#C9CEDA'), outline:j === i ? '2px solid #259821' : 'none', outlineOffset:1 } });
+    const nav = (txt, on, off) => h('button', { onClick:on, disabled:off, style:{ border:'1px solid #C9CEDA', background:'#fff', color:'#17325E', borderRadius:7, padding:'3px 10px', fontSize:11, fontWeight:700, cursor:off ? 'default' : 'pointer', opacity:off ? 0.5 : 1 } }, txt);
+    return h('div', { style:box },
+      h('div', { style:{ display:'flex', alignItems:'baseline', gap:8, flexWrap:'wrap', marginBottom:6 } },
+        h('span', { style:{ fontSize:11, fontWeight:800, letterSpacing:'0.06em', textTransform:'uppercase', color:'#6B7280' } }, 'Preview'),
+        h('span', { style:{ fontSize:12, color:'#17325E', fontWeight:700 } }, it.label + ' · clip ' + (i + 1) + ' of ' + n),
+        h('span', { style:{ fontSize:11.5, color:'#6B7280' } }, (Math.round(before * 10) / 10) + ' s of ' + (Math.round(total * 10) / 10) + ' s' + (it.trimmed ? ' · trimmed' : '')),
+        h('span', { style:{ marginLeft:'auto' } }, h('button', { onClick:this.closeSeqPreview, style:{ border:'1px solid #C9CEDA', background:'#fff', color:'#17325E', borderRadius:7, padding:'1px 8px', fontSize:11, fontWeight:700, cursor:'pointer' } }, 'Close'))),
+      h('video', { key:'seq' + (sp.run || 0) + '-' + i, src:it.url + '#t=' + it.start.toFixed(2) + ',' + it.end.toFixed(2), autoPlay:!sp.done || i !== n - 1, muted:true, playsInline:true, controls:true, preload:'auto',
+        onTimeUpdate:ev => { if (ev.target.currentTime >= it.end - 0.05) this.seqNext(i, n)(); }, onEnded:this.seqNext(i, n),
+        style:{ width:'100%', maxWidth:560, borderRadius:8, background:'#1B2433', display:'block' } }),
+      h('div', { style:{ display:'flex', gap:2, marginTop:8, alignItems:'center' } }, items.map(seg)),
+      h('div', { style:{ display:'flex', gap:6, marginTop:8, alignItems:'center', flexWrap:'wrap' } },
+        nav('← Previous', this.seqGo(i - 1), i === 0), nav('Next →', this.seqGo(i + 1), i === n - 1), nav(sp.done ? '↻ Replay' : '↻ From the start', this.seqGo(0), false),
+        h('span', { style:{ fontSize:11, color:'#9AA1AD' } }, 'Pictures only: no voice, music or sound. Light segments are trimmed. Click a segment to jump.')),
+      skipped.length ? h('div', { style:{ fontSize:11.5, color:'#B07A12', marginTop:6 } }, 'Not in this preview (no chosen clip): ' + skipped.slice(0, 6).join(', ') + (skipped.length > 6 ? ' and ' + (skipped.length - 6) + ' more' : '')) : null);
+  }
   assembleFilm = async () => {
     const st = this.assembleStatus();
     if (this.state.production.status === 'rendering') return;
@@ -17649,10 +17703,12 @@ class Component extends DCLogic {
         h('span', { style:{ fontSize:12, color:st.complete ? '#1A8A7A' : '#41505F', fontWeight:st.complete ? 700 : 400 } },
           (st.total - st.missing.length) + ' of ' + st.total + ' shots have a chosen clip' + (st.complete ? ' \u2014 ready' : '') + (st.draft.length || st.final.length ? ' \u00b7 ' + st.draft.length + ' Draft, ' + st.final.length + ' Final' : '')),
         h('span', { style:{ marginLeft:'auto', display:'flex', gap:8, flexWrap:'wrap' } },
-          omni && st.draft.length ? btn('Promote chosen to Final (' + st.draft.length + ') \u00b7 about ' + this.usd(est), this.promoteToFinal, { disabled:!!s.clipBatch || assembling, title:'Re-renders only the chosen Draft clips at 720p; the Drafts are kept' }) : null,
+          btn(s.seqPreview ? 'Restart preview' : 'Preview sequence', this.openSeqPreview, { disabled:(st.total - st.missing.length) < 1, title:'Plays your chosen, trimmed clips in script order, pictures only: no render and no cost' }),
+          omni && st.draft.length ? btn('Promote chosen to Final ('+ st.draft.length + ') \u00b7 about ' + this.usd(est), this.promoteToFinal, { disabled:!!s.clipBatch || assembling, title:'Re-renders only the chosen Draft clips at 720p; the Drafts are kept' }) : null,
           btn(assembling ? 'Assembling\u2026' : 'Assemble film', this.assembleFilm, { go:true, disabled:!st.complete || assembling || !!s.clipBatch, title:st.complete ? 'Joins your chosen clips and adds voice and music: no new video is generated' : 'Choose a clip for every shot first' }))),
       st.total ? h('div', { style:{ fontSize:11.5, color:'#41505F', marginTop:4 } }, 'Timeline: ' + (Math.round(st.kept * 10) / 10) + ' s of the ' + st.planned + ' s planned' + (st.complete ? '' : ' (so far)')
         + (st.trimmedN ? ' · ' + st.trimmedN + ' clip' + (st.trimmedN > 1 ? 's' : '') + ' trimmed' : '')) : null,
+      this.seqPlayer(),
       !st.complete ? h('div', { style:{ fontSize:11.5, color:'#B07A12', marginTop:4 } }, 'Still to choose: ' + st.missing.slice(0, 6).map(x => x.label).join(', ') + (st.missing.length > 6 ? ' and ' + (st.missing.length - 6) + ' more' : '')) : null,
       st.older.length ? h('div', { style:{ fontSize:11.5, color:'#B07A12', marginTop:4 } }, st.older.length + ' chosen clip' + (st.older.length > 1 ? 's were' : ' was') + ' animated from an earlier frame: ' + st.older.slice(0, 4).map(x => x.label).join(', ')) : null,
       h('div', { style:{ fontSize:11, color:'#9AA1AD', marginTop:4 } }, 'Assembling makes no new video: it joins your chosen clips and adds the voice and music (a small cost). The film appears below and in Production, and opens in the Edit room.'),

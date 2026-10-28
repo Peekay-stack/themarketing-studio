@@ -79,3 +79,17 @@ Acceptance targets met so far: 1 (baseline holds), 2 (no trims = same request: p
 | Size of the change | - | +47/-3 backend, +63/-6 frontend | +93/-2 frontend only, +1 page-check file |
 
 Acceptance target 4 (reorder invariants: frames, takes, trims, notes and captions follow their scenes, atomically, with an invariants test) is MET by the page test (and the exact round trip). Captions: they are derived from each row's timecode at render, and the two swapped rows' timecodes are re-laid. Target 5 (timeline = preview = assembled film) waits for S2d.
+
+## 7. After S2d (preview) — S2 complete
+
+| Check | Baseline | After S2a | After S2b+S2c | After S2d |
+|---|---|---|---|---|
+| Python suites | 45 / - / 79 / 101 / 24 / 33 / 19 / 13 | + s2 = 20 | unchanged | unchanged |
+| `test_surfaces_wiring`, `test_tools` | behave, 18/0 | same | same | same |
+| `checkfe`, `partials verify` (bytes) | pass, 2,549,195 | 2,554,606 | 2,562,979 | pass, 2,569,574 |
+| `selfcheck` | 1,473 / 0 | 1,476 / 0 | 1,476 / 0 | 1,476 / 0 |
+| `app.dc.html` CRLF | 0 | 0 | 0 | 0 |
+| Page checks | - | - | reorder invariants 18 / 18 | + sequence preview 14 / 14, + one real-playback run |
+| Size of the change | - | +47/-3 backend, +63/-6 frontend | +93/-2 frontend | +57/-1 frontend, +1 page-check file |
+
+**S2 acceptance targets:** 1 baseline holds: MET. 2 no trims and no reorder = the same request: MET (pinned in `test_builder_s2`). 3 trim leaves the take untouched and the length is the window: MET. 4 reorder invariants: MET (page test, exact round trip). 5 timeline = preview = assembled film: preview = Timeline is MET and asserted; preview = assembled film is MET by the same length rule and by one real playback of the preview, but a real signed-in assemble has NOT been compared (the server can re-time scenes by dialogue at render).
