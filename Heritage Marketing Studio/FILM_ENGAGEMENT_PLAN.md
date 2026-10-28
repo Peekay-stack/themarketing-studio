@@ -32,7 +32,21 @@ Owner click-through:
 4. Edit a scene's visual. Expected: both rows say the script has changed since the read.
 5. Press **Approve script** with a "high" risk showing. Expected: it approves anyway, and the panel goes away.
 
-## 3. Plan: lever #2, the concept carries its own entertainment (NOT built, needs your go)
+## 3a. Built (29 Oct, after your go): lever #2, with the real-model result
+
+**Built, front end only.** The concept prompt in `generateVideo` now also asks each route for `hook`, `surprise`, `turn` and `memorable` (one specific sentence each, never a generic line, the four different, the hook an action or something unexpected and never a quiet establishing view). They ride on the route object, so they are kept when you switch route and saved with the film (`video_concept` is stored whole). They show as four labelled lines on each route card and under the chosen concept's logline. The full-script writer is told the chosen route's four lines **must be delivered as scenes** and that the first scene shows the hook (the sentence is added only when the fields exist: an older concept's writer prompt is byte-for-byte unchanged). A refine re-sends the current route with its four fields so they are kept. Not done, on purpose: the provocation route writer (as recommended), and a hand-off to the director's read (it reads the *script*, which now carries them).
+
+**Two real model calls** (the exact prompt the page builds, captured from the real page, sent through the same backend path the app uses):
+- **Heritage house**, 3 routes. Specific, concrete and different from each other, e.g. hook "A steel glass is drained in one long gulp, milk moustache left behind as the girl slams it down and bolts for the door"; surprise "The slow, always-last child is the first one at the gate, waiting for her out-of-breath father to catch up"; turn "Mid-walk she lets go of his hand and skips ahead, and he realises he's the one hurrying now"; memorable "The small milk moustache on a grinning girl who's overtaken her own dad on the pavement". Route 3's hook ("A man leans over a milk pot like a detective, torch in one hand, spoon in the other") is the kind of opening the old prompt never asked for.
+- **A different category (cement), Independent mode**, 3 routes: equally concrete (a mason's trowel slapping wet cement in extreme close-up; a steel ball dropped on two slabs, one shatters; an uncle in a safari suit rapping a half-built wall). So the fields are not Heritage-specific. (Run first without Independent mode, the backend correctly refused to write a cement film for the Heritage tenant: brand grounding working as designed.)
+- **Honest read:** all hooks were a visible action (the "never a quiet establishing view" rule worked); no generic filler lines. Weaknesses seen: in one Heritage route "surprise" and "turn" overlap (both about the girl getting ahead of her father), and one cement "turn" (a cracked-looking patch that is only old paint) is oddly specific. Two routes, 6 route samples: **not** proof it is reliably good, only that it is not generic. The proof is you reading them on your own brand.
+- **Bug found and fixed by the page check:** the first version put the card's label ("remember") and a doubled full stop into the writer's prompt, and would have said "the first scene must show the hook" even for a concept with no hook. Fixed ("memorable moment", one stop, hook sentence only when there is a hook).
+
+Tests: `tools/page_checks/film_concept_fields.js` (17 checks on the real page, the model stubbed: the prompt text, parsing, cards, switching, the writer hand-off, refine, an older concept unchanged, partial fields).
+
+Owner click-through (needs the model key on your server): Video, pick an objective, press generate. Expected: three routes, each with Hook / Surprise / Turn / Remember lines. Pick one, write the full script: scene 1 should show the hook and the other three should appear as scenes. Open an older film: its concept shows no extra lines and writes as before. Tell me which routes read as specific and which as filler.
+
+## 3. Plan as written before the build (kept for the record)
 
 **What:** each of the three routes also returns four short fields, so the idea is judged on entertainment before a script exists:
 - `hook` — what the first 3 seconds show (an action or something unexpected, never a quiet establishing view)
