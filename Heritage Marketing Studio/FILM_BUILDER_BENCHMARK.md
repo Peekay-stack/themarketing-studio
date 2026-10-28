@@ -1,0 +1,67 @@
+# Film builder — change list and benchmark
+
+Source: `git log` on branch `coverage`, `FILM_BUILDER_PLAN.md` build log, and a fresh run of every suite on the `coverage` head
+`b89c102` (28 Oct 2026, before any S2 change). Each later slice is compared against the **Baseline** column.
+
+## 1. What changed, slice by slice (the previous chat's work)
+
+| Change | Commit | Date | Size | What it did | Verified | NOT verified |
+|---|---|---|---|---|---|---|
+| Stitch freeze fix (`filmcut.stitch`) | `a59aa4d` on `coverage`; **`b1519e6` on master (LIVE)** | 27-28 Oct | +126, 2 files | A joined film no longer shows ONE frame for seconds: the join is checked (`frozen_join`) and rebuilt with the concat filter if frozen | synthetic 5-clip case, smoke, selfcheck, live `/selfcheck` | the seven real Heritage clips (not on the deploy machine); a real signed-in live render |
+| S0 foundations | `26e8624` | 28 Oct | +394/-5, 4 files | `takes.py`, `video_builder` film field, inert `only_shot` / `use_clips` render keys | `test_builder_s0.py` | — |
+| S1a frame variants | `eb3c7b9` | 28 Oct | +319/-32, 4 files | Frame takes with history + choose; the Shots step; 15 wipe-sites now also clear the builder | tests + page driven with stubbed fetch | — |
+| S1b clip takes | `08f683d` | 28 Oct | +371/-37, 7 files | Per-shot clip generate / re-roll / choose / recover through `only_shot`; found + fixed the `only_shot: 0` falsy bug (would have been a full paid render) | tests; one real Draft clip (scene-3 master, 6 s) | many real clips |
+| S3 assemble + Promote to Final | `81928cd` | 28 Oct | +222/-19, 7 files | `use_clips` assemble is strict (400 naming the shot); real clip length wins; Draft+Final join in one film | tests; page driven with stubbed fetch | a real signed-in assemble; a paid Promote to Final |
+
+Totals: 5 changes, **1,432 lines added, 93 removed**, 24 files touched (some repeatedly). Only the stitch fix is on master; S0-S3 are on `coverage` (pushed, not merged, not live).
+
+## 2. Baseline (before S2) — the numbers every later slice must hold or improve
+
+Run on `coverage` @ `b89c102`, `api/.venv/Scripts/python.exe`, `PYTHONUTF8=1`.
+
+| Check | Baseline result |
+|---|---|
+| `tools/test_builder_s0.py` | ALL PASS (45 checks) |
+| `tools/test_coverage_plan.py` | ALL PASS (79) — the golden snapshot must stay byte-identical |
+| `tools/test_scene_shots.py` | ALL PASS (101) |
+| `tools/test_omni_video.py` | ALL PASS (24) |
+| `tools/test_videoprompt.py` | ALL PASS (33) |
+| `tools/test_packqa.py` | ALL PASS (19) |
+| `tools/test_stitch_freeze.py` | ALL PASS (13; real-clip case skipped here) |
+| `tools/test_surfaces_wiring.py` | all cases behave |
+| `tools/test_tools.py` | 18 passed, 0 failed (flaky once on S3, unexplained, 2 sightings) |
+| `tools/checkfe.py` | all checks passed |
+| `tools/partials.py verify` | byte-identical, 2,549,195 bytes through 72 parts |
+| `api/selfcheck.py` | **1,473 cross-module calls, 0 problems** (master: 1,406) |
+| `app.dc.html` line endings | LF only (0 CRLF) |
+
+## 3. Film-quality benchmarks (the audience's test, not the pipeline's)
+
+| Benchmark | Baseline |
+|---|---|
+| Heritage re-directed film (30 s Draft, 7 shots) | owner verdict: "okay, less repetitive, boring as hell" — **not fixed on purpose**; a RE-RUN from a script written under the new writer rules is the next film benchmark |
+| Frozen-picture check on every produced film | 1-frame-per-second contact sheet + `frozen_join`; must pass before "works" |
+| Omni cost | Draft ~ $0.034/s, Final ~ $0.101/s (measured 27 Oct); a 2 s shot is generated at 3 s |
+
+## 4. S2 acceptance targets (set before building)
+
+1. Every baseline row above still passes; selfcheck problems stay 0; `app.dc.html` stays LF-only.
+2. A film with no trims and no reorder assembles **byte-for-byte the same request** as today (`test_builder_s0.py` unchanged and green).
+3. Trim: the trimmed take file is never modified; the assembled film's length = the sum of kept windows (within 0.05 s); voice follows the kept picture.
+4. Reorder (when built): frames, takes, trims, notes and captions all still belong to their scenes afterwards (an invariants test), in one atomic update.
+5. Timeline total, preview and the assembled film agree.
+
+## 5. After S2a (trim) — measured against the baseline
+
+| Check | Baseline | After S2a |
+|---|---|---|
+| `test_builder_s0` | 45 pass | 45 pass |
+| `test_builder_s2` (new) | - | 20 pass |
+| `test_coverage_plan` / `scene_shots` / `omni` / `videoprompt` / `packqa` / `stitch_freeze` | 79 / 101 / 24 / 33 / 19 / 13 | 79 / 101 / 24 / 33 / 19 / 13 |
+| `test_surfaces_wiring`, `test_tools` | behave, 18/0 | behave, 18/0 |
+| `checkfe`, `partials verify` | pass, 2,549,195 B | pass, 2,554,606 B |
+| `selfcheck` | 1,473 / 0 problems | 1,476 / 0 problems |
+| `app.dc.html` CRLF | 0 | 0 |
+| Size of the change | - | +47/-3 in `main.py` + `filmcut.py` (CRLF kept), +63/-6 in `app.dc.html`, +1 test file |
+
+Acceptance targets met so far: 1 (baseline holds), 2 (no trims = same request: pinned in `test_builder_s2`), 3 (source file untouched, length = window within a frame or two). Targets 4 and 5 (reorder invariants; timeline = preview = assembled film) wait for S2b-S2d.

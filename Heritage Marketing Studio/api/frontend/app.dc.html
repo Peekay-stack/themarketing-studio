@@ -17392,8 +17392,10 @@ class Component extends DCLogic {
       if (!(b.takes[fk] || []).some(x => x.id === take.id)) return { clipBusy:cb };           // the take was discarded while it ran
       const takes = { ...b.takes, [fk]:b.takes[fk].map(x => x.id === take.id ? { ...x, ...patch } : x) };
       // the first good clip of a shot becomes its chosen one (you can always choose another)
-      const chosen = (patch.status === 'done' && (!b.chosen[fk] || opts.choose)) ? { ...b.chosen, [fk]:take.id } : b.chosen;
-      return { clipBusy:cb, videoBuilder:{ ...b, takes, chosen } };
+      const picks = patch.status === 'done' && (!b.chosen[fk] || opts.choose);
+      const chosen = picks ? { ...b.chosen, [fk]:take.id } : b.chosen;
+      const trim = { ...b.trim }; if (picks) delete trim[fk];              // a trim belongs to the clip it was set on
+      return { clipBusy:cb, videoBuilder:{ ...b, takes, chosen, trim } };
     });
     this._lastWasBilling = false;
     if (patch.status === 'error') {
@@ -17406,7 +17408,9 @@ class Component extends DCLogic {
   chooseClipTake = (idx, k, id) => () => {
     const fk = this.frameKey(idx, k);
     this.setState(s => { const b = this.builderOf(s.videoBuilder), t = (b.takes[fk] || []).find(x => x.id === id);
-      if (!t || t.status !== 'done') return {}; return { videoBuilder:{ ...b, chosen:{ ...b.chosen, [fk]:id } } }; });
+      if (!t || t.status !== 'done') return {};
+      const trim = { ...b.trim }; if (b.chosen[fk] !== id) delete trim[fk];      // a trim belongs to the clip it was set on
+      return { videoBuilder:{ ...b, chosen:{ ...b.chosen, [fk]:id }, trim } }; });
   };
   discardClipTake = (idx, k, id) => () => {
     const fk = this.frameKey(idx, k);
@@ -17469,20 +17473,26 @@ class Component extends DCLogic {
   // Every ACTIVE shot (skipped ones are not in the film) and whether it has a chosen, finished clip. `quality` is what the assembled film is labelled: Draft, Final or Mixed.
   assembleStatus(){
     const s = this.state, b = this.builderOf(s.videoBuilder), missing = [], older = [], draft = [], final = [];
-    let total = 0;
+    let total = 0, planned = 0, kept = 0, trimmedN = 0;       // seconds: what the script plans for the shots, and what the chosen (trimmed) clips will give
     (s.fullScript || []).forEach((r, i) => {
       [{ k:0 }].concat(this.extraShots(r).map((sh, j) => ({ k:j + 1, sh }))).forEach(({ k, sh }) => {
         if (sh && sh.skip) return;
         total++;
         const key = this.frameKey(i, k), label = 'scene ' + this.sceneNo(r, i) + ', shot ' + (k + 1);
+        const want = k ? (parseInt(sh.secs, 10) || 2) : this.shotMasterSecs(r);
+        planned += want;
         const tk = (b.takes[key] || []).find(x => x.id === b.chosen[key]);
         if (!tk || tk.status !== 'done' || !tk.url) { missing.push({ idx:i, k, key, label }); return; }
         const f = (s.sceneFrames || {})[key];
         if (tk.frame && f && f.url && tk.frame !== f.url) older.push({ idx:i, k, key, label });
         (tk.tier === 'final' ? final : draft).push({ idx:i, k, key, label, secs:tk.seconds });
+        const tr = this.trimOf(b, key, tk);
+        if (tr.out != null) trimmedN++;
+        const have = tr.out != null ? tr.out - tr.in : ((tk.beats && tk.beats.length) ? tk.beats.reduce((x, c) => x + (c.seconds || 0), 0) : (tk.seconds || 0));
+        kept += Math.min(have, want);                       // a longer clip is cut to its beat; a shorter one shrinks the beat
       });
     });
-    return { total, missing, older, draft, final, complete:total > 0 && !missing.length, quality:(draft.length && final.length) ? 'Mixed' : (final.length ? 'Final' : 'Draft') };
+    return { total, missing, older, draft, final, planned, kept, trimmedN, complete:total > 0 && !missing.length, quality:(draft.length && final.length) ? 'Mixed' : (final.length ? 'Final' : 'Draft') };
   }
   // The `use_clips` payload: {key: [{url, seconds, mode}]} for every chosen finished take (a multi-beat shot sends one clip per beat, in order).
   chosenClipsPayload(){
@@ -17490,10 +17500,32 @@ class Component extends DCLogic {
     Object.keys(b.chosen || {}).forEach(key => {
       const tk = (b.takes[key] || []).find(x => x.id === b.chosen[key]);
       if (!tk || tk.status !== 'done' || !tk.url) return;
-      out[key] = (tk.beats && tk.beats.length) ? tk.beats.map(c => ({ url:c.url, seconds:c.seconds, mode:tk.mode || 'frame' })) : [{ url:tk.url, seconds:tk.seconds, mode:tk.mode || 'frame' }];
+      out[key] = (tk.beats && tk.beats.length) ? tk.beats.map(c => ({ url:c.url, seconds:c.seconds, mode:tk.mode || 'frame' })) : [{ url:tk.url, seconds:tk.seconds, mode:tk.mode || 'frame', ...this.trimOf(b, key, tk) }];
     });
     return out;
   }
+  // ---------- the film builder, slice S2a: trim a chosen clip ----------
+  // The kept window of a shot's chosen clip as {in, out} (seconds into the clip), or {} when the whole clip is kept. A multi-beat clip is never trimmed (each beat is its own clip).
+  trimOf(b, key, tk){
+    const t = (b.trim || {})[key];
+    if (!t || (tk.beats && tk.beats.length) || !(t.out - t.in >= 0.2) || t.in < 0) return {};
+    return { in:t.in, out:t.out };
+  }
+  // Keep [a, b] of the shot's chosen clip. The whole clip (or a window under half a second) removes the trim; the clip's own file is never changed.
+  setClipTrim = (idx, k, a, bb, dur) => {
+    const fk = this.frameKey(idx, k);
+    a = Math.max(0, Math.round(a * 10) / 10); bb = Math.min(dur, Math.round(bb * 10) / 10);
+    if (bb - a < 0.5) return;
+    this.setState(s => {
+      const b = this.builderOf(s.videoBuilder), trim = { ...b.trim };
+      if (a <= 0.04 && bb >= dur - 0.04) delete trim[fk]; else trim[fk] = { in:a, out:bb };
+      return { videoBuilder:{ ...b, trim } };
+    });
+  };
+  clearClipTrim = (idx, k) => () => {
+    const fk = this.frameKey(idx, k);
+    this.setState(s => { const b = this.builderOf(s.videoBuilder), trim = { ...b.trim }; delete trim[fk]; return { videoBuilder:{ ...b, trim } }; });
+  };
   assembleFilm = async () => {
     const st = this.assembleStatus();
     if (this.state.production.status === 'rendering') return;
@@ -17529,6 +17561,8 @@ class Component extends DCLogic {
         h('span', { style:{ marginLeft:'auto', display:'flex', gap:8, flexWrap:'wrap' } },
           omni && st.draft.length ? btn('Promote chosen to Final (' + st.draft.length + ') \u00b7 about ' + this.usd(est), this.promoteToFinal, { disabled:!!s.clipBatch || assembling, title:'Re-renders only the chosen Draft clips at 720p; the Drafts are kept' }) : null,
           btn(assembling ? 'Assembling\u2026' : 'Assemble film', this.assembleFilm, { go:true, disabled:!st.complete || assembling || !!s.clipBatch, title:st.complete ? 'Joins your chosen clips and adds voice and music: no new video is generated' : 'Choose a clip for every shot first' }))),
+      st.total ? h('div', { style:{ fontSize:11.5, color:'#41505F', marginTop:4 } }, 'Timeline: ' + (Math.round(st.kept * 10) / 10) + ' s of the ' + st.planned + ' s planned' + (st.complete ? '' : ' (so far)')
+        + (st.trimmedN ? ' · ' + st.trimmedN + ' clip' + (st.trimmedN > 1 ? 's' : '') + ' trimmed' : '')) : null,
       !st.complete ? h('div', { style:{ fontSize:11.5, color:'#B07A12', marginTop:4 } }, 'Still to choose: ' + st.missing.slice(0, 6).map(x => x.label).join(', ') + (st.missing.length > 6 ? ' and ' + (st.missing.length - 6) + ' more' : '')) : null,
       st.older.length ? h('div', { style:{ fontSize:11.5, color:'#B07A12', marginTop:4 } }, st.older.length + ' chosen clip' + (st.older.length > 1 ? 's were' : ' was') + ' animated from an earlier frame: ' + st.older.slice(0, 4).map(x => x.label).join(', ')) : null,
       h('div', { style:{ fontSize:11, color:'#9AA1AD', marginTop:4 } }, 'Assembling makes no new video: it joins your chosen clips and adds the voice and music (a small cost). The film appears below and in Production, and opens in the Edit room.'),
@@ -17550,6 +17584,28 @@ class Component extends DCLogic {
       h('span', { style:{ fontSize:12, color:'#41505F' } }, all.length + ' take' + (all.length === 1 ? '' : 's') + ' made · ' + chosen + ' chosen' + (this.clipEngine() === 'omni' ? ' · about ' + this.usd(spent) + ' estimated so far' : '')),
       h('span', { style:{ marginLeft:'auto' } }, h('button', { onClick:this.generateMissingClips, disabled:!todo.length || !!s.clipBatch, style:{ border:'1px solid #259821', background:'#259821', color:'#fff', borderRadius:8, padding:'5px 12px', fontSize:12, fontWeight:700,
         cursor:(!todo.length || s.clipBatch) ? 'default' : 'pointer', opacity:(!todo.length || s.clipBatch) ? 0.55 : 1 } }, s.clipBatch ? 'Generating…' : 'Generate all missing (' + todo.length + ')' + (est != null && todo.length ? ' · about ' + this.usd(est) : ''))));
+  }
+  // The trim control under a shot's takes: the kept part of the CHOSEN clip. Two sliders (start, end), what is kept, a preview that plays only that part (a #t=start,end media fragment) and Reset.
+  trimRow(idx, k, key, b){
+    const h = React.createElement, tk = (b.takes[key] || []).find(x => x.id === b.chosen[key]);
+    if (!tk || tk.status !== 'done' || !tk.url) return null;
+    if (tk.beats && tk.beats.length) return h('div', { style:{ fontSize:10.5, color:'#9AA1AD', marginBottom:8 } }, 'Trim is not available for a shot made of several continuing beats.');
+    const dur = Math.round((tk.seconds || 0) * 10) / 10;
+    if (!(dur >= 1)) return null;
+    const t = (b.trim || {})[key], trimmed = !!t, a = trimmed ? t.in : 0, e = trimmed ? t.out : dur, kept = Math.round((e - a) * 10) / 10;
+    const slider = (label, val, onChange) => h('label', { style:{ display:'inline-flex', alignItems:'center', gap:6, fontSize:11, color:'#41505F' } }, label,
+      h('input', { type:'range', min:0, max:dur, step:0.1, value:val, onChange:ev => onChange(parseFloat(ev.target.value)), style:{ width:150 } }),
+      h('span', { style:{ minWidth:34, fontVariantNumeric:'tabular-nums' } }, val.toFixed(1) + ' s'));
+    return h('div', { style:{ margin:'0 0 10px', padding:'8px 10px', border:'1px solid #E6E3DC', borderRadius:8, background:'#FBFAF8', maxWidth:560 } },
+      h('div', { style:{ display:'flex', alignItems:'baseline', gap:8, flexWrap:'wrap', marginBottom:6 } },
+        h('span', { style:{ fontSize:10.5, fontWeight:800, letterSpacing:'0.05em', textTransform:'uppercase', color:'#6B7280' } }, 'Trim'),
+        h('span', { style:{ fontSize:11.5, color:trimmed ? '#17325E' : '#9AA1AD', fontWeight:trimmed ? 700 : 400 } }, trimmed ? 'Keeping ' + a.toFixed(1) + '–' + e.toFixed(1) + ' s · ' + kept.toFixed(1) + ' s of ' + dur.toFixed(1) + ' s' : 'Keeping all ' + dur.toFixed(1) + ' s'),
+        trimmed ? h('button', { onClick:this.clearClipTrim(idx, k), style:{ border:'1px solid #C9CEDA', background:'#fff', color:'#17325E', borderRadius:7, padding:'1px 8px', fontSize:11, fontWeight:700, cursor:'pointer' } }, 'Reset') : null),
+      h('div', { style:{ display:'flex', gap:14, flexWrap:'wrap' } },
+        slider('Start', a, v => this.setClipTrim(idx, k, Math.min(v, e - 0.5), e, dur)),
+        slider('End', e, v => this.setClipTrim(idx, k, a, Math.max(v, a + 0.5), dur))),
+      trimmed ? h('video', { key:a + '-' + e, src:tk.url + '#t=' + a + ',' + e, controls:true, preload:'metadata', muted:true, playsInline:true, style:{ width:220, borderRadius:6, marginTop:6, background:'#1B2433', display:'block' } }) : null,
+      h('div', { style:{ fontSize:10.5, color:'#9AA1AD', marginTop:5 } }, 'The clip itself is not changed. The cut is made when you assemble, and the voice follows the trimmed picture.'));
   }
   clipLayer(idx, k, key, frame){
     const h = React.createElement, s = this.state, b = this.builderOf(s.videoBuilder), list = b.takes[key] || [], chosenId = b.chosen[key] || '';
@@ -17577,6 +17633,7 @@ class Component extends DCLogic {
       h('div', { style:{ display:'flex', alignItems:'baseline', gap:8, marginBottom:6 } }, h('span', { style:{ fontSize:10.5, fontWeight:800, letterSpacing:'0.05em', textTransform:'uppercase', color:'#6B7280' } }, 'Clip'),
         h('span', { style:{ fontSize:10.5, color:'#9AA1AD' } }, list.length ? list.length + ' take' + (list.length > 1 ? 's' : '') : 'none yet')),
       list.length ? h('div', { style:{ display:'flex', gap:10, flexWrap:'wrap', marginBottom:8 } }, cards) : null,
+      this.trimRow(idx, k, key, b),
       h('div', { style:{ display:'flex', gap:6, alignItems:'center', flexWrap:'wrap' } },
         btn(busy ? 'Rendering…' : (list.length ? '↻ Re-roll' : 'Generate clip') + ' (' + (tier === 'final' ? 'Final' : 'Draft') + ')' + (est != null ? ' · about ' + this.usd(est) : ''), this.generateClipTake(idx, k),
           { go:!list.length, disabled:busy || !hasFrame, title:hasFrame ? (est == null ? 'Billed by fal; no estimate available' : 'Estimated at the measured Omni rate; the engine makes at least 3 s') : 'Choose a frame first' }),

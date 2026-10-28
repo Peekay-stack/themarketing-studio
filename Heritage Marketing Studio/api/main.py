@@ -1541,12 +1541,36 @@ def _produce_video_sync(payload: dict):
             return f"scene {row.get('no') or seg['index'] + 1}, shot {int(row.get('shot_no') or (int(row.get('shot') or 0) + 1))}"
         return f"shot {seg['index'] + 1}"
 
+    _asm_trimmed: dict[int, float] = {}     # shot index -> the kept window's length, for shots whose chosen clip was trimmed
+
+    def _asm_trim(_i: int, _c: dict):
+        """A trimmed chosen clip (`in`/`out` seconds into the take): cut the kept window into a NEW file; the take's own file is never touched. Returns (url to use, note).
+        If the window cannot be cut the WHOLE clip is used and the note says so: a silent fallback would hand over a film that ignores the trim."""
+        _url = str(_c["url"])
+        try:
+            _a, _b = float(_c.get("in")), float(_c.get("out"))
+        except (TypeError, ValueError):
+            return _url, ""
+        if not (_a >= 0 and _b - _a >= 0.2):
+            return _url, ""
+        _exe_t = filmcut.ffmpeg_exe()
+        _src = gemini.local_path(_url) or _resolve_media(_url)
+        if not _exe_t or not _src or not os.path.exists(_src):
+            return _url, f"{_asm_label(_i)}: the trim could not be applied (the clip file or ffmpeg is missing), so the whole clip is used"
+        os.makedirs(gemini.MEDIA_DIR, exist_ok=True)
+        _name = f"trim-{uuid.uuid4().hex[:10]}.mp4"
+        if filmcut.trim_window(_exe_t, _src, _a, _b, os.path.join(gemini.MEDIA_DIR, _name)):
+            _asm_trimmed[_i] = round(_b - _a, 2)
+            return f"/media/{_name}", ""
+        return _url, f"{_asm_label(_i)}: the trim could not be cut, so the whole clip is used"
+
     def render(seg):
         if _chosen_clips is not None:
             _c = _asm_chosen(seg["index"])
             if _c and str(_c.get("url") or "").strip():
-                return seg["index"], {"url": str(_c["url"]), "provider": str(_c.get("provider") or "chosen"), "model": "chosen take", "kind": "video",
-                                      "from_frame": str(_c.get("mode") or "frame") != "text"}
+                _cu, _cn = _asm_trim(seg["index"], _c)
+                return seg["index"], {"url": _cu, "provider": str(_c.get("provider") or "chosen"), "model": "chosen take", "kind": "video",
+                                      "from_frame": str(_c.get("mode") or "frame") != "text", **({"note": _cn} if _cn else {})}
             return seg["index"], {"url": "", "provider": "none", "kind": "video",
                                   "note": f"{_seg_label(seg)}: no chosen clip, so nothing was rendered (assembling never generates)"}
         # A scene with a signed-off live-action shot is NOT generated. Real footage of real people
@@ -1642,8 +1666,13 @@ def _produce_video_sync(payload: dict):
                 _d = filmcut.probe_seconds(_exe_a, _p) if _p and os.path.exists(_p) else 0.0
                 _plan_s = float(segments[_i]["seconds"] or 0)
                 if _d > 0 and _d < _plan_s - 0.25:
-                    errors.append(f"{_asm_label(_i)}: the chosen clip is {_d:.1f} s but the plan gives that shot {_plan_s:g} s, so the film is {_plan_s - _d:.1f} s shorter there (the voice follows the real picture)")
+                    if _i in _asm_trimmed:
+                        errors.append(f"{_asm_label(_i)}: trimmed to {_d:.1f} s but the plan gives that shot {_plan_s:g} s, so the film is {_plan_s - _d:.1f} s shorter there (the voice follows the trimmed picture)")
+                    else:
+                        errors.append(f"{_asm_label(_i)}: the chosen clip is {_d:.1f} s but the plan gives that shot {_plan_s:g} s, so the film is {_plan_s - _d:.1f} s shorter there (the voice follows the real picture)")
                     segments[_i]["seconds"] = round(_d, 2)
+                elif _i in _asm_trimmed and _d > _plan_s + 0.25:
+                    errors.append(f"{_asm_label(_i)}: your trimmed window is {_d:.1f} s but the plan gives that shot {_plan_s:g} s, so only the first {_plan_s:g} s of the window is used")
     if _only:
         _recs = [{"beat": _beat_of[_i] + 1, "seconds": segments[_i]["seconds"], "url": slots[_i] or "", "ok": bool(slots[_i]),
                   "provider": str((results.get(_i) or {}).get("provider") or ""), "from_frame": bool((results.get(_i) or {}).get("from_frame"))}

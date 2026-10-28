@@ -521,6 +521,21 @@ def _make_exact(exe: str, path: str, seconds: float) -> None:
               file=sys.stderr, flush=True)
 
 
+def trim_window(exe: str, src: str, a: float, b: float, dest: str) -> bool:
+    """Cut the window [a, b] seconds out of `src` into a NEW file `dest`. The source take is never touched (a trim is a choice that can be changed, not an edit that destroys the clip).
+    Re-encoded rather than stream-copied: a copy can only start on a keyframe, so the window would start a few frames early. True on success, and a file that has frames."""
+    a, b = max(0.0, float(a)), float(b)
+    if b - a < 0.2:
+        return False
+    cmd = [exe, "-y", "-i", src, "-ss", f"{a:.3f}", "-t", f"{b - a:.3f}", "-c:v", "libx264", "-preset", "veryfast", "-crf", "20", "-pix_fmt", "yuv420p",
+           "-c:a", "aac", "-b:a", "96k", "-movflags", "+faststart", dest]
+    res = subprocess.run(cmd, capture_output=True, text=True)
+    if res.returncode == 0 and os.path.exists(dest) and os.path.getsize(dest) > 0:
+        return True
+    print(f"[filmcut] could not cut the window {a:.2f}-{b:.2f} s: {res.stderr[-200:]}", file=sys.stderr, flush=True)
+    return False
+
+
 def _frame_signature(exe: str, path: str, t: float):
     """A tiny grey fingerprint (64x36) of the frame at `t` seconds, or None when it cannot be read. Two different pictures never share one; a frozen picture always does."""
     r = subprocess.run([exe, "-y", "-ss", f"{max(0.0, t):.3f}", "-i", path, "-frames:v", "1", "-vf", "scale=64:36,format=gray", "-f", "rawvideo", "-"],

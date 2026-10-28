@@ -82,3 +82,21 @@ Anything confusing in the strip or the wording of the confirms; whether the asse
 
 ## Not in this slice
 Trimming, reordering and a preview timeline (S2); take QC (S5); continuity between shots (S4); budget cap and retention (S7). The assembled film is joined with the existing stitch, including its frozen-picture check.
+
+# Slice S2a — Trim a chosen clip (28 Oct 2026)
+
+Same set-up as before (run `run-local.bat` from the exact folder, hard-reload, sign in). **Trimming spends nothing**: the clip file is never changed; the cut is made when you assemble.
+
+## What S2a is
+Under a shot's clip cards, once a clip is chosen, there is a **Trim** row: a Start and an End slider (0.1 s steps, at least 0.5 s kept), what is kept ("Keeping 1.0-3.0 s, 2.0 s of 4.0 s"), a small player that plays ONLY the kept part, and **Reset**. The assemble strip now shows a **Timeline** line: the film's length from your chosen, trimmed clips against what the script plans. Not in S2a: reordering shots/scenes and the whole-film preview player (next).
+
+## Click-through (about 5 minutes, no spend)
+1. On **Shots**, pick a shot with a chosen clip. Drag **Start** to about 1 s. Expected: "Keeping 1.0-x s", a player appears that starts at 1 s and stops at the End; the **Timeline** line drops and says "1 clip trimmed".
+2. Drag **End** below Start. Expected: End stops at Start + 0.5 s (never an empty window).
+3. Press **Reset**. Expected: back to "Keeping all"; the player disappears.
+4. Trim a shot, then **Use** another take of that shot. Expected: the trim is cleared (a trim belongs to the clip it was set on). Other shots' trims stay.
+5. Trim two shots, press **Assemble film**. Expected: the film is shorter by what you cut; the result notes which shots were trimmed and by how much; the voice follows the trimmed picture; open it in the Edit room.
+6. A shot made of several continuing beats (a scene longer than 8 s) says "Trim is not available" - each beat is its own clip.
+
+## What to tell me
+Whether the sliders feel right (or you want exact-second boxes), whether the preview player is clear, and whether the Timeline wording makes sense.
