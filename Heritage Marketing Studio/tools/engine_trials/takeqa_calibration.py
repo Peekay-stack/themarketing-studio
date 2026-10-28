@@ -1,4 +1,4 @@
-# takeqa_calibration.py -- the measurements behind takeqa.py's thresholds (29 Oct 2026): motion, brightness and first/middle-frame similarity over the trial clips in C:\Users\punie\Downloads\engine-trial plus synthetic frozen / black clips.
+# takeqa_calibration.py -- the measurements behind takeqa.py's thresholds (28 Oct 2026): motion, brightness and first/middle-frame similarity over the trial clips in C:\Users\punie\Downloads\engine-trial plus synthetic frozen / black clips.
 # Run: api/.venv/Scripts/python.exe tools/engine_trials/takeqa_calibration.py   (needs the trial clips on this machine; edit the `tmp` scratch folder below to somewhere writable)
 import os, subprocess, sys, glob
 sys.path.insert(0, r"C:\Users\punie\Heritage-Marketing-Studio-OPUS\Heritage Marketing Studio\api")

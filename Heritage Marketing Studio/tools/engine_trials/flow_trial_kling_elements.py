@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""flow_trial_kling_elements.py -- TRIAL 2 of the "Flow / Higgsfield" research (29 Oct 2026): can Kling 3.0 on fal hold OUR cast across different shots from reference ELEMENTS (frontal image + tag @Element1)
+"""flow_trial_kling_elements.py -- TRIAL 2 of the "Flow / Higgsfield" research (28 Oct 2026): can Kling 3.0 on fal hold OUR cast across different shots from reference ELEMENTS (frontal image + tag @Element1)
 -- Higgsfield's "Elements" / Flow's "Ingredients" -- with no storyboard frame to animate? Spends real credit; fal lists Kling 3.0 Pro with elements at a higher per-second rate than without, so clips are 3-4 s and
 audio is off. Output: Downloads\\engine-trial\\flow_trials\\kling\\ (clips, the two reference crops, a contact sheet), and the endpoint's own error text if a call is refused.
 

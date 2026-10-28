@@ -28,7 +28,7 @@
     ...(partial ? { hook: 'ONLYHOOK-' + n } : {}) });
   try {
     // 1. the prompt asks for the four fields
-    I.setState({ screen: 'video', vTab: 'film', videoObjective: 'Brand awareness', scriptVersions: [], refinePrompt: '', videoForceTyped: false, videoBrief: '', videoGenerating: false, videoConcept: null, conceptRoutes: [], prodDuration: '30s', scriptPhase: 'concept' });
+    I.setState({ screen: 'video', vTab: 'film', videoStep: 'scripting', videoObjective: 'Brand awareness', scriptVersions: [], refinePrompt: '', videoForceTyped: false, videoBrief: '', videoGenerating: false, videoConcept: null, conceptRoutes: [], prodDuration: '30s', scriptPhase: 'concept' });
     reply = JSON.stringify({ routes: [route(1, true), route(2, true), route(3, true)] });
     await I.generateVideo(); await wait(800);
     const p = prompts[0] || '';
@@ -65,7 +65,7 @@
 
     // 6. an older concept (no fields): nothing extra anywhere
     prompts.length = 0; reply = null;
-    I.setState({ videoConcept: route(9, false), conceptRoutes: [route(9, false), route(8, false)], conceptRoute: 0, scriptPhase: 'concept', scriptWriting: false, fullScript: null, scriptStatus: 'concept', scriptVersions: [], refinePrompt: '' }); await wait(600);
+    I.setState({ videoStep: 'scripting', videoConcept: route(9, false), conceptRoutes: [route(9, false), route(8, false)], conceptRoute: 0, scriptPhase: 'concept', scriptWriting: false, fullScript: null, scriptStatus: 'concept', scriptVersions: [], refinePrompt: '' }); await wait(600);
     check('an older concept shows no Hook/Surprise/Turn/Remember lines', !/REMEMBER/i.test(txt()) && !/\bSURPRISE\b/.test(txt()));
     await I.writeFullScript(); await wait(500);
     check('and its writer prompt has NO entertainment sentence (byte-for-byte the old behaviour)', !/own entertainment/.test(prompts[0] || '') && !/must show the hook/.test(prompts[0] || '') && /Concept logline: "Logline 9"/.test(prompts[0] || ''), (prompts[0] || '').slice(0, 300));

@@ -1,6 +1,6 @@
 # Film engagement — the three "boring" levers: sweep, what was built, plan for the rest
 
-Written 29 Oct 2026. Source: `FILM_PIPELINE_MAP.md` Part 4 (the proposed process) checked against the code. Branch `coverage` (unmerged, not live).
+Written 28 Oct 2026. Source: `FILM_PIPELINE_MAP.md` Part 4 (the proposed process) checked against the code. Branch `coverage` (unmerged, not live).
 
 Why these exist: the 28 Oct film was mechanically fine and creatively wrong ("okay, less repetitive, **boring as hell**"). The craft panels (director's read, flow review, editor's notes), the "be entertaining" writer rule and the builder fix *rendering* problems. These three levers move the judgement of "is it boring" **earlier**, to where changing it is free.
 
@@ -32,7 +32,7 @@ Owner click-through:
 4. Edit a scene's visual. Expected: both rows say the script has changed since the read.
 5. Press **Approve script** with a "high" risk showing. Expected: it approves anyway, and the panel goes away.
 
-## 3a. Built (29 Oct, after your go): lever #2, with the real-model result
+## 3a. Built (28 Oct, after your go): lever #2, with the real-model result
 
 **Built, front end only.** The concept prompt in `generateVideo` now also asks each route for `hook`, `surprise`, `turn` and `memorable` (one specific sentence each, never a generic line, the four different, the hook an action or something unexpected and never a quiet establishing view). They ride on the route object, so they are kept when you switch route and saved with the film (`video_concept` is stored whole). They show as four labelled lines on each route card and under the chosen concept's logline. The full-script writer is told the chosen route's four lines **must be delivered as scenes** and that the first scene shows the hook (the sentence is added only when the fields exist: an older concept's writer prompt is byte-for-byte unchanged). A refine re-sends the current route with its four fields so they are kept. Not done, on purpose: the provocation route writer (as recommended), and a hand-off to the director's read (it reads the *script*, which now carries them).
 

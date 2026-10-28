@@ -54,10 +54,23 @@ hostile = [f_ch, c_ch, c_src, cur_frame, cast] + list(other.values()) + ["/media
 r = mediapurge.purge(media, films, hostile, dry_run=False)
 check("naming files a film uses, files off the allowlist, other folders, traversal or junk deletes NOTHING", r["deleted"] == [] and r["freed_bytes"] == 0 and len(os.listdir(media)) == 15, str(r["deleted"]))
 reasons = {s["url"]: s["reason"] for s in r["skipped"]}
-check("each used file is skipped with the reason 'in use by a film'", all("in use by a film" in reasons[x] for x in (f_ch, c_ch, c_src, cur_frame, cast)), str({x: reasons.get(x) for x in (f_ch, c_ch, c_src, cur_frame, cast)}))
+check("each used file is skipped with the reason 'in use'", all("in use" in reasons[x] for x in (f_ch, c_ch, c_src, cur_frame, cast)), str({x: reasons.get(x) for x in (f_ch, c_ch, c_src, cur_frame, cast)}))
 check("voice, music, key visuals, trimmed assemble clips, stills and cast files are 'not a generated frame or clip'", all("not a generated frame or clip" in reasons[x] for x in other.values()), str({x: reasons.get(x) for x in other.values()}))
 check("a path outside the media folder, a full URL, an empty or non-string entry is 'not a stored media file'", all("not a stored media file" in reasons.get(x, "") for x in ("/media/../main.py", "/media/sub/frame-aaaaaaaaaa.jpg", "/renders/film-1.mp4", "https://x.test/media/frame-bbbbbbbbbb.jpg", "")), str(reasons))
 check("the real main.py is still there", os.path.exists(os.path.join(ROOT, "api", "main.py")))
+
+# ---- a saved Edit-room cut keeps the clips it plays (found in the 28 Oct wiring audit: the real tenant's cuts store names six shot clips) ----------------------------------------------
+cuts = tempfile.mkdtemp()
+c_cut = make("shot-cccccccc01.mp4", 400); c_cut2 = make("shot-cccccccc02.mp4", 500); c_free = make("shot-cccccccc03.mp4", 600)
+json.dump([{"id": "x", "versions": [{"beats": [{"n": 1, "clip_url": c_cut}, {"n": 2, "clip_url": c_cut2}]}]}], open(os.path.join(cuts, "manifest.json"), "w"))
+open(os.path.join(cuts, "notes.txt"), "w").write(c_free)
+check("without the cuts folder the cut's clips look unused (the gap the audit found)", [d["url"] for d in mediapurge.purge(media, films, [c_cut, c_cut2, c_free])["deleted"]] == [c_cut, c_cut2, c_free])
+r = mediapurge.purge(media, films, [c_cut, c_cut2, c_free], dry_run=False, also_dirs=[cuts])
+check("with the cuts folder, the clips a saved cut plays are KEPT and only the unreferenced clip goes (a .txt in the folder is ignored)",
+      [d["url"] for d in r["deleted"]] == [c_free] and os.path.exists(os.path.join(media, "shot-cccccccc01.mp4")) and os.path.exists(os.path.join(media, "shot-cccccccc02.mp4")) and not os.path.exists(os.path.join(media, "shot-cccccccc03.mp4"))
+      and all("saved Edit-room cut" in s["reason"] for s in r["skipped"]), str(r))
+check("a missing cuts folder is harmless", mediapurge.in_use(films, also_dirs=[os.path.join(cuts, "nope")]) == mediapurge.in_use(films))
+shutil.rmtree(cuts, ignore_errors=True)
 
 # ---- the real delete -------------------------------------------------------------------------------------------------------------------------------
 r = mediapurge.purge(media, films, ask + [f_un1], dry_run=False)

@@ -1478,6 +1478,10 @@ def _produce_video_sync(payload: dict):
     # clip's LAST frame instead of the shot's own storyboard frame; `chain_beats` makes each later piece of a long shot (a scene over 8 s is several continuing pieces) start from the last frame of the piece before it.
     _chain_from = str(payload.get("chain_from") or "").strip()
     _chain_beats = bool(payload.get("chain_beats"))
+    try:
+        _chain_at = float(payload.get("chain_from_at")) if payload.get("chain_from_at") not in (None, "") else None     # the second of that clip where the film stops using it
+    except (TypeError, ValueError):
+        _chain_at = None
     _chained = bool(_chain_from or _chain_beats)
     if _chained and not _only:
         return JSONResponse(status_code=400, content={"detail": "chain_from and chain_beats apply to a single-shot render (only_shot) only."})
@@ -1577,7 +1581,7 @@ def _produce_video_sync(payload: dict):
             return f"/media/{_name}", ""
         return _url, f"{_asm_label(_i)}: the trim could not be cut, so the whole clip is used"
 
-    def _chain_frame(src_url: str) -> str:
+    def _chain_frame(src_url: str, at=None) -> str:
         """The last frame of a clip we hold, saved as a new image in the media folder (where the next piece of a continuing shot starts). "" when it cannot be taken."""
         _exe_c = filmcut.ffmpeg_exe()
         _src_c = gemini.local_path(src_url) or _resolve_media(src_url)
@@ -1585,7 +1589,7 @@ def _produce_video_sync(payload: dict):
             return ""
         os.makedirs(gemini.MEDIA_DIR, exist_ok=True)
         _nm = f"chain-{uuid.uuid4().hex[:10]}.jpg"
-        return f"/media/{_nm}" if filmcut.last_frame(_exe_c, _src_c, os.path.join(gemini.MEDIA_DIR, _nm)) else ""
+        return f"/media/{_nm}" if filmcut.last_frame(_exe_c, _src_c, os.path.join(gemini.MEDIA_DIR, _nm), at) else ""
 
     def render(seg, _frame=""):
         if _chosen_clips is not None:
@@ -1674,7 +1678,7 @@ def _produce_video_sync(payload: dict):
                 if not _prev_url:
                     _stop = f"{_seg_label(_s)}: the piece before it did not render, so there is no last frame to continue from"
                 else:
-                    _fr = _chain_frame(_prev_url)
+                    _fr = _chain_frame(_prev_url, _chain_at if _beat_of[_i] == 0 else None)
                     if not _fr:
                         _stop = f"{_seg_label(_s)}: could not take the last frame of the previous clip, so this shot was not rendered (a chained shot never falls back to its own frame)"
             if _stop:
@@ -3232,13 +3236,13 @@ def media_purge(payload: dict):
     """Remove the files of takes nobody chose, ON REQUEST ONLY (film builder S7). Body: `urls` (served /media paths) and `dry_run` (default TRUE: only measure; send false to delete).
 
     Only generated frames and clips (`frame-`, `shot-`, `chain-` files) can ever be removed, and anything a saved film still uses (the chosen frame and clip of every shot, current storyboard
-    frames, the cast reference) is kept even if it is named. Returns {dry_run, deleted: [{url, bytes}], skipped: [{url, reason}], freed_bytes}."""
+    frames, the cast reference, a clip a saved Edit-room cut plays) is kept even if it is named. Returns {dry_run, deleted: [{url, bytes}], skipped: [{url, reason}], freed_bytes}."""
     urls = payload.get("urls")
     if not isinstance(urls, list):
         return JSONResponse(status_code=400, content={"detail": "Send `urls`: a list of /media paths."})
     if len(urls) > mediapurge.MAX_URLS:
         return JSONResponse(status_code=400, content={"detail": f"At most {mediapurge.MAX_URLS} files per request."})
-    return mediapurge.purge(gemini.MEDIA_DIR, filmscript.DIR, urls, dry_run=payload.get("dry_run") is not False)
+    return mediapurge.purge(gemini.MEDIA_DIR, filmscript.DIR, urls, dry_run=payload.get("dry_run") is not False, also_dirs=[cut.CUT_DIR])
 
 
 @app.post("/production-bible-docx")

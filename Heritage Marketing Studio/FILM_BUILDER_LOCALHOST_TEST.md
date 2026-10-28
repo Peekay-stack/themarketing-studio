@@ -26,7 +26,7 @@ Frames used to be **overwritten** by every re-render. Now each render is kept as
 Anything that looks wrong, confusing or slow; whether the variants are "different enough" (the image engine ignores the seed, so every variant is a fresh picture of the same prompt — see the trial note in `FILM_BUILDER_PLAN.md`); and whether the Shots step feels like the right place.
 
 ## Not in this slice
-Video clips, takes of clips, the timeline, the preview and assembling from chosen clips (S1b–S3). Nothing here touches the Film tab's render, the Edit room, voices or sound.
+Video clips, takes of clips, the timeline, the preview and assembling from chosen clips (S1b–S3; all built since, see their own sections below). Nothing here touches the Film tab's render, the Edit room, voices or sound.
 
 
 ---
@@ -54,7 +54,7 @@ Each shot card in **Shots** now has a **Clip** layer under its frame: you genera
 Anything slow, confusing or wrong; whether the estimate matches what your Google billing page shows after a few clips (that is how I reconcile the rate); and whether the clips are good enough to choose between.
 
 ## Not in this slice
-Assembling the chosen clips into a film, trims, reorder and preview (S3 / S2); continuity between shots (S4); budget cap, retention (S7).
+Assembling the chosen clips into a film, trims, reorder and preview (S3 / S2); continuity between shots (S4); budget cap, retention (S7). (All built since: see their own sections below.)
 
 
 ---
@@ -81,7 +81,7 @@ At the top of **Shots** there is now an assemble strip: how many shots have a ch
 Anything confusing in the strip or the wording of the confirms; whether the assembled film matches what you expected from the chosen clips; and whether the Final estimate matches your Google billing after a promote.
 
 ## Not in this slice
-Trimming, reordering and a preview timeline (S2); take QC (S5); continuity between shots (S4); budget cap and retention (S7). The assembled film is joined with the existing stitch, including its frozen-picture check.
+Trimming, reordering and a preview timeline (S2); take QC (S5); continuity between shots (S4); budget cap and retention (S7). (All built since: see their own sections below.) The assembled film is joined with the existing stitch, including its frozen-picture check.
 
 # Slice S2a — Trim a chosen clip (28 Oct 2026)
 
@@ -141,7 +141,7 @@ In the assemble strip (top of **Shots**) there is a **Preview sequence** button.
 ## What to tell me
 Whether the preview is clear enough to judge pace and order without assembling, and whether you want the voice line shown as text over each segment.
 
-# Slice S5 - Take QC (29 Oct 2026)
+# Slice S5 - Take QC (28 Oct 2026)
 
 Same set-up as before. The automatic checks are free (a second or two of ffmpeg). **Look** is the only paid part: one model call per press.
 
@@ -160,7 +160,7 @@ Every clip take now gets looked at the moment it finishes. A chip on the take sa
 ## What to tell me
 Any clip that was flagged and was fine (a false alarm), and any clip with a real problem that no check caught. The second kind is what Look is for; if Look misses it too, send me the clip and I will see what else can be measured.
 
-# Slice S4a - Continue (chain) (29 Oct 2026)
+# Slice S4a - Continue (chain) (28 Oct 2026)
 
 Same set-up as before. A chained take costs the same as an ordinary one (one clip at the measured rate; the last-frame extraction is free). **Extend is not part of this slice.**
 
@@ -179,7 +179,7 @@ On a shot's clip layer there is a tick box: **Continue from the previous shot** 
 ## What to tell me
 Whether a chained join looks better than a cut between two separately animated frames; whether identity (face, wardrobe) or the pack drifts when a clip starts from a video's last frame; and whether you want Continue ON by default for the extra angles of a scene. If you want extend (adult shots only), say so and I will add it as its own slice.
 
-# Slice S7 - Budget, batches, storage (29 Oct 2026)
+# Slice S7 - Budget, batches, storage (28 Oct 2026)
 
 Same set-up as before. **The storage purge DELETES FILES and cannot be undone. Try it on your local dev tenant only, never live.** The budget cap and compare spend nothing; x3 and batches spend at the measured rate (shown before you confirm).
 

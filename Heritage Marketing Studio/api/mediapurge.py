@@ -1,6 +1,6 @@
 """mediapurge.py -- retention for the film builder (slice S7, FILM_BUILDER_PLAN.md): how much the media folder holds, and removing the files of takes nobody chose, ON REQUEST ONLY.
 
-Measured 29 Oct 2026 on the local tenant (648 MB): IMAGES are the bulk (`frame-*` 404 MB in 418 files, `still-*` 141 MB), the 21 video clips together are 6.7 MB. So the builder's disk cost is
+Measured 28 Oct 2026 on the local tenant (648 MB): IMAGES are the bulk (`frame-*` 404 MB in 418 files, `still-*` 141 MB), the 21 video clips together are 6.7 MB. So the builder's disk cost is
 frame variants first, clips second. Nothing here ever runs on its own.
 
 Safety, in three layers (a delete is the one thing in this app that cannot be undone):
@@ -18,6 +18,7 @@ import shutil
 
 SAFE = re.compile(r"^(frame|shot|chain)-[0-9a-f]{6,}\.(jpg|jpeg|png|webp|mp4)$")
 MAX_URLS = 500
+_MENTION = re.compile(r"/media/((?:frame|shot|chain)-[0-9a-f]{6,}\.(?:jpg|jpeg|png|webp|mp4))")
 
 
 def _name(url) -> str:
@@ -58,9 +59,22 @@ def usage(media_dir: str) -> dict:
     return {"files": files, "bytes": total, "by_kind": by, "disk_free_bytes": free}
 
 
-def in_use(film_dir: str) -> set[str]:
-    """The media file names that any saved film still uses and that a purge must therefore keep."""
+def in_use(film_dir: str, also_dirs=()) -> set[str]:
+    """The media file names that any saved film still uses and that a purge must therefore keep. `also_dirs` are other WORKING stores that point at generated files (the Edit room's saved cuts name each
+    beat's clip): every file name they mention is kept too. (The `made` ledger is deliberately NOT one of them: it is a record of everything ever generated, so protecting it would keep every frame
+    forever; a purge leaves its entries in place without their file, which the confirmation says.)"""
     keep: set[str] = set()
+    for d in also_dirs or ():
+        try:
+            names = [f for f in os.listdir(d) if f.endswith((".json", ".jsonl"))]
+        except OSError:
+            continue
+        for f in names:
+            try:
+                text = open(os.path.join(d, f), encoding="utf-8", errors="replace").read()
+            except OSError:
+                continue
+            keep.update(m.group(1) for m in _MENTION.finditer(text))
 
     def add(u):
         n = _name(u)
@@ -93,10 +107,10 @@ def in_use(film_dir: str) -> set[str]:
     return keep
 
 
-def purge(media_dir: str, film_dir: str, urls, dry_run: bool = True) -> dict:
+def purge(media_dir: str, film_dir: str, urls, dry_run: bool = True, also_dirs=()) -> dict:
     """Remove (or, with `dry_run`, only measure) the named media files. Returns {dry_run, deleted: [{url, bytes}], skipped: [{url, reason}], freed_bytes}. `deleted` lists what WAS removed, or what
     WOULD be on a dry run. Anything not on the allowlist or still used by a saved film is skipped with its reason; nothing else is touched."""
-    keep = in_use(film_dir)
+    keep = in_use(film_dir, also_dirs)
     deleted, skipped, freed = [], [], 0
     seen: set[str] = set()
     for u in list(urls if isinstance(urls, list) else [])[:MAX_URLS]:
@@ -108,7 +122,7 @@ def purge(media_dir: str, film_dir: str, urls, dry_run: bool = True) -> dict:
         elif not SAFE.match(n):
             skipped.append({"url": str(u), "reason": "not a generated frame or clip (only those are ever removed)"})
         elif n in keep:
-            skipped.append({"url": str(u), "reason": "in use by a film (a chosen frame or clip, a current storyboard frame, or the cast reference)"})
+            skipped.append({"url": str(u), "reason": "in use (a film's chosen frame or clip, a current storyboard frame, the cast reference, or a saved Edit-room cut)"})
         else:
             p = os.path.join(media_dir, n)
             if not os.path.isfile(p):

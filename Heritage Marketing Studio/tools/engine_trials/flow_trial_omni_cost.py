@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""flow_trial_omni_cost.py -- TRIAL 1b: what does an Omni EXTEND cost, and how does it compare with the chain we use today? (29 Oct 2026; spends about 12 s of 360p Draft output)
+"""flow_trial_omni_cost.py -- TRIAL 1b: what does an Omni EXTEND cost, and how does it compare with the chain we use today? (28 Oct 2026; spends about 12 s of 360p Draft output)
 Runs clip 1 (4 s), then (a) EXTENDS it by 4 s via previous_interaction_id, and (b) the control: animates the LAST FRAME of clip 1 with the same continuation prompt. Prints each response's usage block, so the
 cost of an extension (the new part only, or the whole video re-billed?) is read from the API's own token counts and compared with clip 1's (7,724 output tokens for 4.0 s on 28 Oct = about 1,930 tokens per second).
 """

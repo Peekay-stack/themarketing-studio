@@ -5,6 +5,9 @@ shape and sane limits, and the clip routes (slice S1b onwards) use the same help
 KEYS are the film's own frame keys: "<position>" for a scene's master shot and "<position>.<k>" for its k-th extra shot, where position is the scene's 0-based place in the script. They are the
 same keys `sceneFrames` uses, so the one existing re-keying logic (removing a shot closes the gap) covers both and a chosen frame can always be mirrored into `sceneFrames[key]`.
 
+RESERVED / NOT USED (28 Oct audit, so nobody mistakes them for live behaviour): `budget.spent_usd` is never written (the page computes the estimated spend from the takes; only `budget.cap_usd` is used); a take's `sig` is always ''
+("out of date" is judged by `frame` / `chain_from` / `chain_at` instead); `interaction_id` and the modes `extend` / `elements` wait for the optional S4b / S8 slices.
+
 A take is append-only history: choosing one never deletes the others. The only things dropped here are takes that cannot be real any more (a render that was in flight when the server or page
 went away) and takes beyond the per-shot cap (oldest unchosen first). Nothing here deletes a media file.
 """
@@ -24,7 +27,7 @@ TIERS = ("draft", "final")
 ENGINES = ("omni", "kling")
 MODES = ("frame", "chain", "extend", "elements")
 
-# Measured on the Gemini Omni API (27-29 Oct 2026): dollars per OUTPUT second. Anything not measured is None: the UI says "estimate unavailable", it never guesses.
+# Measured on the Gemini Omni API (27-28 Oct 2026): dollars per OUTPUT second. Anything not measured is None: the UI says "estimate unavailable", it never guesses.
 RATE_USD_PER_SEC = {("omni", "draft"): 0.034, ("omni", "final"): 0.101}
 OMNI_FLOOR_SECONDS = 3               # Omni's shortest clip: a 2 s shot is generated at 3 s and trimmed
 
@@ -101,7 +104,7 @@ def clip_take(raw) -> dict | None:
     if status == "done" and not url:
         status = "error"
     return {"id": _s(raw.get("id"), 24) or new_id("tk"), "url": url, "beats": beats, "job_id": _s(raw.get("job_id"), 40), "tier": raw.get("tier") if raw.get("tier") in TIERS else "draft", "engine": raw.get("engine") if raw.get("engine") in ENGINES else "omni",
-            "seconds": _num(raw.get("seconds"), 0.0, 0.0, 60.0), "mode": raw.get("mode") if raw.get("mode") in MODES else "frame", "frame": _url(raw.get("frame")), "chain_from": _url(raw.get("chain_from")), "sig": _s(raw.get("sig"), 600),
+            "seconds": _num(raw.get("seconds"), 0.0, 0.0, 60.0), "mode": raw.get("mode") if raw.get("mode") in MODES else "frame", "frame": _url(raw.get("frame")), "chain_from": _url(raw.get("chain_from")), "chain_at": _num(raw.get("chain_at"), 0.0, 0.0, 600.0), "sig": _s(raw.get("sig"), 600),
             "interaction_id": _s(raw.get("interaction_id"), 200), "status": status, "error": _s(raw.get("error"), 300), "note": _s(raw.get("note"), 200), "checks": _checks(raw.get("checks")), "check_accepted": bool(raw.get("check_accepted")),
             "est_usd": (None if raw.get("est_usd") is None else _num(raw.get("est_usd"), 0.0, 0.0, 1000.0)), "created": _s(raw.get("created"), 24) or _now()}
 

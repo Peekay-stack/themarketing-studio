@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """test_takeqa.py -- offline checks for film-builder slice S5 (FILM_BUILDER_PLAN.md): takeqa.py (cheap, deterministic checks on one clip), the routes /take-check and /take-look, and takes.py keeping
 `check_accepted` and up to 12 checks. A: synthetic known-bad clips made with the bundled ffmpeg. B: the routes (the model is stubbed; the media folder is a temp folder, nothing touches the tenant).
-C: when the 29 Oct trial clips are on this machine, every REAL clip must pass (no false alarm) and the same-frame pairs must be flagged as repeats while genuinely different shots are not.
+C: when the 28 Oct trial clips are on this machine, every REAL clip must pass (no false alarm) and the same-frame pairs must be flagged as repeats while genuinely different shots are not.
 Run:  api/.venv/Scripts/python.exe tools/test_takeqa.py
 """
 import glob, json, os, subprocess, sys, tempfile, shutil

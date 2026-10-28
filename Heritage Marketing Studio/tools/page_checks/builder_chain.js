@@ -85,6 +85,23 @@
     const plain = mk('tp', '/media/p.mp4', 4, { frame: '/media/fr-old.jpg' });
     check('an ordinary take is still "older frame" when its storyboard frame has changed', I.clipIsOlder(0, 0, plain, { url: '/media/fr-new.jpg' }) === true && I.clipIsOlder(0, 0, mk('tq', '/media/q.mp4', 4, { frame: '/media/fr-new.jpg' }), { url: '/media/fr-new.jpg' }) === false);
 
+    // the USED end of the previous clip (28 Oct wiring audit): continue from what was on screen, not from the end of the file
+    const bt = (extra) => { const cur = state(); I.setState({ videoBuilder: { ...cur, takes: { ...cur.takes, '1': [mk('tb', '/media/b.mp4', extra.secs)], '1.1': [] }, chosen: { ...cur.chosen, '1': 'tb' }, trim: extra.trim || {} } }); };
+    bt({ secs: 4 }); await wait(250);
+    check('with no trim and a clip as long as its shot, the continuation starts at the end of the clip (4 s)', I.chainSource(1, 1) === '/media/b.mp4' && I.chainAt(1, 1) === 4, String(I.chainAt(1, 1)));
+    bt({ secs: 5 }); await wait(250);
+    check('a clip LONGER than its shot (5 s made for a 4 s shot) continues from the shot\'s planned end (4 s): the film never showed the rest', I.chainAt(1, 1) === 4, String(I.chainAt(1, 1)));
+    bt({ secs: 5, trim: { '1': { in: 0.5, out: 2.5 } } }); await wait(250);
+    check('a TRIMMED clip continues from the trim\'s end (2.5 s), not the end of the file', I.chainAt(1, 1) === 2.5, String(I.chainAt(1, 1)));
+    I.setChain(1, 1, true); await wait(150); bodies.length = 0; await I.generateClipTake(1, 1)(); await wait(500);
+    const tt = state().takes['1.1'][state().takes['1.1'].length - 1];
+    check('the request carries chain_from AND chain_from_at, and the take records chain_at', bodies.length === 1 && bodies[0].chain_from === '/media/b.mp4' && bodies[0].chain_from_at === 2.5 && tt.chain_at === 2.5, JSON.stringify(bodies[0]));
+    check('that take is current while the previous clip is trimmed the same way', I.clipIsOlder(1, 1, tt, I.state.sceneFrames['1.1']) === false);
+    const cur2 = state(); I.setState({ videoBuilder: { ...cur2, trim: { '1': { in: 0.5, out: 3.5 } } } }); await wait(300);
+    check('re-trimming the previous clip makes the chained take "older clip" (it continued from a different moment)', I.clipIsOlder(1, 1, tt, I.state.sceneFrames['1.1']) === true && /older clip/i.test(txt()));
+    bodies.length = 0; I.setState({ videoBuilder: { ...state(), trim: {} } }); await wait(200); I.setChain(1, 1, false); await wait(100);
+    check('an ordinary take sends no chain_from_at', (await I.generateClipTake(1, 1)(), await wait(400), bodies[0].chain_from === undefined && bodies[0].chain_from_at === undefined), JSON.stringify(bodies[0]));
+
     // reorder clears the per-place switches
     I.setState({ chainOn: { '1.1': true, '2': true } }); await wait(150);
     await I.moveScene(0, 1)(); await wait(400);

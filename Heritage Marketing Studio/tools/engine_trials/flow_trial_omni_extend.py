@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""flow_trial_omni_extend.py -- TRIAL 1 of the "Flow / Higgsfield" research (29 Oct 2026): can Gemini Omni EXTEND a clip (previous_interaction_id) the way Flow's Extend / Jump to do, and is it better
+"""flow_trial_omni_extend.py -- TRIAL 1 of the "Flow / Higgsfield" research (28 Oct 2026): can Gemini Omni EXTEND a clip (previous_interaction_id) the way Flow's Extend / Jump to do, and is it better
 than our current chain (animate the last frame of clip 1)?  Spends real credit at 360p Draft (about $0.034 per output second, measured 27 Oct). Output: Downloads\\engine-trial\\flow_trials\\omni\\
 
   O1  clip 1 from a storyboard frame (the boy drinking), 4 s, stored (store=true is the default)

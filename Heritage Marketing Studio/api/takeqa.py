@@ -1,7 +1,7 @@
 """takeqa.py -- cheap checks on ONE generated clip (film builder slice S5, FILM_BUILDER_PLAN.md): the "ok" a render reports is not proof (28 Oct: a 'successful' 30 s film held one frame for ten
 seconds), so every take is looked at before the person spends more. Deterministic, no model, a second or two of ffmpeg: advisory chips on the take, never a block.
 
-Thresholds are MEASURED, not guessed (29 Oct 2026, 37 real clips from Omni, Kling, Veo, Wan, Seedance, MiniMax plus synthetic known-bad ones, see FILM_BUILDER_PLAN.md S5):
+Thresholds are MEASURED, not guessed (28 Oct 2026, 37 real clips from Omni, Kling, Veo, Wan, Seedance, MiniMax plus synthetic known-bad ones, see FILM_BUILDER_PLAN.md S5):
   * real clips never move less than a span of about 4 (mean abs difference of the 64x36 gray first vs last sampled frame, 0-255); a frozen picture is 0.0 -> "still" below 2.0;
   * real clips never average below a brightness of about 74 (0-255); a black clip is 2 -> "black" below 15, a "dark frame" below 12 at any sampled point;
   * clips animated from the SAME frame start within 1-8 of each other at their first frame, clips of genuinely different shots start 56 or more apart -> "repeat" below 15.

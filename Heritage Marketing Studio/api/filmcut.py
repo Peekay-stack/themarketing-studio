@@ -536,14 +536,16 @@ def trim_window(exe: str, src: str, a: float, b: float, dest: str) -> bool:
     return False
 
 
-def last_frame(exe: str, path: str, dest: str) -> bool:
+def last_frame(exe: str, path: str, dest: str, at: float | None = None) -> bool:
     """Save the LAST picture of a clip as a JPEG at `dest`: where the next piece of a continuing shot starts (film builder S4, chain). Taken a hair before the end (the very last frame of some
-    encodes is not decodable on its own); if that fails, a little earlier. True only when a non-empty image was written."""
+    encodes is not decodable on its own); if that fails, a little earlier. `at` is the second of the clip where the film STOPS using it (a trim's end, or the shot's planned length when the engine made
+    a longer clip: a 2 s shot is generated at 3 s and cut to 2 s), so the next shot continues from what was actually on screen; absent or beyond the clip = the end of the file. True only when a non-empty image was written."""
     d = probe_seconds(exe, path)
     if d <= 0:
         return False
+    end = d if (at is None or not (float(at) > 0.2)) else min(d, float(at))
     for back in (0.12, 0.4, 0.8):
-        r = subprocess.run([exe, "-y", "-ss", f"{max(0.0, d - back):.3f}", "-i", path, "-frames:v", "1", "-q:v", "2", dest], capture_output=True)
+        r = subprocess.run([exe, "-y", "-ss", f"{max(0.0, end - back):.3f}", "-i", path, "-frames:v", "1", "-q:v", "2", dest], capture_output=True)
         if r.returncode == 0 and os.path.exists(dest) and os.path.getsize(dest) > 0:
             return True
     print(f"[filmcut] could not take the last frame of {os.path.basename(path)}", file=sys.stderr, flush=True)

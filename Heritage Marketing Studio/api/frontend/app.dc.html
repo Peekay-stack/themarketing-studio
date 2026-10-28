@@ -12144,7 +12144,7 @@ class Component extends DCLogic {
     paceSuggest: null,                      // {pace, why} read from the film's tone words by POST /pace-suggest (a suggestion only, never saved)
     filmReview: null,                       // the last flow review (POST /film-review): verdicts per extra shot, beats, notes, measured stats. Advisory; not saved.
     filmReviewBusy: false,
-    videoBuilder: null,                     // the film builder's saved state (takes.py): frame variants + which is chosen (S1a); clip takes, trims, budget come later. Saved with the film.
+    videoBuilder: null,                     // the film builder's saved state (takes.py): frame variants + which is chosen (S1a), clip takes (S1b), chosen clips, trims (S2a), the budget cap (S7) and each take's checks / continuity record (S4, S5). Saved with the film.
     variantBusy: {},                        // { [frameKey]: true } while a frame VARIANT is being generated
     clipBusy: {},                           // { [frameKey]: takeId } while a clip take is rendering
     storage: null,                          // the last GET /media-usage reading (S7): {files, bytes, by_kind, disk_free_bytes}. Not saved.
@@ -17421,11 +17421,13 @@ class Component extends DCLogic {
     if (!opts.batch && engine === 'omni' && this.capWouldExceed(this.clipEstimate(idx, k, tier)) && typeof window !== 'undefined' && window.confirm
         && !window.confirm('This clip is about ' + this.usd(this.clipEstimate(idx, k, tier)) + ' and would take the clips to about ' + this.usd(this.clipSpent() + this.clipEstimate(idx, k, tier)) + ', over your ' + this.usd(this.budgetCap()) + ' cap. Make it anyway?')) return false;
     const chain = this.chainWanted(idx, k), cfrom = chain ? this.chainSource(idx, k) : '', cbeats = chain && this.chainBeatsPossible(idx, k);      // continuity (S4): decided now, recorded on the take
-    const take = { id:this.newTakeId('tk'), url:'', beats:[], tier, engine, seconds:secs, mode:chain ? 'chain' : 'frame', frame:frame.url, chain_from:cfrom, sig:'', job_id:'', status:'rendering', error:'', note:'',
+    const cat = cfrom ? this.chainAt(idx, k) : 0;                    // where the previous clip's USED part ends (its trim / planned length), so the continuation starts from what was on screen
+    const take = { id:this.newTakeId('tk'), url:'', beats:[], tier, engine, seconds:secs, mode:chain ? 'chain' : 'frame', frame:frame.url, chain_from:cfrom, chain_at:cat, sig:'', job_id:'', status:'rendering', error:'', note:'',
       checks:[], est_usd:this.clipEstimate(idx, k, tier), created:new Date().toISOString().slice(0, 19) + 'Z' };
     this.setState(s => ({ clipBusy:{ ...s.clipBusy, [fk]:take.id }, videoBuilder:this.addClipTake(s.videoBuilder, fk, take) }));
     const body = { ...this.filmRenderBody('Shot take'), only_shot:String(fk) };       // ALWAYS a string: the number 0 is falsy and would mean a full render
-    if (cfrom) body.chain_from = cfrom;              // the first piece starts from the LAST frame of the previous shot's chosen clip
+    if (cfrom) body.chain_from = cfrom;              // the first piece starts from the LAST frame of the previous shot's chosen clip...
+    if (cfrom && cat > 0) body.chain_from_at = cat;  // ...as the film uses it (trimmed / cut to the shot's length), not the end of the file
     if (cbeats) body.chain_beats = true;             // each later piece of a long shot starts from the last frame of the piece before it
     if (engine === 'omni') body.tier = tier === 'final' ? 'standard' : 'lite';
     const r = await this.renderViaJob(body, jid => this.patchClipTake(fk, take.id, { job_id:jid }));
@@ -17536,6 +17538,14 @@ class Component extends DCLogic {
     if (!tk || tk.status !== 'done' || !tk.url) return '';
     return (tk.beats && tk.beats.length) ? tk.beats[tk.beats.length - 1].url : tk.url;
   }
+  // The second of that clip where the film STOPS using it: the trim's end, or the shot's planned length when the engine made a longer clip (a 2 s shot is generated at 3 s and cut to 2 s). The next shot
+  // must continue from THAT picture, not from the end of the file, which was never on screen. Same rule as the preview player (seqItems); 0 when there is nothing to continue from.
+  chainAt(idx, k){
+    const url = this.chainSource(idx, k); if (!url) return 0;
+    const keys = this.activeShotKeys(), n = keys.findIndex(x => x.idx === idx && x.k === k), pk = String(keys[n - 1].key);
+    const mine = this.seqItems().items.filter(x => x.key === pk && x.url === url);
+    return mine.length ? Math.round(mine[mine.length - 1].end * 100) / 100 : 0;
+  }
   chainBeatsPossible(idx, k){ return this.clipSecs(idx, k) > 8; }                 // a shot over 8 s is several continuing pieces
   chainEligible(idx, k){ return !!this.chainSource(idx, k) || this.chainBeatsPossible(idx, k); }
   // Is "Continue" on for this shot? The person's switch wins; otherwise a re-roll keeps the way the latest take was made.
@@ -17549,7 +17559,7 @@ class Component extends DCLogic {
   setChain = (idx, k, on) => this.setState(st => ({ chainOn:{ ...st.chainOn, [this.frameKey(idx, k)]:!!on } }));
   // Was this take made from something that has since changed? A normal take: its frame is no longer the chosen frame. A chained take: the clip it continued from is no longer the previous shot's chosen clip.
   clipIsOlder(idx, k, tk, frame){
-    if (tk.mode === 'chain' && tk.chain_from) return this.chainSource(idx, k) !== tk.chain_from;
+    if (tk.mode === 'chain' && tk.chain_from) return this.chainSource(idx, k) !== tk.chain_from || Math.abs(this.chainAt(idx, k) - (tk.chain_at || 0)) > 0.05;       // a different clip, or the same clip trimmed to a different end
     return !!(tk.frame && frame && frame.url && tk.frame !== frame.url);
   }
   // ---------- the film builder, slice S7: budget, batches, retention ----------
@@ -17864,7 +17874,7 @@ class Component extends DCLogic {
         const parts = (tk.beats && tk.beats.length) ? tk.beats.map(c => ({ url:c.url, a:0, e:c.seconds || 0 })) : [{ url:tk.url, a:tr.out != null ? tr.in : 0, e:tr.out != null ? tr.out : (tk.seconds || 0) }];
         parts.forEach((p, n) => {
           const len = Math.min(p.e - p.a, left); if (!(len > 0.05)) return;
-          left -= len; items.push({ label:label + (parts.length > 1 ? ' (part ' + (n + 1) + ')' : ''), url:p.url, start:p.a, end:p.a + len, len, trimmed:tr.out != null, scene:i });
+          left -= len; items.push({ label:label + (parts.length > 1 ? ' (part ' + (n + 1) + ')' : ''), url:p.url, start:p.a, end:p.a + len, len, trimmed:tr.out != null, scene:i, key:String(key) });
         });
       });
     });
@@ -24549,7 +24559,7 @@ class Component extends DCLogic {
     const cleaned = this.cleanShootDrafts(d.shoot || {});
     this.setState({ videoObjective: d.video_objective, videoConcept: d.video_concept,
       scriptStatus: d.script_status || 'none', scriptPhase: d.script_phase || 'concept',
-      fullScript: d.full_script, sceneFrames: this.settledFrames(d.scene_frames), videoBuilder: d.video_builder || null, shoot: cleaned.shoot,
+      fullScript: d.full_script, sceneFrames: this.settledFrames(d.scene_frames), videoBuilder: d.video_builder || null, chainOn:{}, cmpTakes:null, seqPreview:null, shoot: cleaned.shoot,
       videoCharacters: d.video_characters || '', videoLocationLine: d.video_location_line || '',
       videoLookRef: d.video_look_ref || '', videoWardrobe: d.video_wardrobe || '', videoCamera: d.video_camera || '', videoPace: d.video_pace || '', videoBeatMap: d.video_beat_map || null, videoLocationSrc: d.video_location_src || '',
       soundPlan: d.sound_plan || {},
@@ -24603,6 +24613,11 @@ class Component extends DCLogic {
   _seen = { planId:null, xTab:null, screen:null };
   componentDidUpdate(){
     const s = this.state, seen = this._seen;
+    // The builder's per-film TRANSIENT state (the Continue ticks, the compare mode, the open preview) is keyed by place and means nothing once the builder is wiped (a new objective, a brand or engine switch, a
+    // cast re-lock, a script rework: ~15 sites clear `videoBuilder`). One choke point instead of 15 edits. Found in the 28 Oct wiring audit: they used to survive and could act on the NEXT film's shots.
+    // (The wrapper calls this with no arguments, so the previous value is tracked here, like `_seen`.)
+    const hadBuilder = this._hadBuilder; this._hadBuilder = !!s.videoBuilder;
+    if (hadBuilder && !s.videoBuilder && (Object.keys(s.chainOn || {}).length || s.cmpTakes || s.seqPreview)) this.setState({ chainOn:{}, cmpTakes:null, seqPreview:null });
     const planId = (s.plan && s.plan.id) || null;
     const changed = planId !== seen.planId || s.xTab !== seen.xTab || seen.screen !== s.screen;
     this._seen = { planId, xTab: s.xTab, screen: s.screen };

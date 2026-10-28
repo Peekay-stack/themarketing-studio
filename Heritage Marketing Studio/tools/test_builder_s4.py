@@ -94,6 +94,25 @@ check("chain_beats: the pieces ran ONE AFTER ANOTHER, in order (each call's fram
 r = run(long_(), only_shot="0", chain_from="/media/prevclip.mp4", chain_beats=True)
 check("both keys: every piece is chained (first from the previous clip, the rest from the piece before)", all(c["frame_url"].startswith("/media/chain-") for c in r["clips"]) and r["ok"] is True and len(calls) == pieces, str(r)[:300])
 
+# ---- chain from the clip's USED end (found in the 28 Oct wiring audit): a trim, or a 2 s shot cut from a 3 s clip, means the file's end is NOT what was on screen -------------------------------
+at_dst = os.path.join(tmp, "at.jpg")
+check("last_frame(at=2.0) takes the picture where the film STOPS using the clip, not the end of the file",
+      filmcut.last_frame(exe, src, at_dst, 2.0) and mad(sig(at_dst, 0), sig(src, 2.0 - 0.12)) < 8 and mad(sig(at_dst, 0), sig(src, d - 0.12)) > 5, f"at {mad(sig(at_dst, 0), sig(src, 1.88)):.1f} end {mad(sig(at_dst, 0), sig(src, d - 0.12)):.1f}")
+for bad in (None, 0, 0.1, -3, 99):
+    p_ = os.path.join(tmp, "bad_at.jpg")
+    if os.path.exists(p_): os.remove(p_)
+    ok_ = filmcut.last_frame(exe, src, p_, bad)
+    check(f"an unusable or out-of-range `at` ({bad!r}) falls back to the end of the file", ok_ and mad(sig(p_, 0), sig(src, d - 0.12)) < 8, f"{mad(sig(p_, 0), sig(src, d - 0.12)):.1f}")
+check("a take keeps chain_at (a number, 0 when absent)", takes.clip_take({"url": "/media/a.mp4", "status": "done", "chain_at": 2.5})["chain_at"] == 2.5 and takes.clip_take({"url": "/media/a.mp4", "status": "done"})["chain_at"] == 0.0)
+r = run(long_(), only_shot="0", chain_from="/media/prevclip.mp4", chain_from_at=2.0)
+f0 = os.path.join(tmp, os.path.basename(r["clips"][0]["frame_url"]))
+check("chain_from_at: the FIRST piece starts from the previous clip's picture at that second", mad(sig(f0, 0), sig(prev, 2.0 - 0.12)) < 8 and mad(sig(f0, 0), sig(prev, filmcut.probe_seconds(exe, prev) - 0.12)) > 5)
+r = run(long_(), only_shot="0", chain_from="/media/prevclip.mp4", chain_from_at="junk")
+check("a junk chain_from_at is ignored (the end of the file, as before)", mad(sig(os.path.join(tmp, os.path.basename(r["clips"][0]["frame_url"])), 0), sig(prev, filmcut.probe_seconds(exe, prev) - 0.12)) < 8)
+r = run(long_(), only_shot="0", chain_from="/media/prevclip.mp4", chain_from_at=1.0, chain_beats=True)
+out1 = os.path.join(tmp, os.path.basename(r["clips"][0]["url"])); f1 = os.path.join(tmp, os.path.basename(r["clips"][1]["frame_url"]))
+check("chain_from_at applies ONLY to the first piece: a later piece starts from the END of the piece before it", mad(sig(f1, 0), sig(out1, filmcut.probe_seconds(exe, out1) - 0.12)) < 8)
+
 # ---- refusals -------------------------------------------------------------------------------------------------------------------------------------
 r = run(long_(), chain_from="/media/prevclip.mp4")
 check("chain_from without only_shot is a 400 (a full render never chains) and generates nothing", r.get("status") == 400 and "single-shot" in r["detail"] and not calls, str(r)[:200])
