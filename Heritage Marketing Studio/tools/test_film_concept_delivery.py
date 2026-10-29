@@ -150,5 +150,30 @@ hook_seq = call(scene_seconds=5, role="hook", beat_map=v)
 check("route /scene-shots: a hook scene that is also a sequence is still planned (the role stays hook; the actions still reach the prompt)", seen["messages"] is not None and "A RUN OF DIFFERENT QUICK ACTIONS" in seen["messages"][0]["content"]
       and "This scene's job in the film: hook" in seen["messages"][0]["content"], str(hook_seq)[:200])
 
+# ---- the flow review must not cut the cover the proposer made for a run of quick actions ----------------------------------------------------------
+import flowreview as fr
+FR_ROWS = [{"no": 1, "tc": "0-6s", "visual": "A drop rolls down a plate."},
+           {"no": 2, "tc": "6-11s", "visual": "She smells the milk, watches it boil, holds it to light.", "shots": [{"visual": "The milk climbs the pot.", "secs": 2, "job": "insert", "why": "the boil", "shot_size": "detail"}]},
+           {"no": 3, "tc": "11-17s", "visual": "Her daughter lowers the plate."}, {"no": 4, "tc": "17-23s", "visual": "She laughs and drinks."}, {"no": 5, "tc": "23-29s", "visual": "The pack stands on the counter."}]
+FR_SECS = [6, 5, 6, 6, 6]       # scene 2 is a plain middle scene here (its plan role is `world`), so the pace minimum applies to it
+SEQ = {2: ["smells", "boils", "light"]}
+check("flowreview.budgets: a 5 s scene at Standard pace has no budget (as before) but a run-of-actions scene may carry one extra", fr.budgets(FR_ROWS, FR_SECS, "standard")[2] == 0 and fr.budgets(FR_ROWS, FR_SECS, "standard", seq=SEQ)[2] == 1)
+check("flowreview.budgets: a hook or turn scene that is also a run keeps its own role (not changed)", fr.budgets(FR_ROWS, FR_SECS, "standard", roles={2: "hook"}, seq=SEQ)[2] == 1 and fr.budgets(FR_ROWS, FR_SECS, "standard", turn=2, seq=SEQ)[2] == 1)
+check("flowreview.budgets: a montage / one-beat scene (no_cover) still gets none even when flagged as a run", fr.budgets(FR_ROWS, FR_SECS, "standard", no_cover={2: "montage"}, seq=SEQ)[2] == 0)
+st_no = fr.stats(FR_ROWS, FR_SECS, "standard")
+st_seq = fr.stats(FR_ROWS, FR_SECS, "standard", seq=SEQ)
+check("flowreview.stats: WITHOUT the run flag the extra shot is reported over budget (the old behaviour); WITH it there is no over-budget finding", any(f["kind"] == "over-budget" and f["scene"] == 2 for f in st_no["findings"])
+      and not any(f["kind"] == "over-budget" for f in st_seq["findings"]), [f["kind"] for f in st_seq["findings"]])
+REVIEW = {"summary": "s", "turn_scene": 3, "carrier_scene": 3, "beats": [], "notes": [], "verdicts": [{"scene": 2, "shot": 2, "verdict": "keep", "reason": "the boil is a different action"}]}
+seen["reply"] = json.dumps(REVIEW)
+def review(**over):
+    out = main.film_review({"scenes": FR_ROWS, "seconds": FR_SECS, "pace": "standard", "house_id": "h1", **over})
+    return out if isinstance(out, dict) else {"status": out.status_code, **json.loads(out.body)}
+r_plain = review()
+r_seq = review(beat_map=v)
+vd = lambda r: [x for x in r["verdicts"] if x["scene"] == 2][0]
+check("route /film-review: with no run flag the pace rule cuts the extra shot on a 5 s Standard scene (as before)", vd(r_plain)["verdict"] == "cut" and vd(r_plain).get("by") == "pace", str(vd(r_plain)))
+check("route /film-review: with the director's read marking scene 2 a run of quick actions the review KEEPS the shot the proposer made", vd(r_seq)["verdict"] == "keep" and not any(f["kind"] == "over-budget" for f in r_seq["stats"]["findings"]), str(vd(r_seq)) + str(r_seq["stats"]["findings"]))
+
 print("\n%d failure(s)" % len(fails))
 sys.exit(1 if fails else 0)

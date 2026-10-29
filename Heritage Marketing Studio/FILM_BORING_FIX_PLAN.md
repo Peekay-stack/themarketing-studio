@@ -1,6 +1,6 @@
 # Fixing "it is a boring film": development plan (29 Oct 2026)
 
-Status: **PLAN ONLY, nothing built.** Source: the owner's second localhost test, film `de25a0df2b` ("Nothing Left To Test", Telugu, 30 s), verdict "a boring film". Read from the saved film `filmscripts/dece64e70d.json` and the rendered mp4. Evidence level per line: *seen* (in the film or saved data), *code* (read in the source), *inferred*.
+Status: **SUPERSEDED by `FILM_CONSOLIDATED_PLAN.md`** (written the same day, with B1-B4 folded in; its sections 9-12 record what was built). This file is the morning's diagnosis and first slice list, kept for the record. Source: the owner's second localhost test, film `de25a0df2b` ("Nothing Left To Test", Telugu, 30 s), verdict "a boring film". Read from the saved film `filmscripts/dece64e70d.json` and the rendered mp4. Evidence level per line: *seen* (in the film or saved data), *code* (read in the source), *inferred*.
 
 ## 1. Why it was boring (what the saved film shows)
 

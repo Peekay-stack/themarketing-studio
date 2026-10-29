@@ -83,6 +83,12 @@
     await I.rewriteScene(0)(); await wait(400);
     const rw = prompts[0] || '';
     check('C5: a rewritten scene is told the limb rule, after the shared rules', /Rewrite ONE scene/.test(rw) && rw.indexOf(I.LIMB_RULE) > rw.indexOf('One scene = one frame'), rw.slice(0, 300));
+    // the whole-script rework (a note from the person) writes pictures too: it gets the limb rule, but NOT the speech rules (the person's note governs those)
+    prompts.length = 0; reply = null;
+    I.setState({ scriptRefine: 'make the second scene livelier', scriptReworking: false });
+    await I.reworkScript(); await wait(400);
+    const rk = prompts[0] || '';
+    check('the whole-script rework is told the limb rule before its JSON shape, and gets no voiceover-spine or sign-off-speech rule', /Revise this/.test(rk) && rk.indexOf(I.LIMB_RULE) > rk.indexOf('STRICT SPEECH BUDGET') && rk.indexOf(I.LIMB_RULE) < rk.indexOf('Return ONLY JSON') && !/FILM’S SPINE/.test(rk) && !/SPEAKS AND MOVES/.test(rk), rk.slice(-700));
   } catch (e) {
     results.push({ name: 'the run did not throw', ok: false, extra: String(e && e.stack || e) });
   } finally {

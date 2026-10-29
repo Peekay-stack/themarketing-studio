@@ -3123,8 +3123,9 @@ def film_review(payload: dict):
     beat_map = payload.get("beat_map") if isinstance(payload.get("beat_map"), dict) else None
     no_cover = filmdirect.no_coverage(beat_map)
     turn_scene = (beat_map or {}).get("turn_scene")
+    seq = filmdirect.sequences(beat_map)           # scenes the director read as a run of quick actions: the proposer covers them, so the review must not cut that cover
     shots = flowreview.film_shots(rows, secs, roles)
-    st = flowreview.stats(rows, secs, pace, roles, no_cover, turn_scene)
+    st = flowreview.stats(rows, secs, pace, roles, no_cover, turn_scene, seq)
     prompt = flowreview.build_prompt(rows=rows, seconds=secs, shots=shots, st=st, logline=str(payload.get("logline") or ""), message=str(payload.get("message") or ""),
                                      tone=str(payload.get("tone") or ""), pace=pace, characters=str(payload.get("characters") or ""), roles=roles,
                                      beat_note=filmdirect.read_text(beat_map))
@@ -3137,7 +3138,7 @@ def film_review(payload: dict):
     if raw is None:
         return {"summary": "", "time_passing": False, "turn_scene": None, "carrier_scene": None, "beats": [], "verdicts": [], "notes": [], "skips": [], "stats": st, "model": False,
                 "notes_out": ["The model's review could not be read, so only the measured checks are shown. Try again for the full review."]}
-    out = flowreview.validate(raw, shots, flowreview.budgets(rows, secs, pace, roles, no_cover, turn_scene), pace, no_cover)
+    out = flowreview.validate(raw, shots, flowreview.budgets(rows, secs, pace, roles, no_cover, turn_scene, seq), pace, no_cover)
     out["stats"] = st
     out["model"] = True
     return out

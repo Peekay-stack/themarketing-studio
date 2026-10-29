@@ -66,9 +66,10 @@ def film_shots(rows, seconds, roles=None) -> list[dict]:
     return out
 
 
-def budgets(rows, seconds, pace="", roles=None, no_cover=None, turn=None) -> dict:
+def budgets(rows, seconds, pace="", roles=None, no_cover=None, turn=None, seq=None) -> dict:
     """{scene number: how many EXTRA shots that scene may have} under the film's pace (sceneshots.budget: what fits its seconds, held to the pace, with the
-    opening and an opted-in sign-off treated as in the proposer)."""
+    opening, an opted-in sign-off and a scene the director read as a RUN of quick actions (`seq`, {scene: actions}) treated as in the proposer, so the review never cuts
+    the shots the proposer made for such a scene)."""
     out: dict[int, int] = {}
     for i, row in enumerate(rows or []):
         if not isinstance(row, dict):
@@ -77,11 +78,13 @@ def budgets(rows, seconds, pace="", roles=None, no_cover=None, turn=None) -> dic
         role = str((roles or {}).get(scene_no(row, i)) or row.get("beat_role") or "")
         if turn is not None and scene_no(row, i) == turn and role != "hook":
             role = "turn"          # the turn the director found may be covered even in a short scene
+        elif seq and scene_no(row, i) in seq and role not in ("hook", "turn"):
+            role = "sequence"      # a run of quick actions is covered by its actions whatever its length (sceneshots.EXEMPT_ROLES)
         out[scene_no(row, i)] = 0 if scene_no(row, i) in (no_cover or {}) else sceneshots.budget(secs, pace, role, bool(row.get("signoff_shots")))
     return out
 
 
-def stats(rows, seconds, pace="", roles=None, no_cover=None, turn=None) -> dict:
+def stats(rows, seconds, pace="", roles=None, no_cover=None, turn=None, seq=None) -> dict:
     """Facts measured from the plan, no model: shot count, average length, cut rate against the pace's band, the longest run of one shot size, extras with no job,
     scenes over their pace budget, and a list of plain-language `findings` ({kind, scene, note})."""
     pk = sceneshots.normalise_pace(pace) or "standard"
@@ -123,7 +126,7 @@ def stats(rows, seconds, pace="", roles=None, no_cover=None, turn=None) -> dict:
     for s in no_job:
         findings.append({"kind": "no-job", "scene": s["scene"], "note": f"Scene {s['scene']} shot {s['shot']} has no job (what it is for), so nothing says why it should be rendered."})
     over = []
-    allowed_by_scene = budgets(rows, seconds, pace, roles, no_cover, turn)
+    allowed_by_scene = budgets(rows, seconds, pace, roles, no_cover, turn, seq)
     for i, row in enumerate(rows or []):
         if not isinstance(row, dict):
             continue

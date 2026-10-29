@@ -8,6 +8,9 @@ metadata:
   modified: 2026-10-28T10:15:01.546Z
 ---
 
+## UPDATE 29 Oct (end of day) -- READ [[film-engagement-2-plan]] FIRST
+Branch `coverage-fixes` (A1-A8, worktree `C:\Users\punie\hms-fixes`) and branch `film-engagement-2` (Phases 1-4 of the boring-film plan, same worktree, off `coverage-fixes`) are pushed, NOT merged, NOT live; `coverage` is an ancestor (fast-forward). Owner has NOT yet tested either on a new film. Open for the owner: test batch 1; English voiceover lines in a Telugu film?; is the Approve confirm right (or warning only)?; Phase 5 (optional vision checks) and the one-kitchen/slow-hook gap are the next candidates. Plan + results + audit: `FILM_CONSOLIDATED_PLAN.md` sections 9-12.
+
 **Read this first, then [[flow-higgsfield-research-and-trials]] (the dated BUILD LOG of the film builder, newest at the bottom), `FILM_WIRING_AUDIT.md` in the app folder (the audit of the whole branch), [[change-discipline-working-agreement]], and the lessons [[judge-the-film-not-the-pipeline]], [[git-add-explicit-files-never-directories]], [[project-copies-use-the-opus-folder]].** TODAY'S DATE comes from `date` (it was 28 Oct 2026); earlier notes wrongly said "29 Oct" and were corrected.
 
 ## TOMORROW MORNING (29 Oct) — do this first

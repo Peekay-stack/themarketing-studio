@@ -62,7 +62,7 @@ The owner is running a second, wider localhost test on `coverage`, so the fixes 
 | A2 | Built | Banner: "n of N frames are out of date". |
 | A3 | Built | The banner lists WHY with counts ("a department note (4) · the look (2)"); each card says why in words; a frame drawn before this existed says "something changed". Implemented as a per-kind fingerprint (`parts`) stored on each frame and kept by `takes.py`. |
 | A4 | Built | One confirm the first time frames are drawn with all four crew notes empty (wording differs before/after script approval); a confirm naming the count before drafting DoP/lighting/props/wardrobe when frames exist. |
-| A5 | Built (prompt only) | The concept prompt requires each moment to be filmable by one camera in one shot of one place. **Not yet checked with a real model call.** |
+| A5 | Built (prompt only) | The concept prompt requires each moment to be filmable by one camera in one shot of one place. Checked on real model calls 29 Oct (Phase 2 of `FILM_CONSOLIDATED_PLAN.md`): none of the four moments of 12 real routes used a split screen, a montage or an overlay. |
 | A6 | Built | The shot planner's reason for keeping a scene as one shot stays on the card. |
 | A7 | Built (trigger traced) | `approveScript` -> `loadVoicePlan` (also entering the Shoot Board / Production when no plan exists, and any voice change) overwrote each scene's timecode with the voice plan's. A dismissible note now lists scenes whose length changed. |
 | A8 | Built | Verified wrong ("Live action" is a different tab); the hint now points at the "✦ Lock location and cast" button in the Scripting step. |
