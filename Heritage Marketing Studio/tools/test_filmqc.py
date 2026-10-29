@@ -36,6 +36,11 @@ check("a held but alive close-up (0.6) is not flagged", filmqc.findings([{"no": 
 check("a freeze of 1.5 s or more is a defect, a shorter one is not", [x["kind"] for x in filmqc.findings([], [(4, 6)], [], 30)] == ["frozen"] and filmqc.findings([], [(4, 5)], [], 30) == [])
 check("a silence that runs to the end of the film is a silent tail", [x["kind"] for x in filmqc.findings([], [], [(28.3, None)], 30.0)] == ["silent-tail"])
 check("a silence in the middle, or a short one at the end, is not", filmqc.findings([], [], [(10, 12), (29.4, None)], 30.0) == [])
+fs = filmqc.findings([{"no": 5, "start": 24, "end": 30, "motion": 0.16}], [], [], 30, signoff=5)
+check("the SIGN-OFF scene holds still ON PURPOSE (the render locks the pack shot): it is reported in its own words, flagged as the sign-off, and says how to lift a flat ending",
+      len(fs) == 1 and fs[0]["kind"] == "barely-moves" and fs[0]["signoff"] is True and "locked on purpose" in fs[0]["note"] and "payoff line" in fs[0]["note"] and "add a movement" not in fs[0]["note"], fs)
+fo = filmqc.findings([{"no": 2, "start": 4, "end": 10, "motion": 0.1}], [], [], 30, signoff=5)
+check("a still scene that is NOT the sign-off keeps the ordinary advice (and no sign-off flag)", len(fo) == 1 and "signoff" not in fo[0] and "add a movement" in fo[0]["note"], fo)
 
 # ---- the real ffmpeg path on a tiny film made here -------------------------------------------------------------------------------------
 exe = filmcut.ffmpeg_exe()
@@ -51,6 +56,8 @@ if exe:
           rep.get("ok") and abs(rep["duration"] - 9) < 0.2 and rep["scenes"][0]["motion"] > 1.0 and rep["scenes"][1]["motion"] < 0.05, rep)
     check("report: finds the barely-moving scene 2, the exact freeze and the 2 s silent tail", kinds == ["barely-moves", "frozen", "silent-tail"], kinds)
     check("report: the barely-moves finding names scene 2", [x["scene"] for x in rep["findings"] if x["kind"] == "barely-moves"] == [2])
+    rep_so = filmqc.report(mp4, [{"no": 1, "tc": f"0{DASH}4s"}, {"no": 2, "tc": f"4{DASH}9s"}], signoff=2)
+    check("report: told that scene 2 is the sign-off, its stillness is reported as the deliberate hold", [x for x in rep_so["findings"] if x["kind"] == "barely-moves"][0].get("signoff") is True)
     rep2 = filmqc.report(mp4, None)
     check("report without scenes still reports freeze and silence, with no scene list", rep2.get("ok") and rep2["scenes"] == [] and sorted(x["kind"] for x in rep2["findings"]) == ["frozen", "silent-tail"], rep2)
     check("report on a missing file says so and does not throw", filmqc.report(os.path.join(d, "nope.mp4"), None).get("ok") is False)

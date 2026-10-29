@@ -44,7 +44,9 @@
     // ---- C3: the full-script writer, a concept with a voiceover
     const w = await writer(concept(VO));
     check('C3: the writer is told the concept voiceover is the spine and is what the speech budget is spent on', /THE CONCEPT’S VOICEOVER IS THE FILM’S SPINE: its sentences, in their order/.test(w) && /inside the speech budget above/.test(w), w.slice(-1800));
-    check('C3: the sign-off scene must speak and move, with the pack sharp', /THE SIGN-OFF SCENE SPEAKS AND MOVES/.test(w) && /the pack stays sharp and fully in view, never a still tabletop and never defocused/.test(w));
+    check('C3: the sign-off scene must speak, with the pack sharp and in the same place, and any life comes from what is IN the frame: it must NOT ask for a push-in, zoom or drift (the render holds that shot locked and still on purpose)',
+      /THE SIGN-OFF SCENE SPEAKS:/.test(w) && /never write a push-in, zoom or camera drift on the pack/.test(w) && /a hand takes the pack or pours from it/.test(w) && /sharp, fully in view and in the same place/.test(w) && /"camera" cell as a locked-off hold on the pack/.test(w) && !/SPEAKS AND MOVES/.test(w)
+      && !/something in its frame moves \(a hand takes or pours, a slow push-in/.test(w), w.slice(w.indexOf('THE SIGN-OFF'), w.indexOf('THE SIGN-OFF') + 700));
     check('C3: a "quick cuts" beat must name each action', /rapid sequence \(quick cuts of several different actions\), the scene’s visual must name each of those actions in order/.test(w));
     check('C3: the limb rule is in the writer prompt, with the line that a concept moment needing it keeps the moment and changes the framing', w.indexOf(I.LIMB_RULE) > 0 && /keep the moment and change the framing/.test(w));
     check('C4: the writer is told the stake as what the film must make felt, and it is NOT in the list of moments to deliver as scenes', /What is at stake for the people in this film, which it must make the viewer feel: STAKE-X she loses the one test/.test(w) && !/(^|; )stake: /.test(w) && w.indexOf('STAKE-X') > w.indexOf('memorable moment:') && w.indexOf('What is at stake') > w.indexOf('The first scene must show the hook'), w.slice(w.indexOf('own entertainment'), w.indexOf('own entertainment') + 900));
@@ -62,18 +64,18 @@
     await I.generateVideo(); await wait(500);
     check('a refine re-sends the current route WITH its stake so it is kept', /"stake":"STAKE-X she loses/.test(prompts[0] || ''), (prompts[0] || '').slice(0, 500));
     const w2 = await writer(concept(''));
-    check('a concept with no voiceover gets no spine sentence but keeps the sign-off, sequence and limb rules', !/FILM’S SPINE/.test(w2) && /SIGN-OFF SCENE SPEAKS AND MOVES/.test(w2) && /rapid sequence/.test(w2) && w2.indexOf(I.LIMB_RULE) > 0);
+    check('a concept with no voiceover gets no spine sentence but keeps the sign-off, sequence and limb rules', !/FILM’S SPINE/.test(w2) && /SIGN-OFF SCENE SPEAKS:/.test(w2) && /rapid sequence/.test(w2) && w2.indexOf(I.LIMB_RULE) > 0);
 
     // ---- a wordless film (budget 0): no speech rules at all
     I.voBudget = () => 0;
     const w3 = await writer(concept(VO));
-    check('a wordless film gets NO voiceover-spine and NO spoken sign-off rule, and still gets the sequence and limb rules', !/FILM’S SPINE/.test(w3) && !/SPEAKS AND MOVES/.test(w3) && /rapid sequence/.test(w3) && w3.indexOf(I.LIMB_RULE) > 0);
+    check('a wordless film gets NO voiceover-spine and NO spoken sign-off rule, and still gets the sequence and limb rules', !/FILM’S SPINE/.test(w3) && !/SIGN-OFF SCENE SPEAKS/.test(w3) && /rapid sequence/.test(w3) && w3.indexOf(I.LIMB_RULE) > 0);
     I.voBudget = real.voBudget;
 
     // ---- a film written from a provocation keeps the provocation's own sound language: only the two picture rules
     const realProv = I.provMode; I.provMode = () => true;
     const dp = I.deliveryRulesText(concept(VO));
-    check('a provocation film gets NO voiceover-spine and NO spoken sign-off rule (its own sound language rules), only the sequence and limb rules', !/SPINE/.test(dp) && !/SPEAKS AND MOVES/.test(dp) && /rapid sequence/.test(dp) && dp.indexOf(I.LIMB_RULE) >= 0, dp);
+    check('a provocation film gets NO voiceover-spine and NO spoken sign-off rule (its own sound language rules), only the sequence and limb rules', !/SPINE/.test(dp) && !/SIGN-OFF SCENE SPEAKS/.test(dp) && /rapid sequence/.test(dp) && dp.indexOf(I.LIMB_RULE) >= 0, dp);
     I.provMode = realProv;
 
     // ---- C5: the single-scene rewrite
@@ -88,7 +90,7 @@
     I.setState({ scriptRefine: 'make the second scene livelier', scriptReworking: false });
     await I.reworkScript(); await wait(400);
     const rk = prompts[0] || '';
-    check('the whole-script rework is told the limb rule before its JSON shape, and gets no voiceover-spine or sign-off-speech rule', /Revise this/.test(rk) && rk.indexOf(I.LIMB_RULE) > rk.indexOf('STRICT SPEECH BUDGET') && rk.indexOf(I.LIMB_RULE) < rk.indexOf('Return ONLY JSON') && !/FILM’S SPINE/.test(rk) && !/SPEAKS AND MOVES/.test(rk), rk.slice(-700));
+    check('the whole-script rework is told the limb rule before its JSON shape, and gets no voiceover-spine or sign-off-speech rule', /Revise this/.test(rk) && rk.indexOf(I.LIMB_RULE) > rk.indexOf('STRICT SPEECH BUDGET') && rk.indexOf(I.LIMB_RULE) < rk.indexOf('Return ONLY JSON') && !/FILM’S SPINE/.test(rk) && !/SIGN-OFF SCENE SPEAKS/.test(rk), rk.slice(-700));
   } catch (e) {
     results.push({ name: 'the run did not throw', ok: false, extra: String(e && e.stack || e) });
   } finally {

@@ -66,12 +66,16 @@ def scene_motion(steps: list[float], wins: list[dict], fps: int = FPS) -> list[d
     return out
 
 
-def findings(scenes_motion: list[dict], freezes: list[tuple[float, float]], silences: list[tuple[float, float | None]], duration: float) -> list[dict]:
-    """Plain advice from the measurements. Kinds: barely-moves, frozen, silent-tail."""
+def findings(scenes_motion: list[dict], freezes: list[tuple[float, float]], silences: list[tuple[float, float | None]], duration: float, signoff=None) -> list[dict]:
+    """Plain advice from the measurements. Kinds: barely-moves, frozen, silent-tail. `signoff` is the sign-off scene's number: the render holds that pack shot locked and still ON PURPOSE (so the pack never
+    grows or drifts), so a still sign-off is reported in its own words, not as a fault."""
     out = []
     for s in scenes_motion:
         m, length = s.get("motion"), s["end"] - s["start"]
-        if m is not None and m < STILL_BELOW and length >= STILL_MIN_SECS:
+        if m is not None and m < STILL_BELOW and length >= STILL_MIN_SECS and signoff is not None and s["no"] == signoff:
+            out.append({"kind": "barely-moves", "scene": s["no"], "signoff": True, "note": f"Scene {s['no']} (the sign-off) holds still for {length:g} s: the pack shot is locked on purpose so the pack never grows or drifts. "
+                        "If the ending feels flat, put a person's action beside the pack, say the payoff line over it, or shorten the hold."})
+        elif m is not None and m < STILL_BELOW and length >= STILL_MIN_SECS:
             out.append({"kind": "barely-moves", "scene": s["no"], "note": f"Scene {s['no']} barely moves for {length:g} s (picture change {m:.2f}; a held but alive shot is 0.5 or more). "
                         "A still shot reads as a pause: add a movement, a reveal or a cut, or shorten it."})
     for a, b in freezes:
@@ -96,7 +100,7 @@ def duration_of(text: str) -> float:
     return int(m.group(1)) * 3600 + int(m.group(2)) * 60 + float(m.group(3)) if m else 0.0
 
 
-def report(path: str, scenes=None) -> dict:
+def report(path: str, scenes=None, signoff=None) -> dict:
     """Measure the film at `path`. {ok, duration, scenes:[{no,start,end,motion}], findings:[...]} or {ok: False, detail}."""
     exe = filmcut.ffmpeg_exe()
     if not exe:
@@ -115,4 +119,4 @@ def report(path: str, scenes=None) -> dict:
     except Exception as exc:                                  # a probe that fails is "no report", never a broken render
         return {"ok": False, "detail": f"Could not read the film: {type(exc).__name__}."}
     sm = scene_motion(steps, windows(scenes))
-    return {"ok": True, "duration": round(duration, 2), "scenes": sm, "findings": findings(sm, freezes, silences, duration), "has_audio": "Audio:" in info}
+    return {"ok": True, "duration": round(duration, 2), "scenes": sm, "findings": findings(sm, freezes, silences, duration, signoff), "has_audio": "Audio:" in info}

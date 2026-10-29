@@ -15965,7 +15965,7 @@ class Component extends DCLogic {
     // A film written from a provocation keeps the provocation's own sound language and sign-off (the writer prompt is rewritten for it just after this), so it gets only the two picture rules.
     const vo = String((vc && vc.vo) || '').trim(), budget = this.provMode() ? 0 : this.voBudget(this.state.prodDuration), out = [];
     if (vo && budget) out.push('THE CONCEPT’S VOICEOVER IS THE FILM’S SPINE: its sentences, in their order, must be heard across the scenes (as voiceover, or as the characters’ own lines in the language of the film), inside the speech budget above. The budget is what you spend on it: do not swap it for a thinner version, cut elsewhere first, and keep silence for the scenes that carry none of it.');
-    if (budget) out.push('THE SIGN-OFF SCENE SPEAKS AND MOVES: the pack-shot scene carries the film’s payoff line spoken aloud (voiceover or a character), and something in its frame moves (a hand takes or pours, a slow push-in, a reveal) while the pack stays sharp and fully in view, never a still tabletop and never defocused or behind a blurred foreground.');
+    if (budget) out.push('THE SIGN-OFF SCENE SPEAKS: the pack-shot scene carries the film’s payoff line spoken aloud (voiceover or a character). The film holds the pack-shot camera locked and still so the pack never grows or drifts, so never write a push-in, zoom or camera drift on the pack: any life comes from what is IN the frame beside it (a hand takes the pack or pours from it, a glass fills, steam rises), while the pack stays sharp, fully in view and in the same place, never defocused or behind a blurred foreground. Write this scene’s "camera" cell as a locked-off hold on the pack.');
     out.push('If a concept beat is a rapid sequence (quick cuts of several different actions), the scene’s visual must name each of those actions in order, so each can be covered by its own shot; never replace them with one generic action.');
     out.push(this.LIMB_RULE + ' If one of the concept’s own moments needs such an action, keep the moment and change the framing.');
     return out.join(' ');
@@ -17335,16 +17335,19 @@ class Component extends DCLogic {
     this.setState({ framesBatch:true, staleBusy:'1 of ' + todo });
     const slots = this.frameSlots();
     let n = 0, failed = 0;
-    for (let i = 0; i < slots.length; i++) {
-      const x = slots[i], f = (this.state.sceneFrames || {})[x.key];
-      if (!(f && f.status === 'done' && this.frameIsStale(x.idx, f, x.k))) continue;
-      n++;
-      this.setState({ staleBusy:n + ' of ' + Math.max(todo, n) });
-      await this.generateFrame(x.idx, x.k)();
-      const after = (this.state.sceneFrames || {})[x.key];
-      if (!after || after.status !== 'done') failed++;
+    try {
+      for (let i = 0; i < slots.length; i++) {
+        const x = slots[i], f = (this.state.sceneFrames || {})[x.key];
+        if (!(f && f.status === 'done' && this.frameIsStale(x.idx, f, x.k))) continue;
+        n++;
+        this.setState({ staleBusy:n + ' of ' + Math.max(todo, n) });
+        await this.generateFrame(x.idx, x.k)();
+        const after = (this.state.sceneFrames || {})[x.key];
+        if (!after || after.status !== 'done') failed++;
+      }
+    } finally {
+      this.setState({ framesBatch:false, staleBusy:'' });       // an error in one frame must never leave both bulk buttons locked
     }
-    this.setState({ framesBatch:false, staleBusy:'' });
     this.showToast('Re-rendered ' + (n - failed) + ' frame' + (n - failed === 1 ? '' : 's') + (failed ? ' — ' + failed + ' did not come back, try those again' : ' — all frames are current') + '.', failed ? 'warn' : 'ok');
   };
   // The banner: how many frames are out of date, WHY, and one button for exactly those. Shown on the Storyboard, the Shoot Board and the Shots step.
@@ -19285,7 +19288,10 @@ class Component extends DCLogic {
     const url = (typeof urlArg === 'string' && urlArg) || this.state.producedUrl;
     if (!url || this.state.renderQcBusy) return;
     this.setState({ renderQcBusy:true });
-    const d = await this.apiJson('/film-qc', { url, scenes:(this.state.fullScript || []).map(r => ({ no:r.no, tc:r.tc })) });
+    // The scene windows are those of the film as it was first checked (the report keeps them), so a later edit of the script's timings cannot move them; a film never checked uses the script as it is.
+    const prev = (this.state.renderQc && this.state.renderQc.url === url && Array.isArray(this.state.renderQc.scenes) && this.state.renderQc.scenes.length) ? this.state.renderQc.scenes : null;
+    const rowsNow = this.state.fullScript || [], sIdx = rowsNow.findIndex((_r, i) => this.isBrandScene(i));
+    const d = await this.apiJson('/film-qc', { url, scenes:prev ? prev.map(x => ({ no:x.no, tc:x.start + '–' + x.end + 's' })) : rowsNow.map(r => ({ no:r.no, tc:r.tc })), ...(sIdx >= 0 ? { signoff:this.sceneNoInt(rowsNow[sIdx], sIdx) } : {}) });
     this.setState({ renderQcBusy:false, renderQc: d ? { ...d, url } : { ok:false, url, detail:'Could not check the film.' } });
   };
   renderQcPanel(){

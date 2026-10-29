@@ -3211,7 +3211,7 @@ def film_qc(payload: dict):
     path = tenancy.asset_path("renders", name) if name else ""
     if not path:
         return {"ok": False, "detail": "That film is not on the server."}
-    return filmqc.report(path, (payload or {}).get("scenes"))
+    return filmqc.report(path, (payload or {}).get("scenes"), (payload or {}).get("signoff"))
 
 
 @app.post("/take-look")

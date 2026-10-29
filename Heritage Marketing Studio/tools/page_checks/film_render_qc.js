@@ -48,6 +48,12 @@
     check('the button calls /film-qc with this film and the script timecodes', calls.some(u => /film-qc/.test(u)) && bodies.some(b => b.url === '/renders/a.mp4' && b.scenes.length === 2 && b.scenes[1].tc === '24–30s' && !('visual' in b.scenes[1])), JSON.stringify(bodies));
     check('both findings are shown in plain words, with the free/advice-only note', /Scene 5 barely moves for 6 s/.test(txt()) && /near silence/.test(txt()) && /Free: measured from the file/.test(txt()));
     check('the film itself is untouched (still the same url)', I.state.producedUrl === '/renders/a.mp4');
+    check('the request names the sign-off scene (the last scene with no beat role: scene 5), whose still hold is deliberate', bodies.some(b => b.url === '/renders/a.mp4' && b.signoff === 5), JSON.stringify(bodies));
+    // the script's timings change AFTER the render: a re-check keeps the windows of the first report, so the report cannot drift away from the film
+    I.setState(s => ({ fullScript: s.fullScript.map(r => (r.no === 5 ? { ...r, tc: '20–30s' } : r)) })); await wait(300);
+    bodies.length = 0; btn('Check again').click(); await wait(700);
+    check('a re-check reuses the scene windows of the first report, not the edited timecodes', bodies.some(b => b.scenes && b.scenes.length === 1 && b.scenes[0].no === 5 && b.scenes[0].tc === '24–30s'), JSON.stringify(bodies));
+    I.setState(s => ({ fullScript: s.fullScript.map(r => (r.no === 5 ? { ...r, tc: '24–30s' } : r)) })); await wait(200);
 
     mode = 'clean'; btn('Check again').click(); await wait(700);
     check('a clean film says nothing is flagged', /Nothing flagged: every scene moves/.test(txt()) && !/barely moves/.test(txt()), txt().match(/RENDER CHECK[^\n]*/));
