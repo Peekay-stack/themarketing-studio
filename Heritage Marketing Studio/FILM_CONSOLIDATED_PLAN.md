@@ -89,3 +89,21 @@ The owner's point after round 1 was that one test is not evidence. So the proof 
 6. A screenshot of the step bar **before** a render, for the Shots-step question.
 7. C8: a confirm on Approve, or a pure warning?
 8. OK for the 2-3 vision calibration calls in Phase 5, when we get there.
+
+## 9. Phase 2 status (29 Oct): prompt rules BUILT (commit `b7a8903`) and checked with 6 REAL model calls
+Model `claude-opus-4-8` (the server default), the exact prompts the page builds, no house or learning context (so locations in the concept runs, e.g. "Bengaluru" and "Chennai" for Heritage, are an artefact of that, not of the rules). Cost by token estimate about $0.3-0.5 (the exact figure is on the Anthropic usage page). One sample per case: direction, not statistics.
+
+**Finding that changed the diagnosis:** the writer prompt carries "STRICT SPEECH BUDGET: a hard limit… NO MORE than 32 words… say less… cut every word that is not doing work". The concept voiceover (37 words in the school-hem film) was often over that limit, so the writer cut it by instruction, it did not simply ignore it. The new text says the budget is what the voiceover is spent on, and sits after the budget note.
+
+| Case | Concept VO | Saved script (your run) | Same prompt WITHOUT the new rules (control, today) | NEW prompt |
+|---|---|---|---|---|
+| School hem | 37 words | 9 spoken words | not run | **18**, sign-off speaks, 1 silent scene |
+| Milk moustache | 32 | 28 | not run | **30**, sign-off speaks, 1 silent scene (no regression) |
+| Grandmother | 26 | 13, silent sign-off | 9, sign-off speaks, 1 silent scene | **20**, no silent scene, sign-off speaks and the push-in holds the pack sharp; the quick-cuts beat now names smelling, boiling and holding to the light as three actions |
+
+- **Writer (C3): works in direction, not fully.** The voiceover reaches the script more (9-13 to 18-20 words) but no film carries it whole (about half to three quarters of it). No limb-across-face action appeared in the four new scripts. The sign-off spoke in the control too, so that rule is not what separates old from new (the saved film's silent sign-off was one run's luck).
+- **Watch:** the new scripts all have 4 scenes (the control had 5, your saved runs 6, 6 and 5). The prompt allows 4 to 7 and says one per beat is natural, so this may be noise, but fewer scenes is less variety.
+- **Watch:** the new rule makes the model speak the English concept voiceover lines inside the Telugu film ("For fifty years she checked every drop."). That is open question 4 (English narration line) in a stronger form: decide if English lines in a Telugu film are wanted.
+- **Same place:** the grandmother film is still all in one kitchen; nothing in Phase 2 targets this (Phase 3).
+- **Concept (C4): mostly NOT working.** The "stake" rule was largely ignored: in 6 routes the rationale line gave a brand or market reason, not a stake, (one borderline). **My choice not to add a separate `stake` field was wrong**; the real run says a field is needed. The limb rule was broken in the concept itself: Heritage route 2's memorable moment is a packet pressed against an old woman's cheek. That also sets a conflict to settle, since the writer is told to deliver the concept's memorable moment AND to avoid hands at a face. The turn lines were mostly visible actions (5 of 6), which the older prompt also tended to produce, so I cannot credit the new rule.
+- **Next, if you agree:** add a `stake` field to the concept route (cards, refine, tests) and put the limb rule in a stronger form with an example; then re-run the 2 concept calls (about $0.1). The writer change stays as it is.
