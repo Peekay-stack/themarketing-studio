@@ -3544,6 +3544,7 @@
                     <span style="font-size:12px; color:#6B7280;">{{ renderModelLabel }}</span>
                   </div>
                 </sc-if>
+                {{ renderQcPanel }}
                 <button onClick="{{ downloadMp4 }}" style="margin-top:12px; width:100%; background:#17325E; color:#fff; border:none; border-radius:10px; padding:11px 16px; font-weight:700; font-size:13.5px; cursor:pointer;">⬇ Download MP4</button>
               </div>
             </sc-if>
@@ -12115,6 +12116,7 @@ class Component extends DCLogic {
     provConcept: null,             // the concept last written from the provocation (so switching back to it is free)
     provRouteBusy: false,          // the fourth route card is writing
     loudnessInfo: null,            // what the last preview / render / re-score measured: {integrated, true_peak, target?, ...}
+    renderQc: null, renderQcBusy: false,   // the free post-render report for the film shown: {url, ok, duration, scenes, findings} (filmqc.py via /film-qc)
     musicLockMood: null,           // the music mood the locked bed was made under, to say when the mood has moved on
     musicBusy: false,
     silentMaster: null,            // silent cut kept so music can change with no video spend
@@ -19219,6 +19221,30 @@ class Component extends DCLogic {
   confirmReworkRescore = () => { this.setState({ reworkConfirmOpen:false }); this.rescoreCut(); };
   confirmReworkRender = () => { this.setState({ reworkConfirmOpen:false }); this.produceVideo(); };
   // `arg` is the click event when called from a button; {assemble:true} (see assembleFilm) joins the CHOSEN clips instead of generating any.
+  // Render check (FILM_CONSOLIDATED_PLAN.md C2): free ffmpeg checks on the finished film (a shot that barely moves, a frozen stretch, a silent tail). Runs by itself after a render and on
+  // demand for any film shown (an older render, a re-scored one). Advice only; a failed check says so and never touches the film.
+  runRenderQc = async (urlArg) => {
+    const url = (typeof urlArg === 'string' && urlArg) || this.state.producedUrl;
+    if (!url || this.state.renderQcBusy) return;
+    this.setState({ renderQcBusy:true });
+    const d = await this.apiJson('/film-qc', { url, scenes:(this.state.fullScript || []).map(r => ({ no:r.no, tc:r.tc })) });
+    this.setState({ renderQcBusy:false, renderQc: d ? { ...d, url } : { ok:false, url, detail:'Could not check the film.' } });
+  };
+  renderQcPanel(){
+    const s = this.state, url = s.producedUrl;
+    if (!url) return null;
+    const h = React.createElement, q = (s.renderQc && s.renderQc.url === url) ? s.renderQc : null;
+    const btn = (text, onClick) => h('button', { onClick, style:{ border:'1px solid #C9CEDA', background:'#fff', color:'#17325E', borderRadius:7, padding:'3px 10px', fontSize:11.5, fontWeight:700, cursor:'pointer', marginLeft:8 } }, text);
+    const head = h('span', { style:{ fontSize:11, fontWeight:800, letterSpacing:'0.06em', textTransform:'uppercase', color:'#6B7280' } }, 'Render check');
+    const box = (...kids) => h('div', { style:{ marginTop:11, padding:'9px 12px', border:'1px solid #E6E3DC', borderRadius:10, background:'#FBFAF8', fontSize:12, lineHeight:1.55, color:'#41505F' } }, ...kids);
+    if (s.renderQcBusy) return box(head, '  Checking the picture and sound…');
+    if (!q) return box(head, '  ', btn('Check the picture and sound (free)', this.runRenderQc));
+    if (!q.ok) return box(head, '  ' + (q.detail || 'Could not check the film.'), btn('Try again', this.runRenderQc));
+    const f = q.findings || [];
+    return box(head, f.length ? null : '  Nothing flagged: every scene moves, nothing is frozen and the sound does not trail off.', btn('Check again', this.runRenderQc),
+      ...f.map((x, i) => h('div', { key:'rq' + i, style:{ color:'#B07A12', fontWeight:700, marginTop:3 } }, '• ' + x.note)),
+      h('div', { style:{ fontSize:11, color:'#9AA1AD', marginTop:3 } }, 'Free: measured from the file, no model. Advice only; the film is untouched.'));
+  }
   produceVideo = async (arg) => {
     if (this.state.production.status === 'rendering') return;
     if (this.state.scriptStatus !== 'approved') { this.showToast('Approve the full script before producing.'); return; }
@@ -19251,6 +19277,7 @@ class Component extends DCLogic {
     // Forward wiring: a produced film gets its cut manifest started here, so the Edit room opens straight
     // onto it instead of "No cut yet". Runs on the fresh render data (state may not have flushed yet).
     if (url) this.startCutFromFilm(d.clips, d.master, d.shot_clips);
+    if (url) this.runRenderQc(url);
     // B4 — surface the server's `detail` on failure AND on a 200 that carries a warning.
     if (url) {
       if (d.detail && !this.flagCredits(d.detail)) this.showToast(d.detail);
@@ -22143,7 +22170,8 @@ class Component extends DCLogic {
       prodVersions, hasProdVersions: prodVersions.length>0, prodAspect: prod.aspect,
       produceBtnLabel: prod.status==='rendering' ? 'Rendering…' : (prod.versions.length ? '↻ Render revision' : '● Produce video'),
       producedUrl: s.producedUrl, hasProducedUrl: !!s.producedUrl, noProducedUrl: !s.producedUrl, downloadMp4:this.downloadMp4, openEditRoom:this.openEditRoom,
-      producedVideo: s.producedUrl ? React.createElement('video', { src:s.producedUrl, controls:true, style:{ width:'100%', borderRadius:12, background:'#000', aspectRatio:'16/9' } }) : null,
+      renderQcPanel: this.renderQcPanel(),
+      producedVideo: s.producedUrl ?React.createElement('video', { src:s.producedUrl, controls:true, style:{ width:'100%', borderRadius:12, background:'#000', aspectRatio:'16/9' } }) : null,
       prodNeedsApproval: !approved,
       // campaign
       campaign: camp, hasCampaign: !!camp, campaignName: camp ? camp.name : '',

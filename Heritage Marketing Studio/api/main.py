@@ -59,6 +59,7 @@ import takeqa
 import mediapurge
 import filmdirect
 import filmedit
+import filmqc
 import selfcheck
 import briefguide
 import briefstore
@@ -3194,6 +3195,17 @@ def take_check(payload: dict):
     except (TypeError, ValueError):
         ordered = 0.0
     return takeqa.check_clip(exe, path, ordered, _take_path(payload.get("prev_url")))
+
+
+@app.post("/film-qc")
+def film_qc(payload: dict):
+    """Free checks on a finished film: how much each scene's picture moves, a frozen stretch, a silent tail. ffmpeg only, no model and no cost (filmqc.py). `url` is a /renders/ URL; `scenes` are the script rows (their timecodes mark the scene windows)."""
+    url = str((payload or {}).get("url") or "")
+    name = url.split("?", 1)[0].rsplit("/", 1)[-1] if "/renders/" in url else ""
+    path = tenancy.asset_path("renders", name) if name else ""
+    if not path:
+        return {"ok": False, "detail": "That film is not on the server."}
+    return filmqc.report(path, (payload or {}).get("scenes"))
 
 
 @app.post("/take-look")
