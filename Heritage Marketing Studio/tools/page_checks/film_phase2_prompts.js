@@ -22,7 +22,7 @@
   window.fetch = async () => new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } });
   I.complete = async (p) => { prompts.push(String(p)); if (reply === null) throw new Error('stop'); return reply; };
   const results = [], check = (name, ok, extra) => results.push({ name, ok: !!ok, extra: ok ? undefined : extra });
-  const concept = (vo) => ({ name: 'R', rationale: 'Why.', logline: 'Nothing left to test.', duration: '30s', hook: 'HOOK a drop rolls down a plate.', surprise: 'SURP a lifetime of tests.', turn: 'TURN she drinks it straight.', memorable: 'MEM the plate forgotten.',
+  const concept = (vo, noStake) => ({ name: 'R', rationale: 'Why.', logline: 'Nothing left to test.', duration: '30s', ...(noStake ? {} : { stake: 'STAKE-X she loses the one test she has trusted for fifty years.' }), hook: 'HOOK a drop rolls down a plate.', surprise: 'SURP a lifetime of tests.', turn: 'TURN she drinks it straight.', memorable: 'MEM the plate forgotten.',
     vo, scenes: [{ t: '0–6s', title: 'B1', desc: 'a drop' }, { t: '6–15s', title: 'B2', desc: 'Quick cuts: she smells it, watches it boil, holds it to light' }] });
   const VO = 'For fifty years she checked every drop, because she had to. Today her daughter simply pours. The worry is gone, so only the drinking is left.';
   const writer = async (c) => { prompts.length = 0; reply = null; I.setState({ screen: 'video', vTab: 'film', videoStep: 'scripting', prodDuration: '30s', videoConcept: c, conceptRoutes: [c], conceptRoute: 0, scriptPhase: 'concept', scriptWriting: false, fullScript: null, scriptStatus: 'concept' });
@@ -33,7 +33,9 @@
     I.setState({ screen: 'video', vTab: 'film', videoStep: 'scripting', videoObjective: 'Brand awareness', scriptVersions: [], refinePrompt: '', videoForceTyped: false, videoBrief: '', videoGenerating: false, videoConcept: null, conceptRoutes: [], prodDuration: '30s', scriptPhase: 'concept' });
     await I.generateVideo(); await wait(700);
     const cp = prompts[0] || '';
-    check('C4: the concept prompt asks for a STAKE in the rationale line', /The idea needs a STAKE: the "rationale" line must say what is won or lost/.test(cp), cp.slice(-900));
+    check('C4: the concept prompt asks for a "stake" field (what the PEOPLE IN THE FILM win or lose), in the JSON shape too, and bans a marketing reason', /"stake": what is won or lost for the PEOPLE IN THE FILM/.test(cp) && /"stake": string, "hook": string/.test(cp) && /never a marketing reason such as/.test(cp), cp.slice(-1200));
+    check('C4: the limb rule carries its examples and is aimed at the four moments (a packet or hand to a cheek)', /for example a packet or a hand pressed to a cheek/.test(cp) && /none of them may be a hand, an arm or an object touching or crossing a face/.test(cp));
+    check('C4: the stake is parsed and kept on every route and the working concept, and shown first on the cards', I.state.videoConcept.stake === 'STAKE-X she loses the one test she has trusted for fifty years.' && I.state.conceptRoutes.every(r => /^STAKE-X/.test(r.stake)) && /STAKE-X/.test(document.body.innerText) && /STAKE/.test(document.body.innerText), JSON.stringify(I.state.videoConcept).slice(0, 300));
     check('C4: the turn must be a visible reversal, never something that gently stops or quietly fades', /The "turn" is a VISIBLE REVERSAL by a person or an object/.test(cp) && /never something that gently stops, quietly fades/.test(cp));
     check('C4: at least one beat is a fast visible action', /At least one of the concept beats is a fast visible action/.test(cp));
     check('C4: the limb rule is in the concept prompt (B3)', cp.indexOf(I.LIMB_RULE) > 0 && /never write an arm or a hand crossing a face/.test(cp));
@@ -44,13 +46,21 @@
     check('C3: the writer is told the concept voiceover is the spine and is what the speech budget is spent on', /THE CONCEPT’S VOICEOVER IS THE FILM’S SPINE: its sentences, in their order/.test(w) && /inside the speech budget above/.test(w), w.slice(-1800));
     check('C3: the sign-off scene must speak and move, with the pack sharp', /THE SIGN-OFF SCENE SPEAKS AND MOVES/.test(w) && /the pack stays sharp and fully in view, never a still tabletop and never defocused/.test(w));
     check('C3: a "quick cuts" beat must name each action', /rapid sequence \(quick cuts of several different actions\), the scene’s visual must name each of those actions in order/.test(w));
-    check('C3: the limb rule is in the writer prompt', w.indexOf(I.LIMB_RULE) > 0);
+    check('C3: the limb rule is in the writer prompt, with the line that a concept moment needing it keeps the moment and changes the framing', w.indexOf(I.LIMB_RULE) > 0 && /keep the moment and change the framing/.test(w));
+    check('C4: the writer is told the stake as what the film must make felt, and it is NOT in the list of moments to deliver as scenes', /What is at stake for the people in this film, which it must make the viewer feel: STAKE-X she loses the one test/.test(w) && !/(^|; )stake: /.test(w) && w.indexOf('STAKE-X') > w.indexOf('memorable moment:') && w.indexOf('What is at stake') > w.indexOf('The first scene must show the hook'), w.slice(w.indexOf('own entertainment'), w.indexOf('own entertainment') + 900));
     const bi = w.indexOf('STRICT SPEECH BUDGET'), si = w.indexOf('THE CONCEPT’S VOICEOVER'), ri = w.indexOf('Return ONLY JSON');
     check('C3: the delivery rules sit AFTER the speech budget note and BEFORE the JSON shape (so the budget does not have the last word)', bi > 0 && si > bi && ri > si, [bi, si, ri]);
     check('C3: the shared VISUAL_RULES text is unchanged (no limb or voiceover rule inside it)', !/Keep limbs safe/.test(I.VISUAL_RULES) && !/SPINE/.test(I.VISUAL_RULES));
     check('C3: everything the writer was told before is still there (the entertainment lines, the pack-shot sign-off, the native-script rule)', /This concept’s own entertainment/.test(w) && /The film MUST include a pack-shot sign-off/.test(w) && /native script of its language/.test(w));
 
     // ---- a concept with no voiceover: no spine sentence, the rest stays
+    const w1 = await writer(concept(VO, true));
+    check('a concept with the four moments but NO stake gets no stake sentence (an older concept\'s prompt is as before)', !/What is at stake/.test(w1) && /own entertainment/.test(w1));
+    // a refine re-sends the stake with the other fields so it is kept
+    prompts.length = 0; reply = null;
+    I.setState({ scriptVersions: [{ v: 1, logline: 'x' }], refinePrompt: 'funnier', videoGenerating: false, videoConcept: concept(VO), conceptRoutes: [concept(VO)], conceptRoute: 0 });
+    await I.generateVideo(); await wait(500);
+    check('a refine re-sends the current route WITH its stake so it is kept', /"stake":"STAKE-X she loses/.test(prompts[0] || ''), (prompts[0] || '').slice(0, 500));
     const w2 = await writer(concept(''));
     check('a concept with no voiceover gets no spine sentence but keeps the sign-off, sequence and limb rules', !/FILM’S SPINE/.test(w2) && /SIGN-OFF SCENE SPEAKS AND MOVES/.test(w2) && /rapid sequence/.test(w2) && w2.indexOf(I.LIMB_RULE) > 0);
 
