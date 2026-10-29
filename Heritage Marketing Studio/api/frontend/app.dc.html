@@ -16143,12 +16143,39 @@ class Component extends DCLogic {
   dismissBeatMap = () => this.setState({ videoBeatMap:null });
   // "Before you approve" (the film-engagement levers #3 / #5): the director's read, the shot plan and the flow review all work on a DRAFTED script, while the film is still words and nothing has been drawn or
   // paid for, but nothing used to say so at the point of approving. This brings what they found next to the Approve button, with a button to run each. Advisory only: approving is never blocked.
+  // Delivery checks (FILM_CONSOLIDATED_PLAN.md C1): plain counts on the drafted script, no model call, no language reading. The 28 Oct grandmother film passed every read
+  // yet carried 13 spoken words against a budget of 32, two silent scenes and a silent pack shot; nothing said so. voBudget() is a sparse budget by design (filling every second with
+  // speech made cuts feel like a documentary read), so the floor is HALF of it, and a wordless film (budget 0) is not checked at all.
+  spokenWordsOf(row){
+    if (!row) return 0;
+    const count = (t) => String(t || '').trim().split(/\s+/).filter(Boolean).length;
+    if (Array.isArray(row.audio)) return row.audio.reduce((n, a) => n + count(a && a.text), 0);
+    return count(String(row.dialogue || '').replace(/\([^)]*\)/g, ' ').replace(/(^|[.!?]\s+)[A-Za-z][\w'’ -]{0,24}:/g, '$1 '));
+  }
+  deliveryChecks(){
+    const s = this.state, rows = s.fullScript || [], out = { items:[], words:0, budget:0, wordless:false };
+    if (!rows.length) return out;
+    const per = rows.map(r => this.spokenWordsOf(r)), total = per.reduce((a, b) => a + b, 0), budget = this.voBudget(s.prodDuration);
+    out.words = total; out.budget = budget;
+    if (!budget) { out.wordless = true; return out; }
+    const vc = s.videoConcept, voWords = String((vc && vc.vo) || '').trim().split(/\s+/).filter(Boolean).length;
+    const lostVo = voWords >= 8 && total <= voWords * 0.6;
+    const dur = s.prodDuration || (rows.length + ' scenes');
+    const low = total < budget / 2;
+    if (low) out.items.push({ id:'voice', note:'Only ' + total + ' spoken word' + (total === 1 ? '' : 's') + ' for a ' + dur + ' film (the budget is about ' + budget + ').' + (lostVo ? ' The concept’s own voiceover runs ' + voWords + ' words and most of it did not reach the script.' : '') });
+    else if (lostVo) out.items.push({ id:'carry', note:'The concept’s voiceover runs ' + voWords + ' words but the script speaks only ' + total + '. Check its main line was not dropped.' });
+    const brand = rows.findIndex((_r, i) => this.isBrandScene(i));
+    if (brand >= 0 && !per[brand]) out.items.push({ id:'signoff', note:'The sign-off scene (scene ' + this.sceneNo(rows[brand], brand) + ') has no spoken line. It is the last thing the viewer hears; a short payoff line usually lands it.' });
+    const silent = rows.map((r, i) => (!per[i] && i !== brand) ? this.sceneNo(r, i) : null).filter(x => x != null);
+    if (silent.length >= 2) out.items.push({ id:'silent', soft:true, note:'Scenes ' + silent.join(', ') + ' have no speech (' + silent.length + ' of ' + rows.length + ' scenes). Fine if they are meant to breathe.' });
+    return out;
+  }
   preApprovePanel(){
     const s = this.state, rows = s.fullScript || [];
     if (!rows.length || s.scriptStatus === 'approved') return null;
     const h = React.createElement, bm = s.videoBeatMap, fr = s.filmReview;
     const bmFresh = !!(bm && bm.sig === this.beatSig()), frFresh = !!(fr && fr.sig === this.flowReviewSig());
-    const planned = rows.filter(r => this.activeShots(r).length).length;
+    const planned = rows.filter(r => this.activeShots(r).length).length, dc = this.deliveryChecks();
     const btn = (text, onClick, disabled) => h('button', { onClick, disabled:!!disabled, style:{ border:'1px solid #C9CEDA', background:'#fff', color:'#17325E', borderRadius:8, padding:'4px 11px', fontSize:12, fontWeight:700, cursor:disabled ? 'default' : 'pointer', opacity:disabled ? 0.55 : 1 } }, text);
     const row = (label, body, action) => h('div', { style:{ display:'flex', alignItems:'baseline', gap:10, flexWrap:'wrap', padding:'5px 0', borderTop:'1px solid #ECE8DE' } },
       h('span', { style:{ width:128, flex:'none', fontSize:12, fontWeight:800, color:'#17325E' } }, label), h('span', { style:{ flex:1, minWidth:200, fontSize:12.5, lineHeight:1.5, color:'#41505F' } }, body), action || null);
@@ -16167,7 +16194,10 @@ class Component extends DCLogic {
       row('Director’s read', directors, btn(s.beatMapBusy ? 'Reading…' : (bm ? '↻ Read again' : 'Read the film'), this.runBeatMap, s.beatMapBusy)),
       row('Shot plan', planned ? (planned + ' of ' + rows.length + ' scenes have extra camera angles planned.') : 'No extra camera angles planned. A scene reads best as one shot unless an angle has a job; use Break into shots on a scene card below. Angles planned now cost nothing until frames are drawn.', null),
       row('Flow review', flow, btn(s.filmReviewBusy ? 'Reviewing…' : (fr ? '↻ Review again' : 'Review the flow'), this.runFlowReview, s.filmReviewBusy)),
-      h('div', { style:{ fontSize:11, color:'#9AA1AD', marginTop:4 } }, 'Each read is one model call. Approving is never blocked by what they find.'));
+      row('Delivery', dc.wordless ? 'A wordless film by design: speech is not checked.' : (dc.items.length
+        ? h('div', null, ...dc.items.map((it, i) => h('div', { key:'dc' + i, style:{ color:it.soft ? '#6B7280' : '#B07A12', fontWeight:it.soft ? 400 : 700 } }, '• ' + it.note)))
+        : 'Nothing flagged: ' + dc.words + ' spoken words (budget about ' + dc.budget + ') and the sign-off speaks.'), null),
+      h('div', { style:{ fontSize:11, color:'#9AA1AD', marginTop:4 } }, 'Each read is one model call; the Delivery row is free and updates as you edit. Approving is never blocked by what they find.'));
   }
   beatMapPanel(){
     const h = React.createElement, s = this.state, bm = s.videoBeatMap, rows = s.fullScript || [];
