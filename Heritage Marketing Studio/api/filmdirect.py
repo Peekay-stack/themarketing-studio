@@ -21,6 +21,26 @@ _MODE_WORDS = {"flash back": "flashback", "flash-back": "flashback", "memory": "
                "future": "flash-forward", "present": "continuous", "real-time": "continuous", "real time": "continuous", "linear": "continuous", "time-passing": "montage",
                "time passing": "montage", "time lapse": "montage", "timelapse": "montage"}
 INTENSITY_LABELS = ("quiet", "building", "high", "payoff")
+CONCEPT_STATUSES = ("delivered", "flattened", "missing")
+MOMENTS = (("hook", "Hook"), ("surprise", "Surprise"), ("turn", "Turn"), ("memorable", "Memorable moment"))
+
+
+def promises(concept) -> list:
+    """What the chosen concept PROMISED, as [{id, label, text}]: its hook, surprise, turn and memorable moment (those it has) and each of its beats. [] when there is no concept. The ids are
+    what the director's read answers by, so the labels and texts the page shows come from here, never from the model (FILM_CONSOLIDATED_PLAN.md C6)."""
+    c = concept if isinstance(concept, dict) else {}
+    out = []
+    for key, label in MOMENTS:
+        t = _clip(c.get(key), 220)
+        if t:
+            out.append({"id": key, "label": label, "text": t})
+    beats = c.get("scenes") if isinstance(c.get("scenes"), list) else []
+    for i, b in enumerate(beats[:8], 1):
+        if isinstance(b, dict):
+            t = _clip(" \u2014 ".join(x for x in (str(b.get("title") or "").strip(), str(b.get("desc") or "").strip()) if x), 240)
+            if t:
+                out.append({"id": f"beat{i}", "label": f"Beat {i}" + (f" ({b.get('t')})" if b.get("t") else ""), "text": t})
+    return out
 
 
 def _clip(text, n) -> str:
@@ -51,7 +71,7 @@ def mode_of(value) -> str:
     return v if v in TIME_MODES else ""
 
 
-def build_prompt(*, rows, seconds, logline="", message="", tone="", pace="", characters="", hero="", roles=None) -> str:
+def build_prompt(*, rows, seconds, logline="", message="", tone="", pace="", characters="", hero="", roles=None, concept=None) -> str:
     """The director's brief: the whole script in order, the film's own words, and what to decide per scene."""
     film = []
     if logline:
@@ -73,10 +93,13 @@ def build_prompt(*, rows, seconds, logline="", message="", tone="", pace="", cha
         says = _clip(_says(row), 140)
         lines.append(f"SCENE {scene_no(row, i)} ({secs} s" + (f", planned job: {role}" if role else "") + f"): {_clip(row.get('visual') or row.get('title') or row.get('desc'), 260)}"
                      + (f' | says: "{says}"' if says else ""))
+    prom = promises(concept)
+    promised = ("\nWHAT THE CONCEPT PROMISED (the idea this film was chosen for; check the script keeps it):\n"
+                + "\n".join(f"  [{p['id']}] {p['label']}: {p['text']}" for p in prom) + "\n") if prom else ""
     return (
         "You are the director of a brand film, reading its finished script BEFORE any frame is drawn. Decide what each scene is FOR, as a viewer experiences the film in order. "
         "Judge by MEANING, in whatever language the film is written; never by particular words.\n\n"
-        + "\n".join(film) + "\n\nTHE SCRIPT:\n" + "\n".join(lines) + "\n\n"
+        + "\n".join(film) + "\n\nTHE SCRIPT:\n" + "\n".join(lines) + "\n" + promised + "\n"
         "DECIDE, for every scene (use its number exactly as written):\n"
         "1. `purpose` — one plain line: what this scene does for the story (\"surprise at the short hem\", \"the memory that explains it\"). Not a description of the picture.\n"
         "2. `intensity` — 0 quiet, 1 building, 2 high, 3 payoff. Exactly one or two scenes may be 3. A film where every scene has the same intensity has no shape.\n"
@@ -91,13 +114,21 @@ def build_prompt(*, rows, seconds, logline="", message="", tone="", pace="", cha
         "7. `place` — a short tag for WHERE the scene is (\"kitchen\", \"school gate\", \"street\"); the same place gets the same tag. Judge by the picture the script describes, not the story's setting alone.\n"
         "8. `energy` — 0 a held still, 1 small gestures, 2 clear action or a camera that moves with it, 3 big action or a reveal. How much HAPPENS on screen, not how important the beat is.\n"
         "9. `change` — one line: what is different at the END of the scene from its START (something learned, an object changed, a decision made, a mood turned). Empty when nothing changes.\n"
+        "10. `sequence` and `actions` — `sequence` is true when this scene is meant as a RUN of two to four DIFFERENT quick actions done one after another inside one moment (three tests in a row, a "
+        "ritual, the concept's own \"quick cuts\"), whether the script names them or shows only one of them; `actions` then lists them in order, each a few words. The same routine repeated on "
+        "different days is a `montage`, not a sequence. Otherwise `sequence` is false and `actions` is [].\n"
+        + ("11. `concept` — one entry for EVERY promise listed above, by its id. `status` is `delivered` (the script shows it on screen as pitched), `flattened` (the script has it but weaker: a run of "
+           "different quick actions shown as one still action, a surprise reduced to a generic picture, a turn that no longer visibly reverses anything) or `missing` (nowhere in the script). `scene` is "
+           "the scene that carries it (null when missing) and `note` is one plain line saying what is lost. Judge honestly: do not call a weakened promise delivered.\n" if prom else "")
+        +
         "ENGAGEMENT. A film must be ENTERTAINING, not only clear and not repeated. Read it as a viewer who would swipe away: does the first scene earn the next five seconds with something unexpected or a question; does every scene change something; "
         "does the place, scale or energy change from one scene to the next; does it escalate towards the turn; is there at least one scene a viewer would remember? Judge this honestly in the fields above; do not describe a dull scene as lively.\n"
         "Then name the TURN (`turn_scene`: the one scene where the change or realisation lands) and the MESSAGE CARRIER (`carrier_scene`: where the core line or the hero object lands, usually the last), "
         "say whether the film as a whole is about `time_passing`, and give a one-sentence `summary` of the film's shape as a viewer would feel it.\n\n"
         "Return ONLY JSON, no prose and no markdown: "
         "{\"summary\":\"...\",\"time_passing\":false,\"hero_object\":\"\",\"turn_scene\":4,\"carrier_scene\":6,"
-        "\"scenes\":[{\"no\":1,\"purpose\":\"...\",\"intensity\":1,\"time_mode\":\"continuous\",\"marker\":\"\",\"beat\":\"a\",\"hero\":false,\"place\":\"kitchen\",\"energy\":1,\"change\":\"...\"}]}")
+        "\"scenes\":[{\"no\":1,\"purpose\":\"...\",\"intensity\":1,\"time_mode\":\"continuous\",\"marker\":\"\",\"beat\":\"a\",\"hero\":false,\"place\":\"kitchen\",\"energy\":1,\"change\":\"...\",\"sequence\":false,\"actions\":[]}]"
+        + (",\"concept\":[{\"id\":\"hook\",\"status\":\"delivered\",\"scene\":1,\"note\":\"\"}]" if prom else "") + "}")
 
 
 def parse(raw: str):
@@ -115,7 +146,7 @@ def parse(raw: str):
     return data if isinstance(data, dict) else None
 
 
-def validate(raw: dict, rows, roles=None) -> dict:
+def validate(raw: dict, rows, roles=None, promises_in=None) -> dict:
     """The beat map after the backstops: {summary, time_passing, hero_object, turn_scene, carrier_scene, scenes:[{no, purpose, intensity, time_mode, marker, beat, hero}],
     transitions, findings, notes}. Every scene of the script gets exactly one entry (a scene the model skipped gets a plain default and a note); intensity is 0-3; time_mode is one of
     TIME_MODES; beats are re-numbered b1, b2... and only NEIGHBOURING scenes may share one; the turn and the carrier must be real scenes (the carrier defaults to the sign-off scene, or
@@ -135,9 +166,12 @@ def validate(raw: dict, rows, roles=None) -> dict:
             notes.append(f"Scene {n} was not read by the review, so it has a plain default.")
             s = {}
         mode = (mode_of(s.get("time_mode")) or prev_mode) if s else "continuous"
+        acts = [_clip(a, 60) for a in (s.get("actions") if isinstance(s.get("actions"), list) else []) if str(a or "").strip()][:4]
+        seq = bool(s.get("sequence")) and len(acts) >= 2 and mode != "montage"        # a "run" of one action is not a run; a montage is time passing, never a sequence
         out.append({"no": n, "purpose": _clip(s.get("purpose"), 160), "intensity": max(0, min(3, _int(s.get("intensity"), 1))), "time_mode": mode,
                     "marker": _clip(s.get("marker"), 140), "beat": str(s.get("beat") if s.get("beat") is not None else "").strip()[:12] or f"n{n}", "hero": bool(s.get("hero")),
-                    "place": _clip(s.get("place"), 40).lower(), "energy": max(0, min(3, _int(s.get("energy"), 1))), "change": _clip(s.get("change"), 160)})
+                    "place": _clip(s.get("place"), 40).lower(), "energy": max(0, min(3, _int(s.get("energy"), 1))), "change": _clip(s.get("change"), 160),
+                    "sequence": seq, "actions": acts if seq else []})
         prev_mode = mode
     # beats: re-number; only neighbouring scenes share one
     k, last_raw = 0, None
@@ -175,6 +209,30 @@ def validate(raw: dict, rows, roles=None) -> dict:
         findings.append({"kind": "carrier-without-hero", "scene": carrier, "note": f"Scene {carrier} carries the message but does not show {hero}."})
     eng = engagement(out)
     findings += eng["findings"]
+    # Did the script keep what the concept promised? Answered by meaning (the model), keyed by the ids WE sent, so a label or text can never be invented. A promise the model did not answer for is
+    # left out (unknown is not a finding) and counted in a note.
+    delivery, cf = [], []
+    if promises_in:
+        ask = {p["id"]: p for p in promises_in}
+        got = {}
+        for e in raw.get("concept") if isinstance(raw.get("concept"), list) else []:
+            if isinstance(e, dict) and str(e.get("id") or "") in ask and str(e.get("id")) not in got:
+                got[str(e["id"])] = e
+        for p in promises_in:
+            e = got.get(p["id"])
+            st = str((e or {}).get("status") or "").strip().lower()
+            if st not in CONCEPT_STATUSES:
+                continue
+            sc_no = _int(e.get("scene"), -1)
+            sc_no = sc_no if (sc_no in nos and st != "missing") else None
+            note = _clip(e.get("note"), 200)
+            delivery.append({"id": p["id"], "label": p["label"], "text": p["text"], "status": st, "scene": sc_no, "note": note})
+            if st != "delivered":
+                cf.append({"kind": "concept-missing" if st == "missing" else "concept-flattened", "scene": sc_no,
+                           "note": f"The concept's {p['label'].lower()} (\u201c{_clip(p['text'], 90)}\u201d) is {st} in the script" + (f": {note}" if note else ".")})
+        if len(delivery) < len(promises_in):
+            notes.append(f"The review answered for {len(delivery)} of the concept's {len(promises_in)} promises; the rest are not judged.")
+        findings = cf + findings
     groups: dict[str, list[int]] = {}
     for sc in out:
         groups.setdefault(sc["beat"], []).append(sc["no"])
@@ -182,8 +240,13 @@ def validate(raw: dict, rows, roles=None) -> dict:
         if len(members) > 1:
             findings.append({"kind": "one-beat", "scene": members[1], "note": f"Scenes {', '.join(str(m) for m in members)} are ONE beat shown at more than one scale; the first holds the beat and the "
                                                                               f"{'others are its closer ' + ('views' if len(members) > 2 else 'view')} (no extra angles on them)."})
-    return {"summary": _clip(raw.get("summary"), 400), "time_passing": bool(raw.get("time_passing")), "hero_object": hero, "turn_scene": turn if turn in nos else None,
-            "carrier_scene": carrier if carrier in nos else None, "scenes": out, "transitions": transitions, "findings": findings, "notes": notes, "engagement": {"risk": eng["risk"]}}
+    total = len(eng["findings"]) + len(cf)
+    risk = "high" if total >= 3 else ("medium" if total else "low")
+    res = {"summary": _clip(raw.get("summary"), 400), "time_passing": bool(raw.get("time_passing")), "hero_object": hero, "turn_scene": turn if turn in nos else None,
+           "carrier_scene": carrier if carrier in nos else None, "scenes": out, "transitions": transitions, "findings": findings, "notes": notes, "engagement": {"risk": risk}}
+    if promises_in:
+        res["concept_delivery"] = delivery
+    return res
 
 
 SAME_PLACE_RUN = 4        # this many neighbouring scenes in one place reads as one long scene
@@ -253,6 +316,20 @@ def no_coverage(beat_map) -> dict:
     return out
 
 
+def sequences(beat_map) -> dict:
+    """{scene number: [the actions, in order]} for scenes the director read as a RUN of different quick actions (a ritual, "quick cuts"). A montage is never one (time passing by repetition
+    shows variation, not more actions), so this is empty for it. Used by the shot planner (FILM_CONSOLIDATED_PLAN.md C7): such a scene's extra shots ARE the run."""
+    out: dict[int, list] = {}
+    if not isinstance(beat_map, dict):
+        return out
+    for sc in beat_map.get("scenes") if isinstance(beat_map.get("scenes"), list) else []:
+        if isinstance(sc, dict) and sc.get("sequence") and sc.get("time_mode") != "montage" and _int(sc.get("no"), -1) >= 0:
+            acts = [str(a) for a in (sc.get("actions") if isinstance(sc.get("actions"), list) else []) if str(a or "").strip()]
+            if len(acts) >= 2:
+                out[_int(sc.get("no"), -1)] = acts[:4]
+    return out
+
+
 def read_text(beat_map, scene: int | None = None) -> str:
     """The beat map as plain text for another prompt (shot proposer, flow review): one line per scene, this scene marked. '' when there is no map."""
     if not isinstance(beat_map, dict) or not isinstance(beat_map.get("scenes"), list) or not beat_map["scenes"]:
@@ -271,6 +348,8 @@ def read_text(beat_map, scene: int | None = None) -> str:
             bits.append("THE TURN")
         if n == beat_map.get("carrier_scene"):
             bits.append("THE MESSAGE CARRIER")
+        if sc.get("sequence") and isinstance(sc.get("actions"), list) and sc["actions"] and sc.get("time_mode") != "montage":
+            bits.append("A RUN OF QUICK ACTIONS: " + "; ".join(str(a) for a in sc["actions"][:4]))
         lines.append(f"  Scene {n} ({', '.join(bits)}): {_clip(sc.get('purpose'), 110)}" + ("  <== THIS SCENE" if scene is not None and n == scene else ""))
     head = "THE DIRECTOR'S READ OF THE FILM (given; do not redo it)" + (f": {_clip(beat_map.get('summary'), 220)}" if beat_map.get("summary") else "")
     return head + "\n" + "\n".join(lines)

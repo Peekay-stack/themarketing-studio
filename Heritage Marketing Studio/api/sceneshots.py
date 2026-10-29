@@ -66,7 +66,7 @@ PACE_TABLE = {
              "feel": "energetic and quick: more cuts, shorter holds"},
 }
 # The opening (hook) and the turn may be covered even in a short scene: a reveal there is worth the cut.
-EXEMPT_ROLES = ("hook", "turn")
+EXEMPT_ROLES = ("hook", "turn", "sequence")      # a scene that IS a run of quick actions needs its shots whatever its length
 _CALM_WORDS = ("tender", "calm", "unhurried", "gentle", "intimate", "quiet", "slow", "emotional", "heartfelt", "nostalgic", "reflective",
                "poignant", "serene", "contemplative", "measured", "patient")
 _FAST_WORDS = ("energetic", "energy", "fast", "punchy", "playful", "quick", "dynamic", "bold", "vibrant", "upbeat", "youthful", "high-energy",
@@ -146,7 +146,7 @@ def outline_text(outline, this_index=None) -> str:
 def build_prompt(*, row: dict, secs: int, n_extras: int, pace: str = "standard", role: str = "", logline: str = "", message: str = "",
                  tone: str = "", outline=None, scene_index=None, characters: str = "", location_line: str = "", wardrobe: str = "",
                  camera_notes: str = "", look_note: str = "", plate_locked: bool = False, pack_in_scene: bool = False,
-                 prev_visual: str = "", next_visual: str = "", signoff: bool = False, beat_note: str = "") -> str:
+                 prev_visual: str = "", next_visual: str = "", signoff: bool = False, beat_note: str = "", sequence_actions=None) -> str:
     master = videoprompt.visual_text([row]) or _clip(row.get("visual"), 300)
     cam = _clip(row.get("camera"), 120)
     size = str(row.get("shot_size") or "").strip().lower()
@@ -178,6 +178,11 @@ def build_prompt(*, row: dict, secs: int, n_extras: int, pace: str = "standard",
         "and must never hide, redraw or crowd it. Make the LAST extra shot size `product`, locked-off, the pack square to the camera and "
         "nothing moving in front of it.\n" if signoff else "")
     jobs = "; ".join(f"`{j}` = {JOB_MEANING[j]}" for j in JOBS)
+    acts = [a for a in (sequence_actions or []) if str(a or "").strip()]
+    seq_rule = ("\nTHIS SCENE IS A RUN OF DIFFERENT QUICK ACTIONS, in this order: " + "; ".join(f"{i}. {_clip(a, 70)}" for i, a in enumerate(acts, 1)) + ". "
+                "The film's own idea is that these happen one after another, cut quickly, so extra shots are the point here, and an empty list is the WRONG answer unless the master already shows every one "
+                "of them. The master shows the first action. Give each LATER action its own extra shot, in order, one action per shot, job `insert` or `reveal`: a DIFFERENT action (a different verb "
+                "and object), never the same action from a new angle. Each shot is 2 or 3 seconds, the same person and place as the master, and every rule below still applies.\n") if acts else ""
     film = []
     if logline:
         film.append(f"THE FILM: {_clip(logline, 300)}")
@@ -196,11 +201,12 @@ def build_prompt(*, row: dict, secs: int, n_extras: int, pace: str = "standard",
         + f"\nTHE SCENE ({secs} seconds in total). Shot 1, the master, is already fixed and is NOT yours to change:\n"
         f"  Master shot: {_clip(master, 400)}"
         + (f"\n  Master camera: {cam}" if cam else "") + (f"\n  Master size: {size}" if size else "")
-        + (f"\n  This scene's job in the film: {role}" if role else "") + "\n"
+        + (f"\n  This scene's job in the film: {role}" if role and role != "sequence" else "") + "\n"
         + (f"  Spoken over this scene (for rhythm only; never put words in a shot): \"{spoken}\"\n" if spoken else "")
         + ("\n".join(ctx) + "\n" if ctx else "")
         + ("NEIGHBOURING SCENES (do not repeat their pictures): " + "; ".join(near) + "\n" if near else "")
         + signoff_rule
+        + seq_rule
         + "\nFIRST DECIDE WHETHER THIS SCENE NEEDS ANY EXTRA SHOT. Add a shot ONLY if all three are true:\n"
         f"  A. JOB: it does one of these jobs the master cannot: {jobs}.\n"
         "  B. NEW INFORMATION: it shows something neither the master nor the scenes around it show (a face, a hand, an object, a place, a change). "

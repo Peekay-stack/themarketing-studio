@@ -16145,13 +16145,23 @@ class Component extends DCLogic {
     return out;
   }
   noCoverReason(idx){ const row = (this.state.fullScript || [])[idx]; return row ? (this.noCoverage()[this.sceneNoInt(row, idx)] || '') : ''; }
+  // The actions of a scene the director read as a RUN of different quick actions (a ritual, "quick cuts"), or null (FILM_CONSOLIDATED_PLAN.md C6/C7). Such a scene is covered by one shot per action; the
+  // server's planner does it, whatever the scene's length and the film's pace minimum. A montage is never one.
+  sequenceOf(idx){
+    const bm = this.state.videoBeatMap, row = (this.state.fullScript || [])[idx];
+    if (!bm || !Array.isArray(bm.scenes) || !row) return null;
+    const sc = bm.scenes.find(x => x && x.no === this.sceneNoInt(row, idx));
+    return (sc && sc.sequence && sc.time_mode !== 'montage' && Array.isArray(sc.actions) && sc.actions.length > 1) ? sc.actions : null;
+  }
   runBeatMap = async () => {
     const s = this.state, rows = s.fullScript || [];
     if (!rows.length || s.beatMapBusy) return;
     this.setState({ beatMapBusy:true });
     const vc = s.videoConcept;
     const body = { scenes:rows, seconds:rows.map(r => this.sceneSecs(r)), logline: vc ? (vc.logline || '') : '', message:(vc && vc.proposition) || s.videoObjective || '', tone:this.paceText().slice(0, 300),
-      characters:s.videoCharacters || '', hero:this.packAvailable() ? 'the product pack' : '', brand_mode:s.producerBrandMode, ...this.videoExtra() };
+      characters:s.videoCharacters || '', hero:this.packAvailable() ? 'the product pack' : '', brand_mode:s.producerBrandMode, ...this.videoExtra(),
+      // What the concept promised, so the read can say what the script kept (FILM_CONSOLIDATED_PLAN.md C6). Sent as it is; the server builds the list of promises and ignores anything that is not an object.
+      ...(vc ? { concept:{ hook:vc.hook, surprise:vc.surprise, turn:vc.turn, memorable:vc.memorable, stake:vc.stake, scenes:vc.scenes } } : {}) };
     const r = await this.apiCall('/film-direct', body);
     const d = (r && r.data) || {};
     if (!r || !r.ok) { this.setState({ beatMapBusy:false }); this.showToast(d.detail || 'Couldn’t read the film — try again.'); return; }
@@ -16196,11 +16206,16 @@ class Component extends DCLogic {
     const btn = (text, onClick, disabled) => h('button', { onClick, disabled:!!disabled, style:{ border:'1px solid #C9CEDA', background:'#fff', color:'#17325E', borderRadius:8, padding:'4px 11px', fontSize:12, fontWeight:700, cursor:disabled ? 'default' : 'pointer', opacity:disabled ? 0.55 : 1 } }, text);
     const row = (label, body, action) => h('div', { style:{ display:'flex', alignItems:'baseline', gap:10, flexWrap:'wrap', padding:'5px 0', borderTop:'1px solid #ECE8DE' } },
       h('span', { style:{ width:128, flex:'none', fontSize:12, fontWeight:800, color:'#17325E' } }, label), h('span', { style:{ flex:1, minWidth:200, fontSize:12.5, lineHeight:1.5, color:'#41505F' } }, body), action || null);
-    const risk = bm && bm.engagement && bm.engagement.risk, first = (bm && bm.engagement && bm.engagement.findings || [])[0];
+    // The server's read carries its findings at the top level (engagement holds only the risk), so look there when engagement has none. Until now this panel showed no finding for a real read.
+    const fl = (bm && bm.engagement && bm.engagement.findings) || (bm && bm.findings) || [];
+    const risk = bm && bm.engagement && bm.engagement.risk, first = fl[0];
+    const cd = (bm && Array.isArray(bm.concept_delivery)) ? bm.concept_delivery : [], cdKept = cd.filter(x => x.status === 'delivered').length;
+    const seqs = rows.map((r, i) => ({ i, no:this.sceneNoInt(r, i), acts:this.sequenceOf(i) })).filter(x => x.acts && !this.activeShots(rows[x.i]).length);
     const riskColor = risk === 'high' ? '#C0392B' : (risk === 'medium' ? '#B07A12' : '#1A8A7A');
     const directors = !bm ? 'Not read yet. It says what each scene is for, where the film turns, and whether it risks being boring.'
       : [h('b', { key:'r', style:{ color:riskColor } }, 'Boredom risk: ' + (risk || 'unknown')), (!bmFresh ? ' · the script has changed since this read' : ''),
-         (first && first.note) ? (' — ' + first.note) : '', ((bm.engagement && bm.engagement.findings || []).length > 1) ? ' (+' + ((bm.engagement.findings || []).length - 1) + ' more in the Director’s read below)' : ''];
+         (first && first.note) ? (' — ' + first.note) : '', (fl.length > 1) ? ' (+' + (fl.length - 1) + ' more in the Director’s read below)' : '',
+         cd.length ? h('div', { key:'cd', style:{ marginTop:2, color:cdKept < cd.length ? '#B07A12' : '#1A8A7A', fontWeight:700 } }, 'The concept’s promises kept: ' + cdKept + ' of ' + cd.length + (cdKept < cd.length ? ' (the rest are listed in the Director’s read below).' : '.')) : null];
     const flow = !fr ? 'Not run yet. An editor’s pass: would a viewer stay, and which extra angles earn their place.'
       : [h('b', { key:'f', style:{ color:(fr.engagement && fr.engagement.risk === 'high') ? '#C0392B' : '#B07A12' } }, 'Would a viewer stay? ' + ((fr.engagement && fr.engagement.risk) ? '(' + fr.engagement.risk + ' risk)' : '')), (!frFresh ? ' · the script has changed since this review' : ''),
          (fr.engagement && fr.engagement.why) ? (' — ' + String(fr.engagement.why).slice(0, 240)) : ''];
@@ -16209,7 +16224,8 @@ class Component extends DCLogic {
         h('span', { style:{ fontSize:11, fontWeight:800, letterSpacing:'0.06em', textTransform:'uppercase', color:'#6B7280' } }, 'Before you approve'),
         h('span', { style:{ fontSize:12, color:'#6B7280' } }, 'Optional. Judge how the film will play while it is still words: nothing is drawn or paid for yet.')),
       row('Director’s read', directors, btn(s.beatMapBusy ? 'Reading…' : (bm ? '↻ Read again' : 'Read the film'), this.runBeatMap, s.beatMapBusy)),
-      row('Shot plan', planned ? (planned + ' of ' + rows.length + ' scenes have extra camera angles planned.') : 'No extra camera angles planned. A scene reads best as one shot unless an angle has a job; use Break into shots on a scene card below. Angles planned now cost nothing until frames are drawn.', null),
+      row('Shot plan', [planned ? (planned + ' of ' + rows.length + ' scenes have extra camera angles planned.') : 'No extra camera angles planned. A scene reads best as one shot unless an angle has a job; use Break into shots on a scene card below. Angles planned now cost nothing until frames are drawn.',
+        ...seqs.map(x => h('div', { key:'sq' + x.no, style:{ marginTop:2, color:'#B07A12', fontWeight:700 } }, 'Scene ' + x.no + ' is a run of quick actions (' + x.acts.join(' · ') + '): one shot would flatten it. Break into shots plans one shot per action.'))], null),
       row('Flow review', flow, btn(s.filmReviewBusy ? 'Reviewing…' : (fr ? '↻ Review again' : 'Review the flow'), this.runFlowReview, s.filmReviewBusy)),
       row('Delivery', dc.wordless ? 'A wordless film by design: speech is not checked.' : (dc.items.length
         ? h('div', null, ...dc.items.map((it, i) => h('div', { key:'dc' + i, style:{ color:it.soft ? '#6B7280' : '#B07A12', fontWeight:it.soft ? 400 : 700 } }, '• ' + it.note)))
@@ -16236,6 +16252,8 @@ class Component extends DCLogic {
       head(runBtn, btn('Dismiss', this.dismissBeatMap)),
       stale ? line('The script changed since this read — read it again for a current one.', '#B07A12', { fontWeight:700 }) : null,
       bm.summary ? line(bm.summary, '#17325E', { fontWeight:600, fontSize:12.5 }) : null,
+      (Array.isArray(bm.concept_delivery) && bm.concept_delivery.length) ? line('The concept’s promises kept: ' + bm.concept_delivery.filter(x => x.status === 'delivered').length + ' of ' + bm.concept_delivery.length
+        + (bm.concept_delivery.some(x => x.status !== 'delivered') ? ' — what was flattened or left out is listed below, first.' : '.'), bm.concept_delivery.some(x => x.status !== 'delivered') ? '#B07A12' : '#1A8A7A', { fontWeight:700 }) : null,
       (bm.engagement && bm.engagement.risk && bm.engagement.risk !== 'low') ? line('Boredom risk: ' + bm.engagement.risk + ' \u2014 see the points below that start with the film\u2019s opening, its places and its energy.', bm.engagement.risk === 'high' ? '#C0392B' : '#B07A12', { fontWeight:800 }) : null,
       h('div', { style:{ marginTop:6, display:'flex', flexDirection:'column', gap:3 } }, ...(bm.scenes || []).map((sc, i) => h('div', { key:'bs' + i, style:{ display:'flex', gap:8, alignItems:'baseline', fontSize:11.5, lineHeight:1.45, color:'#38414F' } },
         h('span', { style:{ fontWeight:800, color:'#17325E', minWidth:52 } }, 'Scene ' + sc.no),
@@ -16245,7 +16263,8 @@ class Component extends DCLogic {
         h('span', { style:{ flex:1 } }, sc.purpose, sc.place ? h('i', { style:{ color:'#9AA1AD', marginLeft:6 } }, '\u00b7 ' + sc.place) : null,
           sc.no === bm.turn_scene ? h('b', { style:{ color:'#C8860F', marginLeft:6 } }, 'THE TURN') : null,
           sc.no === bm.carrier_scene ? h('b', { style:{ color:'#259821', marginLeft:6 } }, 'THE MESSAGE') : null,
-          nc[sc.no] ? h('i', { style:{ color:'#6B7280', marginLeft:6 } }, '· no extra angles') : null)))),
+          nc[sc.no] ? h('i', { style:{ color:'#6B7280', marginLeft:6 } }, '· no extra angles') : null,
+          (sc.sequence && Array.isArray(sc.actions) && sc.actions.length > 1 && sc.time_mode !== 'montage') ? h('i', { style:{ color:'#B07A12', marginLeft:6 } }, '· a run of quick actions: ' + sc.actions.join(' · ')) : null)))),
       ...((bm.findings || []).map((f, i) => line('• ' + f.note, '#B07A12', { fontWeight:700 }, 'bf' + i))),
       bm.time_passing ? line('The story is about time passing by repetition: show it as different days (light, clothes, what has changed), not as more angles on one moment.', '#41505F') : null,
       ...((bm.notes || []).map((n, i) => line(n, '#6B7280', {}, 'bn' + i))));
@@ -16999,7 +17018,9 @@ class Component extends DCLogic {
       if (!can.ok) return can.why ? h('div', { style:{ marginTop:8, fontSize:11, color:'#9AA1AD' } }, 'Coverage: ' + can.why) : null;
       const declined = (s.shotsDeclined || {})[key];
       return wrap(h('div', { style:{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' } }, label('Coverage'),
-        h('span', { style:{ fontSize:11.5, color:'#6B7280' } }, 'One shot today. Cut between camera angles?'),
+        h('span', { style:{ fontSize:11.5, color:this.sequenceOf(idx) ? '#B07A12' : '#6B7280', fontWeight:this.sequenceOf(idx) ? 700 : 400 } }, this.sequenceOf(idx)
+          ? 'One shot today, but the director reads this scene as a run of quick actions (' + this.sequenceOf(idx).join(' · ') + '). Break into shots plans one shot per action.'
+          : 'One shot today. Cut between camera angles?'),
         btn(busy ? 'Proposing…' : '＋ Break into shots', this.breakIntoShots(idx), false, busy || !!s.shotsBusy)),
         declined ? h('div', { style:{ fontSize:11.5, lineHeight:1.45, color:'#41505F', fontStyle:'italic', marginTop:4 } }, 'The shot planner kept this as one shot: ' + declined) : null);
     }

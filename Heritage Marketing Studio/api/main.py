@@ -2964,6 +2964,10 @@ def scene_shots(payload: dict):
     # The turn the director found may be covered even in a short scene (framework section 6), the same exemption the flow review gives it.
     if beat_map and scene_n is not None and scene_n == beat_map.get("turn_scene") and role not in ("hook", "turn"):
         role = "turn"
+    # A scene the director read as a RUN of different quick actions is covered by those actions (its shots are the point), whatever its length and the film's pace minimum.
+    seq_actions = filmdirect.sequences(beat_map).get(scene_n) if (beat_map and scene_n is not None) else None
+    if seq_actions and role not in ("hook", "turn"):
+        role = "sequence"
     if hold:
         return {"shots": [], "master_secs": secs, "notes": [], "scene_seconds": secs, "pace": pace, "budget": 0, "needs_coverage": False,
                 "why": hold[:1].upper() + hold[1:] + ".", "reason": "No extra angles: " + hold + "."}
@@ -2995,7 +2999,7 @@ def scene_shots(payload: dict):
         camera_notes=str(payload.get("camera_notes") or ""), look_note=str(payload.get("look_note") or ""),
         plate_locked=bool(payload.get("plate_locked")), pack_in_scene=pack_in,
         prev_visual=str(payload.get("prev_visual") or ""), next_visual=str(payload.get("next_visual") or ""), signoff=signoff,
-        beat_note=filmdirect.read_text(beat_map, scene_n))
+        beat_note=filmdirect.read_text(beat_map, scene_n), sequence_actions=seq_actions)
     flags = {k: payload[k] for k in ("house_id", "execution", "brand_mode", "provocation_id", "use_provocation", "use_house",
                                      "use_platform", "use_plan", "skip_mandatories", "force_typed") if k in payload}
     r = complete_endpoint({**flags, "messages": [{"role": "user", "content": prompt}], "film": True})
@@ -3070,7 +3074,8 @@ def film_direct(payload: dict):
     secs = _seconds_for(rows, payload)
     roles = _scene_roles(rows, secs)
     prompt = filmdirect.build_prompt(rows=rows, seconds=secs, logline=str(payload.get("logline") or ""), message=str(payload.get("message") or ""), tone=str(payload.get("tone") or ""),
-                                     characters=str(payload.get("characters") or ""), hero=str(payload.get("hero") or ""), roles=roles)
+                                     characters=str(payload.get("characters") or ""), hero=str(payload.get("hero") or ""), roles=roles,
+                                     concept=payload.get("concept") if isinstance(payload.get("concept"), dict) else None)
     flags = {k: payload[k] for k in ("house_id", "execution", "brand_mode", "provocation_id", "use_provocation", "use_house",
                                      "use_platform", "use_plan", "skip_mandatories", "force_typed") if k in payload}
     r = complete_endpoint({**flags, "messages": [{"role": "user", "content": prompt}], "film": True})
@@ -3079,7 +3084,7 @@ def film_direct(payload: dict):
     raw = filmdirect.parse(r.get("completion") if isinstance(r, dict) else "")
     if raw is None:
         return JSONResponse(status_code=502, content={"detail": "The director's read could not be understood. Try again."})
-    out = filmdirect.validate(raw, rows, roles)
+    out = filmdirect.validate(raw, rows, roles, filmdirect.promises(payload.get("concept")) or None)
     out["model"] = True
     return out
 
