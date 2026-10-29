@@ -16230,7 +16230,7 @@ class Component extends DCLogic {
       row('Delivery', dc.wordless ? 'A wordless film by design: speech is not checked.' : (dc.items.length
         ? h('div', null, ...dc.items.map((it, i) => h('div', { key:'dc' + i, style:{ color:it.soft ? '#6B7280' : '#B07A12', fontWeight:it.soft ? 400 : 700 } }, '• ' + it.note)))
         : 'Nothing flagged: ' + dc.words + ' spoken words (budget about ' + dc.budget + ') and the sign-off speaks.'), null),
-      h('div', { style:{ fontSize:11, color:'#9AA1AD', marginTop:4 } }, 'Each read is one model call; the Delivery row is free and updates as you edit. Approving is never blocked by what they find.'));
+      h('div', { style:{ fontSize:11, color:'#9AA1AD', marginTop:4 } }, 'Each read is one model call; the Delivery row is free and updates as you edit. Approving is never blocked by what they find; it asks once when they found something serious.'));
   }
   beatMapPanel(){
     const h = React.createElement, s = this.state, bm = s.videoBeatMap, rows = s.fullScript || [];
@@ -16692,8 +16692,25 @@ class Component extends DCLogic {
     return out;
   }
 
+  // What the checks found about the script, for the one confirm on Approve (FILM_CONSOLIDATED_PLAN.md C8): the director's read when it is high risk or found a concept promise flattened or left out, the
+  // flow review at high risk, and the free Delivery checks (a thin or silent script). Only a read that matches the script as it is NOW counts. The person can always approve: this only asks once.
+  approvalConcerns(){
+    const s = this.state, out = [], bm = s.videoBeatMap, fr = s.filmReview;
+    if (bm && bm.sig === this.beatSig()) {
+      const fl = (bm.engagement && bm.engagement.findings) || bm.findings || [], concept = fl.filter(f => /^concept-/.test((f && f.kind) || ''));
+      if (bm.engagement && bm.engagement.risk === 'high') out.push('The director’s read says the film risks being boring (high risk).');
+      concept.slice(0, 3).forEach(f => out.push(f.note));
+      if (concept.length > 3) out.push('…and ' + (concept.length - 3) + ' more of the concept’s promises left out or flattened.');
+    }
+    if (fr && fr.sig === this.flowReviewSig() && fr.engagement && fr.engagement.risk === 'high') out.push('The flow review says a viewer would probably leave (high risk).');
+    this.deliveryChecks().items.filter(x => !x.soft).forEach(x => out.push(x.note));
+    return out;
+  }
   approveScript = () => {
     if (!this.state.fullScript) return;
+    const concerns = this.approvalConcerns();
+    if (concerns.length && typeof window !== 'undefined' && window.confirm
+        && !window.confirm('Before you approve, the checks found:\n\n' + concerns.map(c => '• ' + c).join('\n') + '\n\nApprove the script anyway? Cancel to change it first.')) return;
     this.loadStyleOptions();
     this.loadMusicStyles();
     this.loadEngines();

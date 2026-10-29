@@ -73,8 +73,10 @@
     // editing the script updates the row and approving removes the panel
     I.setState({ fullScript: thin, videoConcept: { logline: 'x', proposition: 'y', vo: conceptVo, scenes: [] } }); await wait(500);
     check('back to the thin script the finding returns', /Only 13 spoken words/.test(delivery()), delivery());
-    I.approveScript(); await wait(700);
-    check('approving works with findings showing and the panel goes away', I.state.scriptStatus === 'approved' && !/BEFORE YOU APPROVE/i.test(txt()));
+    // Phase 4: findings showing make Approve ask once; here the person answers yes (the confirm itself is checked in film_approve_confirm.js).
+    const realConfirm = window.confirm, asked = []; window.confirm = (m) => { asked.push(String(m)); return true; };
+    I.approveScript(); await wait(700); window.confirm = realConfirm;
+    check('approving works with findings showing (after one confirm that names them) and the panel goes away', I.state.scriptStatus === 'approved' && !/BEFORE YOU APPROVE/i.test(txt()) && asked.length === 1 && /Only 13 spoken words/.test(asked[0]), asked.join('|'));
     I.setState({ scriptStatus: 'none', fullScript: null }); await wait(400);
     check('with no script there is no panel and the check returns nothing', !/BEFORE YOU APPROVE/i.test(txt()) && I.deliveryChecks().items.length === 0);
   } catch (e) {

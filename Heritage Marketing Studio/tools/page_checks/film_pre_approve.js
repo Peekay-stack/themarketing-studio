@@ -49,8 +49,11 @@
     check('when the script changes, both reads say they are out of date', (txt().match(/the script has changed since this read/g) || []).length === 1 && /the script has changed since this review/.test(txt()), (txt().match(/Boredom risk[^\n]*/) || [''])[0]);
 
     // approving removes the panel
-    I.approveScript(); await wait(700);
+    // Phase 4: a high-risk read that matches the script makes Approve ask once; here the person answers yes.
+    const realConfirm = window.confirm, asked = []; window.confirm = (m) => { asked.push(String(m)); return true; };
+    I.approveScript(); await wait(700); window.confirm = realConfirm;
     check('approving works with the reads open, and the panel goes away', I.state.scriptStatus === 'approved' && !/BEFORE YOU APPROVE/i.test(txt()));
+    check('the confirm was asked once, and only about the free Delivery row (this script has no speech): the two reads were out of date by then so they are not quoted', asked.length === 1 && /Only 0 spoken words/.test(asked[0]) && !/director.s read says/.test(asked[0]) && !/flow review says/.test(asked[0]), asked.join('|'));
     // no script: nothing
     I.setState({ scriptStatus: 'none', fullScript: null }); await wait(400);
     check('with no script there is no panel', !/BEFORE YOU APPROVE/i.test(txt()));
