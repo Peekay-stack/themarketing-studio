@@ -54,4 +54,20 @@ Source: the owner ran the whole Film flow on localhost on branch `coverage` (hea
 
 Open owner decisions: go-ahead on the order; OK for the 2-3 vision calls; whether B3 / B4 also apply to the provocation writer (recommended: no, for now).
 
+## 5. Build status (29 Oct): batch 1 built on branch `coverage-fixes` (commit `c0b06ac`, off `coverage` at `a503b13`; NOT merged, NOT live)
+The owner is running a second, wider localhost test on `coverage`, so the fixes that do not depend on a model's output on one run were built in a separate worktree/branch and the owner merges them when they choose.
+| # | Status | What it does now |
+|---|---|---|
+| A1 | Built | "Re-render out-of-date (n)" redraws only the stale frames (a scene's own frame first; its extra angles join when their match changes). Storyboard, Shoot Board and Shots step. |
+| A2 | Built | Banner: "n of N frames are out of date". |
+| A3 | Built | The banner lists WHY with counts ("a department note (4) · the look (2)"); each card says why in words; a frame drawn before this existed says "something changed". Implemented as a per-kind fingerprint (`parts`) stored on each frame and kept by `takes.py`. |
+| A4 | Built | One confirm the first time frames are drawn with all four crew notes empty (wording differs before/after script approval); a confirm naming the count before drafting DoP/lighting/props/wardrobe when frames exist. |
+| A5 | Built (prompt only) | The concept prompt requires each moment to be filmable by one camera in one shot of one place. **Not yet checked with a real model call.** |
+| A6 | Built | The shot planner's reason for keeping a scene as one shot stays on the card. |
+| A7 | Built (trigger traced) | `approveScript` -> `loadVoicePlan` (also entering the Shoot Board / Production when no plan exists, and any voice change) overwrote each scene's timecode with the voice plan's. A dismissible note now lists scenes whose length changed. |
+| A8 | Built | Verified wrong ("Live action" is a different tab); the hint now points at the "✦ Lock location and cast" button in the Scripting step. |
+| B1-B4 | **Waiting for the second test** | Prompt rules and the motion check should be set from defects that repeat, not from one film. |
+
+Checks: 32 new page checks (`tools/page_checks/film_stale_frames.js`) + the 9 earlier suites on the same build (all pass), 3 new takes tests, the Python suites, selfcheck 1498/0, golden prompts 75 unchanged, smoke passed on the committed tree. Not verified: a real model call, a real signed-in session.
+
 Working-agreement reminders: plan + blast radius first even for "small" items (full sweep of backend + frontend + siblings); minimal diff; verify on the real page with the network stubbed, then ask the owner to click through; commit explicit files only; mirror memory.

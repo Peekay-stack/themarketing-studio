@@ -17,6 +17,9 @@ metadata:
 4. Things NOT yet verified that matter: A7's trigger (which click re-timed the scenes was not traced: read `loadVoicePlan` callers, `approveScript`, `setVideoStep`), and A8 (the "Lock location and cast in Live action first" wording).
 5. The owner is mid-test on localhost (their own `run-local.bat`, branch `coverage` checked out; do NOT switch branches; after any backend change they must restart the server). They may send more screenshots; the same plan applies (judge as an audience first).
 
+## UPDATE 29 Oct: batch 1 of the localhost fixes is built on branch `coverage-fixes` (worktree `C:\Users\punie\hms-fixes`, commit `c0b06ac`)
+A1-A4 (stale-frame banner + reason + re-render only stale + the two department nudges), A5 (concept prompt, unchecked on a real model), A6, A7, A8. Not merged, not live; the owner's localhost test stays on `coverage`. B1-B4 wait for their second test. See [[localhost-test-findings-28-oct]]. To use it: the owner checks out `coverage-fixes` (or merges it into `coverage`) and reloads; the only backend change is `takes.py` (restart the server).
+
 ## State in one paragraph
 **LIVE = master `b1519e6`**: the video engine switch (Omni) + the stitch freeze hotfix (a frozen join). **Everything else is on branch `coverage` (pushed, NOT merged, NOT live; owner rule: localhost first, merge only after their sign-off):** shot coverage + the five film-craft slices (27 Oct); the Film pipeline map; the **film builder** = a new Film step **Shots** (frame variants, clip takes, choose, assemble from chosen clips, Promote to Final, trim, reorder shots/scenes, picture-only preview, take QC, chain continuity, budget cap, x3 + compare, storage retention); and the **engagement levers**: a "Before you approve" panel and the concept routes' hook/surprise/turn/memorable fields. ~65 commits, +11k lines. Local server serves the working tree, so `coverage` must stay checked out.
 
