@@ -2896,6 +2896,9 @@
               {{ allFramesLabel }}
             </button>
           </div>
+          <!-- Out-of-date frames: how many, why, and one button for exactly those (built in staleFramesPanel). -->
+          {{ staleFramesPanel }}
+          {{ retimeNotePanel }}
           <!-- Director's read: what each scene is FOR (beat map). Built in beatMapPanel(). -->
           {{ beatMapPanel }}
           <!-- Flow review: the editor's pass over the whole cut (verdict + reason per extra shot). Built in flowReviewPanel(). -->
@@ -2951,6 +2954,9 @@
                     </span>
                   </div>
                   <div style="font-size:12px; line-height:1.5; color:#6B7280;">{{ sc.desc }}</div>
+                  <sc-if value="{{ sc.isStale }}" hint-placeholder-val="{{ false }}">
+                    <div style="margin-top:4px; font-size:11px; line-height:1.45; color:#B07A12; font-weight:700;">{{ sc.staleWhy }}</div>
+                  </sc-if>
                   <!-- Item 2 \u2014 match this scene's blocking/orientation to an earlier approved frame. -->
                   <sc-if value="{{ sc.hasSiblings }}" hint-placeholder-val="{{ false }}">
                     <select value="{{ sc.siblingValue }}" onChange="{{ sc.setSibling }}" style="width:100%; margin-top:7px; border:1px solid #DDD9D1; border-radius:8px; padding:5px 7px; font-size:11.5px; color:#41505F; background:#fff; font-family:inherit;">
@@ -3053,6 +3059,8 @@
           {{ allFramesLabel }}
         </button>
       </div>
+      {{ staleFramesPanel }}
+      {{ retimeNotePanel }}
       <div class="hf-scroll" style="display:grid; grid-auto-flow:column; grid-auto-columns:minmax(250px,1fr); gap:14px; margin-bottom:26px; overflow-x:auto; padding-bottom:6px; align-items:start;">
         <sc-for list="{{ videoScenes }}" as="sc" hint-placeholder-count="4">
           <div style="background:#fff; border:1px solid #DDD9D1; border-radius:12px; overflow:hidden; min-width:0;">
@@ -3085,6 +3093,9 @@
               </span>
             </div>
             <div style="padding:0 11px 8px; font-size:11.5px; line-height:1.5; color:#6B7280;">{{ sc.desc }}</div>
+            <sc-if value="{{ sc.isStale }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:0 11px 8px; font-size:11px; line-height:1.45; color:#B07A12; font-weight:700;">{{ sc.staleWhy }}</div>
+            </sc-if>
             {{ sc.shotStrip }}
             <!-- The spoken words live with the frame they play over: edit here and the scene's
                  length re-times immediately, so picture and sound can't drift apart. -->
@@ -12111,6 +12122,9 @@ class Component extends DCLogic {
     prodShotClips: null,           // the render's one-record-per-shot list ({no, shot, seconds, url, ok, ...}); coverage + the Edit room read it
     shotsBusy: '',                 // the scene (shotKey) a "Break into shots" call is running for
     shotsProposal: {},             // { [shotKey]: {shots, notes, master_secs} } -- proposals waiting for Accept; keyed by scene text so a reworked scene never shows a stale one
+    shotsDeclined: {},             // { [shotKey]: reason } -- why the shot planner kept a scene as ONE shot, shown on the scene card (same key as shotsProposal)
+    staleBusy: '',                 // "2 of 5" while "Re-render out-of-date" is running
+    retimeNote: '',                // what the spoken script just did to the scene lengths ("scene 6: 3 s → 6 s"), until dismissed
     // Importing a film into the Edit room — a remembered film (from /made) or one uploaded from a drive.
     // These have no generated script or silent stem behind them, so only the pixel ops apply.
     directFilm: null,              // { url, name, seconds } — the film loaded for direct (pixel-ops) editing
@@ -16780,8 +16794,10 @@ class Component extends DCLogic {
     const r = await this.apiCall('/scene-shots', body);
     const d = (r && r.data) || {};
     if (!r || !r.ok) { this.setState({ shotsBusy:'' }); this.showToast(d.detail || 'Couldn’t propose shots — try again.'); return; }
-    if (!(d.shots || []).length) { this.setState({ shotsBusy:'' }); this.showToast(d.reason || d.why || 'This scene reads best as one shot.', 'info'); return; }
-    this.setState(st => ({ shotsBusy:'', shotsProposal:{ ...(st.shotsProposal || {}), [key]:{ shots:d.shots, notes:d.notes || [], master_secs:d.master_secs, why:d.why || '' } } }));
+    // A decline keeps its reason on the scene card (it used to be a toast that vanished, leaving the card asking the same question again).
+    if (!(d.shots || []).length) { const why = d.reason || d.why || 'This scene reads best as one shot.'; this.setState(st => ({ shotsBusy:'', shotsDeclined:{ ...(st.shotsDeclined || {}), [key]:why } })); this.showToast(why, 'info'); return; }
+    this.setState(st => { const dec = { ...(st.shotsDeclined || {}) }; delete dec[key];
+      return { shotsBusy:'', shotsDeclined:dec, shotsProposal:{ ...(st.shotsProposal || {}), [key]:{ shots:d.shots, notes:d.notes || [], master_secs:d.master_secs, why:d.why || '' } } }; });
   };
   allowSignoffShots = (idx) => () => {
     this.setState(st => ({ fullScript:(st.fullScript || []).map((r, i) => i === idx ? { ...r, signoff_shots:true } : r) }));
@@ -16850,7 +16866,7 @@ class Component extends DCLogic {
     if (sh.shot_size === 'wide' && !s.videoPlateChoice) warns.push('Location is not locked — the room may differ from shot 1.');
     if (f.angleSame) warns.push(f.angleSame);
     if (f.packShape) warns.push('Check the pack: ' + f.packShape + '.');
-    if (stale) warns.push('Out of date — re-render this frame.');
+    if (stale) warns.push('Out of date — ' + this.staleWhyText(idx, f, k) + '. Re-render this frame.');
     this.checksOf(f).forEach(c => warns.push('Check — ' + c.label + ': ' + c.note));
     }
     const field = { border:'1px solid #DDD9D1', borderRadius:7, padding:'5px 7px', fontSize:11.5, color:'#38414F', background:'#fff', fontFamily:'inherit', boxSizing:'border-box' };
@@ -16934,9 +16950,11 @@ class Component extends DCLogic {
       if (!can.ok && can.allowable) return wrap(h('div', { style:{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' } }, label('Coverage'),
         h('span', { style:{ fontSize:11.5, color:'#6B7280' } }, can.why), btn('Allow shots on the sign-off', this.allowSignoffShots(idx), false)));
       if (!can.ok) return can.why ? h('div', { style:{ marginTop:8, fontSize:11, color:'#9AA1AD' } }, 'Coverage: ' + can.why) : null;
+      const declined = (s.shotsDeclined || {})[key];
       return wrap(h('div', { style:{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' } }, label('Coverage'),
         h('span', { style:{ fontSize:11.5, color:'#6B7280' } }, 'One shot today. Cut between camera angles?'),
-        btn(busy ? 'Proposing…' : '＋ Break into shots', this.breakIntoShots(idx), false, busy || !!s.shotsBusy)));
+        btn(busy ? 'Proposing…' : '＋ Break into shots', this.breakIntoShots(idx), false, busy || !!s.shotsBusy)),
+        declined ? h('div', { style:{ fontSize:11.5, lineHeight:1.45, color:'#41505F', fontStyle:'italic', marginTop:4 } }, 'The shot planner kept this as one shot: ' + declined) : null);
     }
     if (!ex.length && prop) {
       return wrap(
@@ -17078,6 +17096,11 @@ class Component extends DCLogic {
       .filter(s => s && /[A-Za-z]/.test(s));
     return this.clipText(kept.join(' '), 400);
   }
+  // The department notes as THIS scene's frame receives them: ["Lighting: ...", ...]. Shared by the frame request and by `frameParts`.
+  frameCrew(no){
+    return [['dop', 'Director of photography'], ['lighting', 'Lighting'], ['props', 'Props'], ['wardrobe', 'Wardrobe']]
+      .map(([id, label]) => { const t = this.frameNoteFor(id, no); return t ? label + ': ' + t : ''; }).filter(Boolean);
+  }
   // The request ONE frame sends (no seed -- the film's seed is set when it renders). Pure: reads state, changes nothing.
   frameBody(idx, k = 0){
     const s = this.state;
@@ -17092,8 +17115,7 @@ class Component extends DCLogic {
     // The place comes from the short Location line (or the cleaned, clipped note) -- the whole location plan is a
     // production document, not a description of what the camera sees.
     const locNote = this.locationText();
-    const crew = [['dop', 'Director of photography'], ['lighting', 'Lighting'], ['props', 'Props'], ['wardrobe', 'Wardrobe']]
-      .map(([id, label]) => { const t = this.frameNoteFor(id, no); return t ? label + ': ' + t : ''; }).filter(Boolean);
+    const crew = this.frameCrew(no);
     const prompt = [row.visual, row.camera ? 'Camera: ' + row.camera + '.' : '',
       locNote ? 'Location: ' + locNote : '',
       crew.length ? 'Supporting direction from the departments (the cast sheet and the locked image win wherever these disagree): ' + crew.join(' ') : '',
@@ -17175,6 +17197,110 @@ class Component extends DCLogic {
     for (let i = 0; i < t.length; i++) h = ((h * 33) ^ t.charCodeAt(i)) >>> 0;
     return h.toString(36) + ':' + t.length;
   }
+  // WHY a frame is out of date (29 Oct, from the owner's first localhost test: every frame went "out of date" after the department notes were written, with no
+  // reason shown and no way to re-render only those). A frame now also remembers a short fingerprint of each KIND of thing it was drawn from; comparing them with
+  // today's says what changed. The recipe above is one hash and cannot be taken apart, so a frame drawn before this existed can only say "something changed".
+  FRAME_PART_LABELS = { words:'the scene’s words or the extra direction', dept:'a department note (DoP, lighting, props or wardrobe)', loc:'the Location line', look:'the look',
+    cast:'the cast sheet or wardrobe lock', pack:'the pack tick', plate:'the location photo pick', mode:'the brand mode', match:'the shot it is matched to' };
+  FRAME_DEPT_IDS = ['dop', 'lighting', 'props', 'wardrobe'];     // the departments whose notes are folded into every frame (see DEPTS: "feeds the frames")
+  hashStr(t){ let h = 5381; for (let i = 0; i < t.length; i++) h = ((h * 33) ^ t.charCodeAt(i)) >>> 0; return h.toString(36); }
+  frameParts(idx, k = 0){
+    const fb = this.frameBody(idx, k);
+    if (!fb) return null;
+    const s = this.state, b = fb.body, baseRow = (s.fullScript || [])[idx], row = (k ? this.shotRow(baseRow, k) : baseRow) || {};
+    const no = Number(row.no != null ? row.no : idx + 1), prov = this.provMode() ? this.videoProv() : null;
+    const part = {
+      words:[row.visual, row.camera, row.frame_note, s.frameNote, b.shot_size || ''],
+      dept:this.frameCrew(no),
+      loc:[this.locationText()],
+      look:[b.look_note || '', b.style, b.camera_notes || '', b.ratio, prov ? [prov.id || '', ((prov.film || {}).visual_language || '')] : ''],
+      cast:[b.characters || '', b.use_cast, b.cast_id || '', b.wardrobe || ''],
+      pack:[b.include_pack === undefined ? null : b.include_pack, b.pack_id || ''],
+      plate:[b.use_plate, b.plate_id || ''],
+      mode:[b.brand_mode],
+      match:[fb.matchNo] };
+    const out = {};
+    Object.keys(part).forEach(n => { out[n] = this.hashStr(JSON.stringify(part[n])); });
+    return out;
+  }
+  // What changed for the frame at `idx`: a list of plain phrases, [] when the frame cannot say.
+  staleWhy(idx, f, k = 0){
+    if (!f || !f.parts) return [];
+    const now = this.frameParts(idx, k);
+    if (!now) return [];
+    return Object.keys(this.FRAME_PART_LABELS).filter(n => f.parts[n] !== undefined && now[n] !== f.parts[n]).map(n => this.FRAME_PART_LABELS[n]);
+  }
+  staleWhyText(idx, f, k = 0){ const w = this.staleWhy(idx, f, k); return w.length ? 'changed since it was drawn: ' + w.join(', ') : 'something it was drawn from has changed since'; }
+  // The rendered frames that are out of date, in film order (a scene's own frame before its extra angles, which are matched to it).
+  staleSlots(){
+    const fr = this.state.sceneFrames || {};
+    return this.frameSlots().map(x => ({ ...x, f:fr[x.key] })).filter(x => x.f && x.f.status === 'done' && this.frameIsStale(x.idx, x.f, x.k));
+  }
+  // Re-render ONLY the out-of-date frames (the other bulk button, "Generate all frames", redraws everything). Staleness is re-read before each frame: re-rendering a
+  // scene's own frame changes what its extra angles are matched to, so they join the list on their own, exactly as they do in "Generate all frames".
+  rerenderStale = async () => {
+    if (this.state.framesBatch) return;
+    const todo = this.staleSlots().length;
+    if (!todo) { this.showToast('No frames are out of date.', 'info'); return; }
+    if (!this.state.castRefUrl && !this.provNoPeople()) {
+      this.setState({ castGateHit:true });
+      this.showToast('Lock location and cast first ' + String.fromCharCode(8212) + ' every frame is generated from that one image.', 'warn');
+      return;
+    }
+    this.setState({ framesBatch:true, staleBusy:'1 of ' + todo });
+    const slots = this.frameSlots();
+    let n = 0, failed = 0;
+    for (let i = 0; i < slots.length; i++) {
+      const x = slots[i], f = (this.state.sceneFrames || {})[x.key];
+      if (!(f && f.status === 'done' && this.frameIsStale(x.idx, f, x.k))) continue;
+      n++;
+      this.setState({ staleBusy:n + ' of ' + Math.max(todo, n) });
+      await this.generateFrame(x.idx, x.k)();
+      const after = (this.state.sceneFrames || {})[x.key];
+      if (!after || after.status !== 'done') failed++;
+    }
+    this.setState({ framesBatch:false, staleBusy:'' });
+    this.showToast('Re-rendered ' + (n - failed) + ' frame' + (n - failed === 1 ? '' : 's') + (failed ? ' — ' + failed + ' did not come back, try those again' : ' — all frames are current') + '.', failed ? 'warn' : 'ok');
+  };
+  // The banner: how many frames are out of date, WHY, and one button for exactly those. Shown on the Storyboard, the Shoot Board and the Shots step.
+  staleFramesPanel(){
+    const h = React.createElement, s = this.state, st = this.staleSlots();
+    if (!st.length) return null;
+    const counts = {}; let unknown = 0;
+    st.forEach(x => { const w = this.staleWhy(x.idx, x.f, x.k); if (!w.length) unknown++; w.forEach(l => { counts[l] = (counts[l] || 0) + 1; }); });
+    const reasons = Object.keys(counts).map(l => l + ' (' + counts[l] + ')');
+    if (unknown) reasons.push('an earlier version of the script or the look (' + unknown + ')');
+    const busy = !!(s.staleBusy || s.framesBatch);
+    const btn = h('button', { onClick:this.rerenderStale, disabled:busy, style:{ border:'1px solid #259821', background:'#259821', color:'#fff', borderRadius:8, padding:'5px 12px', fontSize:12, fontWeight:700,
+      cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.6 : 1 } }, s.staleBusy ? 'Re-rendering ' + s.staleBusy + '…' : '↻ Re-render out-of-date (' + st.length + ')');
+    return h('div', { style:{ margin:'0 0 14px', padding:'10px 14px', border:'1px solid #F0D9A6', borderRadius:12, background:'#FFF9EC', maxWidth:900 } },
+      h('div', { style:{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' } },
+        h('span', { style:{ fontSize:12.5, fontWeight:800, color:'#8A5B0F' } }, '↻ ' + st.length + ' of ' + this.frameTotal() + ' frames are out of date'), h('span', { style:{ marginLeft:'auto' } }, btn)),
+      h('div', { style:{ fontSize:11.5, lineHeight:1.5, color:'#41505F', marginTop:4 } }, 'What changed after they were drawn: ' + reasons.join(' · ') + '.'),
+      counts[this.FRAME_PART_LABELS.dept] ? h('div', { style:{ fontSize:11.5, lineHeight:1.5, color:'#6B7280', marginTop:3 } },
+        'The DoP, lighting, props and wardrobe notes are part of every frame’s recipe, so a note written or edited after the frames are drawn redraws them. Write the notes first next time and each frame is drawn once.') : null);
+  }
+  // Scene lengths follow the spoken script. This says so (and by how much) instead of changing the cards silently.
+  retimeNotePanel(){
+    const h = React.createElement, note = this.state.retimeNote;
+    if (!note) return null;
+    return h('div', { style:{ margin:'0 0 14px', padding:'8px 14px', border:'1px solid #D6DEEC', borderRadius:12, background:'#F3F6FB', maxWidth:900, display:'flex', alignItems:'center', gap:10 } },
+      h('span', { style:{ fontSize:11.5, lineHeight:1.5, color:'#41505F', flex:1 } }, note),
+      h('span', { onClick:this.dismissRetimeNote, title:'Dismiss', style:{ cursor:'pointer', color:'#9AA1AD', fontSize:14, lineHeight:1 } }, '✕'));
+  }
+  dismissRetimeNote = () => { this.setState({ retimeNote:'' }); };
+  // The scene-length changes a new voice plan makes, as one sentence ('' when no scene changed length). `tcs` maps scene number -> new timecode.
+  retimeSummary(rows, tcs){
+    const ch = [];
+    (rows || []).forEach((r, i) => {
+      const tc = tcs[String(r.no != null ? r.no : i + 1)];
+      if (!tc || tc === r.tc) return;
+      const a = this.cutSecsOf(r), b = this.cutSecsOf({ tc });
+      if (a !== b) ch.push('scene ' + this.sceneNo(r, i) + ': ' + a + ' s → ' + b + ' s');
+    });
+    if (!ch.length) return '';
+    return 'The spoken script set the scene lengths — ' + ch.slice(0, 6).join(' · ') + (ch.length > 6 ? ' · and ' + (ch.length - 6) + ' more' : '') + '. Edit the words or a line’s timing on the Shoot Board to change them.';
+  }
   // Is the frame at `idx` out of date? Frames drawn with a recipe compare recipes; frames from before that compare the
   // scene's VISUAL and the look (the timecode and the spoken words no longer count — the picture is drawn from the visual).
   frameIsStale(idx, f, k = 0){
@@ -17230,7 +17356,7 @@ class Component extends DCLogic {
     // what it is later compared against cannot drift apart.
     const fb = this.frameBody(idx, k);
     const body = fb.body, lookRef = fb.lookRef;
-    const recipe = this.frameRecipe(idx, k);
+    const recipe = this.frameRecipe(idx, k), parts = this.frameParts(idx, k);
     // one fixed seed per film — every frame reuses it so the look stays consistent (a VARIANT passes its own seed, or it would repeat the same picture)
     let seed = this.state.videoSeed;
     if (!seed) { seed = Math.floor(Math.random()*900000) + 100000; this.setState({ videoSeed: seed }); }
@@ -17249,7 +17375,7 @@ class Component extends DCLogic {
     // Coverage: the server says when an extra angle came back as a near-copy of shot 1 (anglecheck.py). Only "same" is shown.
     const ac = res && res.angle_check;
     const angleSame = (k && ac && ac.verdict === 'same') ? String(ac.note || 'This looks the same as shot 1 \u2014 the angle did not change.') : '';
-    if (res && res.image_url) return { ok:true, provider:res.provider || '', entry:{ status:'done', url:res.image_url, provider:res.provider || '', sig, packMissing, packShape, angleSame, look:lookRef, recipe } };
+    if (res && res.image_url) return { ok:true, provider:res.provider || '', entry:{ status:'done', url:res.image_url, provider:res.provider || '', sig, packMissing, packShape, angleSame, look:lookRef, recipe, parts } };
     return { ok:false };
   };
   builderOf(b){ return b || { version:1, frames:{}, frame_chosen:{}, takes:{}, chosen:{}, trim:{}, budget:{ cap_usd:0, spent_usd:0 } }; }
@@ -18112,6 +18238,7 @@ class Component extends DCLogic {
         h('span', { style:{ fontSize:14, fontWeight:600, color:'#6B7280' } }, '\u00b7 ' + nWith + ' / ' + nShots + ' have a frame \u00b7 ' + nVariants + ' kept variant' + (nVariants === 1 ? '' : 's'))),
       h('div', { style:{ fontSize:13, color:'#6B7280', marginBottom:12, maxWidth:760 } }, 'Choose the frame each shot is animated from. Generate variants, check them (a model looks for pasted panels, wrong anatomy, extra people), and pick one. '
         + 'Frames are cheap and the video is not, so this is the place to get the picture right. The Storyboard in Scripting shows the same chosen frames.'),
+      this.staleFramesPanel(),
       this.clipHeader(),
       this.assembleStrip(),
       this.storageStrip(),
@@ -18129,6 +18256,12 @@ class Component extends DCLogic {
       this.showToast('Lock location and cast first ' + String.fromCharCode(8212) + ' every frame is generated from that one image.', 'warn');
       return;
     }
+    // The first time frames are drawn with all four crew notes still empty: those notes go into every frame, so writing them afterwards redraws everything.
+    if (!this.framesDoneCount() && this.FRAME_DEPT_IDS.every(d => !String((((this.state.shoot || {})[d]) || {}).text || '').trim())
+        && typeof window !== 'undefined' && window.confirm
+        && !window.confirm(this.state.scriptStatus === 'approved'
+          ? 'The DoP, lighting, props and wardrobe notes are still empty. They go into every frame, so writing them after the frames are drawn marks every frame out of date and means drawing them twice. Draw the frames now anyway? (Cancel to write the notes first, on the Shoot Board.)'
+          : 'These frames will not include the DoP, lighting, props and wardrobe notes — they are written on the Shoot Board, which opens when you approve the script. Writing them afterwards marks every frame out of date and means drawing them twice. Draw the frames now anyway? (Cancel to approve the script and write the notes first.)')) return;
     this.setState({ framesBatch:true });
     for (let i=0;i<rows.length;i++){
       await this.generateFrame(i)();
@@ -18248,6 +18381,10 @@ class Component extends DCLogic {
   }
   draftDept = (id) => async () => {
     if ((this.state.shoot[id]||{}).status==='drafting') return;
+    // These four notes are folded into every frame, so drafting one after frames exist marks them all out of date. Say so before it happens.
+    const nDrawn = this.FRAME_DEPT_IDS.indexOf(id) >= 0 ? this.framesDoneCount() : 0;
+    if (nDrawn && typeof window !== 'undefined' && window.confirm
+        && !window.confirm('The ' + this.DEPTS.find(d => d.id === id).label + ' plan is part of every frame’s recipe, so the ' + nDrawn + ' frame' + (nDrawn > 1 ? 's' : '') + ' already drawn will be marked out of date and need re-rendering (you can re-render only those afterwards). Draft it now?')) return;
     this.setState(s => ({ shoot:{ ...s.shoot, [id]:{ status:'drafting', text:'' } } }));
     const dept = this.DEPTS.find(d=>d.id===id);
     let text = null;
@@ -18531,7 +18668,7 @@ class Component extends DCLogic {
       // (see `bagVideoExec`/`createVideoExecution`).
       const vexec = this.videoExec();
       const noTrio = !vexec && !brief && !(stands && stands.text && !forceTyped);
-      const prompt = `${pre}\n\nCommunication objective: "${obj}".${ctx}${standsCtx}${typedCtx}${refine} Propose THREE genuinely different creative routes for a ${dur} film — not three phrasings of one idea. Each must take a distinct angle: for example a human story, a craft-or-proof route showing what makes this product what it is, and a lighter observational route; draw each from THIS brand’s own category, market and platform. Give each a short route name and a one-line reason it could work. The voiceover is performed as ONE continuous read across the whole film (it does not restart per shot), so write roughly ${words} words per route — about 2 words per second of ${dur} — as flowing connected sentences, never per-scene fragments. If the voiceover lands on the brand’s sign-off or tagline, it must read cleanly — never repeat a word the tagline already fixes, no word appearing twice in the sign-off. Each route must also say what makes it ENTERTAINING, not only clear, in four fields: "hook" — what the viewer sees in the first 3 seconds (an action or something unexpected, never a quiet establishing view); "surprise" — what the viewer does not expect; "turn" — the moment something visibly changes; "memorable" — ONE image or action a viewer would repeat to a friend. Each is ONE specific sentence about THIS route's own film (its people, objects and places), never a generic line such as "a surprising reveal" or "an emotional moment", and the four must differ from each other. Return ONLY JSON (no markdown): {"routes":[{"name":"short route name","rationale":"one line on why this works","logline": string, "duration": "${dur}", "hook": string, "surprise": string, "turn": string, "memorable": string, "vo": "the full ~${words}-word voiceover", "scenes": [{"t":"0\u20135s","title":string,"desc":string}, ... 4 concept beats]}, ...exactly 3 routes]}.`;
+      const prompt = `${pre}\n\nCommunication objective: "${obj}".${ctx}${standsCtx}${typedCtx}${refine} Propose THREE genuinely different creative routes for a ${dur} film — not three phrasings of one idea. Each must take a distinct angle: for example a human story, a craft-or-proof route showing what makes this product what it is, and a lighter observational route; draw each from THIS brand’s own category, market and platform. Give each a short route name and a one-line reason it could work. The voiceover is performed as ONE continuous read across the whole film (it does not restart per shot), so write roughly ${words} words per route — about 2 words per second of ${dur} — as flowing connected sentences, never per-scene fragments. If the voiceover lands on the brand’s sign-off or tagline, it must read cleanly — never repeat a word the tagline already fixes, no word appearing twice in the sign-off. Each route must also say what makes it ENTERTAINING, not only clear, in four fields: "hook" — what the viewer sees in the first 3 seconds (an action or something unexpected, never a quiet establishing view); "surprise" — what the viewer does not expect; "turn" — the moment something visibly changes; "memorable" — ONE image or action a viewer would repeat to a friend. Each is ONE specific sentence about THIS route's own film (its people, objects and places), never a generic line such as "a surprising reveal" or "an emotional moment", and the four must differ from each other. Each must also be something ONE camera can film in ONE continuous shot of ONE place — a visible action of people or objects in that frame — so never a split screen, a montage, an overlay, a before-and-after cut or on-screen text doing the work (the film is shot one frame per scene, and those cannot be). Return ONLY JSON (no markdown): {"routes":[{"name":"short route name","rationale":"one line on why this works","logline": string, "duration": "${dur}", "hook": string, "surprise": string, "turn": string, "memorable": string, "vo": "the full ~${words}-word voiceover", "scenes": [{"t":"0\u20135s","title":string,"desc":string}, ... 4 concept beats]}, ...exactly 3 routes]}.`;
       // 29 Sep (part 2): house_id — same fix as Social's generate/rework/adjust calls; see the bridge
       // script's own comment.
       const hv = this.state.house;
@@ -18870,7 +19007,9 @@ class Component extends DCLogic {
     // so copy the timecodes back — the script table and storyboard then show the real cut.
     const tcs = {};
     (d.timecodes || []).forEach(t => { if (t && t.tc) tcs[String(t.no)] = t.tc; });
-    this.setState(s2 => ({ voiceBusy:'', voicePlan:d, plannedSeconds: d.seconds || 0,
+    // Say so when this changes how long a scene is (approving the script is the usual first time: the script's own timings give way to the spoken script's).
+    const retimed = this.retimeSummary(this.state.fullScript, tcs);
+    this.setState(s2 => ({ voiceBusy:'', voicePlan:d, plannedSeconds: d.seconds || 0, ...(retimed ? { retimeNote:retimed } : {}),
       fullScript: (s2.fullScript || []).map((r, i) => {
         const tc = tcs[String(r.no != null ? r.no : i + 1)];
         return tc ? { ...r, tc } : r;
@@ -20667,7 +20806,7 @@ class Component extends DCLogic {
         frameNote: r.frame_note || '', editFrameNote: this.editFrameNote(i),
         lines, hasLines: lines.length > 0, isSilent: lines.length === 0, willBeSilent,
         addVo: this.addSceneLine(i, 'vo'), addLine: this.addSceneLine(i, 'dialogue'),
-        isStale: stale,
+        isStale: stale, staleWhy: stale ? 'Out of date — ' + this.staleWhyText(i, f) + '.' : '',
         frameImg: f.url ? React.createElement('img', { src:f.url, onClick:this.openLightbox(f.url), style:{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', cursor:'zoom-in' } }) : null };
     });
 
@@ -21591,8 +21730,8 @@ class Component extends DCLogic {
       // because something went wrong.
       castNeedsLock: !s.castRefUrl && !this.provNoPeople(),
       castNeedsLockText: s.castGateHit
-        ? 'Frames need a locked location and cast. Lock it in Live action above — every frame is generated from that one image, which is what keeps the setting and the faces the same across the film.'
-        : 'Lock location and cast in Live action first. Every frame is generated from that one image; without it each frame invents its own faces and setting.',
+        ? 'Frames need a locked location and cast. Press “✦ Lock location and cast” in the panel above (Scripting step) — every frame is generated from that one image, which is what keeps the setting and the faces the same across the film.'
+        : 'Lock location and cast first: press “✦ Lock location and cast” in the panel above. Every frame is generated from that one image; without it each frame invents its own faces and setting.',
       castNeedsLockFg: s.castGateHit ? '#C0392B' : '#8A6410',
       castNeedsLockBg: s.castGateHit ? '#FDF3F2' : '#FFF9EC',
       castNeedsLockLine: s.castGateHit ? '#F1C9C4' : '#F0DFB4',
@@ -21608,7 +21747,7 @@ class Component extends DCLogic {
       videoCharacters: s.videoCharacters, onVideoCharacters:this.onVideoCharacters,
       videoWardrobe: s.videoWardrobe || '', onVideoWardrobe: this.onVideoWardrobe,
       videoCamera: s.videoCamera || '', onVideoCamera: this.onVideoCamera, useSuggestedCamera: this.useSuggestedCamera,
-      paceBar: this.paceBar(), beatMapPanel: this.beatMapPanel(), preApprovePanel: this.preApprovePanel(), editorNotesPanel: this.editorNotesPanel(), flowReviewPanel: this.flowReviewPanel(), frameCheckPanel: this.frameCheckPanel(),
+      staleFramesPanel: this.staleFramesPanel(), retimeNotePanel: this.retimeNotePanel(), paceBar: this.paceBar(), beatMapPanel: this.beatMapPanel(), preApprovePanel: this.preApprovePanel(), editorNotesPanel: this.editorNotesPanel(), flowReviewPanel: this.flowReviewPanel(), frameCheckPanel: this.frameCheckPanel(),
       deriveCharacters:this.deriveCharacters, charBusy: s.charBusy,
       charBtnLabel: s.charBusy ? 'Deriving…' : (s.videoCharacters ? '↻ Re-derive from script' : '✦ Derive from script'),
       seedLabel: s.videoSeed ? ' · seed ' + s.videoSeed : '',
@@ -24625,6 +24764,7 @@ class Component extends DCLogic {
     // Round 92: video's own execution options, same trigger as the xTab producers' `loadExecOptions`.
     // A film with no script has nothing to remember: the next one, even with identical scenes and roles, must ask again.
     if (!s.fullScript) this._soundBaseSig = '';
+    if (!s.fullScript && s.retimeNote) this.setState({ retimeNote:'' });     // the note is about this script's scene lengths: gone with the script
     if (s.screen === 'video' && (s.videoStep === 'shootboard' || s.videoStep === 'production') && s.fullScript) {
       this.refreshSoundBase();
       if (!s.soundStatus && !this._soundStatusAsked) { this._soundStatusAsked = true; this.loadSoundStatus(); }

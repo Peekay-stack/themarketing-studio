@@ -34,6 +34,7 @@
     const p = prompts[0] || '';
     check('the concept prompt asks for hook, surprise, turn and memorable, in the JSON shape too', /"hook" — what the viewer sees in the first 3 seconds/.test(p) && /"surprise"/.test(p) && /"turn" — the moment something visibly changes/.test(p) && /"memorable" — ONE image or action/.test(p)
       && /"hook": string, "surprise": string, "turn": string, "memorable": string/.test(p), p.slice(-600));
+    check('A5: the prompt requires each moment to be filmable by one camera in one shot of one place (no split screens, montages, overlays)', /ONE camera can film in ONE continuous shot of ONE place/.test(p) && /never a split screen, a montage, an overlay/.test(p), p.slice(-900));
     check('it forbids a quiet establishing hook and generic lines, and wants the four to differ', /never a quiet establishing view/.test(p) && /never a generic line such as/.test(p) && /the four must differ from each other/.test(p));
     check('the rest of the prompt is as before (three routes, the voiceover rules, the JSON beats)', /Propose THREE genuinely different creative routes/.test(p) && /exactly 3 routes/.test(p) && /ONE continuous read across the whole film/.test(p));
 

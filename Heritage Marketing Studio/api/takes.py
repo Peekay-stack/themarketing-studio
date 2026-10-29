@@ -64,6 +64,13 @@ def _url(v) -> str:
     return u if (u.startswith("/") or u.startswith("http://") or u.startswith("https://")) and len(u) <= 600 else ""
 
 
+def _parts(v) -> dict:
+    """The page's per-kind fingerprints of what a frame was drawn from ({"words": "1a2b", "dept": ...}): short strings, a handful of keys. They let the page say WHY a frame is out of date."""
+    if not isinstance(v, dict):
+        return {}
+    return {_s(k, 12): _s(x, 16) for k, x in list(v.items())[:12] if k and isinstance(x, str) and x}
+
+
 def _checks(v) -> list[dict]:
     out = []
     for c in (v if isinstance(v, list) else [])[:12]:
@@ -82,7 +89,7 @@ def frame_take(raw) -> dict | None:
     if raw.get("status") == "rendering":
         return None
     return {"id": _s(raw.get("id"), 24) or new_id("fr"), "url": url, "status": "done" if raw.get("status") != "error" else "error", "provider": _s(raw.get("provider"), 24),
-            "sig": _s(raw.get("sig"), 600), "recipe": _s(raw.get("recipe"), 80), "look": _s(raw.get("look"), 400), "packMissing": bool(raw.get("packMissing")),
+            "sig": _s(raw.get("sig"), 600), "recipe": _s(raw.get("recipe"), 80), "parts": _parts(raw.get("parts")), "look": _s(raw.get("look"), 400), "packMissing": bool(raw.get("packMissing")),
             "packShape": _s(raw.get("packShape"), 160), "angleSame": _s(raw.get("angleSame"), 160), "checks": _checks(raw.get("checks")), "checkedUrl": _url(raw.get("checkedUrl")),
             "checkAccepted": bool(raw.get("checkAccepted")), "checkSeen": _s(raw.get("checkSeen"), 240), "note": _s(raw.get("note"), 200), "created": _s(raw.get("created"), 24) or _now()}
 

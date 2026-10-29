@@ -23,6 +23,11 @@ n = takes.normalise(doc)
 check("normalise: frame takes keep only real ones (a url, not mid-render), bad keys and junk are dropped", [t["id"] for t in n["frames"]["0"]] == ["fr_1", "fr_2"] and "bad key" not in n["frames"] and list(n["frames"]) == ["0", "2.1"], str(n["frames"].keys()))
 check("normalise: a chosen id that exists is kept, one that does not is un-chosen", n["frame_chosen"] == {"0": "fr_2"})
 check("normalise: nothing in it -> None (a film that never used the builder stores nothing)", takes.normalise({}) is None and takes.normalise(None) is None and takes.normalise({"frames": {}}) is None and takes.normalise("x") is None)
+# the page's per-kind fingerprints (why a frame is out of date) survive a save, and junk in them cannot get in
+pt = takes.normalise({"frames": {"0": [ft(1, recipe="abc:1", parts={"words": "1a2b", "dept": "zz9", "bad": 5, "": "x", "loc": ["no"]})]}})["frames"]["0"][0]
+check("normalise: a frame take keeps its fingerprints (strings only, short)", pt["parts"] == {"words": "1a2b", "dept": "zz9"}, str(pt.get("parts")))
+check("normalise: a take with no fingerprints gets an empty dict, and a non-dict is dropped to {}", takes.normalise({"frames": {"0": [ft(1)]}})["frames"]["0"][0]["parts"] == {} and takes.normalise({"frames": {"0": [ft(1, parts="x")]}})["frames"]["0"][0]["parts"] == {})
+check("normalise: fingerprints are capped at 12 kinds and 16 characters each", len(takes._parts({f"k{i}": "v" * 40 for i in range(30)})) == 12 and all(len(v) == 16 for v in takes._parts({"a": "v" * 40}).values()))
 check("normalise: a data: URI is never stored in a take", takes.normalise({"frames": {"0": [ft(1, url="data:image/png;base64," + "A" * 50)]}}) is None)
 many = {"frames": {"0": [ft(i) for i in range(30)]}, "frame_chosen": {"0": "fr_0"}}
 nm = takes.normalise(many)
