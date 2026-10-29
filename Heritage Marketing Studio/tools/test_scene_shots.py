@@ -110,6 +110,7 @@ check("prompt: caps the extras and states the camera POSITION rule", "at most 2 
 check("prompt: forbids words and text, and says keep objects in the master's state", "NO WORDS ON SCREEN" in pr and "KEEP EVERY OBJECT IN THE STATE IT HAS IN SHOT 1" in pr)
 check("prompt: steers away from wide when the location is not locked; allows it when locked", "AVOID wide shots" in pr and "A wide shot is allowed." in ss.build_prompt(row=row, secs=8, n_extras=2, plate_locked=True))
 check("prompt: product hero is offered only when the scene is about the pack", "product" in pr.split("SIZES: choose from")[1].split(".")[0] and "product" not in ss.build_prompt(row=row, secs=8, n_extras=2, pack_in_scene=False).split("SIZES: choose from")[1].split(".")[0])
+check("prompt: never proposes an arm or hand crossing a face, hands toward the lens, or a limb in extreme close-up (B3)", "Never propose an arm or a hand crossing a face, hands reaching toward the lens, or a limb in extreme close-up" in pr)
 check("prompt: neighbours and cast reach the model", "Technicians at work" in pr and "CAST: Boy (8)" in pr and "LOCATION: a Hyderabad kitchen" in pr)
 check("prompt: the decision comes FIRST -- three tests (job, new information, serves the film), zero is valid, jobs listed",
       "FIRST DECIDE WHETHER THIS SCENE NEEDS ANY EXTRA SHOT" in pr and "A. JOB" in pr and "B. NEW INFORMATION" in pr and "C. IT SERVES THE FILM" in pr and "ZERO extra shots is a valid" in pr

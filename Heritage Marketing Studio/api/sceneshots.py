@@ -212,7 +212,7 @@ def build_prompt(*, row: dict, secs: int, n_extras: int, pace: str = "standard",
         "IS already coverage of it: return none.\n"
         "  * If the film shows TIME PASSING by repeating an action (days, months, a routine), do not add angles on one moment: return none and say so.\n"
         "  * Avoid pictures image and video generators draw badly: two legs or feet in motion, crowds, interlocking hands, readable text. Prefer one "
-        "subject, one limb, a still or slow frame.\n\n"
+        "subject, one limb, a still or slow frame. Never propose an arm or a hand crossing a face, hands reaching toward the lens, or a limb in extreme close-up.\n\n"
         "RULES FOR ANY SHOT YOU DO PROPOSE\n"
         "1. SAME MOMENT, SAME PLACE, SAME PEOPLE. Each extra shot is one camera view of one moment of this scene (no split screens, no "
         "montage). Use only the people, props and place already in the scene or the notes above. Do not invent characters, products, "
