@@ -240,7 +240,9 @@ def validate(raw: dict, rows, roles=None, promises_in=None) -> dict:
         if len(members) > 1:
             findings.append({"kind": "one-beat", "scene": members[1], "note": f"Scenes {', '.join(str(m) for m in members)} are ONE beat shown at more than one scale; the first holds the beat and the "
                                                                               f"{'others are its closer ' + ('views' if len(members) > 2 else 'view')} (no extra angles on them)."})
-    total = len(eng["findings"]) + len(cf)
+    # One root cause is one problem: the 28 Oct film's pitched split screen came back as three findings (its turn, its memorable moment and its beat), all on scene 4. Findings on the SAME scene count once
+    # towards the risk (all of them are still listed); findings with no scene (a promise left out altogether) count one each.
+    total = len(eng["findings"]) + len({f["scene"] for f in cf if f["scene"] is not None}) + sum(1 for f in cf if f["scene"] is None)
     risk = "high" if total >= 3 else ("medium" if total else "low")
     res = {"summary": _clip(raw.get("summary"), 400), "time_passing": bool(raw.get("time_passing")), "hero_object": hero, "turn_scene": turn if turn in nos else None,
            "carrier_scene": carrier if carrier in nos else None, "scenes": out, "transitions": transitions, "findings": findings, "notes": notes, "engagement": {"risk": risk}}

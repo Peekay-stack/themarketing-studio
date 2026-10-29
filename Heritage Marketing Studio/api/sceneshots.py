@@ -182,7 +182,8 @@ def build_prompt(*, row: dict, secs: int, n_extras: int, pace: str = "standard",
     seq_rule = ("\nTHIS SCENE IS A RUN OF DIFFERENT QUICK ACTIONS, in this order: " + "; ".join(f"{i}. {_clip(a, 70)}" for i, a in enumerate(acts, 1)) + ". "
                 "The film's own idea is that these happen one after another, cut quickly, so extra shots are the point here, and an empty list is the WRONG answer unless the master already shows every one "
                 "of them. The master shows the first action. Give each LATER action its own extra shot, in order, one action per shot, job `insert` or `reveal`: a DIFFERENT action (a different verb "
-                "and object), never the same action from a new angle. Each shot is 2 or 3 seconds, the same person and place as the master, and every rule below still applies.\n") if acts else ""
+                "and object), never the same action from a new angle. Each shot is 2 or 3 seconds, the same person and place as the master, and every rule below still applies. Give each shot a real `shot_size` "
+                "from the list below (never \"none\") and vary the sizes: an action on an object reads best as `detail` or `close`.\n") if acts else ""
     film = []
     if logline:
         film.append(f"THE FILM: {_clip(logline, 300)}")

@@ -66,6 +66,10 @@ kinds = [f["kind"] for f in v["findings"]]
 check("validate: the concept findings come FIRST (flattened and missing), delivered ones make none", kinds[:3] == ["concept-missing", "concept-flattened", "concept-flattened"] and kinds.count("concept-flattened") + kinds.count("concept-missing") == 3, kinds)
 check("validate: a finding names the promise in words and quotes it", "surprise" in v["findings"][0]["note"].lower() and "lifetime" in v["findings"][0]["note"] and "missing" in v["findings"][0]["note"], v["findings"][0]["note"])
 check("validate: three concept findings make the film's risk HIGH", v["engagement"]["risk"] == "high", v["engagement"])
+same = fd.validate(raw(concept=[{"id": "turn", "status": "flattened", "scene": 3, "note": "a"}, {"id": "memorable", "status": "flattened", "scene": 3, "note": "b"}, {"id": "beat3", "status": "flattened", "scene": 3, "note": "c"}]),
+                   ROWS, {}, fd.promises({**CONCEPT, "scenes": CONCEPT["scenes"] + [{"title": "x", "desc": "y"}]}))
+check("validate: three findings that all sit on the SAME scene (one root cause) are all listed but count once towards the risk (medium, not high)",
+      sum(1 for f in same["findings"] if f["kind"].startswith("concept")) == 3 and same["engagement"]["risk"] == "medium", (same["engagement"], [f["kind"] for f in same["findings"]]))
 one = fd.validate(raw(concept=[{"id": "turn", "status": "flattened", "scene": 3, "note": "n"}]), ROWS, {}, P)
 check("validate: one flattened promise alone makes the risk MEDIUM, and the promises not answered are counted in a note", one["engagement"]["risk"] == "medium" and any("answered for 1 of the concept's 6" in n for n in one["notes"]), (one["engagement"], one["notes"]))
 none = fd.validate(raw(concept=[{"id": "hook", "status": "delivered", "scene": 1}] * 1), ROWS, {}, P)
@@ -100,7 +104,8 @@ check("budget: 'sequence' is exempt from the pace minimum like the hook and the 
 row = {"no": 2, "visual": "She sips and smells the milk.", "camera": "medium"}
 sp = ss.build_prompt(row=row, secs=6, n_extras=2, sequence_actions=["smells the milk", "watches it boil", "holds it to the light"], role="sequence")
 check("planner prompt: a sequence scene is told its actions in order, that an empty list is wrong, and to give each later action its own shot", "A RUN OF DIFFERENT QUICK ACTIONS, in this order: 1. smells the milk; 2. watches it boil; 3. holds it to the light" in sp
-      and "an empty list is the WRONG answer" in sp and "Give each LATER action its own extra shot" in sp and "never the same action from a new angle" in sp, sp[sp.index("THE SCENE"):][:900])
+      and "an empty list is the WRONG answer" in sp and "Give each LATER action its own extra shot" in sp and "never the same action from a new angle" in sp
+      and "a real `shot_size`" in sp and "never \"none\"" in sp and "`detail` or `close`" in sp, sp[sp.index("THE SCENE"):][:900])
 check("planner prompt: the plain role word 'sequence' is not shown as the scene's job", "This scene's job in the film: sequence" not in sp)
 sp0 = ss.build_prompt(row=row, secs=6, n_extras=2)
 check("planner prompt without actions: exactly as before (no sequence block)", "A RUN OF DIFFERENT QUICK ACTIONS" not in sp0 and "FIRST DECIDE WHETHER THIS SCENE NEEDS ANY EXTRA SHOT" in sp0)
