@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 188571ea-55a9-4350-b9a0-481c7a9d13b2
-  modified: 2026-10-30T07:28:06.293Z
+  modified: 2026-10-30T09:30:56.706Z
 ---
 
 The owner (30 Oct 2026, repeated) sends YouTube ad links one or a few at a time and says "next one for the learning log". Each is read with the SAME framework, logged, compared with our builder's rules, and the owner "will answer queries at the end". Standing instruction: **keep this log in app memory, keep it accessible, and keep updating it as the owner adds campaigns.**
@@ -22,6 +22,9 @@ The owner (30 Oct 2026, repeated) sends YouTube ad links one or a few at a time 
 4. Write the entry (fact sheet; audience verdict; the nine-question table with evidence tags; "Our system on this ad" table). Evidence levels: MEASURED / SEEN / READ / INFERRED / OWNER-REPORTED / NOT JUDGED. **I cannot hear: never judge voice, music genre or lyrics beyond captions; sound is measured only.**
 5. Update the log by splicing: new entry before `## Side by side`; a new row in the side-by-side table (after the last ad's row) and the index (after the last `| 0NN |` row); re-write `## Patterns` if counts change; edit the candidate rows (support counts "for / against / status") and append new candidates after the last `| C.. |` row; append new owner questions as `| Q.. |` rows at the very end under `## Open questions for the owner`. Questions are asked ONLY there (the owner answers at the end). Use PowerShell string replace (no Python on this machine); build the text in files with the Write tool (never shell strings: backticks/backslashes).
 6. Copy the repo log to the memory copy (re-add the frontmatter), commit explicit files on `film-engagement-2`, copy the memory folder to `.claude-memory/` and push `coverage`. Update this note's STATE block.
+
+## What the owner told us (the lead evidence; 30 Oct 2026)
+The owner chose each reference for: ONE clear message (functional or emotional) delivered in an entertaining, memorable way; a memorable device (jingle, tag line, an intriguing question with a reveal, a character moment, a gag); performance and characterisation; humour or intrigue as the way in; a tie between product and emotion; breaking the norm of its day / making a boring subject fun. **None of the reasons is pace or brand timing:** the measured patterns are descriptive, not causal. Their per-ad reasons are in the log's section "Why the owner chose each reference" (014 Tata Sky still blank). For a new ad, add its row there if the owner gives a reason; framework section 3.11 ("why it works") is the matching question. Q1 is answered; Q2 only partly (the 009 gag: counting 1-5 in Tamil); Q3-Q16 open.
 
 ## STATE (30 Oct 2026, after entry 015)
 Log entries: 001 Cadbury, 002 Flipkart (PARTIAL, needs a full read), 003 Oral-B, 004 Surf Excel, 005/006 Good Knight (Fastcard, Low Smoke Coil), 007 IPL on Set Max, 008/010 CRED (Bappi Lahiri, Dravid), 009 Fevi Kwik "fish", 011/012 Mother Dairy (25 s ad, 4-min film), 013 Sting, 014 Tata Sky, 015 Uninor. Repo head `film-engagement-2` (see the log's git history). 9 patterns, 31 candidate changes (C1-C31), 16 open owner questions (Q1-Q16). Nothing in the builder has been changed off the ads: changes go through the owner after patterns exist (Q9: at about six ads offer to write a proposals PLAN, not code; we are past that: offer it).

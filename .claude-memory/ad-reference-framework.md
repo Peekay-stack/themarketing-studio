@@ -1,6 +1,6 @@
 ---
 name: ad-reference-framework
-description: The common framework for reading a reference ad (ground rules, evidence levels, the nine questions in builder order, verdict + comparison with our rules, and the read protocol with the measurement lessons).
+description: The common framework for reading a reference ad (ground rules, evidence levels, the nine questions in builder order plus "why it works", verdict + comparison with our rules, and the read protocol with the measurement lessons).
 metadata:
   type: reference
 ---
@@ -85,6 +85,11 @@ For each: what we ask, how we get evidence, the number to record, and which part
 - **Ask:** the first second the brand is visible or named, how it enters (story or logo), how long the pack or logo holds at the end, what the end line says and whether it is spoken, any offer or legal text and its size, whether the brand could be removed and the film still work.
 - **Evidence:** MEASURED + SEEN + READ. **Record:** brand first seen (s and %), end hold (s), spoken tagline (yes / no), on-screen text lines.
 - **Tests:** the pack-shot sign-off rules (a spoken payoff, the locked hold), `carrier_scene`, the sign-off conflict found on 29 Oct.
+
+### 3.11 Why it works (the owner's lens; added 30 Oct 2026 after the owner's answers)
+- **Ask:** the ONE message in a sentence (functional or emotional); the memorable device that carries it (a jingle, a tag line, an intriguing question and its reveal, a character moment, a gag); the quality of the performance and the characterisation; the humour or intrigue that is the way in; how the product and the emotion or benefit are tied; whether it broke the norm of its day or made a boring subject fun.
+- **Evidence:** OWNER-REPORTED first (the owner's reason for choosing the ad is the lead evidence, recorded in the log's section "Why the owner chose each reference"); then SEEN and READ. **Record:** the one-sentence message, the memorable device, the performance note, the way in.
+- **Tests:** concept routes and the writer rules (is there ONE message and ONE memorable device?), the director's `concept_delivery`, the voice and casting notes. The measured patterns (pace, shots, quiet beats, brand timing) are descriptive; they become candidate rules only with a link to these reasons.
 
 ## 4. The audience verdict and the comparison with our rules
 - **Audience verdict** (SEEN, as a viewer): attention curve in three words (where I lean in, where I would swipe), the memorable image, what I would repeat, whether it makes me want to watch again. Plain words, no scores.
