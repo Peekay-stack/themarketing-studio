@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 188571ea-55a9-4350-b9a0-481c7a9d13b2
-  modified: 2026-10-30T06:46:17.002Z
+  modified: 2026-10-30T07:01:57.777Z
 ---
 
 The owner will share real ads that work; for each we ask the same nine questions in builder order (concept, script, shoot board, shots, sound design, music, voice-over, casting, location, plus brand/CTA), compare with our rules (CONFIRMS / CONTRADICTS / EXTENDS / OUTSIDE), and only then consider a change.
@@ -23,6 +23,8 @@ The owner will share real ads that work; for each we ask the same nine questions
 **Update 30 Oct, fourth (commit `b153bbe`):** Entry 007 IPL on Set Max "Manoranjan Ka Baap" (AHByZLDbPiw, 75.8 s tune-in promo, a montage): 38 shots on a curve (4.3 then ~7 per 10 s), ~10 places, ~12 characters, loud continuous sound, no brand until the TV reveal at 87 %, a 2.7 s white card with a start date. Words not recoverable. Brand timing now 2 early vs 4 late, C17 fits 6 of 6. New C21 (montage structure, outside today), Q12 (montage/tune-in promos in scope?). Patterns now over 6 ads; sub-2 s shots 5 of 5 verified; pace-as-curve 4 of 6; held closing card 2.7-5.8 s 6 of 6.
 
 **Update 30 Oct, fifth (commit `230a661`):** Entry 008 CRED "Not everyone gets it" with Bappi Lahiri (qEqPM7sYFzg, 46 s): the first ad in our STANDARD pace band (3.3 shots/10 s, locked-off camera, median frame change 0.19), a dim one-room audition spoof, panel reaction shots held ~4 s, a corner logo bug from 1 s, a mid-film brand card (56 %), a 50 dB sound drop before the 3.4 s end card (app-download CTA), the product never shown. Seven ads read; **none is in our Calm band, none Telugu/heritage** (Q5). New: pattern 7 (a quiet beat at or before the closing card: 004, 005, 008), C22 (takeqa "barely moves" vs held reaction shots), C23 (mid-film card), C24 (cut meter misses fades/dissolves), Q13 (celebrity-as-concept ads: score structure only?). **Measurement lessons:** a screenshot right after a seek can show black or YouTube's end-screen suggestions (frame not rendered): wait ~2 s and measure real brightness with the canvas; the meter counts hard cuts only (framework protocol 2c).
+
+**Update 30 Oct, sixth (commits `ec19fa3`, `47d55cc`):** Entries 009 Pidilite Fevi Kwik "fish" (HMZ45fSOr1k, 40 s lakeside gag, brand only at 93 %, -43 dB under the pack card, I could NOT read the gag) and 010 CRED "Great for the good" ft. Rahul Dravid (j8KpV-4_mRg, 23 s, 9.6 s calm explainer then ~14 shots in 10 s: strongest pace curve; verbal setup, visual pay-off; ~26 words/10 s). Nine ads read in full. Side-by-side is now ONE ROW PER AD. New: C25 (dip-to-dark blink), C26 (verbal setup + visual pay-off), pattern 3 of 3 on C10 (voice budget depends on the film: 003, 006, 010). **Measurement lesson:** with the app window unfocused the first tab was `document.hidden` and the picture meter dropped to ~1 frame/s (false "cut" every second; seeks ~1/s); a fresh FOREGROUND tab (`tabs_create foreground:true`) was visible and fast; the sound meter works regardless; always report `document.hidden` + frame count (framework 2b-ii).
 
 **Rules:** evidence levels MEASURED / SEEN / READ / INFERRED / OWNER-REPORTED / NOT JUDGED. I cannot hear: never judge voice, music genre or lyrics; sound is measured only. One ad is a hypothesis, three agreeing ads a pattern, the owner decides, the log is append-only.
 
