@@ -14,6 +14,7 @@ Append-only. One entry per ad, in the order read. Questions, evidence levels and
 |---|---|---|---|---|---|---|---|
 | 001 | Cadbury Dairy Milk: "Cadbury Dairy Milk and Cricket are back" (#ShubhAarambh) | https://www.youtube.com/watch?v=e7JATezA1nY | 30 Oct 2026 | 44.3 s (2 s black lead-in, 2 s black tail) | chocolate / sport tie-in, Hindi | READ, MEASURED (picture and sound meter), SEEN (20 frames) | Tension with fast, varied cuts in ONE venue, a visible reversal at 57 %, a long held payoff, a continuous music bed, brand on the screen from the first picture. |
 | 002 | Flipkart: "No Cost EMI by Flipkart. India Chahe Jo Hum Banaye Woh!" | https://www.youtube.com/watch?v=ppCZ9h_aACw | 30 Oct 2026 (partial) | 45 s | e-commerce offer, Hindi/Hinglish | READ + 5 small frames only | **Not yet logged under the framework.** Read before it existed: children play the adults, burned-in Hinglish subtitles. Needs the full read. |
+| 003 | Oral-B India: "Don't Let Dental Problems Cost You \| Switch to Oral-B Electric" (#SwitchToElectric) | https://www.youtube.com/watch?v=o9GOkHJTKwY | 30 Oct 2026 | 20.0 s | oral care, product demonstration with a known face, Hinglish | READ, MEASURED (picture and sound meter), SEEN (about 20 frames) | A 16-shot, 8-per-10-s demonstration: the brand card in the first second, a visible before/after proof (split-screen plaque), a spoken claim with a footnote, a known face to camera, continuous voice and sound, a held pack-and-presenter close. |
 
 ## Entries
 
@@ -71,16 +72,86 @@ Status: **not logged under the framework.** It was looked at before the framewor
 - Casting device noted for later: **children playing adults** (a casting idea that is the concept). Nothing about pace, sound, brand arrival or sign-off is claimed.
 - No candidate change is drawn from it.
 
-## Patterns (updated as ads arrive; needs 3 ads that agree)
-(none yet: 1 ad fully logged)
+### 003. Oral-B India: "Don't Let Dental Problems Cost You | Switch to Oral-B Electric" (read 30 Oct 2026)
 
+**Fact sheet.** READ: channel Oral-B India (29.5K subscribers), 266M views, "2y ago" (so about 2024), tag #SwitchToElectric; the description says the electric toothbrush helps prevent future dental problems and gives "a dentist-like cleaning every day". MEASURED: 20.02 s, picture 854x480. Live action plus graphic proof shots (UV-style plaque, a split screen, a shield). Language: English words spoken in a Hindi-speaking ad (the on-page captions are Devanagari spellings of English words: "Hinglish"; auto-captions, so READ at low confidence). A known face: the on-screen name super reads "Sameera Reddy, Actor | Mother" (SEEN). Commercial job: product-switch (a manual-to-electric brush) with a stated benefit claim. Evidence note: 498 frames measured (about 25 a second), sound meter live (-16 to -38 dB), so the measurement is trusted; popularity is a signal only.
+
+**Audience verdict (SEEN, as a viewer).** The first second is a dark brand card; at 0.84 s I am inside the patient's chair looking up at a dentist with gloved hands, then the patient's wide-eyed face: a clear tiny story ("I brush twice a day... so why do I have a problem?") and I stay for the answer. The turn comes at about 7.3 s (the dentist holds up an electric brush) and from 8.3 s the film is demonstration: a macro of the brush on stained teeth, then a split screen where the manual brush leaves plaque and the electric one does not. I would not swipe: every shot is about one second and each one adds something new. The memorable image is the split screen with the "100% more plaque" claim. The last 3.3 s is a flat, held "buy this" frame. I would feel sold to rather than moved, which is the job here.
+
+**The nine questions**
+| | Finding | Evidence |
+|---|---|---|
+| **Concept** | A domestic-medical confrontation: a patient says she brushes twice a day, the dentist reframes it: "maybe it's not your brushing, it's your brush". A premise of conflict then demonstration. Stake: dental problems and their cost (the title says "cost you"). Hook: patient's-eye view of the dentist's face and gloved hands. Surprise: the patient's shocked face. Turn: the reframe plus the brush appearing. Memorable: the split-screen plaque proof. The brand IS the reason the story works (the product is the answer), so brand-necessity is integral. The story is INFERRED from the captions (low confidence) and the frames. | SEEN, READ (low), INFERRED |
+| **Script / structure** | Brand card 0-0.84 s. Setup 0.84-7.3 s (the chair, the patient, "twice a day"): 36 % of the film. Turn 7.3 s (36 %). Demonstration 8.3-13.1 s (24 %). Benefit claim and shield 13.1-14.0 s. Known-face testimonial 14.0-15.6 s (7 %). Pack, offer and close 15.6-20.0 s (22 %). The film never rests: no scene longer than 3.3 s. | MEASURED + SEEN |
+| **Shoot board** | One clinic set (a clean "Expert Lab" with the brand branded into the wall) shot from many angles: patient POV, patient close-up, wide with both people, hands holding the brush, a macro of teeth, plus graphic proof (a dark UV plaque shot, a split-screen, a shield animation) and a studio lock-up for the close (a blue gradient with the pack and a presenter). The hero object is the electric brush, shown in the dentist's hand (7.8 s), in the macro (8.9 s), and as the pack (15.6-20.0 s). Wardrobe: a white coat (dentist) against a blue gown (patient), colour-coded. | SEEN |
+| **Shots** | 16 picture shots in 20.0 s (the automatic reading found 17 cuts; the one at 0.12 s is inside the brand card's animation, shown by the brightness trace), so **8.0 shots per 10 s, average 1.25 s**, against our Fast band of 3.5-5. 14 of 17 measured segments are 1.4 s or less; shortest real shot 0.64 s; the longest is the closing hold, 3.26 s. The rhythm holds near one second from the chair to the proof, then relaxes only for the close. Sizes: the closest framing is dominant (face, hands, brush, teeth), with wides at 7 s and the close. The 9-13 s block is the most active (frame change 9-15 against a median of 1.3), driven by animated splits and wipes, not camera moves. | MEASURED + SEEN |
+| **Sound design** | A level that is present from the first frame (rising from -38 dB at the first second) and never drops below -30 dB until the end, with **no quiet second inside the film**; it climbs gently from about -30 dB at 3 s to about -20 dB at 7-12 s and peaks at 17 s (-16 dB, the pack close). What the effects are is NOT JUDGED. | MEASURED |
+| **Music** | I cannot separate music from speech in the meter (the speech-band share is 0.5-0.99 in 19 of 20 seconds, which says voice is present almost the whole film, not that music is absent). Whether there is a bed, the genre, and the lift are NOT JUDGED here; ask the owner if it matters. | MEASURED (limited), NOT JUDGED |
+| **Voice-over / dialogue** | Mostly presenter/character speech. READ (low confidence): about 45-50 words in 20 s, roughly 22-25 words per 10 s, which is more than TWICE our voice budget (32 words per 30 s = 10.7 per 10 s). Lines (reconstructed from the transliterated captions): "problem, but I'm brushing twice a day", "maybe it's not your brushing, it's your brush", "switch to Oral-B Electric", "removes up to 100% more plaque", "helps prevent dental problems", then a warranty/clean-teeth line and the switch line repeated. The product name and the switch line are spoken twice; the claim is spoken AND written. | READ (low), SEEN |
+| **Casting / performance** | Two women on screen for the story (a patient, a dentist, in white and blue), a presenter who speaks to camera at the close (the dentist or presenter in a white coat), and a named known face: "Sameera Reddy, Actor \| Mother" is superimposed on the testimonial shot (14.0-15.6 s). The hoop earring suggests the patient is the same woman (INFERRED). Faces or hands are on screen in about 11 of 16 shots; the rest are macro teeth and graphics. Casting device: celebrity plus a "dentist's authority" figure. Looks to camera: twice (the testimonial, the close). | SEEN, INFERRED |
+| **Location** | A single dental clinic ("Expert Lab"), made believable by the dental chair, instruments, the dentist's coat and a branded wall; the proof is shown in abstract graphic spaces (teeth in UV colour, a split screen), not another real place. A studio set with a gradient for the close. | SEEN |
+| **Brand and CTA** | The Oral-B card is the FIRST picture (0-0.84 s) and a logo bug stays in the top-left corner of every sampled shot (about 100 % of the film); the product is shown at 7.3 s (36 %), the claim line carries the logo again at 13.5 s. The end (15.6-20.0 s): a pack shot (iO box plus a toothbrush) with an "Oral-B Electric" lock-up and a presenter in the same frame speaking, with the corner bug present: no offer or price, no pack-only still. The brand name is spoken at least twice in 20 s. A small footnote under the claim ("manual vs electric") is on screen for about 2 s. | MEASURED + SEEN |
+
+**Not judged:** the sound itself and any music; the voice, accent and delivery; whether the claim is true (the footnote text was too small to read); whether the film was liked.
+
+**Our system on this ad**
+| Our rule | What the ad does | Verdict | Confidence |
+|---|---|---|---|
+| Pace presets (Fast is 3.5-5 shots per 10 s) | 8.0 per 10 s, average 1.25 s | **CONTRADICTS** the table's top: a very fast cut rate is used for a demonstration film. With Cadbury (4.5-5.5), two ads are at or above the top of our Fast band | low (2 ads) |
+| Minimum shot 2 s (`SHOT_FLOOR`) | 14 of 17 segments are 1.4 s or less | **CONTRADICTS**, as in 001 | medium-low (2 ads) |
+| `same-place` (4+ neighbouring scenes in one place) | One clinic for about 8 s of story, then graphics | **CONTRADICTS** as a boredom predictor (as in 001); here too size, subject and viewpoint change at every cut | low (2 ads) |
+| `slow-hook` | A 0.84 s brand card, then a patient POV that cuts every second | **CONFIRMS** that the hook has to move fast; neither opening is slow | low |
+| Visible reversal and stake | A confrontation with a stake, a turn at 36 %, a before/after proof | **CONFIRMS** | low (2 ads) |
+| Voice budget (32 words per 30 s, warn on thin script) | 22-25 words per 10 s, three times ours | **CONTRADICTS** for a demonstration/claim film (our budget is tuned to quiet emotional films); the Cadbury sung line was far below it. So the right budget depends on what carries the message, not on a fixed number | low |
+| Editor's note: a beat of silence before the message | None; sound continuous and voice-led | **CONTRADICTS** (second ad) | low (2 ads) |
+| Sign-off: pack held locked and still, spoken payoff | A pack shot with a speaking presenter in frame, held 3.3 s, corner bug; the end is not a pack-only still | **EXTENDS**: a presenter and the pack share the close; our sign-off does not allow a person speaking in it | low |
+| Render check silent-tail finding | Not triggered: sound runs to the last frame | n/a (no evidence either way) | - |
+| Concept `carrier_scene` / brand arrival | Brand in the first picture and a persistent corner bug | **EXTENDS**: we have no rule for when the brand first appears. 001 and 003 both show it in the first 2 s | low (2 ads) |
+| Shot job `reaction` | The patient's shocked face is a reaction shot | **CONFIRMS** | low (2 ads) |
+| Graphic proof shots (UV plaque, split screen, shield, claim text) | A third of the film is made of them | **OUTSIDE**: the builder generates live-action clips and a pack still, not motion graphics, split screens, claims or footnotes | low |
+| On-screen name super for a known face | "Name, Actor \| Mother" for 1.5 s | **OUTSIDE** (we do not do endorsers or supers) | low |
+| Director's read, `late-peak` | Turn at 36 %, demonstration peak 9-13 s (45-65 %) | **UNKNOWN**: our read not run on this ad | - |
+
+**Questions for the owner**
+1. What made this one a reference: the speed, the dentist-chair story, the split-screen proof, or the celebrity?
+2. Do we want demonstration films (claims, split screens, supers) in the builder, or only live-action stories?
+
+## Side by side (rebuilt at each new ad; the numbers come from the entries above)
+| | 001 Cadbury | 003 Oral-B | Flipkart (002, not yet read) |
+|---|---|---|---|
+| Length / shape | 44.3 s, music-led, tension to a release | 20.0 s, voice-led, conflict to a demonstration | 45 s |
+| Shots per 10 s (our Fast = 3.5-5) | 4.5-5.5 | 8.0 | - |
+| Average shot / shots 1.4 s or less | about 2.2 s / 7 of 18 | 1.25 s / 14 of 17 | - |
+| Turn at | 57 % | 36 % | - |
+| Brand first on screen | 2.04 s (first picture, in hand) | 0 s (brand card) | - |
+| Where the message is carried | a sung line and a written end line | spoken lines, a written claim, a name super | - |
+| Words per 10 s (our budget 10.7) | about 3-4 | about 22-25 | - |
+| Silence inside the film | none | none | - |
+| Places | one ground, many scales | one clinic, many angles, plus graphics | - |
+| Close | 5.8 s animated swirl, written line | 3.3 s pack plus a speaking presenter | - |
+| Known face | no | yes (named on screen) | - |
+| Popularity (signal only) | 3M views, about 13 years old | 266M views, about 2 years old | - |
+
+## Patterns (updated as ads arrive; needs 3 ads that agree)
+Two ads so far (001, 003), different category, language mix, length and message carrier; **they agree on the points below, so each is at "2 of 3" and none is a pattern yet**:
+1. Cut rate at or above the top of our Fast band, with many shots 1.4 s or less.
+2. A single place that never feels like a single place (scale, subject and viewpoint change at each cut).
+3. The brand is on the screen in the first 2 seconds, not only at the end.
+4. Sound is continuous with no silent second inside the film.
+5. A visible reversal and a stake in the story (both confirm our concept rules).
+Caution: both ads are very widely seen mass-market ads, and the sample is two; a quiet, slow brand film (our house style) would not appear in a list of the most-watched ads, so absence of slow ads here proves nothing about slow ads.
 ## Candidate changes (hypotheses, with support)
 | # | Candidate change to our system | Where | Supported by | Contradicted by | Status | Owner decision |
 |---|---|---|---|---|---|---|
-| C1 | Allow shots shorter than 2 s (a flash-cut burst) as trims of generated clips, so a tension build can accelerate | `filmvoice.SHOT_FLOOR`, `sceneshots` (2-4 s extras), the Edit room trim | 001 | - | hypothesis | - |
-| C2 | The `same-place` finding should count variety of scale, subject and viewpoint, not only place tags | `filmdirect.engagement` and the director's `place` field | 001 | - | hypothesis | - |
-| C3 | The `slow-hook` check should consider the cut rate of the opening seconds, not only scene 1's energy | `filmdirect.engagement` | 001 | - | hypothesis | - |
-| C4 | Classify each film by what carries the message (picture, voice-over, sung line, on-screen text) and run the Delivery and editor checks that match | `deliveryChecks`, `filmedit` | 001 | - | hypothesis | - |
+| C1 | Allow shots shorter than 2 s (a flash-cut burst) as trims of generated clips, so a tension build can accelerate | `filmvoice.SHOT_FLOOR`, `sceneshots` (2-4 s extras), the Edit room trim | 001, 003 | - | **2 of 3** | - |
+| C2 | The `same-place` finding should count variety of scale, subject and viewpoint, not only place tags | `filmdirect.engagement` and the director's `place` field | 001, 003 | - | **2 of 3** | - |
+| C3 | The `slow-hook` check should consider the cut rate of the opening seconds, not only scene 1's energy | `filmdirect.engagement` | 001, 003 (both openings cut within about 1 s) | - | **2 of 3** | - |
+| C4 | Classify each film by what carries the message (picture, voice-over, sung line, on-screen text) and run the Delivery and editor checks that match | `deliveryChecks`, `filmedit` | 001 (sung), 003 (spoken) | - | **2 of 3** | - |
 | C5 | The Render check's silent-tail finding fires only while a picture is still on screen (not over a black tail) | `filmqc.findings` | 001 | - | hypothesis (cheap) | - |
-| C6 | Wardrobe note: name the hero who must separate from the crowd by colour | department prompts, wardrobe lock | 001 | - | hypothesis | - |
+| C6 | Wardrobe note: name the hero who must separate from the crowd by colour | department prompts, wardrobe lock | 001, 003 (white coat against blue gown) | - | hypothesis, weak | - |
 | C7 | A moving, animated end card as a second sign-off style | sign-off rules, composite | 001 | - | hypothesis, mostly OUTSIDE today | - |
+| C8 | The editor's "beat of silence before the message" note is optional by film type, not a default | `filmedit` notes | 001, 003 | - | **2 of 3** | - |
+| C9 | A brand-arrival check: the brand (or product in hand) on screen in the first 2 s, as a director's-read field | `filmdirect` read (`carrier_scene`) and the writer | 001, 003 | - | **2 of 3** | - |
+| C10 | The voice budget depends on what carries the message (a 32 words-per-30-s ceiling suits a quiet film; a claim/demonstration film runs about 22-25 per 10 s) | `voBudget`, `deliveryRulesText` | 003 (001 is far below it, in a sung film) | - | hypothesis | - |
+| C11 | A sign-off that allows a speaking presenter next to the pack | sign-off rules, composite | 003 | - | hypothesis, OUTSIDE today | - |
+| C12 | Demonstration/proof shots (split screen, plaque or UV graphic, a claim line with its footnote, a name super for an endorser) as a shot type | shot jobs, composite, the pack-shot step | 003 | - | hypothesis, OUTSIDE today (builder makes live-action clips only) | - |
