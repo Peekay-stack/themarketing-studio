@@ -61,6 +61,8 @@ For each: what we ask, how we get evidence, the number to record, and which part
 - **Evidence:** MEASURED only (level per second, silent stretches, the loudest second, level lift points) + the burned-in text. **Not judged:** what the effects are.
 - **Tests:** the sound plan, the editor's notes (music lifts on the turn, a beat of silence before the message, a silent tail), the Render check's silent-tail finding.
 
+**The owner's account of sound (30 Oct 2026; I cannot hear, so record it as OWNER-REPORTED):** every film layers music, voice-over, dialogue, sometimes a jingle, and sound design (ambient sounds that heighten the situation, foley that sells an action, hit sounds for big moments); the music is not uniform: it stops and adds to the drama. A jingle is easy, hummable, unique and short, a simple expression of the proposition. Ask the owner for each new ad's sound design if the owner wants it recorded; otherwise record only the measured level shape and say "sound design NOT JUDGED".
+
 ### 3.6 Music
 - **Ask:** is there a bed; when does it enter and leave; does it change at the turn; does it duck under speech; does it end on a button; is it a known track or a library feel.
 - **Evidence:** MEASURED (level shape, entry and exit seconds, the lift) + READ (description, comments naming a track) + OWNER-REPORTED. **Not judged:** genre, instruments, mood by ear.
