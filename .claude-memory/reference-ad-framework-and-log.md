@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 188571ea-55a9-4350-b9a0-481c7a9d13b2
-  modified: 2026-10-30T06:26:11.936Z
+  modified: 2026-10-30T06:31:50.633Z
 ---
 
 The owner will share real ads that work; for each we ask the same nine questions in builder order (concept, script, shoot board, shots, sound design, music, voice-over, casting, location, plus brand/CTA), compare with our rules (CONFIRMS / CONTRADICTS / EXTENDS / OUTSIDE), and only then consider a change.
@@ -17,6 +17,8 @@ The owner will share real ads that work; for each we ask the same nine questions
 **Update 30 Oct (commit `3444138`):** Entry 004 Surf Excel "Puddlewar" (6o6JJIkamVY) logged: slow, picture-led, brand only at 84 %, a 20 dB sound drop under the written tagline, a story coda after the card. With 3 ads, two PATTERNS (visible reversal + stake; one place that never feels like one place) and C4 (what carries the message decides the film's grammar). Three earlier two-ad agreements split (brand in first 2 s, continuous sound, top-of-Fast cut rate). Candidates now C1-C16. **Measurement lesson:** on a 320x240 upload `measure_ad.js` got only 24 frames and fake once-a-second cuts; fallback `tools/adlab/measure_ad_seek.js` (seek every 0.1 s, verify candidates by eye); report shot counts as estimates unless verified. The sound meter was still trusted.
 
 **Update 30 Oct, later (commit `ef5e264`):** Entry 005 Good Knight Fastcard (bon3PB8clIE, a private re-upload; ad = 35 s inside a 42.6 s file) logged: three calm long shots for 11 s then a burst (about 11 per 10 s), 20 dB sound range, near silence under a 1.3 s white end card, brand legible only at 87 %. Log now holds 4 full entries + 002 partial, **5 patterns** (reversal+stake; one place many scales; very short shots normal; pace is a curve; a film's grammar follows what carries the message) and candidates C1-C16. **The owner said (30 Oct): "I will answer your queries in the end - keep asking - consolidate them"; so all questions live ONCE in the log's section "Open questions for the owner" (Q1-Q9, answers recorded as OWNER-REPORTED); add new questions there, not at the end of each entry.** Next: keep reading ads they send; at about 6 ads offer to write a proposals plan (Q9).
+
+**Update 30 Oct, third (commit `2ac70e8`):** Entry 006 Good Knight Low Smoke Coil (sYdOy6ZrJMc, 29.8 s, brand channel, captions legible Hindi): dialogue joke, elderly couple in one dim room, spoken hook in 1st second, brand only at 66 %, 4.4 shots/10 s = the first ad inside our Fast band, 1 of 13 shots <=1.4 s, sound lifts up to 25 dB at the claim, two end cards. It is the NEAREST to Heritage's style so far. It broke the "what carries the message explains brand timing" idea (demoted); new hypothesis C17: brand early when the product is in the story world from the first picture, late when it arrives as the answer. New checks: C19 `takeqa` black threshold (15) vs a night look (mean 25-33), C20 compare our sign-off hold with the ads' 3-6 s cards. Open questions now Q1-Q11 (Q10 low-key night look, Q11 dialogue scenes). 5 patterns: reversal+stake 5/5, one place 5/5, sub-2 s shots 5/5, pace-as-curve 3/5, closing hold 3-6 s 5/5.
 
 **Rules:** evidence levels MEASURED / SEEN / READ / INFERRED / OWNER-REPORTED / NOT JUDGED. I cannot hear: never judge voice, music genre or lyrics; sound is measured only. One ad is a hypothesis, three agreeing ads a pattern, the owner decides, the log is append-only.
 
