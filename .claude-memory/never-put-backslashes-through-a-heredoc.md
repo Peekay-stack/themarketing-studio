@@ -38,3 +38,5 @@ SyntaxWarning about a neighbouring escape. Repaired by replacing the x08 bytes w
 reinforced: any file with regex or backslashes goes through the Write tool, then `python -W error -m py_compile` and a
 `b.count(bytes([8]))` check. Also, `grep -c` with a carriage-return argument in this shell returned the line count on a pure-LF
 file -- count line endings with Python bytes instead.
+
+**Sixth incident, 29 Oct 2026 (backticks):** a patch written as a double-quoted bash `python -c "..."` string contained markdown backticks. Bash ran them as command substitution ("command not found") and silently DROPPED the words between them, so a doc section was committed with three phrases missing ('batch 1, )'). The run exited 0. Rule: any text that contains backticks, backslashes, or dollar signs goes through the Write tool as a .py file (or the Edit tool), never through a double-quoted shell string; after writing prose, grep the result for the empty-bracket signs of dropped words, e.g. '(, ' or ', )'.
