@@ -27,6 +27,9 @@ doc = {"frames": {"0": [frame]}, "frame_chosen": {"0": "fr_1"}}
 
 filmscript.save("h1", {"video_concept": concept, "full_script": rows, "video_beat_map": bm, "video_builder": doc, "scene_frames": {"0": {"url": "/media/frame-1.jpg", "status": "done", "recipe": "r1", "parts": {"words": "aaaa"}}}})
 back = filmscript.load("h1")
+rows_p = [{"no": 1, "tc": "0-6s", "visual": "A boy drinks."}, {"no": 2, "tc": "6-12s", "visual": "A technician reads a vial.", "place": "A dairy lab at dawn"}]
+filmscript.save("h3", {"full_script": rows_p})
+check("a scene's own `place` survives the film store, and a row with none stays without the key", filmscript.load("h3")["full_script"][1]["place"] == "A dairy lab at dawn" and "place" not in filmscript.load("h3")["full_script"][0])
 check("the concept's stake survives the store, with every other concept field", back["video_concept"] == concept, back["video_concept"])
 check("the director's read survives whole: the promises, their statuses, a scene's sequence flag and its actions", back["video_beat_map"]["concept_delivery"] == bm["concept_delivery"]
       and back["video_beat_map"]["scenes"][1]["sequence"] is True and back["video_beat_map"]["scenes"][1]["actions"] == ["smells", "boils", "light"] and back["video_beat_map"]["sig"] == "abc", str(back["video_beat_map"])[:300])

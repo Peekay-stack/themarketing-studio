@@ -2669,6 +2669,8 @@
                       <option value="close">Close-up — tight</option>
                       <option value="product">Product hero — pack fills frame</option>
                     </select>
+                    <span style="font-size:10.5px; font-weight:800; letter-spacing:0.05em; text-transform:uppercase; color:#9AA1AC;">Place</span>
+                    <input data-row="{{ r.rowIdx }}" data-cell="place" value="{{ r.place }}" onChange="{{ editSceneChoice }}" placeholder="Only if this scene is NOT in the film’s location" title="Where this scene happens when it is somewhere other than the film’s main location. Its frame is drawn there instead of in the Location line. Leave empty for the film’s own location." style="min-width:190px; max-width:260px; border:1px solid #E6E3DC; border-radius:8px; padding:5px 9px; font-size:11.5px; color:#38414F; background:#fff; font-family:inherit;" />
                     <input data-row="{{ r.rowIdx }}" data-cell="beat_note" value="{{ r.beatNote }}" onChange="{{ editSceneChoice }}" placeholder="Direction for this beat, in your own words (optional)" style="flex:1; min-width:220px; border:1px solid #E6E3DC; border-radius:8px; padding:6px 10px; font-size:12px; color:#38414F; background:#fff; font-family:inherit;" />
                   </div>
                 </div>
@@ -2954,6 +2956,9 @@
                     </span>
                   </div>
                   <div style="font-size:12px; line-height:1.5; color:#6B7280;">{{ sc.desc }}</div>
+                  <sc-if value="{{ sc.hasPlace }}" hint-placeholder-val="{{ false }}">
+                  <div style="margin-top:3px; padding:0 0; font-size:11px; line-height:1.45; color:#1A8A7A; font-weight:700;">{{ sc.placeNote }}</div>
+                  </sc-if>
                   <sc-if value="{{ sc.isStale }}" hint-placeholder-val="{{ false }}">
                     <div style="margin-top:4px; font-size:11px; line-height:1.45; color:#B07A12; font-weight:700;">{{ sc.staleWhy }}</div>
                   </sc-if>
@@ -3093,6 +3098,9 @@
               </span>
             </div>
             <div style="padding:0 11px 8px; font-size:11.5px; line-height:1.5; color:#6B7280;">{{ sc.desc }}</div>
+            <sc-if value="{{ sc.hasPlace }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top:3px; padding:0 0; font-size:11px; line-height:1.45; color:#1A8A7A; font-weight:700;">{{ sc.placeNote }}</div>
+            </sc-if>
             <sc-if value="{{ sc.isStale }}" hint-placeholder-val="{{ false }}">
               <div style="padding:0 11px 8px; font-size:11px; line-height:1.45; color:#B07A12; font-weight:700;">{{ sc.staleWhy }}</div>
             </sc-if>
@@ -15967,6 +15975,7 @@ class Component extends DCLogic {
     const vo = String((vc && vc.vo) || '').trim(), budget = this.provMode() ? 0 : this.voBudget(this.state.prodDuration), out = [];
     if (vo && budget) out.push('THE CONCEPT’S VOICEOVER IS THE FILM’S SPINE: its sentences, in their order, must be heard across the scenes (as voiceover, or as the characters’ own lines in the language of the film), inside the speech budget above. The budget is what you spend on it: do not swap it for a thinner version, cut elsewhere first, and keep silence for the scenes that carry none of it.');
     if (budget) out.push('THE SIGN-OFF SCENE SPEAKS: the pack-shot scene carries the film’s payoff line spoken aloud (voiceover or a character). The film holds the pack-shot camera locked and still so the pack never grows or drifts, so never write a push-in, zoom or camera drift on the pack: any life comes from what is IN the frame beside it (a hand takes the pack or pours from it, a glass fills, steam rises), while the pack stays sharp, fully in view and in the same place, never defocused or behind a blurred foreground. Write this scene’s "camera" cell as a locked-off hold on the pack.');
+    out.push('PLACE: most scenes happen in the film’s main location and need no place. A scene that happens somewhere ELSE (a lab, a street, another room) gets a short "place" line saying where, written so a picture can be drawn from it; leave "place" empty for every scene in the main location. Do not invent places the story does not need: a one-room film stays one room. The frame is drawn from this line, so name the place the scene visibly shows.');
     out.push('If a concept beat is a rapid sequence (quick cuts of several different actions), the scene’s visual must name each of those actions in order, so each can be covered by its own shot; never replace them with one generic action.');
     out.push(this.LIMB_RULE + ' If one of the concept’s own moments needs such an action, keep the moment and change the framing.');
     return out.join(' ');
@@ -15992,7 +16001,7 @@ class Component extends DCLogic {
         const pre = this.brandPreamble('a film director writing a shootable script', this.state.producerBrandMode === 'general', !!provRec, true);
         if (!pre) { this.showToast(this.BRAND_PREAMBLE_MISSING); this.setState({ scriptWriting:false }); return; }
         const packSuper = this.brandName();
-        const prompt = pre + '\n\nConcept logline: "'+vc.logline+'". Concept beats: '+JSON.stringify(vc.scenes)+'. VO: "'+(vc.vo||'')+'". '+this.conceptEntertainText(vc)+'The finished film is '+dur+' long — write between '+minScenes+' and '+rng.max+' scenes — '+(beats ? 'the concept has '+beats+' beats, so one scene per beat is the natural count; ' : '')+'choose the number the story actually needs. NEVER repeat, copy or near-duplicate a scene to reach a count: every scene must show a different moment. No film may exceed '+rng.ceiling+' scenes: each shot is rendered separately and the shortest a shot can be is 4 seconds. Give timecodes that run continuously from 0s to '+dur+'. Every scene is rendered as its own shot, so each "visual" must be a self-contained, filmable description of what is on screen (who, where, what happens). '+this.VISUAL_RULES+' The film MUST include a pack-shot sign-off — a scene that shows the pack and carries the pack-shot super "'+(packSuper || 'this brand\u2019s name, written naturally — no other brand\u2019s')+'" followed by a short payoff line written for THIS film from its message (a benefit or a thought of the film\u2019s own; the brand\u2019s standing tagline only if it truly fits) — and that is normally the final scene. Only when the concept calls for a comeback AFTER the pack shot may a short closing button (a few seconds, no pack-shot super of its own) follow it; if you add one, put "beat_role":"button" on that row and on no other. Spoken lines are in the languages given by LANGUAGE OF THE WORK in THE BRAND, where natural; English if it gives none. Write every spoken line — the "text" of each "audio" entry AND the spoken words in the "dialogue" cell — in the native script of its language (Telugu in Telugu script, Hindi in Devanagari), never romanised into Latin, because the voices pronounce native script correctly but romanised text badly. In the "dialogue" cell, follow the native-script line with a short romanised gloss in round brackets so it stays readable. Only embedded English words and the on-screen "supr" stay in Latin.\n\nCASTING THE SOUND: when a person is on camera and would naturally speak, give them DIALOGUE in their own words — do not describe them with narration instead. Use the voiceover only to bridge between scenes or land the brand thought at the end. A film where every line is "vo" is wrong unless the concept is genuinely wordless observation; prefer a mix, with the recurring characters from the concept actually speaking to each other. EVERY scene needs an "audio" array — this is what actually gets voiced, so it must contain ONLY words to be spoken aloud. One entry per spoken line, in the order heard. Never put speaker names, stage directions, camera notes, SFX or on-screen text inside "text"; the performance note belongs in "emotion" and the character in "speaker". Use type "vo" for narration (the brand voice) and type "dialogue" for a character speaking on camera. A scene with no speech gets "audio": []. '+this.voBudgetNote(dur, n)+' '+this.deliveryRulesText(vc)+'\n\nReturn ONLY JSON: {"rows":[{"no":1,"tc":"0–5s","visual":"...","camera":"shot type & movement","dialogue":"human-readable script cell, e.g. Speaker (how it is said): the words","supr":"on-screen text","audio":[{"type":"dialogue","speaker":"Speaker","age":"adult","emotion":"how it is said","language":"en","text":"spoken words only"},{"type":"vo","emotion":"how it is said","language":"en","text":"spoken words only"}]}]}';
+        const prompt = pre + '\n\nConcept logline: "'+vc.logline+'". Concept beats: '+JSON.stringify(vc.scenes)+'. VO: "'+(vc.vo||'')+'". '+this.conceptEntertainText(vc)+'The finished film is '+dur+' long — write between '+minScenes+' and '+rng.max+' scenes — '+(beats ? 'the concept has '+beats+' beats, so one scene per beat is the natural count; ' : '')+'choose the number the story actually needs. NEVER repeat, copy or near-duplicate a scene to reach a count: every scene must show a different moment. No film may exceed '+rng.ceiling+' scenes: each shot is rendered separately and the shortest a shot can be is 4 seconds. Give timecodes that run continuously from 0s to '+dur+'. Every scene is rendered as its own shot, so each "visual" must be a self-contained, filmable description of what is on screen (who, where, what happens). '+this.VISUAL_RULES+' The film MUST include a pack-shot sign-off — a scene that shows the pack and carries the pack-shot super "'+(packSuper || 'this brand\u2019s name, written naturally — no other brand\u2019s')+'" followed by a short payoff line written for THIS film from its message (a benefit or a thought of the film\u2019s own; the brand\u2019s standing tagline only if it truly fits) — and that is normally the final scene. Only when the concept calls for a comeback AFTER the pack shot may a short closing button (a few seconds, no pack-shot super of its own) follow it; if you add one, put "beat_role":"button" on that row and on no other. Spoken lines are in the languages given by LANGUAGE OF THE WORK in THE BRAND, where natural; English if it gives none. Write every spoken line — the "text" of each "audio" entry AND the spoken words in the "dialogue" cell — in the native script of its language (Telugu in Telugu script, Hindi in Devanagari), never romanised into Latin, because the voices pronounce native script correctly but romanised text badly. In the "dialogue" cell, follow the native-script line with a short romanised gloss in round brackets so it stays readable. Only embedded English words and the on-screen "supr" stay in Latin.\n\nCASTING THE SOUND: when a person is on camera and would naturally speak, give them DIALOGUE in their own words — do not describe them with narration instead. Use the voiceover only to bridge between scenes or land the brand thought at the end. A film where every line is "vo" is wrong unless the concept is genuinely wordless observation; prefer a mix, with the recurring characters from the concept actually speaking to each other. EVERY scene needs an "audio" array — this is what actually gets voiced, so it must contain ONLY words to be spoken aloud. One entry per spoken line, in the order heard. Never put speaker names, stage directions, camera notes, SFX or on-screen text inside "text"; the performance note belongs in "emotion" and the character in "speaker". Use type "vo" for narration (the brand voice) and type "dialogue" for a character speaking on camera. A scene with no speech gets "audio": []. '+this.voBudgetNote(dur, n)+' '+this.deliveryRulesText(vc)+'\n\nReturn ONLY JSON: {"rows":[{"no":1,"tc":"0–5s","visual":"...","camera":"shot type & movement","dialogue":"human-readable script cell, e.g. Speaker (how it is said): the words","supr":"on-screen text","place":"empty, or where this scene happens only when it is NOT the main location","audio":[{"type":"dialogue","speaker":"Speaker","age":"adult","emotion":"how it is said","language":"en","text":"spoken words only"},{"type":"vo","emotion":"how it is said","language":"en","text":"spoken words only"}]}]}';
         // Anchors first, then the house rules, then the brief. Approved work shows the model what
         // "good" means here far better than any adjective, and the rules are corrections already
         // paid for once — repeating a mistake that was already flagged is the worst failure there is.
@@ -16233,6 +16242,39 @@ class Component extends DCLogic {
         : 'Nothing flagged: ' + dc.words + ' spoken words (budget about ' + dc.budget + ') and the sign-off speaks.'), null),
       h('div', { style:{ fontSize:11, color:'#9AA1AD', marginTop:4 } }, 'Each read is one model call; the Delivery row is free and updates as you edit. Approving is never blocked by what they find; it asks once when they found something serious.'));
   }
+  // Actions on the director's findings (FILM_PHASE5_AND_PLACE_PLAN.md G2). A finding that names something fixable gets one button that does it with the existing one-scene rewrite and a direction.
+  // Only when the person presses it; it replaces that scene's text exactly as "Rewrite scene" does. `slow-hook` -> open on the concept's own hook; `same-place` -> move the middle scene of the run (never the
+  // film's first scene, the sign-off, a button, or a scene that already has its own place) to a new place. null when nothing can be done.
+  findingAction(f){
+    const s = this.state, rows = s.fullScript || [], vc = s.videoConcept, bm = s.videoBeatMap;
+    if (!f || !rows.length) return null;
+    if (f.kind === 'slow-hook' && vc && String(vc.hook || '').trim()) {
+      return { label:'↻ Rewrite the opening on the hook', idx:0, direction:'Open the film on the concept’s own hook: "' + String(vc.hook).trim().replace(/[.\s]+$/, '') + '". Make it a visible action in the first seconds that one camera can film in one shot; keep the story, the people and the place unless the hook needs another.' };
+    }
+    if (f.kind === 'same-place' && bm && Array.isArray(bm.scenes)) {
+      const sc = bm.scenes, at = sc.findIndex(x => x && x.no === f.scene);
+      if (at < 0 || !sc[at].place) return null;
+      const tag = sc[at].place; let end = at;
+      while (end + 1 < sc.length && sc[end + 1] && sc[end + 1].place === tag) end++;
+      const mid = (at + end) / 2, cands = [];
+      for (let k = at; k <= end; k++) {
+        const i = rows.findIndex((r, j) => this.sceneNoInt(r, j) === sc[k].no);
+        if (i > 0 && !this.isBrandScene(i) && !this.hasOwnPlace(rows[i]) && this.beatRoleOf(rows[i]) !== 'button') cands.push({ i, d:Math.abs(k - mid) });
+      }
+      if (!cands.length) return null;
+      cands.sort((a, b) => a.d - b.d || a.i - b.i);
+      const i = cands[0].i;
+      return { label:'↻ Rewrite scene ' + this.sceneNo(rows[i], i) + ' in a new place', idx:i, direction:'Set this scene somewhere other than "' + tag + '": a different place the story could plausibly visit, or the same place at a different time of day, keeping the same people, wardrobe and story beat. Give it a "place" line for where it now happens.' };
+    }
+    return null;
+  }
+  runFindingAction = (idx, direction) => async () => {
+    if (this.state.rewritingScene != null) return;
+    const row = (this.state.fullScript || [])[idx];
+    if (this.state.scriptStatus === 'approved' && typeof window !== 'undefined' && window.confirm
+        && !window.confirm('This rewrites scene ' + this.sceneNo(row, idx) + ' of an approved script. Its frame (if drawn) will be out of date, and the director’s read will need reading again. Go ahead?')) return;
+    await this.rewriteScene(idx, direction)();
+  };
   beatMapPanel(){
     const h = React.createElement, s = this.state, bm = s.videoBeatMap, rows = s.fullScript || [];
     if (!rows.length) return null;
@@ -16266,7 +16308,8 @@ class Component extends DCLogic {
           sc.no === bm.carrier_scene ? h('b', { style:{ color:'#259821', marginLeft:6 } }, 'THE MESSAGE') : null,
           nc[sc.no] ? h('i', { style:{ color:'#6B7280', marginLeft:6 } }, '· no extra angles') : null,
           (sc.sequence && Array.isArray(sc.actions) && sc.actions.length > 1 && sc.time_mode !== 'montage') ? h('i', { style:{ color:'#B07A12', marginLeft:6 } }, '· a run of quick actions: ' + sc.actions.join(' · ')) : null)))),
-      ...((bm.findings || []).map((f, i) => line('• ' + f.note, '#B07A12', { fontWeight:700 }, 'bf' + i))),
+      ...((bm.findings || []).map((f, i) => { const act = this.findingAction(f), l = line('• ' + f.note, '#B07A12', { fontWeight:700 }, 'bf' + i);
+        return act ? h('div', { key:'bfa' + i, style:{ display:'flex', alignItems:'baseline', gap:8, flexWrap:'wrap' } }, l, btn(s.rewritingScene != null ? 'Rewriting…' : act.label, this.runFindingAction(act.idx, act.direction), false, s.rewritingScene != null)) : l; })),
       bm.time_passing ? line('The story is about time passing by repetition: show it as different days (light, clothes, what has changed), not as more angles on one moment.', '#41505F') : null,
       ...((bm.notes || []).map((n, i) => line(n, '#6B7280', {}, 'bn' + i))));
   }
@@ -16521,6 +16564,14 @@ class Component extends DCLogic {
   }
   // What the cast lock and every frame are told about the place: the person's own Location line when there is
   // one, otherwise the Location note cleaned of markdown and clipped -- never the whole plan raw.
+  // Where THIS scene's frame is drawn (FILM_PHASE5_AND_PLACE_PLAN.md G1): the scene's own `place` when the script gives it one (a scene that happens somewhere other than the film's location), else the film's
+  // Location line exactly as before. Without this every frame was told "Location: <the one kitchen>" even for a scene the script puts in a lab, and a weak picture cue reverted to the locked place (the round-1
+  // film's curd-and-paneer test, written in the lab, came out in the kitchen).
+  sceneLocation(row){
+    const own = String((row && row.place) || '').replace(/\s+/g, ' ').trim();
+    return own ? this.withoutPackMentions(own) : this.locationText();
+  }
+  hasOwnPlace(row){ return !!String((row && row.place) || '').trim(); }
   locationText(st){
     const s = st || this.state;
     const line = (s.videoLocationLine || '').trim();
@@ -16606,7 +16657,7 @@ class Component extends DCLogic {
   // change what the script says, so they do not drop an approved script back to "drafted".
   editSceneChoice = (e) => {
     const idx = +e.target.getAttribute('data-row'); const field = e.target.getAttribute('data-cell'); const val = e.target.value;
-    if (field !== 'beat_role' && field !== 'beat_note') return;
+    if (field !== 'beat_role' && field !== 'beat_note' && field !== 'place') return;
     this.setState(s => ({ fullScript: (s.fullScript || []).map((r, i) => {
       if (i !== idx) return r;
       const next = { ...r }; if (val) next[field] = val; else delete next[field];
@@ -16633,7 +16684,7 @@ class Component extends DCLogic {
     return parts.join('\n') || 'Ambient / natural sound';
   }
 
-  rewriteScene = (idx) => async () => {
+  rewriteScene = (idx, direction = '') => async () => {
     if (this.state.rewritingScene!=null) return;
     const row = this.state.fullScript[idx]; const vc = this.state.videoConcept;
     this.setState({ rewritingScene: idx });
@@ -16644,7 +16695,7 @@ class Component extends DCLogic {
         // A film written from a provocation keeps its film notes when one scene is rewritten (a wordless film must not grow speech).
         const provRec = this.provMode() ? this.videoProv() : null;
         const provSentence = provRec ? (' This film stands on an approved provocation (in your instructions): keep its film notes and sound language' + (((provRec.film || {}).vo_words === 0) ? '; there is NO speech in this film, so "audio" must be []' : '') + '.') : '';
-        const prompt = 'Rewrite ONE scene of a ' + (this.brandRef() || 'brand') + ' commercial script for a crew shooting in the market the brand sells in' + ', keeping continuity with the film logline "'+(vc?vc.logline:'')+'". Current scene: '+JSON.stringify(this.scriptForPrompt([row])[0])+'. The other scenes already show: '+JSON.stringify((this.state.fullScript||[]).filter((_r,j)=>j!==idx).map(r2=>r2.visual))+' — the rewritten scene must show a different moment from each of them. This scene runs about '+secs+' seconds, and a voice reads ~2 words per second, so all spoken "text" in this scene together must stay under '+Math.max(4, Math.round(secs*2))+' words. '+this.VISUAL_RULES+' '+this.LIMB_RULE+' The "audio" array holds ONLY spoken words — no speaker names, stage directions, SFX or on-screen text in "text" (those go in "speaker"/"emotion"); type is "vo" for narration or "dialogue" for a character. Any non-English spoken line — the "text" of each "audio" entry and the "dialogue" cell — is written in its own native script (Telugu in Telugu script), never romanised; in the "dialogue" cell add a short romanised gloss in round brackets.' + provSentence + ' Return ONLY JSON: {"no":'+row.no+',"tc":"'+row.tc+'","visual":"...","camera":"...","dialogue":"...","supr":"...","audio":[{"type":"vo","emotion":"warm","language":"en","text":"spoken words only"}]}';
+        const prompt = 'Rewrite ONE scene of a ' + (this.brandRef() || 'brand') + ' commercial script for a crew shooting in the market the brand sells in' + ', keeping continuity with the film logline "'+(vc?vc.logline:'')+'". Current scene: '+JSON.stringify(this.scriptForPrompt([row])[0])+'. The other scenes already show: '+JSON.stringify((this.state.fullScript||[]).filter((_r,j)=>j!==idx).map(r2=>r2.visual))+' — the rewritten scene must show a different moment from each of them. This scene runs about '+secs+' seconds, and a voice reads ~2 words per second, so all spoken "text" in this scene together must stay under '+Math.max(4, Math.round(secs*2))+' words. '+this.VISUAL_RULES+' '+this.LIMB_RULE+' The "audio" array holds ONLY spoken words — no speaker names, stage directions, SFX or on-screen text in "text" (those go in "speaker"/"emotion"); type is "vo" for narration or "dialogue" for a character. Any non-English spoken line — the "text" of each "audio" entry and the "dialogue" cell — is written in its own native script (Telugu in Telugu script), never romanised; in the "dialogue" cell add a short romanised gloss in round brackets.' + provSentence + (this.hasOwnPlace(row) ? ' This scene is set in "' + String(row.place).trim() + '", not in the film’s main location: keep it there unless the direction says otherwise.' : '') + (direction ? ' DIRECTION FOR THIS REWRITE (follow it): ' + direction : '') + ' The "place" is empty when the scene happens in the film’s main location, otherwise a short line saying where. Return ONLY JSON: {"no":'+row.no+',"tc":"'+row.tc+'","visual":"...","camera":"...","dialogue":"...","supr":"...","place":"","audio":[{"type":"vo","emotion":"warm","language":"en","text":"spoken words only"}]}';
         let raw = await this.complete(prompt, this.videoExtra());
         raw = String(raw).trim().replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();
         next = JSON.parse(raw.slice(raw.indexOf('{'), raw.lastIndexOf('}')+1));
@@ -16656,6 +16707,9 @@ class Component extends DCLogic {
       const merged = { ...r, ...next };
       // A frame note corrects one picture; a rewritten visual makes it a note about a scene that no longer exists.
       if (String(merged.visual || '').trim() !== String(r.visual || '').trim()) delete merged.frame_note;
+      // The place is part of what the model returns for a rewrite: an empty one means the film's main location; a reply with no place at all keeps the old one only while the picture is unchanged.
+      if (next && next.place !== undefined) { if (!String(next.place || '').trim()) delete merged.place; }
+      else if (String(merged.visual || '').trim() !== String(r.visual || '').trim()) delete merged.place;
       return merged;
     }) }));
   };
@@ -16869,10 +16923,10 @@ class Component extends DCLogic {
     const said = (r) => (Array.isArray(r.audio) && r.audio.length) ? r.audio.map(a => (a && a.text) || '').join(' ') : (r.dialogue || '');
     const outline = rows.map((r, i) => ({ no:r.no || i + 1, secs:this.sceneSecs(r), visual:r.visual || '', says:said(r),
       shots:this.activeShots(r).map(x => ({ job:x.job || '', visual:x.visual || '' })) }));
-    const body = { scene, scene_seconds:this.sceneSecs(row), is_signoff:this.isBrandScene(idx), allow_signoff:!!row.signoff_shots, plate_locked:!!s.videoPlateChoice,
+    const body = { scene, scene_seconds:this.sceneSecs(row), is_signoff:this.isBrandScene(idx), allow_signoff:!!row.signoff_shots, plate_locked:!!s.videoPlateChoice && !this.hasOwnPlace(row),
       pace:this.paceNow(), role:this.beatRoleOf(row) || (idx === 0 ? 'hook' : ''), message: (vc && vc.proposition) || s.videoObjective || '', tone:this.paceText().slice(0, 300),
       outline, scene_index:idx, ...(s.videoBeatMap ? { beat_map:s.videoBeatMap } : {}),
-      logline: vc ? (vc.logline || '') : '', characters:s.videoCharacters || '', location_line:this.locationText() || '', wardrobe:s.videoWardrobe || '',
+      logline: vc ? (vc.logline || '') : '', characters:s.videoCharacters || '', location_line:this.sceneLocation(row) || '', wardrobe:s.videoWardrobe || '',
       camera_notes:s.videoCamera || '', look_note:s.videoLookRef || '', prev_visual: idx ? (rows[idx - 1].visual || '') : '',
       next_visual: rows[idx + 1] ? (rows[idx + 1].visual || '') : '', brand_mode:s.producerBrandMode, ...this.videoExtra() };
     const r = await this.apiCall('/scene-shots', body);
@@ -17200,7 +17254,7 @@ class Component extends DCLogic {
     const note = (s.frameNote || '').trim();
     // The place comes from the short Location line (or the cleaned, clipped note) -- the whole location plan is a
     // production document, not a description of what the camera sees.
-    const locNote = this.locationText();
+    const locNote = this.sceneLocation(row);
     const crew = this.frameCrew(no);
     const prompt = [row.visual, row.camera ? 'Camera: ' + row.camera + '.' : '',
       locNote ? 'Location: ' + locNote : '',
@@ -17255,7 +17309,8 @@ class Component extends DCLogic {
     // lock image (which was built from those picks already), never the library's newest.
     if (s.videoCastChoice) { body.use_cast = true; body.cast_id = s.videoCastChoice; }
     else body.use_cast = false;
-    if (s.videoPlateChoice) body.plate_id = s.videoPlateChoice;
+    // The picked location photo is the FILM's place: a scene with its own place does not get it (it would pull the frame back to the locked room).
+    if (s.videoPlateChoice && !this.hasOwnPlace(row)) body.plate_id = s.videoPlateChoice;
     else body.use_plate = false;
     body.brand_mode = s.producerBrandMode;
     // For a shot the "match" is its master's frame itself: re-rendering shot 1 flags its other angles out of date.
@@ -17286,7 +17341,7 @@ class Component extends DCLogic {
   // WHY a frame is out of date (29 Oct, from the owner's first localhost test: every frame went "out of date" after the department notes were written, with no
   // reason shown and no way to re-render only those). A frame now also remembers a short fingerprint of each KIND of thing it was drawn from; comparing them with
   // today's says what changed. The recipe above is one hash and cannot be taken apart, so a frame drawn before this existed can only say "something changed".
-  FRAME_PART_LABELS = { words:'the scene’s words or the extra direction', dept:'a department note (DoP, lighting, props or wardrobe)', loc:'the Location line', look:'the look',
+  FRAME_PART_LABELS = { words:'the scene’s words or the extra direction', dept:'a department note (DoP, lighting, props or wardrobe)', loc:'the Location line or this scene’s place', look:'the look',
     cast:'the cast sheet or wardrobe lock', pack:'the pack tick', plate:'the location photo pick', mode:'the brand mode', match:'the shot it is matched to' };
   FRAME_DEPT_IDS = ['dop', 'lighting', 'props', 'wardrobe'];     // the departments whose notes are folded into every frame (see DEPTS: "feeds the frames")
   hashStr(t){ let h = 5381; for (let i = 0; i < t.length; i++) h = ((h * 33) ^ t.charCodeAt(i)) >>> 0; return h.toString(36); }
@@ -17298,7 +17353,7 @@ class Component extends DCLogic {
     const part = {
       words:[row.visual, row.camera, row.frame_note, s.frameNote, b.shot_size || ''],
       dept:this.frameCrew(no),
-      loc:[this.locationText()],
+      loc:this.hasOwnPlace(row) ? [this.sceneLocation(row), 'own'] : [this.locationText()],        // a scene with no place of its own hashes exactly as before, so frames drawn earlier keep an honest reason
       look:[b.look_note || '', b.style, b.camera_notes || '', b.ratio, prov ? [prov.id || '', ((prov.film || {}).visual_language || '')] : ''],
       cast:[b.characters || '', b.use_cast, b.cast_id || '', b.wardrobe || ''],
       pack:[b.include_pack === undefined ? null : b.include_pack, b.pack_id || ''],
@@ -20961,7 +21016,7 @@ class Component extends DCLogic {
         frameNote: r.frame_note || '', editFrameNote: this.editFrameNote(i),
         lines, hasLines: lines.length > 0, isSilent: lines.length === 0, willBeSilent,
         addVo: this.addSceneLine(i, 'vo'), addLine: this.addSceneLine(i, 'dialogue'),
-        isStale: stale, staleWhy: stale ? 'Out of date — ' + this.staleWhyText(i, f) + '.' : '',
+        isStale: stale, staleWhy: stale ? 'Out of date — ' + this.staleWhyText(i, f) + '.' : '', hasPlace: this.hasOwnPlace(r), placeNote: this.hasOwnPlace(r) ? 'Drawn in: ' + String(r.place).trim() : '',
         frameImg: f.url ? React.createElement('img', { src:f.url, onClick:this.openLightbox(f.url), style:{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', cursor:'zoom-in' } }) : null };
     });
 
@@ -26191,7 +26246,7 @@ class Component extends DCLogic {
   // or reworked script starts without the old script's choices (before, a tick on frame 3 followed you into the next
   // script in the same session and vanished on reload). None of these edits drop an approved script back to
   // "drafted" -- they change how a still is drawn, not what the script says.
-  SCENE_EXTRAS = ['frame_note', 'movement_class', 'shot_size', 'include_pack', 'match_no', 'beat_role', 'beat_note', 'shots', 'signoff_shots'];
+  SCENE_EXTRAS = ['frame_note', 'movement_class', 'shot_size', 'include_pack', 'match_no', 'beat_role', 'beat_note', 'shots', 'signoff_shots', 'place'];
   sceneNo(row, i){ return String(row && row.no != null ? row.no : i + 1); }
   // The script's Beat role cell: Auto ('') or one of these. Anything else counts as Auto, as on the server.
   BEAT_ROLE_IDS = ['hook', 'world', 'mechanism', 'turn', 'brand', 'button'];
@@ -26239,7 +26294,7 @@ class Component extends DCLogic {
         this.SCENE_EXTRAS.forEach(k => {
           if (BEAT.indexOf(k) >= 0) return;
           if (old[k] === undefined || old[k] === '' || out[k] !== undefined) return;
-          if (k === 'frame_note' && String(old.visual || '').trim() !== String(r.visual || '').trim()) return;
+          if ((k === 'frame_note' || k === 'place') && String(old.visual || '').trim() !== String(r.visual || '').trim()) return;       // a place belongs to the picture it was written for
           // Extra camera angles belong to the scene's picture: carried only while that picture is unchanged.
           if (k === 'shots' && (!Array.isArray(old[k]) || !old[k].length || String(old.visual || '').trim() !== String(r.visual || '').trim())) return;
           if (k === 'signoff_shots' && (old[k] !== true || String(old.visual || '').trim() !== String(r.visual || '').trim())) return;

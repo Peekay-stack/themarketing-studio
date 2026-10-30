@@ -91,8 +91,9 @@ def build_prompt(*, rows, seconds, logline="", message="", tone="", pace="", cha
         secs = _int((seconds or [])[i] if i < len(seconds or []) else 0, 4)
         role = str((roles or {}).get(scene_no(row, i)) or row.get("beat_role") or "")
         says = _clip(_says(row), 140)
+        own_place = _clip(row.get("place"), 90)
         lines.append(f"SCENE {scene_no(row, i)} ({secs} s" + (f", planned job: {role}" if role else "") + f"): {_clip(row.get('visual') or row.get('title') or row.get('desc'), 260)}"
-                     + (f' | says: "{says}"' if says else ""))
+                     + (f" | set in: {own_place}" if own_place else "") + (f' | says: "{says}"' if says else ""))
     prom = promises(concept)
     promised = ("\nWHAT THE CONCEPT PROMISED (the idea this film was chosen for; check the script keeps it):\n"
                 + "\n".join(f"  [{p['id']}] {p['label']}: {p['text']}" for p in prom) + "\n") if prom else ""
@@ -233,6 +234,16 @@ def validate(raw: dict, rows, roles=None, promises_in=None) -> dict:
         if len(delivery) < len(promises_in):
             notes.append(f"The review answered for {len(delivery)} of the concept's {len(promises_in)} promises; the rest are not judged.")
         findings = cf + findings
+        # A quiet opening that IS the concept's chosen hook is a choice, not a miss (FILM_PHASE5_AND_PLACE_PLAN.md G3): the check is two numbers (energy and intensity of scene 1) and fired on the grandmother
+        # film whose first scene delivers its hook (a drop rolling down a plate). Say so, keep the finding and the risk as they are.
+        first_no = out[0]["no"] if out else None
+        hook_here = next((d for d in delivery if d["id"] == "hook" and d["status"] == "delivered" and first_no is not None and d["scene"] == first_no), None)
+        if hook_here:
+            for f in findings:
+                if f.get("kind") == "slow-hook":
+                    f["by_design"] = True
+                    f["note"] = (f"The film opens quietly (scene {first_no}), and that scene is the concept's chosen hook ({_clip(hook_here['text'], 70)}), so this is a choice, not a miss: "
+                                 "make the first seconds faster only if you want to.")
     groups: dict[str, list[int]] = {}
     for sc in out:
         groups.setdefault(sc["beat"], []).append(sc["no"])

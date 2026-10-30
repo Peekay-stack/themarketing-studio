@@ -48,6 +48,32 @@ No automatic look after a render (it stays opt-in), no block on Approve, assembl
 ## Order and cost
 Phase 5 first (self-contained), then G1-G3, then the two paid trials (P5.5 about 4-6 cheap vision calls; G4 two images). I will quote each paid run before it starts. Every free step ends with the page checks, the Python tests and a wiring review like the two audits.
 
+## Status (30 Oct, built the same day as planned): everything free is BUILT; the two paid trials are NOT RUN
+| # | State |
+|---|---|
+| P5.1-P5.3 | **Built** (`takeqa.frames_jpeg`, `framecheck.vision_prompt(frames=3)` / `look_many`, `/take-look` `frames`, the page's Look sends 3). A new issue id `drift` ("Changes between frames") exists only for a look at several frames. 15 new Python checks, 13 page checks. |
+| P5.4 | **Built**: "Look at chosen clips (n) · about $x–$y" on the Shots step, one confirm, one clip after another, stops at the first failure, adds notes only. |
+| G1 | **Built**: a scene's own `place` (writer rule + JSON field, script table input, card note "Drawn in: ...", frame prompt and fingerprint, location photo off for that scene, rewrite and shot planner told, director's read told). Frames of scenes with NO place hash and prompt exactly as before: **92 recipes and 92 fingerprints identical to the pre-change code on the three real saved films.** 33 page checks. |
+| G2 | **Built**: "Rewrite the opening on the hook" and "Rewrite scene N in a new place" on the director's findings (only when pressed; a confirm on an approved script). |
+| G3 | **Built**: a quiet opening that IS the concept's delivered hook says so ("a choice, not a miss"); the finding and the risk are unchanged. |
+| P5.5 | **Prepared, NOT run** (needs your OK on the cost): `p55_calibrate.py`, 8 calls. |
+| G4 | **Not run** (needs your OK; see the cost note). |
+
+### What the free preview of the calibration clips showed (seen)
+Frames the three-frame look would send, taken from single shots of the round-1 film (cut points found first, so every clip is ONE shot):
+- **The arm** (scene 1, shot 2): in all three frames the forearm ends in a stump against the mouth and no hand is drawn. One middle frame would have caught this too.
+- **The pack** (sign-off master): across the three frames the pack GROWS and slides to the front, ending large and out of focus. **A single middle frame shows a normal-looking pack; only the change across frames shows it.** This is the case the three-frame look is for. **Why it happened (code + saved film):** that scene was an opted-in sign-off (`signoff_shots: true`, with an extra "product" shot), and for an opted-in sign-off the render's locked-still hold goes on the LAST shot only (a deliberate rule, tested in `test_coverage_plan.py`); the master kept the script's own camera cell, which read "Close-up on the pack, gentle rack focus to the doorway behind". So the script asked for the focus to leave the pack. The Phase 2 writer rule that the sign-off's camera cell reads as a locked-off hold on the pack addresses that cause; the render rule is unchanged and still leaves the non-last shots of an opted-in sign-off free to move (an open design question for you).
+- **A good clip** (the lab): clean in all three frames.
+So the calibration asks the right question: does the model call the pack GROWTH and the arm a defect (with the page's brief), and leave the good clips alone.
+
+### Wiring review of this batch (read from the code, then tested)
+- **Where the film-wide Location still applies, on purpose:** the cast-and-location lock (`castRefBody`, `castSig`), the department prompts (`want location`) and the location-photo card say. A scene's own place changes only that scene's frame prompt, the fingerprint, the shot planner's context and the director's read.
+- **`place` as a drawing choice (`SCENE_EXTRAS`):** stripped from the prompts built from the script (so a rework cannot lose it) and restored by `keepSceneExtras` while the scene's picture is unchanged, at BOTH of its callers (the whole-script rework and the review's Apply); editing it does not send an approved script back to draft; it is saved with the film (`full_script` is stored whole; a round-trip test covers it).
+- **Staleness:** a changed place marks that scene's frame out of date with its own reason; a scene with no place hashes exactly as before (92 + 92 identical on the real films). The director's read is flagged out of date by a change of picture, not by a change of place (a place edit does not make a read stale; the frame banner does).
+- **Not touched:** the backend frame, still and clip routes (the place travels inside the prompt text and the existing `use_plate` flag), the render prompts, the cast lock image, the Edit room (a cutdown is written from the script without the place; it is not drawn).
+- **Phase 5:** `drift` is accepted only for a look at several frames; `/take-look` without `frames` is byte for byte the old single-frame call (test); the batch button shares the guard with the clip batch; no automatic look anywhere.
+- **Known limit (G1):** the cast-and-location reference image is still one image that carries a place, so a scene in another place leans on its prompt against that image (the round-1 lab scene worked, the weaker curd-and-paneer scene did not). G4 measures this on real images and is not run.
+
 ## Owner decisions needed
 1. G1: per-scene `place` as built above, or keep one location per film and only improve the advice?
 2. G2: a rewrite button that replaces the scene text (as "Rewrite this scene" does), or a proposal you accept first?

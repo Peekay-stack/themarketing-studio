@@ -175,5 +175,22 @@ vd = lambda r: [x for x in r["verdicts"] if x["scene"] == 2][0]
 check("route /film-review: with no run flag the pace rule cuts the extra shot on a 5 s Standard scene (as before)", vd(r_plain)["verdict"] == "cut" and vd(r_plain).get("by") == "pace", str(vd(r_plain)))
 check("route /film-review: with the director's read marking scene 2 a run of quick actions the review KEEPS the shot the proposer made", vd(r_seq)["verdict"] == "keep" and not any(f["kind"] == "over-budget" for f in r_seq["stats"]["findings"]), str(vd(r_seq)) + str(r_seq["stats"]["findings"]))
 
+# ---- the quiet opening that IS the concept's hook (G3) ---------------------------------------------------------------------------------------------
+quiet = raw(scenes=[{"no": 1, "purpose": "hook", "intensity": 1, "place": "kitchen", "energy": 1, "change": "learns", "beat": "a"}, {"no": 2, "purpose": "tests", "intensity": 2, "place": "lab", "energy": 2, "change": "x", "beat": "b"},
+                    {"no": 3, "purpose": "turn", "intensity": 3, "place": "street", "energy": 2, "change": "y", "beat": "c"}])
+hook_ok = fd.validate({**quiet, "concept": [{"id": "hook", "status": "delivered", "scene": 1}]}, ROWS, {}, P)
+sh = [f for f in hook_ok["findings"] if f["kind"] == "slow-hook"]
+check("slow-hook: when the concept's hook is delivered in scene 1 the finding says the quiet opening is a choice, names the hook, keeps the finding and flags it by design",
+      len(sh) == 1 and sh[0].get("by_design") is True and "chosen hook" in sh[0]["note"] and "drop of milk" in sh[0]["note"] and "a choice, not a miss" in sh[0]["note"], sh)
+check("slow-hook by design still counts toward the risk: the risk is exactly what the same read gives with no promises at all (only the wording changed)", hook_ok["engagement"]["risk"] == fd.validate(quiet, ROWS, {})["engagement"]["risk"] and hook_ok["engagement"]["risk"] != "low", hook_ok["engagement"])
+hook_late = fd.validate({**quiet, "concept": [{"id": "hook", "status": "delivered", "scene": 2}]}, ROWS, {}, P)
+hook_flat = fd.validate({**quiet, "concept": [{"id": "hook", "status": "flattened", "scene": 1, "note": "weaker"}]}, ROWS, {}, P)
+hook_none = fd.validate(quiet, ROWS, {})
+plain_note = [f for f in hook_none["findings"] if f["kind"] == "slow-hook"][0]["note"]
+check("slow-hook: the generic warning stays when the hook is delivered in another scene, flattened, or when there are no promises at all",
+      all("by_design" not in f and "a choice, not a miss" not in f["note"] for r_ in (hook_late, hook_flat, hook_none) for f in r_["findings"] if f["kind"] == "slow-hook") and "must earn the next five" in plain_note, plain_note)
+# ---- the director's read is told a scene's own place ----------------------------------------------------------------------------------------------------
+pp = fd.build_prompt(rows=[{"no": 1, "tc": "0-6s", "visual": "A boy drinks."}, {"no": 2, "tc": "6-12s", "visual": "A technician reads a vial.", "place": "A dairy lab at dawn"}], seconds=[6, 6])
+check("director's read prompt: a scene with its own place is given 'set in: <place>', a scene without one is not", "SCENE 2 (6 s): A technician reads a vial. | set in: A dairy lab at dawn" in pp and "SCENE 1 (6 s): A boy drinks.\n" in pp and "set in:" not in pp.split("SCENE 2")[0], pp[pp.index("THE SCRIPT"):][:300])
 print("\n%d failure(s)" % len(fails))
 sys.exit(1 if fails else 0)
