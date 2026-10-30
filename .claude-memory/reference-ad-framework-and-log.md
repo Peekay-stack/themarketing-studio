@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 188571ea-55a9-4350-b9a0-481c7a9d13b2
-  modified: 2026-10-30T06:38:53.304Z
+  modified: 2026-10-30T06:46:17.002Z
 ---
 
 The owner will share real ads that work; for each we ask the same nine questions in builder order (concept, script, shoot board, shots, sound design, music, voice-over, casting, location, plus brand/CTA), compare with our rules (CONFIRMS / CONTRADICTS / EXTENDS / OUTSIDE), and only then consider a change.
@@ -21,6 +21,8 @@ The owner will share real ads that work; for each we ask the same nine questions
 **Update 30 Oct, third (commit `2ac70e8`):** Entry 006 Good Knight Low Smoke Coil (sYdOy6ZrJMc, 29.8 s, brand channel, captions legible Hindi): dialogue joke, elderly couple in one dim room, spoken hook in 1st second, brand only at 66 %, 4.4 shots/10 s = the first ad inside our Fast band, 1 of 13 shots <=1.4 s, sound lifts up to 25 dB at the claim, two end cards. It is the NEAREST to Heritage's style so far. It broke the "what carries the message explains brand timing" idea (demoted); new hypothesis C17: brand early when the product is in the story world from the first picture, late when it arrives as the answer. New checks: C19 `takeqa` black threshold (15) vs a night look (mean 25-33), C20 compare our sign-off hold with the ads' 3-6 s cards. Open questions now Q1-Q11 (Q10 low-key night look, Q11 dialogue scenes). 5 patterns: reversal+stake 5/5, one place 5/5, sub-2 s shots 5/5, pace-as-curve 3/5, closing hold 3-6 s 5/5.
 
 **Update 30 Oct, fourth (commit `b153bbe`):** Entry 007 IPL on Set Max "Manoranjan Ka Baap" (AHByZLDbPiw, 75.8 s tune-in promo, a montage): 38 shots on a curve (4.3 then ~7 per 10 s), ~10 places, ~12 characters, loud continuous sound, no brand until the TV reveal at 87 %, a 2.7 s white card with a start date. Words not recoverable. Brand timing now 2 early vs 4 late, C17 fits 6 of 6. New C21 (montage structure, outside today), Q12 (montage/tune-in promos in scope?). Patterns now over 6 ads; sub-2 s shots 5 of 5 verified; pace-as-curve 4 of 6; held closing card 2.7-5.8 s 6 of 6.
+
+**Update 30 Oct, fifth (commit `230a661`):** Entry 008 CRED "Not everyone gets it" with Bappi Lahiri (qEqPM7sYFzg, 46 s): the first ad in our STANDARD pace band (3.3 shots/10 s, locked-off camera, median frame change 0.19), a dim one-room audition spoof, panel reaction shots held ~4 s, a corner logo bug from 1 s, a mid-film brand card (56 %), a 50 dB sound drop before the 3.4 s end card (app-download CTA), the product never shown. Seven ads read; **none is in our Calm band, none Telugu/heritage** (Q5). New: pattern 7 (a quiet beat at or before the closing card: 004, 005, 008), C22 (takeqa "barely moves" vs held reaction shots), C23 (mid-film card), C24 (cut meter misses fades/dissolves), Q13 (celebrity-as-concept ads: score structure only?). **Measurement lessons:** a screenshot right after a seek can show black or YouTube's end-screen suggestions (frame not rendered): wait ~2 s and measure real brightness with the canvas; the meter counts hard cuts only (framework protocol 2c).
 
 **Rules:** evidence levels MEASURED / SEEN / READ / INFERRED / OWNER-REPORTED / NOT JUDGED. I cannot hear: never judge voice, music genre or lyrics; sound is measured only. One ad is a hypothesis, three agreeing ads a pattern, the owner decides, the log is append-only.
 
