@@ -5,8 +5,11 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 188571ea-55a9-4350-b9a0-481c7a9d13b2
-  modified: 2026-10-28T10:15:01.546Z
+  modified: 2026-10-30T13:02:30.535Z
 ---
+
+## UPDATE 30 Oct (night) -- MONDAY 2 NOV STARTS WITH [[craft-layer-monday-start]]
+The 30 Oct work was the owner's reference-ads learning log (15 ads read, all 17 questions answered, kept in memory: [[reference-ad-framework-and-log]], [[ad-learning-log]]) and a PLAN (nothing built) for a craft layer that makes TMS films memorable: [[film-craft-layer-plan]]. Monday's first move: ask the owner the 5 pending decisions, then Phase A. Small free checks that can be done before then are listed in the Monday note. Branch `film-engagement-2` (plan commit `521c6ac`) is pushed, not merged, not live.
 
 ## UPDATE 29 Oct (end of day) -- READ [[film-engagement-2-plan]] FIRST
 Branch `coverage-fixes` (A1-A8, worktree `C:\Users\punie\hms-fixes`) and branch `film-engagement-2` (Phases 1-4 of the boring-film plan, same worktree, off `coverage-fixes`) are pushed, NOT merged, NOT live; `coverage` is an ancestor (fast-forward). Owner has NOT yet tested either on a new film. Open for the owner: test batch 1; English voiceover lines in a Telugu film?; is the Approve confirm right (or warning only)?; Phase 5 (optional vision checks) and the one-kitchen/slow-hook gap are the next candidates. Plan + results + audit: `FILM_CONSOLIDATED_PLAN.md` sections 9-12.
