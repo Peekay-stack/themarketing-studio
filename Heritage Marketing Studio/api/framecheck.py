@@ -20,8 +20,9 @@ import os
 import re
 
 ISSUE_IDS = ("collage", "extra-people", "missing-people", "anatomy", "text", "mismatch", "other")
+MOTION_ISSUE_IDS = ISSUE_IDS + ("drift",)      # a look at SEVERAL frames of one clip may also name a change between them
 ISSUE_LABELS = {"collage": "Pasted panels", "extra-people": "Extra person", "missing-people": "Person missing", "anatomy": "Anatomy",
-                "text": "Unwanted text", "mismatch": "Not the shot", "other": "Other"}
+                "text": "Unwanted text", "mismatch": "Not the shot", "other": "Other", "drift": "Changes between frames"}
 MEDIA_TYPES = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".webp": "image/webp", ".gif": "image/gif"}
 
 
@@ -29,8 +30,9 @@ def model_name() -> str:
     return os.environ.get("FRAMECHECK_MODEL") or os.environ.get("GEN_MODEL", "claude-opus-4-8")
 
 
-def vision_prompt(*, description: str, cast: str = "", wardrobe: str = "", pack_expected: bool = False) -> str:
-    """The brief for the vision model: look at the frame and report only real defects against what the shot was meant to show."""
+def vision_prompt(*, description: str, cast: str = "", wardrobe: str = "", pack_expected: bool = False, frames: int = 1) -> str:
+    """The brief for the vision model: look at the frame and report only real defects against what the shot was meant to show. With `frames` > 1 the attached pictures are frames of ONE clip in
+    time order and the brief is about what CHANGES between them (a limb that stretches, a pack that smears): the single-frame brief is returned byte for byte as before when `frames` is 1."""
     desc = " ".join(str(description or "").split())[:600]
     ctx = []
     if cast:
@@ -38,6 +40,25 @@ def vision_prompt(*, description: str, cast: str = "", wardrobe: str = "", pack_
     if wardrobe:
         ctx.append("WARDROBE: " + " ".join(str(wardrobe).split())[:300])
     ctx.append("A product pack " + ("SHOULD" if pack_expected else "is not required to") + " appear in this frame.")
+    if frames and int(frames) > 1:
+        n = int(frames)
+        return (
+            f"You are the quality-control reviewer of a film. Look at the {n} attached frames. They are taken from ONE short video clip, in time order (early, middle and late), and the clip is about to be paid for in a cut. "
+            "Report only REAL defects that would make a viewer notice something wrong, judged against what the shot was meant to show and ABOVE ALL against what CHANGES between the frames. Do not critique style, taste or composition.\n\n"
+            f"WHAT THIS SHOT SHOULD SHOW: {desc}\n" + "\n".join(ctx) + "\n\n"
+            "CHECK, in order:\n"
+            "1. `drift` — something changes between the frames that should not: an arm, hand or leg that stretches, splits, merges, grows or vanishes; an arm or hand that crosses the face; a face that turns into someone else; "
+            "the product pack changing shape, size, colour or label, smearing or going out of focus; an object that appears or disappears. Name the frames (early, middle, late).\n"
+            "2. `anatomy` — in ANY frame, a body that is wrong: a wrong number of limbs, legs or arms of clearly different lengths, hands or feet with the wrong number of fingers or toes, a merged or distorted body, a broken face.\n"
+            "3. `collage` — a frame is two or more separate pictures pasted together, or one part of it is at a clearly different scale or perspective from the rest.\n"
+            "4. `extra-people` — a person who is not in the description or the cast.\n"
+            "5. `missing-people` — someone the description requires is absent.\n"
+            "6. `text` — readable words, captions, signs or a logo that the description did not ask for (the product's own printed label on a pack is allowed).\n"
+            "7. `mismatch` — the clip shows something clearly different from the description.\n"
+            "8. `other` — any other clear defect.\n\n"
+            "Return ONLY JSON, no prose and no markdown: {\"verdict\":\"ok\" or \"check\",\"issues\":[{\"id\":\"drift\",\"note\":\"one plain sentence naming what is wrong, where and in which frame\"}],"
+            "\"seen\":\"one sentence: what happens across the frames\"}. If the clip is fine, return {\"verdict\":\"ok\",\"issues\":[],\"seen\":\"...\"}. "
+            "An issue you are not sure of is not an issue: leave it out.")
     return (
         "You are the quality-control reviewer of a film's storyboard. Look at the attached frame, which is about to be animated into a video clip at real cost. "
         "Report only REAL defects that would make a viewer notice something wrong, measured against what the shot was meant to show. Do not critique style, taste or composition.\n\n"
@@ -71,30 +92,44 @@ def parse(raw: str):
     return data if isinstance(data, dict) else None
 
 
-def clean_issues(raw) -> list[dict]:
-    """Issues from a vision reply: only known ids, each with a note of real length, at most one per id, at most six."""
+def clean_issues(raw, motion: bool = False) -> list[dict]:
+    """Issues from a vision reply: only known ids (`drift` too when the look was at several frames), each with a note of real length, at most one per id, at most six."""
+    known = MOTION_ISSUE_IDS if motion else ISSUE_IDS
     out, seen = [], set()
     for it in (raw.get("issues") if isinstance(raw, dict) and isinstance(raw.get("issues"), list) else []):
         if not isinstance(it, dict):
             continue
         iid = str(it.get("id") or "").strip().lower().replace("_", "-")
         note = " ".join(str(it.get("note") or "").split())[:240]
-        if iid in ISSUE_IDS and iid not in seen and len(note) >= 8:
+        if iid in known and iid not in seen and len(note) >= 8:
             seen.add(iid)
             out.append({"id": iid, "label": ISSUE_LABELS[iid], "verdict": "check", "note": note})
     return out[:6]
 
 
-def result(raw) -> dict:
+def result(raw, motion: bool = False) -> dict:
     """One result for a frame from the parsed reply: {verdict: ok|check, checks: [{id, label, verdict, note}], seen}. `check` exactly when at least one usable issue was named
     (a reply that says `check` but names nothing usable is `ok`: an unexplained flag is not shown to a person)."""
-    checks = clean_issues(raw)
+    checks = clean_issues(raw, motion)
     seen = " ".join(str((raw or {}).get("seen") or "").split())[:240] if isinstance(raw, dict) else ""
     return {"verdict": "check" if checks else "ok", "checks": checks, "seen": seen}
 
 
 def media_type(path: str) -> str:
     return MEDIA_TYPES.get(os.path.splitext(str(path or ""))[1].lower(), "image/jpeg")
+
+
+def look_many(images: list, mime: str, prompt: str, client=None) -> tuple[str, dict]:
+    """The one model call for SEVERAL frames of one clip, in time order, plus the brief (P5.2). Same reply and usage shape as `look`."""
+    if client is None:
+        import anthropic
+        client = anthropic.Anthropic()
+    content = [{"type": "image", "source": {"type": "base64", "media_type": mime, "data": base64.b64encode(d).decode("ascii")}} for d in images]
+    content.append({"type": "text", "text": prompt})
+    resp = client.messages.create(model=model_name(), max_tokens=700, messages=[{"role": "user", "content": content}])
+    text = "".join(b.text for b in resp.content if getattr(b, "type", None) == "text").strip()
+    u = getattr(resp, "usage", None)
+    return text, {"input_tokens": getattr(u, "input_tokens", 0) or 0, "output_tokens": getattr(u, "output_tokens", 0) or 0}
 
 
 def look(data: bytes, mime: str, prompt: str, client=None) -> tuple[str, dict]:

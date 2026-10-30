@@ -77,6 +77,20 @@ def check_clip(exe: str, path: str, ordered_seconds: float = 0.0, prev_path: str
     return {"checks": checks, "measured": measured}
 
 
+def frames_jpeg(exe: str, path: str, fractions=(0.25, 0.5, 0.75)) -> list:
+    """Frames of a clip at the given fractions of its length, as JPEG bytes in time order (FILM_PHASE5_AND_PLACE_PLAN.md P5.1). Nothing is written to disk. A frame that cannot be taken is left out,
+    so the list may be shorter than `fractions` (or empty for an unreadable clip). A limb that stretches or a pack that smears is a change over TIME: one middle frame can miss it."""
+    d = filmcut.probe_seconds(exe, path)
+    if d <= 0:
+        return []
+    out = []
+    for f in fractions:
+        r = subprocess.run([exe, "-y", "-ss", f"{d * float(f):.3f}", "-i", path, "-frames:v", "1", "-f", "image2pipe", "-vcodec", "mjpeg", "-q:v", "3", "-"], capture_output=True)
+        if r.returncode == 0 and r.stdout[:2] == b"\xff\xd8":
+            out.append(r.stdout)
+    return out
+
+
 def middle_frame_jpeg(exe: str, path: str) -> bytes | None:
     """The middle frame of a clip as JPEG bytes (for the optional model look), or None. Nothing is written to disk."""
     d = filmcut.probe_seconds(exe, path)

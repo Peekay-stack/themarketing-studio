@@ -12060,6 +12060,7 @@ class Component extends DCLogic {
     rewritingScene: null,
     sceneFrames: {},               // { [idx]: {status:'idle|rendering|done|error', url} }
     framesBatch: false,
+    lookBatch: false,              // "Look at chosen clips" is running (FILM_PHASE5_AND_PLACE_PLAN.md P5.4)
     shoot: {},                     // { deptId: {status:'idle|drafting|done', text} }
     producedUrl: null,
     docBusy: '',                   // '', 'brief', 'script'
@@ -17682,7 +17683,7 @@ class Component extends DCLogic {
   // ---------- the film builder, slice S5: take QC ----------
   // Cheap, deterministic checks on a finished clip (POST /take-check: does it play, does the picture move, is it black, as long as ordered, a repeat of the previous shot), run on its own when a take
   // finishes, plus an optional model look at the middle frame (POST /take-look). Advisory chips on the take: nothing here blocks Use, assemble or Promote.
-  CLIP_LOOK_IDS = ['collage', 'extra-people', 'missing-people', 'anatomy', 'text', 'mismatch', 'other', 'look'];
+  CLIP_LOOK_IDS = ['collage', 'extra-people', 'missing-people', 'anatomy', 'text', 'mismatch', 'other', 'drift', 'look'];
   // The notes still standing on a take: flagged checks the person has not accepted.
   clipChecksOf(tk){ return (tk && !tk.check_accepted && Array.isArray(tk.checks)) ? tk.checks.filter(c => c && c.verdict === 'check') : []; }
   // Every shot that is in the film, in script order: [{idx, k, key}].
@@ -17728,7 +17729,8 @@ class Component extends DCLogic {
     if (!tk || tk.status !== 'done' || !tk.url || !row || (s.takeChecking || {})[id]) return;
     const rr = k ? this.shotRow(row, k) : row;
     this.setState(st => ({ takeChecking:{ ...st.takeChecking, [id]:true } }));
-    const r = await this.apiCall('/take-look', { url:tk.url, description:(rr && rr.visual) || '', cast:s.videoCharacters || '', wardrobe:s.videoWardrobe || '', pack_expected:!!(rr && this.packOnShot(rr)) });
+    // THREE frames (25 / 50 / 75 %) in one call and a brief about what changes between them: a stretched arm or a smeared pack is a change over time, and one middle frame can miss it (FILM_PHASE5_AND_PLACE_PLAN.md P5.3).
+    const r = await this.apiCall('/take-look', { url:tk.url, frames:3, description:(rr && rr.visual) || '', cast:s.videoCharacters || '', wardrobe:s.videoWardrobe || '', pack_expected:!!(rr && this.packOnShot(rr)) });
     const d = (r && r.data) || {};
     this.setState(st => {
       const tc = { ...st.takeChecking }; delete tc[id];
@@ -17739,8 +17741,37 @@ class Component extends DCLogic {
       return { takeChecking:tc, videoBuilder:{ ...b, takes:{ ...b.takes, [fk]:b.takes[fk].map(x => x.id === id ? { ...x, checks:rest.concat(looked), check_accepted:false } : x) } } };
     });
     if (!r || !r.ok) this.showToast(d.detail || 'Couldn’t look at that clip — try again.', 'warn');
+    return !!(r && r.ok);
   };
   acceptClipChecks = (idx, k, id) => () => this.patchClipTake(this.frameKey(idx, k), id, { check_accepted:true });
+  // "Look at all chosen clips" (FILM_PHASE5_AND_PLACE_PLAN.md P5.4): the same three-frame look on every CHOSEN clip that has not had one yet, one after another, only when asked, after one confirm that says how
+  // many and about what it costs. Nothing runs by itself and nothing is blocked by what it finds.
+  LOOK_USD = { draft:[0.02, 0.03], final:[0.03, 0.05] };       // per clip: 3 frames at 640x360 (about 300 image tokens each) or 1280x720 (about 1,200 each), the brief and a short answer, at the model's price
+  chosenToLook(){
+    const s = this.state, b = this.builderOf(s.videoBuilder), out = [];
+    this.activeShotKeys().forEach(({ idx, k, key }) => {
+      const tk = (b.takes[key] || []).find(x => x.id === b.chosen[key]);
+      if (tk && tk.status === 'done' && tk.url && !(tk.checks || []).some(c => this.CLIP_LOOK_IDS.indexOf(c.id) >= 0)) out.push({ idx, k, id:tk.id });
+    });
+    return out;
+  }
+  lookCostText(n){ const r = this.LOOK_USD[this.builderTierNow()] || this.LOOK_USD.draft; return n ? 'about $' + (n * r[0]).toFixed(2) + '–$' + (n * r[1]).toFixed(2) : ''; }
+  lookAllChosen = async () => {
+    const todo = this.chosenToLook();
+    if (!todo.length || this.state.lookBatch || this.state.clipBatch) return;
+    const msg = 'Look at ' + todo.length + ' chosen clip' + (todo.length > 1 ? 's' : '') + ' for stretched limbs, a smeared pack and other defects? One model call each, three frames per clip, ' + this.lookCostText(todo.length) + ' in all. They run one after another and only add notes: nothing is blocked.';
+    if (typeof window !== 'undefined' && window.confirm && !window.confirm(msg)) return;
+    this.setState({ lookBatch:true });
+    let done = 0;
+    try {
+      for (const x of todo) { if (!(await this.lookClipTake(x.idx, x.k, x.id)())) break; done++; }       // a failed look (no key, a server error) stops the batch: it would fail the same way for every clip
+    } finally {
+      this.setState({ lookBatch:false });
+    }
+    const b = this.builderOf(this.state.videoBuilder);
+    const flagged = todo.filter(x => { const tk = (b.takes[this.frameKey(x.idx, x.k)] || []).find(t => t.id === x.id); return tk && (tk.checks || []).some(c => this.CLIP_LOOK_IDS.indexOf(c.id) >= 0 && c.verdict === 'check'); }).length;
+    this.showToast('Looked at ' + done + ' clip' + (done === 1 ? '' : 's') + ': ' + (flagged ? flagged + ' with something to check (see the notes on each take).' : 'nothing to check.'), flagged ? 'warn' : 'ok');
+  };
   // ---------- the film builder, slice S4: CONTINUITY (chain) ----------
   // "Continue" makes a shot start from where the clip before it ENDED instead of from its own storyboard frame: the last picture of the previous shot's chosen clip (same scene only: a new scene is a new
   // place), and, for a long shot made of several pieces, the last picture of the piece before each. Off by default (a shot is made from its approved frame, as always); the take records how it was made.
@@ -18193,6 +18224,9 @@ class Component extends DCLogic {
           style:{ width:64, border:'1px solid #C9CEDA', borderRadius:6, padding:'3px 6px', fontSize:12 } }),
         this.budgetCap() > 0 ? h('span', { style:{ fontWeight:700, color:spent > this.budgetCap() ? '#C0392B' : (spent >= 0.8 * this.budgetCap() ? '#B07A12' : '#1A8A7A') } },
           Math.round(spent / this.budgetCap() * 100) + '% used' + (spent > this.budgetCap() ? ' — over' : '')) : null) : null,
+      this.chosenToLook().length ? h('button', { onClick:this.lookAllChosen, disabled:!!s.lookBatch || !!s.clipBatch, title:'Optional, one model call per clip (' + this.lookCostText(this.chosenToLook().length) + '): looks at three frames of each chosen clip that has not been looked at, for stretched limbs, a smeared pack and other defects. Only adds notes.',
+        style:{ border:'1px solid #C9CEDA', background:'#fff', color:'#17325E', borderRadius:8, padding:'5px 12px', fontSize:12, fontWeight:700, cursor:(s.lookBatch || s.clipBatch) ? 'default' : 'pointer', opacity:(s.lookBatch || s.clipBatch) ? 0.55 : 1 } },
+        s.lookBatch ? 'Looking…' : 'Look at chosen clips (' + this.chosenToLook().length + ') · ' + this.lookCostText(this.chosenToLook().length)) : null,
       h('span', { style:{ marginLeft:'auto' } }, h('button', { onClick:this.generateMissingClips, disabled:!todo.length || !!s.clipBatch, style:{ border:'1px solid #259821', background:'#259821', color:'#fff', borderRadius:8, padding:'5px 12px', fontSize:12, fontWeight:700,
         cursor:(!todo.length || s.clipBatch) ? 'default' : 'pointer', opacity:(!todo.length || s.clipBatch) ? 0.55 : 1 } }, s.clipBatch ? 'Generating…' : 'Generate all missing (' + todo.length + ')' + (est != null && todo.length ? ' · about ' + this.usd(est) : ''))));
   }
@@ -18241,7 +18275,7 @@ class Component extends DCLogic {
           (tk.status === 'done' && tk.checks && tk.checks.length) ? (flags.length ? chip('! ' + flags.length, '#B07A12') : chip('✓ checked', '#1A8A7A')) : null,
           (!isChosen && tk.status === 'done') ? btn('Use', this.chooseClipTake(idx, k, tk.id), { go:true }) : null,
           tk.status === 'done' ? btn(checking ? '…' : ((tk.checks && tk.checks.length) ? 'Re-check' : 'Check'), this.checkClipTake(idx, k, tk.id), { disabled:checking, title:'Free: does it play, does the picture move, is it black, as long as ordered, a repeat of the previous shot' }) : null,
-          tk.status === 'done' ? btn('Look', this.lookClipTake(idx, k, tk.id), { disabled:checking, title:'One model call: it looks at the clip’s middle frame for pasted panels, extra or missing people, wrong anatomy, unwanted text' }) : null,
+          tk.status === 'done' ? btn('Look', this.lookClipTake(idx, k, tk.id), { disabled:checking, title:'One model call (a few cents): it looks at three frames of the clip, early, middle and late, for an arm or hand that stretches or crosses a face, a smeared pack, pasted panels, extra or missing people, wrong anatomy, unwanted text' }) : null,
           flags.length ? btn('Accept', this.acceptClipChecks(idx, k, tk.id), { title:'Dismiss these notes for this clip' }) : null,
           (tk.status === 'interrupted' && tk.job_id) ? btn('Recover', () => { delete (this._recovered || {})[tk.id]; this.recoverClipTakes(); }, { title:'Ask the server whether this clip finished' }) : null,
           (!isChosen && !running) ? btn('✕', this.discardClipTake(idx, k, tk.id), { title:'Remove this take from the list (the file is kept)' }) : null),

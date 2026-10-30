@@ -3225,21 +3225,28 @@ def take_look(payload: dict):
     if not completion.has_key():
         return JSONResponse(status_code=503, content={"detail": "The look needs the Anthropic key, which is not set on this server."})
     exe = filmcut.ffmpeg_exe()
-    data = takeqa.middle_frame_jpeg(exe, path) if exe else None
-    if not data:
+    try:
+        want = max(1, min(5, int(payload.get("frames") or 1)))
+    except (TypeError, ValueError):
+        want = 1
+    # `frames` > 1 (the page sends 3): several frames of the clip in time order and a brief about what CHANGES between them. The default stays the one middle frame.
+    shots = (takeqa.frames_jpeg(exe, path, tuple((i + 1) / (want + 1) for i in range(want))) if exe else []) if want > 1 else []
+    data = shots[0] if len(shots) == 1 else (None if shots else (takeqa.middle_frame_jpeg(exe, path) if exe else None))
+    if not data and len(shots) < 2:
         return JSONResponse(status_code=400, content={"detail": "A frame could not be taken from that clip."})
     prompt = framecheck.vision_prompt(description=str(payload.get("description") or ""), cast=str(payload.get("cast") or ""),
-                                      wardrobe=str(payload.get("wardrobe") or ""), pack_expected=bool(payload.get("pack_expected")))
+                                      wardrobe=str(payload.get("wardrobe") or ""), pack_expected=bool(payload.get("pack_expected")), frames=len(shots) if len(shots) > 1 else 1)
     try:
-        text, usage = framecheck.look(data, "image/jpeg", prompt)
+        text, usage = framecheck.look_many(shots, "image/jpeg", prompt) if len(shots) > 1 else framecheck.look(data, "image/jpeg", prompt)
     except Exception as e:
         print(f"[main] take-look failed: {type(e).__name__}: {e}", flush=True)
         return JSONResponse(status_code=502, content={"detail": "The look could not run just now. Try again."})
     raw = framecheck.parse(text)
     if raw is None:
         return JSONResponse(status_code=502, content={"detail": "The look's reply could not be read. Try again."})
-    out = framecheck.result(raw)
+    out = framecheck.result(raw, motion=len(shots) > 1)
     out["usage"] = usage
+    out["frames"] = len(shots) if len(shots) > 1 else 1
     return out
 
 

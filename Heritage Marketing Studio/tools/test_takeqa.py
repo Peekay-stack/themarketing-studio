@@ -98,6 +98,61 @@ completion.has_key = lambda: True
 r = call(main.take_look, {"url": "/media/nope.mp4"})
 check("/take-look on a clip that is not stored is a 400", r.get("status") == 400, str(r))
 completion.has_key, framecheck.look = real_key, real_look
+
+# ---- B2. the look at SEVERAL frames of one clip (FILM_PHASE5_AND_PLACE_PLAN.md P5.1-P5.3) ----------------------------------------------------------------
+fr3 = takeqa.frames_jpeg(exe, moving)
+check("frames_jpeg: three frames at 25 / 50 / 75 % of a moving clip, all real JPEGs, all different (time order)", len(fr3) == 3 and all(f[:2] == b"\xff\xd8" for f in fr3) and len(set(fr3)) == 3, [len(f) for f in fr3])
+check("frames_jpeg: one fraction gives one frame; an unreadable clip gives none, never raises", len(takeqa.frames_jpeg(exe, moving, (0.5,))) == 1 and takeqa.frames_jpeg(exe, os.path.join(tmp, "missing.mp4")) == [])
+p1 = framecheck.vision_prompt(description="The boy lifts a glass.", cast="A boy of nine.")
+check("vision_prompt: frames=1 (or unset) is byte for byte the single-frame brief", framecheck.vision_prompt(description="The boy lifts a glass.", cast="A boy of nine.", frames=1) == p1 and "`drift`" not in p1)
+p3 = framecheck.vision_prompt(description="The boy lifts a glass.", cast="A boy of nine.", frames=3, pack_expected=True)
+check("vision_prompt: 3 frames -> the brief is about CHANGE between frames of ONE clip, names drift first, limbs, a hand crossing a face, a pack that smears, and asks which frame",
+      "3 attached frames" in p3 and "ONE short video clip, in time order" in p3 and "1. `drift`" in p3 and "stretches, splits, merges" in p3 and "crosses the face" in p3 and "smearing or going out of focus" in p3
+      and "Name the frames" in p3 and "SHOULD appear" in p3 and "The boy lifts a glass." in p3 and p3.rstrip().endswith("leave it out."), p3[:300])
+check("clean_issues: `drift` is accepted for a look at several frames and ignored for a single frame (it cannot happen in one picture)", [i["id"] for i in framecheck.clean_issues({"issues": [{"id": "drift", "note": "The arm stretches across the face in the middle frame."}]}, motion=True)] == ["drift"]
+      and framecheck.clean_issues({"issues": [{"id": "drift", "note": "The arm stretches across the face in the middle frame."}]}) == [])
+class FakeClient:
+    def __init__(self): self.sent = None
+    class _M:
+        def __init__(self, outer): self.o = outer
+        def create(self, **kw):
+            self.o.sent = kw
+            class R:
+                content = [type("B", (), {"type": "text", "text": '{"verdict":"ok","issues":[],"seen":"s"}'})()]
+                usage = type("U", (), {"input_tokens": 7, "output_tokens": 3})()
+            return R()
+    @property
+    def messages(self): return FakeClient._M(self)
+fcx = FakeClient(); txt, use = framecheck.look_many([b"a", b"b", b"c"], "image/jpeg", "BRIEF", client=fcx)
+blocks = fcx.sent["messages"][0]["content"]
+check("look_many: ONE call with the images first, in order, then the brief; same reply and usage shape as look", [b["type"] for b in blocks] == ["image", "image", "image", "text"] and blocks[-1]["text"] == "BRIEF" and use == {"input_tokens": 7, "output_tokens": 3} and "verdict" in txt)
+
+real_many, real_frames = framecheck.look_many, takeqa.frames_jpeg
+seen2 = {}
+def fake_many(images, mime, prompt, client=None):
+    seen2.update({"n": len(images), "prompt": prompt}); return seen2.get("reply", '{"verdict":"ok","issues":[],"seen":"A boy lifts a glass; nothing changes."}'), {"input_tokens": 30, "output_tokens": 9}
+completion.has_key = lambda: True; framecheck.look_many = fake_many; framecheck.look = fake_look
+seen.clear()
+r = call(main.take_look, {"url": "/media/moving.mp4", "description": "The boy lifts a glass.", "frames": 3})
+check("/take-look frames=3 sends THREE frames in one call with the motion brief and says how many it looked at", seen2["n"] == 3 and "3 attached frames" in seen2["prompt"] and r["frames"] == 3 and r["verdict"] == "ok" and "bytes" not in seen, str(r)[:300])
+seen2["reply"] = '{"verdict":"check","issues":[{"id":"drift","note":"The arm stretches across the face between the middle and late frames."}],"seen":"x"}'
+r = call(main.take_look, {"url": "/media/moving.mp4", "description": "d", "frames": 3})
+check("/take-look frames=3 returns a drift issue as a check", r["verdict"] == "check" and r["checks"][0]["id"] == "drift" and r["checks"][0]["label"] == "Changes between frames", str(r)[:300])
+seen.clear(); seen2.clear()
+r = call(main.take_look, {"url": "/media/moving.mp4", "description": "The boy lifts a glass."})
+check("/take-look with no `frames` is exactly as before: ONE middle frame, the single-frame brief, frames reported as 1", seen.get("bytes", 0) > 100 and "n" not in seen2 and "`drift`" not in seen["prompt"] and r["frames"] == 1, str(r)[:200])
+for bad in ("abc", 0, -2, None):
+    seen.clear(); seen2.clear(); r = call(main.take_look, {"url": "/media/moving.mp4", "description": "d", "frames": bad})
+    check("/take-look frames=%r is treated as 1 (never an error)" % (bad,), r.get("frames") == 1 and seen.get("bytes", 0) > 100, str(r)[:160])
+seen2.clear(); r = call(main.take_look, {"url": "/media/moving.mp4", "description": "d", "frames": 99})
+check("/take-look frames=99 is held to 5", seen2.get("n") == 5 and r["frames"] == 5, str(seen2) + str(r)[:120])
+takeqa.frames_jpeg = lambda exe_, path_, fr=(): []
+seen.clear(); seen2.clear(); r = call(main.take_look, {"url": "/media/moving.mp4", "description": "d", "frames": 3})
+check("/take-look frames=3 on a clip where no extra frame can be taken falls back to the one middle frame (never a refusal)", seen.get("bytes", 0) > 100 and r["frames"] == 1, str(r)[:200])
+takeqa.frames_jpeg = lambda exe_, path_, fr=(): [b"\xff\xd8only-one"]
+seen.clear(); seen2.clear(); r = call(main.take_look, {"url": "/media/moving.mp4", "description": "d", "frames": 3})
+check("/take-look frames=3 with only ONE frame obtainable looks at that frame with the single-frame brief", seen.get("bytes") == len(b"\xff\xd8only-one") and r["frames"] == 1, str(r)[:200])
+takeqa.frames_jpeg = real_frames; framecheck.look_many = real_many
 gemini.MEDIA_DIR = real_dir
 
 # ---- takes.py -----------------------------------------------------------------------------------------------------------------------------------
