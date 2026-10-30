@@ -1,0 +1,1717 @@
+{"note":"Director's read (POST /film-direct, api/filmdirect.py) run 30 Oct 2026 on scripts RECONSTRUCTED from the reference ads (see AD_LEARNING_LOG.md). films = the reconstructed scripts; reads = the model reads and program findings.","films":[
+ {"id":"001","name":"Cadbury Dairy Milk cricket","logline":"At a cricket ground a batsman waits on 99 and a woman in a bright dress runs onto the pitch, dancing, while the crowd watches.","message":"Cadbury Dairy Milk: something special in all of us; the real taste of life.","tone":"Joyful, tense then playful, a sung jingle","characters":"A batsman, a bowler, an umpire, a policeman, a crowd, a woman in a bright floral dress with a Cadbury bar, an old man in sunglasses.","hero":"A Cadbury Dairy Milk bar",
+  "scenes":[
+   {"no":1,"secs":6,"visual":"In the stands a woman in a bright floral dress holds a Cadbury Dairy Milk bar among a crowd in muted clothes; the scoreboard reads 99.","says":"(a sung hook begins) kuch khaas hai hum sabhi mein"},
+   {"no":2,"secs":8,"visual":"Extreme close-up of the batsman's eyes; the bowler turns at the top of his run; fielders crouch; faces in the crowd look up.","says":""},
+   {"no":3,"secs":10,"visual":"The bowler runs in, the batsman sets his feet; a bearded old man in sunglasses leans forward; an overhead wide of the ground; reaction shots of the crowd build.","says":""},
+   {"no":4,"secs":2,"visual":"A burst of very fast cuts of faces and the pitch at the moment of release.","says":""},
+   {"no":5,"secs":11,"visual":"The woman in the floral dress runs onto the open grass and dances while a policeman tries to catch her and officials and crowd watch, one long wide shot with pigeons.","says":""},
+   {"no":6,"secs":6,"visual":"A swirl of chocolate and milk around the bar and the written line asli swad zindagi ka (the real taste of life).","says":"asli swad zindagi ka"}]},
+ {"id":"003","name":"Oral-B electric","logline":"A patient insists she brushes twice a day; the dentist shows her why an electric brush matters.","message":"Switch to Oral-B Electric: it removes up to 100% more plaque and helps prevent dental problems.","tone":"Brisk, bright, a little comic","characters":"A patient (a known actress), a dentist, a presenter.","hero":"The Oral-B electric toothbrush",
+  "scenes":[
+   {"no":1,"secs":1,"visual":"A dark brand card with the Oral-B logo animating in.","says":""},
+   {"no":2,"secs":6,"visual":"From the patient's point of view in the dentist's chair: the dentist's masked face and gloved hands loom; the patient's wide-eyed shocked face; she holds up two fingers.","says":"Problem but I'm brushing twice a day"},
+   {"no":3,"secs":3,"visual":"A wide of the clinic and the dentist holding up an electric toothbrush: maybe it is not your brushing, it is your brush.","says":"Maybe it's not your brushing, it's your brush. Switch to Oral-B Electric"},
+   {"no":4,"secs":6,"visual":"Macro of the electric brush head on stained teeth, then a split screen: manual brush leaves plaque, the electric brush leaves clean teeth; text 'removes up to 100% more plaque'.","says":"Its rounded brush head removes up to 100% more plaque"},
+   {"no":5,"secs":2,"visual":"A shield graphic over clean teeth: helps prevent dental problems.","says":"and helps prevent dental problems"},
+   {"no":6,"secs":2,"visual":"The patient to camera, then a presenter in a white coat beside the pack and the Oral-B Electric lock-up; app and offer line.","says":"Switch to Oral-B Electric"}]},
+ {"id":"004","name":"Surf Excel Puddlewar","logline":"Two small children on the way home from school have a mud fight, and the stains are shown as the best part of the day.","message":"Dirt is good: a stain is an experience a child brings home.","tone":"Warm, quiet, then playful","characters":"A small boy and a smaller girl in school uniform, a man reading a newspaper on a roadside bench, other children.","hero":"A Surf Excel pack",
+  "scenes":[
+   {"no":1,"secs":4,"visual":"Black, then the two children in school uniform walk home along a red-earth country lane past a hedge; a man reads a newspaper on a bench.","says":""},
+   {"no":2,"secs":6,"visual":"Wide shots of the lane; the boy and girl walk apart and together; the girl pulls a face; children walk past in the background.","says":""},
+   {"no":3,"secs":9,"visual":"Close-ups of the girl's serious face, her profile, and the boy's mud-covered hands held out.","says":""},
+   {"no":4,"secs":5,"visual":"A burst of fast shots: the girl braces, mud flies, the boy falls into the puddle.","says":""},
+   {"no":5,"secs":9,"visual":"The boy plastered in mud, smiling; the girl clean and smiling; the two laughing together by the lane.","says":""},
+   {"no":6,"secs":5,"visual":"A white card with two Surf Excel packs and a red star: daag (stain), then daag achhe hain (stains are good).","says":"daag achhe hain"},
+   {"no":7,"secs":3,"visual":"The children by a house, the girl helping the boy with his school bag.","says":""}]},
+ {"id":"005","name":"Good Knight Fastcard","logline":"At a child's birthday party a mosquito problem is solved quietly by a lit card.","message":"Good Knight Fast Card clears mosquitoes quickly; the party goes on.","tone":"Warm, domestic, then a demonstration","characters":"A boy in a party cap, his father blowing up balloons, his mother, guests.","hero":"A Good Knight Fast Card pack and card",
+  "scenes":[
+   {"no":1,"secs":5,"visual":"A boy in a blue party cap at a birthday table, speaking.","says":""},
+   {"no":2,"secs":3,"visual":"His father blows up a balloon in a room hung with balloons.","says":""},
+   {"no":3,"secs":3,"visual":"The boy presses his hands together and makes a wish with his eyes closed.","says":""},
+   {"no":4,"secs":6,"visual":"Two Fast Cards lie on a dark floor; a card is lit in a hand and placed on a plate; smoke drifts among the guests' feet; small pink rings fall.","says":""},
+   {"no":5,"secs":9,"visual":"The boy's wish again, his mother's hand over her mouth, the father with a balloon, the boy's big grin.","says":""},
+   {"no":6,"secs":4,"visual":"The pack on a table with a plate and a burning card, a '1' graphic and a price; then a white end card.","says":""}]},
+ {"id":"006","name":"Good Knight Low Smoke Coil","logline":"An old couple celebrate catching a single mosquito, so rare in a house that uses the coil that it is news worth a phone call.","message":"Good Knight Advanced Low Smoke Coil: less smoke, more effect.","tone":"Dry, domestic comedy","characters":"An elderly man in a checked shirt, an elderly woman in a green blouse and cream sari.","hero":"A Good Knight coil and pack",
+  "scenes":[
+   {"no":1,"secs":4,"visual":"Night, a dim living room: the old man holds out his open palm to his wife, who is on a landline phone.","says":"Ye lo, mil gaya. Machhar! Machhar mil gaya!"},
+   {"no":2,"secs":4,"visual":"The wife on the phone speaks to a neighbour while the husband stands by, pleased.","says":"Hello aunty, theek to hai?"},
+   {"no":3,"secs":6,"visual":"Two-shots and over-the-shoulder shots of the couple; the husband says the neighbours took mosquitoes away.","says":"Wo abhi abhi hamare ghar se machhar lekar gaye"},
+   {"no":4,"secs":5,"visual":"The husband looks at his wife, turned away, a lamp glowing.","says":""},
+   {"no":5,"secs":8,"visual":"A dark card with the red Good Knight logo; a glowing coil; a pack with a family on it beside the coil.","says":"Are bhai aapke ghar mein to machhar nahin milega. Dhuan kam, asar zyada."},
+   {"no":6,"secs":3,"visual":"A white parent-brand card, Enjoy a brighter Godrej.","says":""}]},
+ {"id":"007","name":"IPL on Set Max","logline":"A woman in labour and a parade of ordinary Indian people each waiting for something; the answer arrives on an old television: the Indian Premier League begins.","message":"Manoranjan ka baap: the IPL on Set Max starts 18th April.","tone":"Comic, rapid, ensemble","characters":"A woman in labour, a nurse, two boys, a mother, a holy man, three street men, a market mother, a man in a floral shirt, a newspaper seller.","hero":"The IPL logo on the television",
+  "scenes":[
+   {"no":1,"secs":5,"visual":"A woman in a hospital bed grits her teeth, fists clenched; a nurse in a white cap.","says":""},
+   {"no":2,"secs":10,"visual":"A mother with a puja plate puts a tilak on two boys; a long-haired holy man between temple bells; three men chatting in a lane.","says":""},
+   {"no":3,"secs":12,"visual":"A woman in a market with two boys; a mother and children on a seesaw; a man in a loud floral shirt on a seesaw; a school classroom.","says":""},
+   {"no":4,"secs":14,"visual":"The floral-shirt man in a flower market holding a rose, pained; a woman at a barred window; a newspaper seller in sunglasses; a shocked woman on a bed.","says":""},
+   {"no":5,"secs":16,"visual":"A woman in a red sari outdoors at night; two boys with a ball; the holy man again; a hand dabbing red powder on a brass pot; fast cuts.","says":""},
+   {"no":6,"secs":14,"visual":"Two boys cheer at an old television: a swirl and the word MANORANJAN, then the DLF IPL logo; a Set Max cube spins.","says":""},
+   {"no":7,"secs":4,"visual":"A white card: Set Max official broadcaster, Indian Premier League, starts 18th April.","says":""}]},
+ {"id":"008","name":"CRED Bappi Lahiri","logline":"A famous composer in gold chains auditions in a dim studio for a panel of three deadpan casting people.","message":"CRED: not everyone gets it; members only.","tone":"Deadpan, meta, dry comedy","characters":"A famous composer in sunglasses and gold chains, a casting panel of two men and a woman, crew.","hero":"The CRED logo",
+  "scenes":[
+   {"no":1,"secs":4,"visual":"The star in close-up, pointing at camera, gesturing.","says":""},
+   {"no":2,"secs":5,"visual":"A wide of the dim audition room: lamps on stands, a grey backdrop, the panel at a table and the star at a microphone.","says":""},
+   {"no":3,"secs":8,"visual":"The star performs with a microphone in the foreground, arms open, then a hand to his sleeve.","says":""},
+   {"no":4,"secs":8,"visual":"The panel's held reactions: three people watching, one lifts a hand to his mouth.","says":""},
+   {"no":5,"secs":3,"visual":"A white-on-grey card flashes: CRED, not everyone gets it, members only.","says":""},
+   {"no":6,"secs":9,"visual":"The star again, then the room fading to dark.","says":""},
+   {"no":7,"secs":4,"visual":"The CRED end card with download icons.","says":""}]},
+ {"id":"009","name":"Fevi Kwik fish","logline":"On a calm lake a Tamil-speaking man counts one to five while an English-looking gentleman waits for his first fish; a quick-drying adhesive is the secret.","message":"Fevi Kwik: a quick-drying adhesive; sticks in a pinch; Rs 5.","tone":"Dry, patient, humorous","characters":"A stern fisherman in a flat cap, a cheeky man in a towel.","hero":"A Fevi Kwik sachet",
+  "scenes":[
+   {"no":1,"secs":7,"visual":"A lakeside at golden hour: a fisherman in a flat cap sits on a log platform with a rod, a tent behind him; two small blinks to dark.","says":""},
+   {"no":2,"secs":6,"visual":"A man in a towel crouches at the water's edge near him.","says":""},
+   {"no":3,"secs":6,"visual":"The fisherman's irritated stare in close-up; the towel man's cheeky face.","says":""},
+   {"no":4,"secs":10,"visual":"White fish-shaped objects float at the shore while the man counts one to five in Tamil; the towel man runs along the bank.","says":"(counting one to five in Tamil)"},
+   {"no":5,"secs":8,"visual":"The fisherman looks back to camera, still waiting for his first fish.","says":""},
+   {"no":6,"secs":3,"visual":"A blue Fevi Kwik sachet on logs with a price: MRP Rs 5, 500 mg pack, and the line chutki mein chipkaaye.","says":"chutki mein chipkaaye"}]},
+ {"id":"010","name":"CRED Dravid","logline":"A calm explainer says CRED gives credit coins for cashback and rewards, and that this sounds as ridiculous as saying Rahul Dravid has anger issues; then the star shows his rage in a traffic jam.","message":"CRED: great for the good; earn credit coins and claim cashback and rewards.","tone":"Deadpan then comic burst","characters":"A calm man in tweed explaining, a famous cricketer in sunglasses, a young passenger, other drivers.","hero":"The CRED app",
+  "scenes":[
+   {"no":1,"secs":10,"visual":"A warm amber room with a round table and globe lamps: a man in a tweed jacket seated, speaking calmly to someone off-camera.","says":"CRED, you earn credit coins; use them to claim cashback and rewards. I know this sounds ridiculous: it's like saying Rahul Dravid has anger issues."},
+   {"no":2,"secs":1,"visual":"A car window: a man in sunglasses leans on the door.","says":""},
+   {"no":3,"secs":4,"visual":"The same man behind the wheel shouting at another driver; a young passenger flinches.","says":"Hey, that doesn't mean you can overtake. Come, come, you come man!"},
+   {"no":4,"secs":6,"visual":"Fast cuts: an arm out of the window, a cricket bat, a view inside the car, then he stands on the car roof with a bat in a traffic jam.","says":"Indiranagar ka gunda hoon main"},
+   {"no":5,"secs":2,"visual":"A card of credit cards and partner logos, terms and conditions apply.","says":""},
+   {"no":6,"secs":2,"visual":"The CRED logo, great for the good, download CRED.","says":""}]},
+ {"id":"011","name":"Mother Dairy Maa Jaisi coolness","logline":"On a plane a grandmother shares her ice cream with a stranger's toddler and wipes his chin: a stranger's gentleness like a mother's.","message":"Mother Dairy: maa jaisi (like a mother).","tone":"Warm, tender, sung","characters":"An elderly woman in a green kurta and glasses, a toddler in a pink patka, passengers.","hero":"A Mother Dairy ice cream cup",
+  "scenes":[
+   {"no":1,"secs":4,"visual":"An aeroplane cabin: the grandmother sips from a cup; the toddler in a pink patka watches her across the aisle.","says":"(hum) tu ru ru ru"},
+   {"no":2,"secs":6,"visual":"A hand takes an ice cream cup from the tray; the toddler looks; she offers him the cup.","says":"Umra phisal gayi dono mein"},
+   {"no":3,"secs":6,"visual":"He licks the ice cream; she wipes his chin with her thumb; he grins; she laughs behind her hand.","says":"Mamta pighal gayi dono mein"},
+   {"no":4,"secs":5,"visual":"Close-ups of both faces, the cup in his hands, her hand to her mouth.","says":"Maa jaisi"},
+   {"no":5,"secs":2,"visual":"A line-up of Mother Dairy packs on a blue gradient.","says":"jaisi mamta, jaisi shuddh"},
+   {"no":6,"secs":1,"visual":"A blue logo card: Mother Dairy, maa jaisi.","says":"Mother Dairy, maa jaisi"}]},
+ {"id":"013","name":"Sting energy","logline":"In an old-world laboratory a film star in a school blazer drinks Sting and crackles with blue electricity while a comic professor watches.","message":"Energy bole toh Sting.","tone":"Stylised, comic, a sung jingle","characters":"A film star in a crested brown blazer, a comic professor in a plaid jacket, a young woman in a matching blazer.","hero":"A red Sting bottle",
+  "scenes":[
+   {"no":1,"secs":5,"visual":"A slow fade up into a dim laboratory of brass instruments, jars and a map; the professor stands among them.","says":""},
+   {"no":2,"secs":11,"visual":"The professor in close-up speaks; over-the-shoulder shots; the young woman watches; brass scales on a counter.","says":"Didn't rock my boat"},
+   {"no":3,"secs":10,"visual":"A wide of the lab; the star strolls in; a close of the bottle in his hand.","says":""},
+   {"no":4,"secs":7,"visual":"The star drinks Sting; blue electricity crackles around him; the professor reels; a flurry of five quick cuts.","says":""},
+   {"no":5,"secs":8,"visual":"The star fans himself with a scholar's fan; the professor in close-up, stunned; a quiet beat.","says":""},
+   {"no":6,"secs":7,"visual":"A chalkboard with a red Sting bottle and the line Energy bole toh Sting; the jingle.","says":"energy, energy, Sting"}]},
+ {"id":"014","name":"Tata Sky Pyaar Jingalala","logline":"A woman and a man in a living room argue over a missed show; Tata Sky lets you record from your mobile.","message":"Record on Tata Sky with mobile; Tata Sky laga daala toh pyaar jingalala.","tone":"Light comic drama","characters":"A woman in a maroon top, a man in a grey shirt.","hero":"The Tata Sky mobile app",
+  "scenes":[
+   {"no":1,"secs":4,"visual":"A living room: the man in grey smiles sheepishly; the woman in maroon looks shocked.","says":"Arre meri ek baat samajh mein nahi aayi"},
+   {"no":2,"secs":6,"visual":"Close and over-the-shoulder shots of the two, her wide-eyed stare, a long pause.","says":""},
+   {"no":3,"secs":8,"visual":"Her stare; his answer; a quiet stretch with almost no sound.","says":"Miss ho gaya... arre yeh record kaise"},
+   {"no":4,"secs":8,"visual":"A wide of the sofa; she smiles; the song begins; a quarrel resolves.","says":"Bolne ka mauka hi nahin deti ho"},
+   {"no":5,"secs":6,"visual":"A blue card: Record on Tata Sky with mobile.","says":""},
+   {"no":6,"secs":6,"visual":"The Tata Sky logo, the tag line and an app icon, download now.","says":"Tata Sky laga daala toh pyaar jingalala"}]},
+ {"id":"015","name":"Uninor Jootey padengey jootey","logline":"In a cafe a woman on the phone wanders past a man who reacts; they end up together, both on the phone; an offer follows.","message":"Uninor: up to 60% discount on all local calls.","tone":"Light, flirtatious, one continuous take","characters":"A young woman in a coral-red dress, a young man in a grey-blue shirt, cafe customers.","hero":"The mobile phone",
+  "scenes":[
+   {"no":1,"secs":7,"visual":"A warmly lit cafe: the woman in red on the phone walks behind the seated man, who looks back over his shoulder.","says":""},
+   {"no":2,"secs":10,"visual":"One continuous take: he grins and raises a hand, glances at her; she moves about the cafe, still talking.","says":""},
+   {"no":3,"secs":14,"visual":"The same take continues: he watches her, amused; other customers pass.","says":""},
+   {"no":4,"secs":3,"visual":"A close two-shot: she is beside him; he lifts a phone to his ear.","says":""},
+   {"no":5,"secs":6,"visual":"A cyan super over the same shot: up to 60% discount on all local calls; fade to black.","says":""}]}
+]
+,"reads":{
+ "001": {
+  "ok": true,
+  "read": {
+   "summary": "A cricket match hangs on 99, the tension coils tight, then a woman breaks the spell by dancing onto the pitch \u2014 joy spilling over where no one expected it, carried home by the chocolate's taste of life.",
+   "time_passing": false,
+   "hero_object": "Cadbury Dairy Milk bar",
+   "turn_scene": 5,
+   "carrier_scene": 6,
+   "scenes": [
+    {
+     "no": 1,
+     "purpose": "a flash of colour and a sung promise hook us into a crowd on the edge of something",
+     "intensity": 1,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b1",
+     "hero": true,
+     "place": "stadium-stands",
+     "energy": 1,
+     "change": "we register the score is 99 and someone in bright colour stands apart from the muted crowd",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 2,
+     "purpose": "pull us into the stakes of the moment \u2014 the whole ground holding its breath",
+     "intensity": 1,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b2",
+     "hero": false,
+     "place": "stadium-pitch",
+     "energy": 1,
+     "change": "the tension is now personal, fixed on the batsman and bowler",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 3,
+     "purpose": "wind the suspense tighter as the delivery approaches and everyone leans in",
+     "intensity": 2,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b2",
+     "hero": false,
+     "place": "stadium-pitch",
+     "energy": 2,
+     "change": "the crowd's anticipation builds to near breaking point",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 4,
+     "purpose": "the pressure peaks in the split second of release",
+     "intensity": 2,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b2",
+     "hero": false,
+     "place": "stadium-pitch",
+     "energy": 2,
+     "change": "the moment reaches its maximum tension",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 5,
+     "purpose": "the surprise that breaks the tension \u2014 joy invades the pitch where only sport belonged",
+     "intensity": 3,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b3",
+     "hero": false,
+     "place": "stadium-pitch",
+     "energy": 3,
+     "change": "the coiled sporting tension releases into pure, uncontainable celebration",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 6,
+     "purpose": "land the feeling on the product and name the real taste of life",
+     "intensity": 3,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b4",
+     "hero": true,
+     "place": "product-swirl",
+     "energy": 2,
+     "change": "the joy becomes the brand's promise and the line lands",
+     "sequence": false,
+     "actions": []
+    }
+   ],
+   "transitions": [],
+   "findings": [
+    {
+     "kind": "slow-hook",
+     "scene": 1,
+     "note": "The film opens quietly (scene 1: energy 1, intensity 1). The first seconds must earn the next five with something unexpected, a question or a visible action."
+    },
+    {
+     "kind": "same-place",
+     "scene": 2,
+     "note": "4 neighbouring scenes (scene 2 to 5) happen in the same place ('stadium-pitch'). A viewer sees one room for as long as it lasts: change the place, the time of day or the scale, or cut one."
+    },
+    {
+     "kind": "one-beat",
+     "scene": 3,
+     "note": "Scenes 2, 3, 4 are ONE beat shown at more than one scale; the first holds the beat and the others are its closer views (no extra angles on them)."
+    }
+   ],
+   "notes": [],
+   "engagement": {
+    "risk": "medium"
+   },
+   "model": true
+  }
+ },
+ "003": {
+  "ok": true,
+  "read": {
+   "summary": "A patient's indignant 'but I brush twice a day!' is flipped by the dentist's one line \u2014 it's the brush, not you \u2014 then proven with a split-screen and sealed with a shield and a switch.",
+   "time_passing": false,
+   "hero_object": "Oral-B electric toothbrush",
+   "turn_scene": 3,
+   "carrier_scene": 6,
+   "scenes": [
+    {
+     "no": 1,
+     "purpose": "Brand card opens the film with a quick logo flash",
+     "intensity": 0,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b1",
+     "hero": false,
+     "place": "brand card",
+     "energy": 1,
+     "change": "The brand is announced",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 2,
+     "purpose": "Sets up the patient's confident complaint and the comic tension",
+     "intensity": 1,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b2",
+     "hero": false,
+     "place": "clinic",
+     "energy": 1,
+     "change": "We learn she brushes twice a day yet still has a problem",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 3,
+     "purpose": "The realisation flips the blame from her habit to her tool",
+     "intensity": 2,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b3",
+     "hero": true,
+     "place": "clinic",
+     "energy": 2,
+     "change": "The cause is reframed: the brush, not the brushing",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 4,
+     "purpose": "Proves the claim with a visible manual-vs-electric contrast",
+     "intensity": 3,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b4",
+     "hero": true,
+     "place": "clinic",
+     "energy": 3,
+     "change": "We see the electric brush leave clean teeth where manual left plaque",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 5,
+     "purpose": "Extends the benefit from clean teeth to prevention",
+     "intensity": 1,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b5",
+     "hero": false,
+     "place": "clinic",
+     "energy": 1,
+     "change": "The payoff widens to preventing dental problems",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 6,
+     "purpose": "Lands the product, pack and call to switch",
+     "intensity": 2,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b6",
+     "hero": true,
+     "place": "clinic",
+     "energy": 1,
+     "change": "The viewer is given the product and the action to take",
+     "sequence": false,
+     "actions": []
+    }
+   ],
+   "transitions": [],
+   "findings": [
+    {
+     "kind": "weak-turn",
+     "scene": 3,
+     "note": "Scene 3 is the turn but another scene is stronger; the change should land on the strongest scene."
+    },
+    {
+     "kind": "slow-hook",
+     "scene": 1,
+     "note": "The film opens quietly (scene 1: energy 1, intensity 0). The first seconds must earn the next five with something unexpected, a question or a visible action."
+    },
+    {
+     "kind": "same-place",
+     "scene": 2,
+     "note": "5 neighbouring scenes (scene 2 to 6) happen in the same place ('clinic'). A viewer sees one room for as long as it lasts: change the place, the time of day or the scale, or cut one."
+    }
+   ],
+   "notes": [],
+   "engagement": {
+    "risk": "medium"
+   },
+   "model": true
+  }
+ },
+ "004": {
+  "ok": true,
+  "read": {
+   "summary": "Two children walk home, a mud fight erupts, and the ruined uniforms turn out to be the best thing they carry home \u2014 the stain reframed as a joy, then named by the pack.",
+   "time_passing": false,
+   "hero_object": "Surf Excel pack",
+   "turn_scene": 5,
+   "carrier_scene": 6,
+   "scenes": [
+    {
+     "no": 1,
+     "purpose": "open on a calm everyday walk home to set up the ordinary before it breaks",
+     "intensity": 0,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b1",
+     "hero": false,
+     "place": "country lane",
+     "energy": 1,
+     "change": "we meet the two children and settle into the quiet of the walk",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 2,
+     "purpose": "establish the rhythm between the two kids and hint at mischief with the girl's face",
+     "intensity": 1,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b2",
+     "hero": false,
+     "place": "country lane",
+     "energy": 1,
+     "change": "a flicker of intent appears \u2014 something is about to start",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 3,
+     "purpose": "build the standoff \u2014 the serious faces and muddy hands promise a fight",
+     "intensity": 1,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b3",
+     "hero": false,
+     "place": "country lane",
+     "energy": 1,
+     "change": "tension tightens into a dare, the fight is now inevitable",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 4,
+     "purpose": "the mud fight erupts \u2014 the physical release the whole film was building to",
+     "intensity": 2,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b4",
+     "hero": false,
+     "place": "country lane",
+     "energy": 3,
+     "change": "the clean uniform is gone; the boy is in the puddle",
+     "sequence": true,
+     "actions": [
+      "girl braces",
+      "mud flies",
+      "boy falls into puddle"
+     ]
+    },
+    {
+     "no": 5,
+     "purpose": "the turn \u2014 the mess reads as pure joy, reframing the stain as the best part of the day",
+     "intensity": 3,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b5",
+     "hero": false,
+     "place": "country lane",
+     "energy": 2,
+     "change": "dirt stops being damage and becomes shared delight",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 6,
+     "purpose": "the brand lands the idea in words: the stain is good",
+     "intensity": 3,
+     "time_mode": "continuous",
+     "marker": "cut to white card with caption",
+     "beat": "b6",
+     "hero": true,
+     "place": "end card",
+     "energy": 1,
+     "change": "the feeling is named and owned by the brand",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 7,
+     "purpose": "close warm \u2014 the kids home, the bond intact, mess forgiven",
+     "intensity": 0,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b7",
+     "hero": false,
+     "place": "house",
+     "energy": 1,
+     "change": "the day ends in care, the experience carried home",
+     "sequence": false,
+     "actions": []
+    }
+   ],
+   "transitions": [],
+   "findings": [
+    {
+     "kind": "slow-hook",
+     "scene": 1,
+     "note": "The film opens quietly (scene 1: energy 1, intensity 0). The first seconds must earn the next five with something unexpected, a question or a visible action."
+    },
+    {
+     "kind": "same-place",
+     "scene": 1,
+     "note": "5 neighbouring scenes (scene 1 to 5) happen in the same place ('country lane'). A viewer sees one room for as long as it lasts: change the place, the time of day or the scale, or cut one."
+    },
+    {
+     "kind": "flat-energy",
+     "scene": 1,
+     "note": "Scenes 1 to 3 are all held stills or small gestures: nothing happens on screen for 3 scenes in a row. Give at least one of them an action, a reveal or a moving camera."
+    },
+    {
+     "kind": "late-peak",
+     "scene": 4,
+     "note": "Nothing builds until scene 4 (3 of 7 scenes in). Escalate earlier, or give the opening scenes a stake of their own."
+    }
+   ],
+   "notes": [],
+   "engagement": {
+    "risk": "high"
+   },
+   "model": true
+  }
+ },
+ "005": {
+  "ok": true,
+  "read": {
+   "summary": "A birthday party with a mosquito problem is quietly fixed by a lit Fast Card, so the child's wish and the celebration carry on undisturbed.",
+   "time_passing": false,
+   "hero_object": "Good Knight Fast Card pack and card",
+   "turn_scene": 4,
+   "carrier_scene": 6,
+   "scenes": [
+    {
+     "no": 1,
+     "purpose": "opens on a child's party and the voice that draws us in",
+     "intensity": 1,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b1",
+     "hero": false,
+     "place": "party room",
+     "energy": 1,
+     "change": "we meet the boy and his celebration",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 2,
+     "purpose": "builds the warm domestic party world",
+     "intensity": 0,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b2",
+     "hero": false,
+     "place": "party room",
+     "energy": 1,
+     "change": "the home fills with festive preparation",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 3,
+     "purpose": "the boy's wish raises the stakes of the moment",
+     "intensity": 1,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b3",
+     "hero": false,
+     "place": "party room",
+     "energy": 1,
+     "change": "a wish is made, a hope hangs in the air",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 4,
+     "purpose": "the product quietly solves the unseen mosquito problem",
+     "intensity": 3,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b4",
+     "hero": true,
+     "place": "party room",
+     "energy": 2,
+     "change": "the card is lit and mosquitoes are cleared from the room",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 5,
+     "purpose": "the payoff: the wish holds and the party joy lands",
+     "intensity": 3,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b5",
+     "hero": false,
+     "place": "party room",
+     "energy": 2,
+     "change": "relief and delight sweep the family as the party goes on",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 6,
+     "purpose": "brands the fix with pack, price and the one-card promise",
+     "intensity": 1,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b6",
+     "hero": true,
+     "place": "party room",
+     "energy": 1,
+     "change": "the solution is named and sold",
+     "sequence": false,
+     "actions": []
+    }
+   ],
+   "transitions": [],
+   "findings": [
+    {
+     "kind": "slow-hook",
+     "scene": 1,
+     "note": "The film opens quietly (scene 1: energy 1, intensity 1). The first seconds must earn the next five with something unexpected, a question or a visible action."
+    },
+    {
+     "kind": "same-place",
+     "scene": 1,
+     "note": "6 neighbouring scenes (scene 1 to 6) happen in the same place ('party room'). A viewer sees one room for as long as it lasts: change the place, the time of day or the scale, or cut one."
+    },
+    {
+     "kind": "flat-energy",
+     "scene": 1,
+     "note": "Scenes 1 to 3 are all held stills or small gestures: nothing happens on screen for 3 scenes in a row. Give at least one of them an action, a reveal or a moving camera."
+    },
+    {
+     "kind": "late-peak",
+     "scene": 4,
+     "note": "Nothing builds until scene 4 (3 of 6 scenes in). Escalate earlier, or give the opening scenes a stake of their own."
+    }
+   ],
+   "notes": [],
+   "engagement": {
+    "risk": "high"
+   },
+   "model": true
+  }
+ },
+ "006": {
+  "ok": true,
+  "read": {
+   "summary": "A couple treat catching one mosquito as triumphant news, and the joke pays off when the brand reveals why their house is so mosquito-free; dry domestic comedy with a clean product punchline.",
+   "time_passing": false,
+   "hero_object": "Good Knight Advanced Low Smoke Coil and pack",
+   "turn_scene": 5,
+   "carrier_scene": 5,
+   "scenes": [
+    {
+     "no": 1,
+     "purpose": "opens on an absurd triumph that raises the question: why is catching one mosquito such a big deal?",
+     "intensity": 2,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b1",
+     "hero": false,
+     "place": "living room",
+     "energy": 2,
+     "change": "we learn a single mosquito has been caught and it is treated as an event",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 2,
+     "purpose": "shows the news being shared with a neighbour, deepening the comic premise",
+     "intensity": 1,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b2",
+     "hero": false,
+     "place": "living room",
+     "energy": 1,
+     "change": "the private triumph becomes a phone call worth making",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 3,
+     "purpose": "explains why the house has mosquitoes at all \u2014 the neighbours brought them, setting up the gag",
+     "intensity": 1,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b3",
+     "hero": false,
+     "place": "living room",
+     "energy": 1,
+     "change": "we learn the mosquito was an import, not a resident",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 4,
+     "purpose": "a held beat of domestic contentment that lets the joke breathe before the reveal",
+     "intensity": 1,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b4",
+     "hero": false,
+     "place": "living room",
+     "energy": 0,
+     "change": "the mood settles, pausing before the punchline",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 5,
+     "purpose": "the reveal that lands both the joke and the product reason: their house has no mosquitoes because of the coil",
+     "intensity": 3,
+     "time_mode": "continuous",
+     "marker": "cut to a dark product card with the logo",
+     "beat": "b5",
+     "hero": true,
+     "place": "product card",
+     "energy": 3,
+     "change": "the running joke resolves into the product claim \u2014 less smoke, more effect",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 6,
+     "purpose": "parent-brand sign-off",
+     "intensity": 0,
+     "time_mode": "continuous",
+     "marker": "cut to white parent-brand card",
+     "beat": "b6",
+     "hero": false,
+     "place": "brand card",
+     "energy": 0,
+     "change": "",
+     "sequence": false,
+     "actions": []
+    }
+   ],
+   "transitions": [],
+   "findings": [
+    {
+     "kind": "same-place",
+     "scene": 1,
+     "note": "4 neighbouring scenes (scene 1 to 4) happen in the same place ('living room'). A viewer sees one room for as long as it lasts: change the place, the time of day or the scale, or cut one."
+    },
+    {
+     "kind": "flat-energy",
+     "scene": 2,
+     "note": "Scenes 2 to 4 are all held stills or small gestures: nothing happens on screen for 3 scenes in a row. Give at least one of them an action, a reveal or a moving camera."
+    }
+   ],
+   "notes": [],
+   "engagement": {
+    "risk": "medium"
+   },
+   "model": true
+  }
+ },
+ "007": {
+  "ok": true,
+  "read": {
+   "summary": "A rapid comic ensemble of ordinary Indians all tensed and waiting for the same unnamed thing, which pays off when the IPL kicks off on Set Max \u2014 the anticipation IS the gag.",
+   "time_passing": false,
+   "hero_object": "The IPL logo on the television",
+   "turn_scene": 6,
+   "carrier_scene": 6,
+   "scenes": [
+    {
+     "no": 1,
+     "purpose": "Open on raw tension that poses the question: what is everyone waiting for?",
+     "intensity": 1,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b1",
+     "hero": false,
+     "place": "hospital",
+     "energy": 1,
+     "change": "We're hooked on a suspense whose cause is withheld",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 2,
+     "purpose": "Widen the net \u2014 the same waiting spreads across unrelated people and places",
+     "intensity": 1,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b2",
+     "hero": false,
+     "place": "temple-lane",
+     "energy": 1,
+     "change": "The question scales from one person to a whole society",
+     "sequence": true,
+     "actions": [
+      "mother tilaks two boys",
+      "holy man between bells",
+      "three men chat in a lane"
+     ]
+    },
+    {
+     "no": 3,
+     "purpose": "Keep stacking the ensemble of expectant ordinary people",
+     "intensity": 2,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b2",
+     "hero": false,
+     "place": "market",
+     "energy": 2,
+     "change": "The collective anticipation builds wider still",
+     "sequence": true,
+     "actions": [
+      "woman with boys at market",
+      "mother and kids on seesaw",
+      "floral-shirt man on seesaw",
+      "school classroom"
+     ]
+    },
+    {
+     "no": 4,
+     "purpose": "Push the comic tension to its peak \u2014 faces pained, shocked, straining to wait",
+     "intensity": 2,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b2",
+     "hero": false,
+     "place": "flower-market",
+     "energy": 2,
+     "change": "The suspense tightens to near-breaking across every character",
+     "sequence": true,
+     "actions": [
+      "floral-shirt man pained with rose",
+      "woman at barred window",
+      "newspaper seller in shades",
+      "shocked woman on bed"
+     ]
+    },
+    {
+     "no": 5,
+     "purpose": "The fastest, most breathless run of waiting just before release",
+     "intensity": 2,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b2",
+     "hero": false,
+     "place": "street-night",
+     "energy": 3,
+     "change": "Tension maxes out and demands a payoff",
+     "sequence": true,
+     "actions": [
+      "woman in red sari at night",
+      "boys with a ball",
+      "holy man again",
+      "red powder on brass pot"
+     ]
+    },
+    {
+     "no": 6,
+     "purpose": "The answer lands \u2014 it was all for the IPL on Set Max; relief and joy",
+     "intensity": 3,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b3",
+     "hero": true,
+     "place": "living-room",
+     "energy": 3,
+     "change": "The withheld question is answered: the IPL begins",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 7,
+     "purpose": "Deliver the broadcaster, event and start date",
+     "intensity": 1,
+     "time_mode": "continuous",
+     "marker": "caption card",
+     "beat": "b4",
+     "hero": true,
+     "place": "end-card",
+     "energy": 0,
+     "change": "Viewer learns when and where to watch",
+     "sequence": false,
+     "actions": []
+    }
+   ],
+   "transitions": [],
+   "findings": [
+    {
+     "kind": "slow-hook",
+     "scene": 1,
+     "note": "The film opens quietly (scene 1: energy 1, intensity 1). The first seconds must earn the next five with something unexpected, a question or a visible action."
+    },
+    {
+     "kind": "one-beat",
+     "scene": 3,
+     "note": "Scenes 2, 3, 4, 5 are ONE beat shown at more than one scale; the first holds the beat and the others are its closer views (no extra angles on them)."
+    }
+   ],
+   "notes": [],
+   "engagement": {
+    "risk": "medium"
+   },
+   "model": true
+  }
+ },
+ "008": {
+  "ok": true,
+  "read": {
+   "summary": "A swaggering star auditions for three unimpressed gatekeepers; the joke is that even fame doesn't buy you in \u2014 CRED is members only.",
+   "time_passing": false,
+   "hero_object": "CRED logo",
+   "turn_scene": 4,
+   "carrier_scene": 5,
+   "scenes": [
+    {
+     "no": 1,
+     "purpose": "open on the star's confidence, daring us to watch",
+     "intensity": 2,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b1",
+     "hero": false,
+     "place": "studio",
+     "energy": 2,
+     "change": "we meet a star who assumes he's already in",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 2,
+     "purpose": "reveal this is an audition, not a stage \u2014 he has to prove himself",
+     "intensity": 1,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b2",
+     "hero": false,
+     "place": "studio",
+     "energy": 1,
+     "change": "the power flips: a panel is judging him",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 3,
+     "purpose": "the star gives it everything to win them over",
+     "intensity": 2,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b3",
+     "hero": false,
+     "place": "studio",
+     "energy": 2,
+     "change": "he commits fully to the performance",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 4,
+     "purpose": "the deadpan panel withholds approval \u2014 the joke lands",
+     "intensity": 3,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b4",
+     "hero": false,
+     "place": "studio",
+     "energy": 1,
+     "change": "we realise fame isn't enough to get in",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 5,
+     "purpose": "the line names the rule the scene just dramatised",
+     "intensity": 2,
+     "time_mode": "continuous",
+     "marker": "white-on-grey caption card",
+     "beat": "b5",
+     "hero": true,
+     "place": "card",
+     "energy": 1,
+     "change": "the premise is stated: members only",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 6,
+     "purpose": "leave the star in limbo as the room swallows him",
+     "intensity": 1,
+     "time_mode": "continuous",
+     "marker": "room fades to dark",
+     "beat": "b6",
+     "hero": false,
+     "place": "studio",
+     "energy": 1,
+     "change": "the verdict stays unspoken; he's left out",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 7,
+     "purpose": "brand sign-off and call to download",
+     "intensity": 1,
+     "time_mode": "continuous",
+     "marker": "end card",
+     "beat": "b7",
+     "hero": true,
+     "place": "card",
+     "energy": 0,
+     "change": "the viewer is pointed to the app",
+     "sequence": false,
+     "actions": []
+    }
+   ],
+   "transitions": [],
+   "findings": [
+    {
+     "kind": "same-place",
+     "scene": 1,
+     "note": "4 neighbouring scenes (scene 1 to 4) happen in the same place ('studio'). A viewer sees one room for as long as it lasts: change the place, the time of day or the scale, or cut one."
+    },
+    {
+     "kind": "flat-energy",
+     "scene": 4,
+     "note": "Scenes 4 to 7 are all held stills or small gestures: nothing happens on screen for 4 scenes in a row. Give at least one of them an action, a reveal or a moving camera."
+    }
+   ],
+   "notes": [],
+   "engagement": {
+    "risk": "medium"
+   },
+   "model": true
+  }
+ },
+ "009": {
+  "ok": true,
+  "read": {
+   "summary": "A patient fisherman waits by a lake while a cheeky man floats fake fish and counts to five \u2014 the joke lands when we see the fish are stuck on with glue, and the pack explains the trick.",
+   "time_passing": false,
+   "hero_object": "Fevi Kwik sachet",
+   "turn_scene": 5,
+   "carrier_scene": 6,
+   "scenes": [
+    {
+     "no": 1,
+     "purpose": "opens on a quiet, almost comic stillness that poses the question: why is this man so patiently waiting?",
+     "intensity": 0,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b1",
+     "hero": false,
+     "place": "lakeside",
+     "energy": 0,
+     "change": "we settle into the fisherman's patient, deadpan wait",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 2,
+     "purpose": "introduces the cheeky intruder, hinting mischief is afoot near the fisherman",
+     "intensity": 1,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b2",
+     "hero": false,
+     "place": "lakeside",
+     "energy": 1,
+     "change": "a second, suspicious character enters the scene",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 3,
+     "purpose": "plants the tension between the two men \u2014 irritation versus cheek",
+     "intensity": 1,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b3",
+     "hero": false,
+     "place": "lakeside",
+     "energy": 1,
+     "change": "the rivalry between the two faces is established",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 4,
+     "purpose": "the prank in action \u2014 fake fish appear as the man counts, raising the comic stakes",
+     "intensity": 2,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b4",
+     "hero": false,
+     "place": "lakeside",
+     "energy": 2,
+     "change": "the trick is set in motion but its secret is not yet clear",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 5,
+     "purpose": "the payoff: the fisherman still has no real fish, and we grasp the fish were stuck there as a joke",
+     "intensity": 3,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b5",
+     "hero": false,
+     "place": "lakeside",
+     "energy": 1,
+     "change": "the realisation lands \u2014 the fish were glued, not caught",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 6,
+     "purpose": "reveals the product behind the trick and delivers price, pack and line",
+     "intensity": 3,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b6",
+     "hero": true,
+     "place": "lakeside",
+     "energy": 1,
+     "change": "the gag is explained by the glue and the offer is stated",
+     "sequence": false,
+     "actions": []
+    }
+   ],
+   "transitions": [],
+   "findings": [
+    {
+     "kind": "slow-hook",
+     "scene": 1,
+     "note": "The film opens quietly (scene 1: energy 0, intensity 0). The first seconds must earn the next five with something unexpected, a question or a visible action."
+    },
+    {
+     "kind": "same-place",
+     "scene": 1,
+     "note": "6 neighbouring scenes (scene 1 to 6) happen in the same place ('lakeside'). A viewer sees one room for as long as it lasts: change the place, the time of day or the scale, or cut one."
+    },
+    {
+     "kind": "flat-energy",
+     "scene": 1,
+     "note": "Scenes 1 to 3 are all held stills or small gestures: nothing happens on screen for 3 scenes in a row. Give at least one of them an action, a reveal or a moving camera."
+    },
+    {
+     "kind": "late-peak",
+     "scene": 4,
+     "note": "Nothing builds until scene 4 (3 of 6 scenes in). Escalate earlier, or give the opening scenes a stake of their own."
+    }
+   ],
+   "notes": [],
+   "engagement": {
+    "risk": "high"
+   },
+   "model": true
+  }
+ },
+ "010": {
+  "ok": true,
+  "read": {
+   "summary": "A deadpan setup dares you to disbelieve, then detonates into a cricketer's absurd road-rage tantrum before snapping back to the calm brand line.",
+   "time_passing": false,
+   "hero_object": "The CRED app",
+   "turn_scene": 4,
+   "carrier_scene": 6,
+   "scenes": [
+    {
+     "no": 1,
+     "purpose": "Sets up the claim and plants the absurd comparison that baits the joke",
+     "intensity": 1,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b1",
+     "hero": false,
+     "place": "amber room",
+     "energy": 1,
+     "change": "The premise and the setup for the Dravid gag are laid, leaving the viewer waiting for the punchline",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 2,
+     "purpose": "Cuts to the star and primes the reveal of who he is",
+     "intensity": 1,
+     "time_mode": "continuous",
+     "marker": "cut to car exterior",
+     "beat": "b2",
+     "hero": false,
+     "place": "street",
+     "energy": 1,
+     "change": "We arrive at the man the explainer just named, expectation building",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 3,
+     "purpose": "The joke lands: the calm icon is actually furious, flipping the claim",
+     "intensity": 2,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b3",
+     "hero": false,
+     "place": "car",
+     "energy": 2,
+     "change": "The 'impossible' anger is proven real, contradicting the setup",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 4,
+     "purpose": "The rage escalates to full absurd spectacle, the memorable payoff",
+     "intensity": 3,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b4",
+     "hero": false,
+     "place": "street",
+     "energy": 3,
+     "change": "The tantrum peaks with him on the car roof, the gag fully delivered",
+     "sequence": true,
+     "actions": [
+      "arm out of window",
+      "grabs cricket bat",
+      "stands on car roof shouting"
+     ]
+    },
+    {
+     "no": 5,
+     "purpose": "Snaps back to the actual offer and the legal terms",
+     "intensity": 1,
+     "time_mode": "continuous",
+     "marker": "cut to product card",
+     "beat": "b5",
+     "hero": true,
+     "place": "end card",
+     "energy": 1,
+     "change": "Attention returns from the gag to the cashback and rewards offer",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 6,
+     "purpose": "Lands the brand and call to action",
+     "intensity": 1,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b6",
+     "hero": true,
+     "place": "end card",
+     "energy": 1,
+     "change": "The viewer is left with the logo, tagline and download prompt",
+     "sequence": false,
+     "actions": []
+    }
+   ],
+   "transitions": [],
+   "findings": [
+    {
+     "kind": "slow-hook",
+     "scene": 1,
+     "note": "The film opens quietly (scene 1: energy 1, intensity 1). The first seconds must earn the next five with something unexpected, a question or a visible action."
+    }
+   ],
+   "notes": [],
+   "engagement": {
+    "risk": "medium"
+   },
+   "model": true
+  }
+ },
+ "011": {
+  "ok": true,
+  "read": {
+   "summary": "A quiet plane turns tender as a grandmother shares her ice cream with a stranger's child, and a stranger's care looks exactly like a mother's.",
+   "time_passing": false,
+   "hero_object": "Mother Dairy ice cream cup",
+   "turn_scene": 3,
+   "carrier_scene": 6,
+   "scenes": [
+    {
+     "no": 1,
+     "purpose": "Sets the small distance between two strangers and poses the question of whether it will close",
+     "intensity": 0,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b1",
+     "hero": true,
+     "place": "plane cabin",
+     "energy": 1,
+     "change": "A watchful curiosity is established between the child and the woman",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 2,
+     "purpose": "The gesture that crosses the distance \u2014 she offers what is hers to a stranger's child",
+     "intensity": 1,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b2",
+     "hero": true,
+     "place": "plane cabin",
+     "energy": 2,
+     "change": "The offer is made; the gap between strangers begins to close",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 3,
+     "purpose": "The heart of it: a stranger's instinctive mothering, the chin wipe that reads as a mother's",
+     "intensity": 3,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b3",
+     "hero": true,
+     "place": "plane cabin",
+     "energy": 2,
+     "change": "Strangers become momentarily family; care lands as maternal",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 4,
+     "purpose": "Holds and names the feeling \u2014 this tenderness is 'like a mother'",
+     "intensity": 2,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b3",
+     "hero": true,
+     "place": "plane cabin",
+     "energy": 1,
+     "change": "The shared warmth is sealed on both faces",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 5,
+     "purpose": "Hands the human feeling to the brand \u2014 care equals purity",
+     "intensity": 1,
+     "time_mode": "continuous",
+     "marker": "cut to product on blue gradient",
+     "beat": "b4",
+     "hero": true,
+     "place": "end card",
+     "energy": 1,
+     "change": "The emotion is transferred onto the product line",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 6,
+     "purpose": "Signs off with the brand and its promise",
+     "intensity": 1,
+     "time_mode": "continuous",
+     "marker": "logo card",
+     "beat": "b5",
+     "hero": false,
+     "place": "end card",
+     "energy": 0,
+     "change": "The brand claims the feeling just shown",
+     "sequence": false,
+     "actions": []
+    }
+   ],
+   "transitions": [],
+   "findings": [
+    {
+     "kind": "carrier-without-hero",
+     "scene": 6,
+     "note": "Scene 6 carries the message but does not show Mother Dairy ice cream cup."
+    },
+    {
+     "kind": "slow-hook",
+     "scene": 1,
+     "note": "The film opens quietly (scene 1: energy 1, intensity 0). The first seconds must earn the next five with something unexpected, a question or a visible action."
+    },
+    {
+     "kind": "same-place",
+     "scene": 1,
+     "note": "4 neighbouring scenes (scene 1 to 4) happen in the same place ('plane cabin'). A viewer sees one room for as long as it lasts: change the place, the time of day or the scale, or cut one."
+    },
+    {
+     "kind": "flat-energy",
+     "scene": 4,
+     "note": "Scenes 4 to 6 are all held stills or small gestures: nothing happens on screen for 3 scenes in a row. Give at least one of them an action, a reveal or a moving camera."
+    },
+    {
+     "kind": "one-beat",
+     "scene": 4,
+     "note": "Scenes 3, 4 are ONE beat shown at more than one scale; the first holds the beat and the others are its closer view (no extra angles on them)."
+    }
+   ],
+   "notes": [],
+   "engagement": {
+    "risk": "high"
+   },
+   "model": true
+  }
+ },
+ "013": {
+  "ok": true,
+  "read": {
+   "summary": "A dim, mysterious lab sets up a skeptical professor, the star arrives and transforms the room with Sting-powered electricity, leaving the professor stunned before the jingle lands the brand.",
+   "time_passing": false,
+   "hero_object": "red Sting bottle",
+   "turn_scene": 4,
+   "carrier_scene": 6,
+   "scenes": [
+    {
+     "no": 1,
+     "purpose": "opens a strange world and poses a question about what this place is",
+     "intensity": 1,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b1",
+     "hero": false,
+     "place": "lab",
+     "energy": 1,
+     "change": "we enter the lab and meet the professor",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 2,
+     "purpose": "establishes the professor's boredom and dissatisfaction, the lack he needs filled",
+     "intensity": 1,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b2",
+     "hero": false,
+     "place": "lab",
+     "energy": 1,
+     "change": "we learn nothing here has impressed him",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 3,
+     "purpose": "the star arrives and introduces the product as the answer",
+     "intensity": 1,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b3",
+     "hero": true,
+     "place": "lab",
+     "energy": 2,
+     "change": "the star and the bottle enter the scene",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 4,
+     "purpose": "the drink unleashes the energy payoff, the spectacle the film is built around",
+     "intensity": 3,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b4",
+     "hero": true,
+     "place": "lab",
+     "energy": 3,
+     "change": "drinking triggers crackling electricity; the professor is rocked",
+     "sequence": true,
+     "actions": [
+      "drinks Sting",
+      "electricity crackles",
+      "professor reels",
+      "quick-cut flurry"
+     ]
+    },
+    {
+     "no": 5,
+     "purpose": "the professor's stunned reaction confirms the transformation landed",
+     "intensity": 2,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b5",
+     "hero": false,
+     "place": "lab",
+     "energy": 1,
+     "change": "the professor is won over, mood turns to awe",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 6,
+     "purpose": "lands the brand line and product with the jingle",
+     "intensity": 3,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b6",
+     "hero": true,
+     "place": "lab",
+     "energy": 2,
+     "change": "the message and brand are stated",
+     "sequence": false,
+     "actions": []
+    }
+   ],
+   "transitions": [],
+   "findings": [
+    {
+     "kind": "slow-hook",
+     "scene": 1,
+     "note": "The film opens quietly (scene 1: energy 1, intensity 1). The first seconds must earn the next five with something unexpected, a question or a visible action."
+    },
+    {
+     "kind": "same-place",
+     "scene": 1,
+     "note": "6 neighbouring scenes (scene 1 to 6) happen in the same place ('lab'). A viewer sees one room for as long as it lasts: change the place, the time of day or the scale, or cut one."
+    },
+    {
+     "kind": "late-peak",
+     "scene": 4,
+     "note": "Nothing builds until scene 4 (3 of 6 scenes in). Escalate earlier, or give the opening scenes a stake of their own."
+    }
+   ],
+   "notes": [],
+   "engagement": {
+    "risk": "high"
+   },
+   "model": true
+  }
+ },
+ "014": {
+  "ok": true,
+  "read": {
+   "summary": "A tense living-room spat over a missed show tips into relief when one partner reveals it was recorded on mobile, resolving into warmth and the brand line.",
+   "time_passing": false,
+   "hero_object": "The Tata Sky mobile app",
+   "turn_scene": 4,
+   "carrier_scene": 6,
+   "scenes": [
+    {
+     "no": 1,
+     "purpose": "opens on a frozen stand-off \u2014 his sheepish smile against her shock poses the question of what he's done",
+     "intensity": 1,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b1",
+     "hero": false,
+     "place": "living room",
+     "energy": 1,
+     "change": "a confrontation is set up; we want to know his confession",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 2,
+     "purpose": "holds the tension in the silence between them, letting the awkwardness sit",
+     "intensity": 1,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b1",
+     "hero": false,
+     "place": "living room",
+     "energy": 0,
+     "change": "the pause deepens the standoff without resolving it",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 3,
+     "purpose": "he confesses the show was missed, then stumbles toward the idea of recording \u2014 the pivot in the quarrel",
+     "intensity": 2,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b2",
+     "hero": false,
+     "place": "living room",
+     "energy": 1,
+     "change": "the real problem is named and the solution is hinted at",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 4,
+     "purpose": "the recording reveal lands, her anger melts into a smile and the quarrel dissolves into affection",
+     "intensity": 3,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b3",
+     "hero": false,
+     "place": "living room",
+     "energy": 2,
+     "change": "conflict turns to warmth \u2014 the fight is won by the recording",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 5,
+     "purpose": "names the mechanism plainly: you can record on Tata Sky from your mobile",
+     "intensity": 1,
+     "time_mode": "continuous",
+     "marker": "caption card",
+     "beat": "b4",
+     "hero": false,
+     "place": "title card",
+     "energy": 1,
+     "change": "the viewer now knows the product capability behind the gag",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 6,
+     "purpose": "brand and tagline land with the app icon and call to download",
+     "intensity": 3,
+     "time_mode": "continuous",
+     "marker": "logo card",
+     "beat": "b5",
+     "hero": true,
+     "place": "title card",
+     "energy": 1,
+     "change": "the product and its promise are fixed as the takeaway",
+     "sequence": false,
+     "actions": []
+    }
+   ],
+   "transitions": [],
+   "findings": [
+    {
+     "kind": "slow-hook",
+     "scene": 1,
+     "note": "The film opens quietly (scene 1: energy 1, intensity 1). The first seconds must earn the next five with something unexpected, a question or a visible action."
+    },
+    {
+     "kind": "same-place",
+     "scene": 1,
+     "note": "4 neighbouring scenes (scene 1 to 4) happen in the same place ('living room'). A viewer sees one room for as long as it lasts: change the place, the time of day or the scale, or cut one."
+    },
+    {
+     "kind": "flat-energy",
+     "scene": 1,
+     "note": "Scenes 1 to 3 are all held stills or small gestures: nothing happens on screen for 3 scenes in a row. Give at least one of them an action, a reveal or a moving camera."
+    },
+    {
+     "kind": "one-beat",
+     "scene": 2,
+     "note": "Scenes 1, 2 are ONE beat shown at more than one scale; the first holds the beat and the others are its closer view (no extra angles on them)."
+    }
+   ],
+   "notes": [],
+   "engagement": {
+    "risk": "high"
+   },
+   "model": true
+  }
+ },
+ "015": {
+  "ok": true,
+  "read": {
+   "summary": "A flirtatious cafe chase in one take where a man clocks a woman on the phone and ends up beside her, both talking, landing a local-call discount \u2014 fun to watch but it coasts on a single idea.",
+   "time_passing": false,
+   "hero_object": "mobile phone",
+   "turn_scene": 4,
+   "carrier_scene": 5,
+   "scenes": [
+    {
+     "no": 1,
+     "purpose": "a stranger's glance opens a question \u2014 who is she, will he follow",
+     "intensity": 1,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b1",
+     "hero": true,
+     "place": "cafe",
+     "energy": 2,
+     "change": "he notices her and turns, the flirtation begins",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 2,
+     "purpose": "his interest becomes a playful pursuit as she keeps moving",
+     "intensity": 1,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b2",
+     "hero": true,
+     "place": "cafe",
+     "energy": 2,
+     "change": "he signals to her; the chase is now mutual",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 3,
+     "purpose": "the charged in-between where he watches and waits",
+     "intensity": 1,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b3",
+     "hero": true,
+     "place": "cafe",
+     "energy": 1,
+     "change": "tension holds but little advances \u2014 the weakest beat",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 4,
+     "purpose": "they land together, both on the phone \u2014 the flirtation pays off",
+     "intensity": 3,
+     "time_mode": "continuous",
+     "marker": "",
+     "beat": "b4",
+     "hero": true,
+     "place": "cafe",
+     "energy": 2,
+     "change": "they are side by side; the meet-up is resolved",
+     "sequence": false,
+     "actions": []
+    },
+    {
+     "no": 5,
+     "purpose": "the offer lands: the local-call discount that connects them",
+     "intensity": 2,
+     "time_mode": "continuous",
+     "marker": "cyan super caption",
+     "beat": "b5",
+     "hero": true,
+     "place": "cafe",
+     "energy": 1,
+     "change": "the flirtation reframes as a telecom offer, fade to black",
+     "sequence": false,
+     "actions": []
+    }
+   ],
+   "transitions": [],
+   "findings": [
+    {
+     "kind": "same-place",
+     "scene": 1,
+     "note": "5 neighbouring scenes (scene 1 to 5) happen in the same place ('cafe'). A viewer sees one room for as long as it lasts: change the place, the time of day or the scale, or cut one."
+    },
+    {
+     "kind": "late-peak",
+     "scene": 4,
+     "note": "Nothing builds until scene 4 (3 of 5 scenes in). Escalate earlier, or give the opening scenes a stake of their own."
+    }
+   ],
+   "notes": [],
+   "engagement": {
+    "risk": "medium"
+   },
+   "model": true
+  }
+ }
+}}
