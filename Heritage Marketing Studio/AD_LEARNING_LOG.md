@@ -15,6 +15,7 @@ Append-only. One entry per ad, in the order read. Questions, evidence levels and
 | 001 | Cadbury Dairy Milk: "Cadbury Dairy Milk and Cricket are back" (#ShubhAarambh) | https://www.youtube.com/watch?v=e7JATezA1nY | 30 Oct 2026 | 44.3 s (2 s black lead-in, 2 s black tail) | chocolate / sport tie-in, Hindi | READ, MEASURED (picture and sound meter), SEEN (20 frames) | Tension with fast, varied cuts in ONE venue, a visible reversal at 57 %, a long held payoff, a continuous music bed, brand on the screen from the first picture. |
 | 002 | Flipkart: "No Cost EMI by Flipkart. India Chahe Jo Hum Banaye Woh!" | https://www.youtube.com/watch?v=ppCZ9h_aACw | 30 Oct 2026 (partial) | 45 s | e-commerce offer, Hindi/Hinglish | READ + 5 small frames only | **Not yet logged under the framework.** Read before it existed: children play the adults, burned-in Hinglish subtitles. Needs the full read. |
 | 003 | Oral-B India: "Don't Let Dental Problems Cost You \| Switch to Oral-B Electric" (#SwitchToElectric) | https://www.youtube.com/watch?v=o9GOkHJTKwY | 30 Oct 2026 | 20.0 s | oral care, product demonstration with a known face, Hinglish | READ, MEASURED (picture and sound meter), SEEN (about 20 frames) | A 16-shot, 8-per-10-s demonstration: the brand card in the first second, a visible before/after proof (split-screen plaque), a spoken claim with a footnote, a known face to camera, continuous voice and sound, a held pack-and-presenter close. |
+| 004 | Surf Excel: "Puddlewar" (Daag Ache Hain) | https://www.youtube.com/watch?v=6o6JJIkamVY | 30 Oct 2026 | 43.5 s (3 s black and silent lead-in) | detergent, brand-idea film with children, Hindi tagline | READ, MEASURED (sound meter, black/white card timing; picture counts are ESTIMATES), SEEN (25 frames) | A slow, warm, picture-led build with no brand for 84 %, a mud-splash burst at 56 %, a quiet payoff of faces, then a written tagline with the sound dropping 20 dB under it and a story coda. |
 
 ## Entries
 
@@ -116,42 +117,96 @@ Status: **not logged under the framework.** It was looked at before the framewor
 1. What made this one a reference: the speed, the dentist-chair story, the split-screen proof, or the celebrity?
 2. Do we want demonstration films (claims, split screens, supers) in the builder, or only live-action stories?
 
-## Side by side (rebuilt at each new ad; the numbers come from the entries above)
-| | 001 Cadbury | 003 Oral-B | Flipkart (002, not yet read) |
+### 004. Surf Excel: "Puddlewar" (Daag Ache Hain) (read 30 Oct 2026)
+
+**Fact sheet.** READ: channel Surf excel, 229K views, "14y ago" (so about 2012), the description says the brand believes every stain a child brings home is an experience, "a value learned in process of getting dirty"; the tagline is in the title ("Daag Ache Hain", stains are good). MEASURED: 43.46 s; the only quality YouTube offers for this upload is 320x240 (4:3, low resolution). Live action, children, countryside. Language: the one piece of text is Hindi, "दाग अच्छे हैं". Commercial job: a brand-idea film that reframes stains as good. Popularity (signal only): modest, 229K views, which says nothing about its reputation.
+
+**Measurement note (important).** The picture meter could not be trusted on this video: on a 320x240 handheld film, the cut rule counted a "cut" about every second, and a visible check found one continuous shot where it said there were three. So **shot counts for this ad are estimates read from frame jumps and 25 stills, not measured**; the sound meter and the black/white card timing are trusted (see below). Method change for a 320-wide upload: sample by seeking every 0.1 s (a seek-sampled change of 28 or more is a candidate cut) and always check the candidates by eye. The first run of the standard tool gave only 24 frames and was discarded.
+
+**Audience verdict (SEEN, as a viewer).** It opens quietly: three seconds of black and silence, then two children in school uniform walking home along a country lane while a man reads a paper on the side. Nothing happens for about 20 seconds, and I stay because the children are watchable and the colour is warm; then the energy rises at 24 s (the girl braces, a burst of fast mud-splash shots from about 24 to 28.5 s), and the film settles into faces at 29-36 s: a boy plastered in mud, smiling, and a girl smiling. The brand shows up only at 36 s on a clean card with the two packs, a red star and the word for "stain", then the line "stains are good". A short coda follows (the children by a house, the girl helping the boy with his school bag). I would feel warmth, not sold-to, and I would remember the muddy, smiling boy. The risk is the long quiet middle: someone who swipes at 8 s would never meet the idea. (The story is INFERRED: a mud fight in which the boy ends up dirty and happy and the girl clean and smiling, so a stain is shown as something good he "paid" for the fun or for her; I did not see the splash that decides it.)
+
+**The nine questions**
+| | Finding | Evidence |
+|---|---|---|
+| **Concept** | A mud fight on the way home: the thing a parent dreads (a ruined uniform) is shown as the best part of the day. Premise type: reversal of a value (dirt = good). Stake: a school uniform and, implied, a parent's reaction. Hook: weak, a quiet walk (the first strong image is at about 24 s). Surprise/turn: the splash burst at 24.4 s (56 % of the film). Memorable: the boy's mud-covered, grinning face. Brand-necessity: integral to the idea (the product is what makes the mud acceptable) but the brand is not in the story. | SEEN, READ, INFERRED |
+| **Script / structure** | Black and silent lead-in 0-3 s. Walk and setup 3-24 s (21 s, 48 % of the film). Burst 24.4-28.5 s. Quiet payoff of faces 29-36 s. Brand card 36.4-39.5 s (3.1 s, white background). A coda scene 39.5-42.4 s (2.9 s, after the tagline). Black from 42.4 s. | MEASURED + SEEN |
+| **Shoot board** | One lane and its surroundings (a red-earth path, a hedge with flowers, a bench with a man reading a newspaper, a house in the coda). Hero look: school uniforms (a boy in white shirt, shorts and tie; a girl in a red blazer and bow), then the boy in a mud-stained cream outfit. A third child group walks past in the background (light touches of life). The product is not on the set at all. Light is warm and low (golden hour feel). | SEEN |
+| **Shots** | Estimated 20-27 shots in the 40 s of picture (unverified, see the note), so about **5-6.5 shots per 10 s overall, but very uneven**: roughly 4 per 10 s in the walk (3-10 s), 7-8 per 10 s at 10-20 s, a peak of about 8-9 per 10 s at 20-30 s (the mud burst has jumps 0.1-0.7 s apart), then 2 per 10 s in the payoff and a held 3 s card. The first shot is long (about 3.5 s). Sizes: wides on the lane (3-9 s, 16-22 s), then close-ups of children's faces (12-15 s, 24 s, 29-35 s), a macro-ish splash. Camera is handheld/moving throughout (typical frame change 7 on a 0-255 scale per 0.1 s). | MEASURED (low confidence on counts), SEEN |
+| **Sound design** | Silent 0-2 s, then present from 3 s at about -21 dB; it rises through the film to its loudest at 22-25 s (-17 dB) with the burst, falls to -25 to -31 dB at 28-31 s, and **drops to -43.6 dB at 39 s exactly when the tagline "stains are good" lands on the card** (about 20 dB below the film's typical level), recovers to -20 dB in the coda at 41 s, and fades out to silence by 42.5 s. At 29-30 s the sound's spectrum shifts (the speech-band share falls from about 0.9 to 0.01-0.19), meaning a different kind of sound (not midrange speech or melody) carries those two seconds: I cannot say what it is. What the sounds are is NOT JUDGED. | MEASURED |
+| **Music** | Not separable from the meter: the speech-band share is 0.6-1.0 in most seconds, which says the mid band is busy, not that there is speech. Whether there is a music bed, its genre or a song is NOT JUDGED. | MEASURED (limited), NOT JUDGED |
+| **Voice-over / dialogue** | No burned-in subtitles in any of the 25 frames and no on-page captions read, so **words are not recoverable**; whether anyone speaks or sings is NOT JUDGED. The only text in the film is the tagline, written, two words then four, at the end. | SEEN, NOT JUDGED |
+| **Casting / performance** | Two child leads (a boy of about 6-8, a girl of about 4-5) and a few extra children; one adult (the man on the bench, half in frame, no face). Casting device: the children carry everything, shown through reactions (the girl's wince, the boy's grin). Faces are on screen in about 11 of 20 sampled frames. No looks to camera. A known face: none shown. | SEEN |
+| **Location** | One rural lane and a house at the end; the setting is made lived-in by small things (the hedge flowers, the man with the newspaper, other children passing, the school bags). No other place. | SEEN |
+| **Brand and CTA** | **No brand, pack or logo until 36.4 s (84 % of the film)**, then a white-and-blue card with two packs, a red star symbol, the word for "stain" (37.5 s) and then "stains are good" (38.8 s), held 3.1 s; the sound drops out under the line. Then a 2.9 s coda scene after the brand card (children by a house). No offer, no price, no spoken tagline recoverable. | MEASURED + SEEN |
+
+**Not judged:** all sound content and any music; any words spoken; whether the boy takes the splash for the girl (the key beat); picture quality (it is the platform's 320x240 version).
+
+**Our system on this ad**
+| Our rule | What the ad does | Verdict | Confidence |
 |---|---|---|---|
-| Length / shape | 44.3 s, music-led, tension to a release | 20.0 s, voice-led, conflict to a demonstration | 45 s |
-| Shots per 10 s (our Fast = 3.5-5) | 4.5-5.5 | 8.0 | - |
-| Average shot / shots 1.4 s or less | about 2.2 s / 7 of 18 | 1.25 s / 14 of 17 | - |
-| Turn at | 57 % | 36 % | - |
-| Brand first on screen | 2.04 s (first picture, in hand) | 0 s (brand card) | - |
-| Where the message is carried | a sung line and a written end line | spoken lines, a written claim, a name super | - |
-| Words per 10 s (our budget 10.7) | about 3-4 | about 22-25 | - |
-| Silence inside the film | none | none | - |
-| Places | one ground, many scales | one clinic, many angles, plus graphics | - |
-| Close | 5.8 s animated swirl, written line | 3.3 s pack plus a speaking presenter | - |
-| Known face | no | yes (named on screen) | - |
-| Popularity (signal only) | 3M views, about 13 years old | 266M views, about 2 years old | - |
+| Pace presets (Fast 3.5-5 per 10 s) | Overall about 5-6.5 per 10 s but 2-4 at the edges and 8-9 in the middle | **EXTENDS**: a pace curve (slow, burst, settle) rather than one preset for the film | low |
+| Minimum shot 2 s | A burst with jumps 0.1-0.7 s apart (unverified) | **CONTRADICTS** probably, but not verified (the three-ad count for C1 is not raised) | very low |
+| `slow-hook` (scene 1 energy low) | A 3 s black lead and 20 s of quiet walking | **CONTRADICTS** (as a rule that an opening must move): the film opens slowly by design. It may cost views (not known) | low |
+| Hook within the first seconds | The first strong image is at about 24 s | **CONTRADICTS** the concept `hook` rule if hook means early; the film's hook is the family-recognisable "child in uniform" scene, a soft one | low |
+| Visible reversal and stake | The reversal (clean uniform to mud, shown as joy) is the whole film | **CONFIRMS** | low (3 ads) |
+| `same-place` finding | One lane for 36 s, alive through scale and subject, with long wides | **CONTRADICTS** as a boredom predictor (third ad); the film's weak stretch is the quiet walk, not the single place | low (3 ads) |
+| Editor's note: a beat of silence before the message | The sound drops 20 dB exactly under the tagline | **CONFIRMS** (and 001 and 003, which had no silence, were music-led and voice-led) | low |
+| `carrier_scene` / brand arrival | The brand arrives only at 84 % | **CONTRADICTS** the 001/003 reading that the brand should be on screen in the first 2 s: both can work | low |
+| Sign-off: pack held still, spoken payoff | A card with packs and a written payoff, held 3.1 s, a sound dip, then a coda scene | **CONFIRMS** most of it (still pack card, quiet beat, written line) and **EXTENDS** it (a story coda after the card) | low |
+| Voice budget (32 words per 30 s) | Words not recoverable | n/a | - |
+| Wardrobe lock | Colour-coded uniforms (white and red) and a visible change (clean to mud) | **EXTENDS**: costume change over the film (clean state to dirty state) is the story; our wardrobe lock fixes one state | low |
+| Black lead-in and tail | 3 s black and silent, 1 s black tail | Not a finding: the Render check's silent-tail finding should ignore black tails (as in C5) | low |
+| Director's read | Not run | UNKNOWN | - |
+
+**Questions for the owner**
+1. What made this one a reference: the slow, warm build, the mud-covered boy, or the idea that the stain is the point?
+2. Do we want a "state change over the film" feature for wardrobe (clean to dirty), since this ad and any stain/dirt/product-effect story depend on it?
+
+## Side by side (rebuilt at each new ad; the numbers come from the entries above; 002 Flipkart is not read yet)
+| | 001 Cadbury | 003 Oral-B | 004 Surf Excel |
+|---|---|---|---|
+| Length / shape | 44.3 s, music-led, tension to a release | 20.0 s, voice-led, conflict to a demonstration | 43.5 s, picture-led, a quiet walk, a burst, a payoff, a written tagline |
+| Shots per 10 s (our Fast = 3.5-5) | 4.5-5.5 | 8.0 | about 5-6.5 overall (estimated), very uneven: 2 to 9 |
+| Average shot / shots 1.4 s or less | about 2.2 s / 7 of 18 | 1.25 s / 14 of 17 | not measured / burst of very short shots (unverified) |
+| Opening | black 2 s, then a face with the bar | brand card 0.84 s, then a patient POV | black and silent 3 s, then a slow wide walk |
+| Turn at | 57 % | 36 % | 56 % (the splash burst) |
+| Brand first on screen | 2.04 s (in hand) | 0 s (brand card) | 36.4 s (84 %, the end card) |
+| Where the message is carried | a sung line and a written end line | spoken lines, a written claim, a name super | the picture, then a written tagline |
+| Words per 10 s (our budget 10.7) | about 3-4 | about 22-25 | not recoverable |
+| Silence inside the film | none | none | a 20 dB drop under the tagline (at 39 s) |
+| Places | one ground, many scales | one clinic, many angles, plus graphics | one lane, long wides and close faces |
+| Close | 5.8 s animated swirl, written line | 3.3 s pack plus a speaking presenter | 3.1 s card with packs, sound dip, then a 2.9 s coda scene |
+| Known face | no | yes (named on screen) | no (two child leads) |
+| Popularity (signal only) | 3M views, about 13 years old | 266M views, about 2 years old | 229K views, about 14 years old |
 
 ## Patterns (updated as ads arrive; needs 3 ads that agree)
-Two ads so far (001, 003), different category, language mix, length and message carrier; **they agree on the points below, so each is at "2 of 3" and none is a pattern yet**:
-1. Cut rate at or above the top of our Fast band, with many shots 1.4 s or less.
-2. A single place that never feels like a single place (scale, subject and viewpoint change at each cut).
-3. The brand is on the screen in the first 2 seconds, not only at the end.
-4. Sound is continuous with no silent second inside the film.
-5. A visible reversal and a stake in the story (both confirm our concept rules).
-Caution: both ads are very widely seen mass-market ads, and the sample is two; a quiet, slow brand film (our house style) would not appear in a list of the most-watched ads, so absence of slow ads here proves nothing about slow ads.
+Three ads so far (001, 003, 004), different category, message carrier, length and pace. **Two points hold in all three; they are the first patterns, and neither is a proposal yet:**
+1. **A visible reversal with a stake** (the grandmother film's "ritual quietly stops" would not meet this): a batsman near a hundred and a woman who runs on; a patient who "brushes twice a day" shown the plaque; a clean uniform that becomes mud and joy. (004's reversal is INFERRED, since I did not see the splash that decides it.)
+2. **One place that never feels like one place**: the ground, the clinic and the lane are each one location, kept alive by changes of scale, subject and viewpoint, with small lived-in details (pigeons, a branded wall, a man with a newspaper). Our `same-place` finding treats one place as a boredom risk; none of the three was boring because of it.
+
+**Points where the third ad broke the two-ad agreement (back to hypothesis, with one for and one against):**
+- Brand on screen in the first 2 seconds (001 and 003 yes; 004 no, the brand arrives at 84 %).
+- Continuous sound with no silent second (001 and 003 yes; 004 drops 20 dB under the tagline).
+- Cut rate at the top of our Fast band (001 and 003 yes; 004 overall similar but with a slow open and close and a burst between).
+So the reading to test with the next ad: **what carries the message decides the film's grammar**: sung or spoken films run continuous and cut fast with the brand early; a picture-led film builds slowly, holds the brand to the end, and puts the silence under the written line. This is one hypothesis (C4 in the candidates), not a result.
+Caution: all three are widely seen mass-market ads (or, for 004, a well-known campaign), and a quiet brand film of our house style would not be in a list chosen this way; the sample is three.
+
 ## Candidate changes (hypotheses, with support)
 | # | Candidate change to our system | Where | Supported by | Contradicted by | Status | Owner decision |
 |---|---|---|---|---|---|---|
 | C1 | Allow shots shorter than 2 s (a flash-cut burst) as trims of generated clips, so a tension build can accelerate | `filmvoice.SHOT_FLOOR`, `sceneshots` (2-4 s extras), the Edit room trim | 001, 003 | - | **2 of 3** | - |
-| C2 | The `same-place` finding should count variety of scale, subject and viewpoint, not only place tags | `filmdirect.engagement` and the director's `place` field | 001, 003 | - | **2 of 3** | - |
-| C3 | The `slow-hook` check should consider the cut rate of the opening seconds, not only scene 1's energy | `filmdirect.engagement` | 001, 003 (both openings cut within about 1 s) | - | **2 of 3** | - |
-| C4 | Classify each film by what carries the message (picture, voice-over, sung line, on-screen text) and run the Delivery and editor checks that match | `deliveryChecks`, `filmedit` | 001 (sung), 003 (spoken) | - | **2 of 3** | - |
-| C5 | The Render check's silent-tail finding fires only while a picture is still on screen (not over a black tail) | `filmqc.findings` | 001 | - | hypothesis (cheap) | - |
-| C6 | Wardrobe note: name the hero who must separate from the crowd by colour | department prompts, wardrobe lock | 001, 003 (white coat against blue gown) | - | hypothesis, weak | - |
+| C2 | The `same-place` finding should count variety of scale, subject and viewpoint, not only place tags | `filmdirect.engagement` and the director's `place` field | 001, 003, 004 | - | **PATTERN (3 of 3)** | - |
+| C3 | The `slow-hook` check should consider the cut rate of the opening seconds, not only scene 1's energy | `filmdirect.engagement` | 001, 003 (both openings cut within about 1 s) | 004 (a deliberately slow, quiet open) | **split: 2 for, 1 against** | - |
+| C4 | Classify each film by what carries the message (picture, voice-over, sung line, on-screen text) and run the Delivery and editor checks that match | `deliveryChecks`, `filmedit` | 001 (sung), 003 (spoken), 004 (picture then written line) | - | **PATTERN (3 of 3)**: films differ by what carries the message | - |
+| C5 | The Render check's silent-tail finding fires only while a picture is still on screen (not over a black tail) | `filmqc.findings` | 001, 004 (black and silent head and tail) | - | hypothesis (cheap) | - |
+| C6 | Wardrobe note: name the hero who must separate from the crowd by colour | department prompts, wardrobe lock | 001, 003 (white coat against blue gown), 004 (white boy against a red-blazer girl) | - | hypothesis, weak | - |
 | C7 | A moving, animated end card as a second sign-off style | sign-off rules, composite | 001 | - | hypothesis, mostly OUTSIDE today | - |
-| C8 | The editor's "beat of silence before the message" note is optional by film type, not a default | `filmedit` notes | 001, 003 | - | **2 of 3** | - |
-| C9 | A brand-arrival check: the brand (or product in hand) on screen in the first 2 s, as a director's-read field | `filmdirect` read (`carrier_scene`) and the writer | 001, 003 | - | **2 of 3** | - |
+| C8 | The editor's "beat of silence before the message" note is optional by film type, not a default | `filmedit` notes | 001, 003 (none, and they work); 004 (a 20 dB drop under the tagline, picture-led) | - | **3 of 3 on "depends on type"** | - |
+| C9 | A brand-arrival check: the brand (or product in hand) on screen in the first 2 s, as a director's-read field | `filmdirect` read (`carrier_scene`) and the writer | 001, 003 | 004 (the brand arrives at 84 % and the film stands) | **split: 2 for, 1 against** | - |
 | C10 | The voice budget depends on what carries the message (a 32 words-per-30-s ceiling suits a quiet film; a claim/demonstration film runs about 22-25 per 10 s) | `voBudget`, `deliveryRulesText` | 003 (001 is far below it, in a sung film) | - | hypothesis | - |
 | C11 | A sign-off that allows a speaking presenter next to the pack | sign-off rules, composite | 003 | - | hypothesis, OUTSIDE today | - |
 | C12 | Demonstration/proof shots (split screen, plaque or UV graphic, a claim line with its footnote, a name super for an endorser) as a shot type | shot jobs, composite, the pack-shot step | 003 | - | hypothesis, OUTSIDE today (builder makes live-action clips only) | - |
+| C13 | Wardrobe can have a STATE CHANGE over the film (clean to muddy, dry to wet, plain to stained): a lock of one state fights stain/dirt/product-effect stories | wardrobe lock, department prompts, frame prompts | 004 | - | hypothesis | - |
+| C14 | Allow a story coda AFTER the brand/tagline card (a last 2-3 s beat), as an optional sign-off tail | sign-off rules, composite, Render check | 004 | - | hypothesis, OUTSIDE today (sign-off must be last) | - |
+| C15 | Pace is a CURVE (slow open, a burst at the turn, a settle for the payoff), not one preset per film | `PACE_TABLE`, director's `energy` and `change` | 004 (001 also accelerates into the turn) | - | hypothesis | - |
+| C16 | Measurement protocol: for low-resolution uploads seek-sample every 0.1 s and verify candidate cuts by eye; never report counts from the automatic rule alone | `tools/adlab/measure_ad.js`, framework section 6 | 004 | - | **process fix, apply now** | - |
