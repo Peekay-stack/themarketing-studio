@@ -16,6 +16,7 @@ Append-only. One entry per ad, in the order read. Questions, evidence levels and
 | 002 | Flipkart: "No Cost EMI by Flipkart. India Chahe Jo Hum Banaye Woh!" | https://www.youtube.com/watch?v=ppCZ9h_aACw | 30 Oct 2026 (partial) | 45 s | e-commerce offer, Hindi/Hinglish | READ + 5 small frames only | **Not yet logged under the framework.** Read before it existed: children play the adults, burned-in Hinglish subtitles. Needs the full read. |
 | 003 | Oral-B India: "Don't Let Dental Problems Cost You \| Switch to Oral-B Electric" (#SwitchToElectric) | https://www.youtube.com/watch?v=o9GOkHJTKwY | 30 Oct 2026 | 20.0 s | oral care, product demonstration with a known face, Hinglish | READ, MEASURED (picture and sound meter), SEEN (about 20 frames) | A 16-shot, 8-per-10-s demonstration: the brand card in the first second, a visible before/after proof (split-screen plaque), a spoken claim with a footnote, a known face to camera, continuous voice and sound, a held pack-and-presenter close. |
 | 004 | Surf Excel: "Puddlewar" (Daag Ache Hain) | https://www.youtube.com/watch?v=6o6JJIkamVY | 30 Oct 2026 | 43.5 s (3 s black and silent lead-in) | detergent, brand-idea film with children, Hindi tagline | READ, MEASURED (sound meter, black/white card timing; picture counts are ESTIMATES), SEEN (25 frames) | A slow, warm, picture-led build with no brand for 84 %, a mud-splash burst at 56 %, a quiet payoff of faces, then a written tagline with the sound dropping 20 dB under it and a story coda. |
+| 005 | Good Knight Fastcard: "Fastcard 35sec Hindi" (a private re-upload) | https://www.youtube.com/watch?v=bon3PB8clIE | 30 Oct 2026 | 35.0 s of ad in a 42.6 s file (2.8 s black lead, 4.7 s black tail) | household insecticide, a family birthday with an in-story demonstration, Hindi | READ, MEASURED (picture and sound meter, 1062 frames), SEEN (about 30 frames) | Three calm long shots for 11 s, then a burst of about 11 per 10 s at the product, back to the family for the wish granted, then a short pack close; a 20 dB sound range with near silence under the end card; the brand legible only at 87 %. |
 
 ## Entries
 
@@ -61,9 +62,7 @@ Evidence note: the Hindi lines on screen are YouTube's own auto-captions (white 
 | Wardrobe lock (consistency) | Colour separation of the hero from the crowd is deliberate | **EXTENDS** the wardrobe note (add "who must pop out of the frame") | low |
 | Director's read, `late-peak` (first intensity-2 scene by 40 %) | The release comes at 57 %, the tension is built by cuts | **UNKNOWN**: needs our director's read run on this ad's shot list (about 7 cents); not run | - |
 
-**Questions for the owner**
-1. What made this one a reference for you: the build to the release, the long payoff, the song, or the brand arriving through the product in her hand?
-2. Is a music-led film (a jingle carrying the message) in scope for the builder, or only voice-led films?
+**Questions for the owner:** consolidated in the section "Open questions for the owner" below.
 
 ### 002. Flipkart: "No Cost EMI by Flipkart" (PARTIAL, read 30 Oct 2026)
 
@@ -113,9 +112,7 @@ Status: **not logged under the framework.** It was looked at before the framewor
 | On-screen name super for a known face | "Name, Actor \| Mother" for 1.5 s | **OUTSIDE** (we do not do endorsers or supers) | low |
 | Director's read, `late-peak` | Turn at 36 %, demonstration peak 9-13 s (45-65 %) | **UNKNOWN**: our read not run on this ad | - |
 
-**Questions for the owner**
-1. What made this one a reference: the speed, the dentist-chair story, the split-screen proof, or the celebrity?
-2. Do we want demonstration films (claims, split screens, supers) in the builder, or only live-action stories?
+**Questions for the owner:** consolidated in the section "Open questions for the owner" below.
 
 ### 004. Surf Excel: "Puddlewar" (Daag Ache Hain) (read 30 Oct 2026)
 
@@ -158,55 +155,112 @@ Status: **not logged under the framework.** It was looked at before the framewor
 | Black lead-in and tail | 3 s black and silent, 1 s black tail | Not a finding: the Render check's silent-tail finding should ignore black tails (as in C5) | low |
 | Director's read | Not run | UNKNOWN | - |
 
-**Questions for the owner**
-1. What made this one a reference: the slow, warm build, the mud-covered boy, or the idea that the stain is the point?
-2. Do we want a "state change over the film" feature for wardrobe (clean to dirty), since this ad and any stain/dirt/product-effect story depend on it?
+**Questions for the owner:** consolidated in the section "Open questions for the owner" below.
+
+### 005. Good Knight Fastcard: "Fastcard 35 sec Hindi" (read 30 Oct 2026)
+
+**Fact sheet.** READ: the upload is titled "Good Knight Fastcard HD 35sec Hindi" by a private uploader (not the brand channel), 9K views, "13y ago" (so about 2013), no description; so popularity says nothing about the ad. MEASURED: file 42.56 s, of which the ad itself runs 2.84-37.88 s (35.0 s, matching the title): 2.84 s of black and silence before it and 4.7 s of black and silence after it. Picture 576x360. Live action in a home, with a product demonstration. Language: Hindi (words not recoverable: the on-page captions were too small and unreliable to read). Commercial job: a household insecticide product (a mosquito-repellent card) shown working at a family occasion.
+
+**Audience verdict (SEEN, as a viewer).** Calm, domestic and warm: a boy in a party cap at a birthday table, his father blowing up balloons, his mother smiling. For 11 seconds (three shots, 3-5 s each) the film is gentle and only the boy's closed-eye, hands-together "wish" tells me something is coming. At 14 s it wakes up: the cuts shorten to about one second, a card is lit on a plate, smoke drifts at floor level among guests' feet, small pink rings fall. It then returns to the family for ten seconds: the boy's wish again, the mother's hand over her mouth, the father's balloon, and the boy's big grin. I would not swipe in the first 11 s because the boy is charming and the mood is clear, but I would not remember anything from the first 11 s either. The memorable image is the lit card on the plate with the smoke and the feet. I do not know what the boy wished for (INFERRED: a party without mosquitoes) and the film does not make me sure. The ending is very short: a pack on a table, a "1" starburst, a quick white card (1.3 s).
+
+**The nine questions**
+| | Finding | Evidence |
+|---|---|---|
+| **Concept** | A family birthday where the product silently solves a nuisance. Premise type: demonstration inside a story. Stake: the party (a child's birthday wish; INFERRED that the wish is for a party free of mosquitoes). Hook: the boy's pose with eyes closed and hands pressed. Surprise: the lit card and smoke in the middle of a party. Turn: the product appears at 15 s (35 %). Memorable: the lit card and drifting smoke among feet. Brand-necessity: the product is the answer, integral; the brand name and pack are shown only late. The reversal (mosquitoes gone, boy smiling at 32 s) is INFERRED from the pink rings, the boy's grin, and the mood. | SEEN, INFERRED |
+| **Script / structure** | Black and silent 0-2.84 s. Setup 2.84-14.1 s (11 s, 32 % of the ad): boy, father, wish. Product and demonstration 14.1-22.9 s (9 s, 25 %): cards on a dark floor, a card lit, smoke, guests' feet, small pink rings. Back to the family 22.9-33 s (10 s, 29 %): the boy's wish again (eyes closed, 23.5 and 27 s), the father with a balloon, the mother with a hand over her mouth, then the boy's big grin at 32 s. Pack and claim 33-36.6 s (3.6 s). White end card 36.6-37.9 s (1.3 s). Black 37.9 s onwards. | MEASURED + SEEN |
+| **Shoot board** | A decorated home (balloons on every wall, lamps, a dining table with a snack bowl, patterned curtains) and a floor-level demo set (a dark floor or grey tile, a white plate, guests' feet). Hero object: the card in hand, on the plate, then the pack (with a red "Fast Card" label and a "3" badge). Wardrobe is simple and colour-coded: the boy in a mustard shirt and a blue paper cap, the father in a pale blue shirt, the mother in white and grey. Lighting: warm and soft for the home, dark and contrasty for the demo. | SEEN |
+| **Shots** | 20 picture shots in 35.0 s = **5.7 per 10 s, average 1.75 s** (our Fast band tops out at 5). 11 of 20 are 1.4 s or less; the shortest is 0.52 s. The rhythm is a curve: three long shots (5.0, 3.3, 3.0 s) for the first 11 s, then a burst of six shots of 0.5-1.7 s in 14-19.4 s (about 11 per 10 s there), then a mixed stretch of 1.0-3.4 s that cuts between the family and the card, and 1.0-1.3 s shots to the end. Sizes: medium and close faces in the setup, wides of the decorated room, macro of the card and smoke, a pack shot on the table at the end. The longest shot is the first (5.0 s). | MEASURED + SEEN |
+| **Sound design** | Silent 0-2 s, a fade-in from 3 s. **A wide dynamic range, about 20 dB:** a quiet setup (-28 to -44 dB, 4-15 s), a loud demonstration (-23 to -26 dB, 16-23 s), quiet again under the family shots (-35 to -43 dB, 25-29 s), loud at the pack shot (-25 dB, 32-34 s), a near-silent white card (-51.8 dB at 37 s), then silence from 38 s. So the sound lifts where the product appears and drops under the wish and the end card. What the sounds are is NOT JUDGED. | MEASURED |
+| **Music** | Not separable from the meter. Whether there is a music bed or a jingle, and its genre, are NOT JUDGED. | MEASURED (limited), NOT JUDGED |
+| **Voice-over / dialogue** | Words are not recoverable: whether there is a voice-over, who speaks and what they say, is NOT JUDGED. No burned-in subtitles; the only on-screen graphics are a "1" starburst near the card (34-35 s), a "3" badge on the pack, and the product's logo bug (top right, 33-35 s). | SEEN, NOT JUDGED |
+| **Casting / performance** | A family of three on screen: a boy of about 9-10, a father, a mother (guests only as feet and shadows). The boy carries the film and does the performing: a held, serious wish, then a big grin. Faces are on screen in about 9 of 20 shots; no looks to camera. No known face (none named). The casting device is a child's wish. | SEEN |
+| **Location** | One home (dining and party room), shown in wide, medium and close; the demonstration is shot in a different, darker space at floor level (INFERRED a constructed set). | SEEN |
+| **Brand and CTA** | The product (a card on a dark floor) first appears at 15 s (35 % in), a lit card at 18 s; the pack with its label is legible only at 33 s (87 %), with a logo bug at the top right; a "1" starburst graphic follows; a white end card holds 1.3 s with near silence under it. No offer or price on screen that I could read; no spoken tagline recoverable. The brand name is not on screen for the first 87 % of the ad. | MEASURED + SEEN |
+
+**Not judged:** all sound content, any music, any voice or words; whether the wish is for a mosquito-free party; the content of the white end card (the picture could not be captured; it averages 246/238/236 on a 0-255 scale with a darker band in the lower middle, which says a white card with a logo or line).
+
+**Our system on this ad**
+| Our rule | What the ad does | Verdict | Confidence |
+|---|---|---|---|
+| Pace presets (Fast 3.5-5 per 10 s) | 5.7 per 10 s overall, from 3 per 10 s in the opening to about 11 per 10 s in the demo | **EXTENDS** (a curve, as in 004): the single-preset table has no word for it | low |
+| Minimum shot 2 s | 11 of 20 shots at or under 1.4 s, down to 0.52 s | **CONTRADICTS** (third ad where this is measured) | medium-low (3 ads) |
+| `slow-hook` | A calm first 11 s, three long shots, no promise of the idea | **CONTRADICTS** as a prohibition (as in 004): quiet openings exist; but we have no evidence they hold attention | low |
+| Visible reversal and stake | A wish, then a demonstration, then a smile (INFERRED) | **CONFIRMS** weakly (the reversal is not explicit) | low |
+| `same-place` | A single home for most of the ad, plus a floor-level demo set | **CONTRADICTS** as a boredom predictor (fourth ad) | low (4 ads) |
+| Editor's note: a beat of silence before the message | Sound drops about 20 dB under the quiet wish and to near silence under the end card, lifts at the product | **CONFIRMS** (picture-led, as in 004) | low |
+| Brand arrival (`carrier_scene`) | Product at 35 %, legible pack at 87 % | **CONTRADICTS** brand-in-first-2-s (as in 004) | low |
+| Sign-off: pack held locked and still | A pack on a table with a graphic, 3.6 s, then a 1.3 s white card | **CONFIRMS** the idea of a still pack close; the hold is shorter than in 001, 003, 004 | low |
+| Proof / demonstration graphics | A lit card, smoke, pink rings, a "1" starburst, a pack badge | **OUTSIDE** (as in 003) | low |
+| Wardrobe lock | Simple colour coding of the family; no state change | **CONFIRMS** | low |
+| Black lead-in and tail | 2.84 s black and silent before, 4.7 s after (likely upload artefacts) | Not a finding; supports C5 | low |
+| Director's read | Not run | UNKNOWN | - |
+
+**Questions for the owner:** consolidated in the section "Open questions for the owner" below (Q1 covers what made each a reference).
 
 ## Side by side (rebuilt at each new ad; the numbers come from the entries above; 002 Flipkart is not read yet)
-| | 001 Cadbury | 003 Oral-B | 004 Surf Excel |
-|---|---|---|---|
-| Length / shape | 44.3 s, music-led, tension to a release | 20.0 s, voice-led, conflict to a demonstration | 43.5 s, picture-led, a quiet walk, a burst, a payoff, a written tagline |
-| Shots per 10 s (our Fast = 3.5-5) | 4.5-5.5 | 8.0 | about 5-6.5 overall (estimated), very uneven: 2 to 9 |
-| Average shot / shots 1.4 s or less | about 2.2 s / 7 of 18 | 1.25 s / 14 of 17 | not measured / burst of very short shots (unverified) |
-| Opening | black 2 s, then a face with the bar | brand card 0.84 s, then a patient POV | black and silent 3 s, then a slow wide walk |
-| Turn at | 57 % | 36 % | 56 % (the splash burst) |
-| Brand first on screen | 2.04 s (in hand) | 0 s (brand card) | 36.4 s (84 %, the end card) |
-| Where the message is carried | a sung line and a written end line | spoken lines, a written claim, a name super | the picture, then a written tagline |
-| Words per 10 s (our budget 10.7) | about 3-4 | about 22-25 | not recoverable |
-| Silence inside the film | none | none | a 20 dB drop under the tagline (at 39 s) |
-| Places | one ground, many scales | one clinic, many angles, plus graphics | one lane, long wides and close faces |
-| Close | 5.8 s animated swirl, written line | 3.3 s pack plus a speaking presenter | 3.1 s card with packs, sound dip, then a 2.9 s coda scene |
-| Known face | no | yes (named on screen) | no (two child leads) |
-| Popularity (signal only) | 3M views, about 13 years old | 266M views, about 2 years old | 229K views, about 14 years old |
+| | 001 Cadbury | 003 Oral-B | 004 Surf Excel | 005 Good Knight |
+|---|---|---|---|---|
+| Length (the ad itself) | 40.3 s of picture in 44.3 s, music-led | 20.0 s, voice-led | about 39.5 s of picture in 43.5 s, picture-led | 35.0 s in 42.6 s, picture-led |
+| Shots per 10 s (our Fast = 3.5-5) | 4.5-5.5 | 8.0 | about 5-6.5 (estimated), very uneven | 5.7, very uneven (3 to 11) |
+| Average shot / shots 1.4 s or less | about 2.2 s / 7 of 18 | 1.25 s / 14 of 17 | not measured / a burst of very short shots (unverified) | 1.75 s / 11 of 20 |
+| Opening | black 2 s, then a face with the bar | brand card 0.84 s, then a patient POV | black 3 s, then a slow wide walk | black 2.8 s, then three long calm shots (11 s) |
+| Turn / product at | 57 % | 36 % | 56 % (the splash burst) | 35 % (the product), wish granted at about 84 % |
+| Brand first on screen | 2.04 s (in hand) | 0 s (brand card) | 36.4 s (84 %) | product at 15 s (35 %), legible pack at 87 % |
+| Where the message is carried | a sung line and a written end line | spoken lines, a written claim, a name super | the picture, then a written tagline | the picture and a demonstration; words not recoverable |
+| Words per 10 s (our budget 10.7) | about 3-4 | about 22-25 | not recoverable | not recoverable |
+| Quiet beat inside the film | none | none | a 20 dB drop under the tagline | a 20 dB range: quiet under the wish and near silence under the end card |
+| Places | one ground, many scales | one clinic, many angles, plus graphics | one lane, long wides and close faces | one home, plus a floor-level demo set |
+| Close | 5.8 s animated swirl, written line | 3.3 s pack plus a speaking presenter | 3.1 s card with packs, sound dip, then a 2.9 s coda | 3.6 s pack shot and "1" graphic, then a 1.3 s white card |
+| Known face | no | yes (named on screen) | no (two child leads) | no (a family of three) |
+| Popularity (signal only) | 3M views, about 13 years old | 266M views, about 2 years old | 229K views, about 14 years old | 9K views (a private re-upload, meaningless) |
 
 ## Patterns (updated as ads arrive; needs 3 ads that agree)
-Three ads so far (001, 003, 004), different category, message carrier, length and pace. **Two points hold in all three; they are the first patterns, and neither is a proposal yet:**
-1. **A visible reversal with a stake** (the grandmother film's "ritual quietly stops" would not meet this): a batsman near a hundred and a woman who runs on; a patient who "brushes twice a day" shown the plaque; a clean uniform that becomes mud and joy. (004's reversal is INFERRED, since I did not see the splash that decides it.)
-2. **One place that never feels like one place**: the ground, the clinic and the lane are each one location, kept alive by changes of scale, subject and viewpoint, with small lived-in details (pigeons, a branded wall, a man with a newspaper). Our `same-place` finding treats one place as a boredom risk; none of the three was boring because of it.
+Four ads so far (001, 003, 004, 005): different categories, message carriers, lengths and paces. Points that now hold in three or more ads (each is a pattern, none is a proposal yet; the owner decides):
+1. **A visible reversal with a stake.** A batsman near a hundred and a woman who runs on; a patient who "brushes twice a day" shown the plaque; a clean uniform becoming mud and joy; a child's party and a nuisance that vanishes. (004's and 005's reversals are INFERRED.)
+2. **One place that never feels like one place.** Ground, clinic, lane, home: each is one location, kept alive by changes of scale, subject and viewpoint, with small lived-in details. Our `same-place` finding treats a single place as a boredom risk; none of the four was held back by it (the quiet stretches in 004 and 005 are quiet because of what happens, not where).
+3. **Very short shots are normal.** 001, 003 and 005 all have many shots at 1.4 s or less and shots as short as 0.5-0.6 s; 004 appears to (unverified). Our 2 s floor is outside what these ads do.
+4. **Pace is a curve, not a number.** 001 accelerates into the turn; 004 and 005 both open with long calm shots (three shots in 11 s in 005) and burst into about 8-11 per 10 s at the product or the splash, then settle. 003 is fast throughout. A single "Fast" preset describes none of them.
+5. **A film's grammar follows what carries the message.** Sung and spoken films (001, 003) run continuous in sound, cut fast and show the brand early; picture-led films (004, 005) open slowly, hold the brand back (84-87 % of the way) and put the quiet under the closing line. This is the hypothesis C4 in the candidates, now at 4 ads.
 
-**Points where the third ad broke the two-ad agreement (back to hypothesis, with one for and one against):**
-- Brand on screen in the first 2 seconds (001 and 003 yes; 004 no, the brand arrives at 84 %).
-- Continuous sound with no silent second (001 and 003 yes; 004 drops 20 dB under the tagline).
-- Cut rate at the top of our Fast band (001 and 003 yes; 004 overall similar but with a slow open and close and a burst between).
-So the reading to test with the next ad: **what carries the message decides the film's grammar**: sung or spoken films run continuous and cut fast with the brand early; a picture-led film builds slowly, holds the brand to the end, and puts the silence under the written line. This is one hypothesis (C4 in the candidates), not a result.
-Caution: all three are widely seen mass-market ads (or, for 004, a well-known campaign), and a quiet brand film of our house style would not be in a list chosen this way; the sample is three.
+**Not patterns (split):**
+- Brand on screen in the first 2 seconds: 001 and 003 yes, 004 and 005 no (the same split as pattern 5).
+- Continuous sound with no quiet beat: 001 and 003 yes, 004 and 005 no.
+- A story coda after the brand card: 004 only.
+
+Caution: the four ads are mass-market ads, all Hindi or Hinglish, all from India, and chosen as references; a quiet brand film of our house style (Telugu, slow, heritage) would not be in a list chosen this way, so the sample says what works in broadcast-style ads, not what works for Heritage. Q5 in the open questions asks whether to weigh that.
 
 ## Candidate changes (hypotheses, with support)
 | # | Candidate change to our system | Where | Supported by | Contradicted by | Status | Owner decision |
 |---|---|---|---|---|---|---|
-| C1 | Allow shots shorter than 2 s (a flash-cut burst) as trims of generated clips, so a tension build can accelerate | `filmvoice.SHOT_FLOOR`, `sceneshots` (2-4 s extras), the Edit room trim | 001, 003 | - | **2 of 3** | - |
-| C2 | The `same-place` finding should count variety of scale, subject and viewpoint, not only place tags | `filmdirect.engagement` and the director's `place` field | 001, 003, 004 | - | **PATTERN (3 of 3)** | - |
-| C3 | The `slow-hook` check should consider the cut rate of the opening seconds, not only scene 1's energy | `filmdirect.engagement` | 001, 003 (both openings cut within about 1 s) | 004 (a deliberately slow, quiet open) | **split: 2 for, 1 against** | - |
-| C4 | Classify each film by what carries the message (picture, voice-over, sung line, on-screen text) and run the Delivery and editor checks that match | `deliveryChecks`, `filmedit` | 001 (sung), 003 (spoken), 004 (picture then written line) | - | **PATTERN (3 of 3)**: films differ by what carries the message | - |
-| C5 | The Render check's silent-tail finding fires only while a picture is still on screen (not over a black tail) | `filmqc.findings` | 001, 004 (black and silent head and tail) | - | hypothesis (cheap) | - |
+| C1 | Allow shots shorter than 2 s (a flash-cut burst) as trims of generated clips, so a tension build can accelerate | `filmvoice.SHOT_FLOOR`, `sceneshots` (2-4 s extras), the Edit room trim | 001, 003, 005 (004 unverified) | - | **PATTERN (3 of 3)** | - |
+| C2 | The `same-place` finding should count variety of scale, subject and viewpoint, not only place tags | `filmdirect.engagement` and the director's `place` field | 001, 003, 004, 005 | - | **PATTERN (4 of 4)** | - |
+| C3 | The `slow-hook` check should consider the cut rate of the opening seconds, not only scene 1's energy | `filmdirect.engagement` | 001, 003 (both openings cut within about 1 s) | 004, 005 (both open with long calm shots) | **split: 2 for, 2 against** (whether a slow open holds attention is NOT KNOWN from these ads) | - |
+| C4 | Classify each film by what carries the message (picture, voice-over, sung line, on-screen text) and run the Delivery and editor checks that match | `deliveryChecks`, `filmedit` | 001 (sung), 003 (spoken), 004 and 005 (picture-led) | - | **PATTERN (4 of 4)**: films differ by what carries the message | - |
+| C5 | The Render check's silent-tail finding fires only while a picture is still on screen (not over a black tail) | `filmqc.findings` | 001, 004, 005 (black and silent head and tail; probably upload artefacts) | - | hypothesis (cheap) | - |
 | C6 | Wardrobe note: name the hero who must separate from the crowd by colour | department prompts, wardrobe lock | 001, 003 (white coat against blue gown), 004 (white boy against a red-blazer girl) | - | hypothesis, weak | - |
 | C7 | A moving, animated end card as a second sign-off style | sign-off rules, composite | 001 | - | hypothesis, mostly OUTSIDE today | - |
-| C8 | The editor's "beat of silence before the message" note is optional by film type, not a default | `filmedit` notes | 001, 003 (none, and they work); 004 (a 20 dB drop under the tagline, picture-led) | - | **3 of 3 on "depends on type"** | - |
-| C9 | A brand-arrival check: the brand (or product in hand) on screen in the first 2 s, as a director's-read field | `filmdirect` read (`carrier_scene`) and the writer | 001, 003 | 004 (the brand arrives at 84 % and the film stands) | **split: 2 for, 1 against** | - |
+| C8 | The editor's "beat of silence before the message" note is optional by film type, not a default | `filmedit` notes | 001, 003 (none, and they work); 004 and 005 (a quiet beat under the closing line, both picture-led) | - | **4 of 4 on "depends on type"** | - |
+| C9 | A brand-arrival check: the brand (or product in hand) on screen in the first 2 s, as a director's-read field | `filmdirect` read (`carrier_scene`) and the writer | 001, 003 | 004, 005 (the brand arrives at 84-87 %) | **split: 2 for, 2 against**, and the split follows what carries the message | - |
 | C10 | The voice budget depends on what carries the message (a 32 words-per-30-s ceiling suits a quiet film; a claim/demonstration film runs about 22-25 per 10 s) | `voBudget`, `deliveryRulesText` | 003 (001 is far below it, in a sung film) | - | hypothesis | - |
 | C11 | A sign-off that allows a speaking presenter next to the pack | sign-off rules, composite | 003 | - | hypothesis, OUTSIDE today | - |
-| C12 | Demonstration/proof shots (split screen, plaque or UV graphic, a claim line with its footnote, a name super for an endorser) as a shot type | shot jobs, composite, the pack-shot step | 003 | - | hypothesis, OUTSIDE today (builder makes live-action clips only) | - |
+| C12 | Demonstration/proof shots (split screen, plaque or UV graphic, a claim line with its footnote, a name super for an endorser) as a shot type | shot jobs, composite, the pack-shot step | 003, 005 (a lit card, smoke, pink rings, a "1" starburst, a pack badge) | - | **2 of 3**, OUTSIDE today (builder makes live-action clips only) | - |
 | C13 | Wardrobe can have a STATE CHANGE over the film (clean to muddy, dry to wet, plain to stained): a lock of one state fights stain/dirt/product-effect stories | wardrobe lock, department prompts, frame prompts | 004 | - | hypothesis | - |
 | C14 | Allow a story coda AFTER the brand/tagline card (a last 2-3 s beat), as an optional sign-off tail | sign-off rules, composite, Render check | 004 | - | hypothesis, OUTSIDE today (sign-off must be last) | - |
-| C15 | Pace is a CURVE (slow open, a burst at the turn, a settle for the payoff), not one preset per film | `PACE_TABLE`, director's `energy` and `change` | 004 (001 also accelerates into the turn) | - | hypothesis | - |
+| C15 | Pace is a CURVE (slow open, a burst at the turn, a settle for the payoff), not one preset per film | `PACE_TABLE`, director's `energy` and `change` | 004, 005 (001 accelerates into the turn; 003 is fast throughout) | - | **PATTERN (3 of 3)** | - |
 | C16 | Measurement protocol: for low-resolution uploads seek-sample every 0.1 s and verify candidate cuts by eye; never report counts from the automatic rule alone | `tools/adlab/measure_ad.js`, framework section 6 | 004 | - | **process fix, apply now** | - |
+
+## Open questions for the owner (consolidated; answer here or in chat, then I record the answer and date)
+The log asks questions once, here, instead of at the end of every entry. Answers are recorded as OWNER-REPORTED. Unanswered questions stay open; nothing in the builder changes while they are open.
+
+| # | Question | Asked at | Why it matters | Owner's answer (date) |
+|---|---|---|---|---|
+| Q1 | For each ad, what made it a reference for you? 001 Cadbury: the build to the release, the long payoff, the song, or the bar in her hand? 003 Oral-B: the speed, the dentist-chair story, the split-screen proof, or the celebrity? 004 Surf Excel: the slow warm build, the muddy boy, or the idea that the stain is the point? 005 Good Knight: the birthday wish, the demonstration, or something else? | 001, 003, 004, 005 | Tells me which of the many things in an ad to weight; without it every observation counts the same. | open |
+| Q2 | Your ear notes: for any ad, can you tell me what the music, voice or sound is like (a jingle? a known track? a warm voice? effects that sell the action?). I cannot hear, so sound is only measured. | all | Fills the NOT JUDGED rows (music, voice-over, sound effects), which are three of the nine questions. | open |
+| Q3 | Is a music-led film (a sung line carries the message, as in Cadbury) in scope for the builder, or only voice-led films? | 001 | Decides whether a sung hook and a continuous music bed are things to support (C4, C10). | open |
+| Q4 | Do we want demonstration films in the builder: claims with footnotes, split screens, proof graphics, a lit card with smoke, an on-screen name super for an endorser? Today it makes live-action clips and a pack still only. | 003, 005 | Decides whether C11 and C12 are ever built; they are outside the builder today. | open |
+| Q5 | How much should these ads count for Heritage? All four are Hindi/Hinglish mass-market ads; Heritage films are Telugu, quiet and brand-heritage in style. Should references be weighted by category (dairy/FMCG), language or tone, and should I look for slower, quieter references too? | 004, 005 | Decides whether a pattern from these ads is a rule for us or only a rule for fast broadcast ads. | open |
+| Q6 | Should the builder let wardrobe CHANGE over a film (clean to muddy, dry to wet, plain to stained)? Our wardrobe lock fixes one state. | 004 | Stain, dirt and product-effect stories depend on it (C13). | open |
+| Q7 | Shall I run our own director's read on the logged ads' shot lists, to see which of our findings would fire on ads that work (a false-alarm test)? About 7 cents each, about 30 cents for four; I quote before running. | 001 | The cleanest test of whether our `same-place`, `slow-hook`, `late-peak` and `flat-energy` findings are right. | open |
+| Q8 | Flipkart (002) is only partly read. Do the full read next, or keep going with new links? | 002 | Housekeeping: it is the only entry not under the framework. | open |
+| Q9 | When should I turn patterns into proposals? Suggestion: when about six ads are logged I write a plan (not code) for the patterns that held, each with the evidence for and against and the cost, and you pick. | all | Keeps changes off single ads; five patterns already stand at 3-4 ads. | open |
+
