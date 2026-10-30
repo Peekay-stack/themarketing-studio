@@ -5,14 +5,14 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 188571ea-55a9-4350-b9a0-481c7a9d13b2
-  modified: 2026-10-30T06:01:13.594Z
+  modified: 2026-10-30T06:10:39.237Z
 ---
 
 The owner will share real ads that work; for each we ask the same nine questions in builder order (concept, script, shoot board, shots, sound design, music, voice-over, casting, location, plus brand/CTA), compare with our rules (CONFIRMS / CONTRADICTS / EXTENDS / OUTSIDE), and only then consider a change.
 
-**Files (branch `film-engagement-2`, commit `51b85e4`, pushed, not merged):** `Heritage Marketing Studio/AD_REFERENCE_FRAMEWORK.md` (ground rules, fact sheet, the questions, protocol), `AD_LEARNING_LOG.md` (index, entries, patterns, candidate changes C1-C7), `tools/adlab/measure_ad.js` (paste inline into a YouTube watch page).
+**Files (branch `film-engagement-2`, commits `51b85e4`, `8e770ff`, pushed, not merged):** `Heritage Marketing Studio/AD_REFERENCE_FRAMEWORK.md` (ground rules, fact sheet, the questions, protocol), `AD_LEARNING_LOG.md` (index, entries, patterns, side-by-side table, candidate changes C1-C12), `tools/adlab/measure_ad.js` (paste inline into a YouTube watch page).
 
-**State:** Entry 001 Cadbury (e7JATezA1nY) fully logged; Entry 002 Flipkart (ppCZ9h_aACw) PARTIAL (needs the full read). Nothing is changed in the builder off one ad; candidates C1-C7 are hypotheses with support count 1. Owner questions open: what made Cadbury a reference; is a music-led film in scope. Our director's read on the Cadbury shot list not run (about 7 cents, quote first).
+**State:** Entry 001 Cadbury (e7JATezA1nY) and Entry 003 Oral-B (o9GOkHJTKwY, 20 s, 16 shots, 8 per 10 s, voice-led, known face) fully logged, with a side-by-side table; Entry 002 Flipkart (ppCZ9h_aACw) PARTIAL (needs the full read). Nothing is changed in the builder off the ads yet; candidates C1-C12, five of them at 2 of 3 (sub-2 s shots, same-place, slow-hook by cut rate, carrier classification, silence note, brand-in-first-2 s). Needs a third ad to become a pattern. Owner questions open: what made Cadbury a reference; is a music-led film in scope. Our director's read on the Cadbury shot list not run (about 7 cents, quote first).
 
 **Rules:** evidence levels MEASURED / SEEN / READ / INFERRED / OWNER-REPORTED / NOT JUDGED. I cannot hear: never judge voice, music genre or lyrics; sound is measured only. One ad is a hypothesis, three agreeing ads a pattern, the owner decides, the log is append-only.
 
