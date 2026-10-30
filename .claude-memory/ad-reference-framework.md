@@ -1,6 +1,6 @@
 ---
 name: ad-reference-framework
-description: The common framework for reading a reference ad (ground rules, evidence levels, the nine questions in builder order plus "why it works", verdict + comparison with our rules, and the read protocol with the measurement lessons).
+description: The common framework for reading a reference ad (ground rules, evidence levels, the nine questions in builder order, "why it works" and "where the magic is" (read first), verdict + comparison with our rules, and the read protocol with the measurement lessons).
 metadata:
   type: reference
 ---
@@ -90,6 +90,9 @@ For each: what we ask, how we get evidence, the number to record, and which part
 - **Ask:** the ONE message in a sentence (functional or emotional); the memorable device that carries it (a jingle, a tag line, an intriguing question and its reveal, a character moment, a gag); the quality of the performance and the characterisation; the humour or intrigue that is the way in; how the product and the emotion or benefit are tied; whether it broke the norm of its day or made a boring subject fun.
 - **Evidence:** OWNER-REPORTED first (the owner's reason for choosing the ad is the lead evidence, recorded in the log's section "Why the owner chose each reference"); then SEEN and READ. **Record:** the one-sentence message, the memorable device, the performance note, the way in.
 - **Tests:** concept routes and the writer rules (is there ONE message and ONE memorable device?), the director's `concept_delivery`, the voice and casting notes. The measured patterns (pace, shots, quiet beats, brand timing) are descriptive; they become candidate rules only with a link to these reasons.
+
+### 3.12 Where the magic is (the owner's stated purpose; added 30 Oct 2026; READ THIS FIRST for every new ad)
+The owner showed these ads to teach **when an ad becomes magical and effective**: the thought in every small detail: the scripting, the dialogues, the key moments, the voice-over artiste, the celebrity casting, the creation of attention hooks, the dramatising of the proposition. The measured questions above are only a way of describing the film. For each ad write FIRST, as a row of the log's "Where the magic is" table: **the attention hook** (what opens a question in the first seconds); **the key moment** people will remember; **how the proposition is dramatised** as an event (a proof, a gag, a reversal, a demonstration) rather than stated; **the lines or small details that carry it** (a quotable line, a prop, a gesture, a recurring character); **the casting and voice** (a choice that is the idea; the voice artiste is NOT JUDGED unless the owner tells me). Then the owner's reason for choosing the ad and the music kind as the owner reports it (a jingle film, or a voice-and-dialogue film with sound design and music at the reveal). Only then the numbers.
 
 ## 4. The audience verdict and the comparison with our rules
 - **Audience verdict** (SEEN, as a viewer): attention curve in three words (where I lean in, where I would swipe), the memorable image, what I would repeat, whether it makes me want to watch again. Plain words, no scores.
