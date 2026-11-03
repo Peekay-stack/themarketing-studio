@@ -12947,11 +12947,13 @@ class Component extends DCLogic {
     // `brand_mode` rides on every call through the one shared Producers toggle — see producerBrandMode's
     // own note. `extra` still wins if a caller ever needs to say something different for one specific
     // call, but nothing today does.
+    // `timeoutMs` is the page's own limit for ONE call (craft mode asks for a longer answer, which this model needs more than 45 s for); it is not sent to the server.
+    const { timeoutMs, ...rest } = extra || {};
     const call = { messages:[{ role:'user', content: prompt }],
-      brand_mode: this.state.producerBrandMode || 'grounded', ...(extra || {}) };
+      brand_mode: this.state.producerBrandMode || 'grounded', ...rest };
     return Promise.race([
       Promise.resolve(window.claude.complete(call)).finally(() => clearTimeout(t)),
-      new Promise((_, rej) => { t = setTimeout(() => rej(new Error('timeout')), this.MODEL_TIMEOUT_MS); }),
+      new Promise((_, rej) => { t = setTimeout(() => rej(new Error('timeout')), timeoutMs || this.MODEL_TIMEOUT_MS); }),
     ]);
   }
   BRAND_PREAMBLE_MISSING = 'No brand profile is active, so this would be written for nobody. Pick a brand from the chip at the top before generating.';
@@ -16040,7 +16042,7 @@ class Component extends DCLogic {
               'Return ONLY JSON: {"rows":[{"no":1,"tc":"0\u20135s","visual":"...","camera":"shot type & movement","dialogue":"human-readable script cell (empty when nothing is said)","supr":"on-screen text","audio":[]}]}. '
               + 'Where something is spoken, "audio" holds one entry per spoken line: {"type":"vo" or "dialogue","speaker":"who (dialogue only)","emotion":"how it is said","language":"en","text":"spoken words only"}. Where nothing is spoken it stays [].');
         }
-        let raw = await this.complete((learned ? learned + '\n\n' : '') + finalPrompt + locked, { ...this.videoExtra(), ...this.craftOpts() });
+        let raw = await this.complete((learned ? learned + '\n\n' : '') + finalPrompt + locked, { ...this.videoExtra(), ...this.craftCall() });
         raw = String(raw).trim().replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();
         const data = JSON.parse(raw.slice(raw.indexOf('{'), raw.lastIndexOf('}')+1));
         if (data.rows && data.rows.length) rows = this.cleanBeatRoles(data.rows);
@@ -16406,6 +16408,9 @@ class Component extends DCLogic {
   // ---------- craft mode (FILM_CRAFT_LAYER_PLAN.md, Phase A): off unless this browser turns it on; the server switch CRAFT_BRIEF must also be on for the brief to reach the model ----------
   CRAFT_FIELDS = [['message', 'Message'], ['move', 'Move'], ['device', 'Device'], ['line', 'Line'], ['cast_idea', 'Casting']];
   craftOpts(){ return this.state.craftOn ? { craft: true } : {}; }
+  // For the concept and script WRITING calls (this.complete): the craft flag and a longer page timeout. The craft answer is longer and the model is slow, so 45 s cut it off on 3 Nov.
+  CRAFT_TIMEOUT_MS = 120000;
+  craftCall(){ return this.state.craftOn ? { craft: true, timeoutMs: this.CRAFT_TIMEOUT_MS } : {}; }
   toggleCraft = () => { const on = !this.state.craftOn; try { localStorage.setItem('tms.craft', on ? '1' : '0'); } catch (e) {} this.setState({ craftOn:on, craftScore:null }); };
   // The five extra concept lines, asked for only in craft mode; '' otherwise so the concept prompt is unchanged.
   craftConceptText(){
@@ -18908,7 +18913,7 @@ class Component extends DCLogic {
       // script's own comment.
       const hv = this.state.house;
       let raw = await this.complete(prompt, { ...(vexec ? { execution: vexec.id } : {}),
-        ...(hv && hv.id ? { house_id: hv.id } : {}), force_typed: forceTyped, skip_mandatories: noTrio, film: true, ...this.craftOpts() });
+        ...(hv && hv.id ? { house_id: hv.id } : {}), force_typed: forceTyped, skip_mandatories: noTrio, film: true, ...this.craftCall() });
       raw = String(raw).trim().replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();
       const parsed = JSON.parse(raw.slice(raw.indexOf('{'), raw.lastIndexOf('}')+1));
       // Three routes come back; the first becomes the working concept and the rest stay available
@@ -18932,7 +18937,7 @@ class Component extends DCLogic {
       this.setState({ videoGenerating:false, videoConcept:null, refinePrompt:'', videoCheck:null,
         scriptStatus:'none', fullScript:null, sceneFrames:{}, videoBuilder:null, scriptPhase:'concept',
         videoRefusal: err && err.message === 'timeout'
-          ? 'Nothing came back within ' + Math.round(this.MODEL_TIMEOUT_MS/1000) + ' seconds, so the concept is empty rather than invented. Run it again.'
+          ? 'Nothing came back within ' + Math.round((this.state.craftOn ? this.CRAFT_TIMEOUT_MS : this.MODEL_TIMEOUT_MS)/1000) + ' seconds, so the concept is empty rather than invented. Run it again.'
           : this.fallbackVideo(obj, brief).refusal });
     }
   };

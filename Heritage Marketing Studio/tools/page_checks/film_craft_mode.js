@@ -123,6 +123,17 @@
     const ld2 = calls.find(x => x.path === '/learning-decision');
     check('and then the decision is exactly what it was (no meta key)', ld2 && !('meta' in ld2.body), JSON.stringify(ld2 && Object.keys(ld2.body)));
     I.setState({ craftOn: true });
+    // 8. the longer page timeout belongs to craft-mode writing calls only and is never sent to the server
+    I.setState({ craftOn: true });
+    check('craft mode ON: the writing calls get a 120 s page limit and the craft flag', I.craftCall().craft === true && I.craftCall().timeoutMs === 120000);
+    I.setState({ craftOn: false });
+    check('craft mode OFF: the writing calls get nothing extra (the usual 45 s)', JSON.stringify(I.craftCall()) === '{}' && I.MODEL_TIMEOUT_MS === 45000);
+    const realClaude = window.claude; let sent = null;
+    window.claude = { complete: async (c) => { sent = c; return 'ok'; } };
+    const got = await real.complete.call(I, 'P', { film: true, craft: true, timeoutMs: 120000 });
+    window.claude = realClaude;
+    check('the page-only timeoutMs is not sent to the server, the rest is', got === 'ok' && sent && sent.timeoutMs === undefined && sent.craft === true && sent.film === true && sent.messages[0].content === 'P', JSON.stringify(sent));
+    I.setState({ craftOn: true });
     I.toggleCraft(); await wait(300);
     check('turning craft mode off hides the row and clears the scorecard', !/Craft scorecard/.test(txt()) && I.state.craftScore === null);
   } catch (e) {
