@@ -58,6 +58,7 @@ import framecheck
 import takeqa
 import mediapurge
 import filmdirect
+import filmscore
 import filmedit
 import filmqc
 import selfcheck
@@ -3089,6 +3090,34 @@ def film_direct(payload: dict):
     out["model"] = True
     return out
 
+
+@app.post("/film-score")
+def film_score(payload: dict):
+    """The CRAFT SCORECARD (FILM_CRAFT_LAYER_PLAN.md, W0): one model call reads a film concept (and/or its script) and scores the owner's tests 0-3 with a reason each (one clear message,
+    attention hook, one memorable moment, the proposition as an event, a memorable device, performance and casting, originality), then names the strongest and weakest test and one way to
+    strengthen the weakest. ADVICE ONLY: run on request, blocks nothing, saves nothing.
+
+    Body: `concept` (the concept's own lines: logline, hook, surprise, turn, memorable, stake, scenes...), `scenes` and `seconds` (the script rows, optional), `logline`, `message`, `tone`,
+    `characters`, and the model flags /complete takes. Returns the scorecard plus {model: true}; 400 with nothing to score; 502 when the reply cannot be read.
+    """
+    concept = payload.get("concept") if isinstance(payload.get("concept"), dict) else None
+    rows = [r for r in (payload.get("scenes") or []) if isinstance(r, dict)]
+    if not concept and not rows:
+        return JSONResponse(status_code=400, content={"detail": "Send the concept or the script to score."})
+    prompt = filmscore.build_prompt(concept=concept, rows=rows, seconds=payload.get("seconds") if isinstance(payload.get("seconds"), list) else None,
+                                    logline=str(payload.get("logline") or ""), message=str(payload.get("message") or ""), tone=str(payload.get("tone") or ""),
+                                    characters=str(payload.get("characters") or ""))
+    flags = {k: payload[k] for k in ("house_id", "execution", "brand_mode", "provocation_id", "use_provocation", "use_house",
+                                     "use_platform", "use_plan", "skip_mandatories", "force_typed") if k in payload}
+    r = complete_endpoint({**flags, "messages": [{"role": "user", "content": prompt}], "film": True})
+    if isinstance(r, JSONResponse):
+        return r
+    raw = filmscore.parse(r.get("completion") if isinstance(r, dict) else "")
+    if raw is None:
+        return JSONResponse(status_code=502, content={"detail": "The scorecard could not be understood. Try again."})
+    out = filmscore.validate(raw)
+    out["model"] = True
+    return out
 
 @app.post("/editor-notes")
 def editor_notes(payload: dict):
