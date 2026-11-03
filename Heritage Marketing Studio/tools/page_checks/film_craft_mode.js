@@ -91,6 +91,22 @@
     scoreReply = { ok: false, data: { detail: 'The scorecard could not be understood. Try again.' } };
     const before = I.state.craftScore; await I.runCraftScore(); await wait(300);
     check('a failed score leaves the earlier scorecard in place and does not stick the button', I.state.craftScore === before && I.state.craftBusy === false);
+    // 6. the director's read: craft:true goes with it only in craft mode, quiet notes read as notes and never as the first finding
+    const bmReply = { ok: true, data: { model: true, summary: 'S', time_passing: false, hero_object: '', turn_scene: 1, carrier_scene: 2, engagement: { risk: 'low' }, notes: [],
+      scenes: rows.map(r => ({ no: r.no, purpose: 'p', intensity: 1, time_mode: 'continuous', marker: '', beat: 'b' + r.no, hero: false, place: 'kitchen', energy: 1, change: 'x', sequence: false, actions: [] })),
+      findings: [{ kind: 'flat-energy', scene: 2, note: 'REALFINDING-x' }, { kind: 'slow-hook', scene: 1, quiet: true, note: 'QUIETNOTE-y' }] } };
+    I.apiCall = async (path, body) => { calls.push({ path, body }); return path === '/film-direct' ? bmReply : { ok: false, data: {} }; };
+    calls.length = 0; I.setState({ videoBeatMap: null, craftOn: true });
+    await I.runBeatMap(); await wait(500);
+    const bmOn = calls.find(x => x.path === '/film-direct');
+    check('craft mode ON: the director read call carries craft:true', bmOn && bmOn.body.craft === true && bmOn.body.film === true, JSON.stringify(bmOn && Object.keys(bmOn.body)));
+    check('"Before you approve" leads with the real finding, not the quiet note', /Boredom risk: low — REALFINDING-x/.test(txt().replace(/\s+/g, ' ')), txt().replace(/\s+/g, ' ').slice(txt().replace(/\s+/g, ' ').indexOf('Boredom') - 20, txt().replace(/\s+/g, ' ').indexOf('Boredom') + 200));
+    check('the quiet note reads as a note, in the director read', /A note: QUIETNOTE-y/.test(txt()) && /• REALFINDING-x/.test(txt()));
+    calls.length = 0; I.setState({ videoBeatMap: null, craftOn: false });
+    await I.runBeatMap(); await wait(500);
+    const bmOff = calls.find(x => x.path === '/film-direct');
+    check('craft mode OFF: the director read call carries no craft flag', bmOff && bmOff.body.craft === undefined, JSON.stringify(bmOff && bmOff.body.craft));
+    I.setState({ craftOn: true, videoBeatMap: null });
     I.toggleCraft(); await wait(300);
     check('turning craft mode off hides the row and clears the scorecard', !/Craft scorecard/.test(txt()) && I.state.craftScore === null);
   } catch (e) {

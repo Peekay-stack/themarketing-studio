@@ -16173,7 +16173,7 @@ class Component extends DCLogic {
     this.setState({ beatMapBusy:true });
     const vc = s.videoConcept;
     const body = { scenes:rows, seconds:rows.map(r => this.sceneSecs(r)), logline: vc ? (vc.logline || '') : '', message:(vc && vc.proposition) || s.videoObjective || '', tone:this.paceText().slice(0, 300),
-      characters:s.videoCharacters || '', hero:this.packAvailable() ? 'the product pack' : '', brand_mode:s.producerBrandMode, ...this.videoExtra(),
+      characters:s.videoCharacters || '', hero:this.packAvailable() ? 'the product pack' : '', brand_mode:s.producerBrandMode, ...this.videoExtra(), ...this.craftOpts(),
       // What the concept promised, so the read can say what the script kept (FILM_CONSOLIDATED_PLAN.md C6). Sent as it is; the server builds the list of promises and ignores anything that is not an object.
       ...(vc ? { concept:{ hook:vc.hook, surprise:vc.surprise, turn:vc.turn, memorable:vc.memorable, stake:vc.stake, scenes:vc.scenes } } : {}) };
     const r = await this.apiCall('/film-direct', body);
@@ -16222,7 +16222,7 @@ class Component extends DCLogic {
       h('span', { style:{ width:128, flex:'none', fontSize:12, fontWeight:800, color:'#17325E' } }, label), h('span', { style:{ flex:1, minWidth:200, fontSize:12.5, lineHeight:1.5, color:'#41505F' } }, body), action || null);
     // The server's read carries its findings at the top level (engagement holds only the risk), so look there when engagement has none. Until now this panel showed no finding for a real read.
     const fl = (bm && bm.engagement && bm.engagement.findings) || (bm && bm.findings) || [];
-    const risk = bm && bm.engagement && bm.engagement.risk, first = fl[0];
+    const risk = bm && bm.engagement && bm.engagement.risk, first = fl.find(f => !f.quiet) || fl[0];
     const cd = (bm && Array.isArray(bm.concept_delivery)) ? bm.concept_delivery : [], cdKept = cd.filter(x => x.status === 'delivered').length;
     const seqs = rows.map((r, i) => ({ i, no:this.sceneNoInt(r, i), acts:this.sequenceOf(i) })).filter(x => x.acts && !this.activeShots(rows[x.i]).length);
     const riskColor = risk === 'high' ? '#C0392B' : (risk === 'medium' ? '#B07A12' : '#1A8A7A');
@@ -16313,7 +16313,7 @@ class Component extends DCLogic {
           sc.no === bm.carrier_scene ? h('b', { style:{ color:'#259821', marginLeft:6 } }, 'THE MESSAGE') : null,
           nc[sc.no] ? h('i', { style:{ color:'#6B7280', marginLeft:6 } }, '· no extra angles') : null,
           (sc.sequence && Array.isArray(sc.actions) && sc.actions.length > 1 && sc.time_mode !== 'montage') ? h('i', { style:{ color:'#B07A12', marginLeft:6 } }, '· a run of quick actions: ' + sc.actions.join(' · ')) : null)))),
-      ...((bm.findings || []).map((f, i) => { const act = this.findingAction(f), l = line('• ' + f.note, '#B07A12', { fontWeight:700 }, 'bf' + i);
+      ...((bm.findings || []).map((f, i) => { const act = this.findingAction(f), l = f.quiet ? line('\u25e6 A note: ' + f.note, '#6B7280', {}, 'bf' + i) : line('• ' + f.note, '#B07A12', { fontWeight:700 }, 'bf' + i);
         return act ? h('div', { key:'bfa' + i, style:{ display:'flex', alignItems:'baseline', gap:8, flexWrap:'wrap' } }, l, btn(s.rewritingScene != null ? 'Rewriting…' : act.label, this.runFindingAction(act.idx, act.direction), false, s.rewritingScene != null)) : l; })),
       bm.time_passing ? line('The story is about time passing by repetition: show it as different days (light, clothes, what has changed), not as more angles on one moment.', '#41505F') : null,
       ...((bm.notes || []).map((n, i) => line(n, '#6B7280', {}, 'bn' + i))));

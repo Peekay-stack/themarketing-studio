@@ -71,7 +71,7 @@ def mode_of(value) -> str:
     return v if v in TIME_MODES else ""
 
 
-def build_prompt(*, rows, seconds, logline="", message="", tone="", pace="", characters="", hero="", roles=None, concept=None) -> str:
+def build_prompt(*, rows, seconds, logline="", message="", tone="", pace="", characters="", hero="", roles=None, concept=None, craft: bool = False) -> str:
     """The director's brief: the whole script in order, the film's own words, and what to decide per scene."""
     film = []
     if logline:
@@ -124,12 +124,14 @@ def build_prompt(*, rows, seconds, logline="", message="", tone="", pace="", cha
         +
         "ENGAGEMENT. A film must be ENTERTAINING, not only clear and not repeated. Read it as a viewer who would swipe away: does the first scene earn the next five seconds with something unexpected or a question; does every scene change something; "
         "does the place, scale or energy change from one scene to the next; does it escalate towards the turn; is there at least one scene a viewer would remember? Judge this honestly in the fields above; do not describe a dull scene as lively.\n"
+        + (CRAFT_ASK if craft else "") +
         "Then name the TURN (`turn_scene`: the one scene where the change or realisation lands) and the MESSAGE CARRIER (`carrier_scene`: where the core line or the hero object lands, usually the last), "
         "say whether the film as a whole is about `time_passing`, and give a one-sentence `summary` of the film's shape as a viewer would feel it.\n\n"
         "Return ONLY JSON, no prose and no markdown: "
         "{\"summary\":\"...\",\"time_passing\":false,\"hero_object\":\"\",\"turn_scene\":4,\"carrier_scene\":6,"
         "\"scenes\":[{\"no\":1,\"purpose\":\"...\",\"intensity\":1,\"time_mode\":\"continuous\",\"marker\":\"\",\"beat\":\"a\",\"hero\":false,\"place\":\"kitchen\",\"energy\":1,\"change\":\"...\",\"sequence\":false,\"actions\":[]}]"
-        + (",\"concept\":[{\"id\":\"hook\",\"status\":\"delivered\",\"scene\":1,\"note\":\"\"}]" if prom else "") + "}")
+        + (",\"concept\":[{\"id\":\"hook\",\"status\":\"delivered\",\"scene\":1,\"note\":\"\"}]" if prom else "")
+        + (CRAFT_JSON if craft else "") + "}")
 
 
 def parse(raw: str):
@@ -147,7 +149,7 @@ def parse(raw: str):
     return data if isinstance(data, dict) else None
 
 
-def validate(raw: dict, rows, roles=None, promises_in=None) -> dict:
+def validate(raw: dict, rows, roles=None, promises_in=None, craft: bool = False) -> dict:
     """The beat map after the backstops: {summary, time_passing, hero_object, turn_scene, carrier_scene, scenes:[{no, purpose, intensity, time_mode, marker, beat, hero}],
     transitions, findings, notes}. Every scene of the script gets exactly one entry (a scene the model skipped gets a plain default and a note); intensity is 0-3; time_mode is one of
     TIME_MODES; beats are re-numbered b1, b2... and only NEIGHBOURING scenes may share one; the turn and the carrier must be real scenes (the carrier defaults to the sign-off scene, or
@@ -208,7 +210,7 @@ def validate(raw: dict, rows, roles=None, promises_in=None) -> dict:
     hero = _clip(raw.get("hero_object"), 120)
     if hero and carrier in nos and not next(sc["hero"] for sc in out if sc["no"] == carrier):
         findings.append({"kind": "carrier-without-hero", "scene": carrier, "note": f"Scene {carrier} carries the message but does not show {hero}."})
-    eng = engagement(out)
+    eng = engagement(out, quiet=craft)
     findings += eng["findings"]
     # Did the script keep what the concept promised? Answered by meaning (the model), keyed by the ids WE sent, so a label or text can never be invented. A promise the model did not answer for is
     # left out (unknown is not a finding) and counted in a note.
@@ -253,21 +255,34 @@ def validate(raw: dict, rows, roles=None, promises_in=None) -> dict:
                                                                               f"{'others are its closer ' + ('views' if len(members) > 2 else 'view')} (no extra angles on them)."})
     # One root cause is one problem: the 28 Oct film's pitched split screen came back as three findings (its turn, its memorable moment and its beat), all on scene 4. Findings on the SAME scene count once
     # towards the risk (all of them are still listed); findings with no scene (a promise left out altogether) count one each.
-    total = len(eng["findings"]) + len({f["scene"] for f in cf if f["scene"] is not None}) + sum(1 for f in cf if f["scene"] is None)
+    total = sum(1 for f in eng["findings"] if not f.get("quiet")) + len({f["scene"] for f in cf if f["scene"] is not None}) + sum(1 for f in cf if f["scene"] is None)
     risk = "high" if total >= 3 else ("medium" if total else "low")
     res = {"summary": _clip(raw.get("summary"), 400), "time_passing": bool(raw.get("time_passing")), "hero_object": hero, "turn_scene": turn if turn in nos else None,
            "carrier_scene": carrier if carrier in nos else None, "scenes": out, "transitions": transitions, "findings": findings, "notes": notes, "engagement": {"risk": risk}}
     if promises_in:
         res["concept_delivery"] = delivery
+    if craft:
+        # Craft mode (FILM_CRAFT_LAYER_PLAN.md W3): the two craft questions, and the opening-quietly / one-place notes softened. Advice only; every craft note is quiet and never raises the risk.
+        cr = craft_read(raw)
+        res["craft"] = cr
+        res["findings"] = res["findings"] + craft_findings(cr, out)
+        res["findings"].sort(key=lambda f: 1 if f.get("quiet") else 0)
     return res
 
 
+QUIET_KINDS = ("slow-hook", "same-place")       # in craft mode these are notes, not risks (C36)
+CRAFT_ASK = (
+    "CRAFT. Two more questions, answered by what the script shows. (a) ONE MESSAGE: can the film's single message be said in one plain sentence, and does the script deliver exactly that "
+    "(`one_message.clear` true or false, `one_message.message` the sentence, `one_message.note` a plain line when it is not clear). (b) A MEMORABLE DEVICE: is there a short, repeatable thing "
+    "that carries the message (a line, a tune, a question with a reveal, a recurring character or gag), (`device.present` true or false, `device.what` it in a few words, `device.note` a plain "
+    "line when there is none). Judge honestly; do not invent a device the script does not contain.\n")
+CRAFT_JSON = ',"one_message":{"clear":true,"message":"","note":""},"device":{"present":true,"what":"","note":""}'
 SAME_PLACE_RUN = 4        # this many neighbouring scenes in one place reads as one long scene
 FLAT_RUN = 3              # this many neighbouring scenes at energy 0-1 is a stretch where nothing happens
 LATE_PEAK = 0.4           # the first scene of real intensity should come by this share of the film
 
 
-def engagement(scenes: list) -> dict:
+def engagement(scenes: list, quiet: bool = False) -> dict:
     """Is this film ENTERTAINING, from the director's own per-scene fields (place, energy, change, intensity)? {risk: low|medium|high, findings: [{kind, scene, note}]}. These are checks a
     program can make; the model supplies the fields and is told to judge honestly. Kinds: slow-hook (the first scene is quiet), same-place (a long run in one place), flat-energy (a run of
     scenes where almost nothing happens), no-change (scenes that change nothing), late-peak (nothing builds until late). Added after the 28 Oct film: less repetitive, but one kitchen, six passive
@@ -303,8 +318,39 @@ def engagement(scenes: list) -> dict:
     peak = next((i for i, sc in enumerate(scenes) if sc["intensity"] >= 2), None)
     if peak is not None and peak > 0 and peak / n > LATE_PEAK:
         out.append({"kind": "late-peak", "scene": scenes[peak]["no"], "note": f"Nothing builds until scene {scenes[peak]['no']} ({peak} of {n} scenes in). Escalate earlier, or give the opening scenes a stake of their own."})
-    risk = "high" if len(out) >= 3 else ("medium" if out else "low")
+    if quiet:
+        # Craft mode (C36): a film that opens quietly, or stays in one place, can be a choice (13 reference ads the owner prizes did one or both and none was boring). They are still listed, as notes, and do not count towards the risk.
+        for f in out:
+            if f["kind"] in QUIET_KINDS:
+                f["quiet"] = True
+    live = [f for f in out if not f.get("quiet")]
+    risk = "high" if len(live) >= 3 else ("medium" if live else "low")
     return {"risk": risk, "findings": out}
+
+
+def craft_read(raw: dict) -> dict:
+    """The two craft answers, cleaned: {message: {clear, message, note} | None, device: {present, what, note} | None}. A missing or malformed answer is None (unknown is not a finding)."""
+    raw = raw if isinstance(raw, dict) else {}
+    out = {"message": None, "device": None}
+    m, d = raw.get("one_message"), raw.get("device")
+    if isinstance(m, dict) and isinstance(m.get("clear"), bool):
+        out["message"] = {"clear": m["clear"], "message": _clip(m.get("message"), 200), "note": _clip(m.get("note"), 200)}
+    if isinstance(d, dict) and isinstance(d.get("present"), bool):
+        out["device"] = {"present": d["present"], "what": _clip(d.get("what"), 120), "note": _clip(d.get("note"), 200)}
+    return out
+
+
+def craft_findings(cr: dict, scenes: list) -> list:
+    """Quiet notes from the craft answers: no single message, no memorable device. Never raise the risk; the director may have meant it."""
+    out = []
+    m, d = (cr or {}).get("message"), (cr or {}).get("device")
+    if m and not m["clear"]:
+        out.append({"kind": "no-message", "scene": None, "quiet": True, "craft": True,
+                    "note": "The script does not say ONE thing a viewer could repeat in a sentence" + (f": {m['note']}" if m["note"] else ".") + " Decide the one message and let every scene serve it, or cut what does not."})
+    if d and not d["present"]:
+        out.append({"kind": "no-device", "scene": None, "quiet": True, "craft": True,
+                    "note": "Nothing short and repeatable carries the message (a line, a tune, a question with a reveal, a recurring character or gag)" + (f": {d['note']}" if d["note"] else ".") + " Not every film needs one; most remembered films have one."})
+    return out
 
 
 def no_coverage(beat_map) -> dict:

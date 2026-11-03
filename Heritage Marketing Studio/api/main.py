@@ -59,6 +59,7 @@ import takeqa
 import mediapurge
 import filmdirect
 import filmscore
+import craft as craft_brief
 import filmedit
 import filmqc
 import selfcheck
@@ -3075,9 +3076,11 @@ def film_direct(payload: dict):
         return JSONResponse(status_code=400, content={"detail": "Send the script (its scene rows) to map."})
     secs = _seconds_for(rows, payload)
     roles = _scene_roles(rows, secs)
+    # Craft mode (FILM_CRAFT_LAYER_PLAN.md W3): the request flag AND the server switch, as for the craft brief. Off: the read is exactly what it was.
+    craft_mode = payload.get("craft") is True and craft_brief.server_on()
     prompt = filmdirect.build_prompt(rows=rows, seconds=secs, logline=str(payload.get("logline") or ""), message=str(payload.get("message") or ""), tone=str(payload.get("tone") or ""),
                                      characters=str(payload.get("characters") or ""), hero=str(payload.get("hero") or ""), roles=roles,
-                                     concept=payload.get("concept") if isinstance(payload.get("concept"), dict) else None)
+                                     concept=payload.get("concept") if isinstance(payload.get("concept"), dict) else None, craft=craft_mode)
     flags = {k: payload[k] for k in ("house_id", "execution", "brand_mode", "provocation_id", "use_provocation", "use_house",
                                      "use_platform", "use_plan", "skip_mandatories", "force_typed") if k in payload}
     r = complete_endpoint({**flags, "messages": [{"role": "user", "content": prompt}], "film": True})
@@ -3086,7 +3089,7 @@ def film_direct(payload: dict):
     raw = filmdirect.parse(r.get("completion") if isinstance(r, dict) else "")
     if raw is None:
         return JSONResponse(status_code=502, content={"detail": "The director's read could not be understood. Try again."})
-    out = filmdirect.validate(raw, rows, roles, filmdirect.promises(payload.get("concept")) or None)
+    out = filmdirect.validate(raw, rows, roles, filmdirect.promises(payload.get("concept")) or None, craft=craft_mode)
     out["model"] = True
     return out
 
@@ -3118,6 +3121,7 @@ def film_score(payload: dict):
     out = filmscore.validate(raw)
     out["model"] = True
     return out
+
 
 @app.post("/editor-notes")
 def editor_notes(payload: dict):
