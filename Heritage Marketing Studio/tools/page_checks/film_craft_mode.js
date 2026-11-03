@@ -134,6 +134,23 @@
     window.claude = realClaude;
     check('the page-only timeoutMs is not sent to the server, the rest is', got === 'ok' && sent && sent.timeoutMs === undefined && sent.craft === true && sent.film === true && sent.messages[0].content === 'P', JSON.stringify(sent));
     I.setState({ craftOn: true });
+    // 9. the three routes differ in MOVE and stand on the platform (3 Nov)
+    I.setState({ craftOn: true });
+    const withP = I.craftConceptText(true), noP = I.craftConceptText(false);
+    check('with a platform: all three routes stand on it and the messaging house, differ ONLY in move, and replace the old angle suggestion', /stand on the idea platform named above/.test(withP) && /messaging house/.test(withP) && /differ ONLY in their "move"/.test(withP) && /REPLACES the earlier suggestion/.test(withP) && /every route uses it/.test(withP), withP.slice(600, 1100));
+    check('without a platform: the same single message and the same move rule, no platform wording', /serve the same single message/.test(noP) && /differ ONLY in their "move"/.test(noP) && !/idea platform named above/.test(noP));
+    check('both keep: the genre from the direction, feeling AND proof, no invented claims, cover the logo, numbers agree, original only', [withP, noP].every(x => /keep it: they differ in move, not in genre/.test(x) && /BOTH the feeling and the proof/.test(x) && /never invent a claim about the product/.test(x) && /Cover the logo/.test(x) && /number, age and quantity/.test(x) && /Original only/.test(x)));
+    check('the five craft lines are still asked for and the text is bounded (under 3,600 characters)', /"message" \u2014 the single thing the film says/.test(withP) && /"cast_idea"/.test(withP) && withP.length < 3600, withP.length);
+    I.setState({ craftOn: false });
+    check('craft mode OFF: the route text is empty', I.craftConceptText(true) === '' && I.craftConceptText(false) === '');
+    prompts.length = 0; opts.length = 0; reply = JSON.stringify({ routes: [route(1, true), route(2, true), route(3, true)] });
+    I.setState({ ...base, craftOn: true, videoStandsOn: { text: 'The Strength Count: a running tally of the morning pour', has_platform: true }, videoForceTyped: false });
+    await I.generateVideo(); await wait(600);
+    check('generateVideo passes the platform flag through: the platform variant is in the prompt', /stand on the idea platform named above/.test(prompts[0] || '') && /The idea platform this film stands on: "The Strength Count/.test(prompts[0] || ''), (prompts[0] || '').slice(-900));
+    prompts.length = 0; I.setState({ ...base, craftOn: true, videoStandsOn: null });
+    await I.generateVideo(); await wait(600);
+    check('and with no platform it is the single-message variant', /serve the same single message/.test(prompts[0] || '') && !/idea platform named above/.test(prompts[0] || ''));
+    I.setState({ craftOn: true, videoStandsOn: null });
     I.toggleCraft(); await wait(300);
     check('turning craft mode off hides the row and clears the scorecard', !/Craft scorecard/.test(txt()) && I.state.craftScore === null);
   } catch (e) {
