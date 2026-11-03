@@ -12574,7 +12574,7 @@ class Component extends DCLogic {
   openDecision = (kind, subject, extras) => () => this.setState({
     decision: { open:true, kind, subject, choice:null, reason:'', busy:false, error:'',
                 body:(extras && extras.body) || '', brief:(extras && extras.brief) || '',
-                template:(extras && extras.template) || '' } });
+                template:(extras && extras.template) || '', meta:(extras && extras.meta) || null } });
   closeDecision = () => this.setState(s => ({ decision:{ ...s.decision, open:false, error:'' } }));
   setDecisionChoice = (choice) => () => this.setState(s => ({ decision:{ ...s.decision, choice, error:'' } }));
   onDecisionReason = (e) => { const v = e.target.value; this.setState(s => ({ decision:{ ...s.decision, reason:v, error:'' } })); };
@@ -12584,7 +12584,7 @@ class Component extends DCLogic {
     this.setState(s => ({ decision:{ ...s.decision, busy:true, error:'' } }));
     const r = await this.apiCall('/learning-decision', {
       kind:d.kind, decision:d.choice, subject:d.subject, reason:d.reason.trim(),
-      template:d.template, who:'You', body:d.body, brief:d.brief });
+      template:d.template, who:'You', body:d.body, brief:d.brief, ...(d.meta ? { meta:d.meta } : {}) });
     const data = (r && r.data) || {};
     if (!r || !r.ok) {
       // Surface the server's own wording. The 400 for a reasonless reject says something worth
@@ -16417,6 +16417,17 @@ class Component extends DCLogic {
   craftWriterText(c){
     const bits = this.CRAFT_FIELDS.map(([k, l]) => [l, String((c && c[k]) || '').replace(/\s+/g, ' ').trim().replace(/[.\s]+$/, '')]).filter(x => x[1] && x[1].toLowerCase() !== 'none');
     return bits.length ? 'This route\u2019s craft: ' + bits.map(([l, t]) => l.toLowerCase() + ': ' + t).join('; ') + '. Write the script so these are visible and audible, not described.  ' : '';
+  }
+  // What the learning log keeps with an approved or rejected film (FILM_CRAFT_LAYER_PLAN.md W10): the craft scorecard if one was run and the concept's craft lines if it has them. null when there is
+  // nothing, so the call is exactly what it was.
+  filmDecisionMeta(){
+    const s = this.state, vc = s.videoConcept, cs = s.craftScore, meta = {};
+    const lines = {};
+    this.CRAFT_FIELDS.forEach(([k]) => { const v = String((vc && vc[k]) || '').trim(); if (v) lines[k] = v.slice(0, 300); });
+    if (Object.keys(lines).length) meta.craft_lines = lines;
+    if (cs && Array.isArray(cs.tests)) meta.craft_score = { total:cs.total, max:cs.max, weakest:cs.weakest, tests:cs.tests.map(t => [t.id, t.score]) };
+    if (vc && vc.hook) meta.entertain = { hook:String(vc.hook).slice(0, 200), memorable:String(vc.memorable || '').slice(0, 200) };
+    return Object.keys(meta).length ? meta : null;
   }
   runCraftScore = async () => {
     const s = this.state, vc = s.videoConcept, rows = s.fullScript || [];
@@ -21550,7 +21561,7 @@ class Component extends DCLogic {
       decisionReasonPlaceholder: decisionIsReject
         ? 'e.g. the pack faces away from camera in the hero shot — it must always face front'
         : 'e.g. the farm montage at golden hour is exactly the warmth we want',
-      openFilmDecision: this.openDecision('film', cutLabel, { body:scriptText, brief:(vc && vc.logline) || '' }),
+      openFilmDecision: this.openDecision('film', cutLabel, { body:scriptText, brief:(vc && vc.logline) || '', meta:this.filmDecisionMeta() }),
       openBriefDecision: this.openDecision('brief', (dr && dr.brand ? dr.brand + ' — IMC brief' : 'IMC brief'),
         { body:(dr && dr.smp) || '', brief:(dr && dr.smp) || '' }),
       cutLabel,

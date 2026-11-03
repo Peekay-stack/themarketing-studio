@@ -107,6 +107,22 @@
     const bmOff = calls.find(x => x.path === '/film-direct');
     check('craft mode OFF: the director read call carries no craft flag', bmOff && bmOff.body.craft === undefined, JSON.stringify(bmOff && bmOff.body.craft));
     I.setState({ craftOn: true, videoBeatMap: null });
+    // 7. W10: the learning log keeps the scorecard and the craft lines with the decision
+    I.apiCall = async (path, body) => { calls.push({ path, body }); return path === '/learning-decision' ? { ok: true, data: { status: null } } : { ok: false, data: {} }; };
+    I.setState({ videoConcept: { ...route(1, true) }, craftScore: { total: 13, max: 21, weakest: 'device', tests: [{ id: 'message', score: 3 }, { id: 'device', score: 0 }] } });
+    const fm = I.filmDecisionMeta();
+    check('the film decision meta carries the scorecard, the craft lines and the hook', fm && fm.craft_score.total === 13 && fm.craft_score.tests[1][0] === 'device' && fm.craft_lines.device.startsWith('DEV-1') && fm.entertain.hook === 'HOOK-1', JSON.stringify(fm));
+    calls.length = 0;
+    I.openDecision('film', 'Cut X', { body: 'SCRIPT', brief: 'B', meta: fm })(); I.setDecisionChoice('approve')(); await I.submitDecision(); await wait(200);
+    const ld = calls.find(x => x.path === '/learning-decision');
+    check('approving sends the meta with the decision', ld && ld.body.meta && ld.body.meta.craft_score.max === 21 && ld.body.decision === 'approve' && ld.body.body === 'SCRIPT', JSON.stringify(ld && ld.body));
+    calls.length = 0;
+    I.setState({ videoConcept: { logline: 'old', scenes: [] }, craftScore: null });
+    check('a concept with nothing craft-related gives no meta', I.filmDecisionMeta() === null);
+    I.openDecision('film', 'Cut Y', { body: 'S2', brief: 'B' })(); I.setDecisionChoice('approve')(); await I.submitDecision(); await wait(200);
+    const ld2 = calls.find(x => x.path === '/learning-decision');
+    check('and then the decision is exactly what it was (no meta key)', ld2 && !('meta' in ld2.body), JSON.stringify(ld2 && Object.keys(ld2.body)));
+    I.setState({ craftOn: true });
     I.toggleCraft(); await wait(300);
     check('turning craft mode off hides the row and clears the scorecard', !/Craft scorecard/.test(txt()) && I.state.craftScore === null);
   } catch (e) {

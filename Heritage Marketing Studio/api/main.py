@@ -3911,10 +3911,16 @@ def learning_decision(payload: dict):
                           meta=payload.get("meta") if isinstance(payload.get("meta"), dict) else {},
                           brand=_dec_brand)
     if decision == "approve" and str(payload.get("body") or "").strip():
+        # What was known about the work when it was approved (the craft scorecard and the concept's craft lines, FILM_CRAFT_LAYER_PLAN.md W10) is kept WITH the anchor, so the anchors are
+        # good work and a dataset exists if training is ever considered. Bounded; absent unless the page sent it.
+        _keep_meta = payload.get("meta") if isinstance(payload.get("meta"), dict) else {}
+        if len(json.dumps(_keep_meta, default=str)) > 4000:
+            _keep_meta = {}
         learning.keep_example(str(payload.get("kind") or "work"),
                               title=str(payload.get("subject") or "approved"),
                               body=str(payload.get("body") or ""),
                               brief=str(payload.get("brief") or ""),
+                              meta=_keep_meta,
                               brand=_dec_brand)
     return {"recorded": row, "status": learning.status()}
 
