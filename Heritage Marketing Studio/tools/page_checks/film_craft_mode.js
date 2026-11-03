@@ -1,0 +1,106 @@
+// film_craft_mode.js -- the CRAFT MODE switch and scorecard on the page (FILM_CRAFT_LAYER_PLAN.md, Phase A), driven on the REAL page with the model (this.complete) and the network stubbed.
+//
+// Why: craft mode must be OFF by default and change NOTHING when off (same concept prompt, same writer prompt, no craft flag on the call, no scorecard row). When ON it must ask the concept
+// writer for the five craft lines, send craft:true on the concept and script calls only, show the lines on the route card, hand them to the script writer, keep them across a refine, and show a
+// scorecard row in "Before you approve" that posts the concept and script to /film-score and renders what comes back (advice only: nothing blocks).
+//
+// How to run: start the studio, open http://localhost:8000/app (or your port), run this whole file with the browser tool's javascript_exec. In-memory state only; reload afterwards.
+// Returns {pass, failures, results}. Expected: pass === true.
+(async () => {
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  const root = document.getElementById('dc-root') || document.body, ck = Object.keys(root).find(k => k.startsWith('__reactContainer'));
+  let I = null; const seen = new Set();
+  (function walk(f, d){ if (!f || seen.has(f) || d > 500 || I) return; seen.add(f);
+    for (const k of ['stateNode', 'memoizedProps', 'memoizedState']) { const v = f[k];
+      if (v && typeof v === 'object' && typeof v.setState === 'function' && v.state && 'fullScript' in v.state && typeof v.craftOpts === 'function') { I = v; return; }
+      if (v && v.logic && typeof v.logic.craftOpts === 'function') { I = v.logic; return; } }
+    walk(f.child, d + 1); walk(f.sibling, d + 1); })(root[ck], 0);
+  if (!I) return JSON.stringify({ pass: false, failures: ['could not find the app instance (reload the page, wait 3 s, run again)'] });
+  const real = { complete: I.complete, needBrand: I.needBrand, brandPreamble: I.brandPreamble, learningContext: I.learningContext, showToast: I.showToast, fetch: window.fetch, apiCall: I.apiCall };
+  const prompts = [], opts = [], calls = []; let reply = null, scoreReply = null;
+  I.needBrand = () => true; I.brandPreamble = () => 'PREAMBLE'; I.learningContext = async () => ''; I.showToast = () => {};
+  window.fetch = async () => new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } });
+  I.complete = async (p, o) => { prompts.push(String(p)); opts.push(o || {}); if (reply === null) throw new Error('stop'); return reply; };
+  I.apiCall = async (path, body) => { calls.push({ path, body }); if (path === '/film-score') return scoreReply; return { ok: false, data: {} }; };
+  const results = [], check = (name, ok, extra) => results.push({ name, ok: !!ok, extra: ok ? undefined : extra });
+  const txt = () => document.body.innerText;
+  const route = (n, craft) => ({ name: 'Route ' + n, rationale: 'Why', logline: 'Logline ' + n, duration: '30s', vo: 'Voice ' + n, hook: 'HOOK-' + n, surprise: 'SURP-' + n, turn: 'TURN-' + n, memorable: 'MEM-' + n,
+    ...(craft ? { message: 'MSG-' + n + ' pure milk', move: 'MOVE-' + n + ' she tests it at the door', device: 'DEV-' + n + ' the sniff', line: 'LINE-' + n + ' pehle test', cast_idea: 'CAST-' + n + ' a real dadi' } : {}),
+    scenes: [{ t: '0–5s', title: 'B1', desc: 'd1' }, { t: '5–10s', title: 'B2', desc: 'd2' }, { t: '10–20s', title: 'B3', desc: 'd3' }, { t: '20–30s', title: 'B4', desc: 'd4' }] });
+  const base = { screen: 'video', vTab: 'film', videoStep: 'scripting', videoObjective: 'Brand awareness', scriptVersions: [], refinePrompt: '', videoForceTyped: false, videoBrief: '', videoGenerating: false, videoConcept: null, conceptRoutes: [], conceptRoute: 0, scriptWriting: false, fullScript: null, scriptStatus: 'none' };
+  try {
+    // 1. OFF (the default): nothing changes
+    try { localStorage.removeItem('tms.craft'); } catch (e) {}
+    I.setState({ ...base, craftOn: false, craftScore: null });
+    check('craft mode is off by default and sends no flag', JSON.stringify(I.craftOpts()) === '{}' && I.craftConceptText() === '' && I.craftShape() === '');
+    reply = JSON.stringify({ routes: [route(1, false), route(2, false), route(3, false)] });
+    await I.generateVideo(); await wait(700);
+    const off = prompts[0] || '';
+    check('OFF: the concept prompt has no craft lines and the call carries no craft flag', !/"cast_idea"/.test(off) && !/five craft lines/.test(off) && opts[0] && opts[0].craft === undefined && opts[0].film === true, JSON.stringify(opts[0]));
+    check('OFF: no craft scorecard row in "Before you approve" and no craft toggle state', !/Craft scorecard/.test(txt()));
+
+    // 2. ON: the concept asks for five more lines and sends craft:true
+    I.toggleCraft(); await wait(200);
+    check('toggling sets craftOn and remembers it in this browser', I.state.craftOn === true && (() => { try { return localStorage.getItem('tms.craft') === '1'; } catch (e) { return true; } })());
+    prompts.length = 0; opts.length = 0;
+    I.setState({ ...base, craftOn: true });
+    reply = JSON.stringify({ routes: [route(1, true), route(2, true), route(3, true)] });
+    await I.generateVideo(); await wait(700);
+    const on = prompts[0] || '';
+    check('ON: the concept prompt asks for message, move, device, line and cast_idea, in the JSON shape too',
+      /"message" — the single thing the film says/.test(on) && /"move"/.test(on) && /"device"/.test(on) && /"cast_idea"/.test(on) && /"memorable": string, "message": string, "move": string, "device": string, "line": string, "cast_idea": string/.test(on), on.slice(-500));
+    check('ON: the concept call carries craft:true (and is still a film call)', opts[0] && opts[0].craft === true && opts[0].film === true, JSON.stringify(opts[0]));
+    check('ON: the rest of the concept prompt is as before (three routes, the four entertainment fields)', /Propose THREE genuinely different creative routes/.test(on) && /exactly 3 routes/.test(on) && /"hook" — what the viewer sees/.test(on));
+    check('ON: the five lines survive parsing for the working concept and every route', I.state.videoConcept.device.startsWith('DEV-1') && I.state.conceptRoutes.length === 3 && I.state.conceptRoutes[2].cast_idea.startsWith('CAST-3'));
+    check('ON: the route cards show the craft lines', /DEV-1/.test(txt()) && /MOVE-2/.test(txt()) && /CAST-3/.test(txt()) && /MSG-1/.test(txt()));
+
+    // 3. switching route keeps ITS lines; a refine remembers them
+    I.pickConceptRoute(1)(); await wait(400);
+    check('picking another route makes ITS craft lines the concept\'s', I.state.videoConcept.line.startsWith('LINE-2'));
+    prompts.length = 0; opts.length = 0; reply = JSON.stringify({ routes: [route(2, true), route(2, true), route(2, true)] });
+    I.setState({ refinePrompt: 'warmer' });
+    await I.generateVideo(); await wait(500);
+    check('a refine hands the writer the five lines to keep', /"device":"DEV-2/.test(prompts[0] || '') && /"cast_idea":"CAST-2/.test(prompts[0] || ''), (prompts[0] || '').slice(0, 600));
+
+    // 4. the script writer is told, and the call carries craft:true
+    I.pickConceptRoute(0)(); await wait(300);
+    prompts.length = 0; opts.length = 0; reply = null;
+    I.setState({ scriptWriting: false, fullScript: null, scriptStatus: 'concept' });
+    await I.writeFullScript(); await wait(500);
+    const w = prompts[0] || '';
+    check('the script writer is told the route\'s craft: device, line, casting, move, message', /This route’s craft: /.test(w) && /device: DEV-2/.test(w) && /line: LINE-2/.test(w) && /casting: CAST-2/.test(w) && /move: MOVE-2/.test(w) && /visible and audible, not described/.test(w), w.slice(0, 300));
+    check('the script call carries craft:true', opts[0] && opts[0].craft === true && opts[0].film === true, JSON.stringify(opts[0]));
+    check('and the craft text sits with the concept, before the length instructions', w.indexOf('This route’s craft') > 0 && w.indexOf('This route’s craft') < w.indexOf('The finished film is'));
+    I.setState({ craftOn: false });
+    prompts.length = 0; opts.length = 0; I.setState({ scriptWriting: false, fullScript: null });
+    await I.writeFullScript(); await wait(500);
+    check('OFF again: the writer prompt still carries the craft lines of a concept that has them (they are the concept\'s own) but the call sends no flag', opts[0] && opts[0].craft === undefined, JSON.stringify(opts[0]));
+    I.setState({ craftOn: true });
+
+    // 5. the scorecard row
+    const rows = [{ no: 1, visual: 'Kitchen', dialogue: 'Pehle test' }, { no: 2, visual: 'Fridge', dialogue: '' }];
+    I.setState({ fullScript: rows, scriptStatus: 'ready', craftScore: null, scriptPhase: 'script' }); await wait(500);
+    check('ON: the "Craft scorecard" row appears in "Before you approve" with a Score button', /Craft scorecard/.test(txt()) && /Score the film/.test(txt()), txt().slice(0, 200));
+    scoreReply = { ok: true, data: { model: true, total: 13, max: 21, scored: 7, strongest: 'message', weakest: 'device', summary: 'A warm clear film.', suggestion: 'Give her a repeatable gesture.',
+      tests: [['message', 'One clear message', 3], ['hook', 'Attention hook', 2], ['moment', 'One memorable moment', 3], ['dramatised', 'The proposition as an event', 1], ['device', 'A memorable device', 0], ['performance', 'Performance and casting are the idea', 2], ['original', 'Original', null]].map(([id, label, score]) => ({ id, label, score, reason: 'R-' + id })), notes: [] } };
+    await I.runCraftScore(); await wait(500);
+    const c = calls.find(x => x.path === '/film-score');
+    check('the scorecard posts the concept (with the craft lines) and the script to /film-score', c && c.body.concept && c.body.concept.device.startsWith('DEV-2') && c.body.scenes.length === 2 && c.body.film === true, JSON.stringify(c && Object.keys(c.body)));
+    check('it shows the total, the summary, each test with its reason and the suggestion', /13 of 21/.test(txt()) && /A warm clear film/.test(txt()) && /R-device/.test(txt()) && /Give her a repeatable gesture/.test(txt()) && /0\/3 A memorable device/.test(txt()), txt().slice(0, 300));
+    check('an unscored test shows a dash, not a zero', /–\/3 Original/.test(txt()));
+    scoreReply = { ok: false, data: { detail: 'The scorecard could not be understood. Try again.' } };
+    const before = I.state.craftScore; await I.runCraftScore(); await wait(300);
+    check('a failed score leaves the earlier scorecard in place and does not stick the button', I.state.craftScore === before && I.state.craftBusy === false);
+    I.toggleCraft(); await wait(300);
+    check('turning craft mode off hides the row and clears the scorecard', !/Craft scorecard/.test(txt()) && I.state.craftScore === null);
+  } catch (e) {
+    check('no exception', false, String(e && e.stack || e));
+  } finally {
+    Object.assign(I, { complete: real.complete, needBrand: real.needBrand, brandPreamble: real.brandPreamble, learningContext: real.learningContext, showToast: real.showToast, apiCall: real.apiCall });
+    window.fetch = real.fetch;
+    try { localStorage.removeItem('tms.craft'); } catch (e) {}
+    I.setState({ craftOn: false, craftScore: null });
+  }
+  const failures = results.filter(r => !r.ok);
+  return JSON.stringify({ pass: failures.length === 0, failures, results: results.map(r => (r.ok ? 'PASS ' : 'FAIL ') + r.name) }, null, 1);
+})();
