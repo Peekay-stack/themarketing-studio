@@ -21164,7 +21164,9 @@ class Component extends DCLogic {
     // and segment_prompt() behaves exactly as Phase 3 shipped it.
     const scriptRows = (s.fullScript||[]).map((r,i)=>({ ...r, rowIdx:i, rewriting: s.rewritingScene===i, rewriteLabel: s.rewritingScene===i ? 'Rewriting…' : '↻ Rewrite scene',
       movementClass: r.movement_class || '', hasMovementRisk: r.movement_class === 'orbit', shotSize: r.shot_size || '',
-      beatRole: this.beatRoleOf(r), beatNote: r.beat_note || '' }));
+      beatRole: this.beatRoleOf(r), beatNote: r.beat_note || '',
+      // The table's Rewrite scene button had no handler (it bound to a row property nobody set). It rewrites this scene, following the "Direction for this beat" text when there is one.
+      rewriteScene: this.rewriteScene(i, String(r.beat_note || '').trim()) }));
     // One row-builder, two homes -- `home` on each DEPTS entry decides scripting vs shoot board, not
     // two copies of this mapping drifting apart the way the medium vocabulary did.
     const deptRow = (d) => { const st = s.shoot[d.id] || { status:'idle', text:'' };
