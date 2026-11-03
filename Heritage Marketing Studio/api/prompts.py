@@ -22,6 +22,7 @@ import sys
 
 import brandprofile
 import character
+import craft as craft_brief
 
 # ---------------------------------------------------------------- global master
 # Brand-agnostic on purpose. The one thing it must NOT do is imply a category, a market or a claim the
@@ -563,7 +564,7 @@ def system_for(messages: list[dict], brand: dict | None = None, brand_mode: str 
               execution: str = "", house_id: str = "", force_typed: bool = False,
               skip_mandatories: bool = False,
               use_house: bool = True, use_platform: bool = True, use_plan: bool = True,
-              provocation: dict | None = None, film: bool = False) -> str:
+              provocation: dict | None = None, film: bool = False, craft: bool = False) -> str:
     """Craft + this brand's grounding + what has been decided + the detected surface block.
 
     `brand` is resolved by the caller when it knows which brand is in play; otherwise the single profile
@@ -639,6 +640,8 @@ def system_for(messages: list[dict], brand: dict | None = None, brand_mode: str 
     if prov and (prov.get("film") or {}).get("cast_approach") in ("objects", "animated", "none"):
         character_block = ""
     surface_text = VIDEO_PROVOCATION if (prov and surface is VIDEO) else surface
+    # The film craft brief (craft.py, workstream W0 of FILM_CRAFT_LAYER_PLAN.md): advice for the director on a film concept or script, only when the server switch CRAFT_BRIEF AND the request's craft flag are both on. Otherwise empty, and the join below drops it, so every prompt is unchanged.
+    craft_block = craft_brief.for_prompt(bool(craft and (film or surface is VIDEO)))
     parts = (GLOBAL_MASTER, "THE BRAND\n" + brandprofile.voice_block(voice_b, skip_mandatories=skip_mandatories, film=bool(film or surface is VIDEO), scope="strategy" if surface is BRIEF else "creative"),
-             character_block, spine, provocation_block(prov), this_one, surface_text)
+             character_block, spine, provocation_block(prov), this_one, craft_block, surface_text)
     return "\n\n".join(x for x in parts if x).strip()
