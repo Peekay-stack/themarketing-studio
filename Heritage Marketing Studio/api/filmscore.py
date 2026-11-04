@@ -106,7 +106,7 @@ def validate(raw: dict) -> dict:
         else:
             total += score
             n += 1
-        tests.append({"id": tid, "label": label, "score": score, "reason": _clip((t or {}).get("reason"), 200)})
+        tests.append({"id": tid, "label": label, "score": score, "reason": _clip((t or {}).get("reason"), 320)})
     scored = [t for t in tests if t["score"] is not None]
     strongest, weakest = str(raw.get("strongest") or ""), str(raw.get("weakest") or "")
     if scored:
