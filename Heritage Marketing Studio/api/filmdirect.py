@@ -270,7 +270,7 @@ def validate(raw: dict, rows, roles=None, promises_in=None, craft: bool = False)
     return res
 
 
-QUIET_KINDS = ("slow-hook", "same-place")       # in craft mode these are notes, not risks (C36)
+QUIET_KINDS = ()        # 5 Nov: was ("slow-hook", "same-place"), softened to notes in craft mode (C36). The owner found that told the writer a quiet one-room film was fine; both count towards the risk again.
 CRAFT_ASK = (
     "CRAFT. Two more questions, answered by what the script shows. (a) ONE MESSAGE: can the film's single message be said in one plain sentence, and does the script deliver exactly that "
     "(`one_message.clear` true or false, `one_message.message` the sentence, `one_message.note` a plain line when it is not clear). (b) A MEMORABLE DEVICE: is there a short, repeatable thing "

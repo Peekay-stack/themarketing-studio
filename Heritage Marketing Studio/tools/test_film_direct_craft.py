@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """test_film_direct_craft.py -- offline checks for workstream W3 of FILM_CRAFT_LAYER_PLAN.md: the director's read in CRAFT MODE (request flag `craft: true` AND server switch CRAFT_BRIEF).
-Adds two questions (one message, a memorable device), softens the "opens quietly" and "one place" findings to quiet notes that do not count towards the risk, and changes NOTHING when craft mode
+Adds two questions (one message, a memorable device) as quiet notes (the "opens quietly" and "one place" findings were softened too until 5 Nov, when the owner found that steered films quiet), and changes NOTHING when craft mode
 is off. The model is stubbed; nothing is saved.
 Run:  api/.venv/Scripts/python.exe tools/test_film_direct_craft.py
 """
@@ -33,8 +33,8 @@ check("OFF: slow-hook and same-place are real findings, count towards the risk, 
       and not any(f.get("quiet") for f in off["findings"]) and "craft" not in off and off["engagement"]["risk"] == "medium", (off["engagement"], [f["kind"] for f in off["findings"]]))
 on = filmdirect.validate(RAW, ROWS, craft=True)
 kinds = {f["kind"]: f for f in on["findings"]}
-check("ON: slow-hook and same-place are still listed, marked quiet", kinds["slow-hook"].get("quiet") is True and kinds["same-place"].get("quiet") is True)
-check("ON: quiet notes do not count towards the risk (medium becomes low)", on["engagement"]["risk"] == "low", on["engagement"])
+check("ON (5 Nov): slow-hook and same-place are real findings again, not softened to quiet notes", not kinds["slow-hook"].get("quiet") and not kinds["same-place"].get("quiet"))
+check("ON (5 Nov): they count towards the risk exactly as with craft off (medium)", on["engagement"]["risk"] == off["engagement"]["risk"] == "medium", on["engagement"])
 check("ON: the craft answers are returned cleaned", on["craft"]["message"] == {"clear": False, "message": "", "note": "it says three things"} and on["craft"]["device"]["present"] is False)
 check("ON: no single message and no device become quiet, craft-tagged notes with no scene", kinds["no-message"]["quiet"] and kinds["no-message"]["craft"] and kinds["no-message"]["scene"] is None and kinds["no-device"]["quiet"] and "most remembered films" in kinds["no-device"]["note"])
 check("ON: quiet notes are listed after the real findings", [bool(f.get("quiet")) for f in on["findings"]] == sorted(bool(f.get("quiet")) for f in on["findings"]))
