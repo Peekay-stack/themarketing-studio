@@ -5,10 +5,16 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 188571ea-55a9-4350-b9a0-481c7a9d13b2
-  modified: 2026-11-05T10:28:50.877Z
+  modified: 2026-11-05T13:16:48.996Z
 ---
 
 Plan: [[film-craft-layer-plan]] (repo `Heritage Marketing Studio/FILM_CRAFT_LAYER_PLAN.md`). Evidence: [[ad-learning-log]] ([[reference-ad-framework-and-log]]; purpose "when ads become magical"). Owner approved Phase A on 3 Nov (also: check vendor terms = yes, GitHub repo private = yes).
+
+## 5 Nov A/B (craft OFF vs ON, same house, Telugu, no direction), first pair after loosening `50367c7` (17 screenshots, no frames drawn)
+- OFF "The Kindness Nobody Taught" (Bangalore stairwell tiffin): 6 scenes, 3 speaking scenes, boredom risk medium, flow review medium. Stake (going hungry) never shown; logline says "mothers notice" but no mother on the stairwell; scenes 2+3 same beat; scenes 4-6 held stills.
+- ON "The Kind Habit" (Chennai bus seat): 6 scenes (same: base sceneRange 30 s = 6, craft does not raise it), 4 speaking scenes, 37 words vs budget 48, stake shown in scene 2, 5+ people, 2 places, director's read low, flow review medium, scorecard 15/21 (hook 2/3). Livelier, but a familiar genre.
+- Defects seen in ON: casting lines gave 3 routes 3 cities/languages (Hyderabad Telugu, Bengaluru Kannada, Chennai Tamil) despite the rule "ONE region and language"; film then speaks Telugu on a Chennai bus; Location line says "empty bus" for a packed-bus film; Cast note leaks "Built Daily" title and ** markdown; concept VO not in script (Delivery row did not flag). Common to both: 1.9 shots/10 s, flashback without a marker, location line says "early morning" or "empty".
+- One pair = one sample, craft attribution still unproven. Nothing changed after reading it; owner to decide.
 
 ## OWNER DECISION, 5 Nov (supersedes the "tomorrow" block below): START HERE
 "Let's not fix this film any more... your rules are too rigid, and single-mindedness doesn't mean a boring film with minimal dialogues. I will generate another one and then we will check. This change has not gone live; if it doesn't yield results, we will not use this at all."
