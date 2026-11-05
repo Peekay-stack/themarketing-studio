@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 188571ea-55a9-4350-b9a0-481c7a9d13b2
-  modified: 2026-11-05T10:17:21.889Z
+  modified: 2026-11-05T10:28:50.877Z
 ---
 
 Plan: [[film-craft-layer-plan]] (repo `Heritage Marketing Studio/FILM_CRAFT_LAYER_PLAN.md`). Evidence: [[ad-learning-log]] ([[reference-ad-framework-and-log]]; purpose "when ads become magical"). Owner approved Phase A on 3 Nov (also: check vendor terms = yes, GitHub repo private = yes).
@@ -16,6 +16,14 @@ Plan: [[film-craft-layer-plan]] (repo `Heritage Marketing Studio/FILM_CRAFT_LAYE
 - The craft layer is on trial: if it doesn't produce better films it gets dropped entirely (flag stays off, nothing merged to master). Don't defend it; measure it.
 - Feedback to carry into any future craft-text work: the rules read as rigid; "one clear message" was over-read as sparse, quiet, low-dialogue films (cover-the-logo, shown-not-spoken proof, silent scenes, few lines). Single-minded must still allow dialogue, characters, drama. Do not add more rules in reaction; if the next film disappoints, compare craft-on against craft-off on the same brief before changing anything.
 - Nothing paid is queued. Test studio may need restarting (recipe below) if the owner asks.
+
+## 5 Nov (later): craft rules LOOSENED, commit `50367c7` (pushed, not merged, flag off). NEXT = the A/B test (craft on vs off, same house/platform/direction), owner generates or asks me.
+Owner: my craft rules steered films quiet (fewer scenes, fewer words, less drama); "fix this first, then A/B". What changed (all craft-mode only; flag off = unchanged prompts):
+- `craft_skill/SKILL.md` rewritten: "singleness is the message, not the size of the film"; new "Make it live" list (want and obstacle, a reason it is now/clock, more than two people, the story moves place/time, every scene changes something, people TALK, the turn costs something); removed "two sentences = two films", "no conflict", "quiet", "many hold one place / a held look can be the point", "line or none if wordless". Claims guard kept, reworded as limiting what the film asserts, not how alive people are.
+- `craftConceptText` (page): routes are "THREE DIFFERENT FILMS" (people, situation, move), not "differ ONLY in move"; new "MAKE EACH ROUTE ALIVE" paragraph (no quota); removed "prefer shown proof, place it outside the emotional build"; cover-the-logo now "where you can"; the format line's fixed "4 concept beats" becomes "as many as the story needs" via `craftBeatsText()`.
+- Baseline (NOT craft) things that also made films lean, now overridden in craft mode only: `voWords` 12/22/32 -> x1.5 = 18/33/48 (voice panel, delivery check and writer read one number); `voBudgetNote` "STRICT... say less... at least one scene MUST be silent" -> asks for dialogue between people, use most of the budget, silence only when the picture is the payoff; PLACE rule "a one-room film stays one room" -> "let the story move". NOT changed: base 30 s film allows at most 7 scenes (Veo 4 s floor; range 5-7); extra shots come from "Break into shots"/film pace.
+- `filmdirect.QUIET_KINDS = ()`: slow-hook and same-place count towards the risk again in craft mode (they were softened to notes). Tests updated; test_craft_brief, test_film_direct_craft, test_film_score, test_learning_meta all 0 failures; page check film_craft_mode.js 42/42.
+- Not done (offer): scorecard still has no "alive/drama" test (7 tests reward singleness); 48 words is a dial, not proven.
 
 ## 5 Nov: the owner's NEW craft test, "Built Daily" (concept "The Shrinking Pile", saved film `da29e2b840`, craft on)
 Owner sent 12 screenshots (script v1 of 5 scenes, their revision v2 of 6 scenes, departments, frame guideline, director's read, flow review, scorecard). My read, nothing built, nothing paid:
@@ -29,7 +37,7 @@ The owner said on 4 Nov: "we will need to think harder... let me think through t
 Proposal waiting for their answer (not built): a text-only, flag-off **"drama floor"** craft rule (a want, an obstacle, a clock; at least 3 people and 2 places; a change in every scene; 8-9 shots for 30 s) + a richer concept, e.g. farm dawn proof, doorstep, kitchen with a school-van horn as the clock, gate, the boy runs back and draws the 1000th stroke himself with a grandmother/father witnessing, sign-off pour. Option: three fresh routes under the new rule first (model calls only). **Temperature/top-k cannot be set**: writer model `claude-opus-4-8` (`GEN_MODEL` in `api/complete.py`) accepts only default sampling params, so creativity must come from the prompt/structure.
 Costs to quote BEFORE any paid call: about 9 frames + recast about $0.5-0.8; video Draft 360p about $0.034/s (about $1.00 for 30 s), Final 720p about $0.101/s (about $3.00); optional re-render of frames 2 and 3 with "Fix this frame only" notes about $0.10-0.16.
 
-## Built (worktree `C:\Users\punie\hms-fixes`, branch `film-engagement-2`, ALL PUSHED, NOT merged, NOT live; head `daf5195`)
+## Built (worktree `C:\Users\punie\hms-fixes`, branch `film-engagement-2`, ALL PUSHED, NOT merged, NOT live; head `50367c7`)
 - `1a82bc4` W0 craft brief (`api/craft.py`, `api/craft_skill/SKILL.md`, wired `prompts.system_for(craft=)`): needs env `CRAFT_BRIEF=1` AND request flag `craft:true`; off = byte-identical prompts (75 goldens unchanged).
 - `bc23848` scorecard `POST /film-score` (`api/filmscore.py`, 7 tests 0-3, advice only). `daf5195` (4 Nov): each reason now clips at 320 chars, not 200 (was cutting mid-sentence). Scores stayed 18-19 across four runs = poor discrimination; the Director's read swings between runs on near-identical scripts (8/8, 5/8, 6/8).
 - `498234d` W1 page: **"Craft mode" tick** (Video Studio > Film, step 1 navy band, left of Generate; state `craftOn`, localStorage `tms.craft`, default off); 5 extra concept lines (message, move, device, line, cast_idea); "Craft scorecard" row in "Before you approve".
