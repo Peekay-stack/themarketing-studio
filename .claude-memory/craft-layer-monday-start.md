@@ -5,12 +5,19 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 188571ea-55a9-4350-b9a0-481c7a9d13b2
-  modified: 2026-11-04T13:52:37.780Z
+  modified: 2026-11-05T05:46:10.905Z
 ---
 
 Plan: [[film-craft-layer-plan]] (repo `Heritage Marketing Studio/FILM_CRAFT_LAYER_PLAN.md`). Evidence: [[ad-learning-log]] ([[reference-ad-framework-and-log]]; purpose "when ads become magical"). Owner approved Phase A on 3 Nov (also: check vendor terms = yes, GitHub repo private = yes).
 
-## TOMORROW (5 Nov): START HERE
+## OWNER DECISION, 5 Nov (supersedes the "tomorrow" block below): START HERE
+"Let's not fix this film any more... your rules are too rigid, and single-mindedness doesn't mean a boring film with minimal dialogues. I will generate another one and then we will check. This change has not gone live; if it doesn't yield results, we will not use this at all."
+- **Stop work on 'The Strength Count' (`dc48a9aefa`). Do NOT build the drama floor, the new concept, or re-render frames.** The owner will generate a NEW film themselves in craft mode and report; judge that one.
+- The craft layer is on trial: if it doesn't produce better films it gets dropped entirely (flag stays off, nothing merged to master). Don't defend it; measure it.
+- Feedback to carry into any future craft-text work: the rules read as rigid; "one clear message" was over-read as sparse, quiet, low-dialogue films (cover-the-logo, shown-not-spoken proof, silent scenes, few lines). Single-minded must still allow dialogue, characters, drama. Do not add more rules in reaction; if the next film disappoints, compare craft-on against craft-off on the same brief before changing anything.
+- Nothing paid is queued. Test studio may need restarting (recipe below) if the owner asks.
+
+## (Old, 4 Nov, now superseded) TOMORROW: START HERE
 The owner said on 4 Nov: "we will need to think harder... let me think through this and tell you", then "we will start tomorrow". **Do NOT build or change anything until the owner states their creative decision.** Then turn it into the script + craft-brief rule in ONE pass (owner is angry at iteration count: "I am not making any more script changes... get into god mode and solve it in one shot"; fix backend things myself, don't hand the owner steps). Questions I put to them: (1) one quiet two-person story, or a busier ad with a clock and more people? (2) drama floor for every craft-mode film or only this test?
 Proposal waiting for their answer (not built): a text-only, flag-off **"drama floor"** craft rule (a want, an obstacle, a clock; at least 3 people and 2 places; a change in every scene; 8-9 shots for 30 s) + a richer concept, e.g. farm dawn proof, doorstep, kitchen with a school-van horn as the clock, gate, the boy runs back and draws the 1000th stroke himself with a grandmother/father witnessing, sign-off pour. Option: three fresh routes under the new rule first (model calls only). **Temperature/top-k cannot be set**: writer model `claude-opus-4-8` (`GEN_MODEL` in `api/complete.py`) accepts only default sampling params, so creativity must come from the prompt/structure.
 Costs to quote BEFORE any paid call: about 9 frames + recast about $0.5-0.8; video Draft 360p about $0.034/s (about $1.00 for 30 s), Final 720p about $0.101/s (about $3.00); optional re-render of frames 2 and 3 with "Fix this frame only" notes about $0.10-0.16.
