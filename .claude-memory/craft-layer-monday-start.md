@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 188571ea-55a9-4350-b9a0-481c7a9d13b2
-  modified: 2026-11-05T05:46:10.905Z
+  modified: 2026-11-05T10:17:21.889Z
 ---
 
 Plan: [[film-craft-layer-plan]] (repo `Heritage Marketing Studio/FILM_CRAFT_LAYER_PLAN.md`). Evidence: [[ad-learning-log]] ([[reference-ad-framework-and-log]]; purpose "when ads become magical"). Owner approved Phase A on 3 Nov (also: check vendor terms = yes, GitHub repo private = yes).
@@ -16,6 +16,13 @@ Plan: [[film-craft-layer-plan]] (repo `Heritage Marketing Studio/FILM_CRAFT_LAYE
 - The craft layer is on trial: if it doesn't produce better films it gets dropped entirely (flag stays off, nothing merged to master). Don't defend it; measure it.
 - Feedback to carry into any future craft-text work: the rules read as rigid; "one clear message" was over-read as sparse, quiet, low-dialogue films (cover-the-logo, shown-not-spoken proof, silent scenes, few lines). Single-minded must still allow dialogue, characters, drama. Do not add more rules in reaction; if the next film disappoints, compare craft-on against craft-off on the same brief before changing anything.
 - Nothing paid is queued. Test studio may need restarting (recipe below) if the owner asks.
+
+## 5 Nov: the owner's NEW craft test, "Built Daily" (concept "The Shrinking Pile", saved film `da29e2b840`, craft on)
+Owner sent 12 screenshots (script v1 of 5 scenes, their revision v2 of 6 scenes, departments, frame guideline, director's read, flow review, scorecard). My read, nothing built, nothing paid:
+- Much better than Strength Count: person-led, a physical sweep gag, a planted milk pouch at frame's edge, daughter calm from second one so the reveal re-attributes her calm to the daily glass (reverse-origin).
+- Faults: only 14 (v1) then 16 (v2) spoken words of a ~32 budget; the concept's VO runs 35 words and its stake ("her worry, not her care, is what the girl will remember", "still I worried") never reached the script (that is the "minimal dialogue" mechanism). Scenes 4-6 say one idea three times (steadiness / inner strength / I poured it myself) and "inner strength in one glass" speaks the milk-causes-strength claim aloud (functional pillar is 0 of 1 sourced). All scenes single-shot: 2.0 shots/10 s vs Fast 3.5-5; the tool's own fix is "Break into shots" on scenes 1 and 2 (free until frames are drawn). Scene 6 says "nearly full glass" after the daughter drank it. Hindi super in a Telugu film.
+- Scorecard 17/21 on both versions (moment 3 to 2, performance 2 to 3 = noise): still poor discrimination. Director's read says boredom LOW while Flow review says MEDIUM in the same panel. Small defects: scorecard "Original" reason still clipped at 320 ("unsure of an exact pr..."), Flow review row in "Before you approve" cut mid-word ("so the bac").
+- Attribution to the craft layer is UNPROVEN: needs a craft-off concept on the same house, platform and direction before deciding keep or drop.
 
 ## (Old, 4 Nov, now superseded) TOMORROW: START HERE
 The owner said on 4 Nov: "we will need to think harder... let me think through this and tell you", then "we will start tomorrow". **Do NOT build or change anything until the owner states their creative decision.** Then turn it into the script + craft-brief rule in ONE pass (owner is angry at iteration count: "I am not making any more script changes... get into god mode and solve it in one shot"; fix backend things myself, don't hand the owner steps). Questions I put to them: (1) one quiet two-person story, or a busier ad with a clock and more people? (2) drama floor for every craft-mode film or only this test?
