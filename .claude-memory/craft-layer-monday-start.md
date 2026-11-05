@@ -5,10 +5,12 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 188571ea-55a9-4350-b9a0-481c7a9d13b2
-  modified: 2026-11-05T13:16:48.996Z
+  modified: 2026-11-05T13:41:59.655Z
 ---
 
 Plan: [[film-craft-layer-plan]] (repo `Heritage Marketing Studio/FILM_CRAFT_LAYER_PLAN.md`). Evidence: [[ad-learning-log]] ([[reference-ad-framework-and-log]]; purpose "when ads become magical"). Owner approved Phase A on 3 Nov (also: check vendor terms = yes, GitHub repo private = yes).
+
+## NEXT, 6 Nov morning: the owner runs a SECOND matched pair (different brand/category, craft off vs on, same route in both, no frames) and sends screenshots. I judge route-for-route as audience/director/editor; change nothing until compared. Test studio = background task `b5nyp40f3`, http://localhost:8000/app (restart with the recipe below if gone; owner presses Ctrl+F5). Things to check in the pair: does the "ONE region and language" casting rule hold; Location line vs script (empty vs packed); Delivery row vs concept VO; scenes still capped at 6 for 30 s (base `sceneRange`); route titles same in both modes?; Selected-badge mismatch (route 1 shown while route 3 developed). Open options if the owner asks: tighten region/language rule in craft mode; add an "alive/drama" test to the scorecard (scorecard has none; craft-off has no scorecard so 15/21 is not comparable); investigate the badge. Verdict so far: craft improves staging (stake, people, conflict), not ideas; moderate, one sample. Owner stance: "if it doesn't yield results, we will not use this at all".
 
 ## 5 Nov A/B (craft OFF vs ON, same house, Telugu, no direction), first pair after loosening `50367c7` (17 screenshots, no frames drawn)
 - OFF "The Kindness Nobody Taught" (Bangalore stairwell tiffin): 6 scenes, 3 speaking scenes, boredom risk medium, flow review medium. Stake (going hungry) never shown; logline says "mothers notice" but no mother on the stairwell; scenes 2+3 same beat; scenes 4-6 held stills.
