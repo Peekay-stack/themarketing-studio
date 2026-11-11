@@ -2541,6 +2541,12 @@ def scene_still(payload: dict):
     if _camera:
         craft = craft + (" CAMERA AND LENS FOR THIS FILM — it OVERRIDES any generic camera, lens, focus or "
                          "sharpness wording above: " + _camera.rstrip(" .") + ".")
+    # Craft mode, STILL photographs only (Social posts, Carousel slides; never a film frame, which follows its script): the film grammar of this brand's kind
+    # of category says how that kind of photograph is shot. Needs the server switch AND the request flag AND a grammar with a PHOTO section; otherwise "" and the prompt is unchanged.
+    if not payload.get("video_frame") and str(payload.get("brand_mode") or "").strip().lower() != "general":
+        _photo_grammar = craft_brief.photo_for_prompt(bool(payload.get("craft")), brandprofile.resolve(), str(payload.get("craft_grammar") or ""))
+        if _photo_grammar:
+            craft = craft + " HOW THIS KIND OF PHOTOGRAPH IS SHOT: " + _photo_grammar
     subject = str(payload.get("prompt", "")).strip() or "brand key visual"
     characters = str(payload.get("characters", "")).strip()
     # A cast reference image pins identity in a way text never can — use it when we have one.

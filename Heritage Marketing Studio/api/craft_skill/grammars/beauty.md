@@ -6,7 +6,7 @@ vo_mult: 1.0
 replaces: Make it live, Proposition moves
 ---
 
-A film grammar is how one KIND of film is shot and shown. This one is for beauty and skin: colour cosmetics, skincare, treatments. It is written for review by a person who knows the category; change anything that is wrong.
+A film and static photoshot grammar is how one KIND of film and static photo is shot and shown. This one is for beauty and skin: colour cosmetics, skincare, treatments. It is written for review by a person who knows the category; change anything that is wrong.
 
 ## FILM
 BEAUTY AND SKIN: HOW THIS CATEGORY IS SHOT AND SHOWN. This REPLACES the general "Make it live" and "Proposition moves" notes: the tests, the shape and pace, the sound and the guards still apply.
@@ -21,6 +21,7 @@ A beauty film is LOOKED AT more than it is followed. The viewer wants to see a f
 - **Words and sound.** Few. A short voiceover lands the benefit and the brand thought in a handful of lines; a person speaks only when her words are the moment, never banter. Texture sound (a pat, a brush, a drop, fabric), room tone and music carry the rest. Silence is allowed.
 - **Casting.** Faces, skin tones and hair true to the brand's market, with real texture. Cast the face and the hands for the close-ups. No extra people (an elder, a child, a neighbour) unless the idea needs them.
 - **Three routes differ by their hero image and by how the proof is made visible** (for example the formula in macro, a face in honest light, the ingredient or its making, a ritual of application), not by a plot gimmick.
+-**the shots should clear, bold or natural depending on the brief requirement and should always have beautiful faces, body shape etc
 
 ## ROUTES_STAND
  THE THREE ROUTES. All three stand on the idea platform named above and on the brand's messaging house (its core line, its emotional and functional pillars and the facts it has sourced), and they are THREE DIFFERENT FILMS: a different hero image (the formula in macro, a face in honest light, the ingredient or its making, a ritual of application), a different setting and styling, and a different way the platform's promise is made visible on the skin. If the platform has a repeatable device, each route uses it in the way that suits that film. This REPLACES the earlier suggestion of a human story, a craft-or-proof route and a lighter observational route.
@@ -30,6 +31,17 @@ A beauty film is LOOKED AT more than it is followed. The viewer wants to see a f
 
 ## ROUTES_ALIVE
  MAKE EACH ROUTE BEAUTIFUL AND CLEAR, as a beauty film is made: it is looked at more than followed. Build it on a face or skin in flattering, honest light, on close-ups and textures (the formula, the skin, the application), on a model or real-skin face rather than a plot of characters, and on a reveal of the skin at the end. A small human moment (a look, a mirror, a reaction) is welcome; a bet, a wager, a test or a sceptic proved wrong is not. Few words: most of the film is picture and sound. Use the beats the film needs, usually four to six, and let a held, slow shot stand where it is the payoff. This REPLACES the "4 concept beats" in the format below.
+
+## PHOTO
+BEAUTY AND SKIN, FOR A STILL PHOTOGRAPH (a social post, a carousel slide, a key visual). A still is read in a second, so it carries ONE idea and ONE point of focus, and it is looked at before it is read.
+
+- **The subject is a face, skin, hair or hands**, or the formula itself, in controlled, flattering light. The eyes, lips and skin are sharp and clearly readable; no dark rooms, no face lost in shadow.
+- **Take the register from the brief: clean, bold or natural.** Clean: soft even light, a minimal set, polished but real. Bold: saturated colour, a graphic composition, strong or coloured light and shadow. Natural: daylight, light styling, minimal retouch. If the brief does not say, go natural.
+- **Beautiful faces and bodies, true to the brand's market.** Cast the face, skin tone, hair and body shape the brief asks for. Skin keeps its real texture (visible pores, fine hair, natural sheen): no plastic or airbrushed skin, no filter look, and hands with five natural fingers.
+- **Texture is the proof.** For skincare show the skin looking soft, comfortable and alive; for colour show the swatch, the smear, the melt, the pigment on the lip or lid. Show no before-and-after, no numbers and no claim of hours or days.
+- **Composition.** A close or medium crop, one clear focal point, and clean space on one side or at the top where type can sit later. Keep the face away from that space.
+- **No lettering and no packaging drawn in the picture.** The pack and the words are added separately.
+- **Extra people only if the brief needs them.** One strong face usually beats a scene.
 
 ## SPEECH
 Beauty films are mostly picture and sound. Spend the words on a short voiceover that lands the benefit and the brand line; a person on screen may say one short line when that line is the moment; no banter. Silence and texture sound are part of the film, so most scenes need no speech.

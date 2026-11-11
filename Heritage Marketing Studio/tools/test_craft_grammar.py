@@ -126,5 +126,46 @@ check("the page asks for the grammar before it writes a concept and before it wr
 check("the page's general craft wording no longer names an elder or the dairy examples", "an elder" not in html.split("MAKE EACH ROUTE ALIVE")[1][:900] and "cold crate" not in html and "network of farmers" not in html)
 check("the speech budget uses the grammar's multiplier and note", "gm.vo_mult" in html and "gm.speech_note" in html)
 
+# ---- still photographs (the PHOTO section, /scene-still for Social and Carousel) --------------------------------
+import gemini                     # noqa: E402
+PH = craft.photo_for_prompt(True, brand={"category": "beauty"})
+check("photo: a beauty brand gets the PHOTO notes (register clean/bold/natural, real skin texture, no lettering or packaging drawn)", all(x in PH for x in ("clean, bold or natural", "real texture", "No lettering and no packaging")), PH[:120])
+check("photo: the person's pick works as it does for film, and 'general' gives none", "clean, bold or natural" in craft.photo_for_prompt(True, brand={"category": "dairy"}, grammar="beauty") and craft.photo_for_prompt(True, brand={"category": "beauty"}, grammar="general") == "")
+check("photo: no grammar for the category, or no brand, or craft flag off: nothing", craft.photo_for_prompt(True, brand={"category": "dairy"}) == "" and craft.photo_for_prompt(True, brand=None) == "" and craft.photo_for_prompt(False, brand={"category": "beauty"}) == "")
+os.environ.pop("CRAFT_BRIEF")
+check("photo: server switch off: nothing even with the flag", craft.photo_for_prompt(True, brand={"category": "beauty"}) == "")
+os.environ["CRAFT_BRIEF"] = "1"
+check("photo: the PHOTO section is short enough to review (under 3,000 characters) and names no brand or reference ad", 0 < len(PH) < 3000 and not [n for n in NAMES if re.search(r"\b" + re.escape(n.strip()) + r"\b", PH.lower())])
+
+_cap: dict = {}
+main._have_image = lambda: True
+main._use = lambda eng, name: name == "google"
+gemini.image_from_reference = lambda prompt, refs, **kw: (_cap.__setitem__("prompt", prompt) or "http://x/f.png")
+gemini.image = lambda prompt, **kw: (_cap.__setitem__("prompt", prompt) or "http://x/f.png")
+
+
+def still(payload: dict) -> str:
+    _cap.clear()
+    main.scene_still({"prompt": "a face in soft light", "style": "real", "engines": {"image": "google"}, **payload})
+    return _cap.get("prompt", "")
+
+
+MARK = "HOW THIS KIND OF PHOTOGRAPH IS SHOT"
+brandprofile.set_active(brandprofile.by_name("Kumkum Beauty")["id"])
+base_p = still({})
+check("scene-still: a plain static call (no craft flag) is untouched", MARK not in base_p and bool(base_p))
+cur = brandprofile.resolve()
+check("scene-still: precondition, the active brand is a beauty brand", bool(cur) and "beauty" in str(cur.get("category", "")).lower(), str(cur)[:80])
+on_p = still({"craft": True})
+check("scene-still: craft flag + beauty brand: the static image prompt carries the PHOTO notes", MARK in on_p and "clean, bold or natural" in on_p, on_p[-200:])
+check("scene-still: with craft the prompt is the plain one plus the notes, nothing else moved", on_p.replace(" " + MARK + ": " + PH, "") == base_p and len(on_p) > len(base_p), on_p[-160:])
+check("scene-still: a film frame never gets them (it follows its script)", MARK not in still({"craft": True, "video_frame": True}))
+check("scene-still: Independent (general) mode never gets them", MARK not in still({"craft": True, "brand_mode": "general"}))
+check("scene-still: the person's pick 'general' removes them", MARK not in still({"craft": True, "craft_grammar": "general"}))
+os.environ.pop("CRAFT_BRIEF")
+check("scene-still: server switch off: byte-identical to the plain call", still({"craft": True}) == base_p)
+os.environ["CRAFT_BRIEF"] = "1"
+check("the page sends the craft fields on all four Social/Carousel still calls and defines them once", html.count("...this.photoCraftFields(),") == 4 and "photoCraftFields(){" in html)
+
 print("\n%d failure(s)" % len(fails))
 sys.exit(1 if fails else 0)

@@ -36,9 +36,15 @@
     check('beauty: asking again for the same brand does not fetch again', (await I.ensureCraftGrammar(), asked.length === 1));
     check('the call carries the craft flag but no grammar pick when the person has not chosen one', JSON.stringify(Object.keys(I.craftCall()).sort()) === '["craft","timeoutMs"]');
 
+    const photoOn = JSON.stringify(I.photoCraftFields());
+    I.setState({ craftOn: false }); await wait(150);
+    const photoOff = JSON.stringify(I.photoCraftFields());
+    I.setState({ craftOn: true }); await wait(150);
+    check('still photographs: craft ON sends the craft flag (no pick yet), craft OFF sends nothing', photoOn === '{"craft":true}' && photoOff === '{}', photoOn + ' / ' + photoOff);
+
     // 2. the person's pick
     I.setState({ craftGrammarPick: 'beauty' });
-    check('a chosen grammar rides on the call as craft_grammar', I.craftCall().craft_grammar === 'beauty' && I.craftCall().craft === true);
+    check('a chosen grammar rides on the call as craft_grammar', I.craftCall().craft_grammar === 'beauty' && I.craftCall().craft === true && I.photoCraftFields().craft_grammar === 'beauty');
     I.onCraftGrammar({ target: { value: 'general' } }); await wait(250);
     check('choosing a film type stores it for this browser and reads the grammar again with the pick', asked.some(a => /grammar=general/.test(a)) && (() => { try { return localStorage.getItem('tms.craftg') === 'general'; } catch (e) { return true; } })());
 

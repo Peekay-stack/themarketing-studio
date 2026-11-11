@@ -57,3 +57,14 @@ def for_prompt(requested: bool, brand: dict | None = None, grammar: str = "") ->
             body = re.sub(r"(?m)^\*\*Singleness is about the message.*$", lambda _m: g["sections"]["INTRO"], body, count=1)
         body = body + "\n\n" + g["sections"]["FILM"]
     return "FILM CRAFT NOTES (advice for the director: use what serves this brief, never imitate a known film)\n" + body
+
+
+def photo_for_prompt(requested: bool, brand: dict | None = None, grammar: str = "") -> str:
+    """How this kind of STILL photograph is shot, for the image prompt of a static picture (social post, carousel slide), or "".
+
+    Same two switches as `for_prompt` (server CRAFT_BRIEF and the request flag). It also needs a grammar that applies (the brand's category or the person's pick)
+    AND carries a PHOTO section: a category with no grammar, or a grammar with no PHOTO section, adds nothing, so those image prompts stay byte for byte as they were."""
+    if not (requested and server_on()):
+        return ""
+    gid, _why = craft_grammar.pick(brand, grammar)
+    return craft_grammar.photo_block(gid).strip() if gid else ""

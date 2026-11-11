@@ -14854,7 +14854,7 @@ class Component extends DCLogic {
         scene_no: 1, ratio: '1:1', style: this.state.socialStyle || 'real',
         prompt: (p.visual || ((this.brandName() || 'Brand') + ' key visual')) + ' Square social image for ' + p.platName + '.',
         brand_mode: this.state.producerBrandMode,
-        ...this.provImgFields('social'),
+        ...this.provImgFields('social'), ...this.photoCraftFields(),
         ...this.socialPackFields(p.packRole),
         // Live-tested finding: the server auto-attaches the most-recently-signed-off cast whenever one
         // exists UNLESS told not to — leaving this checkbox unchecked used to still silently pin the
@@ -14887,7 +14887,7 @@ class Component extends DCLogic {
         use_cast: !!s0.socialWantCast,
         cast_id: s0.socialWantCast ? (s0.socialCastChoice || undefined) : undefined,
         prompt: (p.visual || ((this.brandName() || 'Brand') + ' key visual')) + ' Square social image for ' + p.platName + '.',
-        ...this.provImgFields('social'),
+        ...this.provImgFields('social'), ...this.photoCraftFields(),
         brand_mode: this.state.producerBrandMode,
       });
       if (res && res.image_url) { ok++; this.setState(s => ({ posts: s.posts.map(x => x.id === p.id ? { ...x, ...this.postImagePatch(res) } : x) })); }
@@ -15199,7 +15199,7 @@ class Component extends DCLogic {
       const res = await this.apiJson('/scene-still', {
         scene_no: s.n, ratio, style,
         prompt: (s.visual_note || s.headline || '') + this.carouselNoTextPrompt(),
-        ...this.provImgFields('social'),
+        ...this.provImgFields('social'), ...this.photoCraftFields(),
         ...this.carouselPackFields(c, role), use_cast: !!c.wantCast,
         cast_id: c.wantCast ? (c.castChoice || undefined) : undefined,
         brand_mode: this.state.producerBrandMode,
@@ -15233,7 +15233,7 @@ class Component extends DCLogic {
       // regenerating ONE slide with the cast checkbox unchecked still silently auto-pinned a signed-off
       // cast face (`want_cast` defaults True when the field is absent) — the same class of bug already
       // fixed everywhere else this pattern appears in this file.
-      ...this.provImgFields('social'),
+      ...this.provImgFields('social'), ...this.photoCraftFields(),
       ...this.carouselPackFields(c, role), use_cast: !!c.wantCast,
       cast_id: c.wantCast ? (c.castChoice || undefined) : undefined,
       brand_mode: this.state.producerBrandMode,
@@ -16425,6 +16425,9 @@ class Component extends DCLogic {
   craftOpts(){ return this.state.craftOn ? { craft: true } : {}; }
   // For the concept and script WRITING calls (this.complete): the craft flag and a longer page timeout. The craft answer is longer and the model is slow, so 45 s cut it off on 3 Nov.
   CRAFT_TIMEOUT_MS = 120000;
+  // What a STATIC image call (/scene-still for a Social post or a Carousel slide) sends in craft mode, so the server can add the film grammar's PHOTO notes for this kind of category.
+  // Nothing is sent with craft mode off, so those requests are exactly what they were. The server also needs CRAFT_BRIEF=1 and a grammar with a PHOTO section.
+  photoCraftFields(){ return this.state.craftOn ? { craft: true, ...(this.state.craftGrammarPick ? { craft_grammar: this.state.craftGrammarPick } : {}) } : {}; }
   craftCall(){ return this.state.craftOn ? { craft: true, timeoutMs: this.CRAFT_TIMEOUT_MS, ...(this.state.craftGrammarPick ? { craft_grammar: this.state.craftGrammarPick } : {}) } : {}; }
   toggleCraft = () => { const on = !this.state.craftOn; try { localStorage.setItem('tms.craft', on ? '1' : '0'); } catch (e) {} this.setState({ craftOn:on, craftScore:null }); if (on) this.ensureCraftGrammar(false, true); };
   // Film grammar (craft_skill/grammars/, FILM_CRAFT_LAYER_PLAN.md): how this KIND of film (beauty, later food, home care...) is shot and shown. The server picks it from the brand's category unless the

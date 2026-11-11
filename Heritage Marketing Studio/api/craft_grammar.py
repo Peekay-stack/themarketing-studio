@@ -14,6 +14,8 @@ Sections a grammar file may carry:
   ROUTES_STAND_FREE    the same, with no platform
   ROUTES_ALIVE         the page's "make each route ..." paragraph (replaces the general one)
   SPEECH               the sentence that follows the page's speech budget
+  PHOTO                how this kind of STILL photograph is shot and shown (a social post, a carousel slide, a key visual); added to the image prompt of /scene-still
+                       for static images only, never to a film frame, and only when craft mode is on (craft.photo_for_prompt)
 Front matter keys: id, label, match (comma separated category words, matched as word starts), vo_mult (speech budget multiplier; general craft mode uses 1.5),
 replaces (comma separated titles of general-note sections to leave out when this grammar applies).
 """
@@ -115,6 +117,11 @@ def drop_sections(body: str, titles: list[str]) -> str:
 def block(gid: str) -> str:
     g = get(gid)
     return (g["sections"].get("FILM") or "") if g else ""
+
+
+def photo_block(gid: str) -> str:
+    g = get(gid)
+    return (g["sections"].get("PHOTO") or "") if g else ""
 
 
 def view(brand: dict | None, chosen: str = "") -> dict:
