@@ -60,6 +60,7 @@ import mediapurge
 import filmdirect
 import filmscore
 import craft as craft_brief
+import craft_grammar
 import filmedit
 import filmqc
 import selfcheck
@@ -387,7 +388,8 @@ def complete_endpoint(payload: dict):
                               == "general" else "grounded",
                               provocation=prov_rec,
                               film=payload.get("film") is True,
-                              craft=payload.get("craft") is True)
+                              craft=payload.get("craft") is True,
+                              craft_grammar=str(payload.get("craft_grammar") or ""))
     if not str(out or "").strip():
         # A live key that returns nothing is a failure too, and an empty string dressed as success is the
         # version of it nobody can debug.
@@ -3092,6 +3094,16 @@ def film_direct(payload: dict):
     out = filmdirect.validate(raw, rows, roles, filmdirect.promises(payload.get("concept")) or None, craft=craft_mode)
     out["model"] = True
     return out
+
+
+@app.get("/craft-grammar")
+def craft_grammar_get(brand: str = "", grammar: str = "", brand_mode: str = ""):
+    """Which film grammar applies (craft_grammar.py) for the brand in play, and its wording, so the page's concept and speech-budget text can follow it.
+    Independent (general) work has no brand, so no grammar. The brand is found by name only when one is given; with none, the active brand."""
+    b = None
+    if str(brand_mode or "").strip().lower() != "general":
+        b = (brandprofile.by_name(brand) if brand else None) or brandprofile.resolve()
+    return {**craft_grammar.view(b, grammar), "craft_on": craft_brief.server_on()}
 
 
 @app.post("/film-score")

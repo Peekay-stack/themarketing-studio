@@ -1,0 +1,38 @@
+---
+id: beauty
+label: Beauty and skin
+match: beauty, cosmetic, makeup, make-up, make up, skincare, skin care, skin-care, skin, lipstick, kajal, nail polish
+vo_mult: 1.0
+replaces: Make it live, Proposition moves
+---
+
+A film grammar is how one KIND of film is shot and shown. This one is for beauty and skin: colour cosmetics, skincare, treatments. It is written for review by a person who knows the category; change anything that is wrong.
+
+## FILM
+BEAUTY AND SKIN: HOW THIS CATEGORY IS SHOT AND SHOWN. This REPLACES the general "Make it live" and "Proposition moves" notes: the tests, the shape and pace, the sound and the guards still apply.
+
+A beauty film is LOOKED AT more than it is followed. The viewer wants to see a face or skin and want it. The proof is what the skin looks like and how the formula behaves, not what people say about it and not a contest between them.
+
+- **The hero is a face, skin, hair or hands** in controlled, flattering light, played by a model or a real-skin face, not by a character in a plot. Reactions are looks: a mirror, a glance to camera, a small private smile. A second person appears only when the idea needs one (a friend who notices, a make-up artist), never as a sceptic who is proved wrong.
+- **The shots.** Close-ups and macros dominate: skin texture, the formula's texture, a drop, a scoop, a swatch or a melt, a fingertip or a brush applying it, an eye, lips, a cheek turning in the light. Slow motion where the movement is beautiful (hair, a pour, a brush, fabric). One clean hero shot of the pack, held longer than a story film would hold it. Wide shots set the place, the styling and the mood, and are lit as carefully as the close-ups. A face must always be seen clearly: no dark rooms where the skin cannot be read.
+- **Light and look.** Soft, directional, luminous light; honest skin with real texture, not a filter. Colour and styling (wardrobe, jewellery, hair, location) are part of the idea. When the direction asks for fashion-led, lead with styling, movement and editorial framing.
+- **Proof is shown, not staged as a contest.** Make the benefit visible on the skin and in the formula: texture, glide, melt, the ingredient or the making of it, application to result in one continuous gesture. A bet, a wager, a test against another person or a sceptic proved wrong turns a care product into a stunt and a care claim into a wear contest. Prove only the claim the brief or the house sources: a care or hydration claim is shown by skin that looks soft, comfortable and alive, not by hours of wear or going without touch-ups, and no number of hours or days appears anywhere unless it is sourced.
+- **Shape.** Open on one arresting image inside the first second (a drop, a swatch, an eye, a texture in motion). Build through application and the change in the skin. Land on the face revealed, the pack and the line. Four to six beats, one place or a few beautiful ones; time can pass in a cut.
+- **Words and sound.** Few. A short voiceover lands the benefit and the brand thought in a handful of lines; a person speaks only when her words are the moment, never banter. Texture sound (a pat, a brush, a drop, fabric), room tone and music carry the rest. Silence is allowed.
+- **Casting.** Faces, skin tones and hair true to the brand's market, with real texture. Cast the face and the hands for the close-ups. No extra people (an elder, a child, a neighbour) unless the idea needs them.
+- **Three routes differ by their hero image and by how the proof is made visible** (for example the formula in macro, a face in honest light, the ingredient or its making, a ritual of application), not by a plot gimmick.
+
+## ROUTES_STAND
+ THE THREE ROUTES. All three stand on the idea platform named above and on the brand's messaging house (its core line, its emotional and functional pillars and the facts it has sourced), and they are THREE DIFFERENT FILMS: a different hero image (the formula in macro, a face in honest light, the ingredient or its making, a ritual of application), a different setting and styling, and a different way the platform's promise is made visible on the skin. If the platform has a repeatable device, each route uses it in the way that suits that film. This REPLACES the earlier suggestion of a human story, a craft-or-proof route and a lighter observational route.
+
+## ROUTES_STAND_FREE
+ THE THREE ROUTES. All three serve the same single message, but they are THREE DIFFERENT FILMS: a different hero image (the formula in macro, a face in honest light, the ingredient or its making, a ritual of application), a different setting and styling, and a different way the brand's promise is made visible on the skin. This REPLACES the earlier suggestion of a human story, a craft-or-proof route and a lighter observational route.
+
+## ROUTES_ALIVE
+ MAKE EACH ROUTE BEAUTIFUL AND CLEAR, as a beauty film is made: it is looked at more than followed. Build it on a face or skin in flattering, honest light, on close-ups and textures (the formula, the skin, the application), on a model or real-skin face rather than a plot of characters, and on a reveal of the skin at the end. A small human moment (a look, a mirror, a reaction) is welcome; a bet, a wager, a test or a sceptic proved wrong is not. Few words: most of the film is picture and sound. Use the beats the film needs, usually four to six, and let a held, slow shot stand where it is the payoff. This REPLACES the "4 concept beats" in the format below.
+
+## SPEECH
+Beauty films are mostly picture and sound. Spend the words on a short voiceover that lands the benefit and the brand line; a person on screen may say one short line when that line is the moment; no banter. Silence and texture sound are part of the film, so most scenes need no speech.
+
+## INTRO
+**Singleness is about the message, not the size of the film.** One message does not mean one beat or a handful of words. It means the viewer leaves believing one thing. A beauty film delivers it through what is SEEN: the skin, the formula, the light, one clear reveal.

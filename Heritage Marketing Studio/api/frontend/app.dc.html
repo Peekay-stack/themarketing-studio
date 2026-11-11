@@ -2438,6 +2438,13 @@
         <textarea value="{{ videoBrief }}" onChange="{{ onVideoBrief }}" rows="3" placeholder="e.g. Open on the empty steel glass at 5:45am — the house before anyone's awake. Close on it full, catching the first light, as the day's first sound starts outside." style="width:100%; box-sizing:border-box; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.25); border-radius:12px; padding:14px 16px; color:#fff; font-size:14px; line-height:1.55; resize:vertical; font-family:inherit; margin-bottom:14px;"></textarea>
         <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
           <label title="Asks the writer for craft notes (message, move, device, line, casting) and shows a craft scorecard before you approve. Advice only." style="display:flex; align-items:center; gap:6px; color:#F5C86E; font-size:12.5px; font-weight:700; cursor:pointer;"><input type="checkbox" checked="{{ craftOn }}" onChange="{{ toggleCraft }}" /> Craft mode</label>
+          <sc-if value="{{ craftOn }}" hint-placeholder-val="{{ false }}">
+            <label title="How this kind of film is shot and shown. Auto reads the brand&#39;s category; a category with no film type written yet uses the general craft notes." style="display:flex; align-items:center; gap:6px; color:#C9D6EC; font-size:12px;">Film type
+              <select value="{{ craftGrammarPick }}" onChange="{{ onCraftGrammar }}" style="border:1px solid rgba(255,255,255,0.3); border-radius:8px; padding:4px 8px; font-size:12px; background:rgba(255,255,255,0.12); color:#fff; font-family:inherit;">
+                <sc-for list="{{ craftGrammarOpts }}" as="cg" hint-placeholder-count="3"><option value="{{ cg.v }}" style="color:#17325E;">{{ cg.label }}</option></sc-for>
+              </select>
+            </label>
+          </sc-if>
           <button onClick="{{ generateVideo }}" style="background:#F7F5F1; color:#17325E; border:none; border-radius:12px; padding:14px 24px; font-weight:700; font-size:14px; cursor:pointer; display:flex; align-items:center; gap:9px;">
             <sc-if value="{{ videoGenerating }}" hint-placeholder-val="{{ false }}"><span style="width:15px; height:15px; border:2px solid rgba(58,42,6,0.3); border-top-color:#3A2A06; border-radius:50%; display:inline-block; animation:hf-spin 0.7s linear infinite;"></span></sc-if>
             {{ videoBtnLabel }}
@@ -12173,6 +12180,9 @@ class Component extends DCLogic {
     craftOn: (() => { try { return localStorage.getItem('tms.craft') === '1'; } catch (e) { return false; } })(),   // Craft mode (FILM_CRAFT_LAYER_PLAN.md): this browser asks for the craft brief on concept/script calls and shows the scorecard. The server must ALSO have CRAFT_BRIEF on. Default off.
     craftScore: null,                       // the last craft scorecard (POST /film-score). Advice only; not saved.
     craftBusy: false,
+    craftGrammar: null,                     // the film grammar the server chose for this brand (GET /craft-grammar): its id, label, why, and its own wording for the routes and the speech budget. null = general craft wording.
+    craftGrammarKey: '',                    // which brand + pick craftGrammar was read for, so it is read again when either changes
+    craftGrammarPick: (() => { try { return localStorage.getItem('tms.craftg') || ''; } catch (e) { return ''; } })(),   // '' = choose from the brand's category; 'general' = the general notes; else a grammar id
     videoBuilder: null,                     // the film builder's saved state (takes.py): frame variants + which is chosen (S1a), clip takes (S1b), chosen clips, trims (S2a), the budget cap (S7) and each take's checks / continuity record (S4, S5). Saved with the film.
     variantBusy: {},                        // { [frameKey]: true } while a frame VARIANT is being generated
     clipBusy: {},                           // { [frameKey]: takeId } while a clip take is rendering
@@ -15905,7 +15915,7 @@ class Component extends DCLogic {
   // Total spoken words for the WHOLE film — voiceover and dialogue combined. Deliberately sparse:
   // filling every second with speech is what made early cuts feel like a documentary read.
   // Craft mode (5 Nov): half as many words again. The owner found the craft films too quiet, and a 32-word budget with "say less" left 14-16 words; the voice panel, the delivery check and the writer all read this one number.
-  voWords(dur){ const w = { '10s':12, '20s':22, '30s':32 }[dur || this.state.prodDuration] || 22; return this.state.craftOn ? Math.round(w * 1.5) : w; }
+  voWords(dur){ const w = { '10s':12, '20s':22, '30s':32 }[dur || this.state.prodDuration] || 22; const gm = this.craftGrammarNow(); return this.state.craftOn ? Math.round(w * ((gm && typeof gm.vo_mult === 'number') ? gm.vo_mult : 1.5)) : w; }
   // P4: a film standing on a provocation uses ITS voice-over budget (the provocation's vo_words; 0 = a
   // wordless film). Every other film's budget still comes from the duration. One place, so the voice panel,
   // the rework budget note and the script writer all agree on the number.
@@ -15924,6 +15934,8 @@ class Component extends DCLogic {
   }
   voBudgetNote(dur, n){
     const total = this.voBudget(dur), per = Math.max(4, Math.round(total / Math.max(1, n)));
+    const gm = this.craftGrammarNow();
+    if (gm && gm.speech_note) return 'SPEECH BUDGET: across the ENTIRE film, all "text" values combined (voiceover AND dialogue) must total NO MORE than '+total+' words, about '+per+' words per scene. ' + gm.speech_note;
     if (this.state.craftOn) return 'SPEECH BUDGET: across the ENTIRE film, all "text" values combined (voiceover AND dialogue) must total NO MORE than '+total+' words, about '+per+' words per scene; use most of it. Spend the words on people talking to each other in their own voices, with reactions, so dialogue carries the story; the voiceover only bridges between scenes or lands the brand thought, and never narrates what the picture already shows. A scene may be silent when the picture is the payoff, but most scenes have someone speaking or reacting aloud.';
     return 'STRICT SPEECH BUDGET — this is a hard limit, not a target: across the ENTIRE film, all "text" values combined (voiceover AND dialogue) must total NO MORE than '+total+' words, about '+per+' words per scene. Great commercials are mostly picture and music: say less, leave space, never narrate what the viewer can already see. At least one scene MUST have "audio": [] so the film can breathe. Cut every word that is not doing work.';
   }
@@ -15992,6 +16004,7 @@ class Component extends DCLogic {
     const vc = this.state.videoConcept;
     if (!vc || this.state.scriptWriting) return;
     this.setState({ scriptWriting:true });
+    await this.ensureCraftGrammar();
     const provRec = this.provMode() ? this.videoProv() : null;
     let rows = null;
     // Approved work, the corrections you've given, and any copy that must be placed verbatim. This
@@ -16412,8 +16425,36 @@ class Component extends DCLogic {
   craftOpts(){ return this.state.craftOn ? { craft: true } : {}; }
   // For the concept and script WRITING calls (this.complete): the craft flag and a longer page timeout. The craft answer is longer and the model is slow, so 45 s cut it off on 3 Nov.
   CRAFT_TIMEOUT_MS = 120000;
-  craftCall(){ return this.state.craftOn ? { craft: true, timeoutMs: this.CRAFT_TIMEOUT_MS } : {}; }
-  toggleCraft = () => { const on = !this.state.craftOn; try { localStorage.setItem('tms.craft', on ? '1' : '0'); } catch (e) {} this.setState({ craftOn:on, craftScore:null }); };
+  craftCall(){ return this.state.craftOn ? { craft: true, timeoutMs: this.CRAFT_TIMEOUT_MS, ...(this.state.craftGrammarPick ? { craft_grammar: this.state.craftGrammarPick } : {}) } : {}; }
+  toggleCraft = () => { const on = !this.state.craftOn; try { localStorage.setItem('tms.craft', on ? '1' : '0'); } catch (e) {} this.setState({ craftOn:on, craftScore:null }); if (on) this.ensureCraftGrammar(false, true); };
+  // Film grammar (craft_skill/grammars/, FILM_CRAFT_LAYER_PLAN.md): how this KIND of film (beauty, later food, home care...) is shot and shown. The server picks it from the brand's category unless the
+  // person chose one; this reads it so the concept wording and the speech budget follow it. Only a category that has a grammar changes; anything else keeps the general craft wording below.
+  // `on` / `pick` are passed by the handlers that have just changed them (a setState is not applied until after the handler returns); otherwise they are read from the state.
+  ensureCraftGrammar = async (force, on, pick) => {
+    const isOn = on !== undefined ? on : this.state.craftOn;
+    if (!isOn) return;
+    const pk = pick !== undefined ? pick : (this.state.craftGrammarPick || '');
+    const general = this.state.producerBrandMode === 'general';
+    const key = (general ? '(general)' : (this.brandName() || '')) + '|' + pk;
+    if (!force && this._cgKey === key && this._cg) return;
+    try {
+      const q = '/craft-grammar?brand=' + encodeURIComponent(general ? '' : (this.brandName() || '')) + '&grammar=' + encodeURIComponent(pk) + (general ? '&brand_mode=general' : '');
+      const r = await fetch(q);
+      if (!r.ok) throw new Error('craft-grammar ' + r.status);
+      const g = await r.json();
+      this._cg = g; this._cgKey = key;   // an instance copy too: the writers that follow in the same call read it at once, before any re-render
+      this.setState({ craftGrammar: g, craftGrammarKey: key });
+    } catch (e) { this._cg = null; this._cgKey = ''; this.setState({ craftGrammar: null, craftGrammarKey: '' }); }
+  };
+  onCraftGrammar = (e) => {
+    const v = (e && e.target && e.target.value) || '';
+    try { localStorage.setItem('tms.craftg', v); } catch (err) {}
+    this._cg = null; this._cgKey = '';
+    this.setState({ craftGrammarPick: v, craftGrammar: null, craftGrammarKey: '' });
+    this.ensureCraftGrammar(true, undefined, v);
+  };
+  // The grammar in force for the film, or null when the general craft wording applies (no grammar for this category, the person chose "general", or craft mode is off).
+  craftGrammarNow(){ const g = this.state.craftOn ? this._cg : null; return (g && g.id) ? g : null; }
   // The five extra concept lines, asked for only in craft mode; '' otherwise so the concept prompt is unchanged.
   craftConceptText(onPlatform){
     if (!this.state.craftOn) return '';
@@ -16422,10 +16463,13 @@ class Component extends DCLogic {
     const stand = onPlatform
       ? ' THE THREE ROUTES. All three stand on the idea platform named above and on the brand\u2019s messaging house (its core line, its emotional and functional pillars and the facts it has sourced), and they are THREE DIFFERENT FILMS: different people, a different situation and a different "move" (the way that platform\u2019s promise is made to happen on screen: for example a count, a race, a reversal, a demonstration, a swap, a dare). If the platform has a repeatable device, each route uses it in the way that suits that film. This REPLACES the earlier suggestion of a human story, a craft-or-proof route and a lighter observational route.'
       : ' THE THREE ROUTES. All three serve the same single message, but they are THREE DIFFERENT FILMS: different people, a different situation and a different "move" (the way the brand\u2019s promise is made to happen on screen: for example a count, a race, a reversal, a demonstration, a swap, a dare). This REPLACES the earlier suggestion of a human story, a craft-or-proof route and a lighter observational route.';
-    const rules = ' If the direction above names a tone or genre (for example drama), all three routes keep it. Each route shows BOTH the feeling and the proof: the emotional pillar and the brand\u2019s own reason to believe it must each be visible or audible in the film, not only one; state the proof only as the brief, the platform or the house gives it, at its own scope (a network of farmers is not \u201cour farms\u201d). The film\u2019s own voice (voiceover, supers, tagline) never states or implies that the product causes growth, strength, health or any other result unless the house sources that claim: give the fact and let what happens suggest the rest. That limits what the film asserts, not how alive the people are. Show the proof where a viewer can see it (a glass beaded with cold, a cold crate) and say it where a person would naturally say it. Where you can, give each route something only THIS brand could say (its own proof, process or place), not a truth any competitor could sign. Every number, age and quantity named anywhere in a route (logline, hook, line, voiceover, beats) must agree with the others and be plausible for the people in it; if a count is the device, name its final number once and keep every mention consistent with it. Use ONE region and language for the people in all three routes, from the brief or the house; if none is given, take the brand\u2019s home market and say so in \"cast_idea\". Original only: never imitate a known film.';
+    const rules = ' If the direction above names a tone or genre (for example drama), all three routes keep it. Each route shows BOTH the feeling and the proof: the emotional pillar and the brand\u2019s own reason to believe it must each be visible or audible in the film, not only one; state the proof only as the brief, the platform or the house gives it, at its own scope (a claim sourced for one product is not made for the whole range). The film\u2019s own voice (voiceover, supers, tagline) never states or implies that the product causes growth, strength, health or any other result unless the house sources that claim: give the fact and let what happens suggest the rest. That limits what the film asserts, not how alive the people are. Show the proof where a viewer can see it (the thing itself, close and clear) and say it where a person would naturally say it. Where you can, give each route something only THIS brand could say (its own proof, process or place), not a truth any competitor could sign. Every number, age and quantity named anywhere in a route (logline, hook, line, voiceover, beats) must agree with the others and be plausible for the people in it; if a count is the device, name its final number once and keep every mention consistent with it. Use ONE region and language for the people in all three routes, from the brief or the house; if none is given, take the brand\u2019s home market and say so in \"cast_idea\". Original only: never imitate a known film.';
     // 5 Nov: the owner found the craft rules steered films to quiet, few scenes, few words and little drama. Nothing here is a quota; it is the questions a director asks, and the singleness it protects is the message, not the size of the film.
-    const alive = ' MAKE EACH ROUTE ALIVE, using what its story needs (no quota): the people WANT something and something is in their way; there is a reason it is happening NOW (a clock, a deadline, a visitor, a dare); more than two people take part when the story gains from it (a child, an elder, a neighbour, a rival, a sceptic); the story moves through more than one place or time of day when that helps; every beat changes something (who is ahead, what someone knows or feels); and people TALK to each other in their own words, so spoken lines and reactions carry the story, not a narrator. One message does not mean few beats, one room or few words. Use as many beats as the story needs (five or more is common for a lively film): this REPLACES the “4 concept beats” in the format below.';
-    return five + stand + alive + rules;
+    const alive = ' MAKE EACH ROUTE ALIVE, using what its story needs (no quota): the people WANT something and something is in their way; there is a reason it is happening NOW (a clock, a deadline, a visitor, a dare); more than two people take part when the story gains from it (a friend, a rival, a sceptic, a witness); the story moves through more than one place or time of day when that helps; every beat changes something (who is ahead, what someone knows or feels); and people TALK to each other in their own words, so spoken lines and reactions carry the story, not a narrator. One message does not mean few beats, one room or few words. Use as many beats as the story needs (five or more is common for a lively film): this REPLACES the “4 concept beats” in the format below.';
+    // A film grammar (beauty, ...) replaces the general "three routes" and "make it alive" wording, which describes a story of people who want something and talk.
+    const gm = this.craftGrammarNow();
+    const gStand = gm ? (onPlatform ? gm.routes_stand : gm.routes_stand_free) : '';
+    return five + (gStand || stand) + ((gm && gm.routes_alive) || alive) + rules;
   }
   // The beat count in the concept format line: the old fixed four when craft mode is off (so the prompt is unchanged), as many as the story needs when it is on.
   craftBeatsText(){ return this.state.craftOn ? 'the concept beats, as many as the story needs' : '4 concept beats'; }
@@ -18911,6 +18955,7 @@ class Component extends DCLogic {
                       : (' Additional direction: "' + typed + '".'))
         : '';
       const refine = isRefine ? ` Here is the current script to revise: ${JSON.stringify({ logline:prev.logline, scenes:prev.scenes, vo:prev.vo, stake:prev.stake, hook:prev.hook, surprise:prev.surprise, turn:prev.turn, memorable:prev.memorable, message:prev.message, move:prev.move, device:prev.device, line:prev.line, cast_idea:prev.cast_idea })}. Apply this direction: "${this.state.refinePrompt.trim()}". Keep what works, change only what the direction asks.` : '';
+      await this.ensureCraftGrammar();
       const dur = this.state.prodDuration, words = this.voWords(dur);
       const pre = this.brandPreamble('a film director at an ad agency', this.state.producerBrandMode === 'general', false, true);
       if (!pre) { this.showToast(this.BRAND_PREAMBLE_MISSING); this.setState({ videoGenerating:false, videoRefusal:'' }); return; }
@@ -21862,7 +21907,8 @@ class Component extends DCLogic {
       reworkPosts:this.reworkPosts, socialReworking: s.socialReworking,
       reworkPostsLabel: s.socialReworking ? 'Reworking…' : '↻ Rework posts',
       // video
-      videoObjectives, generateVideo:this.generateVideo, videoGenerating: s.videoGenerating, craftOn: !!s.craftOn, toggleCraft: this.toggleCraft,
+      videoObjectives, generateVideo:this.generateVideo, videoGenerating: s.videoGenerating, craftOn: !!s.craftOn, toggleCraft: this.toggleCraft, craftGrammarPick: s.craftGrammarPick || '', onCraftGrammar: this.onCraftGrammar,
+      craftGrammarOpts: [{ v: '', label: 'Auto' + ((s.craftGrammar && s.craftGrammar.id && !s.craftGrammarPick) ? ' (' + s.craftGrammar.label + ')' : '') }, { v: 'general', label: 'General' }, ...(((s.craftGrammar || {}).options) || []).map(o => ({ v: o.id, label: o.label }))],
       hasVideoObjective: !!s.videoObjective, videoObjectiveName: s.videoObjective || '',
       videoConcept: vc, hasVideoConcept: !!vc, videoScenes,
       videoRefusal: s.videoRefusal || '', hasVideoRefusal: !!s.videoRefusal,

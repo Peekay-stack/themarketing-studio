@@ -21,7 +21,7 @@ These are craft notes from studying what makes advertising films work. They are 
 ## Make it live (questions a director asks; use what the story needs, there is no quota)
 - **Want and obstacle.** What does each person want in this scene, and what is in the way? A scene where nobody wants anything is a still life.
 - **A reason it is now.** A clock, a deadline, a visitor at the door, a dare, a bus about to leave, a guest arriving. Pressure makes small stories gripping.
-- **More than two people.** A third person (a child, an elder, a neighbour, a rival, a sceptic) gives reactions, interruptions and a witness to the turn.
+- **More than two people.** A third person (a friend, a rival, a sceptic, a witness) gives reactions, interruptions and a witness to the turn.
 - **The story moves.** Change the place, the time of day, the light or the people in the frame when the story moves; a different room, a doorstep, a street, a school gate. Stay in one place only when staying is the idea.
 - **Every scene changes something.** Who is ahead, what someone knows, how someone feels, what is on the table. If a scene changes nothing, cut it or give it a turn.
 - **People talk to each other.** Dialogue carries the story: interruptions, teasing, half-sentences, asking and answering, each person in their own voice. A voiceover bridges or lands the brand thought; it does not narrate what the picture already shows. A film where people on camera say three words is a mime, not a drama.

@@ -14,6 +14,8 @@ from __future__ import annotations
 import os
 import re
 
+import craft_grammar
+
 _SKILL = os.path.join(os.path.dirname(__file__), "craft_skill")
 _cache: dict = {"mtime": None, "text": ""}
 
@@ -37,9 +39,21 @@ def _text() -> str:
     return _cache["text"]
 
 
-def for_prompt(requested: bool) -> str:
-    """The craft block for a film concept/script prompt, or "" unless the server switch AND the request flag are both on."""
+def for_prompt(requested: bool, brand: dict | None = None, grammar: str = "") -> str:
+    """The craft block for a film concept/script prompt, or "" unless the server switch AND the request flag are both on.
+
+    When the brand's category (or the person's own pick, `grammar`) has a film grammar (craft_grammar.py), the general notes it contradicts are left out and the grammar's own
+    text follows. A category with no grammar gets the general notes exactly as before."""
     if not (requested and server_on()):
         return ""
     body = _text()
-    return ("FILM CRAFT NOTES (advice for the director: use what serves this brief, never imitate a known film)\n" + body) if body else ""
+    if not body:
+        return ""
+    gid, _why = craft_grammar.pick(brand, grammar)
+    g = craft_grammar.get(gid) if gid else None
+    if g and g["sections"].get("FILM"):
+        body = craft_grammar.drop_sections(body, g["replaces"])
+        if g["sections"].get("INTRO"):   # the general opening paragraph says the film should be people who want something, and talk: a grammar may state its own
+            body = re.sub(r"(?m)^\*\*Singleness is about the message.*$", lambda _m: g["sections"]["INTRO"], body, count=1)
+        body = body + "\n\n" + g["sections"]["FILM"]
+    return "FILM CRAFT NOTES (advice for the director: use what serves this brief, never imitate a known film)\n" + body
