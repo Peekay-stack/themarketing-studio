@@ -18972,9 +18972,11 @@ class Component extends DCLogic {
       // 29 Sep (part 2): house_id — same fix as Social's generate/rework/adjust calls; see the bridge
       // script's own comment.
       const hv = this.state.house;
+      this._conceptRaw = '';
       let raw = await this.complete(prompt, { ...(vexec ? { execution: vexec.id } : {}),
         ...(hv && hv.id ? { house_id: hv.id } : {}), force_typed: forceTyped, skip_mandatories: noTrio, film: true, ...this.craftCall() });
       raw = String(raw).trim().replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();
+      this._conceptRaw = raw;   // kept so that a reply the page cannot read as routes says what it was, instead of the generic "nothing came back"
       const parsed = JSON.parse(raw.slice(raw.indexOf('{'), raw.lastIndexOf('}')+1));
       // Three routes come back; the first becomes the working concept and the rest stay available
       // to switch to. A single-concept reply (older shape) still works unchanged.
@@ -18989,6 +18991,8 @@ class Component extends DCLogic {
         scriptVersions: [...s.scriptVersions, { v:s.scriptVersions.length+1, logline:data.logline, note: isRefine ? s.refinePrompt.trim() : 'Initial draft', duration:data.duration }],
         videoCheck: this.runCreativeCheck([data.logline, (data.scenes||[]).map(x=>x.title+' '+x.desc).join(' ')]) }));
     } catch (err) {
+      const seenRaw = String(this._conceptRaw || ''); this._conceptRaw = '';
+      if (seenRaw) { try { console.warn('[concept] the model replied but it could not be read as routes:', err && err.message, seenRaw); } catch (e) {} }
       // A refine that fails leaves the concept on screen alone — the previous draft is real work.
       // A first draft that fails writes nothing: no concept, no script version, and no entry in the
       // created log, because nothing was created.
@@ -18998,7 +19002,9 @@ class Component extends DCLogic {
         scriptStatus:'none', fullScript:null, sceneFrames:{}, videoBuilder:null, scriptPhase:'concept',
         videoRefusal: err && err.message === 'timeout'
           ? 'Nothing came back within ' + Math.round((this.state.craftOn ? this.CRAFT_TIMEOUT_MS : this.MODEL_TIMEOUT_MS)/1000) + ' seconds, so the concept is empty rather than invented. Run it again.'
-          : this.fallbackVideo(obj, brief).refusal });
+          : (seenRaw
+            ? 'The model replied, but the reply could not be read as three routes (' + String((err && err.message) || 'unreadable').slice(0, 80) + '), so the concept is empty rather than invented. It began: “' + seenRaw.slice(0, 160).replace(/\s+/g, ' ') + '” and ended: “' + seenRaw.slice(-100).replace(/\s+/g, ' ') + '”. Run it again.'
+            : this.fallbackVideo(obj, brief).refusal) });
     }
   };
 
