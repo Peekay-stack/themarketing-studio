@@ -1,11 +1,11 @@
 ---
 name: brand-book-ground-truth
-description: "11 Nov: brand book / identity manual upload read into the prompts as ground truth. BUILT on branch brand-book-ground-truth (worktree C:/Users/punie/hms-brandbook, head ea4a877), localhost only, NOT merged, off unless BRAND_BOOK=1. Where it lives, the three gates, how to run the test studio, what is proven and what is not (no real brand book read yet), open owner decisions, Nat Habit book parked."
+description: "11 Nov: brand book / identity manual upload read into the prompts as ground truth. BUILT on branch brand-book-ground-truth (worktree C:/Users/punie/hms-brandbook, head c35bd4d after the 11 Nov blast-radius audit), localhost only, NOT merged, off unless BRAND_BOOK=1. Where it lives, the three gates, how to run the test studio, what is proven and what is not (no real brand book read yet), open owner decisions, Nat Habit book parked."
 metadata:
   node_type: memory
   type: project
   originSessionId: 188571ea-55a9-4350-b9a0-481c7a9d13b2
-  modified: 2026-11-11T06:26:08.275Z
+  modified: 2026-11-11T06:50:32.346Z
 ---
 
 Owner ask (11 Nov): let the brand book and identity manual be uploaded as ground truth (Memory, and from the "What the studio is told" page), so producers, briefs and the messaging house have a reference. **Localhost only for now.** "Keep it optional." Nat Habit brand-book writing (nathabit.in; the owner declined the first WebFetch) is **parked** until this is built; that book could become the first real test document.
@@ -19,6 +19,9 @@ Owner ask (11 Nov): let the brand book and identity manual be uploaded as ground
 - Tests: `tools/test_brand_book.py` 44 cases (model stubbed, scratch data dir); selfcheck 1438 calls 0 problems; checkfe ok; smoke passed. Page driven in a browser against a scratch studio with the model stubbed: sign off, read, edit, approve, switch on, panel carried the block; upload from the card; corrupt PDF refused.
 
 **Run the test studio:** scratchpad `run_bb_owner.py` (worktree code, owner's own local data from the OPUS api folder as `STUDIO_DATA_DIR`, real key loaded into the process only, `BRAND_BOOK=1`) on http://localhost:8001/app. UI-check variant `run_bb_stub.py` (scratch data, stubbed model, test session cookie) on 8001.
+
+**Audit 11 Nov (commit `c35bd4d`):** swept every sibling entry point. Fixed: (1) each book point is now ONE line `BRAND BOOK · <TAG>: ...` so the page's line-by-line `brandPreamble` filters can drop tone (provocation) and visual identity (strategy) exactly (drift test checks the page contains `TONE_PREFIX`/`VISUAL_PREFIX`); (2) provocation paths `prompts.system_for` and `provocation_gen._context` blank the book's tone like the profile's (rules/claims stay) via `brandbook.drop_sections`; (3) digest for a file the brand no longer sees (brand renamed, file removed/unsigned) is not sent, library rename updates the label; (4) `bbApply` refreshes the page's cached `brands[].voice`/`brandVoices`/`bfVoice` after every book action. Verified: test_brand_book 0 failures (~60 cases), provocation/nuance/brand_suggest tests, checkfe, partials verify, selfcheck 1439/0, smoke (committed tree), browser (cache refresh, provocation/strategy/general preambles). Full `tools/test_*.py` run: only test_exemplar_wording, test_sound_plan, test_tools (no .venv in worktree), test_voice_chirp_routing fail, and they fail identically on master `b1519e6` (pre-existing). Owner's test studio restarted on the fixed code (:8001).
+**Known gaps (not fixed):** modules that never call `voice_block` (brandbrief, briefstore, complete, geo, keyvisual, mediaplan, pr, shelf, people) get no book; pre-existing: page's `brands[].voice` goes stale after an ordinary profile save; `/brands` payload grows with the book; the synchronous 150-page read could hit a proxy timeout on live, so it needs a job/poll before any live rollout; a revised book uploaded as a NEW item blends with the old digest (deduped by text).
 
 **NOT proven:** the digest quality on a REAL brand book (working agreement: prove the risky generation step on the owner's real example first; the first real read is a small paid model call, ask before it); the "switched off" amber note in a browser; a real scanned/outlined PDF; whether the book actually improves ideas/briefs (needs an A/B like the craft layer).
 
