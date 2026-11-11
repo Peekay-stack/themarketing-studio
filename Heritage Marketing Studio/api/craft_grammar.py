@@ -8,6 +8,7 @@ Only a category that has a grammar file is affected; any other category gets the
 CRAFT_BRIEF and the request flag are both on (craft.py), so none of this reaches a prompt until then.
 
 Sections a grammar file may carry:
+  INTRO                replaces the general notes opening paragraph (the one about people who want something, and talk)
   FILM                 added to the craft block in the system prompt (what the writer is told about this kind of film)
   ROUTES_STAND         the page's "three routes" wording when an idea platform is attached (replaces the general one)
   ROUTES_STAND_FREE    the same, with no platform

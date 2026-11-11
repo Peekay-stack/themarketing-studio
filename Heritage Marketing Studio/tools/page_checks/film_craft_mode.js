@@ -16,6 +16,7 @@
       if (v && v.logic && typeof v.logic.craftOpts === 'function') { I = v.logic; return; } }
     walk(f.child, d + 1); walk(f.sibling, d + 1); })(root[ck], 0);
   if (!I) return JSON.stringify({ pass: false, failures: ['could not find the app instance (reload the page, wait 3 s, run again)'] });
+  I._cg = null; I._cgKey = '';   // a grammar read earlier in this page would change the general wording this check pins
   const real = { complete: I.complete, needBrand: I.needBrand, brandPreamble: I.brandPreamble, learningContext: I.learningContext, showToast: I.showToast, fetch: window.fetch, apiCall: I.apiCall };
   const prompts = [], opts = [], calls = []; let reply = null, scoreReply = null;
   I.needBrand = () => true; I.brandPreamble = () => 'PREAMBLE'; I.learningContext = async () => ''; I.showToast = () => {};
