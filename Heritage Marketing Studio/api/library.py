@@ -216,8 +216,10 @@ def add(data: bytes, name: str, kind: str, *, filename: str = "", note: str = ""
     os.makedirs(os.path.join(lib_dir, kind, bucket), exist_ok=True)
     digest = hashlib.sha256(data).hexdigest()
     rows = _load()
-    for r in rows:                      # same bytes already here: don't store it twice
-        if r.get("sha256") == digest:
+    for r in rows:                      # same bytes already here AS THIS KIND: don't store it twice
+        # The kind is part of "the same": a pack photo first filed under Logo, then uploaded again as a Pack shot,
+        # used to come back as the old Logo row (signed off, toast says success) and never reached the pack picker.
+        if r.get("sha256") == digest and r.get("kind") == kind:
             return r
     item_id = uuid.uuid4().hex[:10]
     # Keep the uploaded file's extension even when the display name doesn't carry one — a pack shot
