@@ -121,6 +121,8 @@ SC = cg.get("beauty")["sections"].get("SCRIPT", "")
 check("beauty SCRIPT: stake shown as something seen, show before say, the pack as a hero shot, one place is fine, limbs safe, and it stays under 4,000 characters", all(x in SC for x in ("stake", "Show before you say", "hero shot", "one place is fine", "Keep limbs safe")) and len(SC) < 4000, len(SC))
 check("beauty SPEECH replaces the general dialogue preference for a person alone on screen", "CASTING THE SOUND" in cg.get("beauty")["sections"]["SPEECH"] and "ALONE" in cg.get("beauty")["sections"]["SPEECH"])
 check("beauty ROUTES_STAND keeps the platform's own turn and does not break the limb rule", "names a specific turn" in cg.get("beauty")["sections"]["ROUTES_STAND"] and "without the hand crossing the face" in cg.get("beauty")["sections"]["ROUTES_STAND"])
+check("beauty SCRIPT: the voice and the super never repeat each other, one scene = one action and one camera view, scene 1 shows motion in its first second", all(x in SC for x in ("never say the same words", "one action and one camera view", "Scene 1 shows motion in its first second")), SC[:80])
+check("beauty routes: a signature ingredient or making is named in the message line and made visible in the move (both route wordings), brand-agnostic", all("signature ingredient" in cg.get("beauty")["sections"][k] and "\"message\" line NAMES it" in cg.get("beauty")["sections"][k] for k in ("ROUTES_STAND", "ROUTES_STAND_FREE")))
 check("the real folder loads again", cg.pick({"category": "beauty"})[0] == "beauty")
 
 # ---- the page -------------------------------------------------------------------------------------------------
@@ -129,6 +131,7 @@ check("the page reads GET /craft-grammar, picks the wording from it and offers t
 check("the page asks for the grammar before it writes a concept and before it writes a script", html.count("await this.ensureCraftGrammar();") == 2)
 check("the page's general craft wording no longer names an elder or the dairy examples", "an elder" not in html.split("MAKE EACH ROUTE ALIVE")[1][:900] and "cold crate" not in html and "network of farmers" not in html)
 check("the speech budget uses the grammar's multiplier and note", "gm.vo_mult" in html and "gm.speech_note" in html)
+check("a route card with no hook says so (the guard)", "No hook was written for this route" in html and "!String((c && c.hook) || '').trim()" in html)
 check("the script writer is given the grammar's SCRIPT notes (through craftWriterText, only when a grammar applies)", "gm.script_note" in html and html.count("this.craftWriterText(vc)") == 1)
 
 # ---- still photographs (the PHOTO section, /scene-still for Social and Carousel) --------------------------------

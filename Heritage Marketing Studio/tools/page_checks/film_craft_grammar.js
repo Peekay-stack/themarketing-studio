@@ -45,6 +45,10 @@
     const wr = I.craftWriterText({ message: 'M', move: 'V', device: 'D', line: 'L', cast_idea: 'C' }), wrNone = I.craftWriterText({});
     check('beauty: the script writer gets the concept craft lines AND the grammar SCRIPT notes; with no craft lines the notes still ride', /This route.s craft: message: M/.test(wr) && /BEAUTY-SCRIPT/.test(wr) && /BEAUTY-SCRIPT/.test(wrNone) && !/This route.s craft/.test(wrNone), wr.slice(0, 160));
 
+    const txt = (n) => (n == null || n === false) ? '' : (typeof n === 'string' || typeof n === 'number') ? String(n) : Array.isArray(n) ? n.map(txt).join(' ') : txt(n.props && n.props.children);
+    const noHookCard = txt(I.entertainLines({ stake: 'S', surprise: 'U', turn: 'T', memorable: 'M' })), hookCard = txt(I.entertainLines({ stake: 'S', hook: 'H', surprise: 'U', turn: 'T', memorable: 'M' }));
+    check('a route card with entertainment lines but NO hook says so; with a hook it does not; an old concept with no lines shows nothing', /No hook was written for this route/.test(noHookCard) && !/No hook was written/.test(hookCard) && /\bH\b/.test(hookCard) && I.entertainLines({}) === null, noHookCard.slice(0, 120));
+
     // 2. the person's pick
     I.setState({ craftGrammarPick: 'beauty' });
     check('a chosen grammar rides on the call as craft_grammar', I.craftCall().craft_grammar === 'beauty' && I.craftCall().craft === true && I.photoCraftFields().craft_grammar === 'beauty');

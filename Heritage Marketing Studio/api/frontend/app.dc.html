@@ -18920,8 +18920,13 @@ class Component extends DCLogic {
     const stake = this.conceptStake(c), craftLines = this.CRAFT_FIELDS.map(([k, l]) => [l, String((c && c[k]) || '').replace(/\s+/g, ' ').trim()]).filter(x => x[1]);
     const f = (stake ? [['Stake', stake]] : []).concat(this.conceptFour(c), craftLines); if (!f.length) return null;
     const h = React.createElement;
-    return h('div', { style:{ marginTop:8, display:'flex', flexDirection:'column', gap:3, position:'relative' } }, f.map(([l, t]) => h('div', { key:l, style:{ fontSize:12, lineHeight:1.45, color:onDark ? 'rgba(255,255,255,0.88)' : '#41505F' } },
-      h('b', { style:{ color:onDark ? '#F5C86E' : '#1A8A7A', fontSize:10.5, letterSpacing:'0.05em', textTransform:'uppercase', marginRight:6 } }, l), t)));
+    // 12 Nov: the model once wrote all three routes with NO hook (the field left out), and the script then opened on a quiet still. A route that has other entertainment lines but no hook says so on its card.
+    const noHook = !String((c && c.hook) || '').trim();
+    const rows = f.map(([l, t]) => h('div', { key:l, style:{ fontSize:12, lineHeight:1.45, color:onDark ? 'rgba(255,255,255,0.88)' : '#41505F' } },
+      h('b', { style:{ color:onDark ? '#F5C86E' : '#1A8A7A', fontSize:10.5, letterSpacing:'0.05em', textTransform:'uppercase', marginRight:6 } }, l), t));
+    if (noHook) rows.unshift(h('div', { key:'no-hook', style:{ fontSize:11.5, lineHeight:1.4, color:onDark ? '#F5C86E' : '#B07A12', fontWeight:600 } },
+      'No hook was written for this route, so nothing makes the film open on a strong first image. Run the concept again, or say in the direction box what the first seconds show.'));
+    return h('div', { style:{ marginTop:8, display:'flex', flexDirection:'column', gap:3, position:'relative' } }, rows);
   }
   // What the full-script writer is told about the chosen route's entertainment: '' when the concept has none (so an older concept's prompt is unchanged).
   conceptEntertainText(c){
