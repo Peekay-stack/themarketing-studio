@@ -16480,7 +16480,9 @@ class Component extends DCLogic {
   // What the full-script writer is told about the chosen route's craft lines: '' when the concept has none.
   craftWriterText(c){
     const bits = this.CRAFT_FIELDS.map(([k, l]) => [l, String((c && c[k]) || '').replace(/\s+/g, ' ').trim().replace(/[.\s]+$/, '')]).filter(x => x[1] && x[1].toLowerCase() !== 'none');
-    return bits.length ? 'This route\u2019s craft: ' + bits.map(([l, t]) => l.toLowerCase() + ': ' + t).join('; ') + '. Write the script so these are visible and audible, not described.  ' : '';
+    // A film grammar (beauty, ...) adds how ITS kind of film is written as scenes (its SCRIPT section); '' with none, so the general script prompt is unchanged.
+    const gm = this.craftGrammarNow(), gs = (gm && gm.script_note) ? String(gm.script_note).trim() + '  ' : '';
+    return (bits.length ? 'This route\u2019s craft: ' + bits.map(([l, t]) => l.toLowerCase() + ': ' + t).join('; ') + '. Write the script so these are visible and audible, not described.  ' : '') + gs;
   }
   // What the learning log keeps with an approved or rejected film (FILM_CRAFT_LAYER_PLAN.md W10): the craft scorecard if one was run and the concept's craft lines if it has them. null when there is
   // nothing, so the call is exactly what it was.

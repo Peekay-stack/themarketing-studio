@@ -14,6 +14,7 @@ Sections a grammar file may carry:
   ROUTES_STAND_FREE    the same, with no platform
   ROUTES_ALIVE         the page's "make each route ..." paragraph (replaces the general one)
   SPEECH               the sentence that follows the page's speech budget
+  SCRIPT               how this kind of film is written as scene rows from a chosen concept (the stake seen, show before say, the pack as a hero shot, ...); added to the full-script prompt by the page
   PHOTO                how this kind of STILL photograph is shot and shown (a social post, a carousel slide, a key visual); added to the image prompt of /scene-still
                        for static images only, never to a film frame, and only when craft mode is on (craft.photo_for_prompt)
 Front matter keys: id, label, match (comma separated category words, matched as word starts), vo_mult (speech budget multiplier; general craft mode uses 1.5),
@@ -131,5 +132,5 @@ def view(brand: dict | None, chosen: str = "") -> dict:
     s = (g or {}).get("sections", {})
     return {"id": gid, "label": (g["label"] if g else "General"), "why": why, "options": options(),
             "routes_stand": s.get("ROUTES_STAND", ""), "routes_stand_free": s.get("ROUTES_STAND_FREE", ""),
-            "routes_alive": s.get("ROUTES_ALIVE", ""), "speech_note": s.get("SPEECH", ""),
+            "routes_alive": s.get("ROUTES_ALIVE", ""), "speech_note": s.get("SPEECH", ""), "script_note": s.get("SCRIPT", ""),
             "vo_mult": (g or {}).get("vo_mult")}

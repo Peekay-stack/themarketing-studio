@@ -85,7 +85,7 @@ os.environ["CRAFT_BRIEF"] = "1"
 # ---- the page's view and the route ----------------------------------------------------------------------------
 v = cg.view({"category": "beauty"})
 check("view: id, label, why, options and every piece of wording the page replaces", v["id"] == "beauty" and v["label"] == "Beauty and skin" and v["why"]
-      and any(o["id"] == "beauty" for o in v["options"]) and all(v[k] for k in ("routes_stand", "routes_stand_free", "routes_alive", "speech_note")) and v["vo_mult"] == 1.0, str(v)[:300])
+      and any(o["id"] == "beauty" for o in v["options"]) and all(v[k] for k in ("routes_stand", "routes_stand_free", "routes_alive", "speech_note", "script_note")) and v["vo_mult"] == 1.0, str(v)[:300])
 check("view for a category with no grammar: empty wording, still lists the options", cg.view({"category": "dairy"})["id"] == "" and cg.view({"category": "dairy"})["routes_alive"] == "" and cg.view({"category": "dairy"})["options"])
 check("the routes wording leaves out stunts: no 'bet', 'dare' or 'swap' prompt in it, and says 'hero image'", all(w not in (v["routes_stand"] + v["routes_alive"]).replace("a bet, a wager, a test or a sceptic proved wrong is not", "") for w in ("a dare", "a race", "a swap")) and "hero image" in v["routes_stand"])
 
@@ -100,7 +100,7 @@ check("GET /craft-grammar with a brand that is not on file falls back to the act
 
 # ---- the files themselves -------------------------------------------------------------------------------------
 raw = open(os.path.join(cg._DIR, "beauty.md"), encoding="utf-8").read()
-check("beauty.md has every section the page and the prompt read", all(("## " + s) in raw for s in ("FILM", "INTRO", "ROUTES_STAND", "ROUTES_STAND_FREE", "ROUTES_ALIVE", "SPEECH")))
+check("beauty.md has every section the page and the prompt read", all(("## " + s) in raw for s in ("FILM", "INTRO", "ROUTES_STAND", "ROUTES_STAND_FREE", "ROUTES_ALIVE", "SPEECH", "SCRIPT")))
 NAMES = ["cadbury", "surf excel", "oral-b", "good knight", "godrej", "mother dairy", "cred ", "tata sky", "flipkart", "nykaa", "lakme", "maybelline", "heritage", "kumkum"]
 hits = [n for n in NAMES if re.search(r"\b" + re.escape(n.strip()) + r"\b", raw.lower())]
 check("ORIGINAL-SAFE: the grammar names no brand, reference ad or client", not hits, hits)
@@ -117,6 +117,10 @@ cg._cache["sig"] = None
 check("a malformed grammar file is skipped, not fatal", cg.options() == [] and cg.pick({"category": "beauty"})[0] == "")
 cg._DIR = real
 cg._cache["sig"] = None
+SC = cg.get("beauty")["sections"].get("SCRIPT", "")
+check("beauty SCRIPT: stake shown as something seen, show before say, the pack as a hero shot, one place is fine, limbs safe, and it stays under 4,000 characters", all(x in SC for x in ("stake", "Show before you say", "hero shot", "one place is fine", "Keep limbs safe")) and len(SC) < 4000, len(SC))
+check("beauty SPEECH replaces the general dialogue preference for a person alone on screen", "CASTING THE SOUND" in cg.get("beauty")["sections"]["SPEECH"] and "ALONE" in cg.get("beauty")["sections"]["SPEECH"])
+check("beauty ROUTES_STAND keeps the platform's own turn and does not break the limb rule", "names a specific turn" in cg.get("beauty")["sections"]["ROUTES_STAND"] and "without the hand crossing the face" in cg.get("beauty")["sections"]["ROUTES_STAND"])
 check("the real folder loads again", cg.pick({"category": "beauty"})[0] == "beauty")
 
 # ---- the page -------------------------------------------------------------------------------------------------
@@ -125,6 +129,7 @@ check("the page reads GET /craft-grammar, picks the wording from it and offers t
 check("the page asks for the grammar before it writes a concept and before it writes a script", html.count("await this.ensureCraftGrammar();") == 2)
 check("the page's general craft wording no longer names an elder or the dairy examples", "an elder" not in html.split("MAKE EACH ROUTE ALIVE")[1][:900] and "cold crate" not in html and "network of farmers" not in html)
 check("the speech budget uses the grammar's multiplier and note", "gm.vo_mult" in html and "gm.speech_note" in html)
+check("the script writer is given the grammar's SCRIPT notes (through craftWriterText, only when a grammar applies)", "gm.script_note" in html and html.count("this.craftWriterText(vc)") == 1)
 
 # ---- still photographs (the PHOTO section, /scene-still for Social and Carousel) --------------------------------
 import gemini                     # noqa: E402

@@ -18,8 +18,8 @@
   const real = { fetch: window.fetch, brandName: I.brandName };
   const asked = []; let view = null;
   const BEAUTY = { id: 'beauty', label: 'Beauty and skin', why: 'the brand’s category is “Beauty”', craft_on: true, options: [{ id: 'beauty', label: 'Beauty and skin' }], vo_mult: 1.0,
-    routes_stand: ' THE THREE ROUTES. BEAUTY-STAND-PLATFORM hero image', routes_stand_free: ' THE THREE ROUTES. BEAUTY-STAND-FREE hero image', routes_alive: ' MAKE EACH ROUTE BEAUTIFUL AND CLEAR, BEAUTY-ALIVE.', speech_note: 'BEAUTY-SPEECH picture and sound.' };
-  const GENERAL = { id: '', label: 'General', why: 'no grammar written yet', craft_on: true, options: [{ id: 'beauty', label: 'Beauty and skin' }], routes_stand: '', routes_stand_free: '', routes_alive: '', speech_note: '', vo_mult: null };
+    routes_stand: ' THE THREE ROUTES. BEAUTY-STAND-PLATFORM hero image', routes_stand_free: ' THE THREE ROUTES. BEAUTY-STAND-FREE hero image', routes_alive: ' MAKE EACH ROUTE BEAUTIFUL AND CLEAR, BEAUTY-ALIVE.', speech_note: 'BEAUTY-SPEECH picture and sound.', script_note: 'BEAUTY-SCRIPT show the stake.' };
+  const GENERAL = { id: '', label: 'General', why: 'no grammar written yet', craft_on: true, options: [{ id: 'beauty', label: 'Beauty and skin' }], routes_stand: '', routes_stand_free: '', routes_alive: '', speech_note: '', script_note: '', vo_mult: null };
   window.fetch = async (u) => { const url = String(u); if (url.indexOf('/craft-grammar') === 0) { asked.push(url); return new Response(JSON.stringify(view), { status: 200, headers: { 'Content-Type': 'application/json' } }); }
     return new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } }); };
   const results = [], check = (name, ok, extra) => results.push({ name, ok: !!ok, extra: ok ? undefined : extra });
@@ -42,6 +42,9 @@
     I.setState({ craftOn: true }); await wait(150);
     check('still photographs: craft ON sends the craft flag (no pick yet), craft OFF sends nothing', photoOn === '{"craft":true}' && photoOff === '{}', photoOn + ' / ' + photoOff);
 
+    const wr = I.craftWriterText({ message: 'M', move: 'V', device: 'D', line: 'L', cast_idea: 'C' }), wrNone = I.craftWriterText({});
+    check('beauty: the script writer gets the concept craft lines AND the grammar SCRIPT notes; with no craft lines the notes still ride', /This route.s craft: message: M/.test(wr) && /BEAUTY-SCRIPT/.test(wr) && /BEAUTY-SCRIPT/.test(wrNone) && !/This route.s craft/.test(wrNone), wr.slice(0, 160));
+
     // 2. the person's pick
     I.setState({ craftGrammarPick: 'beauty' });
     check('a chosen grammar rides on the call as craft_grammar', I.craftCall().craft_grammar === 'beauty' && I.craftCall().craft === true && I.photoCraftFields().craft_grammar === 'beauty');
@@ -51,6 +54,7 @@
     // 3. a category with no grammar written yet
     view = GENERAL; reset('Heritage Dairy'); await I.ensureCraftGrammar(); await wait(150);
     const gen = I.craftConceptText(true);
+    check('no grammar for the category: the script writer text is as before (no grammar notes)', !/BEAUTY-SCRIPT/.test(I.craftWriterText({ message: 'M' })) && /message: M/.test(I.craftWriterText({ message: 'M' })) && I.craftWriterText({}) === '');
     check('no grammar for the category: the general wording, the general 1.5x speech budget and the general note', /MAKE EACH ROUTE ALIVE/.test(gen) && !/BEAUTY-/.test(gen) && I.voWords('30s') === 48 && /use most of it/.test(I.voBudgetNote('30s', 5)));
     check('the general wording no longer names an elder or the dairy examples', !/an elder/.test(gen) && !/cold crate/.test(gen) && !/network of farmers/.test(gen) && /a friend, a rival, a sceptic, a witness/.test(gen));
 
@@ -58,6 +62,7 @@
     view = BEAUTY; reset('Kumkum Beauty'); await I.ensureCraftGrammar(); await wait(150);
     I.setState({ craftOn: false });
     check('craft OFF: no craft wording, base speech budget, no flag on the call, whatever grammar was read', I.craftConceptText(true) === '' && I.voWords('30s') === 32 && JSON.stringify(I.craftCall()) === '{}' && !/BEAUTY-SPEECH/.test(I.voBudgetNote('30s', 5)));
+    check('craft OFF: the script writer gets nothing from the grammar', !/BEAUTY-SCRIPT/.test(I.craftWriterText({ message: 'M' })) && I.craftWriterText({ message: 'M' }) !== undefined);
     asked.length = 0; I._cg = null; I._cgKey = ''; await I.ensureCraftGrammar();
     check('craft OFF: the page does not ask the server for a grammar at all', asked.length === 0);
 
