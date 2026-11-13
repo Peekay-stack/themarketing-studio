@@ -16515,13 +16515,27 @@ class Component extends DCLogic {
   };
   craftScoreBody(){
     const h = React.createElement, cs = this.state.craftScore;
-    if (!cs) return 'Not scored yet. Seven tests of what makes a film memorable, entertaining and clear; advice only.';
+    if (!cs) return 'Not scored yet. Seven tests of what makes a film memorable, entertaining and clear, plus a check of the facts it states; advice only.';
     const col = (n) => n === null ? '#9AA1AD' : (n >= 3 ? '#1A8A7A' : (n === 2 ? '#41505F' : '#B07A12'));
     return h('div', null,
       h('b', { style:{ color:'#17325E' } }, cs.total + ' of ' + cs.max), ' \u00b7 ' + (cs.withScript ? 'scored on the script' : 'scored on the concept'), cs.summary ? (' \u2014 ' + cs.summary) : '',
       ...(cs.tests || []).map(t => h('div', { key:'cs' + t.id, style:{ marginTop:2, color:col(t.score), fontWeight:(t.id === cs.weakest) ? 700 : 400 } },
         (t.score === null ? '\u2013' : t.score) + '/3 ' + t.label + (t.reason ? ': ' + t.reason : ''))),
-      cs.suggestion ? h('div', { key:'cs-sg', style:{ marginTop:4, color:'#17325E' } }, 'One way to strengthen the weakest: ' + cs.suggestion) : null);
+      cs.suggestion ? h('div', { key:'cs-sg', style:{ marginTop:4, color:'#17325E' } }, 'One way to strengthen the weakest: ' + cs.suggestion) : null,
+      this.craftClaimsBlock(cs));
+  }
+  // The claims check (filmscore.CLAIMS_ASK): statements of fact the film makes that are doubtful or need a source. Separate from the 0-3 scores; the reviewer's own knowledge, not a search.
+  craftClaimsBlock(cs){
+    const h = React.createElement;
+    if (!cs.claims_checked) return h('div', { key:'cl-none', style:{ marginTop:6, color:'#9AA1AD' } }, 'Claims were not checked this time. Score again to check them.');
+    const flagged = (cs.claims || []).filter(c => c.status !== 'ok'), okN = (cs.claims || []).length - flagged.length;
+    const note = ' (the reviewer’s own knowledge, not a search — verify before you rely on it)';
+    if (!flagged.length) return h('div', { key:'cl-ok', style:{ marginTop:6, color:'#41505F' } }, 'Claims: none flagged' + (okN ? ' (' + okN + ' fact' + (okN > 1 ? 's' : '') + ' looked fine)' : '') + note);
+    return h('div', { key:'cl', style:{ marginTop:6 } },
+      h('b', { style:{ color:'#B07A12' } }, 'Claims to check: ' + flagged.length), h('span', { style:{ color:'#9AA1AD' } }, note),
+      ...flagged.map((c, i) => h('div', { key:'cl' + i, style:{ marginTop:3, color: c.status === 'doubtful' ? '#B0322A' : '#41505F' } },
+        h('b', null, (c.status === 'doubtful' ? 'Doubtful' : 'Needs a source') + ': '), '“' + c.quote + '”', c.why ? ' — ' + c.why : '',
+        c.safer ? h('div', { style:{ color:'#17325E' } }, 'Safer: ' + c.safer) : null)));
   }
   runFlowReview = async () => {
     const s = this.state, rows = s.fullScript || [];

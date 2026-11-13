@@ -23,6 +23,21 @@ TESTS = (
 IDS = tuple(t[0] for t in TESTS)
 
 
+CLAIM_STATUS = ("doubtful", "check", "ok")   # worst first: the order the page lists them in
+
+# The CLAIMS CHECK rides in the same model call as the scores (no second call, no extra cost) but is NOT a scored test: it never changes the total. Why it exists: 13 Nov, a Kumkum film line
+# ("most colour starts with waxes") scored 3/3 on every test, because the tests judge the idea, not whether what the film says is TRUE.
+CLAIMS_ASK = (
+    "CLAIMS CHECK (separate from the scores; it never changes them). A film that says something false, or something a regulator would ask the brand to prove, is a risk however well it plays. "
+    "List every STATEMENT OF FACT the film makes or implies, whether spoken, on screen, or in the concept lines: facts about science, ingredients or how things are made, history, numbers, "
+    "sweeping words (most, never, always, only, first, best), comparisons with other products, and benefit claims about the product (how long it lasts, what it does to skin, health or safety). "
+    "Skip feelings, metaphors and the brand speaking in its own voice. Give each `status`: `ok` (well established, or plainly the brand's own opinion), `check` (may be true but needs a source, "
+    "is only partly true, or is a benefit claim that needs proof), or `doubtful` (probably wrong, overstated or unprovable as worded). Quote the words as written in `quote`, say in `why` what is "
+    "wrong or unproven, and in `safer` give wording that keeps the film's idea but is true or provable. This is your own knowledge, NOT a search: say `check`, not `ok`, when you are unsure. "
+    "At most 8 claims, the riskiest first. If the film states no facts, return an empty list."
+)
+
+
 def _clip(text, n) -> str:
     s = re.sub(r"\s+", " ", str(text or "")).strip()
     return s if len(s) <= n else s[: n - 1].rstrip() + "…"
@@ -67,8 +82,10 @@ def build_prompt(*, concept=None, rows=None, seconds=None, logline="", message="
         + ("\n".join(film) + "\n\n" if film else "") + "THE FILM:\n" + (body or "(nothing was sent)") + "\n\n"
         "SCORE each test 0-3: 0 absent, 1 weak or only stated, 2 present and working, 3 outstanding. Give ONE plain line of reason per test that quotes or points at something in the text.\n" + tests + "\n\n"
         "Then name the `strongest` and the `weakest` test (by id), give a one-sentence `summary` of how the film would feel to a viewer, and ONE concrete `suggestion`: a way to strengthen the weakest test that keeps the film's own idea (an option for the director, not an order).\n\n"
+        + CLAIMS_ASK + "\n\n"
         "Return ONLY JSON, no prose and no markdown: "
-        "{\"tests\":[{\"id\":\"message\",\"score\":2,\"reason\":\"...\"}],\"strongest\":\"hook\",\"weakest\":\"device\",\"summary\":\"...\",\"suggestion\":\"...\"}"
+        "{\"tests\":[{\"id\":\"message\",\"score\":2,\"reason\":\"...\"}],\"strongest\":\"hook\",\"weakest\":\"device\",\"summary\":\"...\",\"suggestion\":\"...\","
+        "\"claims\":[{\"quote\":\"the words as written\",\"status\":\"check\",\"why\":\"...\",\"safer\":\"...\"}]}"
     )
 
 
@@ -116,5 +133,27 @@ def validate(raw: dict) -> dict:
             weakest = min(scored, key=lambda t: t["score"])["id"]
     else:
         strongest = weakest = ""
+    claims = validate_claims(raw.get("claims"))
+    if claims is None:
+        notes.append("The review did not check the film's claims.")
     return {"tests": tests, "total": total, "max": 3 * n, "scored": n, "strongest": strongest, "weakest": weakest,
-            "summary": _clip(raw.get("summary"), 400), "suggestion": _clip(raw.get("suggestion"), 400), "notes": notes}
+            "summary": _clip(raw.get("summary"), 400), "suggestion": _clip(raw.get("suggestion"), 400), "notes": notes,
+            "claims": claims, "claims_checked": claims is not None, "claims_flagged": sum(1 for c in (claims or []) if c["status"] != "ok")}
+
+
+def validate_claims(raw):
+    """The claims list: [{quote, status, why, safer}] worst first, at most 8; None when the model sent no `claims` key at all (NOT checked), [] when it looked and found none. An entry with no
+    quote is dropped; an unknown or missing status becomes `check` (never `ok`: a claim the review could not rate is not cleared)."""
+    if not isinstance(raw, list):
+        return None
+    out = []
+    for c in raw:
+        if not isinstance(c, dict):
+            continue
+        quote = _clip(c.get("quote"), 180)
+        if not quote:
+            continue
+        st = str(c.get("status") or "").strip().lower()
+        out.append({"quote": quote, "status": st if st in CLAIM_STATUS else "check", "why": _clip(c.get("why"), 260), "safer": _clip(c.get("safer"), 220)})
+    out.sort(key=lambda c: CLAIM_STATUS.index(c["status"]))   # stable: the model's own order within a status
+    return out[:8]

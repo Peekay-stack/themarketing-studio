@@ -83,12 +83,15 @@
     I.setState({ fullScript: rows, scriptStatus: 'ready', craftScore: null, scriptPhase: 'script' }); await wait(500);
     check('ON: the "Craft scorecard" row appears in "Before you approve" with a Score button', /Craft scorecard/.test(txt()) && /Score the film/.test(txt()), txt().slice(0, 200));
     scoreReply = { ok: true, data: { model: true, total: 13, max: 21, scored: 7, strongest: 'message', weakest: 'device', summary: 'A warm clear film.', suggestion: 'Give her a repeatable gesture.',
-      tests: [['message', 'One clear message', 3], ['hook', 'Attention hook', 2], ['moment', 'One memorable moment', 3], ['dramatised', 'The proposition as an event', 1], ['device', 'A memorable device', 0], ['performance', 'Performance and casting are the idea', 2], ['original', 'Original', null]].map(([id, label, score]) => ({ id, label, score, reason: 'R-' + id })), notes: [] } };
+      tests: [['message', 'One clear message', 3], ['hook', 'Attention hook', 2], ['moment', 'One memorable moment', 3], ['dramatised', 'The proposition as an event', 1], ['device', 'A memorable device', 0], ['performance', 'Performance and casting are the idea', 2], ['original', 'Original', null]].map(([id, label, score]) => ({ id, label, score, reason: 'R-' + id })), notes: [],
+      claims_checked: true, claims_flagged: 2, claims: [{ quote: 'Most colour starts with waxes.', status: 'doubtful', why: 'WHY-1', safer: 'SAFER-1' }, { quote: 'Good for skin.', status: 'check', why: 'WHY-2', safer: '' }, { quote: 'Castor comes from beans.', status: 'ok', why: '', safer: '' }] } };
     await I.runCraftScore(); await wait(500);
     const c = calls.find(x => x.path === '/film-score');
     check('the scorecard posts the concept (with the craft lines) and the script to /film-score', c && c.body.concept && c.body.concept.device.startsWith('DEV-2') && c.body.scenes.length === 2 && c.body.film === true, JSON.stringify(c && Object.keys(c.body)));
     check('it shows the total, the summary, each test with its reason and the suggestion', /13 of 21/.test(txt()) && /A warm clear film/.test(txt()) && /R-device/.test(txt()) && /Give her a repeatable gesture/.test(txt()) && /0\/3 A memorable device/.test(txt()), txt().slice(0, 300));
     check('an unscored test shows a dash, not a zero', /–\/3 Original/.test(txt()));
+    check('the claims check shows the flagged claims worst first with why and a safer wording, notes the ok one is not listed, and says it is not a search', /Claims to check: 2/.test(txt()) && /Doubtful: .Most colour starts with waxes\./.test(txt()) && /WHY-1/.test(txt()) && /Safer: SAFER-1/.test(txt()) && /Needs a source: .Good for skin/.test(txt()) && !/Castor comes from beans/.test(txt()) && /not a search/.test(txt()) && txt().indexOf('Doubtful') < txt().indexOf('Needs a source'), txt().slice(-500));
+    check('the claims do not change the scorecard total shown', /13 of 21/.test(txt()));
     scoreReply = { ok: false, data: { detail: 'The scorecard could not be understood. Try again.' } };
     const before = I.state.craftScore; await I.runCraftScore(); await wait(300);
     check('a failed score leaves the earlier scorecard in place and does not stick the button', I.state.craftScore === before && I.state.craftBusy === false);
