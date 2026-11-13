@@ -50,7 +50,7 @@ Beauty films are mostly picture and sound. Spend the words on a short voiceover 
 BEAUTY AND SKIN, WRITING THE SCRIPT FROM THE CONCEPT. These notes are for the scene rows and they win over the general notes named below.
 
 - **Keep the concept's story as it is told.** Its direction of travel, its time of day and its stake are not reversed: if she is going TO a reception she is going to it, not coming home from it. Do not swap the concept's turn for another.
-- **Show the stake once, early, as something SEEN** (an invitation or message on a phone, a garment bag, a clock, a hall glimpsed), so the viewer knows what the skin has to hold up for. A stake that is only felt does not reach the screen.
+- **Show the stake once, early, as something the CAMERA SEES.** Name it as an object in the scene's own `visual` line, in one of the first two scenes, in the words of what the lens sees: "her phone on the seat beside her, the screen lit with the invitation", "a garment bag hanging on the door behind her", "the hall's doors glimpsed through glass". Not as her thought, a memory or a line of voiceover: if the `visual` line does not name it, the frame cannot draw it and the viewer never sees what the skin has to hold up for. Keep the concept's own stake; do not swap it for another object.
 - **Show before you say.** A time, a length of wear or a day ("fourteen hours in") is spoken or written on screen only if an earlier scene SHOWED that time passing (a desk, a clock, a lit office, daylight turning to dark). The proof (soft, comfortable skin) is shown as skin in honest light, never said aloud by the person wearing it and never also repeated as a super in the same shot. An ingredient the voiceover names (a ghee, an oil, an extract) is shown once on screen in the same scene or the one before it (its texture, its making, a pour or swirl), never named cold in the last seconds.
 - **The pack is a hero shot, not a prop.** It is cut to a clean surface or hand, lit as carefully as the face and held, not left on a lap or a table with no reason. It lands in the closing scene with the sign-off.
 - **A film in one place is fine.** This REPLACES, for this film, the general notes to change the place every scene and to open on a visible action: keep one place and change the framing, the scale, the light and what the face is doing; open on one arresting image (a face, a light, a texture), held long enough to read.
@@ -59,6 +59,13 @@ BEAUTY AND SKIN, WRITING THE SCRIPT FROM THE CONCEPT. These notes are for the sc
 - **One scene is one action and one camera view.** Each scene row is rendered as a single frame from a single camera: one person doing one thing, one camera move. A rushing day, a stride then a sit-down, or a tracking shot that snaps to somewhere else is several scenes or one simpler scene.
 - **Scene 1 shows motion in its first second** (a brush sweep, a swatch smeared, a door sliding shut, light travelling across a face), never a still arrangement. The motion can be slow and beautiful.
 - **Keep limbs safe.** Where the idea calls for a hand on the face, show the same feeling without the hand crossing the face: the cheek tipped into the passing light, the head turning, the light sliding across the skin, a hand resting near the jaw or on the glass beside the face.
+
+## FRAME
+BEAUTY AND SKIN, FOR A FILM FRAME (the picture one scene is drawn from). This adds to the scene's own text; where they disagree the scene text wins.
+
+- **If the scene's text names the stake** (a phone with the invitation, a garment bag, a clock, a hall glimpsed), draw that object in the frame: large enough to recognise at film size, in a plane the eye can find (foreground or lit), and not hidden behind the face or a hand. Show it by shape, colour and the glow of a screen, not by readable writing: no lettering is drawn on screens, invitations or signs.
+- **One person, one action, one camera view.** Skin, eyes and lips sharp and readable in honest light; real skin texture, no airbrushing; hands with five natural fingers; no hand crossing the face.
+- **Nothing the scene does not name.** No extra touch on the face, no second product, no mirror or prop added for decoration: leave out what the scene text does not ask for.
 
 ## INTRO
 **Singleness is about the message, not the size of the film.** One message does not mean one beat or a handful of words. It means the viewer leaves believing one thing. A beauty film delivers it through what is SEEN: the skin, the formula, the light, one clear reveal.

@@ -184,5 +184,41 @@ check("the page hides the Craft mode tick and keeps craft off until the server s
 check("film and POSM pickers read this brand's library items and every pack/cast/location upload tags the brand",
       html.count("/library?for_brand=1") >= 3 and html.count("fd.append('scope_brand', '1')") >= 4)
 
+# ---- 13 Nov, items 6 and 7: the stake must be SEEN BY THE CAMERA (SCRIPT rule + FRAME section reaching film frames), and the page re-reads the grammar every time ----------------------------------
+import craft_grammar  # noqa: E402
+bg = craft_grammar.get("beauty")
+check("script rule: the stake is something the CAMERA SEES, named in the scene's own visual line in the first two scenes, with examples, and not as thought or voiceover",
+      all(x in bg["sections"]["SCRIPT"] for x in ("the CAMERA SEES", "`visual` line", "first two scenes", "garment bag", "Not as her thought")), bg["sections"]["SCRIPT"][:200])
+check("script rule: it keeps the concept's own stake (no swapping the object)", "Keep the concept's own stake" in bg["sections"]["SCRIPT"])
+FR = craft.frame_for_prompt(True, brand={"category": "beauty"})
+check("frame: a beauty brand gets the FRAME notes (the stake object drawn in frame, one view, nothing the scene does not name)", all(x in FR for x in ("names the stake", "not hidden behind the face", "One person, one action", "Nothing the scene does not name")), FR[:120])
+check("frame: the pick works as for film; 'general', no grammar, no brand, craft flag off: nothing",
+      craft.frame_for_prompt(True, brand={"category": "dairy"}, grammar="beauty") == FR and craft.frame_for_prompt(True, brand={"category": "beauty"}, grammar="general") == ""
+      and craft.frame_for_prompt(True, brand={"category": "dairy"}) == "" and craft.frame_for_prompt(True, brand=None) == "" and craft.frame_for_prompt(False, brand={"category": "beauty"}) == "")
+os.environ.pop("CRAFT_BRIEF")
+check("frame: server switch off: nothing even with the flag", craft.frame_for_prompt(True, brand={"category": "beauty"}) == "")
+os.environ["CRAFT_BRIEF"] = "1"
+check("frame: the section is short enough to review (under 1,500 characters) and names no brand or reference ad", 0 < len(FR) < 1500 and not [n for n in NAMES if re.search(r"\b" + re.escape(n.strip()) + r"\b", FR.lower())])
+check("frame: the view still hands the page its other notes untouched (script_note carries the new stake rule)", "the CAMERA SEES" in craft_grammar.view({"category": "beauty"}).get("script_note", ""))
+
+FMARK = "HOW THIS KIND OF FILM FRAME IS DRAWN"
+fbase = still({"video_frame": True})
+check("scene-still: a plain film frame (no craft flag) is untouched", FMARK not in fbase and bool(fbase))
+fon = still({"video_frame": True, "craft": True})
+check("scene-still: craft flag + beauty brand: the FILM FRAME prompt carries the FRAME notes", FMARK in fon and "names the stake" in fon, fon[-200:])
+check("scene-still: with craft the frame prompt is the plain one plus the notes, nothing else moved", fon.replace(" " + FMARK + ": " + FR, "") == fbase and len(fon) > len(fbase), fon[-160:])
+check("scene-still: a static photo never gets the frame notes, and a film frame never gets the photo notes", FMARK not in still({"craft": True}) and MARK not in fon)
+check("scene-still: Independent (general) mode and the person's pick 'general' never get them", FMARK not in still({"video_frame": True, "craft": True, "brand_mode": "general"}) and FMARK not in still({"video_frame": True, "craft": True, "craft_grammar": "general"}))
+os.environ.pop("CRAFT_BRIEF")
+check("scene-still: server switch off: the film frame is byte-identical to the plain one", still({"video_frame": True, "craft": True}) == fbase)
+os.environ["CRAFT_BRIEF"] = "1"
+fb_src = html.split("  frameBody(idx, k = 0){")[1].split("  frameRecipe(idx, k = 0){")[0]
+rec_src = html.split("  frameRecipe(idx, k = 0){")[1].split("  // WHY a frame is out of date")[0]
+check("the page sends the craft fields with every film frame (frameBody), and the staleness recipe does not read them (no frame is reflagged by craft mode)",
+      "video_frame:true, ...this.photoCraftFields()" in fb_src and "craft" not in rec_src.replace("camera_notes", "").replace("cast_", "").replace("craftGrammar", ""), rec_src[:400])
+eg_src = html.split("  ensureCraftGrammar = async (force, on, pick) => {")[1].split("  onCraftGrammar = (e) =>")[0]
+check("page: the grammar is re-read on every call (no tab-long cache), never from the HTTP cache, and a failed read keeps this brand's copy instead of dropping to the general notes",
+      "if (!force && this._cgKey === key && this._cg) return;" not in eg_src and "{ cache: 'no-store' }" in eg_src and "if (this._cgKey === key && this._cg) return;" in eg_src)
+
 print("\n%d failure(s)" % len(fails))
 sys.exit(1 if fails else 0)

@@ -2547,6 +2547,11 @@ def scene_still(payload: dict):
         _photo_grammar = craft_brief.photo_for_prompt(bool(payload.get("craft")), brandprofile.resolve(), str(payload.get("craft_grammar") or ""))
         if _photo_grammar:
             craft = craft + " HOW THIS KIND OF PHOTOGRAPH IS SHOT: " + _photo_grammar
+    # Craft mode, FILM FRAMES only (video_frame): the grammar's FRAME notes (what the scene text names, such as the stake, must be IN the frame). Same switches as above; otherwise unchanged.
+    if payload.get("video_frame") and str(payload.get("brand_mode") or "").strip().lower() != "general":
+        _frame_grammar = craft_brief.frame_for_prompt(bool(payload.get("craft")), brandprofile.resolve(), str(payload.get("craft_grammar") or ""))
+        if _frame_grammar:
+            craft = craft + " HOW THIS KIND OF FILM FRAME IS DRAWN: " + _frame_grammar
     subject = str(payload.get("prompt", "")).strip() or "brand key visual"
     characters = str(payload.get("characters", "")).strip()
     # A cast reference image pins identity in a way text never can — use it when we have one.

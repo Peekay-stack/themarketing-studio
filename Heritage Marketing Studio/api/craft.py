@@ -68,3 +68,12 @@ def photo_for_prompt(requested: bool, brand: dict | None = None, grammar: str = 
         return ""
     gid, _why = craft_grammar.pick(brand, grammar)
     return craft_grammar.photo_block(gid).strip() if gid else ""
+
+
+def frame_for_prompt(requested: bool, brand: dict | None = None, grammar: str = "") -> str:
+    """How this kind of FILM FRAME is drawn, for the image prompt of a storyboard frame, or "". Same two switches and the same grammar choice as `photo_for_prompt`; needs a FRAME section,
+    so a category with no grammar, or a grammar without one, adds nothing and the frame prompt stays byte for byte as it was."""
+    if not (requested and server_on()):
+        return ""
+    gid, _why = craft_grammar.pick(brand, grammar)
+    return craft_grammar.frame_block(gid).strip() if gid else ""

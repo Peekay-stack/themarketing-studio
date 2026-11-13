@@ -16446,15 +16446,20 @@ class Component extends DCLogic {
     const pk = pick !== undefined ? pick : (this.state.craftGrammarPick || '');
     const general = this.state.producerBrandMode === 'general';
     const key = (general ? '(general)' : (this.brandName() || '')) + '|' + pk;
-    if (!force && this._cgKey === key && this._cg) return;
+    // Read again on EVERY call (a concept or a script is about to be written; one tiny GET): a grammar edited on the server, or a restart, is picked up at once and the page never writes from a
+    // stale copy for the life of the tab (found 12 Nov). `force` is kept for callers that pass it.
     try {
       const q = '/craft-grammar?brand=' + encodeURIComponent(general ? '' : (this.brandName() || '')) + '&grammar=' + encodeURIComponent(pk) + (general ? '&brand_mode=general' : '');
-      const r = await fetch(q);
+      const r = await fetch(q, { cache: 'no-store' });
       if (!r.ok) throw new Error('craft-grammar ' + r.status);
       const g = await r.json();
       this._cg = g; this._cgKey = key;   // an instance copy too: the writers that follow in the same call read it at once, before any re-render
       this.setState({ craftGrammar: g, craftGrammarKey: key });
-    } catch (e) { this._cg = null; this._cgKey = ''; this.setState({ craftGrammar: null, craftGrammarKey: '' }); }
+    } catch (e) {
+      // A failed read keeps the copy already held for THIS brand and pick (the wording does not silently fall back to the general notes mid-session); with none held it is null, as before.
+      if (this._cgKey === key && this._cg) return;
+      this._cg = null; this._cgKey = ''; this.setState({ craftGrammar: null, craftGrammarKey: '' });
+    }
   };
   onCraftGrammar = (e) => {
     const v = (e && e.target && e.target.value) || '';
@@ -17402,7 +17407,7 @@ class Component extends DCLogic {
       // This frame's own correction goes last so it has the final word over the film-wide note above.
       (row.frame_note || '').trim()].filter(Boolean).join(' ');
     const body = { scene_no: row.no || idx + 1, prompt, ratio:this.filmAspect(), style:s.videoStyle,
-                   engines:s.engines, video_frame:true };
+                   engines:s.engines, video_frame:true, ...this.photoCraftFields() };   // craft fields only in craft mode; NOT part of the frame recipe below, so no frame is reflagged by them
     // The written look reference rides with the style, not inside the scene text.
     const lookRef = (s.videoLookRef || '').trim();
     if (lookRef) body.look_note = lookRef;

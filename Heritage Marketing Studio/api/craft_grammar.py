@@ -15,6 +15,8 @@ Sections a grammar file may carry:
   ROUTES_ALIVE         the page's "make each route ..." paragraph (replaces the general one)
   SPEECH               the sentence that follows the page's speech budget
   SCRIPT               how this kind of film is written as scene rows from a chosen concept (the stake seen, show before say, the pack as a hero shot, ...); added to the full-script prompt by the page
+  FRAME                how this kind of FILM FRAME (the picture one scene is drawn from) is drawn: what the scene text names must be IN the frame; added to the image prompt of /scene-still for
+                       film frames only (video_frame), and only when craft mode is on (craft.frame_for_prompt)
   PHOTO                how this kind of STILL photograph is shot and shown (a social post, a carousel slide, a key visual); added to the image prompt of /scene-still
                        for static images only, never to a film frame, and only when craft mode is on (craft.photo_for_prompt)
 Front matter keys: id, label, match (comma separated category words, matched as word starts), vo_mult (speech budget multiplier; general craft mode uses 1.5),
@@ -123,6 +125,11 @@ def block(gid: str) -> str:
 def photo_block(gid: str) -> str:
     g = get(gid)
     return (g["sections"].get("PHOTO") or "") if g else ""
+
+
+def frame_block(gid: str) -> str:
+    g = get(gid)
+    return (g["sections"].get("FRAME") or "") if g else ""
 
 
 def view(brand: dict | None, chosen: str = "") -> dict:

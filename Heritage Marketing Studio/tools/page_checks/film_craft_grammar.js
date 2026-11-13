@@ -33,7 +33,15 @@
     check('beauty: the route wording is the grammar’s (platform and no-platform variants), the general "alive" wording is gone', /BEAUTY-STAND-PLATFORM/.test(withP) && /BEAUTY-STAND-FREE/.test(noP) && /BEAUTY-ALIVE/.test(withP) && !/MAKE EACH ROUTE ALIVE/.test(withP) && !/more than two people/.test(withP), withP.slice(0, 200));
     check('beauty: the five craft lines and the claim rules still ride along', /"cast_idea"/.test(withP) && /Original only/.test(withP) && /BOTH the feeling and the proof/.test(withP));
     check('beauty: the speech budget is the base 32 words (not 1.5x) with the grammar’s note', I.voWords('30s') === 32 && /NO MORE than 32 words/.test(I.voBudgetNote('30s', 5)) && /BEAUTY-SPEECH/.test(I.voBudgetNote('30s', 5)) && !/use most of it/.test(I.voBudgetNote('30s', 5)));
-    check('beauty: asking again for the same brand does not fetch again', (await I.ensureCraftGrammar(), asked.length === 1));
+    // 13 Nov: no tab-long cache. Asking again reads again, so an edited grammar (or a server restart) is picked up at once; a failed read keeps this brand's copy.
+    check('beauty: asking again for the same brand reads the server again (no tab-long cache)', (await I.ensureCraftGrammar(), asked.length === 2));
+    view = { ...BEAUTY, script_note: 'BEAUTY-SCRIPT-EDITED the stake is seen by the camera.' };
+    await I.ensureCraftGrammar(); await wait(100);
+    check('an edited grammar on the server reaches the page on the next write, without a reload', I._cg && /BEAUTY-SCRIPT-EDITED/.test(I._cg.script_note) && /BEAUTY-SCRIPT-EDITED/.test(I.state.craftGrammar.script_note), JSON.stringify(I._cg).slice(0, 200));
+    const goodFetch = window.fetch; window.fetch = async (u) => { if (String(u).indexOf('/craft-grammar') === 0) throw new Error('network down'); return goodFetch(u); };
+    await I.ensureCraftGrammar(); await wait(100);
+    check('a failed read keeps the copy already held for this brand (the wording does not drop to the general notes)', I._cg && I._cg.id === 'beauty' && /BEAUTY-SCRIPT-EDITED/.test(I._cg.script_note) && I.craftGrammarNow() && I.craftGrammarNow().id === 'beauty');
+    window.fetch = goodFetch; view = BEAUTY;
     check('the call carries the craft flag but no grammar pick when the person has not chosen one', JSON.stringify(Object.keys(I.craftCall()).sort()) === '["craft","timeoutMs"]');
 
     const photoOn = JSON.stringify(I.photoCraftFields());
