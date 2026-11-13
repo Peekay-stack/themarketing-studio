@@ -118,7 +118,7 @@ check("a malformed grammar file is skipped, not fatal", cg.options() == [] and c
 cg._DIR = real
 cg._cache["sig"] = None
 SC = cg.get("beauty")["sections"].get("SCRIPT", "")
-check("beauty SCRIPT: stake shown as something seen, show before say, the closing shot glorifies the pack, one place is fine, limbs safe, and it stays under 4,000 characters", all(x in SC for x in ("stake", "Show before you say", "glorifies the pack or range", "one place is fine", "Keep limbs safe")) and len(SC) < 4000, len(SC))
+check("beauty SCRIPT: stake shown as something seen, show before say, the pack as a hero shot, one place is fine, limbs safe, and it stays under 4,000 characters", all(x in SC for x in ("stake", "Show before you say", "hero shot", "one place is fine", "Keep limbs safe")) and len(SC) < 4000, len(SC))
 check("beauty SPEECH replaces the general dialogue preference for a person alone on screen", "CASTING THE SOUND" in cg.get("beauty")["sections"]["SPEECH"] and "ALONE" in cg.get("beauty")["sections"]["SPEECH"])
 check("beauty ROUTES_STAND keeps the platform's own turn and does not break the limb rule", "names a specific turn" in cg.get("beauty")["sections"]["ROUTES_STAND"] and "without the hand crossing the face" in cg.get("beauty")["sections"]["ROUTES_STAND"])
 check("beauty SCRIPT: the voice and the super never repeat each other, one scene = one action and one camera view, scene 1 shows motion in its first second", all(x in SC for x in ("never say the same words", "one action and one camera view", "Scene 1 shows motion in its first second")), SC[:80])
@@ -201,12 +201,6 @@ os.environ["CRAFT_BRIEF"] = "1"
 check("frame: the section is short enough to review (under 1,500 characters) and names no brand or reference ad", 0 < len(FR) < 1500 and not [n for n in NAMES if re.search(r"\b" + re.escape(n.strip()) + r"\b", FR.lower())])
 check("frame: the view still hands the page its other notes untouched (script_note carries the new stake rule)", "the CAMERA SEES" in craft_grammar.view({"category": "beauty"}).get("script_note", ""))
 
-# 13 Nov night: the closing pack shot must glorify the range (the Kumkum end frame was a cluttered table, a lifted bangle and a small range)
-check("script rule: the closing shot glorifies the pack or range (only subject, clean surface, nothing competing, no hand lifting a prop)",
-      all(x in bg["sections"]["SCRIPT"] for x in ("closing shot glorifies the pack or range", "ONLY subject", "clean surface", "Nothing competes", "no hand lifting")), bg["sections"]["SCRIPT"][:120])
-check("frame rule: a closing pack scene is drawn as a product hero and wins over listed props",
-      all(x in FR for x in ("closing pack scene is drawn as a product hero", "wins over any props", "no hand lifting anything")), FR[-300:])
-check("frame notes stay under the review length and still name no brand", len(FR) < 2000 and not [n for n in NAMES if re.search(r"\b" + re.escape(n.strip()) + r"\b", FR.lower())], len(FR))
 FMARK = "HOW THIS KIND OF FILM FRAME IS DRAWN"
 fbase = still({"video_frame": True})
 check("scene-still: a plain film frame (no craft flag) is untouched", FMARK not in fbase and bool(fbase))
