@@ -13702,7 +13702,11 @@ class Component extends DCLogic {
         this.setImc({ status:'nokey', message: d.detail || 'AI drafting needs an Anthropic API key on the server. You can still fill the brief in manually.', draft: this.state.imc.draft || this.blankDraft() });
         return;
       }
-      if (!r.ok) throw new Error('server returned ' + r.status);
+      if (!r.ok) {
+        // Say WHY when the server did (it wraps the real reason as "AI draft failed: ..."), not only the status.
+        const ed = await r.json().catch(()=>({}));
+        throw new Error('server returned ' + r.status + (ed && typeof ed.detail === 'string' && ed.detail ? ': ' + ed.detail.slice(0, 400) : ''));
+      }
       const payload = await r.json();
       // The id handed back here is the upsert key for /brief-save, so a redraft corrects this brief in
       // the library instead of leaving two versions of it for someone else to choose between.

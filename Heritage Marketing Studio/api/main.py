@@ -10343,7 +10343,8 @@ def brand_brief_draft(payload: str = Form(...), research: list[UploadFile] = Fil
     except brief_ai.NoApiKey:
         raise HTTPException(400, "ANTHROPIC_API_KEY is not set.")
     except Exception as e:
-        raise HTTPException(500, f"AI draft failed: {e}")
+        import logging; logging.getLogger("uvicorn.error").exception("brand-brief-draft: the draft call failed")
+        raise HTTPException(500, f"AI draft failed: {type(e).__name__}: {e}")
     # Keep the draft the moment it exists.
     #
     # Saving only on export was the wrong event: somebody writes a brief, moves on to the messaging
