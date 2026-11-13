@@ -142,3 +142,7 @@ copy dead weight.
 
 See [[account-migration-plan]] for the git/backup discipline and [[studio-work-inventory]] for the
 architecture review this plan draws on.
+
+
+## 13 Nov update
+Live now runs master `bc9f95e` (film-engagement-2 merged, `CRAFT_BRIEF=1` on Render); the previous deploy was 28 Oct. Details, ids and how to move local data: [[live-deploy-13-nov-and-moving-data]]. Backups and spend caps (Phase 4) are still open.
