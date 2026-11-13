@@ -56,6 +56,19 @@ check("stitch: the result moves in every clip's window", bool(name) and filmcut.
 if name: os.remove(joined)
 filmcut._download = real_dl
 
+# ---- 13 Nov: the model's clips carry a 90000 time scale; the re-encoded trim of the LAST clip (3 s -> 2 s) came out at 12288 and the stream-copy join then played 2 s SHORT (all frames present, overlapping stamps) ----
+def make90(name, secs):
+    p = os.path.join(tmp, name)
+    subprocess.run([exe, "-y", "-f", "lavfi", "-i", "testsrc2=size=320x180:rate=24", "-t", str(secs), "-c:v", "libx264", "-pix_fmt", "yuv420p", "-video_track_timescale", "90000", p], capture_output=True)
+    return p
+ts = {"t0": make90("t0.mp4", 4), "t1": make90("t1.mp4", 6), "t2": make90("t2.mp4", 8), "t3": make90("t3.mp4", 6), "t4": make90("t4.mp4", 4), "t5": make90("t5.mp4", 3)}
+filmcut._download = lambda url, dest: shutil.copyfile(ts[url], dest)
+name = filmcut.stitch(["t0", "t1", "t2", "t3", "t4", "t5"], [4, 6, 8, 6, 4, 2])
+joined = os.path.join(filmcut.RENDERS_DIR, name) if name else ""
+check("stitch: six clips at the model's time scale, the last trimmed 3 s -> 2 s, join into a 30 s film (not 28)", bool(name) and abs(filmcut.probe_seconds(exe, joined) - 30.0) < 0.1, f"{name} {filmcut.probe_seconds(exe, joined) if name else 0:.2f}")
+if name: os.remove(joined)
+filmcut._download = real_dl
+
 # ---- Draft (360p) and Final (720p) takes in ONE film: the demuxer cannot join different sizes, so the concat filter does, at the largest size --------------------------------
 mix = {"m0": make("m0.mp4", 4, size="320x180"), "m1": make("m1.mp4", 4, size="640x360"), "m2": make("m2.mp4", 3, size="320x180")}
 filmcut._download = lambda url, dest: shutil.copyfile(mix[url], dest)

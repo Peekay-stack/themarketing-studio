@@ -470,6 +470,15 @@ def probe_seconds(exe: str, path: str) -> float:
     return int(h) * 3600 + int(mm) * 60 + float(ss)
 
 
+def _video_timescale(exe: str, path: str) -> int:
+    """The video track's time scale (ffmpeg's `tbn`: 90k reads as 90000), or 0 when it can't be read."""
+    res = subprocess.run([exe, "-hide_banner", "-i", path], capture_output=True, text=True)
+    m = re.search(r"Video:.*?,\s*(\d+(?:\.\d+)?)(k?)\s*tbn", res.stderr or "")
+    if not m:
+        return 0
+    return int(round(float(m.group(1)) * (1000 if m.group(2) else 1)))
+
+
 def _trim(exe: str, path: str, seconds: float) -> str:
     """Cut a clip back to the beat length it was ordered at. Returns the path to use.
 
@@ -485,8 +494,13 @@ def _trim(exe: str, path: str, seconds: float) -> str:
     # Re-encoded rather than stream-copied: a copy can only cut on a frame boundary and lands a
     # frame or two long, which compounds across shots until the last cut is half a second adrift
     # from the timecode its dialogue was placed at. `-t` is exact when the frames are re-written.
+    # The trimmed clip must keep the SOURCE clip's video time scale (the model's clips carry 90000; ffmpeg re-encodes at 12288). With a
+    # mixed pair the stream-copy join lets the trimmed clip's frames overlap the one before: every frame is there but the file plays
+    # short (found 13 Nov: a 3s closing shot trimmed to 2s vanished from a 30s film, which came out 28s).
+    ts = _video_timescale(exe, path)
+    ts_args = ["-video_track_timescale", str(ts)] if ts else []
     attempts = [[exe, "-y", "-i", path, "-t", f"{seconds:.3f}",
-                 "-c:v", "libx264", "-preset", "veryfast", "-crf", "20", "-c:a", "copy", out],
+                 "-c:v", "libx264", "-preset", "veryfast", "-crf", "20", *ts_args, "-c:a", "copy", out],
                 [exe, "-y", "-i", path, "-t", f"{seconds:.3f}", "-c", "copy",
                  "-avoid_negative_ts", "make_zero", out]]
     for cmd in attempts:
