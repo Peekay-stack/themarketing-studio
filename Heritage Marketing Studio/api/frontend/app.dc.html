@@ -2437,7 +2437,7 @@
       <div style="background:linear-gradient(135deg,#17325E,#2E5EA6); border-radius:16px; padding:18px;">
         <textarea value="{{ videoBrief }}" onChange="{{ onVideoBrief }}" rows="3" placeholder="e.g. Open on the empty steel glass at 5:45am — the house before anyone's awake. Close on it full, catching the first light, as the day's first sound starts outside." style="width:100%; box-sizing:border-box; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.25); border-radius:12px; padding:14px 16px; color:#fff; font-size:14px; line-height:1.55; resize:vertical; font-family:inherit; margin-bottom:14px;"></textarea>
         <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
-          <label title="Asks the writer for craft notes (message, move, device, line, casting) and shows a craft scorecard before you approve. Advice only." style="display:flex; align-items:center; gap:6px; color:#F5C86E; font-size:12.5px; font-weight:700; cursor:pointer;"><input type="checkbox" checked="{{ craftOn }}" onChange="{{ toggleCraft }}" /> Craft mode</label>
+          <sc-if value="{{ craftAvail }}" hint-placeholder-val="{{ true }}"><label title="Asks the writer for craft notes (message, move, device, line, casting) and shows a craft scorecard before you approve. Advice only." style="display:flex; align-items:center; gap:6px; color:#F5C86E; font-size:12.5px; font-weight:700; cursor:pointer;"><input type="checkbox" checked="{{ craftOn }}" onChange="{{ toggleCraft }}" /> Craft mode</label></sc-if>
           <sc-if value="{{ craftOn }}" hint-placeholder-val="{{ false }}">
             <label title="How this kind of film is shot and shown. Auto reads the brand&#39;s category; a category with no film type written yet uses the general craft notes." style="display:flex; align-items:center; gap:6px; color:#C9D6EC; font-size:12px;">Film type
               <select value="{{ craftGrammarPick }}" onChange="{{ onCraftGrammar }}" style="border:1px solid rgba(255,255,255,0.3); border-radius:8px; padding:4px 8px; font-size:12px; background:rgba(255,255,255,0.12); color:#fff; font-family:inherit;">
@@ -12177,7 +12177,8 @@ class Component extends DCLogic {
     paceSuggest: null,                      // {pace, why} read from the film's tone words by POST /pace-suggest (a suggestion only, never saved)
     filmReview: null,                       // the last flow review (POST /film-review): verdicts per extra shot, beats, notes, measured stats. Advisory; not saved.
     filmReviewBusy: false,
-    craftOn: (() => { try { return localStorage.getItem('tms.craft') === '1'; } catch (e) { return false; } })(),   // Craft mode (FILM_CRAFT_LAYER_PLAN.md): this browser asks for the craft brief on concept/script calls and shows the scorecard. The server must ALSO have CRAFT_BRIEF on. Default off.
+    craftAvail: false,   // the SERVER's craft switch (CRAFT_BRIEF), read from /studio-settings at sign-in; until it says yes the tick is hidden and craftOn stays false, so the page's own craft wording is never used with the server off
+    craftOn: false,   // starts false; loadStudioServer sets it to (server switch on AND this browser's saved tick). Craft mode (FILM_CRAFT_LAYER_PLAN.md): this browser asks for the craft brief on concept/script calls and shows the scorecard. The server must ALSO have CRAFT_BRIEF on. Default off.
     craftScore: null,                       // the last craft scorecard (POST /film-score). Advice only; not saved.
     craftBusy: false,
     craftGrammar: null,                     // the film grammar the server chose for this brand (GET /craft-grammar): its id, label, why, and its own wording for the routes and the speech budget. null = general craft wording.
@@ -12694,6 +12695,8 @@ class Component extends DCLogic {
   }
   loadStudioServer = async () => {
     const d = await this.apiGet('/studio-settings');
+    // Craft mode needs the server switch AND this browser's tick. The server says whether its switch is on; a failed read leaves it off (the safe side).
+    if (d) { let want = false; try { want = localStorage.getItem('tms.craft') === '1'; } catch (e) {} const avail = !!d.craft_available; this.setState({ craftAvail: avail, craftOn: avail && want }); }
     // The drawer's profile card would otherwise read the form's own payload, which only arrives once
     // somebody has opened the form — so it under-reported a profile that was half answered.
     if (d && d.readiness) this.setState({ bfReady: d.readiness },
@@ -16433,7 +16436,7 @@ class Component extends DCLogic {
   // Nothing is sent with craft mode off, so those requests are exactly what they were. The server also needs CRAFT_BRIEF=1 and a grammar with a PHOTO section.
   photoCraftFields(){ return this.state.craftOn ? { craft: true, ...(this.state.craftGrammarPick ? { craft_grammar: this.state.craftGrammarPick } : {}) } : {}; }
   craftCall(){ return this.state.craftOn ? { craft: true, timeoutMs: this.CRAFT_TIMEOUT_MS, ...(this.state.craftGrammarPick ? { craft_grammar: this.state.craftGrammarPick } : {}) } : {}; }
-  toggleCraft = () => { const on = !this.state.craftOn; try { localStorage.setItem('tms.craft', on ? '1' : '0'); } catch (e) {} this.setState({ craftOn:on, craftScore:null }); if (on) this.ensureCraftGrammar(false, true); };
+  toggleCraft = () => { if (!this.state.craftAvail) return; const on = !this.state.craftOn; try { localStorage.setItem('tms.craft', on ? '1' : '0'); } catch (e) {} this.setState({ craftOn:on, craftScore:null }); if (on) this.ensureCraftGrammar(false, true); };
   // Film grammar (craft_skill/grammars/, FILM_CRAFT_LAYER_PLAN.md): how this KIND of film (beauty, later food, home care...) is shot and shown. The server picks it from the brand's category unless the
   // person chose one; this reads it so the concept wording and the speech budget follow it. Only a category that has a grammar changes; anything else keeps the general craft wording below.
   // `on` / `pick` are passed by the handlers that have just changed them (a setState is not applied until after the handler returns); otherwise they are read from the state.
@@ -19192,7 +19195,7 @@ class Component extends DCLogic {
   // photo, a location plate, a specific pack, picked once here instead of only ever described in
   // words. Loaded lazily (Scripting mounting is what actually needs it) rather than on every screen.
   loadVideoAssetLib = async () => {
-    const d = await this.apiGet('/library');
+    const d = await this.apiGet('/library?for_brand=1');   // this brand's items only (plus brand-agnostic ones), as Social already does
     // A failed read leaves the list as it was (it is now re-read on every entry to Video, and must not blank the pickers).
     if (d && Array.isArray(d.items)) this.setState({ videoAssets: d.items, videoAssetsLoaded: true });
   };
@@ -19208,6 +19211,7 @@ class Component extends DCLogic {
     if (!file) return;
     const fd = new FormData();
     fd.append('kind', kind); fd.append('files', file);
+    fd.append('scope_brand', '1');   // this brand's own pack/cast/location, so another brand's picker never lists it (same as Social)
     let addR; try { addR = await fetch('/library-add', { method:'POST', body:fd }); } catch (err) { addR = null; }
     const addD = addR ? await addR.json().catch(() => ({})) : {};
     if (!addR || !addR.ok || !Array.isArray(addD.added) || !addD.added.length) {
@@ -21927,7 +21931,7 @@ class Component extends DCLogic {
       reworkPosts:this.reworkPosts, socialReworking: s.socialReworking,
       reworkPostsLabel: s.socialReworking ? 'Reworking…' : '↻ Rework posts',
       // video
-      videoObjectives, generateVideo:this.generateVideo, videoGenerating: s.videoGenerating, craftOn: !!s.craftOn, toggleCraft: this.toggleCraft, craftGrammarPick: s.craftGrammarPick || '', onCraftGrammar: this.onCraftGrammar,
+      videoObjectives, generateVideo:this.generateVideo, videoGenerating: s.videoGenerating, craftAvail: !!s.craftAvail, craftOn: !!s.craftOn, toggleCraft: this.toggleCraft, craftGrammarPick: s.craftGrammarPick || '', onCraftGrammar: this.onCraftGrammar,
       craftGrammarOpts: [{ v: '', label: 'Auto' + ((s.craftGrammar && s.craftGrammar.id && !s.craftGrammarPick) ? ' (' + s.craftGrammar.label + ')' : '') }, { v: 'general', label: 'General' }, ...(((s.craftGrammar || {}).options) || []).map(o => ({ v: o.id, label: o.label }))],
       hasVideoObjective: !!s.videoObjective, videoObjectiveName: s.videoObjective || '',
       videoConcept: vc, hasVideoConcept: !!vc, videoScenes,
@@ -25610,7 +25614,7 @@ class Component extends DCLogic {
   // Surfaced once, right after a route is picked — not discovered after a failed render. Same
   // /library the Ground truth tab already reads; this is a second, situated place to see it.
   loadPosmAssetLib = async () => {
-    const d = await this.apiGet('/library');
+    const d = await this.apiGet('/library?for_brand=1');   // this brand's items only (plus brand-agnostic ones), matching the brand-scoped lookups the render makes
     this.setPosm({ assets: (d && Array.isArray(d.items)) ? d.items : [] });
   };
   posmAssetOptions(kinds){
@@ -25627,6 +25631,7 @@ class Component extends DCLogic {
     if (!file) return;
     const fd = new FormData();
     fd.append('kind', kind); fd.append('files', file);
+    fd.append('scope_brand', '1');   // this brand's own item (same as Social and Video)
     let addR; try { addR = await fetch('/library-add', { method:'POST', body:fd }); } catch (err) { addR = null; }
     const addD = addR ? await addR.json().catch(() => ({})) : {};
     if (!addR || !addR.ok || !Array.isArray(addD.added) || !addD.added.length) {
@@ -26358,6 +26363,7 @@ class Component extends DCLogic {
     const fd = new FormData();
     fd.append('kind', kind);
     fd.append('files', file);
+    fd.append('scope_brand', '1');   // this brand's own item (same as Social and Video)
     let addR;
     try { addR = await fetch('/library-add', { method:'POST', body:fd }); } catch (err) { addR = null; }
     const addD = addR ? await addR.json().catch(() => ({})) : {};

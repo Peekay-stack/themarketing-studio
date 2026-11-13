@@ -45,5 +45,14 @@ check("the pack row is not stored twice either", d["id"] == c["id"] and len(libr
 library.sign_off(c["id"], "t", True)
 check("the pack picker's kind sees it once signed off", [r["id"] for r in library.items("pack", signed_only=True)] == [c["id"]])
 
+e = library.add(data, "range", "pack", filename="range.png", brand="Kumkum Beauty")
+check("brand A uploading a file already stored for nobody gets its own row, tagged to A", e["brand"] == "Kumkum Beauty" and e["id"] not in (a["id"], c["id"]))
+f = library.add(data, "range", "pack", filename="range.png", brand="Other Brand")
+check("brand B uploading the SAME file gets its own row, not A's", f["brand"] == "Other Brand" and f["id"] != e["id"])
+g = library.add(data, "range", "pack", filename="range.png", brand="Kumkum Beauty")
+check("the same brand uploading it again gets its own row back (stored once)", g["id"] == e["id"])
+library.sign_off(e["id"], "t", True); library.sign_off(f["id"], "t", True)
+check("each brand's picker lists only its own (plus brand-agnostic) pack", {r["id"] for r in library.items("pack", signed_only=True, brand="Other Brand")} == {c["id"], f["id"]})
+
 print("\n%d failure(s)" % len(fails))
 sys.exit(1 if fails else 0)

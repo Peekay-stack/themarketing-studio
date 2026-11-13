@@ -4641,7 +4641,7 @@ def studio_settings_get():
     b = brandprofile.resolve()
     return {"settings": brandprofile.studio_settings(),
             "readiness": brandprofile.readiness(b),
-            "brand": b}
+            "brand": b, "craft_available": craft_brief.server_on()}
 
 
 @app.post("/studio-settings")

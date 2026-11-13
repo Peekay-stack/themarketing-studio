@@ -175,5 +175,14 @@ check("scene-still: server switch off: byte-identical to the plain call", still(
 os.environ["CRAFT_BRIEF"] = "1"
 check("the page sends the craft fields on all four Social/Carousel still calls and defines them once", html.count("...this.photoCraftFields(),") == 4 and "photoCraftFields(){" in html)
 
+check("the server tells the page whether its craft switch is on (on)", main.studio_settings_get().get("craft_available") is True)
+os.environ.pop("CRAFT_BRIEF")
+check("the server tells the page whether its craft switch is on (off)", main.studio_settings_get().get("craft_available") is False)
+os.environ["CRAFT_BRIEF"] = "1"
+check("the page hides the Craft mode tick and keeps craft off until the server says on",
+      '<sc-if value="{{ craftAvail }}"' in html and "craftOn: false," in html and "craftOn: avail && want" in html and "if (!this.state.craftAvail) return;" in html)
+check("film and POSM pickers read this brand's library items and every pack/cast/location upload tags the brand",
+      html.count("/library?for_brand=1") >= 3 and html.count("fd.append('scope_brand', '1')") >= 4)
+
 print("\n%d failure(s)" % len(fails))
 sys.exit(1 if fails else 0)
